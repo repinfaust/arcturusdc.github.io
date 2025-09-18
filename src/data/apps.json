@@ -1,55 +1,26 @@
-{
-  "mandrake": {
+[
+  {
+    "id": "mandrake",
     "name": "Mandrake",
-    "tagline": "Private urge logging, quick tactics, and pattern insights.",
-    "icon": "/assets/mandrake-icon.png",
-    "platforms": {
-      "android": {
-        "title": "Android (Google Play)",
-        "policies": [
-          { "label": "Privacy Policy", "href": "/assets/mandrake/Android/Mandrake_Privacy_Policy_16plus.pdf" },
-          { "label": "Terms of Service", "href": "/assets/mandrake/Android/Mandrake_Terms_of_Service_16plus.pdf" },
-          { "label": "Disclaimer", "href": "/assets/mandrake/Android/Mandrake_Disclaimer_16plus.pdf" }
-        ]
-      },
-      "ios": {
-        "title": "iOS (Apple App Store)",
-        "policies": [
-          { "label": "Privacy Policy", "href": "/assets/mandrake/iOS/Mandrake_Privacy_Policy_iOS.pdf" },
-          { "label": "Terms of Service", "href": "/assets/mandrake/iOS/Mandrake_Terms_of_Service_iOS.pdf" },
-          { "label": "Disclaimer", "href": "/assets/mandrake/iOS/Mandrake_Disclaimer_iOS.pdf" }
-        ]
-      }
-    }
+    "desc": "Private urge logging, quick tactics, and pattern insights.",
+    "link": "/apps/mandrake",
+    "bg": "/img/mandrake-card-background.png"
   },
-  "syncfit": {
+  {
+    "id": "syncfit",
     "name": "SyncFit",
-    "tagline": "Smart scheduling for workouts and self-care, synced with your calendar.",
-    "icon": "/assets/syncfit-icon.png",
-    "platforms": {
-      "android": {
-        "title": "Android",
-        "policies": []
-      },
-      "ios": {
-        "title": "iOS",
-        "policies": []
-      }
-    }
+    "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
+    "link": "/apps/syncfit"
   },
-  "adhd-acclaim": {
+  {
+    "id": "adhd-acclaim",
     "name": "ADHD Acclaim",
-    "tagline": "Gamified rewards to celebrate wins and encourage progress.",
-    "icon": "/assets/adhd-acclaim-icon.png",
-    "platforms": {
-      "android": { "title": "Android", "policies": [] },
-      "ios": { "title": "iOS", "policies": [] }
-    }
+    "desc": "Gamified rewards to celebrate wins and encourage progress.",
+    "link": "/apps/adhd-acclaim"
   },
-  "tou-me": {
+  {
+    "id": "toume",
     "name": "Tou.me (coming soon)",
-    "tagline": "For you, for me, for them.",
-    "icon": "/assets/toume-icon.png",
-    "platforms": {}
+    "desc": "For you, for me, for them."
   }
-}
+]
