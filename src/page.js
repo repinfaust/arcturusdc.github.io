@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HeroWithCapabilities from "@/components/HeroWithCapabilities";
+import HeroWithApps from "@/components/HeroWithApps";
 
 export default function Home() {
   return (
@@ -13,48 +14,57 @@ export default function Home() {
               Software that ships.
             </h1>
             <p className="mt-3 text-neutral-600 max-w-prose">
-              Pragmatic product, apps, and privacy-first delivery for regulated environments.
+              Pragmatic product, apps, and privacy-first delivery for regulated
+              environments.
             </p>
 
             <div className="mt-5 flex gap-3">
-              <Link href="/apps" className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700">
+              <Link
+                href="/apps"
+                className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+              >
                 Explore apps
               </Link>
-              <Link href="/product-strategy" className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50">
+              <Link
+                href="/product-strategy"
+                className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50"
+              >
                 Capabilities
               </Link>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2 text-sm">
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">UK Ltd</span>
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">App Store & Google Play compliant</span>
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">UK based</span>
+              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
+                UK Ltd
+              </span>
+              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
+                App Store & Google Play compliant
+              </span>
+              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
+                UK based
+              </span>
             </div>
           </div>
 
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm flex items-center justify-center">
             <div className="text-center">
               <div className="mx-auto mb-4 size-16 rounded-2xl bg-[conic-gradient(from_0deg,rgba(255,68,34,.25),transparent_60%)] ring-1 ring-neutral-200" />
-              <h2 className="text-2xl font-semibold text-neutral-900">ArcturusDC</h2>
-              <p className="text-neutral-600">Clarity over clutter. Outcomes over theatre.</p>
+              <h2 className="text-2xl font-semibold text-neutral-900">
+                ArcturusDC
+              </h2>
+              <p className="text-neutral-600">
+                Clarity over clutter. Outcomes over theatre.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Full-bleed hero with floating, matching-size Capabilities card */}
+      {/* Full-bleed hero with floating Capabilities card */}
       <HeroWithCapabilities />
 
-      {/* Apps section (unchanged) */}
-      <section className="mx-auto max-w-6xl px-4 mt-8">
-        <div className="rounded-2xl border border-neutral-200/70 bg-white shadow-sm p-6">
-          <h3 className="text-xl font-bold text-neutral-900">Apps</h3>
-          <p className="text-neutral-600">Find policies and platform specifics for each app.</p>
-          <Link href="/apps" className="mt-3 inline-flex items-center text-red-700 hover:underline">
-            Browse apps →
-          </Link>
-        </div>
-      </section>
+      {/* Full-bleed hero with floating Apps card */}
+      <HeroWithApps />
     </main>
   );
 }
