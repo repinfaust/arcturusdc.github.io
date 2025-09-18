@@ -1,12 +1,10 @@
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Hero from '@/components/Hero';
 import FeatureCard from '@/components/FeatureCard';
 
-export default function Page(){
+export default function Page() {
   return (
     <>
-      <Header/>
       <main className="pb-10 pt-[72px]"> {/* pad for fixed header */}
         <Hero/>
 
