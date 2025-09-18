@@ -4,6 +4,7 @@
     "name": "Mandrake",
     "desc": "Private urge logging, quick tactics, and pattern insights.",
     "link": "/apps/mandrake",
+    "icon": "/img/mandrake-app-logo.png",
     "bg": "/img/mandrake-card-background.png"
   },
   {
