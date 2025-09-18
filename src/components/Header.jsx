@@ -46,7 +46,6 @@ export default function Header() {
           href="/"
           className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
         >
-          {/* swap this for your SVG if you have one */}
           <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-neutral-900 font-bold">
             A
           </span>
@@ -95,11 +94,8 @@ export default function Header() {
             aria-modal="true"
             className="absolute right-0 top-0 h-full w-[88%] max-w-sm bg-neutral-950 border-l border-white/10 p-6 flex flex-col"
           >
-            <div className="flex items-center justify-between">
-              <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-neutral-900 font-bold">A</span>
-                <span className="text-white text-lg font-semibold tracking-tight">Arcturus Digital</span>
-              </Link>
+            {/* Close button only */}
+            <div className="flex justify-end">
               <button
                 onClick={() => setOpen(false)}
                 className="rounded-full p-2 -mr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -111,6 +107,7 @@ export default function Header() {
               </button>
             </div>
 
+            {/* Links */}
             <ul className="mt-8 space-y-1">
               {LINKS.map(({ label, href }) => {
                 const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
