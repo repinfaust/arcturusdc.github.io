@@ -1,46 +1,171 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-const cx = (...classes) => classes.filter(Boolean).join(' ');
+const LINKS = [
+  { label: "Home", href: "/" },
+  { label: "Apps", href: "/apps" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+];
 
 export default function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [hover, setHover] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const compact = scrolled && !hover;
+  // lock scroll when mobile menu open
+  useEffect(() => {
+    document.documentElement.classList.toggle("overflow-hidden", open);
+  }, [open]);
 
   return (
-    <header
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      className={cx(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled ? "bg-white/80 backdrop-blur shadow-sm" : "bg-transparent"
+    <div className="sticky top-3 z-50 mx-auto max-w-7xl px-3 sm:px-4">
+      <nav
+        aria-label="Primary"
+        className={[
+          "flex h-16 sm:h-18 items-center justify-between",
+          "rounded-full border border-white/10",
+          "px-4 sm:px-6 lg:px-8",
+          "bg-neutral-900/70 backdrop-blur-md",
+          scrolled ? "shadow-[0_6px_24px_-8px_rgba(0,0,0,0.35)]" : "shadow-none",
+          "transition-shadow",
+        ].join(" ")}
+      >
+        {/* Brand */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        >
+          {/* swap this for your SVG if you have one */}
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-neutral-900 font-bold">
+            A
+          </span>
+          <span className="text-white text-base sm:text-lg font-semibold tracking-tight">
+            Arcturus Digital Consulting
+          </span>
+        </Link>
+
+        {/* Desktop nav */}
+        <ul className="hidden md:flex items-center gap-1">
+          {LINKS.map(({ label, href }) => {
+            const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
+            return (
+              <li key={href}>
+                <NavLink href={href} active={active}>
+                  {label}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* Mobile button */}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="md:hidden inline-flex items-center justify-center rounded-full p-2 -mr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          aria-label="Open menu"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" className="text-white/90" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </nav>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <button
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="absolute right-0 top-0 h-full w-[88%] max-w-sm bg-neutral-950 border-l border-white/10 p-6 flex flex-col"
+          >
+            <div className="flex items-center justify-between">
+              <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-neutral-900 font-bold">A</span>
+                <span className="text-white text-lg font-semibold tracking-tight">Arcturus Digital</span>
+              </Link>
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-full p-2 -mr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                aria-label="Close menu"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" className="text-white/90" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <ul className="mt-8 space-y-1">
+              {LINKS.map(({ label, href }) => {
+                const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
+                return (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      onClick={() => setOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={[
+                        "block rounded-xl px-3 py-3 text-base",
+                        active ? "text-white bg-white/5" : "text-white/85 hover:text-white hover:bg-white/5",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
+                        "transition",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-auto pt-6 text-white/60 text-xs">
+              © {new Date().getFullYear()} Arcturus Digital Consulting
+            </div>
+          </div>
+        </div>
       )}
+    </div>
+  );
+}
+
+function NavLink({ href, active, children }) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={[
+        "group relative inline-flex items-center rounded-full px-3 py-2 text-sm font-medium transition",
+        active ? "text-white" : "text-white/85 hover:text-white",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
+      ].join(" ")}
     >
-      <div className={cx(
-        "mx-auto px-5 transition-all",
-        compact ? "max-w-[980px] py-2" : "max-w-[1120px] py-4"
-      )}>
-        <nav className="flex items-center justify-between">
-          <Link href="/" className="font-extrabold text-xl">Arcturus Digital Consulting</Link>
-          <ul className="flex items-center gap-6 text-[15px]">
-            <li><Link href="/">Home</Link></li>
-            <li><Link href="/apps">Apps</Link></li>
-            <li><Link href="/privacy">Privacy</Link></li>
-            <li><Link href="/terms">Terms</Link></li>
-          </ul>
-        </nav>
-      </div>
-    </header>
+      <span className="relative">
+        {children}
+        <span
+          className={[
+            "absolute left-0 right-0 -bottom-1 h-[2px] rounded",
+            "bg-white/85",
+            active ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            "transition-opacity duration-200",
+          ].join(" ")}
+        />
+      </span>
+    </Link>
   );
 }
