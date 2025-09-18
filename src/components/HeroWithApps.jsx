@@ -17,21 +17,31 @@ export default function HeroWithApps() {
     card.style.opacity = reduce ? "1" : "0";
 
     let raf = 0;
-    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    const getVH = () => (window.visualViewport?.height ?? window.innerHeight ?? 1);
+
     const tick = () => {
       raf = 0;
-      const rect = root.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
 
-      const start = vh * 0.95;
-      const end   = vh * 0.40;
-      const p = clamp01((start - rect.top) / (start - end || 1));
+      const rect = root.getBoundingClientRect();
+      const vh = getVH();
+      const isSmall = matchMedia("(max-width: 640px)").matches;
+
+      // Fade/animate from near bottom to around the middle.
+      const startY = vh * (isSmall ? 1.02 : 0.95);
+      const endY   = vh * (isSmall ? 0.52 : 0.40);
+      const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
+        // Parallax background
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
 
-        const topPct = 70 - 25 * p; // 70% → 45%
+        // Card vertical path: start low, finish slightly above centre
+        const startTopPct = isSmall ? 84 : 70;
+        const endTopPct   = isSmall ? 47 : 42; // ⬅ sits a wee bit higher
+        const topPct = startTopPct - (startTopPct - endTopPct) * p;
+
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
@@ -42,19 +52,23 @@ export default function HeroWithApps() {
         card.style.transform = "translate(-50%, -50%)";
       }
     };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
+    const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
 
     tick();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
+    window.addEventListener("scroll", onScrollResize, { passive: true });
+    window.addEventListener("resize", onScrollResize, { passive: true });
+    window.visualViewport?.addEventListener("resize", onScrollResize, { passive: true });
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("scroll", onScrollResize);
+      window.removeEventListener("resize", onScrollResize);
+      window.visualViewport?.removeEventListener("resize", onScrollResize);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 
-  const heroH = "h-[72vh] md:h-[82vh]";
+  // Slightly taller on mobile so the card has space to land higher
+  const heroH = "h-[88vh] md:h-[82vh]";
   const topMargin = "mt-12 sm:mt-16";
 
   return (
@@ -86,7 +100,7 @@ export default function HeroWithApps() {
           "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
           "will-change-transform will-change-opacity",
         ].join(" ")}
-        style={{ top: "70%", transform: "translate(-50%, -50%)" }}
+        style={{ top: "84%", transform: "translate(-50%, -50%)" }}
       >
         <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
           Apps
