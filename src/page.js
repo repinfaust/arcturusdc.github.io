@@ -10,12 +10,12 @@ export const metadata = {
 export default function Home() {
   return (
     <main className="relative">
-      {/* Starburst corner motif (unchanged) */}
-      <div className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(80%_60%_at_100%_0%,#0000_35%,#000_60%)]">
+      {/* Starburst corner motif (lower z so content can sit above) */}
+      <div className="pointer-events-none absolute inset-0 z-0 [mask-image:radial-gradient(80%_60%_at_100%_0%,#0000_35%,#000_60%)]">
         <div className="absolute -top-24 right-0 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(255,68,34,0.18),transparent_60%)]" />
       </div>
 
-      {/* ===== Top intro/strapline (kept exactly, so you don’t lose it) ===== */}
+      {/* ===== Top intro/strapline (unchanged) ===== */}
       <section className="mx-auto max-w-6xl px-4 pt-14">
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm">
@@ -75,7 +75,7 @@ export default function Home() {
       <section
         id="capabilities"
         className={[
-          "relative mx-auto max-w-[1200px] px-4",
+          "relative z-20 mx-auto max-w-[1200px] px-4",
           "-mt-16 md:-mt-20 lg:-mt-24", // pull up over the hero
         ].join(" ")}
       >
