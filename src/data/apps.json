@@ -12,6 +12,7 @@
     "name": "SyncFit",
     "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
     "icon": "/img/SyncFit_App_Icon_512x512.png",
+    "bg": "/img/syncfit-card-background.png",
     "link": "/apps/syncfit"
   },
   {
