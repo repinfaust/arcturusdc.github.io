@@ -1,10 +1,17 @@
 import Link from "next/link";
 import HeroWithCapabilities from "@/components/HeroWithCapabilities";
+import HeroWithApps from "@/components/HeroWithApps";
+
+export const metadata = {
+  title: "Arcturus Digital Consulting",
+  description:
+    "Pragmatic product, apps, and privacy-first delivery for regulated environments.",
+};
 
 export default function Home() {
   return (
     <main className="relative">
-      {/* Top intro/strapline – unchanged */}
+      {/* Top intro — unchanged */}
       <section className="mx-auto max-w-6xl px-4 pt-14">
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm">
@@ -42,19 +49,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* New composed hero + capabilities overlay */}
+      {/* Capabilities hero */}
       <HeroWithCapabilities />
 
-      {/* Apps teaser – unchanged */}
-      <section className="mx-auto max-w-6xl px-4 mt-8">
-        <div className="rounded-2xl border border-neutral-200/70 bg-white shadow-sm p-6">
-          <h3 className="text-xl font-bold text-neutral-900">Apps</h3>
-          <p className="text-neutral-600">Find policies and platform specifics for each app.</p>
-          <Link href="/apps" className="mt-3 inline-flex items-center text-red-700 hover:underline">
-            Browse apps →
-          </Link>
-        </div>
-      </section>
+      {/* Apps hero (orange image) */}
+      <HeroWithApps />
     </main>
   );
 }
