@@ -1,16 +1,10 @@
 import Link from "next/link";
 import ScrollHero from "@/components/ScrollHero";
 
-export const metadata = {
-  title: "Arcturus Digital Consulting",
-  description:
-    "Pragmatic product, apps, and privacy-first delivery for regulated environments.",
-};
-
 export default function Home() {
   return (
     <main className="relative">
-      {/* Starburst corner motif (lower z so content can sit above) */}
+      {/* Starburst corner motif – ensure it's under content */}
       <div className="pointer-events-none absolute inset-0 z-0 [mask-image:radial-gradient(80%_60%_at_100%_0%,#0000_35%,#000_60%)]">
         <div className="absolute -top-24 right-0 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(255,68,34,0.18),transparent_60%)]" />
       </div>
@@ -19,15 +13,10 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pt-14">
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm">
-            <p className="text-xs font-semibold text-red-600 mb-3">
-              Product & Apps
-            </p>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
-              Software that ships.
-            </h1>
+            <p className="text-xs font-semibold text-red-600 mb-3">Product & Apps</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">Software that ships.</h1>
             <p className="mt-3 text-neutral-600 max-w-prose">
-              Pragmatic product, apps, and privacy-first delivery for regulated
-              environments.
+              Pragmatic product, apps, and privacy-first delivery for regulated environments.
             </p>
 
             <div className="mt-5 flex gap-3">
@@ -46,15 +35,9 @@ export default function Home() {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2 text-sm">
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
-                UK Ltd
-              </span>
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
-                App Store & Google Play compliant
-              </span>
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
-                UK based
-              </span>
+              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">UK Ltd</span>
+              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">App Store & Google Play compliant</span>
+              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">UK based</span>
             </div>
           </div>
 
@@ -76,7 +59,7 @@ export default function Home() {
         id="capabilities"
         className={[
           "relative z-20 mx-auto max-w-[1200px] px-4",
-          "-mt-16 md:-mt-20 lg:-mt-24", // pull up over the hero
+          "-mt-16 md:-mt-20 lg:-mt-24", // overlap the hero
         ].join(" ")}
       >
         <div className="rounded-3xl border border-neutral-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-xl p-6 sm:p-8 lg:p-12">
@@ -88,15 +71,8 @@ export default function Home() {
             <div>
               <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
               <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
-              <p className="text-sm text-neutral-600">
-                Find and ship the next most valuable thing.
-              </p>
-              <Link
-                href="/product-strategy"
-                className="mt-3 inline-block text-sm text-red-700 hover:underline"
-              >
-                Learn more
-              </Link>
+              <p className="text-sm text-neutral-600">Find and ship the next most valuable thing.</p>
+              <Link href="/product-strategy" className="mt-3 inline-block text-sm text-red-700 hover:underline">Learn more</Link>
               <div className="mt-4 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border px-2 py-1">Discovery</span>
                 <span className="rounded-full border px-2 py-1">Compliance support</span>
@@ -107,17 +83,13 @@ export default function Home() {
             <div>
               <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
               <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
-              <p className="text-sm text-neutral-600">
-                Android & iOS with privacy-first design.
-              </p>
+              <p className="text-sm text-neutral-600">Android & iOS with privacy-first design.</p>
             </div>
 
             <div>
               <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
               <h4 className="font-semibold text-neutral-900 text-lg">Data & analytics</h4>
-              <p className="text-sm text-neutral-600">
-                From instrumentation to insight, minus the spin.
-              </p>
+              <p className="text-sm text-neutral-600">From instrumentation to insight, minus the spin.</p>
             </div>
           </div>
         </div>
@@ -127,12 +99,8 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 mt-8">
         <div className="rounded-2xl border border-neutral-200/70 bg-white shadow-sm p-6">
           <h3 className="text-xl font-bold text-neutral-900">Apps</h3>
-          <p className="text-neutral-600">
-            Find policies and platform specifics for each app.
-          </p>
-          <Link href="/apps" className="mt-3 inline-flex items-center text-red-700 hover:underline">
-            Browse apps →
-          </Link>
+          <p className="text-neutral-600">Find policies and platform specifics for each app.</p>
+          <Link href="/apps" className="mt-3 inline-flex items-center text-red-700 hover:underline">Browse apps →</Link>
         </div>
       </section>
     </main>
