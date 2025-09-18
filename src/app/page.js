@@ -3,39 +3,19 @@ import Footer from '@/components/Footer';
 import Hero from '@/components/Hero';
 import FeatureCard from '@/components/FeatureCard';
 
-export default function Page() {
+export default function Page(){
   return (
     <>
-      <Header />
-
-      <main className="pb-10">
-        <Hero
-          title="Software that ships."
-          subtitle="Pragmatic product, apps, and privacy-first delivery for regulated environments."
-          ctaPrimary={{ label: "Explore apps", href: "/apps" }}
-          ctaSecondary={{ label: "Capabilities", href: "#capabilities" }}
-          background="bg-gradient-to-r from-brand/10 to-transparent"
-        />
+      <Header/>
+      <main className="pb-10 pt-[72px]"> {/* pad for fixed header */}
+        <Hero/>
 
         <section id="capabilities" className="card p-6 mt-4">
           <div className="text-2xl font-extrabold mb-2">Capabilities</div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <FeatureCard
-              code="PS"
-              title="Product strategy"
-              desc="Find and ship the next most valuable thing."
-              href="/product-strategy"
-            />
-            <FeatureCard
-              code="AD"
-              title="App development"
-              desc="Android & iOS with privacy-first design."
-            />
-            <FeatureCard
-              code="DA"
-              title="Data & analytics"
-              desc="From instrumentation to insight, minus the spin."
-            />
+            <FeatureCard code="PS" title="Product strategy" desc="Find and ship the next most valuable thing." href="/product-strategy"/>
+            <FeatureCard code="AD" title="App development" desc="Android & iOS with privacy-first design."/>
+            <FeatureCard code="DA" title="Data & analytics" desc="From instrumentation to insight, minus the spin."/>
           </div>
           <div className="flex gap-2 flex-wrap mt-3 text-sm">
             <span className="badge">Discovery</span>
@@ -50,8 +30,7 @@ export default function Page() {
           <a className="underline font-bold" href="/apps">Browse apps →</a>
         </section>
       </main>
-
-      <Footer />
+      <Footer/>
     </>
   );
 }
