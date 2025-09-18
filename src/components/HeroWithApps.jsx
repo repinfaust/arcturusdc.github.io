@@ -9,42 +9,34 @@ export default function HeroWithApps() {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current;
-    const bg   = bgRef.current;
-    const card = cardRef.current;
+    console.log("[HeroWithApps] mounted");
+    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    // initial states
     bg.style.opacity = reduce ? "1" : "0";
     card.style.opacity = reduce ? "1" : "0";
 
     let raf = 0;
     const clamp01 = (v) => Math.max(0, Math.min(1, v));
-
-    const update = () => {
+    const tick = () => {
       raf = 0;
       const rect = root.getBoundingClientRect();
       const vh = window.innerHeight || 1;
 
-      // progress from entering → near-centred
+      // 0 → 1 as hero top moves from 95% vh to 40% vh
       const start = vh * 0.95;
       const end   = vh * 0.40;
       const p = clamp01((start - rect.top) / (start - end || 1));
 
       if (!reduce) {
-        // BG parallax + fade
-        const y = Math.round(-60 * p);
         bg.style.opacity = String(p);
-        bg.style.transform = `translate3d(0, ${y}px, 0)`;
+        bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
 
-        // Card float (70% → 45%), fade + tiny scale
-        const topPct = 70 - 25 * p;
+        const topPct = 70 - 25 * p; // 70% → 45%
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
-        const sc = 0.98 + 0.02 * p;
-        card.style.transform = `translate(-50%, -50%) scale(${sc})`;
+        card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
       } else {
         bg.style.opacity = "1";
         card.style.top = "50%";
@@ -52,9 +44,9 @@ export default function HeroWithApps() {
         card.style.transform = "translate(-50%, -50%)";
       }
     };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
 
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
+    tick();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     return () => {
@@ -71,17 +63,12 @@ export default function HeroWithApps() {
     <section
       ref={rootRef}
       aria-label="Apps hero"
-      className={[
-        "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
-        heroH,
-        topMargin,
-        "mb-20",
-      ].join(" ")}
+      className={`relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] ${heroH} ${topMargin} mb-20`}
     >
       {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
-          src="/img/network-orange-hero-2560.png"
+          src="/img/network-orange-hero-2560.png"  // file exists in public/img
           alt="Abstract network (orange)"
           fill
           priority
@@ -103,20 +90,17 @@ export default function HeroWithApps() {
         ].join(" ")}
         style={{ top: "70%", transform: "translate(-50%, -50%)" }}
       >
-        <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-6 lg:mb-8">
+        <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
           Apps
         </h2>
-
         <p className="text-neutral-700 max-w-prose">
           Policies, platforms, and specifics for each app — kept compliant and privacy-first.
         </p>
-
         <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
           <span className="badge">App Store & Google Play</span>
           <span className="badge">UK based</span>
           <span className="badge">Privacy-first</span>
         </div>
-
         <a
           href="/apps"
           className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
