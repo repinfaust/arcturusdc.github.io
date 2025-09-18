@@ -12,43 +12,44 @@ export default function HeroWithCapabilities() {
     const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
     if (!root || !bg || !card) return;
 
-    const mqReduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const reduce = mqReduce.matches;
-
-    // initialise
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     bg.style.opacity = reduce ? "1" : "0";
     card.style.opacity = reduce ? "1" : "0";
 
     let raf = 0;
-    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+    const getVH = () => (window.visualViewport?.height ?? window.innerHeight ?? 1);
 
     const tick = () => {
       raf = 0;
 
       const rect = root.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const isSmall = window.matchMedia("(max-width: 640px)").matches;
+      const vh = getVH();
+      const isSmall = matchMedia("(max-width: 640px)").matches;
 
-      // Fade window: start when the hero top nears the bottom of the screen,
-      // end when it's roughly mid-screen. Slightly earlier on mobile.
-      const start = vh * (isSmall ? 0.92 : 0.95);
-      const end   = vh * (isSmall ? 0.50 : 0.40);
-      const p = clamp01((start - rect.top) / (start - end || 1));
+      // We map progress by when the hero's TOP passes a point near the bottom,
+      // until the hero TOP reaches roughly the centre of the viewport.
+      // This ensures the CARD ends at 50% on mobile.
+      const startY = vh * (isSmall ? 1.02 : 0.95); // start a bit later on mobile to counter the URL bar jumps
+      const endY   = vh * (isSmall ? 0.52 : 0.40); // hit centre on mobile, slightly above on desktop
+      const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
-        // Parallax bg
+        // Parallax + fade
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
 
-        // Card vertical path: start lower, end at visual centre
-        const startTopPct = isSmall ? 78 : 70; // where it starts
-        const endTopPct   = isSmall ? 50 : 45; // finish at true centre on mobile
+        // Vertical path of the card
+        const startTopPct = isSmall ? 84 : 70; // start noticeably lower on small screens
+        const endTopPct   = isSmall ? 50 : 45; // finish dead centre on mobile
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
       } else {
+        // Reduced motion
         bg.style.opacity = "1";
         card.style.top = "50%";
         card.style.opacity = "1";
@@ -57,18 +58,24 @@ export default function HeroWithCapabilities() {
     };
 
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    const onResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
     tick();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    // visualViewport changes when the URL bar hides/shows on mobile
+    window.visualViewport?.addEventListener("resize", onResize, { passive: true });
+
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 
-  // Same heights as before; mobile gets slightly taller hero to give the card room
-  const heroH = "h-[72vh] md:h-[82vh]";
+  // Slightly taller on mobile to give the card room to settle at centre
+  const heroH = "h-[88vh] md:h-[82vh]";
   const topMargin = "mt-12 sm:mt-16";
 
   return (
@@ -100,7 +107,7 @@ export default function HeroWithCapabilities() {
           "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
           "will-change-transform will-change-opacity",
         ].join(" ")}
-        style={{ top: "70%", transform: "translate(-50%, -50%)" }}
+        style={{ top: "84%", transform: "translate(-50%, -50%)" }}
       >
         <h3 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
           Capabilities
