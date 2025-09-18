@@ -15,14 +15,14 @@ export default function ScrollHero() {
     <section
       aria-label="Network hero"
       className={[
-        "relative ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] w-screen",
+        "relative z-10 ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] w-screen",
         "h-[70vh] md:h-[85vh] lg:h-[92vh]",
         ready ? "opacity-100" : "opacity-0",
         "transition-opacity duration-500",
       ].join(" ")}
     >
       <Image
-        src="/img/network-hero-2560.png"   // put your file here
+        src="/img/network-hero-2560.png"
         alt="Abstract network"
         fill
         priority
