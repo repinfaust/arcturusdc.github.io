@@ -41,7 +41,7 @@ export default function Header() {
           "transition-shadow",
         ].join(" ")}
       >
-        {/* Brand */}
+        {/* Brand (only here) */}
         <Link
           href="/"
           className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -81,34 +81,34 @@ export default function Header() {
         </button>
       </nav>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (no brand/header row) */}
       {open && (
         <div className="fixed inset-0 z-[60] md:hidden">
+          {/* Backdrop */}
           <button
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           />
+          {/* Panel */}
           <div
             role="dialog"
             aria-modal="true"
-            className="absolute right-0 top-0 h-full w-[88%] max-w-sm bg-neutral-950 border-l border-white/10 p-6 flex flex-col"
+            className="absolute right-0 top-0 h-full w-[88%] max-w-sm bg-neutral-950 border-l border-white/10 p-6 pt-14 flex flex-col"
           >
-            {/* Close button only */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setOpen(false)}
-                className="rounded-full p-2 -mr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-                aria-label="Close menu"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" className="text-white/90" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
+            {/* Close button, absolute — no duplicate header */}
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-4 right-4 rounded-full p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              aria-label="Close menu"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" className="text-white/90" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
 
-            {/* Links */}
-            <ul className="mt-8 space-y-1">
+            {/* Links only */}
+            <ul className="space-y-1">
               {LINKS.map(({ label, href }) => {
                 const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
                 return (
