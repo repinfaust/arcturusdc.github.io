@@ -1,31 +1,48 @@
-import Link from 'next/link';
-
-export default function Hero() {
+export default function Hero({
+  eyebrow = 'Product & Apps',
+  heading = 'Software that ships.',
+  subtext = 'Pragmatic product, apps, and privacy-first delivery for regulated environments.',
+  ctas = [
+    { href: '/apps', label: 'Explore apps', variant: 'primary' },
+    { href: '/#capabilities', label: 'Capabilities', variant: 'ghost' },
+  ],
+}) {
   return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(80%_60%_at_100%_0%,rgba(240,69,47,0.14),transparent_60%),radial-gradient(60%_50%_at_-10%_20%,rgba(240,69,47,0.10),transparent_55%)]" />
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-24 md:py-32">
-        <p className="text-xs uppercase tracking-wider text-brand font-semibold mb-4">Product & Apps</p>
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">Software that ships.</h1>
-        <p className="mt-4 max-w-2xl text-lg text-muted">
-          Pragmatic product, apps, and privacy-first delivery for regulated environments.
-        </p>
+    <section
+      className="relative overflow-hidden rounded-2xl border border-black/5 bg-white/70 shadow-soft"
+      style={{
+        background: 'radial-gradient(1000px 400px at 85% -10%, rgba(240,69,47,0.10), transparent)',
+      }}
+    >
+      <div className="p-8 md:p-12">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">{eyebrow}</p>
+        <h1 className="mt-3 max-w-2xl text-4xl font-extrabold leading-tight tracking-tight md:text-5xl">
+          {heading}
+        </h1>
+        <p className="mt-4 max-w-2xl text-[17px] leading-7 text-muted">{subtext}</p>
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/apps" className="btn-primary">Explore apps</Link>
-          <Link href="/product-strategy" className="btn-secondary">Capabilities</Link>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {ctas.map((c) => (
+            <a
+              key={c.label}
+              href={c.href}
+              className={
+                c.variant === 'primary'
+                  ? 'rounded-2xl bg-brand px-4 py-2 text-white shadow-sm transition hover:opacity-90'
+                  : 'rounded-2xl border border-black/10 bg-white/70 px-4 py-2 text-ink transition hover:bg-white'
+              }
+            >
+              {c.label}
+            </a>
+          ))}
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-2">
-          <Badge>UK Ltd</Badge>
-          <Badge>App Store & Google Play compliant</Badge>
-          <Badge>UK based</Badge>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <span className="badge">UK Ltd</span>
+          <span className="badge">App Store & Google Play compliant</span>
+          <span className="badge">UK based</span>
         </div>
       </div>
     </section>
   );
-}
-
-function Badge({ children }) {
-  return <span className="px-3 py-1 rounded-full text-sm bg-white border border-neutral-200 shadow-sm">{children}</span>;
 }
