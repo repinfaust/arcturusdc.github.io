@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://arcturusdc.com/</loc><lastmod>2025-09-18</lastmod></url>
+  <url><loc>https://arcturusdc.com/apps/</loc><lastmod>2025-09-18</lastmod></url>
+  <url><loc>https://arcturusdc.com/apps/mandrake/</loc><lastmod>2025-09-18</lastmod></url>
+  <url><loc>https://arcturusdc.com/apps/mandrake/android/</loc><lastmod>2025-09-18</lastmod></url>
+  <url><loc>https://arcturusdc.com/apps/mandrake/ios/</loc><lastmod>2025-09-18</lastmod></url>
+  <url><loc>https://arcturusdc.com/apps/syncfit/</loc><lastmod>2025-09-18</lastmod></url>
+  <url><loc>https://arcturusdc.com/apps/adhd-acclaim/</loc><lastmod>2025-09-18</lastmod></url>
+  <url><loc>https://arcturusdc.com/apps/tou.me/</loc><lastmod>2025-09-18</lastmod></url>
   <url><loc>https://arcturusdc.com/privacy.html</loc><lastmod>2025-09-18</lastmod></url>
   <url><loc>https://arcturusdc.com/terms.html</loc><lastmod>2025-09-18</lastmod></url>
 </urlset>
