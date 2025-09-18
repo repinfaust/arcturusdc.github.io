@@ -1,6 +1,7 @@
-import apps from '@/data/apps.json';
+import Image from "next/image";
+import apps from "@/data/apps.json";
 
-export const metadata = { title: 'Apps — ArcturusDC' };
+export const metadata = { title: "Apps — ArcturusDC" };
 
 export default function AppsIndex() {
   const entries = Object.entries(apps);
@@ -15,15 +16,34 @@ export default function AppsIndex() {
           <a
             key={slug}
             href={`/apps/${slug}`}
-            className="rounded-2xl border bg-white p-5 hover:shadow-soft transition"
+            className="relative rounded-2xl border bg-white p-5 hover:shadow-soft transition overflow-hidden"
           >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="w-12 h-12 rounded-xl bg-neutral-200 overflow-hidden">
-                {app.icon ? <img src={app.icon} alt="" className="w-full h-full object-cover" /> : null}
+            {/* Optional background */}
+            {app.bg && (
+              <Image
+                src={app.bg}
+                alt=""
+                fill
+                className="absolute inset-0 object-cover opacity-20"
+              />
+            )}
+
+            {/* Foreground content */}
+            <div className="relative">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-neutral-200 overflow-hidden">
+                  {app.icon ? (
+                    <img
+                      src={app.icon}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div className="font-semibold text-lg">{app.name}</div>
               </div>
-              <div className="font-semibold text-lg">{app.name}</div>
+              <p className="text-sm text-muted">{app.tagline}</p>
             </div>
-            <p className="text-sm text-muted">{app.tagline}</p>
           </a>
         ))}
       </div>
