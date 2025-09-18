@@ -1,10 +1,61 @@
-<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Apps • Arcturus Digital Consulting</title><link rel="icon" href="/assets/logo.png"><link rel="stylesheet" href="/styles.css"></head>
-<body><div class="container"><header class="header"><span class="logo"><img src="/assets/logo.png" alt=""></span>
-<div><h1>Arcturus Digital Consulting</h1><nav><a href="/index.html">Home</a><a href="/apps/index.html">Apps</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav></div></header>
-<main>
-<div class="card"><h2>Our Apps</h2><p>Explore each app for platform-specific policies and support.</p></div>
-<div class="card"><h3>Mandrake</h3><p>Private urge logging and pattern insights — quick tactics, no streak pressure.</p><p><a class="cta" href="/apps/mandrake/index.html">Mandrake overview</a></p></div>
-<div class="card"><h3>SyncFit</h3><p>Smart workout scheduling that finds real gaps in busy calendars.</p><p><a href="/apps/syncfit/index.html">SyncFit overview</a></p></div>
-<div class="card"><h3>ADHD Acclaim</h3><p>Achievement-first rewards app for ADHD — celebrate wins, skip the guilt.</p><p><a href="/apps/adhd-acclaim/index.html">ADHD Acclaim overview</a></p></div>
-</main><footer class="footer">&copy; 2025 Arcturus Digital Consulting</footer></div></body></html>
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apps • Arcturus Digital Consulting</title>
+  <link rel="icon" href="/assets/logo.png">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .app-card{display:flex;gap:1rem;align-items:center;background:var(--card);padding:1rem;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.06);margin:1rem 0;}
+    .app-logo{width:56px;height:56px;border-radius:14px;object-fit:cover;background:#fff;display:block}
+    .app-card h3{margin:.2rem 0}
+  </style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <span class="logo"><img src="/assets/logo.png" alt="Arcturus logo"></span>
+    <div>
+      <h1>Arcturus Digital Consulting</h1>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/apps/">Apps</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="card"><h2>Our Apps</h2><p>Explore each app for platform-specific policies and support.</p></div>
+
+    <a class="app-card" href="/apps/mandrake/">
+      <img class="app-logo" src="/assets/mandrake-vertical.png" alt="Mandrake logo">
+      <div>
+        <h3>Mandrake</h3>
+        <div>Private urge logging, quick tactics, and pattern insights.</div>
+      </div>
+    </a>
+
+    <a class="app-card" href="/apps/syncfit/">
+      <img class="app-logo" src="/assets/syncfit-logo.png" alt="SyncFit logo" onerror="this.style.display='none'">
+      <div>
+        <h3>SyncFit</h3>
+        <div>Smart workout scheduling that finds real gaps in busy calendars.</div>
+      </div>
+    </a>
+
+    <a class="app-card" href="/apps/adhd-acclaim/">
+      <img class="app-logo" src="/assets/adhd-acclaim-logo.png" alt="ADHD Acclaim logo" onerror="this.style.display='none'">
+      <div>
+        <h3>ADHD Acclaim</h3>
+        <div>Achievement-first rewards app for ADHD — celebrate wins, skip the guilt.</div>
+      </div>
+    </a>
+  </main>
+
+  <footer class="footer">&copy; 2025 Arcturus Digital Consulting</footer>
+</div>
+</body>
+</html>
