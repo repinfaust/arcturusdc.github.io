@@ -1,0 +1,1 @@
+export default function Page(){return <main className='py-10'><h2 className='text-2xl font-extrabold'>Terms of Use</h2><p className='text-muted mt-2'>Add your site terms here.</p></main>}

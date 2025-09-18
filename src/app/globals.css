@@ -1,0 +1,29 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ring: rgba(240,69,47,.25);
+}
+
+/* Subtle arcturus starburst background */
+.bg-starburst {
+  background:
+    radial-gradient(1200px 600px at -10% -20%, rgba(240,69,47,.07), transparent 50%),
+    radial-gradient(800px 400px at 110% -10%, rgba(32,32,32,.05), transparent 60%);
+}
+
+.card {
+  @apply bg-white border border-black/10 rounded-xl2 shadow-soft;
+}
+
+.badge {
+  @apply inline-flex items-center gap-2 text-sm border border-black/10 rounded-full bg-white px-2.5 py-1;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2;
+}
+.btn-primary { @apply bg-brand text-white hover:bg-brand-600; }
+.btn-secondary { @apply bg-white border border-black/10 text-ink hover:bg-white/80; }
