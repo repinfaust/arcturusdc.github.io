@@ -3,25 +3,17 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 
-/**
- * Full-bleed hero with:
- *  - IntersectionObserver to fade/slide the card in
- *  - rAF + scroll to parallax the background
- *  - Console log once so you can confirm the client code is running
- */
 export default function HeroWithCapabilities() {
   const rootRef = useRef(null);
   const bgRef   = useRef(null);
   const cardRef = useRef(null);
 
-  // 1) Confirm JS is running on the client
+  // --- 1) sanity log so we know we're live
   useEffect(() => {
-    // You should see this in DevTools -> Console exactly once
-    // If you don't, the component isn't mounting as a client component
     console.log("[HeroWithCapabilities] mounted");
   }, []);
 
-  // 2) Fade/slide in the card when the section intersects
+  // --- 2) fade/slide card when the section enters
   useEffect(() => {
     const root = rootRef.current;
     const card = cardRef.current;
@@ -29,58 +21,82 @@ export default function HeroWithCapabilities() {
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Set initial state (hidden) – very obvious
     if (!reduce) {
+      // initial state (definitely visible to you)
       card.style.opacity = "0";
-      card.style.transform = "translate3d(-50%, 40px, 0)"; // 40px so it’s visible
+      card.style.transform = "translate3d(-50%, 48px, 0)";
+    } else {
+      // static if reduced motion
+      card.style.opacity = "1";
+      card.style.transform = "translate3d(-50%, 0, 0)";
+      return;
     }
 
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          // visible state
-          card.style.transition = "opacity 700ms ease-out, transform 700ms ease-out";
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+
+      // Force a paint before we start the transition
+      // 1st frame: ensure initial styles are committed
+      requestAnimationFrame(() => {
+        // trigger transition only after layout
+        // (offsetHeight forces layout flush)
+        void card.offsetHeight;
+        card.style.transition = "opacity 800ms ease-out, transform 800ms cubic-bezier(.2,.8,.2,1)";
+        // 2nd frame: start anim
+        requestAnimationFrame(() => {
           card.style.opacity = "1";
-          card.style.transform = "translate3d(-50%, 0px, 0)";
-          io.disconnect();
-        }
-      },
-      { threshold: 0.25 }
-    );
+          card.style.transform = "translate3d(-50%, 0, 0)";
+        });
+      });
+
+      io.disconnect();
+    }, { threshold: 0.25 });
 
     io.observe(root);
     return () => io.disconnect();
   }, []);
 
-  // 3) Parallax the background on scroll
+  // --- 3) parallax background (obvious movement so you can verify)
   useEffect(() => {
     const root = rootRef.current;
     const bg   = bgRef.current;
     if (!root || !bg) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return; // static if user prefers reduced motion
+    if (reduce) return;
 
     let raf = 0;
+    let lastPrint = 0;
+
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
     const onScroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
+
         const rect = root.getBoundingClientRect();
         const vh = window.innerHeight || 1;
 
-        // progress 0..1 as the block moves through viewport
-        const start = vh;       // start when section bottom hits bottom of viewport
-        const end   = -rect.height; // end when it's fully past top
-        const t = Math.max(0, Math.min(1, (start - rect.top) / (start - end || 1)));
+        // progress: 0 when just below viewport, 1 when top hits 25% viewport
+        const start = vh * 0.95;
+        const end   = vh * 0.25;
+        const p = clamp01((start - rect.top) / (start - end || 1));
 
-        // move bg up to 30px across the scroll
-        const y = -30 * t;
-        bg.style.transform = `translate3d(0, ${y}px, 0)`;
+        // BIG parallax so you can't miss it (dial back later to 20–40)
+        const bgY = Math.round(-120 * p);  // px
+        bg.style.transform = `translate3d(0, ${bgY}px, 0)`;
+
+        // throttled console so you can see updates
+        const now = performance.now();
+        if (now - lastPrint > 250) {
+          console.log(`[Hero] scroll p=${p.toFixed(2)} bgY=${bgY}px`);
+          lastPrint = now;
+        }
       });
     };
 
-    onScroll(); // initial
+    onScroll(); // initial compute
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     return () => {
@@ -111,7 +127,7 @@ export default function HeroWithCapabilities() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/8 to-black/25" />
       </div>
 
-      {/* Floating capabilities card – bottom anchored, auto height */}
+      {/* Floating capabilities card — bottom anchored, auto height */}
       <div
         ref={cardRef}
         className={[
@@ -128,13 +144,9 @@ export default function HeroWithCapabilities() {
         </h2>
 
         <div className="grid gap-6 md:grid-cols-3 text-neutral-700">
-          <Cap code="PS" title="Product strategy"
-               desc="Find and ship the next most valuable thing."
-               href="/product-strategy" />
-          <Cap code="AD" title="App development"
-               desc="Android & iOS with privacy-first design." />
-          <Cap code="DA" title="Data & analytics"
-               desc="From instrumentation to insight, minus the spin." />
+          <Block code="PS" title="Product strategy" desc="Find and ship the next most valuable thing." href="/product-strategy" />
+          <Block code="AD" title="App development" desc="Android & iOS with privacy-first design." />
+          <Block code="DA" title="Data & analytics" desc="From instrumentation to insight, minus the spin." />
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
@@ -147,7 +159,7 @@ export default function HeroWithCapabilities() {
   );
 }
 
-function Cap({ code, title, desc, href }) {
+function Block({ code, title, desc, href }) {
   return (
     <div>
       <div className="text-xs font-semibold text-neutral-500 mb-1">{code}</div>
