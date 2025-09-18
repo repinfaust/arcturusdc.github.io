@@ -1,35 +1,26 @@
 import Link from "next/link";
 import ScrollHero from "@/components/ScrollHero";
 
-export default function Home() {
+export default function Page(){
   return (
-    <main className="relative">
-      {/* Starburst corner motif – ensure it's under content */}
-      <div className="pointer-events-none absolute inset-0 z-0 [mask-image:radial-gradient(80%_60%_at_100%_0%,#0000_35%,#000_60%)]">
-        <div className="absolute -top-24 right-0 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(255,68,34,0.18),transparent_60%)]" />
-      </div>
-
-      {/* ===== Top intro/strapline (unchanged) ===== */}
-      <section className="mx-auto max-w-6xl px-4 pt-14">
+    <main className="pb-10 pt-[72px] relative">
+      {/* Top intro/strapline (unchanged) */}
+      <section className="mx-auto max-w-6xl px-4">
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm">
             <p className="text-xs font-semibold text-red-600 mb-3">Product & Apps</p>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">Software that ships.</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
+              Software that ships.
+            </h1>
             <p className="mt-3 text-neutral-600 max-w-prose">
               Pragmatic product, apps, and privacy-first delivery for regulated environments.
             </p>
 
             <div className="mt-5 flex gap-3">
-              <Link
-                href="/apps"
-                className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
-              >
+              <Link href="/apps" className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700">
                 Explore apps
               </Link>
-              <Link
-                href="/product-strategy"
-                className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50"
-              >
+              <Link href="/product-strategy" className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50">
                 Capabilities
               </Link>
             </div>
@@ -51,15 +42,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Full-bleed hero image that “arrives” as you scroll ===== */}
+      {/* Full-bleed hero (scrolls into view) */}
       <ScrollHero />
 
-      {/* ===== Capabilities — larger, overlapping the image for impact ===== */}
+      {/* Capabilities — bigger + overlapping the hero */}
       <section
         id="capabilities"
         className={[
           "relative z-20 mx-auto max-w-[1200px] px-4",
-          "-mt-16 md:-mt-20 lg:-mt-24", // overlap the hero
+          "-mt-16 md:-mt-20 lg:-mt-24", // pull up over hero
         ].join(" ")}
       >
         <div className="rounded-3xl border border-neutral-200/70 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-xl p-6 sm:p-8 lg:p-12">
@@ -72,7 +63,9 @@ export default function Home() {
               <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
               <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
               <p className="text-sm text-neutral-600">Find and ship the next most valuable thing.</p>
-              <Link href="/product-strategy" className="mt-3 inline-block text-sm text-red-700 hover:underline">Learn more</Link>
+              <Link href="/product-strategy" className="mt-3 inline-block text-sm text-red-700 hover:underline">
+                Learn more
+              </Link>
               <div className="mt-4 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border px-2 py-1">Discovery</span>
                 <span className="rounded-full border px-2 py-1">Compliance support</span>
@@ -95,7 +88,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Apps teaser (unchanged) ===== */}
+      {/* Apps teaser (unchanged) */}
       <section className="mx-auto max-w-6xl px-4 mt-8">
         <div className="rounded-2xl border border-neutral-200/70 bg-white shadow-sm p-6">
           <h3 className="text-xl font-bold text-neutral-900">Apps</h3>
