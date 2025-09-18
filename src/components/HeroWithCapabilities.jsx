@@ -42,7 +42,7 @@ export default function HeroWithCapabilities() {
 
         // Vertical path of the card
         const startTopPct = isSmall ? 84 : 70; // start noticeably lower on small screens
-        const endTopPct   = isSmall ? 50 : 45; // finish dead centre on mobile
+        const endTopPct   = isSmall ? 47 : 42; // finish dead centre on mobile
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
         card.style.top = `${topPct}%`;
