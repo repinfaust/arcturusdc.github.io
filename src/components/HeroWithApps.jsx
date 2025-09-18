@@ -9,7 +9,6 @@ export default function HeroWithApps() {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    console.log("[HeroWithApps] mounted");
     const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
     if (!root || !bg || !card) return;
 
@@ -24,7 +23,6 @@ export default function HeroWithApps() {
       const rect = root.getBoundingClientRect();
       const vh = window.innerHeight || 1;
 
-      // 0 → 1 as hero top moves from 95% vh to 40% vh
       const start = vh * 0.95;
       const end   = vh * 0.40;
       const p = clamp01((start - rect.top) / (start - end || 1));
@@ -68,7 +66,7 @@ export default function HeroWithApps() {
       {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
-          src="/img/network-orange-hero-2560.png"  // file exists in public/img
+          src="/img/network-orange-hero-2560.png"
           alt="Abstract network (orange)"
           fill
           priority
