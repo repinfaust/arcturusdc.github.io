@@ -22,7 +22,7 @@ export default function ScrollHero() {
       ].join(" ")}
     >
       <Image
-        src="/img/network-hero-2560.jpg"   // put your file here
+        src="/img/network-hero-2560.png"   // put your file here
         alt="Abstract network"
         fill
         priority
