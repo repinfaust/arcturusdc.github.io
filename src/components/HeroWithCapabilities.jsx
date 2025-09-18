@@ -8,113 +8,73 @@ export default function HeroWithCapabilities() {
   const bgRef   = useRef(null);
   const cardRef = useRef(null);
 
-  // --- 1) sanity log so we know we're live
+  // --- fade+slide-in on intersection
   useEffect(() => {
-    console.log("[HeroWithCapabilities] mounted");
-  }, []);
-
-  // --- 2) fade/slide card when the section enters
-  useEffect(() => {
-    const root = rootRef.current;
     const card = cardRef.current;
-    if (!root || !card) return;
+    if (!card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (!reduce) {
-      // initial state (definitely visible to you)
-      card.style.opacity = "0";
-      card.style.transform = "translate3d(-50%, 48px, 0)";
-    } else {
-      // static if reduced motion
+    if (reduce) {
       card.style.opacity = "1";
       card.style.transform = "translate3d(-50%, 0, 0)";
       return;
     }
 
+    // Initial hidden state
+    card.style.opacity = "0";
+    card.style.transform = "translate3d(-50%, 64px, 0)";
+
     const io = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
 
-      // Force a paint before we start the transition
-      // 1st frame: ensure initial styles are committed
       requestAnimationFrame(() => {
-        // trigger transition only after layout
-        // (offsetHeight forces layout flush)
-        void card.offsetHeight;
-        card.style.transition = "opacity 800ms ease-out, transform 800ms cubic-bezier(.2,.8,.2,1)";
-        // 2nd frame: start anim
-        requestAnimationFrame(() => {
-          card.style.opacity = "1";
-          card.style.transform = "translate3d(-50%, 0, 0)";
-        });
+        void card.offsetHeight; // flush layout
+        card.style.transition = "opacity 700ms ease-out, transform 700ms cubic-bezier(.2,.8,.2,1)";
+        card.style.opacity = "1";
+        card.style.transform = "translate3d(-50%, 0, 0)";
       });
 
       io.disconnect();
-    }, { threshold: 0.25 });
+    }, { threshold: 0.3 });
 
-    io.observe(root);
+    io.observe(card);
     return () => io.disconnect();
   }, []);
 
-  // --- 3) parallax background (obvious movement so you can verify)
+  // --- background parallax
   useEffect(() => {
     const root = rootRef.current;
     const bg   = bgRef.current;
     if (!root || !bg) return;
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
-
-    let raf = 0;
-    let lastPrint = 0;
-
-    const clamp01 = (v) => Math.max(0, Math.min(1, v));
-
     const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
+      const rect = root.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
 
-        const rect = root.getBoundingClientRect();
-        const vh = window.innerHeight || 1;
+      const start = vh;
+      const end   = -rect.height;
+      const progress = Math.max(0, Math.min(1, (start - rect.top) / (start - end || 1)));
 
-        // progress: 0 when just below viewport, 1 when top hits 25% viewport
-        const start = vh * 0.95;
-        const end   = vh * 0.25;
-        const p = clamp01((start - rect.top) / (start - end || 1));
-
-        // BIG parallax so you can't miss it (dial back later to 20–40)
-        const bgY = Math.round(-120 * p);  // px
-        bg.style.transform = `translate3d(0, ${bgY}px, 0)`;
-
-        // throttled console so you can see updates
-        const now = performance.now();
-        if (now - lastPrint > 250) {
-          console.log(`[Hero] scroll p=${p.toFixed(2)} bgY=${bgY}px`);
-          lastPrint = now;
-        }
-      });
+      const y = -40 * progress; // dial value for subtle parallax
+      bg.style.transform = `translate3d(0, ${y}px, 0)`;
     };
 
-    onScroll(); // initial compute
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const heroH = "h-[70vh] md:h-[80vh] lg:h-[88vh]";
+  const heroH = "h-[75vh] md:h-[85vh]";
 
   return (
     <section
       ref={rootRef}
       aria-label="Network hero with capabilities"
-      className={`relative ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] w-screen ${heroH}`}
+      className={`relative ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] w-screen ${heroH} mb-24`} 
+      // 👆 `mb-24` ensures it doesn’t collide with next section
     >
-      {/* Background image wrapper (parallax transform applied here) */}
+      {/* Background image with parallax */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform">
         <Image
           src="/img/network-hero-2560.png"
@@ -124,15 +84,15 @@ export default function HeroWithCapabilities() {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/8 to-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-black/25" />
       </div>
 
-      {/* Floating capabilities card — bottom anchored, auto height */}
+      {/* Floating Capabilities card */}
       <div
         ref={cardRef}
         className={[
           "absolute left-1/2 -translate-x-1/2",
-          "bottom-6 sm:bottom-8 lg:bottom-10",
+          "bottom-8 sm:bottom-10 lg:bottom-14",
           "w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px]",
           "rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl",
           "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
