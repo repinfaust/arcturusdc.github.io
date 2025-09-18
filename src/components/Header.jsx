@@ -1,65 +1,42 @@
 'use client';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const ref = useRef(null);
+  const [compact, setCompact] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    onScroll();
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      // compact when scrolling down past 40px
+      setCompact(y > 40 && y > lastY);
+      lastY = y;
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const tall = hovered || !scrolled;
-
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={[
-        'sticky top-4 z-50 mx-auto max-w-6xl transition-all duration-300',
-        tall ? 'h-20' : 'h-12',
-      ].join(' ')}
+    <header
+      ref={ref}
+      className={`sticky top-0 z-50 transition-all duration-300
+      bg-paper/80 backdrop-blur supports-[backdrop-filter]:bg-paper/60
+      ${compact ? 'py-2 shadow-soft' : 'py-4'}
+      hover:py-4`}
     >
-      <div className={[
-        'flex items-center justify-between rounded-2xl border border-neutral-200/70',
-        'bg-white/80 backdrop-blur shadow-soft px-4 md:px-6 transition-all duration-300',
-        tall ? 'h-20' : 'h-12 rounded-xl'
-      ].join(' ')}>
-        <Link href="/" className="flex items-center gap-3">
-          <Image
-            src="/assets/brand/starburst.png" // keep your exact logo file here
-            alt="ArcturusDC"
-            width={28}
-            height={28}
-            className="rounded-md"
-          />
-          <span className="font-semibold tracking-tight">Arcturus Digital Consulting</span>
-        </Link>
-
-        <nav className="hidden md:flex items-center gap-6 text-sm">
-          <NavLink href="/">Home</NavLink>
-          <NavLink href="/apps">Apps</NavLink>
-          <NavLink href="/privacy">Privacy</NavLink>
-          <NavLink href="/terms">Terms</NavLink>
-        </nav>
-
-        <Link href="/apps" className="hidden md:inline-flex items-center rounded-xl bg-brand text-white px-3 py-2 text-sm font-medium hover:opacity-95 transition">
-          Explore apps
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function NavLink({ href, children }) {
-  return (
-    <Link href={href} className="text-ink/80 hover:text-ink transition">
-      {children}
-    </Link>
+      <nav className="max-w-[1120px] mx-auto px-5 flex items-center gap-6">
+        <a href="/" className="flex items-center gap-2 font-semibold">
+          <span className="inline-block w-8 h-8 rounded-xl bg-[url('/assets/starburst.svg')] bg-cover bg-center" aria-hidden />
+          Arcturus Digital Consulting
+        </a>
+        <div className="ml-auto flex items-center gap-5">
+          <a className="hover:text-brand" href="/">Home</a>
+          <a className="hover:text-brand" href="/apps">Apps</a>
+          <a className="hover:text-brand" href="/privacy">Privacy</a>
+          <a className="hover:text-brand" href="/terms">Terms</a>
+        </div>
+      </nav>
+    </header>
   );
 }
