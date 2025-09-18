@@ -1,0 +1,15 @@
+{
+  "name": "Arcturus Digital Consulting",
+  "short_name": "ArcturusDC",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF9F0",
+  "theme_color": "#EA4A2B",
+  "icons": [
+    {
+      "src": "/assets/arcturus-mark-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
