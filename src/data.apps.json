@@ -1,0 +1,64 @@
+{
+  "apps": [
+    {
+      "slug": "mandrake",
+      "name": "Mandrake",
+      "tagline": "Private urge logging, quick tactics, and pattern insights.",
+      "logo": "/assets/vertical_primary_rounded_1024.png",
+      "platforms": [
+        {
+          "name": "Android (Google Play)",
+          "policyBase": "/mandrake/android"
+        },
+        {
+          "name": "iOS (Apple App Store)",
+          "policyBase": "/mandrake/ios"
+        }
+      ]
+    },
+    {
+      "slug": "syncfit",
+      "name": "SyncFit",
+      "tagline": "Smart scheduling for workouts and self\u2011care, synced with your calendar.",
+      "logo": "/assets/SyncFit_App_Icon_512x512.png",
+      "platforms": [
+        {
+          "name": "Android",
+          "policyBase": "/apps/syncfit"
+        },
+        {
+          "name": "iOS",
+          "policyBase": "/apps/syncfit"
+        }
+      ]
+    },
+    {
+      "slug": "adhd-acclaim",
+      "name": "ADHD Acclaim",
+      "tagline": "Gamified rewards to celebrate wins and encourage progress.",
+      "logo": "/assets/adhdacclaim_logo_1024x1024.png",
+      "platforms": [
+        {
+          "name": "Android",
+          "policyBase": "/apps/adhd-acclaim"
+        },
+        {
+          "name": "iOS",
+          "policyBase": "/apps/adhd-acclaim"
+        }
+      ]
+    },
+    {
+      "slug": "tou-me",
+      "name": "Tou.me (coming soon)",
+      "tagline": "For you, for me, for them.",
+      "logo": "/assets/tou.me_logo.jpeg",
+      "platforms": [
+        {
+          "name": "Coming soon",
+          "policyBase": "/apps/tou-me"
+        }
+      ]
+    }
+  ]
+}
