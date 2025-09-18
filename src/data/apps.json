@@ -1,30 +1,55 @@
 {
   "mandrake": {
     "name": "Mandrake",
-    "summary": "Private urge logging, quick tactics, and pattern insights.",
-    "android": {
-      "privacy": "/assets/mandrake/Mandrake_Privacy_Policy_16plus.pdf",
-      "terms": "/assets/mandrake/Mandrake_Terms_of_Service_16plus.pdf",
-      "disclaimer": "/assets/mandrake/Mandrake_Disclaimer_16plus.pdf",
-      "store": null
-    },
-    "ios": {
-      "privacy": "/assets/mandrake/Mandrake_Privacy_Policy_iOS.pdf",
-      "terms": "/assets/mandrake/Mandrake_Terms_of_Service_iOS.pdf",
-      "disclaimer": "/assets/mandrake/Mandrake_Disclaimer_iOS.pdf",
-      "store": null
+    "tagline": "Private urge logging, quick tactics, and pattern insights.",
+    "icon": "/assets/mandrake-icon.png",
+    "platforms": {
+      "android": {
+        "title": "Android (Google Play)",
+        "policies": [
+          { "label": "Privacy Policy", "href": "/assets/mandrake/Android/Mandrake_Privacy_Policy_16plus.pdf" },
+          { "label": "Terms of Service", "href": "/assets/mandrake/Android/Mandrake_Terms_of_Service_16plus.pdf" },
+          { "label": "Disclaimer", "href": "/assets/mandrake/Android/Mandrake_Disclaimer_16plus.pdf" }
+        ]
+      },
+      "ios": {
+        "title": "iOS (Apple App Store)",
+        "policies": [
+          { "label": "Privacy Policy", "href": "/assets/mandrake/iOS/Mandrake_Privacy_Policy_iOS.pdf" },
+          { "label": "Terms of Service", "href": "/assets/mandrake/iOS/Mandrake_Terms_of_Service_iOS.pdf" },
+          { "label": "Disclaimer", "href": "/assets/mandrake/iOS/Mandrake_Disclaimer_iOS.pdf" }
+        ]
+      }
     }
   },
   "syncfit": {
     "name": "SyncFit",
-    "summary": "Smart scheduling for workouts and self-care, synced with your calendar.",
-    "android": { "privacy": null, "terms": null, "disclaimer": null, "store": null },
-    "ios":     { "privacy": null, "terms": null, "disclaimer": null, "store": null }
+    "tagline": "Smart scheduling for workouts and self-care, synced with your calendar.",
+    "icon": "/assets/syncfit-icon.png",
+    "platforms": {
+      "android": {
+        "title": "Android",
+        "policies": []
+      },
+      "ios": {
+        "title": "iOS",
+        "policies": []
+      }
+    }
   },
   "adhd-acclaim": {
     "name": "ADHD Acclaim",
-    "summary": "Gamified rewards to celebrate wins and encourage progress.",
-    "android": { "privacy": null, "terms": null, "disclaimer": null, "store": null },
-    "ios":     { "privacy": null, "terms": null, "disclaimer": null, "store": null }
+    "tagline": "Gamified rewards to celebrate wins and encourage progress.",
+    "icon": "/assets/adhd-acclaim-icon.png",
+    "platforms": {
+      "android": { "title": "Android", "policies": [] },
+      "ios": { "title": "iOS", "policies": [] }
+    }
+  },
+  "tou-me": {
+    "name": "Tou.me (coming soon)",
+    "tagline": "For you, for me, for them.",
+    "icon": "/assets/toume-icon.png",
+    "platforms": {}
   }
 }
