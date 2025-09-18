@@ -27,3 +27,22 @@
 }
 .btn-primary { @apply bg-brand text-white hover:bg-brand-600; }
 .btn-secondary { @apply bg-white border border-black/10 text-ink hover:bg-white/80; }
+
+/* subtle card shadow */
+.shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+
+/* pill badges used under hero */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .35rem .7rem;
+  font-size: .8rem;
+  border-radius: 9999px;
+  background: white;
+  border: 1px solid rgba(0,0,0,.08);
+  color: #1C1C1C;
+}
+
+/* optional: smooth transitions on layout shifts */
+* { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
