@@ -9,9 +9,7 @@ export default function HeroWithCapabilities() {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current;
-    const bg = bgRef.current;
-    const card = cardRef.current;
+    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -25,7 +23,7 @@ export default function HeroWithCapabilities() {
       if (!mqSmall.matches) { root.style.height = ""; return; }
       const vh = getVH();
       const cardH = card.offsetHeight || 0;
-      const needed = Math.max(vh * 0.9, cardH + 96);
+      const needed = Math.max(vh * 0.9, cardH + 96); // breathing room
       root.style.height = `${Math.ceil(needed)}px`;
     };
 
@@ -33,11 +31,14 @@ export default function HeroWithCapabilities() {
       if (reduce) {
         bg.style.opacity = "1"; bg.style.transform = "none";
         card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)";
-      } else { bg.style.opacity = "0"; card.style.opacity = "0"; }
+      } else {
+        bg.style.opacity = "0"; card.style.opacity = "0";
+      }
     };
 
     const tick = () => {
       raf = 0;
+
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = mqSmall.matches;
@@ -49,7 +50,9 @@ export default function HeroWithCapabilities() {
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
-      } else { bg.style.opacity = "1"; bg.style.transform = "none"; }
+      } else {
+        bg.style.opacity = "1"; bg.style.transform = "none";
+      }
 
       if (reduce) { card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)"; return; }
 
@@ -74,6 +77,7 @@ export default function HeroWithCapabilities() {
     const ro = new ResizeObserver(() => { ensureMobileHeight(); if (!raf) raf = requestAnimationFrame(tick); });
 
     setInitial(); ensureMobileHeight(); tick();
+
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
     window.visualViewport?.addEventListener("resize", onResize, { passive: true });
@@ -100,6 +104,7 @@ export default function HeroWithCapabilities() {
         "sm:h-[82vh]",
       ].join(" ")}
     >
+      {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-hero-2560.png"
@@ -112,6 +117,7 @@ export default function HeroWithCapabilities() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
+      {/* Card */}
       <div
         ref={cardRef}
         className={[
@@ -139,10 +145,11 @@ export default function HeroWithCapabilities() {
             <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
               Learn more
             </a>
-            {/* Inline, non-interactive meta */}
-            <p className="mt-4 text-xs text-neutral-500">
-              Discovery <span aria-hidden>•</span> Compliance support <span aria-hidden>•</span> Delivery ops
-            </p>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs sm:text-sm">
+              <span className="badge">Discovery</span>
+              <span className="badge">Compliance support</span>
+              <span className="badge">Delivery ops</span>
+            </div>
           </div>
 
           <div>
@@ -157,4 +164,15 @@ export default function HeroWithCapabilities() {
 
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
-            <h4 className="font-semibold text-neutral-900 text
+            <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
+            <p className="text-sm text-neutral-600">
+              From setup to insight, data is handled with clarity and purpose. No spin,
+              no vanity metrics — just reliable instrumentation and reporting that support
+              decision-making and improvement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
