@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { label: "Home", href: "/" },
   { label: "Apps", href: "/apps" },
-  { label: "Capabilities", href: "/capabilities" }, // 👈 added here
+  { label: "Capabilities", href: "/capabilities" }, // 👈 included
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ];
@@ -31,7 +31,13 @@ export default function Header() {
   }, [open]);
 
   return (
-    <div className="sticky top-3 z-50 mx-auto max-w-7xl px-3 sm:px-4">
+    <div
+      className={[
+        "sticky top-3 z-50 mx-auto transition-all duration-500 group",
+        scrolled ? "max-w-3xl hover:max-w-7xl" : "max-w-7xl",
+        "px-3 sm:px-4",
+      ].join(" ")}
+    >
       <nav
         aria-label="Primary"
         className={[
@@ -39,11 +45,13 @@ export default function Header() {
           "rounded-full border border-white/10",
           "px-4 sm:px-6 lg:px-8",
           "bg-neutral-900/70 backdrop-blur-md",
-          scrolled ? "shadow-[0_6px_24px_-8px_rgba(0,0,0,0.35)]" : "shadow-none",
+          scrolled
+            ? "shadow-[0_6px_24px_-8px_rgba(0,0,0,0.35)]"
+            : "shadow-none",
           "transition-shadow",
         ].join(" ")}
       >
-        {/* Brand (logo + full name) */}
+        {/* Brand (logo + animated full name) */}
         <Link
           href="/"
           className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -56,15 +64,29 @@ export default function Header() {
             className="rounded-full"
             priority
           />
-          <span className="text-white text-base sm:text-lg font-semibold tracking-tight">
-            Arcturus Digital Consultancy
+          <span className="text-white text-base sm:text-lg font-semibold tracking-tight flex gap-0.5 overflow-hidden">
+            {"Arcturus Digital Consultancy".split("").map((char, i) => (
+              <span
+                key={i}
+                className={[
+                  "inline-block transform transition-all duration-500 ease-out",
+                  scrolled
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-full opacity-0",
+                ].join(" ")}
+                style={{ transitionDelay: `${i * 30}ms` }}
+              >
+                {char === " " ? "\u00A0" : char}
+              </span>
+            ))}
           </span>
         </Link>
 
         {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-1">
           {LINKS.map(({ label, href }) => {
-            const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
+            const active =
+              href === "/" ? pathname === "/" : pathname?.startsWith(href);
             return (
               <li key={href}>
                 <NavLink href={href} active={active}>
@@ -129,7 +151,12 @@ export default function Header() {
                 className="rounded-full p-2 -mr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                 aria-label="Close menu"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     d="M6 6l12 12M18 6l-12 12"
                     stroke="currentColor"
@@ -143,7 +170,8 @@ export default function Header() {
 
             <ul className="mt-8 space-y-1">
               {LINKS.map(({ label, href }) => {
-                const active = href === "/" ? pathname === "/" : pathname?.startsWith(href);
+                const active =
+                  href === "/" ? pathname === "/" : pathname?.startsWith(href);
                 return (
                   <li key={href}>
                     <Link
