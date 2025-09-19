@@ -1,30 +1,126 @@
-{/* Product strategy */}
-<div>
-  <h3 className="text-lg font-semibold text-neutral-900">Product strategy</h3>
-  <p className="text-neutral-600">
-    Helping organisations cut through noise to find and deliver the next most
-    valuable outcome. The emphasis is on solving genuine problems in the
-    simplest, most effective way.
-  </p>
-</div>
+"use client";
 
-{/* App development */}
-<div>
-  <h3 className="text-lg font-semibold text-neutral-900">App development</h3>
-  <p className="text-neutral-600">
-    Design and build of Android and iOS apps with privacy-first principles.
-    Each app is focused on a niche where existing tools are either too generic
-    or too complex, ensuring usability and compliance without unnecessary
-    features.
-  </p>
-</div>
+import Image from "next/image";
+import { useEffect, useRef } from "react";
 
-{/* Data & analytics */}
-<div>
-  <h3 className="text-lg font-semibold text-neutral-900">Data & analytics</h3>
-  <p className="text-neutral-600">
-    From setup to insight, data is handled with clarity and purpose. No spin,
-    no vanity metrics — just reliable instrumentation and reporting that
-    support decision-making and improvement.
-  </p>
-</div>
+export default function HeroWithApps() {
+  const rootRef = useRef(null);
+  const bgRef   = useRef(null);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
+    if (!root || !bg || !card) return;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bg.style.opacity = reduce ? "1" : "0";
+    card.style.opacity = reduce ? "1" : "0";
+
+    let raf = 0;
+    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    const getVH = () => (window.visualViewport?.height ?? window.innerHeight ?? 1);
+
+    const tick = () => {
+      raf = 0;
+
+      const rect = root.getBoundingClientRect();
+      const vh = getVH();
+      const isSmall = matchMedia("(max-width: 640px)").matches;
+
+      // Fade/animate from near bottom to around the middle.
+      const startY = vh * (isSmall ? 1.02 : 0.95);
+      const endY   = vh * (isSmall ? 0.52 : 0.40);
+      const p = clamp01((startY - rect.top) / (startY - endY || 1));
+
+      if (!reduce) {
+        // Parallax background
+        bg.style.opacity = String(p);
+        bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
+
+        // Card vertical path: start low, finish slightly above centre
+        const startTopPct = isSmall ? 84 : 70;
+        const endTopPct   = isSmall ? 47 : 42; // ⬅ sits a wee bit higher
+        const topPct = startTopPct - (startTopPct - endTopPct) * p;
+
+        card.style.top = `${topPct}%`;
+        card.style.opacity = String(p);
+        card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
+      } else {
+        bg.style.opacity = "1";
+        card.style.top = "50%";
+        card.style.opacity = "1";
+        card.style.transform = "translate(-50%, -50%)";
+      }
+    };
+
+    const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
+    tick();
+    window.addEventListener("scroll", onScrollResize, { passive: true });
+    window.addEventListener("resize", onScrollResize, { passive: true });
+    window.visualViewport?.addEventListener("resize", onScrollResize, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScrollResize);
+      window.removeEventListener("resize", onScrollResize);
+      window.visualViewport?.removeEventListener("resize", onScrollResize);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  // Slightly taller on mobile so the card has space to land higher
+  const heroH = "h-[88vh] md:h-[82vh]";
+  const topMargin = "mt-12 sm:mt-16";
+
+  return (
+    <section
+      ref={rootRef}
+      aria-label="Apps hero"
+      className={`relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] ${heroH} ${topMargin} mb-20`}
+    >
+      {/* Background */}
+      <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
+        <Image
+          src="/img/network-orange-hero-2560.png"
+          alt="Abstract network (orange)"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
+      </div>
+
+      {/* Floating card */}
+      <div
+        ref={cardRef}
+        className={[
+          "absolute left-1/2",
+          "w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px]",
+          "rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl",
+          "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
+          "will-change-transform will-change-opacity",
+        ].join(" ")}
+        style={{ top: "84%", transform: "translate(-50%, -50%)" }}
+      >
+        <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
+          Apps
+        </h2>
+        <p className="text-neutral-700 max-w-prose">
+          Policies, platforms, and specifics for each app — kept compliant and privacy-first.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
+          <span className="badge">App Store & Google Play</span>
+          <span className="badge">UK based</span>
+          <span className="badge">Privacy-first</span>
+        </div>
+        <a
+          href="/apps"
+          className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+        >
+          Browse apps →
+        </a>
+      </div>
+    </section>
+  );
+}
+v
