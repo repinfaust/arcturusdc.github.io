@@ -2,9 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 import HeroWithCapabilities from "@/components/HeroWithCapabilities";
 import HeroWithApps from "@/components/HeroWithApps";
+import MetaChips from "@/components/MetaChips";
 
 export const metadata = {
-  title: "Arcturus Digital Consultancy",
+  title: "Arcturus Digital Consulting",
   description:
     "Apps and digital products that solve real problems — privacy-first and compliant from day one.",
 };
@@ -13,22 +14,22 @@ export default function Home() {
   const HEADLINE = "Practical software for real needs.";
 
   const BLURB =
-    "Arcturus Digital Consultancy builds apps and digital products that focus on real-world problems — not technology for its own sake. From ADHD support to family organisation and fitness planning, every product is designed around a clear need, with privacy and compliance built in from the start.";
+    "Arcturus Digital Consulting builds apps and digital products that focus on real-world problems — not technology for its own sake. From ADHD support to family organisation and fitness planning, every product is designed around a clear need, with privacy and compliance built in from the start.";
 
   return (
     <main className="relative">
       {/* Brand strip (show on all breakpoints) */}
       <div className="mx-auto max-w-6xl px-4 mt-2 mb-1 flex items-center gap-2">
         <Image
-          src="/img/logo-mark.png"       // 👈 fixed path
-          alt="Arcturus Digital Consultancy"
+          src="/img/logo-mark.png"
+          alt="Arcturus Digital Consulting"
           width={36}
           height={36}
           className="rounded-full"
           priority
         />
         <span className="text-neutral-900 text-base font-semibold">
-          Arcturus Digital Consultancy
+          Arcturus Digital Consulting
         </span>
       </div>
 
@@ -61,16 +62,15 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2 text-sm">
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
-                UK Ltd
-              </span>
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
-                App Store &amp; Google Play compliant
-              </span>
-              <span className="inline-flex items-center rounded-full border px-3 py-1 text-neutral-700">
-                UK based
-              </span>
+            {/* Non-interactive meta chips */}
+            <div className="mt-6">
+              <MetaChips
+                items={[
+                  "UK Ltd",
+                  "App Store & Google Play compliant",
+                  "UK based",
+                ]}
+              />
             </div>
           </div>
         </div>
