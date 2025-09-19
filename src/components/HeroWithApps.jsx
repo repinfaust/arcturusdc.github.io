@@ -10,9 +10,7 @@ export default function HeroWithApps() {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current;
-    const bg = bgRef.current;
-    const card = cardRef.current;
+    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -20,13 +18,10 @@ export default function HeroWithApps() {
 
     let raf = 0;
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-    const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
+    const getVH = () => (window.visualViewport?.height ?? window.innerHeight ?? 1);
 
     const ensureMobileHeight = () => {
-      if (!mqSmall.matches) {
-        root.style.height = ""; // desktop height driven by CSS
-        return;
-      }
+      if (!mqSmall.matches) { root.style.height = ""; return; }
       const vh = getVH();
       const cardH = card.offsetHeight || 0;
       const needed = Math.max(vh * 0.9, cardH + 96);
@@ -35,13 +30,10 @@ export default function HeroWithApps() {
 
     const setInitial = () => {
       if (reduce) {
-        bg.style.opacity = "1";
-        bg.style.transform = "none";
-        card.style.opacity = "1";
-        card.style.transform = "translate(-50%, -50%)";
+        bg.style.opacity = "1"; bg.style.transform = "none";
+        card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)";
       } else {
-        bg.style.opacity = "0";
-        card.style.opacity = "0";
+        bg.style.opacity = "0"; card.style.opacity = "0";
       }
     };
 
@@ -53,15 +45,14 @@ export default function HeroWithApps() {
       const isSmall = mqSmall.matches;
 
       const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY = vh * (isSmall ? 0.55 : 0.40);
+      const endY   = vh * (isSmall ? 0.55 : 0.40);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
       } else {
-        bg.style.opacity = "1";
-        bg.style.transform = "none";
+        bg.style.opacity = "1"; bg.style.transform = "none";
       }
 
       if (reduce) {
@@ -71,18 +62,14 @@ export default function HeroWithApps() {
       }
 
       if (isSmall) {
-        const startTopPct = 80;
-        const endTopPct = 54;
+        const startTopPct = 80, endTopPct = 54;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
-
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
       } else {
-        const startTopPct = 70;
-        const endTopPct = 42;
+        const startTopPct = 70, endTopPct = 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
-
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
@@ -91,14 +78,9 @@ export default function HeroWithApps() {
 
     const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
 
-    const ro = new ResizeObserver(() => {
-      ensureMobileHeight();
-      if (!raf) raf = requestAnimationFrame(tick);
-    });
+    const ro = new ResizeObserver(() => { ensureMobileHeight(); if (!raf) raf = requestAnimationFrame(tick); });
 
-    setInitial();
-    ensureMobileHeight();
-    tick();
+    setInitial(); ensureMobileHeight(); tick();
 
     window.addEventListener("scroll", onScrollResize, { passive: true });
     window.addEventListener("resize", onScrollResize, { passive: true });
@@ -123,10 +105,9 @@ export default function HeroWithApps() {
       className={[
         "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
         "mt-12 sm:mt-16 mb-20",
-        "sm:h-[82vh]", // desktop fixed height, mobile set via JS
+        "sm:h-[82vh]",
       ].join(" ")}
     >
-      {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-orange-hero-2560.png"
@@ -139,7 +120,6 @@ export default function HeroWithApps() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Floating card */}
       <div
         ref={cardRef}
         className={[
@@ -154,6 +134,7 @@ export default function HeroWithApps() {
         <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
           Apps
         </h2>
+
         <p className="text-neutral-700 max-w-prose">
           Every app is built with a clear purpose: to solve one problem well. The
           portfolio includes ADHD motivation, shared-care family organisation,
