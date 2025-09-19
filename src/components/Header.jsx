@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { label: "Home", href: "/" },
   { label: "Apps", href: "/apps" },
+  { label: "Capabilities", href: "/capabilities" }, // 👈 added here
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ];
@@ -82,7 +83,13 @@ export default function Header() {
           aria-label="Open menu"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" className="text-white/90" strokeWidth="2" strokeLinecap="round" />
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+              stroke="currentColor"
+              className="text-white/90"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       </nav>
@@ -101,9 +108,21 @@ export default function Header() {
             className="absolute right-0 top-0 h-full w-[88%] max-w-sm bg-neutral-950 border-l border-white/10 p-6 flex flex-col"
           >
             <div className="flex items-center justify-between">
-              <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                <Image src="/img/logo-mark.png" alt="Arcturus Digital Consultancy" width={32} height={32} className="rounded-full" />
-                <span className="text-white text-lg font-semibold tracking-tight">Arcturus Digital Consultancy</span>
+              <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2"
+              >
+                <Image
+                  src="/img/logo-mark.png"
+                  alt="Arcturus Digital Consultancy"
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+                <span className="text-white text-lg font-semibold tracking-tight">
+                  Arcturus Digital Consultancy
+                </span>
               </Link>
               <button
                 onClick={() => setOpen(false)}
@@ -111,7 +130,13 @@ export default function Header() {
                 aria-label="Close menu"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" className="text-white/90" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M6 6l12 12M18 6l-12 12"
+                    stroke="currentColor"
+                    className="text-white/90"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
             </div>
@@ -127,7 +152,9 @@ export default function Header() {
                       aria-current={active ? "page" : undefined}
                       className={[
                         "block rounded-xl px-3 py-3 text-base",
-                        active ? "text-white bg-white/5" : "text-white/85 hover:text-white hover:bg-white/5",
+                        active
+                          ? "text-white bg-white/5"
+                          : "text-white/85 hover:text-white hover:bg-white/5",
                         "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
                         "transition",
                       ].join(" ")}
