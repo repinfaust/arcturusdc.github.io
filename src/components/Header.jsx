@@ -16,6 +16,7 @@ const LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -30,23 +31,32 @@ export default function Header() {
     document.documentElement.classList.toggle("overflow-hidden", open);
   }, [open]);
 
+  const contracted = scrolled && !hovered; // shrink when scrolled, expand on hover
+
   return (
-    <div className="sticky top-3 z-50 mx-auto max-w-7xl px-3 sm:px-4">
+    <div
+      className={[
+        "sticky top-3 z-50 mx-auto transition-all duration-500",
+        contracted ? "max-w-3xl hover:max-w-7xl" : "max-w-7xl",
+        "px-3 sm:px-4",
+      ].join(" ")}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <nav
         aria-label="Primary"
         className={[
-          "flex items-center justify-between transition-all duration-500",
+          "flex h-16 sm:h-18 items-center",
           "rounded-full border border-white/10",
           "px-4 sm:px-6 lg:px-8",
           "bg-neutral-900/70 backdrop-blur-md",
           scrolled
-            ? "w-1/3 mx-auto shadow-[0_6px_24px_-8px_rgba(0,0,0,0.35)]"
-            : "w-full shadow-none",
+            ? "shadow-[0_6px_24px_-8px_rgba(0,0,0,0.35)]"
+            : "shadow-none",
+          "transition-shadow",
         ].join(" ")}
-        onMouseEnter={() => setScrolled(false)}
-        onMouseLeave={() => setScrolled(window.scrollY > 8)}
       >
-        {/* Brand (logo + full/short name) */}
+        {/* LEFT: Brand */}
         <Link
           href="/"
           className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -59,17 +69,34 @@ export default function Header() {
             className="rounded-full"
             priority
           />
+
+          {/* Full brand (visible when not contracted) */}
           <span
             className={[
-              "text-white font-semibold tracking-tight transition-all duration-500",
-              scrolled ? "text-base sm:text-lg" : "text-base sm:text-lg",
+              "hidden sm:block text-white text-base sm:text-lg font-semibold tracking-tight whitespace-nowrap",
+              contracted ? "opacity-0 pointer-events-none" : "opacity-100",
+              "transition-opacity duration-150",
             ].join(" ")}
           >
-            {scrolled ? "ArcturusDC" : "Arcturus Digital Consultancy"}
+            Arcturus Digital Consultancy
+          </span>
+
+          {/* Short brand (visible when contracted) */}
+          <span
+            className={[
+              "text-white text-base sm:text-lg font-semibold tracking-tight whitespace-nowrap",
+              contracted ? "opacity-100" : "opacity-0 pointer-events-none",
+              "transition-opacity duration-150",
+            ].join(" ")}
+          >
+            ArcturusDC
           </span>
         </Link>
 
-        {/* Desktop nav */}
+        {/* MIDDLE: flexible spacer prevents overlap */}
+        <div className="flex-1" />
+
+        {/* RIGHT: Desktop nav */}
         <ul className="hidden md:flex items-center gap-1">
           {LINKS.map(({ label, href }) => {
             const active =
@@ -84,11 +111,11 @@ export default function Header() {
           })}
         </ul>
 
-        {/* Mobile button */}
+        {/* RIGHT: Mobile menu button */}
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="md:hidden inline-flex items-center justify-center rounded-full p-2 -mr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          className="md:hidden inline-flex items-center justify-center rounded-full p-2 -ml-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           aria-label="Open menu"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
