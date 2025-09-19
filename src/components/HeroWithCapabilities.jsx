@@ -28,28 +28,22 @@ export default function HeroWithCapabilities() {
       const vh = getVH();
       const isSmall = matchMedia("(max-width: 640px)").matches;
 
-      // We map progress by when the hero's TOP passes a point near the bottom,
-      // until the hero TOP reaches roughly the centre of the viewport.
-      // This ensures the CARD ends at 50% on mobile.
-      const startY = vh * (isSmall ? 1.02 : 0.95); // start a bit later on mobile to counter the URL bar jumps
-      const endY   = vh * (isSmall ? 0.52 : 0.40); // hit centre on mobile, slightly above on desktop
+      const startY = vh * (isSmall ? 1.02 : 0.95);
+      const endY   = vh * (isSmall ? 0.52 : 0.40);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
-        // Parallax + fade
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
 
-        // Vertical path of the card
-        const startTopPct = isSmall ? 84 : 70; // start noticeably lower on small screens
-        const endTopPct   = isSmall ? 47 : 42; // finish dead centre on mobile
+        const startTopPct = isSmall ? 84 : 70;
+        const endTopPct   = isSmall ? 47 : 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
       } else {
-        // Reduced motion
         bg.style.opacity = "1";
         card.style.top = "50%";
         card.style.opacity = "1";
@@ -63,7 +57,6 @@ export default function HeroWithCapabilities() {
     tick();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
-    // visualViewport changes when the URL bar hides/shows on mobile
     window.visualViewport?.addEventListener("resize", onResize, { passive: true });
 
     return () => {
@@ -74,7 +67,6 @@ export default function HeroWithCapabilities() {
     };
   }, []);
 
-  // Slightly taller on mobile to give the card room to settle at centre
   const heroH = "h-[88vh] md:h-[82vh]";
   const topMargin = "mt-12 sm:mt-16";
 
@@ -117,7 +109,11 @@ export default function HeroWithCapabilities() {
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
-            <p className="text-sm text-neutral-600">Find and ship the next most valuable thing.</p>
+            <p className="text-sm text-neutral-600">
+              Helping organisations cut through noise to find and deliver the next most
+              valuable outcome. The emphasis is on solving genuine problems in the simplest,
+              most effective way.
+            </p>
             <a href="/product-strategy" className="mt-3 inline-block text-sm text-red-700 hover:underline">
               Learn more
             </a>
@@ -131,13 +127,21 @@ export default function HeroWithCapabilities() {
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
             <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
-            <p className="text-sm text-neutral-600">Android & iOS with privacy-first design.</p>
+            <p className="text-sm text-neutral-600">
+              Design and build of Android and iOS apps with privacy-first principles.
+              Each app is focused on a niche where existing tools are either too generic or
+              too complex, ensuring usability and compliance without unnecessary features.
+            </p>
           </div>
 
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Data & analytics</h4>
-            <p className="text-sm text-neutral-600">From instrumentation to insight, minus the spin.</p>
+            <p className="text-sm text-neutral-600">
+              From setup to insight, data is handled with clarity and purpose. No spin, no
+              vanity metrics — just reliable instrumentation and reporting that support
+              decision-making and improvement.
+            </p>
           </div>
         </div>
       </div>
