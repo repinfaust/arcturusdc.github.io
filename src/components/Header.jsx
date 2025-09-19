@@ -16,69 +16,37 @@ const LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // controls the one-time letter drop after you first scroll, when you next hover to expand
-  const [shouldDrop, setShouldDrop] = useState(false);
-  const [playDropNow, setPlayDropNow] = useState(false);
-
   useEffect(() => {
-    const onScroll = () => {
-      const s = window.scrollY > 8;
-      // when you enter "scrolled" mode for the first time, queue the drop for the next hover
-      if (s && !scrolled) setShouldDrop(true);
-      setScrolled(s);
-    };
+    const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [scrolled]);
+  }, []);
 
   // lock scroll when mobile menu open
   useEffect(() => {
     document.documentElement.classList.toggle("overflow-hidden", open);
   }, [open]);
 
-  // contract when scrolled and NOT hovered
-  const contracted = scrolled && !hovered;
-
-  // when you hover in the scrolled state, play the drop once
-  const onMouseEnter = () => {
-    setHovered(true);
-    if (scrolled && shouldDrop) {
-      // trigger stagger animation once
-      setPlayDropNow(true);
-      setShouldDrop(false);
-      // clear the flag after the animation window
-      setTimeout(() => setPlayDropNow(false), 900);
-    }
-  };
-
   return (
-    <div
-      className={[
-        "sticky top-3 z-50 mx-auto transition-all duration-500",
-        contracted ? "max-w-3xl" : "max-w-7xl",
-        "px-3 sm:px-4",
-      ].join(" ")}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className="sticky top-3 z-50 mx-auto max-w-7xl px-3 sm:px-4">
       <nav
         aria-label="Primary"
         className={[
-          "flex h-16 sm:h-18 items-center justify-between",
+          "flex items-center justify-between transition-all duration-500",
           "rounded-full border border-white/10",
           "px-4 sm:px-6 lg:px-8",
           "bg-neutral-900/70 backdrop-blur-md",
           scrolled
-            ? "shadow-[0_6px_24px_-8px_rgba(0,0,0,0.35)]"
-            : "shadow-none",
-          "transition-shadow",
+            ? "w-1/3 mx-auto shadow-[0_6px_24px_-8px_rgba(0,0,0,0.35)]"
+            : "w-full shadow-none",
         ].join(" ")}
+        onMouseEnter={() => setScrolled(false)}
+        onMouseLeave={() => setScrolled(window.scrollY > 8)}
       >
-        {/* Brand (logo + name) */}
+        {/* Brand (logo + full/short name) */}
         <Link
           href="/"
           className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -91,36 +59,13 @@ export default function Header() {
             className="rounded-full"
             priority
           />
-
-          {/* Full brand (shows at top, and when expanded on hover) */}
           <span
             className={[
-              "hidden sm:block text-white text-base sm:text-lg font-semibold tracking-tight whitespace-nowrap overflow-hidden",
-              contracted ? "opacity-0 pointer-events-none" : "opacity-100",
-              "transition-opacity duration-200",
+              "text-white font-semibold tracking-tight transition-all duration-500",
+              scrolled ? "text-base sm:text-lg" : "text-base sm:text-lg",
             ].join(" ")}
           >
-            <BrandLetters play={playDropNow} />
-          </span>
-
-          {/* Short brand for contracted state so it fits */}
-          <span
-            className={[
-              "sm:hidden text-white text-base font-semibold tracking-tight",
-              contracted ? "opacity-100" : "opacity-0 pointer-events-none",
-              "transition-opacity duration-200",
-            ].join(" ")}
-          >
-            ArcturusDC
-          </span>
-          <span
-            className={[
-              "hidden sm:block text-white text-base font-semibold tracking-tight",
-              contracted ? "opacity-100" : "opacity-0 pointer-events-none",
-              "transition-opacity duration-200",
-            ].join(" ")}
-          >
-            ArcturusDC
+            {scrolled ? "ArcturusDC" : "Arcturus Digital Consultancy"}
           </span>
         </Link>
 
@@ -264,36 +209,5 @@ function NavLink({ href, active, children }) {
         />
       </span>
     </Link>
-  );
-}
-
-/**
- * Full brand with staggered "fall in" when play=true.
- * At rest (top of page), it renders static (no animation).
- */
-function BrandLetters({ play }) {
-  const text = "Arcturus Digital Consultancy";
-  const chars = text.split("");
-
-  return (
-    <span className="inline-flex gap-0.5">
-      {chars.map((char, i) => (
-        <span
-          key={`${char}-${i}`}
-          className={[
-            "inline-block will-change-transform will-change-opacity",
-            play ? "translate-y-full opacity-0 animate-none" : "translate-y-0 opacity-100",
-            // when play toggles from true -> false, we transition into place
-            play ? "" : "transition-all duration-500 ease-out",
-          ].join(" ")}
-          style={play ? { transitionDelay: `${i * 30}ms` } : { transitionDelay: "0ms" }}
-          // when play was true, we immediately force a reflow via CSS transition:
-          // The parent toggles play to true then back to false after ~900ms,
-          // causing these to transition from translate-y-full to 0 with a stagger.
-        >
-          {char === " " ? "\u00A0" : char}
-        </span>
-      ))}
-    </span>
   );
 }
