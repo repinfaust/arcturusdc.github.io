@@ -10,9 +10,6 @@ export const metadata = {
 };
 
 export default function Home() {
-  // Pick one if you want to swap later:
-  // const HEADLINE = "Apps that solve real problems.";
-  // const HEADLINE = "Focused apps, built for people.";
   const HEADLINE = "Practical software for real needs.";
 
   const BLURB =
@@ -20,10 +17,10 @@ export default function Home() {
 
   return (
     <main className="relative">
-      {/* Mobile brand strip (between pill and hero) */}
-      <div className="sm:hidden mx-auto max-w-6xl px-4 mt-2 mb-1 flex items-center gap-2">
+      {/* Brand strip (show on all breakpoints) */}
+      <div className="mx-auto max-w-6xl px-4 mt-2 mb-1 flex items-center gap-2">
         <Image
-          src="/img/logo-mark.svg"
+          src="/img/logo-mark.png"       // 👈 fixed path
           alt="Arcturus Digital Consultancy"
           width={36}
           height={36}
@@ -40,7 +37,7 @@ export default function Home() {
         <div className="grid lg:grid-cols-1 gap-6">
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm">
             <p className="text-xs font-semibold text-red-600 mb-3">
-              Product & Apps
+              Product &amp; Apps
             </p>
 
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
@@ -57,7 +54,7 @@ export default function Home() {
                 Explore apps
               </Link>
               <Link
-                href="/capabilities" // 👈 updated link
+                href="/capabilities"
                 className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50"
               >
                 Capabilities
