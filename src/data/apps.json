@@ -25,13 +25,18 @@
     "strap": "Small wins, real rewards.",
     "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",
     "desc": "Gamified rewards to celebrate wins and encourage progress.",
-    "link": "/apps/adhd-acclaim"
+    "link": "/apps/adhd-acclaim",
+    "icon": "/img/adhdacclaim_logo_1024x1024.png",
+    "bg": "/img/adhdacclaim-card-background.png"
   },
   {
     "id": "toume",
     "name": "Tou.me (coming soon)",
     "strap": "For you, for me, for them.",
     "summary": "Tou.me is a shared-care organiser for families and support circles. It simplifies coordination between parents, relatives, and carers with lightweight scheduling and clear roles. Built to reduce friction and keep everyone on the same page, Tou.me helps households focus more on connection, less on admin.",
-    "desc": "For you, for me, for them."
+    "desc": "For you, for me, for them.",
+    "link": "/apps/toume",
+    "icon": "/img/tou.me_logo.jpeg",
+    "bg": "/img/toume-card-background.png"
   }
 ]
