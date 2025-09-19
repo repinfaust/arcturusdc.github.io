@@ -2,80 +2,129 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
+import MetaChips from "@/components/MetaChips";
 
 export default function HeroWithApps() {
   const rootRef = useRef(null);
-  const bgRef   = useRef(null);
+  const bgRef = useRef(null);
   const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
+    const root = rootRef.current;
+    const bg = bgRef.current;
+    const card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    bg.style.opacity = reduce ? "1" : "0";
-    card.style.opacity = reduce ? "1" : "0";
+    const mqSmall = window.matchMedia("(max-width: 640px)");
 
     let raf = 0;
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-    const getVH = () => (window.visualViewport?.height ?? window.innerHeight ?? 1);
+    const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
+
+    const ensureMobileHeight = () => {
+      if (!mqSmall.matches) {
+        root.style.height = ""; // desktop height driven by CSS
+        return;
+      }
+      const vh = getVH();
+      const cardH = card.offsetHeight || 0;
+      const needed = Math.max(vh * 0.9, cardH + 96);
+      root.style.height = `${Math.ceil(needed)}px`;
+    };
+
+    const setInitial = () => {
+      if (reduce) {
+        bg.style.opacity = "1";
+        bg.style.transform = "none";
+        card.style.opacity = "1";
+        card.style.transform = "translate(-50%, -50%)";
+      } else {
+        bg.style.opacity = "0";
+        card.style.opacity = "0";
+      }
+    };
 
     const tick = () => {
       raf = 0;
 
       const rect = root.getBoundingClientRect();
       const vh = getVH();
-      const isSmall = matchMedia("(max-width: 640px)").matches;
+      const isSmall = mqSmall.matches;
 
-      // Fade/animate from near bottom to around the middle.
       const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY   = vh * (isSmall ? 0.52 : 0.40);
+      const endY = vh * (isSmall ? 0.55 : 0.40);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
-        // Parallax background
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
+      } else {
+        bg.style.opacity = "1";
+        bg.style.transform = "none";
+      }
 
-        // Card vertical path: start low, finish slightly above centre
-        const startTopPct = isSmall ? 84 : 70;
-        const endTopPct   = isSmall ? 47 : 42; 
+      if (reduce) {
+        card.style.opacity = "1";
+        card.style.transform = "translate(-50%, -50%)";
+        return;
+      }
+
+      if (isSmall) {
+        const startTopPct = 80;
+        const endTopPct = 54;
+        const topPct = startTopPct - (startTopPct - endTopPct) * p;
+
+        card.style.top = `${topPct}%`;
+        card.style.opacity = String(p);
+        card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
+      } else {
+        const startTopPct = 70;
+        const endTopPct = 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
-      } else {
-        bg.style.opacity = "1";
-        card.style.top = "50%";
-        card.style.opacity = "1";
-        card.style.transform = "translate(-50%, -50%)";
       }
     };
 
     const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
 
+    const ro = new ResizeObserver(() => {
+      ensureMobileHeight();
+      if (!raf) raf = requestAnimationFrame(tick);
+    });
+
+    setInitial();
+    ensureMobileHeight();
     tick();
+
     window.addEventListener("scroll", onScrollResize, { passive: true });
     window.addEventListener("resize", onScrollResize, { passive: true });
     window.visualViewport?.addEventListener("resize", onScrollResize, { passive: true });
+    mqSmall.addEventListener?.("change", onScrollResize);
+    ro.observe(card);
+
     return () => {
       window.removeEventListener("scroll", onScrollResize);
       window.removeEventListener("resize", onScrollResize);
       window.visualViewport?.removeEventListener("resize", onScrollResize);
+      mqSmall.removeEventListener?.("change", onScrollResize);
+      ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
-
-  // Slightly taller on mobile so the card has space to land higher
-  const heroH = "h-[88vh] md:h-[82vh]";
-  const topMargin = "mt-12 sm:mt-16";
 
   return (
     <section
       ref={rootRef}
       aria-label="Apps hero"
-      className={`relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] ${heroH} ${topMargin} mb-20`}
+      className={[
+        "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
+        "mt-12 sm:mt-16 mb-20",
+        "sm:h-[82vh]", // desktop fixed height, mobile set via JS
+      ].join(" ")}
     >
       {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
@@ -111,11 +160,11 @@ export default function HeroWithApps() {
           and fitness planning — each designed to meet a need in a way that’s
           simple, compliant, and privacy-first.
         </p>
-        <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
-          <span className="badge">App Store & Google Play</span>
-          <span className="badge">UK based</span>
-          <span className="badge">Privacy-first</span>
+
+        <div className="mt-6">
+          <MetaChips items={["App Store & Google Play", "UK based", "Privacy-first"]} />
         </div>
+
         <a
           href="/apps"
           className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
