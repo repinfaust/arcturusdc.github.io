@@ -39,15 +39,15 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pt-4 sm:pt-14">
         <div className="grid lg:grid-cols-1 gap-6">
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm">
-            <p className="text-xs font-semibold text-red-600 mb-3">Product & Apps</p>
+            <p className="text-xs font-semibold text-red-600 mb-3">
+              Product & Apps
+            </p>
 
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
               {HEADLINE}
             </h1>
 
-            <p className="mt-3 text-neutral-700 max-w-prose">
-              {BLURB}
-            </p>
+            <p className="mt-3 text-neutral-700 max-w-prose">{BLURB}</p>
 
             <div className="mt-5 flex gap-3">
               <Link
@@ -57,7 +57,7 @@ export default function Home() {
                 Explore apps
               </Link>
               <Link
-                href="/product-strategy"
+                href="/capabilities" // 👈 updated link
                 className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50"
               >
                 Capabilities
