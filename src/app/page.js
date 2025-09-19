@@ -17,7 +17,7 @@ export default function Home() {
 
   return (
     <main className="relative">
-      {/* Brand strip */}
+      {/* Brand strip (always visible) */}
       <div className="mx-auto max-w-6xl px-4 mt-2 mb-1 flex items-center gap-2">
         <Image
           src="/img/logo-mark.png"
@@ -61,8 +61,8 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Consistent non-interactive badges */}
-            <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
+            {/* Consistent non-interactive badges, centred on smaller screens */}
+            <div className="mt-6 flex flex-wrap justify-start sm:justify-start gap-2 text-xs sm:text-sm">
               <span className="badge">UK Ltd</span>
               <span className="badge">App Store &amp; Google Play compliant</span>
               <span className="badge">UK based</span>
