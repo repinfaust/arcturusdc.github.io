@@ -22,72 +22,52 @@ export default function HeroWithCapabilities() {
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
-    // Ensure the hero is tall enough on mobile so the card never spills outside the bg.
     const ensureMobileHeight = () => {
       const isSmall = mqSmall.matches;
-      if (!isSmall) {
-        root.style.height = ""; // desktop/tablet via CSS (sm:h-[82vh])
-        return;
-      }
+      if (!isSmall) { root.style.height = ""; return; }
       const vh = getVH();
       const cardH = card.offsetHeight || 0;
-      const needed = Math.max(vh * 0.9, cardH + 96); // breathing room for rounded card/shadow
+      const needed = Math.max(vh * 0.9, cardH + 96);
       root.style.height = `${Math.ceil(needed)}px`;
     };
 
     const setInitial = () => {
       if (reduce) {
-        bg.style.opacity = "1";
-        bg.style.transform = "none";
-        card.style.opacity = "1";
-        card.style.transform = "translate(-50%, -50%)";
+        bg.style.opacity = "1"; bg.style.transform = "none";
+        card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)";
         return;
       }
-      bg.style.opacity = "0";
-      card.style.opacity = "0";
+      bg.style.opacity = "0"; card.style.opacity = "0";
     };
 
     const tick = () => {
       raf = 0;
-
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = mqSmall.matches;
 
-      // Scroll progress from just below the fold to mid-hero
       const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY = vh * (isSmall ? 0.55 : 0.40);
+      const endY   = vh * (isSmall ? 0.55 : 0.40);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
-      // Background parallax
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
       } else {
-        bg.style.opacity = "1";
-        bg.style.transform = "none";
+        bg.style.opacity = "1"; bg.style.transform = "none";
       }
 
-      if (reduce) {
-        card.style.opacity = "1";
-        card.style.transform = "translate(-50%, -50%)";
-        return;
-      }
+      if (reduce) { card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)"; return; }
 
-      // Card motion
       if (isSmall) {
-        const startTopPct = 80;
-        const endTopPct = 54;
+        const startTopPct = 80, endTopPct = 54;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
-
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
       } else {
-        const startTopPct = 70;
-        const endTopPct = 42;
+        const startTopPct = 70, endTopPct = 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
-
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
@@ -95,21 +75,11 @@ export default function HeroWithCapabilities() {
     };
 
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
-    const onResize = () => {
-      ensureMobileHeight();
-      if (!raf) raf = requestAnimationFrame(tick);
-    };
+    const onResize = () => { ensureMobileHeight(); if (!raf) raf = requestAnimationFrame(tick); };
 
-    // Recompute when content height changes (mobile safety)
-    const ro = new ResizeObserver(() => {
-      ensureMobileHeight();
-      if (!raf) raf = requestAnimationFrame(tick);
-    });
+    const ro = new ResizeObserver(() => { ensureMobileHeight(); if (!raf) raf = requestAnimationFrame(tick); });
 
-    setInitial();
-    ensureMobileHeight();
-    tick();
-
+    setInitial(); ensureMobileHeight(); tick();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
     window.visualViewport?.addEventListener("resize", onResize, { passive: true });
@@ -133,10 +103,9 @@ export default function HeroWithCapabilities() {
       className={[
         "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
         "mt-12 sm:mt-16 mb-20",
-        "sm:h-[82vh]", // mobile height is set dynamically in JS
+        "sm:h-[82vh]",
       ].join(" ")}
     >
-      {/* Background fills the section */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-hero-2560.png"
@@ -149,7 +118,6 @@ export default function HeroWithCapabilities() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Floating card (absolute centre anchor) */}
       <div
         ref={cardRef}
         className={[
