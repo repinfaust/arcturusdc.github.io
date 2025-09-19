@@ -1,6 +1,5 @@
 export default function MetaChips({ items, align = "left", size = "md" }) {
-  const sizeCls =
-    size === "sm" ? "text-xs px-2.5 py-1" : "text-sm px-3 py-1.5";
+  const sizeCls = size === "sm" ? "text-xs px-2.5 py-1" : "text-sm px-3 py-1.5";
 
   return (
     <ul
@@ -9,16 +8,19 @@ export default function MetaChips({ items, align = "left", size = "md" }) {
         "flex flex-wrap gap-2",
         align === "center" ? "justify-center" : "",
       ].join(" ")}
+      role="list"
     >
       {items.map((t) => (
         <li
           key={t}
+          role="listitem"
           className={[
-            "rounded-full border border-neutral-200/60 bg-neutral-100",
-            "text-neutral-600 select-none cursor-default",
+            "rounded-full",
+            "border border-neutral-200/60 bg-neutral-100",
+            "text-neutral-600",
+            "select-none cursor-default", // 👈 very obviously not a button
             sizeCls,
           ].join(" ")}
-          role="text" // reinforce it's not interactive
         >
           {t}
         </li>
