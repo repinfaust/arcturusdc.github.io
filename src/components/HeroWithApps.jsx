@@ -39,7 +39,7 @@ export default function HeroWithApps() {
 
         // Card vertical path: start low, finish slightly above centre
         const startTopPct = isSmall ? 84 : 70;
-        const endTopPct   = isSmall ? 47 : 42; // ⬅ sits a wee bit higher
+        const endTopPct   = isSmall ? 47 : 42; 
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
         card.style.top = `${topPct}%`;
@@ -106,7 +106,10 @@ export default function HeroWithApps() {
           Apps
         </h2>
         <p className="text-neutral-700 max-w-prose">
-          Policies, platforms, and specifics for each app — kept compliant and privacy-first.
+          Every app is built with a clear purpose: to solve one problem well. The
+          portfolio includes ADHD motivation, shared-care family organisation,
+          and fitness planning — each designed to meet a need in a way that’s
+          simple, compliant, and privacy-first.
         </p>
         <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
           <span className="badge">App Store & Google Play</span>
@@ -123,4 +126,3 @@ export default function HeroWithApps() {
     </section>
   );
 }
-v
