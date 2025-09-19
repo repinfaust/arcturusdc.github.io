@@ -18,7 +18,7 @@ export default function Home() {
 
   return (
     <main className="relative">
-      {/* Brand strip (show on all breakpoints) */}
+      {/* Brand strip */}
       <div className="mx-auto max-w-6xl px-4 mt-2 mb-1 flex items-center gap-2">
         <Image
           src="/img/logo-mark.png"
@@ -62,7 +62,7 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Non-interactive meta chips */}
+            {/* 🔁 Consistent, non-clickable chips */}
             <div className="mt-6">
               <MetaChips
                 items={[
@@ -76,10 +76,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Capabilities hero */}
       <HeroWithCapabilities />
-
-      {/* Apps hero (orange image) */}
       <HeroWithApps />
     </main>
   );
