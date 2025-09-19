@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
+import MetaChips from "@/components/MetaChips";
 
 export default function HeroWithCapabilities() {
   const rootRef = useRef(null);
@@ -21,17 +22,16 @@ export default function HeroWithCapabilities() {
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
-    // --- Ensure background is tall enough on mobile so the card never spills
+    // Ensure the hero is tall enough on mobile so the card never spills outside the bg.
     const ensureMobileHeight = () => {
       const isSmall = mqSmall.matches;
       if (!isSmall) {
-        root.style.height = ""; // desktop height is driven by CSS (sm:h-[82vh])
+        root.style.height = ""; // desktop/tablet via CSS (sm:h-[82vh])
         return;
       }
       const vh = getVH();
       const cardH = card.offsetHeight || 0;
-      // We want at least near-viewport height, or card height + breathing room
-      const needed = Math.max(vh * 0.9, cardH + 96); // 96px buffer looks right with rounded card
+      const needed = Math.max(vh * 0.9, cardH + 96); // breathing room for rounded card/shadow
       root.style.height = `${Math.ceil(needed)}px`;
     };
 
@@ -43,10 +43,8 @@ export default function HeroWithCapabilities() {
         card.style.transform = "translate(-50%, -50%)";
         return;
       }
-      // Start hidden-ish for fade/slide-in
       bg.style.opacity = "0";
       card.style.opacity = "0";
-      // top is computed in tick()
     };
 
     const tick = () => {
@@ -61,7 +59,7 @@ export default function HeroWithCapabilities() {
       const endY = vh * (isSmall ? 0.55 : 0.40);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
-      // Background parallax (works on all breakpoints)
+      // Background parallax
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
@@ -76,19 +74,16 @@ export default function HeroWithCapabilities() {
         return;
       }
 
-      // Card motion:
+      // Card motion
       if (isSmall) {
-        // Keep absolute centring, but we drive section height so it never spills.
-        // Slightly narrower travel so text stays well within the bg at all times.
-        const startTopPct = 80; // start lower
-        const endTopPct = 54;   // settle higher but still safe
+        const startTopPct = 80;
+        const endTopPct = 54;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
       } else {
-        // Original desktop/tablet behaviour
         const startTopPct = 70;
         const endTopPct = 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
@@ -105,7 +100,7 @@ export default function HeroWithCapabilities() {
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
-    // Watch the card for content height changes (mobile safety)
+    // Recompute when content height changes (mobile safety)
     const ro = new ResizeObserver(() => {
       ensureMobileHeight();
       if (!raf) raf = requestAnimationFrame(tick);
@@ -138,11 +133,10 @@ export default function HeroWithCapabilities() {
       className={[
         "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
         "mt-12 sm:mt-16 mb-20",
-        // desktop/tablet keep fixed-height feel; mobile height is set dynamically in JS
-        "sm:h-[82vh]",
+        "sm:h-[82vh]", // mobile height is set dynamically in JS
       ].join(" ")}
     >
-      {/* Background covers the whole section height */}
+      {/* Background fills the section */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-hero-2560.png"
@@ -155,7 +149,7 @@ export default function HeroWithCapabilities() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Floating card (absolute with centre anchor; section height guarantees coverage on mobile) */}
+      {/* Floating card (absolute centre anchor) */}
       <div
         ref={cardRef}
         className={[
@@ -183,10 +177,8 @@ export default function HeroWithCapabilities() {
             <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
               Learn more
             </a>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border px-2 py-1">Discovery</span>
-              <span className="rounded-full border px-2 py-1">Compliance support</span>
-              <span className="rounded-full border px-2 py-1">Delivery ops</span>
+            <div className="mt-4">
+              <MetaChips items={["Discovery", "Compliance support", "Delivery ops"]} size="sm" />
             </div>
           </div>
 
