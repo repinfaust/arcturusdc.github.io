@@ -15,7 +15,7 @@ export default function Home() {
       {/* Mobile brand strip (between pill and hero) */}
       <div className="sm:hidden mx-auto max-w-6xl px-4 mt-2 mb-1 flex items-center gap-2">
         <Image
-          src="/img/logo-mark.png" // put your logo here (SVG/PNG)
+          src="/img/logo-mark.svg" // put your logo here (SVG/PNG)
           alt="Arcturus Digital Consultancy"
           width={36}
           height={36}
