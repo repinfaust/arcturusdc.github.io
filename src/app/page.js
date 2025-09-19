@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import HeroWithCapabilities from "@/components/HeroWithCapabilities";
 import HeroWithApps from "@/components/HeroWithApps";
-import MetaChips from "@/components/MetaChips";
 
 export const metadata = {
   title: "Arcturus Digital Consulting",
@@ -62,16 +61,11 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* 🔁 Consistent, non-clickable chips */}
-            <div className="mt-6">
-              <MetaChips
-                items={[
-                  "UK Ltd",
-                  "App Store & Google Play compliant",
-                  "UK based",
-                ]}
-              />
-            </div>
+            {/* Inline, non-interactive meta */}
+            <p className="mt-6 text-sm text-neutral-500">
+              UK Ltd <span aria-hidden>•</span> App Store &amp; Google Play compliant{" "}
+              <span aria-hidden>•</span> UK based
+            </p>
           </div>
         </div>
       </section>
