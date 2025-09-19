@@ -16,8 +16,8 @@ const LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -56,7 +56,7 @@ export default function Header() {
           "transition-shadow",
         ].join(" ")}
       >
-        {/* LEFT: Brand */}
+        {/* LEFT: Brand (logo + name) */}
         <Link
           href="/"
           className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -69,31 +69,37 @@ export default function Header() {
             className="rounded-full"
             priority
           />
+          {/* Stack full + short names in the same space; fade between them */}
+          <span className="relative block h-6 sm:h-7">
+            {/* Full brand (expanded) */}
+            <span
+              className={[
+                "absolute inset-0 flex items-center whitespace-nowrap",
+                "text-white font-semibold tracking-tight",
+                "text-base sm:text-lg",
+                contracted ? "opacity-0 pointer-events-none" : "opacity-100",
+                "transition-opacity duration-150",
+              ].join(" ")}
+            >
+              Arcturus Digital Consultancy
+            </span>
 
-          {/* Full brand (visible when not contracted) */}
-          <span
-            className={[
-              "hidden sm:block text-white text-base sm:text-lg font-semibold tracking-tight whitespace-nowrap",
-              contracted ? "opacity-0 pointer-events-none" : "opacity-100",
-              "transition-opacity duration-150",
-            ].join(" ")}
-          >
-            Arcturus Digital Consultancy
-          </span>
-
-          {/* Short brand (visible when contracted) */}
-          <span
-            className={[
-              "text-white text-base sm:text-lg font-semibold tracking-tight whitespace-nowrap",
-              contracted ? "opacity-100" : "opacity-0 pointer-events-none",
-              "transition-opacity duration-150",
-            ].join(" ")}
-          >
-            ArcturusDC
+            {/* Short brand (contracted) */}
+            <span
+              className={[
+                "absolute inset-0 flex items-center whitespace-nowrap",
+                "text-white font-semibold tracking-tight",
+                "text-base sm:text-lg",
+                contracted ? "opacity-100" : "opacity-0 pointer-events-none",
+                "transition-opacity duration-150",
+              ].join(" ")}
+            >
+              ArcturusDC
+            </span>
           </span>
         </Link>
 
-        {/* MIDDLE: flexible spacer prevents overlap */}
+        {/* MIDDLE: spacer prevents any overlap with nav */}
         <div className="flex-1" />
 
         {/* RIGHT: Desktop nav */}
