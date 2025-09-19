@@ -9,7 +9,9 @@ export default function HeroWithCapabilities() {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
+    const root = rootRef.current;
+    const bg = bgRef.current;
+    const card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -23,7 +25,7 @@ export default function HeroWithCapabilities() {
       if (!mqSmall.matches) { root.style.height = ""; return; }
       const vh = getVH();
       const cardH = card.offsetHeight || 0;
-      const needed = Math.max(vh * 0.9, cardH + 96); // breathing room
+      const needed = Math.max(vh * 0.9, cardH + 96);
       root.style.height = `${Math.ceil(needed)}px`;
     };
 
@@ -38,7 +40,6 @@ export default function HeroWithCapabilities() {
 
     const tick = () => {
       raf = 0;
-
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = mqSmall.matches;
@@ -54,21 +55,19 @@ export default function HeroWithCapabilities() {
         bg.style.opacity = "1"; bg.style.transform = "none";
       }
 
-      if (reduce) { card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)"; return; }
-
-      if (isSmall) {
-        const startTopPct = 80, endTopPct = 54;
-        const topPct = startTopPct - (startTopPct - endTopPct) * p;
-        card.style.top = `${topPct}%`;
-        card.style.opacity = String(p);
-        card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
-      } else {
-        const startTopPct = 70, endTopPct = 42;
-        const topPct = startTopPct - (startTopPct - endTopPct) * p;
-        card.style.top = `${topPct}%`;
-        card.style.opacity = String(p);
-        card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
+      if (reduce) {
+        card.style.opacity = "1";
+        card.style.transform = "translate(-50%, -50%)";
+        return;
       }
+
+      const startTopPct = isSmall ? 80 : 70;
+      const endTopPct   = isSmall ? 54 : 42;
+      const topPct = startTopPct - (startTopPct - endTopPct) * p;
+
+      card.style.top = `${topPct}%`;
+      card.style.opacity = String(p);
+      card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
     };
 
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
@@ -76,7 +75,9 @@ export default function HeroWithCapabilities() {
 
     const ro = new ResizeObserver(() => { ensureMobileHeight(); if (!raf) raf = requestAnimationFrame(tick); });
 
-    setInitial(); ensureMobileHeight(); tick();
+    setInitial();
+    ensureMobileHeight();
+    tick();
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
@@ -97,55 +98,31 @@ export default function HeroWithCapabilities() {
   return (
     <section
       ref={rootRef}
-      aria-label="Network hero with capabilities"
-      className={[
-        "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
-        "mt-12 sm:mt-16 mb-20",
-        "sm:h-[82vh]",
-      ].join(" ")}
+      aria-label="Capabilities hero"
+      className="relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] mt-12 sm:mt-16 mb-20 sm:h-[82vh]"
     >
-      {/* Background */}
-      <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
-        <Image
-          src="/img/network-hero-2560.png"
-          alt="Abstract network"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
+      <div ref={bgRef} className="absolute inset-0">
+        <Image src="/img/network-hero-2560.png" alt="Abstract network" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Card */}
       <div
         ref={cardRef}
-        className={[
-          "absolute left-1/2",
-          "w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px]",
-          "rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl",
-          "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
-          "will-change-transform will-change-opacity",
-        ].join(" ")}
+        className="absolute left-1/2 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px] rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10"
         style={{ top: "84%", transform: "translate(-50%, -50%)" }}
       >
-        <h3 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
-          Capabilities
-        </h3>
+        <h3 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold text-neutral-900 mb-4">Capabilities</h3>
 
         <div className="grid gap-6 md:grid-cols-3 text-neutral-700">
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
             <p className="text-sm text-neutral-600">
-              Helping organisations cut through noise to find and deliver the next
-              most valuable outcome. The emphasis is on solving genuine problems in
-              the simplest, most effective way.
+              Helping organisations cut through noise to find and deliver the next most valuable outcome...
             </p>
-            <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
-              Learn more
-            </a>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs sm:text-sm">
+            <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">Learn more</a>
+
+            <div className="mt-6 flex justify-center flex-wrap gap-2 text-xs sm:text-sm">
               <span className="badge">Discovery</span>
               <span className="badge">Compliance support</span>
               <span className="badge">Delivery ops</span>
@@ -155,21 +132,13 @@ export default function HeroWithCapabilities() {
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
             <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
-            <p className="text-sm text-neutral-600">
-              Design and build of Android and iOS apps with privacy-first principles.
-              Each app is focused on a niche where existing tools are either too generic
-              or too complex, ensuring usability and compliance without unnecessary features.
-            </p>
+            <p className="text-sm text-neutral-600">Design and build of Android and iOS apps with privacy-first principles...</p>
           </div>
 
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
-            <p className="text-sm text-neutral-600">
-              From setup to insight, data is handled with clarity and purpose. No spin,
-              no vanity metrics — just reliable instrumentation and reporting that support
-              decision-making and improvement.
-            </p>
+            <p className="text-sm text-neutral-600">From setup to insight, data is handled with clarity and purpose...</p>
           </div>
         </div>
       </div>
