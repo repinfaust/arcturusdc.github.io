@@ -61,15 +61,17 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Inline, non-interactive meta */}
-            <p className="mt-6 text-sm text-neutral-500">
-              UK Ltd <span aria-hidden>•</span> App Store &amp; Google Play compliant{" "}
-              <span aria-hidden>•</span> UK based
-            </p>
+            {/* Consistent non-interactive badges */}
+            <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
+              <span className="badge">UK Ltd</span>
+              <span className="badge">App Store &amp; Google Play compliant</span>
+              <span className="badge">UK based</span>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Parallax heroes */}
       <HeroWithCapabilities />
       <HeroWithApps />
     </main>
