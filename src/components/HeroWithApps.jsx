@@ -38,7 +38,6 @@ export default function HeroWithApps() {
 
     const tick = () => {
       raf = 0;
-
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = mqSmall.matches;
@@ -56,19 +55,13 @@ export default function HeroWithApps() {
 
       if (reduce) { card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)"; return; }
 
-      if (isSmall) {
-        const startTopPct = 80, endTopPct = 54;
-        const topPct = startTopPct - (startTopPct - endTopPct) * p;
-        card.style.top = `${topPct}%`;
-        card.style.opacity = String(p);
-        card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
-      } else {
-        const startTopPct = 70, endTopPct = 42;
-        const topPct = startTopPct - (startTopPct - endTopPct) * p;
-        card.style.top = `${topPct}%`;
-        card.style.opacity = String(p);
-        card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
-      }
+      const startTopPct = isSmall ? 80 : 70;
+      const endTopPct   = isSmall ? 54 : 42;
+      const topPct = startTopPct - (startTopPct - endTopPct) * p;
+
+      card.style.top = `${topPct}%`;
+      card.style.opacity = String(p);
+      card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
     };
 
     const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
@@ -97,40 +90,19 @@ export default function HeroWithApps() {
     <section
       ref={rootRef}
       aria-label="Apps hero"
-      className={[
-        "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
-        "mt-12 sm:mt-16 mb-20",
-        "sm:h-[82vh]",
-      ].join(" ")}
+      className="relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] mt-12 sm:mt-16 mb-20 sm:h-[82vh]"
     >
-      {/* Background */}
-      <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
-        <Image
-          src="/img/network-orange-hero-2560.png"
-          alt="Abstract network (orange)"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
+      <div ref={bgRef} className="absolute inset-0">
+        <Image src="/img/network-orange-hero-2560.png" alt="Abstract network (orange)" fill priority sizes="100vw" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Card */}
       <div
         ref={cardRef}
-        className={[
-          "absolute left-1/2",
-          "w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px]",
-          "rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl",
-          "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
-          "will-change-transform will-change-opacity",
-        ].join(" ")}
+        className="absolute left-1/2 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px] rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10"
         style={{ top: "84%", transform: "translate(-50%, -50%)" }}
       >
-        <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
-          Apps
-        </h2>
+        <h2 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold text-neutral-900 mb-4">Apps</h2>
 
         <p className="text-neutral-700 max-w-prose">
           Every app is built with a clear purpose: to solve one problem well. The
@@ -139,16 +111,13 @@ export default function HeroWithApps() {
           simple, compliant, and privacy-first.
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
+        <div className="mt-6 flex justify-center flex-wrap gap-2 text-xs sm:text-sm">
           <span className="badge">App Store &amp; Google Play</span>
           <span className="badge">UK based</span>
           <span className="badge">Privacy-first</span>
         </div>
 
-        <a
-          href="/apps"
-          className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
-        >
+        <a href="/apps" className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700">
           Browse apps →
         </a>
       </div>
