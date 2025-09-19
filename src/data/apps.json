@@ -2,6 +2,8 @@
   {
     "id": "mandrake",
     "name": "Mandrake",
+    "strap": "Private wins, right when it counts.",
+    "summary": "Mandrake is a lightweight, private app that helps people handle urges in the moment. With one tap, users can log an urge, ride it out with a simple timer, and earn subtle reinforcement through points and haptics. The app provides personal insights into when urges spike and which tactics work best—without streak pressure, moralising, or public tracking. Designed for high-functioning, privacy-minded individuals, Mandrake offers a pocket-sized way to turn fleeting challenges into repeatable wins, with gentle safety rails only if patterns become heavy.",
     "desc": "Private urge logging, quick tactics, and pattern insights.",
     "link": "/apps/mandrake",
     "icon": "/img/mandrake-app-logo.png",
@@ -10,6 +12,8 @@
   {
     "id": "syncfit",
     "name": "SyncFit",
+    "strap": "Workouts that fit your schedule.",
+    "summary": "SyncFit makes fitness planning practical by working around real calendars. The app finds free time slots in Google Calendar, recommends sessions based on goals, and lets users log or adjust workouts on the fly. No wasted plans, no guilt—just exercise that slots into daily life and sticks.",
     "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
     "icon": "/img/SyncFit_App_Icon_512x512.png",
     "bg": "/img/syncfit-card-background.png",
@@ -18,12 +22,16 @@
   {
     "id": "adhd-acclaim",
     "name": "ADHD Acclaim",
+    "strap": "Small wins, real rewards.",
+    "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",
     "desc": "Gamified rewards to celebrate wins and encourage progress.",
     "link": "/apps/adhd-acclaim"
   },
   {
     "id": "toume",
     "name": "Tou.me (coming soon)",
+    "strap": "For you, for me, for them.",
+    "summary": "Tou.me is a shared-care organiser for families and support circles. It simplifies coordination between parents, relatives, and carers with lightweight scheduling and clear roles. Built to reduce friction and keep everyone on the same page, Tou.me helps households focus more on connection, less on admin.",
     "desc": "For you, for me, for them."
   }
 ]
