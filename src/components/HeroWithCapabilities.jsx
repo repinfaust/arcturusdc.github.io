@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import MetaChips from "@/components/MetaChips";
 
 export default function HeroWithCapabilities() {
   const rootRef = useRef(null);
@@ -23,8 +22,7 @@ export default function HeroWithCapabilities() {
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
     const ensureMobileHeight = () => {
-      const isSmall = mqSmall.matches;
-      if (!isSmall) { root.style.height = ""; return; }
+      if (!mqSmall.matches) { root.style.height = ""; return; }
       const vh = getVH();
       const cardH = card.offsetHeight || 0;
       const needed = Math.max(vh * 0.9, cardH + 96);
@@ -35,9 +33,7 @@ export default function HeroWithCapabilities() {
       if (reduce) {
         bg.style.opacity = "1"; bg.style.transform = "none";
         card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)";
-        return;
-      }
-      bg.style.opacity = "0"; card.style.opacity = "0";
+      } else { bg.style.opacity = "0"; card.style.opacity = "0"; }
     };
 
     const tick = () => {
@@ -53,9 +49,7 @@ export default function HeroWithCapabilities() {
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
-      } else {
-        bg.style.opacity = "1"; bg.style.transform = "none";
-      }
+      } else { bg.style.opacity = "1"; bg.style.transform = "none"; }
 
       if (reduce) { card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)"; return; }
 
@@ -145,9 +139,10 @@ export default function HeroWithCapabilities() {
             <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
               Learn more
             </a>
-            <div className="mt-4">
-              <MetaChips items={["Discovery", "Compliance support", "Delivery ops"]} size="sm" />
-            </div>
+            {/* Inline, non-interactive meta */}
+            <p className="mt-4 text-xs text-neutral-500">
+              Discovery <span aria-hidden>•</span> Compliance support <span aria-hidden>•</span> Delivery ops
+            </p>
           </div>
 
           <div>
@@ -162,15 +157,4 @@ export default function HeroWithCapabilities() {
 
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
-            <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
-            <p className="text-sm text-neutral-600">
-              From setup to insight, data is handled with clarity and purpose. No spin,
-              no vanity metrics — just reliable instrumentation and reporting that support
-              decision-making and improvement.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+            <h4 className="font-semibold text-neutral-900 text
