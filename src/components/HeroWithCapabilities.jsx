@@ -9,45 +9,59 @@ export default function HeroWithCapabilities() {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current,
-      bg = bgRef.current,
-      card = cardRef.current;
+    const root = rootRef.current;
+    const bg = bgRef.current;
+    const card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isSmallMQ = window.matchMedia("(max-width: 640px)");
-
-    const setInitial = () => {
-      const isSmall = isSmallMQ.matches;
-      // For mobile: no parallax on the card; just fade bg in
-      if (isSmall || reduce) {
-        bg.style.opacity = "1";
-        card.style.opacity = "1";
-        card.style.transform = "none";
-        card.style.top = ""; // let CSS control
-        return;
-      }
-      // desktop/tablet initial
-      bg.style.opacity = reduce ? "1" : "0";
-      card.style.opacity = reduce ? "1" : "0";
-    };
+    const mqSmall = window.matchMedia("(max-width: 640px)");
 
     let raf = 0;
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
+
+    // --- Ensure background is tall enough on mobile so the card never spills
+    const ensureMobileHeight = () => {
+      const isSmall = mqSmall.matches;
+      if (!isSmall) {
+        root.style.height = ""; // desktop height is driven by CSS (sm:h-[82vh])
+        return;
+      }
+      const vh = getVH();
+      const cardH = card.offsetHeight || 0;
+      // We want at least near-viewport height, or card height + breathing room
+      const needed = Math.max(vh * 0.9, cardH + 96); // 96px buffer looks right with rounded card
+      root.style.height = `${Math.ceil(needed)}px`;
+    };
+
+    const setInitial = () => {
+      if (reduce) {
+        bg.style.opacity = "1";
+        bg.style.transform = "none";
+        card.style.opacity = "1";
+        card.style.transform = "translate(-50%, -50%)";
+        return;
+      }
+      // Start hidden-ish for fade/slide-in
+      bg.style.opacity = "0";
+      card.style.opacity = "0";
+      // top is computed in tick()
+    };
 
     const tick = () => {
       raf = 0;
 
       const rect = root.getBoundingClientRect();
       const vh = getVH();
-      const isSmall = isSmallMQ.matches;
+      const isSmall = mqSmall.matches;
 
+      // Scroll progress from just below the fold to mid-hero
       const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY = vh * (isSmall ? 0.52 : 0.4);
+      const endY = vh * (isSmall ? 0.55 : 0.40);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
-      // Always fade/shift the background a touch (ok on mobile)
+      // Background parallax (works on all breakpoints)
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
@@ -56,8 +70,25 @@ export default function HeroWithCapabilities() {
         bg.style.transform = "none";
       }
 
-      // Card parallax only on sm+; mobile stays in normal flow
-      if (!reduce && !isSmall) {
+      if (reduce) {
+        card.style.opacity = "1";
+        card.style.transform = "translate(-50%, -50%)";
+        return;
+      }
+
+      // Card motion:
+      if (isSmall) {
+        // Keep absolute centring, but we drive section height so it never spills.
+        // Slightly narrower travel so text stays well within the bg at all times.
+        const startTopPct = 80; // start lower
+        const endTopPct = 54;   // settle higher but still safe
+        const topPct = startTopPct - (startTopPct - endTopPct) * p;
+
+        card.style.top = `${topPct}%`;
+        card.style.opacity = String(p);
+        card.style.transform = `translate(-50%, -50%) scale(${0.985 + 0.015 * p})`;
+      } else {
+        // Original desktop/tablet behaviour
         const startTopPct = 70;
         const endTopPct = 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
@@ -65,48 +96,54 @@ export default function HeroWithCapabilities() {
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
-      } else {
-        card.style.opacity = "1";
-        card.style.transform = "none";
       }
     };
 
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
     const onResize = () => {
-      setInitial();
+      ensureMobileHeight();
       if (!raf) raf = requestAnimationFrame(tick);
     };
 
+    // Watch the card for content height changes (mobile safety)
+    const ro = new ResizeObserver(() => {
+      ensureMobileHeight();
+      if (!raf) raf = requestAnimationFrame(tick);
+    });
+
     setInitial();
+    ensureMobileHeight();
     tick();
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
-    isSmallMQ.addEventListener?.("change", onResize);
     window.visualViewport?.addEventListener("resize", onResize, { passive: true });
+    mqSmall.addEventListener?.("change", onResize);
+    ro.observe(card);
 
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
-      isSmallMQ.removeEventListener?.("change", onResize);
       window.visualViewport?.removeEventListener("resize", onResize);
+      mqSmall.removeEventListener?.("change", onResize);
+      ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
 
-  // Mobile: let the section height grow with content.
-  // Desktop/tablet: fixed hero height with parallax.
-  const sectionClasses = [
-    "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
-    "mt-12 sm:mt-16 mb-20",
-    "h-auto sm:h-[82vh]",                 // 👈 auto on mobile, fixed on sm+
-    "pt-[44vh] sm:pt-0",                  // 👈 space on mobile so card starts over bg
-  ].join(" ");
-
   return (
-    <section ref={rootRef} aria-label="Network hero with capabilities" className={sectionClasses}>
-      {/* Background: fixed height on mobile, fills on sm+ */}
-      <div ref={bgRef} className="absolute left-0 right-0 top-0 h-[44vh] sm:h-full will-change-transform will-change-opacity">
+    <section
+      ref={rootRef}
+      aria-label="Network hero with capabilities"
+      className={[
+        "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
+        "mt-12 sm:mt-16 mb-20",
+        // desktop/tablet keep fixed-height feel; mobile height is set dynamically in JS
+        "sm:h-[82vh]",
+      ].join(" ")}
+    >
+      {/* Background covers the whole section height */}
+      <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-hero-2560.png"
           alt="Abstract network"
@@ -118,24 +155,17 @@ export default function HeroWithCapabilities() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Card: in-flow on mobile, absolute on sm+ */}
+      {/* Floating card (absolute with centre anchor; section height guarantees coverage on mobile) */}
       <div
         ref={cardRef}
         className={[
-          // positioning
-          "relative sm:absolute sm:left-1/2",
-          // width
-          "w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px] mx-auto",
-          // visuals
+          "absolute left-1/2",
+          "w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px]",
           "rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl",
-          // padding
           "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
-          // perf
           "will-change-transform will-change-opacity",
-          // slight lift on mobile to overlap the bg nicely
-          "-mt-[22vh] sm:mt-0", // 👈 pulls card up over the mobile bg area
         ].join(" ")}
-        // no inline top/transform; JS sets those only on sm+
+        style={{ top: "84%", transform: "translate(-50%, -50%)" }}
       >
         <h3 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
           Capabilities
