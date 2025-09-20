@@ -11,13 +11,12 @@ export const metadata = {
 
 export default function Home() {
   const HEADLINE = "Practical software for real needs.";
-
   const BLURB =
     "Arcturus Digital Consulting builds apps and digital products that focus on real-world problems — not technology for its own sake. From ADHD support to family organisation and fitness planning, every product is designed around a clear need, with privacy and compliance built in from the start.";
 
   return (
     <main className="relative">
-      {/* Brand strip (always visible) */}
+      {/* Brand strip */}
       <div className="mx-auto max-w-6xl px-4 mt-2 mb-1 flex items-center gap-2">
         <Image
           src="/img/logo-mark.png"
@@ -32,13 +31,11 @@ export default function Home() {
         </span>
       </div>
 
-      {/* Top intro */}
+      {/* Intro */}
       <section className="mx-auto max-w-6xl px-4 pt-4 sm:pt-14">
         <div className="grid lg:grid-cols-1 gap-6">
           <div className="rounded-2xl bg-white border border-neutral-200/70 p-8 shadow-sm">
-            <p className="text-xs font-semibold text-red-600 mb-3">
-              Product &amp; Apps
-            </p>
+            <p className="text-xs font-semibold text-red-600 mb-3">Product &amp; Apps</p>
 
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
               {HEADLINE}
@@ -61,8 +58,8 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Consistent non-interactive badges, centred on smaller screens */}
-            <div className="mt-6 flex flex-wrap justify-start sm:justify-start gap-2 text-xs sm:text-sm">
+            {/* CENTRED, non-interactive, consistent */}
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
               <span className="badge">UK Ltd</span>
               <span className="badge">App Store &amp; Google Play compliant</span>
               <span className="badge">UK based</span>
@@ -71,7 +68,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Parallax heroes */}
       <HeroWithCapabilities />
       <HeroWithApps />
     </main>
