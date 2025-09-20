@@ -4,12 +4,14 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 export default function HeroWithApps() {
-  const rootRef = useRef<HTMLDivElement|null>(null);
-  const bgRef   = useRef<HTMLDivElement|null>(null);
-  const cardRef = useRef<HTMLDivElement|null>(null);
+  const rootRef = useRef(null);
+  const bgRef = useRef(null);
+  const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
+    const root = rootRef.current;
+    const bg = bgRef.current;
+    const card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -17,7 +19,7 @@ export default function HeroWithApps() {
     card.style.opacity = reduce ? "1" : "0";
 
     let raf = 0;
-    const clamp01 = (v:number) => v < 0 ? 0 : v > 1 ? 1 : v;
+    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
     const tick = () => {
@@ -27,15 +29,17 @@ export default function HeroWithApps() {
       const isSmall = matchMedia("(max-width: 640px)").matches;
 
       const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY   = vh * (isSmall ? 0.52 : 0.40);
+      const endY = vh * (isSmall ? 0.52 : 0.4);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
+
         const startTopPct = isSmall ? 84 : 70;
-        const endTopPct   = isSmall ? 47 : 42;
+        const endTopPct = isSmall ? 47 : 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
+
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
@@ -47,7 +51,10 @@ export default function HeroWithApps() {
       }
     };
 
-    const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    const onScrollResize = () => {
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
     tick();
     window.addEventListener("scroll", onScrollResize, { passive: true });
     window.addEventListener("resize", onScrollResize, { passive: true });
@@ -66,7 +73,6 @@ export default function HeroWithApps() {
       aria-label="Apps hero"
       className="relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] h-[88vh] md:h-[82vh] mt-12 sm:mt-16 mb-20"
     >
-      {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-orange-hero-2560.png"
@@ -79,7 +85,6 @@ export default function HeroWithApps() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Card */}
       <div
         ref={cardRef}
         className={[
@@ -96,13 +101,11 @@ export default function HeroWithApps() {
         </h2>
 
         <p className="text-neutral-700 max-w-prose">
-          Every app is built with a clear purpose: to solve one problem well. The
-          portfolio includes ADHD motivation, shared-care family organisation,
-          and fitness planning — each designed to meet a need in a way that’s
-          simple, compliant, and privacy-first.
+          Every app is built with a clear purpose: to solve one problem well. The portfolio includes
+          ADHD motivation, shared-care family organisation, and fitness planning — each designed to
+          meet a need in a way that’s simple, compliant, and privacy-first.
         </p>
 
-        {/* CTA */}
         <a
           href="/apps"
           className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
@@ -110,7 +113,7 @@ export default function HeroWithApps() {
           Browse apps →
         </a>
 
-        {/* ✅ Centered chips (shared classes) */}
+        {/* centered chips — same classes everywhere */}
         <div className="mt-4 badges">
           <span className="badge">App Store &amp; Google Play</span>
           <span className="badge">UK based</span>
