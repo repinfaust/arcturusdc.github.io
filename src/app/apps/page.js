@@ -1,7 +1,7 @@
 import apps from "@/data/apps.json";
 import AppsClient from "./AppsClient";
 
-export const metadata = { title: "Apps — Arcturus Digital Consultancy" };
+export const metadata = { title: "Apps — Arcturus Digital Consulting" };
 
 export default function AppsPage() {
   return (
