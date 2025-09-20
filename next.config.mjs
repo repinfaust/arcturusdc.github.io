@@ -1,13 +1,23 @@
+// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
   async rewrites() {
     return [
-      // keep your short paths working
-      { source: '/:slug(android|syncfit|adhd-acclaim)/:platform(android|ios)', destination: '/apps/:slug/:platform' },
-      // optional: legacy /mandrake -> apps/mandrake
-      { source: '/mandrake/:platform(android|ios)', destination: '/apps/mandrake/:platform' },
+      // Short paths like /mandrake/android -> /apps/mandrake/android
+      {
+        source: "/:slug(mandrake|syncfit|adhd-acclaim|toume)/:platform(android|ios)",
+        destination: "/apps/:slug/:platform",
+      },
+
+      // Optional legacy: /mandrake/android -> /apps/mandrake/android (explicit)
+      {
+        source: "/mandrake/:platform(android|ios)",
+        destination: "/apps/mandrake/:platform",
+      },
     ];
   },
 };
-export default nextConfig;
+
+module.exports = nextConfig;
