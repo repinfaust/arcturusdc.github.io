@@ -1,5 +1,6 @@
 // src/app/contact/page.js
-import { Suspense } from "react";
+import ContactFormClient from "../../components/ContactFormClient";
+import Script from "next/script";
 
 export const metadata = {
   title: "Contact | Arcturus Digital Consulting",
@@ -7,121 +8,7 @@ export const metadata = {
     "Get in touch about product strategy, payments, metering, billing and platform work. We’ll get back to you promptly.",
 };
 
-function Banner({ type = "success", children }) {
-  const base =
-    "mb-6 rounded-xl border px-4 py-3 text-sm";
-  const styles =
-    type === "success"
-      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-      : "border-red-500/30 bg-red-500/10 text-red-200";
-  return <div className={`${base} ${styles}`}>{children}</div>;
-}
-
-function ContactForm() {
-  return (
-    <form
-      method="POST"
-      action="/api/contact"
-      className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-neutral-900/70 backdrop-blur p-6 sm:p-8"
-    >
-      <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight mb-2">
-        Contact
-      </h1>
-      <p className="text-white/70 mb-6">
-        Prefer email? Drop us a line at{" "}
-        <a
-          className="underline decoration-white/40 hover:decoration-white"
-          href="mailto:info@arcturusdc.com"
-        >
-          info@arcturusdc.com
-        </a>
-        .
-      </p>
-
-      {/* Honeypot */}
-      <div className="hidden">
-        <label htmlFor="company">Company (leave blank)</label>
-        <input id="company" name="company" type="text" />
-      </div>
-
-      <div className="grid gap-4 sm:gap-5">
-        <div>
-          <label className="block text-sm text-white/80 mb-1" htmlFor="name">
-            Your name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
-            placeholder="Jane Smith"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm text-white/80 mb-1" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            inputMode="email"
-            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
-            placeholder="you@example.com"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm text-white/80 mb-1" htmlFor="subject">
-            Subject
-          </label>
-          <input
-            id="subject"
-            name="subject"
-            type="text"
-            required
-            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
-            placeholder="How we can help"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm text-white/80 mb-1" htmlFor="message">
-            Message
-          </label>
-          <textarea
-            id="message"
-            name="message"
-            required
-            rows={6}
-            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
-            placeholder="Tell us a bit about your needs, timelines, and goals."
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-white/50">
-            We’ll reply from <span className="text-white">info@arcturusdc.com</span>.
-          </p>
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-full bg-white/90 text-black px-5 py-2.5 font-medium hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition"
-          >
-            Send message
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-export default function ContactPage({ searchParams }) {
-  const sent = searchParams?.sent === "1";
-  const error = searchParams?.error;
-
+export default function ContactPage() {
   return (
     <div className="px-3 sm:px-4">
       <div className="mx-auto max-w-7xl py-12 sm:py-16">
@@ -135,18 +22,54 @@ export default function ContactPage({ searchParams }) {
           </p>
         </div>
 
-        <div className="mx-auto w-full max-w-2xl">
-          {sent && <Banner type="success">Thanks — your message has been sent. We’ll reply from <strong>info@arcturusdc.com</strong>.</Banner>}
-          {error === "missing" && <Banner type="error">Please fill in all required fields.</Banner>}
-          {error === "email" && <Banner type="error">That email address doesn’t look valid.</Banner>}
-          {error === "email-lib" && <Banner type="error">Email service isn’t available right now.</Banner>}
-          {error === "server" && <Banner type="error">Something went wrong sending your message. Try again in a moment.</Banner>}
-        </div>
-
-        <Suspense>
-          <ContactForm />
-        </Suspense>
+        <ContactFormClient />
       </div>
+
+      {/* Safety net: intercept submit even if React doesn't hydrate */}
+      <Script id="contact-form-intercept" strategy="afterInteractive">
+        {`
+          (function () {
+            var form = document.getElementById('contact-form');
+            if (!form) return;
+            form.addEventListener('submit', async function (e) {
+              // If React already prevented, do nothing.
+              if (e.defaultPrevented) return;
+              e.preventDefault();
+
+              var payload = {
+                name: form.name.value,
+                email: form.email.value,
+                subject: form.subject.value,
+                message: form.message.value,
+                company: form.company ? form.company.value : ""
+              };
+
+              try {
+                var res = await fetch('/api/contact', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                  body: JSON.stringify(payload)
+                });
+                var ok = false;
+                try { var data = await res.json(); ok = !!data.ok; } catch(_) {}
+                if (ok) {
+                  var wrapper = form.parentNode;
+                  form.remove();
+                  var div = document.createElement('div');
+                  div.id = 'contact-success';
+                  div.className = 'mx-auto w-full max-w-2xl rounded-2xl border border-orange-300 bg-orange-100/80 text-orange-900 p-6 sm:p-8';
+                  div.innerHTML = '<h2 class="text-xl font-semibold mb-1">Thanks — your message has been sent.</h2><p>We’ll get back to you within a couple of days from <strong>info@arcturusdc.com</strong>.</p>';
+                  wrapper.appendChild(div);
+                } else {
+                  alert('Sorry, something went wrong. Please try again.');
+                }
+              } catch (err) {
+                alert('Network error. Please try again.');
+              }
+            }, { passive: false });
+          })();
+        `}
+      </Script>
     </div>
   );
 }
