@@ -3,200 +3,170 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-/* ---------- Small modal with focus trap ---------- */
-function Modal({ isOpen, onClose, app }) {
-  const dialogRef = useRef(null);
-
+/* -------------------- Click outside hook -------------------- */
+function useClickOutside(ref, onOutside) {
   useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    // focus trap-ish
-    const prev = document.activeElement;
-    dialogRef.current?.focus();
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      prev?.focus?.();
+    const onClick = (e) => {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) onOutside?.();
     };
-  }, [isOpen, onClose]);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [onOutside, ref]);
+}
 
-  if (!isOpen || !app) return null;
+/* -------------------- Card -------------------- */
+function AppCard({ app }) {
+  const [open, setOpen] = useState(false);
+  const cardRef = useRef(null);
+  const popRef = useRef(null);
+
+  // Close with Esc
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Click outside (for the popover)
+  useClickOutside(popRef, () => setOpen(false));
+
+  const href = app.link || `/apps/${app.id}`;
+  const strap = app.strap || app.desc || "";
+  const summary = app.summary || app.desc || "";
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={`app-title-${app.id}`}
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6"
-      onClick={onClose}
-    >
-      {/* backdrop */}
-      <div className="absolute inset-0 bg-black/50" />
-
-      {/* panel */}
+    <div className="relative">
+      {/* Base card — fixed height so the grid never pushes siblings */}
       <div
-        ref={dialogRef}
-        tabIndex={-1}
-        className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+        ref={cardRef}
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
+        className={[
+          "group relative rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition overflow-hidden",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800",
+          "min-h-[220px]", // <- keeps the grid stable
+          open ? "z-40" : "z-0",
+        ].join(" ")}
+        aria-expanded={open}
       >
-        {/* bg image, stronger but softened */}
+        {/* Stronger background image */}
         {app.bg && (
           <>
             <Image
               src={app.bg}
               alt=""
               fill
-              sizes="100vw"
-              className="absolute inset-0 object-cover opacity-30"
-              priority={false}
+              sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
+              className="absolute inset-0 object-cover opacity-35 transition-opacity duration-300 group-hover:opacity-45"
             />
-            <div className="absolute inset-0 bg-white/80" />
+            <div className="absolute inset-0 pointer-events-none bg-white/35" />
           </>
         )}
 
-        <div className="relative p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="w-12 h-12 rounded-xl overflow-hidden shrink-0 block">
-              {app.icon ? (
-                <img
-                  src={app.icon}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <span className="w-full h-full bg-neutral-200 block" />
-              )}
-            </span>
-            <h2
-              id={`app-title-${app.id}`}
-              className="text-xl font-semibold text-neutral-900"
+        {/* Foreground content */}
+        <div className="relative">
+          {/* Name/logo is a link – does NOT toggle open */}
+          <div className="flex items-center gap-4 mb-3">
+            <a
+              href={href}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-4"
+              aria-label={app.name}
             >
-              {app.name}
-            </h2>
+              <span className="w-12 h-12 rounded-xl overflow-hidden shrink-0 block">
+                {app.icon ? (
+                  <img
+                    src={app.icon}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className="w-full h-full bg-neutral-200 block" />
+                )}
+              </span>
+              <span className="font-semibold text-lg underline-offset-4 hover:underline">
+                {app.name}
+              </span>
+            </a>
           </div>
 
-          {app.strap && (
-            <p className="text-sm text-neutral-700 italic mb-3">{app.strap}</p>
+          {strap && (
+            <p className="text-sm text-neutral-800/90 italic">{strap}</p>
           )}
 
-          <p className="text-neutral-800 leading-relaxed">
-            {app.summary || app.desc || ""}
-          </p>
-
-          <div className="mt-6 flex items-center gap-3">
-            {app.link && (
-              <a
-                href={app.link}
-                className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
-              >
-                Visit app →
-              </a>
+          {/* Mobile inline expand (no popover on small screens) */}
+          <div
+            className={[
+              "sm:hidden overflow-hidden transition-[max-height] duration-300 ease-out",
+              open ? "max-h-[800px] mt-2" : "max-h-0",
+            ].join(" ")}
+          >
+            {summary && (
+              <p className="text-sm text-neutral-800 mt-2">{summary}</p>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50"
-            >
-              Close
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-/* ---------- App card (fixed height; opens modal) ---------- */
-function AppCard({ app, onOpen }) {
-  const href = app.link || `/apps/${app.id}`;
-  const strap = app.strap || app.desc || "";
+      {/* Desktop/Tablet popover anchored to the card (no layout shift) */}
+      {open && (
+        <div
+          ref={popRef}
+          className={[
+            "hidden sm:block",         // only >= sm
+            "absolute left-0 right-0", // anchor to card width
+            "top-[calc(100%+8px)]",    // below the card with small gap
+            "rounded-2xl bg-white shadow-2xl ring-1 ring-black/10",
+            "p-5 sm:p-6 lg:p-7",
+            "z-50",
+          ].join(" ")}
+          // allow popover to overflow outside the grid cell
+          style={{ pointerEvents: "auto" }}
+        >
+          {/* Optional softened background motif inside popover */}
+          {app.bg && (
+            <>
+              <Image
+                src={app.bg}
+                alt=""
+                fill
+                sizes="100vw"
+                className="absolute inset-0 object-cover opacity-10"
+              />
+              <div className="absolute inset-0 bg-white/80" />
+            </>
+          )}
 
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onOpen(app)}
-      onKeyDown={(e) => {
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault();
-          onOpen(app);
-        }
-      }}
-      className="group relative rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 min-h-[220px]"
-      aria-label={`Open details for ${app.name}`}
-    >
-      {/* stronger bg image */}
-      {app.bg && (
-        <>
-          <Image
-            src={app.bg}
-            alt=""
-            fill
-            sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-            className="absolute inset-0 object-cover opacity-35 transition-opacity duration-300 group-hover:opacity-45"
-            priority={false}
-          />
-          <div className="absolute inset-0 pointer-events-none bg-white/35" />
-        </>
-      )}
-
-      {/* content */}
-      <div className="relative">
-        <div className="flex items-center gap-4 mb-3">
-          {/* name/logo is navigational; stop propagation so it doesn’t open modal */}
-          <a
-            href={href}
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-4"
-            aria-label={app.name}
-          >
-            <span className="w-12 h-12 rounded-xl overflow-hidden shrink-0 block">
-              {app.icon ? (
-                <img
-                  src={app.icon}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <span className="w-full h-full bg-neutral-200 block" />
-              )}
-            </span>
-            <span className="font-semibold text-lg underline-offset-4 hover:underline">
-              {app.name}
-            </span>
-          </a>
+          <div className="relative">
+            {summary && (
+              <p className="text-[15px] leading-relaxed text-neutral-900">
+                {summary}
+              </p>
+            )}
+          </div>
         </div>
-
-        {strap && (
-          <p className="text-sm text-neutral-800/90 italic">
-            {strap}
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
-/* ---------- Grid + modal controller ---------- */
+/* -------------------- Grid -------------------- */
 export default function AppsClient({ apps }) {
-  const [openApp, setOpenApp] = useState(null);
-
   return (
-    <>
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {apps.map((app) => (
-          <AppCard key={app.id} app={app} onOpen={setOpenApp} />
-        ))}
-      </div>
-
-      <Modal
-        isOpen={!!openApp}
-        app={openApp}
-        onClose={() => setOpenApp(null)}
-      />
-    </>
+    <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 relative overflow-visible">
+      {apps.map((app) => (
+        <AppCard key={app.id} app={app} />
+      ))}
+    </div>
   );
 }
