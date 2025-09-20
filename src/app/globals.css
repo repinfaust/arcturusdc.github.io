@@ -3,9 +3,7 @@
 @tailwind utilities;
 
 /* -------- Root & Background -------- */
-:root {
-  --ring: rgba(240,69,47,.25);
-}
+:root { --ring: rgba(240,69,47,.25); }
 
 /* Subtle arcturus starburst background */
 .bg-starburst {
@@ -17,44 +15,38 @@
 /* -------- Custom shadows -------- */
 .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.06); }
 
-/* Optional: smoother theme transitions (kept subtle) */
-* {
-  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-}
+/* Optional: smoother theme transitions */
+* { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 /* -------- Component layer -------- */
 @layer components {
   /* Cards */
-  .card {
-    @apply bg-white border border-black/10 rounded-2xl shadow-soft;
-  }
+  .card { @apply bg-white border border-black/10 rounded-2xl shadow-soft; }
 
   /* Buttons */
-  .btn {
-    @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2;
-  }
-  .btn-primary {
-    @apply bg-red-600 text-white hover:bg-red-700;
-  }
-  .btn-secondary {
-    @apply bg-white border border-black/10 text-neutral-900 hover:bg-white/80;
+  .btn       { @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2; }
+  .btn-primary   { @apply bg-red-600 text-white hover:bg-red-700; }
+  .btn-secondary { @apply bg-white border border-black/10 text-neutral-900 hover:bg-white/80; }
+
+  /* --- Badges (chips) --- */
+
+  /* Row helper: consistent centering, spacing, sizing */
+  .badges {
+    @apply w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm;
   }
 
-  /* Non-interactive metadata badge with orange dot */
+  /* Core badge */
   .badge {
-    @apply inline-flex items-center rounded-full px-3 py-1 
-           text-xs sm:text-sm font-medium
+    @apply inline-flex items-center rounded-full px-3 py-1
+           font-medium leading-none
            bg-neutral-200 text-neutral-900
            select-none cursor-default;
   }
 
+  /* Orange dot */
   .badge::before {
     content: "";
-    display: inline-block;
-    @apply w-2 h-2 rounded-full mr-2 bg-orange-500;
+    @apply inline-block w-2 h-2 rounded-full mr-2 bg-orange-500;
   }
 }
