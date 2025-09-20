@@ -1,16 +1,23 @@
+// src/components/ConsentManager.js
 "use client";
 
 import { useEffect, useState } from "react";
-
-const LS_KEY = "adc_consent"; // { analytics: boolean, ts: number }
+import { getConsent, setConsent } from "@/utils/consentStore"; // 👈 your util
 
 function updateGaConsent(granted) {
-  // Graceful if gtag not loaded yet; GA will pick up on next call too.
-  const gtag = (typeof window !== "undefined" && (window.adc?.gtag || window.gtag)) || null;
+  const gtag =
+    (typeof window !== "undefined" &&
+      (window.adc?.gtag || window.gtag)) ||
+    null;
   if (!gtag) return;
-  gtag("consent", "update", { analytics_storage: granted ? "granted" : "denied" });
-  // Optional: user property so you can segment “consented” sessions (no PII)
-  gtag("set", "user_properties", { analytics_consent: granted ? "true" : "false" });
+
+  gtag("consent", "update", {
+    analytics_storage: granted ? "granted" : "denied",
+  });
+
+  gtag("set", "user_properties", {
+    analytics_consent: granted ? "true" : "false",
+  });
 }
 
 export default function ConsentManager() {
@@ -18,17 +25,16 @@ export default function ConsentManager() {
   const [openPrefs, setOpenPrefs] = useState(false);
   const [analytics, setAnalytics] = useState(false);
 
-  // On mount: read prior choice (if any)
+  // On mount: read prior choice
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+      const saved = getConsent();
       if (saved && typeof saved.analytics === "boolean") {
-        setAnalytics(!!saved.analytics);
+        setAnalytics(saved.analytics);
         setSeen(true);
-        updateGaConsent(!!saved.analytics);
+        updateGaConsent(saved.analytics);
       } else {
-        // No prior choice → show banner
-        setSeen(false);
+        setSeen(false); // no prior choice → show banner
       }
     } catch {
       setSeen(false);
@@ -36,9 +42,9 @@ export default function ConsentManager() {
   }, []);
 
   function persistAndClose(next) {
-    const record = { analytics: next, ts: Date.now() };
-    localStorage.setItem(LS_KEY, JSON.stringify(record));
+    setConsent({ analytics: next });
     updateGaConsent(next);
+    setAnalytics(next);
     setSeen(true);
     setOpenPrefs(false);
   }
@@ -47,7 +53,7 @@ export default function ConsentManager() {
 
   return (
     <>
-      {/* Banner (shows until accepted/rejected) */}
+      {/* Banner (first-time choice) */}
       {!seen && !openPrefs && (
         <div
           role="dialog"
@@ -57,9 +63,13 @@ export default function ConsentManager() {
         >
           <div className="rounded-2xl border border-white/10 bg-neutral-900/90 backdrop-blur px-4 py-4 sm:px-6 sm:py-5 text-white shadow-lg">
             <p className="text-sm">
-              We use essential cookies to make this site work. With your permission we’d also like to
-              use analytics (Google Analytics) to help us improve.{" "}
-              <a href="/privacy" className="underline decoration-white/40 hover:decoration-white">
+              We use essential cookies to make this site work. With your
+              permission we’d also like to use analytics (Google Analytics) to
+              help us improve.{" "}
+              <a
+                href="/privacy"
+                className="underline decoration-white/40 hover:decoration-white"
+              >
                 Learn more
               </a>
               .
@@ -107,7 +117,8 @@ export default function ConsentManager() {
           >
             <h2 className="text-xl font-semibold">Cookie preferences</h2>
             <p className="mt-2 text-sm text-white/80">
-              Essential cookies are always on. Enable analytics to help us improve the site.
+              Essential cookies are always on. Enable analytics to help us
+              improve the site.
             </p>
 
             <div className="mt-4 space-y-3">
@@ -119,16 +130,21 @@ export default function ConsentManager() {
                       Required for the site to function. Always on.
                     </div>
                   </div>
-                  <span className="text-xs rounded-full bg-white/10 px-2 py-1">Always on</span>
+                  <span className="text-xs rounded-full bg-white/10 px-2 py-1">
+                    Always on
+                  </span>
                 </div>
               </div>
 
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-medium">Analytics (Google Analytics)</div>
+                    <div className="font-medium">
+                      Analytics (Google Analytics)
+                    </div>
                     <div className="text-sm text-white/70">
-                      Helps us understand usage. No personal identifiers in our events.
+                      Helps us understand usage. No personal identifiers in our
+                      events.
                     </div>
                   </div>
                   <label className="inline-flex items-center gap-2 cursor-pointer">
@@ -147,10 +163,7 @@ export default function ConsentManager() {
             <div className="mt-5 flex gap-2 justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  setAnalytics(false);
-                  persistAndClose(false);
-                }}
+                onClick={() => persistAndClose(false)}
                 className="rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               >
                 Save & reject
