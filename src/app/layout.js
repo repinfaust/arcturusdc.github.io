@@ -3,7 +3,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import HeaderSpacer from "@/components/HeaderSpacer";
 import Footer from "@/components/Footer";
-import RouteAnalytics from "@/components/RouteAnalytics"; // 👈 new import
+import RouteAnalytics from "@/components/RouteAnalytics";
+import ConsentManager from "@/components/ConsentManager";
 
 export const metadata = {
   title: "Arcturus Digital Consulting",
@@ -18,13 +19,16 @@ export default function RootLayout({ children }) {
         <Header />
         <HeaderSpacer />
 
-        {/* Global analytics hook (fires on route changes) */}
+        {/* Analytics hook (fires page_view on route change) */}
         <RouteAnalytics />
+
+        {/* Consent manager (banner + preferences) */}
+        <ConsentManager />
 
         {/* Page content */}
         <main>{children}</main>
 
-        {/* Footer at the very bottom */}
+        {/* Footer at bottom */}
         <Footer />
       </body>
     </html>
