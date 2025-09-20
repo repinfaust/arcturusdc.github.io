@@ -9,37 +9,33 @@ export default function HeroWithApps() {
   const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current;
-    const bg = bgRef.current;
-    const card = cardRef.current;
+    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
     if (!root || !bg || !card) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bg.style.opacity = reduce ? "1" : "0";
+    card.style.opacity = reduce ? "1" : "0";
 
     let raf = 0;
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-    const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
+    const getVH = () => (window.visualViewport?.height ?? window.innerHeight ?? 1);
 
     const tick = () => {
       raf = 0;
-
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = matchMedia("(max-width: 640px)").matches;
 
-      // Animate from near bottom to mid-hero
       const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY = vh * (isSmall ? 0.52 : 0.40);
+      const endY   = vh * (isSmall ? 0.52 : 0.40);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
-        // Parallax bg + fade
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
 
-        // Card vertical path
         const startTopPct = isSmall ? 84 : 70;
-        const endTopPct = isSmall ? 47 : 42;
+        const endTopPct   = isSmall ? 47 : 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
         card.style.top = `${topPct}%`;
@@ -53,15 +49,12 @@ export default function HeroWithApps() {
       }
     };
 
-    const onScrollResize = () => {
-      if (!raf) raf = requestAnimationFrame(tick);
-    };
+    const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
 
     tick();
     window.addEventListener("scroll", onScrollResize, { passive: true });
     window.addEventListener("resize", onScrollResize, { passive: true });
     window.visualViewport?.addEventListener("resize", onScrollResize, { passive: true });
-
     return () => {
       window.removeEventListener("scroll", onScrollResize);
       window.removeEventListener("resize", onScrollResize);
@@ -70,14 +63,14 @@ export default function HeroWithApps() {
     };
   }, []);
 
+  const heroH = "h-[88vh] md:h-[82vh]";
+  const topMargin = "mt-12 sm:mt-16";
+
   return (
     <section
       ref={rootRef}
       aria-label="Apps hero"
-      className={[
-        "relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]",
-        "h-[88vh] md:h-[82vh] mt-12 sm:mt-16 mb-20",
-      ].join(" ")}
+      className={`relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] ${heroH} ${topMargin} mb-20`}
     >
       {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
@@ -115,7 +108,7 @@ export default function HeroWithApps() {
           simple, compliant, and privacy-first.
         </p>
 
-        {/* CTA above the meta badges */}
+        {/* CTA stays left */}
         <a
           href="/apps"
           className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
@@ -123,8 +116,8 @@ export default function HeroWithApps() {
           Browse apps →
         </a>
 
-        {/* Non-interactive badges (centred on small, left on md+) */}
-        <div className="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs sm:text-sm">
+        {/* Centred chips */}
+        <div className="mt-4 w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
           <span className="badge">App Store &amp; Google Play</span>
           <span className="badge">UK based</span>
           <span className="badge">Privacy-first</span>
