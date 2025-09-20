@@ -1,8 +1,8 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* -------- Root & Background -------- */
 :root {
   --ring: rgba(240,69,47,.25);
 }
@@ -14,35 +14,43 @@
     radial-gradient(800px 400px at 110% -10%, rgba(32,32,32,.05), transparent 60%);
 }
 
-.card {
-  @apply bg-white border border-black/10 rounded-xl2 shadow-soft;
-}
-
-.badge {
-  @apply inline-flex items-center gap-2 text-sm border border-black/10 rounded-full bg-white px-2.5 py-1;
-}
-
-.btn {
-  @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2;
-}
-.btn-primary { @apply bg-brand text-white hover:bg-brand-600; }
-.btn-secondary { @apply bg-white border border-black/10 text-ink hover:bg-white/80; }
-
-/* subtle card shadow */
+/* -------- Custom shadows -------- */
 .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.06); }
 
-/* pill badges used under hero */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .35rem .7rem;
-  font-size: .8rem;
-  border-radius: 9999px;
-  background: white;
-  border: 1px solid rgba(0,0,0,.08);
-  color: #1C1C1C;
+/* Optional: smoother theme transitions (kept subtle) */
+* {
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
 }
 
-/* optional: smooth transitions on layout shifts */
-* { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* -------- Component layer (ensures Tailwind keeps these classes) -------- */
+@layer components {
+  /* Cards */
+  .card {
+    @apply bg-white border border-black/10 rounded-2xl shadow-soft;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2;
+  }
+  .btn-primary {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-secondary {
+    @apply bg-white border border-black/10 text-neutral-900 hover:bg-white/80;
+  }
+
+  /* Non-interactive metadata badge (consistent everywhere) */
+  .badge {
+    @apply inline-flex items-center justify-center
+           rounded-full px-3 py-1
+           text-xs sm:text-sm leading-none
+           bg-neutral-100 text-neutral-600
+           ring-1 ring-inset ring-neutral-200
+           select-none cursor-default;
+  }
+}
