@@ -51,15 +51,9 @@ export default function HeroWithCapabilities() {
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
-      } else {
-        bg.style.opacity = "1"; bg.style.transform = "none";
-      }
+      } else { bg.style.opacity = "1"; bg.style.transform = "none"; }
 
-      if (reduce) {
-        card.style.opacity = "1";
-        card.style.transform = "translate(-50%, -50%)";
-        return;
-      }
+      if (reduce) { card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)"; return; }
 
       const startTopPct = isSmall ? 80 : 70;
       const endTopPct   = isSmall ? 54 : 42;
@@ -75,9 +69,7 @@ export default function HeroWithCapabilities() {
 
     const ro = new ResizeObserver(() => { ensureMobileHeight(); if (!raf) raf = requestAnimationFrame(tick); });
 
-    setInitial();
-    ensureMobileHeight();
-    tick();
+    setInitial(); ensureMobileHeight(); tick();
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
@@ -118,11 +110,13 @@ export default function HeroWithCapabilities() {
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
             <p className="text-sm text-neutral-600">
-              Helping organisations cut through noise to find and deliver the next most valuable outcome...
+              Helping organisations cut through noise to find and deliver the next most valuable outcome. The emphasis
+              is on solving genuine problems in the simplest, most effective way.
             </p>
             <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">Learn more</a>
 
-            <div className="mt-6 flex justify-center flex-wrap gap-2 text-xs sm:text-sm">
+            {/* CENTRED chips */}
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
               <span className="badge">Discovery</span>
               <span className="badge">Compliance support</span>
               <span className="badge">Delivery ops</span>
@@ -132,13 +126,19 @@ export default function HeroWithCapabilities() {
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
             <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
-            <p className="text-sm text-neutral-600">Design and build of Android and iOS apps with privacy-first principles...</p>
+            <p className="text-sm text-neutral-600">
+              Design and build of Android and iOS apps with privacy-first principles. Each app is focused on a niche
+              where existing tools are either too generic or too complex, ensuring usability and compliance.
+            </p>
           </div>
 
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
-            <p className="text-sm text-neutral-600">From setup to insight, data is handled with clarity and purpose...</p>
+            <p className="text-sm text-neutral-600">
+              From setup to insight, data is handled with clarity and purpose. No spin, no vanity metrics — just
+              instrumentation and reporting that support decision-making and improvement.
+            </p>
           </div>
         </div>
       </div>
