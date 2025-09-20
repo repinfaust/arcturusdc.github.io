@@ -10,13 +10,15 @@ export const metadata = {
 export default function ContactPage() {
   return (
     <div className="px-3 sm:px-4">
-      <div className="mx-auto max-w-7xl pt-4 sm:pt-6 pb-12 sm:pb-16">
-        <div className="mx-auto max-w-2xl mb-8 text-center">
-          <p className="text-sm uppercase tracking-widest text-white/60">Get in touch</p>
-          <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-white">
+      <div className="mx-auto max-w-7xl pt-0 sm:pt-2 pb-12 sm:pb-16">
+        <div className="mx-auto max-w-2xl mb-6 text-center">
+          <p className="text-sm uppercase tracking-widest text-white/60 mt-0 mb-1">
+            Get in touch
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white mt-0 mb-2">
             Let’s talk about your product or platform
           </h1>
-          <p className="mt-3 text-white/70">
+          <p className="text-white/70 mt-0 mb-0">
             Product strategy, payments, metering, billing, compliance — we’ve got you covered.
           </p>
         </div>
