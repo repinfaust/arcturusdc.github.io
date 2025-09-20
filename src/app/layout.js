@@ -1,6 +1,6 @@
 import "./globals.css";
 import Header from "@/components/Header";
-import HeaderSpacer from "@/components/HeaderSpacer";
+import HeaderSpacer from "@/components/HeaderSpacer"; // <-- add this
 
 export const metadata = {
   title: "Arcturus Digital Consulting",
@@ -12,7 +12,8 @@ export default function RootLayout({ children }) {
     <html lang="en-GB">
       <body className="bg-paper text-ink bg-starburst">
         <Header />
-        <HeaderSpacer /> {/* route-aware spacer */}
+        {/* Route-aware spacer (big on home, tight elsewhere) */}
+        <HeaderSpacer />
         {children}
       </body>
     </html>
