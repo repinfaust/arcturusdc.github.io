@@ -44,13 +44,16 @@
     @apply bg-white border border-black/10 text-neutral-900 hover:bg-white/80;
   }
 
-  /* Non-interactive metadata badge (consistent everywhere) */
+  /* Non-interactive metadata badge with orange dot */
   .badge {
-    @apply inline-flex items-center justify-center
-           rounded-full px-3 py-1
-           text-xs sm:text-sm leading-none
-           bg-neutral-100 text-neutral-600
-           ring-1 ring-inset ring-neutral-200
+    @apply inline-flex items-center rounded-full px-3 py-1 
+           text-xs sm:text-sm font-medium
+           bg-neutral-200 text-neutral-900
            select-none cursor-default;
+  }
+
+  .badge::before {
+    content: "";
+    @apply inline-block w-2 h-2 rounded-full mr-2 bg-orange-500;
   }
 }
