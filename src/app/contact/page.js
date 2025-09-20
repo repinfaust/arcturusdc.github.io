@@ -1,4 +1,4 @@
-// app/contact/page.js
+// src/app/contact/page.js
 import { Suspense } from "react";
 
 export const metadata = {
@@ -6,6 +6,16 @@ export const metadata = {
   description:
     "Get in touch about product strategy, payments, metering, billing and platform work. We’ll get back to you promptly.",
 };
+
+function Banner({ type = "success", children }) {
+  const base =
+    "mb-6 rounded-xl border px-4 py-3 text-sm";
+  const styles =
+    type === "success"
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+      : "border-red-500/30 bg-red-500/10 text-red-200";
+  return <div className={`${base} ${styles}`}>{children}</div>;
+}
 
 function ContactForm() {
   return (
@@ -58,6 +68,7 @@ function ContactForm() {
             name="email"
             type="email"
             required
+            inputMode="email"
             className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
             placeholder="you@example.com"
           />
@@ -107,20 +118,29 @@ function ContactForm() {
   );
 }
 
-export default function ContactPage() {
+export default function ContactPage({ searchParams }) {
+  const sent = searchParams?.sent === "1";
+  const error = searchParams?.error;
+
   return (
     <div className="px-3 sm:px-4">
       <div className="mx-auto max-w-7xl py-12 sm:py-16">
         <div className="mx-auto max-w-2xl mb-8 text-center">
-          <p className="text-sm uppercase tracking-widest text-white/60">
-            Get in touch
-          </p>
+          <p className="text-sm uppercase tracking-widest text-white/60">Get in touch</p>
           <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight text-white">
             Let’s talk about your product or platform
           </h1>
           <p className="mt-3 text-white/70">
             Product strategy, payments, metering, billing, compliance — we’ve got you covered.
           </p>
+        </div>
+
+        <div className="mx-auto w-full max-w-2xl">
+          {sent && <Banner type="success">Thanks — your message has been sent. We’ll reply from <strong>info@arcturusdc.com</strong>.</Banner>}
+          {error === "missing" && <Banner type="error">Please fill in all required fields.</Banner>}
+          {error === "email" && <Banner type="error">That email address doesn’t look valid.</Banner>}
+          {error === "email-lib" && <Banner type="error">Email service isn’t available right now.</Banner>}
+          {error === "server" && <Banner type="error">Something went wrong sending your message. Try again in a moment.</Banner>}
         </div>
 
         <Suspense>
