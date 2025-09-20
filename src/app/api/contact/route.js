@@ -1,58 +1,47 @@
-export const dynamic = 'force-dynamic'; // no caching
+export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
-  const wantsJson =
-    (req.headers.get("accept") || "").includes("application/json") ||
-    (req.headers.get("x-requested-with") || "").toLowerCase() === "fetch";
-
   try {
-    const form = await req.formData();
+    // If the client sends JSON, support that; otherwise read FormData
+    const ctype = req.headers.get("content-type") || "";
+    let name, email, subject, message, hp = "";
+
+    if (ctype.includes("application/json")) {
+      const body = await req.json();
+      name = String(body.name || "").trim();
+      email = String(body.email || "").trim();
+      subject = String(body.subject || "").trim();
+      message = String(body.message || "").trim();
+      hp = String(body.company || "");
+    } else {
+      const form = await req.formData();
+      name = String(form.get("name") || "").trim();
+      email = String(form.get("email") || "").trim();
+      subject = String(form.get("subject") || "").trim();
+      message = String(form.get("message") || "").trim();
+      hp = String(form.get("company") || "");
+    }
 
     // Honeypot
-    const hp = String(form.get("company") || "");
-    if (hp.trim() !== "") {
-      return wantsJson
-        ? Response.json({ ok: true })
-        : Response.redirect(new URL("/contact?sent=1", req.url), 303);
-    }
+    if (hp.trim() !== "") return Response.json({ ok: true });
 
-    const name = String(form.get("name") || "").trim();
-    const email = String(form.get("email") || "").trim();
-    const subject = String(form.get("subject") || "").trim();
-    const message = String(form.get("message") || "").trim();
+    if (!name || !email || !subject || !message)
+      return Response.json({ ok: false, error: "missing" }, { status: 400 });
 
-    if (!name || !email || !subject || !message) {
-      return wantsJson
-        ? Response.json({ ok: false, error: "missing" }, { status: 400 })
-        : Response.redirect(new URL("/contact?error=missing", req.url), 303);
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return wantsJson
-        ? Response.json({ ok: false, error: "email" }, { status: 400 })
-        : Response.redirect(new URL("/contact?error=email", req.url), 303);
-    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return Response.json({ ok: false, error: "email" }, { status: 400 });
 
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
 
-    // Fallback if SMTP not configured
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-      const mailto = `mailto:info@arcturusdc.com?subject=${encodeURIComponent(
-        `[arcturusdc.com] ${subject}`
-      )}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
-      return wantsJson
-        ? Response.json({ ok: false, error: "smtp_not_configured", mailto }, { status: 503 })
-        : Response.redirect(mailto, 302);
+      return Response.json({ ok: false, error: "smtp_not_configured" }, { status: 503 });
     }
 
-    // Dynamic import so builds don’t choke if dep is temporarily missing
     let nodemailer;
     try {
       nodemailer = (await import("nodemailer")).default;
     } catch {
-      return wantsJson
-        ? Response.json({ ok: false, error: "email_lib" }, { status: 500 })
-        : Response.redirect(new URL("/contact?error=email-lib", req.url), 303);
+      return Response.json({ ok: false, error: "email_lib" }, { status: 500 });
     }
 
     const transporter = nodemailer.createTransport({
@@ -82,14 +71,10 @@ export async function POST(req) {
       html,
     });
 
-    return wantsJson
-      ? Response.json({ ok: true })
-      : Response.redirect(new URL("/contact?sent=1", req.url), 303);
+    return Response.json({ ok: true });
   } catch (err) {
     console.error(err);
-    return wantsJson
-      ? Response.json({ ok: false, error: "server" }, { status: 500 })
-      : Response.redirect(new URL("/contact?error=server", req.url), 303);
+    return Response.json({ ok: false, error: "server" }, { status: 500 });
   }
 }
 
