@@ -61,6 +61,10 @@ export default function Header() {
         <Link
           href="/"
           className="flex items-center gap-2 rounded-full px-1 -mx-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          data-analytics="link"
+          data-name="Nav: Brand"
+          data-component="Header"
+          data-location="nav"
         >
           <Image
             src="/img/logo-mark.png"
@@ -110,7 +114,14 @@ export default function Header() {
               href === "/" ? pathname === "/" : pathname?.startsWith(href);
             return (
               <li key={href}>
-                <NavLink href={href} active={active}>
+                <NavLink
+                  href={href}
+                  active={active}
+                  data-analytics="link"
+                  data-name={`Nav: ${label}`}
+                  data-component="Header"
+                  data-location="nav"
+                >
                   {label}
                 </NavLink>
               </li>
@@ -124,6 +135,11 @@ export default function Header() {
           onClick={() => setOpen(true)}
           className="md:hidden inline-flex items-center justify-center rounded-full p-2 -ml-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           aria-label="Open menu"
+          data-analytics="button"
+          data-name="Nav: Open menu"
+          data-component="Header"
+          data-location="nav"
+          data-variant="icon"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -144,6 +160,11 @@ export default function Header() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
+            data-analytics="button"
+            data-name="Nav: Close overlay"
+            data-component="Header"
+            data-location="drawer"
+            data-variant="overlay"
           />
           <div
             role="dialog"
@@ -155,6 +176,10 @@ export default function Header() {
                 href="/"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2"
+                data-analytics="link"
+                data-name="Nav: Brand (drawer)"
+                data-component="Header"
+                data-location="drawer"
               >
                 <Image
                   src="/img/logo-mark.png"
@@ -171,6 +196,11 @@ export default function Header() {
                 onClick={() => setOpen(false)}
                 className="rounded-full p-2 -mr-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                 aria-label="Close menu"
+                data-analytics="button"
+                data-name="Nav: Close menu"
+                data-component="Header"
+                data-location="drawer"
+                data-variant="icon"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -202,6 +232,10 @@ export default function Header() {
                         "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
                         "transition",
                       ].join(" ")}
+                      data-analytics="link"
+                      data-name={`Nav: ${label}`}
+                      data-component="Header"
+                      data-location="drawer"
                     >
                       {label}
                     </Link>
@@ -220,7 +254,7 @@ export default function Header() {
   );
 }
 
-function NavLink({ href, active, children }) {
+function NavLink({ href, active, children, ...dataAttrs }) {
   return (
     <Link
       href={href}
@@ -230,6 +264,7 @@ function NavLink({ href, active, children }) {
         active ? "text-white" : "text-white/85 hover:text-white",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
       ].join(" ")}
+      {...dataAttrs} // ← passes data-analytics/data-name/etc
     >
       <span className="relative">
         {children}
