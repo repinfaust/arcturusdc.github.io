@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getConsent, setConsent } from "@/utils/consentStore"; // 👈 your util
+import { getConsent, setConsent } from "@/utils/consentStore";
 
 function updateGaConsent(granted) {
   const gtag =
@@ -18,6 +18,15 @@ function updateGaConsent(granted) {
   gtag("set", "user_properties", {
     analytics_consent: granted ? "true" : "false",
   });
+
+  // 👇 Immediate nudge: fire page_view if just accepted
+  if (granted) {
+    gtag("event", "page_view", {
+      page_location: window.location.href,
+      page_path: window.location.pathname,
+      page_title: document.title,
+    });
+  }
 }
 
 export default function ConsentManager() {
@@ -43,7 +52,7 @@ export default function ConsentManager() {
 
   function persistAndClose(next) {
     setConsent({ analytics: next });
-    updateGaConsent(next);
+    updateGaConsent(next); // includes the nudge
     setAnalytics(next);
     setSeen(true);
     setOpenPrefs(false);
@@ -53,7 +62,7 @@ export default function ConsentManager() {
 
   return (
     <>
-      {/* Banner (first-time choice) */}
+      {/* Banner */}
       {!seen && !openPrefs && (
         <div
           role="dialog"
