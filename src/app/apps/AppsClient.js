@@ -14,11 +14,7 @@ function useInView(options) {
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry.isIntersecting) {
-          setInView(true);
-        } else {
-          setInView(false); // collapse when leaving view
-        }
+        setInView(entry.isIntersecting);
       },
       { rootMargin: "0px 0px -10% 0px", threshold: 0.25, ...(options || {}) }
     );
@@ -46,7 +42,7 @@ function AppCard({ app }) {
       onMouseEnter={() => setPointerOver(true)}
       onMouseLeave={() => setPointerOver(false)}
     >
-      {/* Optional background */}
+      {/* Background (STRONGER now) */}
       {app.bg && (
         <>
           <Image
@@ -54,10 +50,11 @@ function AppCard({ app }) {
             alt=""
             fill
             sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
-            className="absolute inset-0 object-cover opacity-25"
+            className="absolute inset-0 object-cover opacity-45 transition-opacity duration-300" // was opacity-25
             priority={false}
           />
-          <div className="absolute inset-0 pointer-events-none bg-white/60" />
+          {/* lighter veil so text stays readable without killing the art */}
+          <div className="absolute inset-0 pointer-events-none bg-white/10" />   {/* was bg-white/60 */}
         </>
       )}
 
@@ -84,15 +81,12 @@ function AppCard({ app }) {
           <p className="text-sm text-neutral-700 italic mb-2">{strap}</p>
         )}
 
-        {/* Expandable area: opens in-view OR on hover/focus; collapses when out-of-view and not hovered/focused */}
+        {/* Expandable area */}
         <div
           className={[
             "relative overflow-hidden transition-[max-height] duration-500 ease-out",
-            // collapsed by default
             "max-h-0",
-            // interactive overrides
             "group-hover:max-h-64 group-focus-within:max-h-64",
-            // in-view expands (and will shrink again when out-of-view due to hook)
             inView ? "max-h-64" : "",
           ].join(" ")}
         >
@@ -102,7 +96,6 @@ function AppCard({ app }) {
               "transition-transform duration-500 ease-out",
               "delay-150",
               "opacity-0 translate-y-1",
-              // show when either in view or pointer is over (keeps fade synced with height)
               (inView || pointerOver) ? "opacity-100 translate-y-0" : "",
               "group-hover:opacity-100 group-hover:translate-y-0",
               "group-focus-within:opacity-100 group-focus-within:translate-y-0",
