@@ -4,58 +4,71 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 export default function HeroWithCapabilities() {
-  const rootRef = useRef<HTMLDivElement|null>(null);
-  const bgRef   = useRef<HTMLDivElement|null>(null);
-  const cardRef = useRef<HTMLDivElement|null>(null);
+  const rootRef = useRef(null);
+  const bgRef = useRef(null);
+  const cardRef = useRef(null);
 
   useEffect(() => {
-    const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
+    const root = rootRef.current;
+    const bg = bgRef.current;
+    const card = cardRef.current;
     if (!root || !bg || !card) return;
 
-    const reduce  = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mqSmall = matchMedia("(max-width: 640px)");
-    let raf = 0;
 
-    const clamp01 = (v:number) => v < 0 ? 0 : v > 1 ? 1 : v;
+    let raf = 0;
+    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
     const ensureMobileHeight = () => {
-      if (!mqSmall.matches) { root!.style.height = ""; return; }
+      if (!mqSmall.matches) {
+        root.style.height = "";
+        return;
+      }
       const vh = getVH();
-      const cardH = card!.offsetHeight || 0;
+      const cardH = card.offsetHeight || 0;
       const needed = Math.max(vh * 0.9, cardH + 96);
-      root!.style.height = `${Math.ceil(needed)}px`;
+      root.style.height = `${Math.ceil(needed)}px`;
     };
 
     const tick = () => {
       raf = 0;
-      const rect = root!.getBoundingClientRect();
+
+      const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = mqSmall.matches;
 
       const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY   = vh * (isSmall ? 0.55 : 0.40);
+      const endY = vh * (isSmall ? 0.55 : 0.4);
       const p = clamp01((startY - rect.top) / (startY - endY || 1));
 
       if (!reduce) {
-        bg!.style.opacity = String(p);
-        bg!.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
+        bg.style.opacity = String(p);
+        bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
       } else {
-        bg!.style.opacity = "1";
-        bg!.style.transform = "none";
+        bg.style.opacity = "1";
+        bg.style.transform = "none";
       }
 
       const startTopPct = isSmall ? 80 : 70;
-      const endTopPct   = isSmall ? 54 : 42;
+      const endTopPct = isSmall ? 54 : 42;
       const topPct = startTopPct - (startTopPct - endTopPct) * p;
 
-      card!.style.top = `${topPct}%`;
-      card!.style.opacity = "1";
-      card!.style.transform = `translate(-50%, -50%) scale(${(isSmall ? 0.985 : 0.98) + (isSmall ? 0.015 : 0.02) * p})`;
+      card.style.top = `${topPct}%`;
+      card.style.opacity = "1";
+      card.style.transform = `translate(-50%, -50%) scale(${
+        (isSmall ? 0.985 : 0.98) + (isSmall ? 0.015 : 0.02) * p
+      })`;
     };
 
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
-    const onResize = () => { ensureMobileHeight(); if (!raf) raf = requestAnimationFrame(tick); };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const onResize = () => {
+      ensureMobileHeight();
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
 
     ensureMobileHeight();
     tick();
@@ -80,7 +93,6 @@ export default function HeroWithCapabilities() {
       aria-label="Network hero with capabilities"
       className="relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] mt-12 sm:mt-16 mb-20 sm:h-[82vh]"
     >
-      {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-hero-2560.png"
@@ -93,7 +105,6 @@ export default function HeroWithCapabilities() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Card */}
       <div
         ref={cardRef}
         className={[
@@ -114,9 +125,8 @@ export default function HeroWithCapabilities() {
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
             <p className="text-sm text-neutral-600">
-              Helping organisations cut through noise to find and deliver the next
-              most valuable outcome. The emphasis is on solving genuine problems in
-              the simplest, most effective way.
+              Helping organisations cut through noise to find and deliver the next most valuable
+              outcome. The emphasis is on solving genuine problems in the simplest, most effective way.
             </p>
             <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
               Learn more
@@ -127,9 +137,9 @@ export default function HeroWithCapabilities() {
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
             <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
             <p className="text-sm text-neutral-600">
-              Design and build of Android and iOS apps with privacy-first principles.
-              Each app is focused on a niche where existing tools are either too generic
-              or too complex, ensuring usability and compliance without unnecessary features.
+              Design and build of Android and iOS apps with privacy-first principles. Each app is
+              focused on a niche where existing tools are either too generic or too complex,
+              ensuring usability and compliance without unnecessary features.
             </p>
           </div>
 
@@ -137,14 +147,14 @@ export default function HeroWithCapabilities() {
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
             <p className="text-sm text-neutral-600">
-              From setup to insight, data is handled with clarity and purpose. No spin,
-              no vanity metrics — just reliable instrumentation and reporting that support
-              decision-making and improvement.
+              From setup to insight, data is handled with clarity and purpose. No spin, no vanity
+              metrics — just reliable instrumentation and reporting that support decision-making and
+              improvement.
             </p>
           </div>
         </div>
 
-        {/* ✅ One centered chips row */}
+        {/* one centered chip row */}
         <div className="mt-6 badges">
           <span className="badge">Discovery</span>
           <span className="badge">Compliance support</span>
