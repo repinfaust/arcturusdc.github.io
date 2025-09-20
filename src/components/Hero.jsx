@@ -13,11 +13,13 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className={cx(
-      "relative rounded-2xl p-6 sm:p-8 lg:p-10 overflow-hidden card",
-      "transition-opacity duration-700",
-      fadeIn ? "opacity-100" : "opacity-0"
-    )}>
+    <section
+      className={cx(
+        "relative rounded-2xl p-6 sm:p-8 lg:p-10 overflow-hidden card",
+        "transition-opacity duration-700",
+        fadeIn ? "opacity-100" : "opacity-0"
+      )}
+    >
       <div className="mb-2 text-xs font-semibold text-brand/80">Product &amp; Apps</div>
       <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
         Software that ships.
@@ -27,8 +29,28 @@ export default function Hero() {
       </p>
 
       <div className="mt-6 flex gap-3 flex-wrap">
-        <a href="/apps" className="btn-primary">Explore apps</a>
-        <a href="#capabilities" className="btn-secondary">Capabilities</a>
+        <a
+          href="/apps"
+          className="btn-primary"
+          data-analytics="button"
+          data-name="Hero: Explore apps"
+          data-component="Hero"
+          data-location="hero"
+          data-variant="primary"
+        >
+          Explore apps
+        </a>
+        <a
+          href="#capabilities"
+          className="btn-secondary"
+          data-analytics="button"
+          data-name="Hero: Capabilities"
+          data-component="Hero"
+          data-location="hero"
+          data-variant="secondary"
+        >
+          Capabilities
+        </a>
       </div>
 
       {/* soft brand glow in the corner */}
