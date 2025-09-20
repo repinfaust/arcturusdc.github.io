@@ -13,7 +13,7 @@ export default function Capabilities() {
           <section className="card p-6 mt-2">
             <h1 className="text-3xl sm:text-4xl font-extrabold">Capabilities</h1>
             <p className="mt-2 text-neutral-700">
-              At Arcturus Digital Consultancy we focus on three things: building apps,
+              At Arcturus Digital Consulting we focus on three things: building apps,
               making digital measurement reliable, and sharpening product strategy.
               Everything we do is outcome-first, practical, and grounded in solving real problems.
             </p>
