@@ -37,6 +37,10 @@
     "desc": "For you, for me, for them.",
     "link": "/apps/toume",
     "icon": "/img/tou.me_logo.jpeg",
-    "bg": "/img/toume-card-background.png"
+    "bg": "/img/toume-card-background.png",
+    "policies": [
+    { "label": "Privacy Policy (PDF)", "href": "/assets/policies/Toume_PrivacyPolicy.pdf" },
+    { "label": "Terms of Service (PDF)", "href": "/assets/policies/Toume_TermsOfService.pdf" }
+  ]
   }
 ]
