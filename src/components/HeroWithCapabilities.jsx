@@ -1,13 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const fire = (...args) => (window.adc?.gtag || window.gtag || function(){})?.(...args);
 
 export default function HeroWithCapabilities() {
   const rootRef = useRef(null);
   const bgRef = useRef(null);
   const cardRef = useRef(null);
+  const [hasViewed, setHasViewed] = useState(false); // send impression once
 
+  // Parallax / motion
   useEffect(() => {
     const root = rootRef.current;
     const bg = bgRef.current;
@@ -87,6 +91,31 @@ export default function HeroWithCapabilities() {
     };
   }, []);
 
+  // Impression (fires once when ≥50% of the card is visible)
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || hasViewed) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!hasViewed && entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            setHasViewed(true);
+            fire("event", "adc_section_view", {
+              section_id: "capabilities-hero",
+              component_name: "HeroWithCapabilities",
+              location: "hero"
+            });
+          }
+        });
+      },
+      { threshold: [0.5] }
+    );
+
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasViewed]);
+
   return (
     <section
       ref={rootRef}
@@ -128,7 +157,14 @@ export default function HeroWithCapabilities() {
               Helping organisations cut through noise to find and deliver the next most valuable
               outcome. The emphasis is on solving genuine problems in the simplest, most effective way.
             </p>
-            <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
+            <a
+              href="/capabilities"
+              className="mt-3 inline-block text-sm text-red-700 hover:underline"
+              data-analytics="link"
+              data-name="Capabilities hero: Learn more"
+              data-component="HeroWithCapabilities"
+              data-location="hero"
+            >
               Learn more
             </a>
           </div>
@@ -154,7 +190,7 @@ export default function HeroWithCapabilities() {
           </div>
         </div>
 
-        {/* one centered chip row */}
+        {/* one centred chip row */}
         <div className="mt-6 badges">
           <span className="badge">Discovery</span>
           <span className="badge">Compliance support</span>
