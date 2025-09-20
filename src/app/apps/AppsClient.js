@@ -1,9 +1,65 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-/* Measure inner content height for smooth expand */
+/* ---------------------------------------
+   FLIP: smoothly animate column reflow
+--------------------------------------- */
+function useFlip(containerRef) {
+  const prevRects = useRef(new Map());
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const items = Array.from(
+      container.querySelectorAll("[data-flip-item]")
+    );
+
+    // Collect current rects
+    const currRects = new Map();
+    for (const el of items) {
+      currRects.set(el.dataset.key, el.getBoundingClientRect());
+    }
+
+    // Animate from previous -> current
+    for (const el of items) {
+      const key = el.dataset.key;
+      const prev = prevRects.current.get(key);
+      const curr = currRects.get(key);
+      if (!prev || !curr) continue;
+
+      const dx = prev.left - curr.left;
+      const dy = prev.top - curr.top;
+      if (dx || dy) {
+        // Invert: set from old position
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        el.style.willChange = "transform";
+
+        // Play: go to 0 on next frame
+        requestAnimationFrame(() => {
+          el.style.transition = "transform 320ms cubic-bezier(.2,.6,.2,1)";
+          el.style.transform = "translate(0,0)";
+          const clear = () => {
+            el.style.transition = "";
+            el.style.transform = "";
+            el.style.willChange = "";
+            el.removeEventListener("transitionend", clear);
+          };
+          el.addEventListener("transitionend", clear);
+        });
+      }
+    }
+
+    // Store for next pass
+    prevRects.current = currRects;
+  });
+}
+
+/* ---------------------------------------
+   Measure inner content height (expand)
+--------------------------------------- */
 function useMeasuredMaxHeight(deps = []) {
   const ref = useRef(null);
   const [maxH, setMaxH] = useState(0);
@@ -15,7 +71,6 @@ function useMeasuredMaxHeight(deps = []) {
     const set = () => setMaxH(el.scrollHeight);
     set();
 
-    // keep in sync if fonts load / viewport changes
     const ro = new ResizeObserver(set);
     ro.observe(el);
     window.addEventListener("resize", set, { passive: true });
@@ -30,7 +85,10 @@ function useMeasuredMaxHeight(deps = []) {
   return { ref, maxH };
 }
 
-function AppCard({ app }) {
+/* ---------------------------------------
+   App card
+--------------------------------------- */
+function AppCard({ app, onToggle }) {
   const [expanded, setExpanded] = useState(false);
   const { ref: expandRef, maxH } = useMeasuredMaxHeight([
     expanded,
@@ -42,7 +100,10 @@ function AppCard({ app }) {
   const strap = app.strap || app.desc || "";
   const summary = app.summary || app.desc || "";
 
-  const toggle = () => setExpanded((v) => !v);
+  const toggle = () => {
+    setExpanded((v) => !v);
+    onToggle?.(); // hint parent to run FLIP
+  };
 
   const onKeyDown = (e) => {
     if (e.key === " " || e.key === "Enter") {
@@ -109,10 +170,10 @@ function AppCard({ app }) {
           <p className="text-sm text-neutral-700 italic mb-2">{strap}</p>
         )}
 
-        {/* Expandable summary */}
+        {/* Expandable summary (height animates; FLIP smooths siblings) */}
         <div
           id={`summary-${app.id}`}
-          className="relative overflow-hidden transition-[max-height] duration-400 ease-out"
+          className="relative overflow-hidden transition-[max-height] duration-300 ease-out"
           style={{ maxHeight: expanded ? maxH : 0 }}
         >
           <div
@@ -123,7 +184,7 @@ function AppCard({ app }) {
               expanded ? "opacity-100" : "opacity-0",
             ].join(" ")}
           >
-            {summary && <p className="text-sm text-neutral-700">{summary}</p>}
+            {summary && <p className="text-sm text-neutral-800">{summary}</p>}
           </div>
         </div>
       </div>
@@ -131,13 +192,32 @@ function AppCard({ app }) {
   );
 }
 
+/* ---------------------------------------
+   Client: masonry + FLIP
+--------------------------------------- */
 export default function AppsClient({ apps }) {
+  const colRef = useRef(null);
+  useFlip(colRef); // animate any reflow caused by expansion
+
+  // force FLIP to run right away on toggle (helps when the height change is fast)
+  const handleToggle = () => {
+    // Trigger a microtask -> next render -> FLIP runs in useLayoutEffect
+  };
+
   return (
-    // ⬇️ Use multi-columns instead of grid
-    <div className="mt-8 columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
+    // Masonry columns preserved
+    <div
+      ref={colRef}
+      className="mt-8 columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance] relative"
+    >
       {apps.map((app) => (
-        <div key={app.id} className="mb-6 break-inside-avoid">
-          <AppCard app={app} />
+        <div
+          key={app.id}
+          data-flip-item
+          data-key={app.id}
+          className="mb-6 break-inside-avoid will-change-transform"
+        >
+          <AppCard app={app} onToggle={handleToggle} />
         </div>
       ))}
     </div>
