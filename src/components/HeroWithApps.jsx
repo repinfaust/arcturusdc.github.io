@@ -4,25 +4,24 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 export default function HeroWithApps() {
-  const rootRef = useRef(null);
-  const bgRef = useRef(null);
-  const cardRef = useRef(null);
+  const rootRef = useRef<HTMLDivElement|null>(null);
+  const bgRef   = useRef<HTMLDivElement|null>(null);
+  const cardRef = useRef<HTMLDivElement|null>(null);
 
   useEffect(() => {
     const root = rootRef.current, bg = bgRef.current, card = cardRef.current;
     if (!root || !bg || !card) return;
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     bg.style.opacity = reduce ? "1" : "0";
     card.style.opacity = reduce ? "1" : "0";
 
     let raf = 0;
-    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    const clamp01 = (v:number) => v < 0 ? 0 : v > 1 ? 1 : v;
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
     const tick = () => {
       raf = 0;
-
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = matchMedia("(max-width: 640px)").matches;
@@ -34,11 +33,9 @@ export default function HeroWithApps() {
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
-
         const startTopPct = isSmall ? 84 : 70;
         const endTopPct   = isSmall ? 47 : 42;
         const topPct = startTopPct - (startTopPct - endTopPct) * p;
-
         card.style.top = `${topPct}%`;
         card.style.opacity = String(p);
         card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
@@ -51,7 +48,6 @@ export default function HeroWithApps() {
     };
 
     const onScrollResize = () => { if (!raf) raf = requestAnimationFrame(tick); };
-
     tick();
     window.addEventListener("scroll", onScrollResize, { passive: true });
     window.addEventListener("resize", onScrollResize, { passive: true });
@@ -64,14 +60,11 @@ export default function HeroWithApps() {
     };
   }, []);
 
-  const heroH = "h-[88vh] md:h-[82vh]";
-  const topMargin = "mt-12 sm:mt-16";
-
   return (
     <section
       ref={rootRef}
       aria-label="Apps hero"
-      className={`relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] ${heroH} ${topMargin} mb-20`}
+      className="relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] h-[88vh] md:h-[82vh] mt-12 sm:mt-16 mb-20"
     >
       {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
@@ -86,7 +79,7 @@ export default function HeroWithApps() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Floating card */}
+      {/* Card */}
       <div
         ref={cardRef}
         className={[
@@ -109,7 +102,7 @@ export default function HeroWithApps() {
           simple, compliant, and privacy-first.
         </p>
 
-        {/* CTA stays left */}
+        {/* CTA */}
         <a
           href="/apps"
           className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
@@ -117,11 +110,11 @@ export default function HeroWithApps() {
           Browse apps →
         </a>
 
-        {/* Centred chips — warm variant */}
-        <div className="meta--warm mt-4 w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
-          <span className="chip"><span className="chip-dot" />App Store &amp; Google Play</span>
-          <span className="chip"><span className="chip-dot" />UK based</span>
-          <span className="chip"><span className="chip-dot" />Privacy-first</span>
+        {/* ✅ Centered chips (shared classes) */}
+        <div className="mt-4 badges">
+          <span className="badge">App Store &amp; Google Play</span>
+          <span className="badge">UK based</span>
+          <span className="badge">Privacy-first</span>
         </div>
       </div>
     </section>
