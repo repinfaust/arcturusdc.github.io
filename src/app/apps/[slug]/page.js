@@ -1,20 +1,22 @@
 import apps from '@/data/apps.json';
 
 export async function generateStaticParams() {
-  return Object.keys(apps).map(slug => ({ slug }));
+  // apps is an array; return [{ slug: 'mandrake' }, ...]
+  return apps.map(a => ({ slug: a.id }));
 }
 
 export default function AppOverview({ params }) {
-  const app = apps[params.slug];
+  // Find the app by its id (slug)
+  const app = apps.find(a => a.id === params.slug);
   if (!app) return notFound();
 
   const platforms = app.platforms ? Object.keys(app.platforms) : [];
-  const policies = app.policies || [];
+  const policies = Array.isArray(app.policies) ? app.policies : [];
 
   return (
     <main className="py-10">
       <a href="/apps" className="text-sm text-muted hover:text-brand">← Back to apps</a>
-      
+
       <div className="mt-4 flex items-center gap-4">
         {app.icon ? (
           <img
@@ -25,7 +27,12 @@ export default function AppOverview({ params }) {
         ) : null}
         <h1 className="text-3xl font-extrabold">{app.name}</h1>
       </div>
-      <p className="mt-2 text-muted">{app.tagline}</p>
+
+      {app.desc ? (
+        <p className="mt-2 text-muted">{app.desc}</p>
+      ) : app.tagline ? (
+        <p className="mt-2 text-muted">{app.tagline}</p>
+      ) : null}
 
       {platforms.length > 0 ? (
         <div className="mt-6 flex flex-wrap gap-3">
