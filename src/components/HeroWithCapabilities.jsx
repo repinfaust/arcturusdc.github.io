@@ -21,10 +21,11 @@ export default function HeroWithCapabilities() {
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
+    // Ensure background tall enough on mobile so the card never spills
     const ensureMobileHeight = () => {
       const isSmall = mqSmall.matches;
       if (!isSmall) {
-        root.style.height = "";
+        root.style.height = ""; // desktop: CSS controls height
         return;
       }
       const vh = getVH();
@@ -195,11 +196,11 @@ export default function HeroWithCapabilities() {
           </div>
         </div>
 
-        {/* Single centred chips row (moved out of col 1) */}
-        <div className="mt-6 w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
-          <span className="badge">Discovery</span>
-          <span className="badge">Compliance support</span>
-          <span className="badge">Delivery ops</span>
+        {/* Centred chips — cool variant */}
+        <div className="meta--cool mt-6 w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
+          <span className="chip"><span className="chip-dot" />Discovery</span>
+          <span className="chip"><span className="chip-dot" />Compliance support</span>
+          <span className="chip"><span className="chip-dot" />Delivery ops</span>
         </div>
       </div>
     </section>
