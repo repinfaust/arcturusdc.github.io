@@ -18,10 +18,11 @@ export default function HeroWithApps() {
 
     let raf = 0;
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-    const getVH = () => (window.visualViewport?.height ?? window.innerHeight ?? 1);
+    const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
     const tick = () => {
       raf = 0;
+
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = matchMedia("(max-width: 640px)").matches;
@@ -116,11 +117,11 @@ export default function HeroWithApps() {
           Browse apps →
         </a>
 
-        {/* Centred chips */}
-        <div className="mt-4 w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
-          <span className="badge">App Store &amp; Google Play</span>
-          <span className="badge">UK based</span>
-          <span className="badge">Privacy-first</span>
+        {/* Centred chips — warm variant */}
+        <div className="meta--warm mt-4 w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
+          <span className="chip"><span className="chip-dot" />App Store &amp; Google Play</span>
+          <span className="chip"><span className="chip-dot" />UK based</span>
+          <span className="chip"><span className="chip-dot" />Privacy-first</span>
         </div>
       </div>
     </section>
