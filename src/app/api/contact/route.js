@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    // If the client sends JSON, support that; otherwise read FormData
     const ctype = req.headers.get("content-type") || "";
     let name, email, subject, message, hp = "";
 
@@ -22,26 +21,20 @@ export async function POST(req) {
       hp = String(form.get("company") || "");
     }
 
-    // Honeypot
     if (hp.trim() !== "") return Response.json({ ok: true });
-
-    if (!name || !email || !subject || !message)
-      return Response.json({ ok: false, error: "missing" }, { status: 400 });
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return Response.json({ ok: false, error: "email" }, { status: 400 });
+    if (!name || !email || !subject || !message) return Response.json({ ok:false, error:"missing" }, { status:400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ ok:false, error:"email" }, { status:400 });
 
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
-
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-      return Response.json({ ok: false, error: "smtp_not_configured" }, { status: 503 });
+      return Response.json({ ok:false, error:"smtp_not_configured" }, { status:503 });
     }
 
     let nodemailer;
     try {
       nodemailer = (await import("nodemailer")).default;
     } catch {
-      return Response.json({ ok: false, error: "email_lib" }, { status: 500 });
+      return Response.json({ ok:false, error:"email_lib" }, { status:500 });
     }
 
     const transporter = nodemailer.createTransport({
@@ -72,9 +65,9 @@ export async function POST(req) {
     });
 
     return Response.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    return Response.json({ ok: false, error: "server" }, { status: 500 });
+  } catch (e) {
+    console.error(e);
+    return Response.json({ ok:false, error:"server" }, { status:500 });
   }
 }
 
