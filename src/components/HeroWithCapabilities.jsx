@@ -21,7 +21,6 @@ export default function HeroWithCapabilities() {
     const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
     const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
 
-    // ensure background tall enough on mobile so the card never spills
     const ensureMobileHeight = () => {
       const isSmall = mqSmall.matches;
       if (!isSmall) {
@@ -131,6 +130,7 @@ export default function HeroWithCapabilities() {
         "sm:h-[82vh]",
       ].join(" ")}
     >
+      {/* Background */}
       <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
         <Image
           src="/img/network-hero-2560.png"
@@ -143,6 +143,7 @@ export default function HeroWithCapabilities() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
+      {/* Card */}
       <div
         ref={cardRef}
         className={[
@@ -158,8 +159,8 @@ export default function HeroWithCapabilities() {
           Capabilities
         </h3>
 
-        <div className="grid gap-6 md:grid-cols-3 text-neutral-700">
-          {/* PS */}
+        {/* Three columns */}
+        <div className="grid gap-8 md:grid-cols-3 text-neutral-700">
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
@@ -171,14 +172,8 @@ export default function HeroWithCapabilities() {
             <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
               Learn more
             </a>
-            <div className="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs sm:text-sm">
-              <span className="badge">Discovery</span>
-              <span className="badge">Compliance support</span>
-              <span className="badge">Delivery ops</span>
-            </div>
           </div>
 
-          {/* AD */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
             <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
@@ -189,7 +184,6 @@ export default function HeroWithCapabilities() {
             </p>
           </div>
 
-          {/* DA */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
@@ -199,6 +193,13 @@ export default function HeroWithCapabilities() {
               decision-making and improvement.
             </p>
           </div>
+        </div>
+
+        {/* Single centred chips row (moved out of col 1) */}
+        <div className="mt-6 w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
+          <span className="badge">Discovery</span>
+          <span className="badge">Compliance support</span>
+          <span className="badge">Delivery ops</span>
         </div>
       </div>
     </section>
