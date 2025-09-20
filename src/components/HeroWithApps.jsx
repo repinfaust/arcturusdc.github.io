@@ -38,6 +38,7 @@ export default function HeroWithApps() {
 
     const tick = () => {
       raf = 0;
+
       const rect = root.getBoundingClientRect();
       const vh = getVH();
       const isSmall = mqSmall.matches;
@@ -49,9 +50,7 @@ export default function HeroWithApps() {
       if (!reduce) {
         bg.style.opacity = String(p);
         bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
-      } else {
-        bg.style.opacity = "1"; bg.style.transform = "none";
-      }
+      } else { bg.style.opacity = "1"; bg.style.transform = "none"; }
 
       if (reduce) { card.style.opacity = "1"; card.style.transform = "translate(-50%, -50%)"; return; }
 
@@ -93,7 +92,14 @@ export default function HeroWithApps() {
       className="relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] mt-12 sm:mt-16 mb-20 sm:h-[82vh]"
     >
       <div ref={bgRef} className="absolute inset-0">
-        <Image src="/img/network-orange-hero-2560.png" alt="Abstract network (orange)" fill priority sizes="100vw" className="object-cover" />
+        <Image
+          src="/img/network-orange-hero-2560.png"
+          alt="Abstract network (orange)"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
@@ -102,22 +108,26 @@ export default function HeroWithApps() {
         className="absolute left-1/2 w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px] rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10"
         style={{ top: "84%", transform: "translate(-50%, -50%)" }}
       >
-        <h2 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold text-neutral-900 mb-4">Apps</h2>
-
+        <h2 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold text-neutral-900 mb-4">
+          Apps
+        </h2>
         <p className="text-neutral-700 max-w-prose">
-          Every app is built with a clear purpose: to solve one problem well. The
-          portfolio includes ADHD motivation, shared-care family organisation,
-          and fitness planning — each designed to meet a need in a way that’s
-          simple, compliant, and privacy-first.
+          Every app is built with a clear purpose: to solve one problem well. The portfolio includes ADHD motivation,
+          shared-care family organisation, and fitness planning — each designed to meet a need in a way that’s simple,
+          compliant, and privacy-first.
         </p>
 
-        <div className="mt-6 flex justify-center flex-wrap gap-2 text-xs sm:text-sm">
+        {/* CENTRED chips */}
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
           <span className="badge">App Store &amp; Google Play</span>
           <span className="badge">UK based</span>
           <span className="badge">Privacy-first</span>
         </div>
 
-        <a href="/apps" className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700">
+        <a
+          href="/apps"
+          className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+        >
           Browse apps →
         </a>
       </div>
