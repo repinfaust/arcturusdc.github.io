@@ -32,7 +32,11 @@ function useMeasuredMaxHeight(deps = []) {
 
 function AppCard({ app }) {
   const [expanded, setExpanded] = useState(false);
-  const { ref: expandRef, maxH } = useMeasuredMaxHeight([expanded, app.summary, app.desc]);
+  const { ref: expandRef, maxH } = useMeasuredMaxHeight([
+    expanded,
+    app.summary,
+    app.desc,
+  ]);
 
   const href = app.link || `/apps/${app.id}`;
   const strap = app.strap || app.desc || "";
@@ -53,7 +57,7 @@ function AppCard({ app }) {
       tabIndex={0}
       onClick={toggle}
       onKeyDown={onKeyDown}
-      className="group relative rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800"
+      className="block group relative rounded-2xl border bg-white p-5 shadow-sm hover:shadow-md transition overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800"
       aria-expanded={expanded}
       aria-controls={`summary-${app.id}`}
     >
@@ -101,7 +105,9 @@ function AppCard({ app }) {
         </div>
 
         {/* Strap / tagline (always visible) */}
-        {strap && <p className="text-sm text-neutral-700 italic mb-2">{strap}</p>}
+        {strap && (
+          <p className="text-sm text-neutral-700 italic mb-2">{strap}</p>
+        )}
 
         {/* Expandable summary */}
         <div
@@ -127,9 +133,12 @@ function AppCard({ app }) {
 
 export default function AppsClient({ apps }) {
   return (
-    <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    // ⬇️ Use multi-columns instead of grid
+    <div className="mt-8 columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
       {apps.map((app) => (
-        <AppCard key={app.id} app={app} />
+        <div key={app.id} className="mb-6 break-inside-avoid">
+          <AppCard app={app} />
+        </div>
       ))}
     </div>
   );
