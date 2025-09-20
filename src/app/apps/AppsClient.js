@@ -4,6 +4,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 /* ---------------------------------------
+   GA helper (safe no-op if GA not ready)
+--------------------------------------- */
+const fire = (...args) => (window.adc?.gtag || window.gtag || function(){})?.(...args);
+
+/* ---------------------------------------
    FLIP: smoothly animate column reflow
 --------------------------------------- */
 function useFlip(containerRef) {
@@ -13,9 +18,7 @@ function useFlip(containerRef) {
     const container = containerRef.current;
     if (!container) return;
 
-    const items = Array.from(
-      container.querySelectorAll("[data-flip-item]")
-    );
+    const items = Array.from(container.querySelectorAll("[data-flip-item]"));
 
     // Collect current rects
     const currRects = new Map();
@@ -33,11 +36,9 @@ function useFlip(containerRef) {
       const dx = prev.left - curr.left;
       const dy = prev.top - curr.top;
       if (dx || dy) {
-        // Invert: set from old position
         el.style.transform = `translate(${dx}px, ${dy}px)`;
         el.style.willChange = "transform";
 
-        // Play: go to 0 on next frame
         requestAnimationFrame(() => {
           el.style.transition = "transform 320ms cubic-bezier(.2,.6,.2,1)";
           el.style.transform = "translate(0,0)";
@@ -52,7 +53,6 @@ function useFlip(containerRef) {
       }
     }
 
-    // Store for next pass
     prevRects.current = currRects;
   });
 }
@@ -87,22 +87,62 @@ function useMeasuredMaxHeight(deps = []) {
 
 /* ---------------------------------------
    App card
+   - Tracks:
+     • adc_click via data-* on the title/logo link
+     • adc_card_toggle when expanding/collapsing
+     • adc_card_view once per card when ≥60% visible
 --------------------------------------- */
 function AppCard({ app, onToggle }) {
   const [expanded, setExpanded] = useState(false);
-  const { ref: expandRef, maxH } = useMeasuredMaxHeight([
-    expanded,
-    app.summary,
-    app.desc,
-  ]);
+  const { ref: expandRef, maxH } = useMeasuredMaxHeight([expanded, app.summary, app.desc]);
+  const cardRootRef = useRef(null);
+  const viewedRef = useRef(false);
 
   const href = app.link || `/apps/${app.id}`;
   const strap = app.strap || app.desc || "";
   const summary = app.summary || app.desc || "";
 
+  // Impression: fire once when card is ≥60% visible
+  useEffect(() => {
+    const el = cardRootRef.current;
+    if (!el || viewedRef.current) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!viewedRef.current && entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            viewedRef.current = true;
+            fire("event", "adc_card_view", {
+              item_id: app.id,
+              item_name: app.name,
+              component_name: "AppsGrid",
+              location: "apps-grid",
+            });
+            io.disconnect();
+          }
+        }
+      },
+      { threshold: [0.6] }
+    );
+
+    io.observe(el);
+    return () => io.disconnect();
+  }, [app.id, app.name]);
+
   const toggle = () => {
-    setExpanded((v) => !v);
-    onToggle?.(); // hint parent to run FLIP
+    setExpanded((v) => {
+      const next = !v;
+      // analytics for expand/collapse (no PII)
+      fire("event", "adc_card_toggle", {
+        item_id: app.id,
+        item_name: app.name,
+        expanded: String(next),
+        component_name: "AppsGrid",
+        location: "apps-grid",
+      });
+      return next;
+    });
+    onToggle?.();
   };
 
   const onKeyDown = (e) => {
@@ -114,6 +154,7 @@ function AppCard({ app, onToggle }) {
 
   return (
     <div
+      ref={cardRootRef}
       role="button"
       tabIndex={0}
       onClick={toggle}
@@ -146,6 +187,10 @@ function AppCard({ app, onToggle }) {
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-4"
             aria-label={app.name}
+            data-analytics="link"
+            data-name={`Apps card: ${app.name}`}
+            data-component="AppsGrid"
+            data-location="apps-grid"
           >
             <span className="w-12 h-12 rounded-xl overflow-hidden shrink-0 block">
               {app.icon ? (
@@ -166,9 +211,7 @@ function AppCard({ app, onToggle }) {
         </div>
 
         {/* Strap / tagline (always visible) */}
-        {strap && (
-          <p className="text-sm text-neutral-700 italic mb-2">{strap}</p>
-        )}
+        {strap && <p className="text-sm text-neutral-700 italic mb-2">{strap}</p>}
 
         {/* Expandable summary (height animates; FLIP smooths siblings) */}
         <div
@@ -178,11 +221,9 @@ function AppCard({ app, onToggle }) {
         >
           <div
             ref={expandRef}
-            className={[
-              "pt-1",
-              "transition-opacity duration-300 ease-out",
-              expanded ? "opacity-100" : "opacity-0",
-            ].join(" ")}
+            className={["pt-1", "transition-opacity duration-300 ease-out", expanded ? "opacity-100" : "opacity-0"].join(
+              " "
+            )}
           >
             {summary && <p className="text-sm text-neutral-800">{summary}</p>}
           </div>
@@ -199,13 +240,11 @@ export default function AppsClient({ apps }) {
   const colRef = useRef(null);
   useFlip(colRef); // animate any reflow caused by expansion
 
-  // force FLIP to run right away on toggle (helps when the height change is fast)
   const handleToggle = () => {
     // Trigger a microtask -> next render -> FLIP runs in useLayoutEffect
   };
 
   return (
-    // Masonry columns preserved
     <div
       ref={colRef}
       className="mt-8 columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance] relative"
