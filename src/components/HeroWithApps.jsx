@@ -1,13 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const fire = (...args) => (window.adc?.gtag || window.gtag || function(){})?.(...args);
 
 export default function HeroWithApps() {
   const rootRef = useRef(null);
   const bgRef = useRef(null);
   const cardRef = useRef(null);
+  const [hasViewed, setHasViewed] = useState(false); // send impression once
 
+  // Parallax/animation
   useEffect(() => {
     const root = rootRef.current;
     const bg = bgRef.current;
@@ -67,6 +71,31 @@ export default function HeroWithApps() {
     };
   }, []);
 
+  // Impression (fires once when at least 50% of the card is visible)
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || hasViewed) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!hasViewed && entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            setHasViewed(true);
+            fire("event", "adc_section_view", {
+              section_id: "apps-hero",
+              component_name: "HeroWithApps",
+              location: "hero",
+            });
+          }
+        });
+      },
+      { threshold: [0.5] }
+    );
+
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasViewed]);
+
   return (
     <section
       ref={rootRef}
@@ -109,11 +138,16 @@ export default function HeroWithApps() {
         <a
           href="/apps"
           className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+          data-analytics="button"
+          data-name="Apps hero: Browse apps"
+          data-component="HeroWithApps"
+          data-location="hero"
+          data-variant="primary"
         >
           Browse apps →
         </a>
 
-        {/* centered chips — same classes everywhere */}
+        {/* centred chips — same classes everywhere */}
         <div className="mt-4 badges">
           <span className="badge">App Store &amp; Google Play</span>
           <span className="badge">UK based</span>
