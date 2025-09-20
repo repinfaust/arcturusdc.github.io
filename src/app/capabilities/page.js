@@ -1,6 +1,6 @@
 import Footer from "@/components/Footer";
 
-export const metadata = { title: "Capabilities — Arcturus Digital Consultancy" };
+export const metadata = { title: "Capabilities — Arcturus Digital Consulting" };
 
 export default function Capabilities() {
   return (
