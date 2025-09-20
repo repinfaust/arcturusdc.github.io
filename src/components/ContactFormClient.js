@@ -1,11 +1,21 @@
 // src/components/ContactFormClient.js
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useRef as useReactRef } from "react";
 
 export default function ContactFormClient() {
   const formRef = useRef(null);
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [error, setError] = useState(null);
+  const startedRef = useReactRef(false); // only send "start" once
+
+  function markFormStart() {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    // GA4: user started interacting with the form
+    (window.adc?.gtag || window.gtag || function () {})("event", "adc_form_start", {
+      form_id: "contact",
+    });
+  }
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -30,15 +40,23 @@ export default function ContactFormClient() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data?.ok) {
-        setError(data?.error || "server");
+        const reason = data?.error || "server";
+        setError(reason);
         setStatus("error");
+
+        // GA4: failed submit (no PII)
+        (window.adc?.gtag || window.gtag || function () {})("event", "adc_form_submit", {
+          form_id: "contact",
+          success: "false",
+          reason, // e.g. "missing", "email", "network", "server"
+        });
         return;
       }
 
       form.reset();
       setStatus("success");
 
-      // GA4: successful form submit (no PII)
+      // GA4: successful submit (no PII)
       (window.adc?.gtag || window.gtag || function () {})("event", "adc_form_submit", {
         form_id: "contact",
         success: "true",
@@ -46,6 +64,12 @@ export default function ContactFormClient() {
     } catch {
       setError("network");
       setStatus("error");
+      // GA4: network failure
+      (window.adc?.gtag || window.gtag || function () {})("event", "adc_form_submit", {
+        form_id: "contact",
+        success: "false",
+        reason: "network",
+      });
     }
   }
 
@@ -67,6 +91,7 @@ export default function ContactFormClient() {
       onSubmit={onSubmit}
       noValidate
       className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-neutral-900/70 backdrop-blur p-6 sm:p-8"
+      onFocusCapture={markFormStart} // first interaction = "start"
     >
       {/* Error banner */}
       {status === "error" && (
