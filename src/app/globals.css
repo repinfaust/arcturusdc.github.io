@@ -18,10 +18,15 @@
 .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.06); }
 
 /* Optional: smoother theme transitions (kept subtle) */
-* { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+* {
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+}
 
-/* -------- Component layer (ensures Tailwind keeps these classes) -------- */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* -------- Component layer -------- */
 @layer components {
   /* Cards */
   .card {
@@ -29,45 +34,27 @@
   }
 
   /* Buttons */
-  .btn { @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2; }
-  .btn-primary { @apply bg-red-600 text-white hover:bg-red-700; }
-  .btn-secondary { @apply bg-white border border-black/10 text-neutral-900 hover:bg-white/80; }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2;
+  }
+  .btn-primary {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-secondary {
+    @apply bg-white border border-black/10 text-neutral-900 hover:bg-white/80;
+  }
 
-  /* ---------- Non-interactive chips with dot (global + variants) ---------- */
-  .chip {
-    @apply inline-flex items-center gap-2
-           rounded-full px-3 py-1
-           text-xs sm:text-sm leading-none
+  /* Non-interactive metadata badge with orange dot */
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 
+           text-xs sm:text-sm font-medium
+           bg-neutral-200 text-neutral-900
            select-none cursor-default;
-    /* default fallback */
-    background: #eef1f4;            /* cool grey */
-    color: #1f2937;                 /* neutral-800 */
-    border: 1px solid #e5e7eb;      /* neutral-200 */
-  }
-  .chip-dot {
-    @apply inline-block rounded-full shrink-0;
-    width: .55rem; height: .55rem;  /* ~9px */
-    background: #fb923c;            /* muted orange */
-    box-shadow: 0 0 0 2px #ffffff55 inset;
   }
 
-  /* Variant for white/cool cards (e.g., Capabilities) */
-  .meta--cool .chip {
-    background: #eef2f6;            /* a touch darker than white */
-    border-color: #d9dee6;
-    color: #111827;
-  }
-  .meta--cool .chip-dot { background: #fb923c; }
-
-  /* Variant for warm/peach cards (e.g., Apps) */
-  .meta--warm .chip {
-    background: #ffffffcc;          /* semi-white on peach */
-    border-color: #ffffff66;
-    @apply backdrop-blur;
-    color: #1f2937;
-  }
-  .meta--warm .chip-dot {
-    background: #6b7280;            /* neutral to avoid clash */
-    box-shadow: 0 0 0 2px #ffffff66 inset;
+  .badge::before {
+    content: "";
+    display: inline-block;
+    @apply w-2 h-2 rounded-full mr-2 bg-orange-500;
   }
 }
