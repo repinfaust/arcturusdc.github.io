@@ -159,6 +159,7 @@ export default function HeroWithCapabilities() {
         </h3>
 
         <div className="grid gap-6 md:grid-cols-3 text-neutral-700">
+          {/* PS */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
@@ -170,8 +171,6 @@ export default function HeroWithCapabilities() {
             <a href="/capabilities" className="mt-3 inline-block text-sm text-red-700 hover:underline">
               Learn more
             </a>
-
-            {/* centred on small, left on md+ */}
             <div className="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs sm:text-sm">
               <span className="badge">Discovery</span>
               <span className="badge">Compliance support</span>
@@ -179,6 +178,29 @@ export default function HeroWithCapabilities() {
             </div>
           </div>
 
+          {/* AD */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
-            <h4 classNa
+            <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
+            <p className="text-sm text-neutral-600">
+              Design and build of Android and iOS apps with privacy-first principles.
+              Each app is focused on a niche where existing tools are either too generic
+              or too complex, ensuring usability and compliance without unnecessary features.
+            </p>
+          </div>
+
+          {/* DA */}
+          <div>
+            <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
+            <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
+            <p className="text-sm text-neutral-600">
+              From setup to insight, data is handled with clarity and purpose. No spin,
+              no vanity metrics — just reliable instrumentation and reporting that support
+              decision-making and improvement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
