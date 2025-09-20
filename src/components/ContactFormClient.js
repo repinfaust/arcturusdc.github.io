@@ -7,7 +7,7 @@ export default function ContactFormClient() {
   const [error, setError] = useState(null);
 
   async function onSubmit(e) {
-    e.preventDefault();
+    e.preventDefault(); // <- stops navigation
     setStatus("loading");
     setError(null);
 
@@ -17,7 +17,7 @@ export default function ContactFormClient() {
       email: form.email.value,
       subject: form.subject.value,
       message: form.message.value,
-      company: form.company?.value || "" // honeypot
+      company: form.company?.value || "", // honeypot
     };
 
     try {
@@ -32,7 +32,7 @@ export default function ContactFormClient() {
         setError(data?.error || "server");
         setStatus("error");
         return;
-        }
+      }
 
       form.reset();
       setStatus("success");
@@ -56,7 +56,8 @@ export default function ContactFormClient() {
       ref={formRef}
       onSubmit={onSubmit}
       className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-neutral-900/70 backdrop-blur p-6 sm:p-8"
-      aria-busy={status === "loading" ? "true" : "false"}
+      // IMPORTANT: no action/method → prevents browser navigation fallback
+      noValidate
     >
       {/* Error banner */}
       {status === "error" && (
