@@ -5,16 +5,14 @@ import { usePathname } from "next/navigation";
 export default function HeaderSpacer() {
   const pathname = usePathname();
 
-  // Home page is the only one that gets the big space
+  // Big brand spacing ONLY on the homepage
   const isHome = pathname === "/";
 
-  // Tight everywhere else (and you can add extra rules if needed)
-  const tight =
-    !isHome ||
-    pathname.startsWith("/apps/") ||
-    pathname === "/contact";
+  // Make contact extra-tight; apps tight; everything else tight
+  const isContact = pathname === "/contact";
+  const isApps = pathname.startsWith("/apps/");
 
-  const cls = tight ? "h-6 md:h-8" : "h-20 md:h-24"; // small vs large
+  const cls = isHome ? "h-20 md:h-24" : isContact ? "h-2 md:h-3" : isApps ? "h-6 md:h-8" : "h-6 md:h-8";
 
   return <div className={cls} aria-hidden="true" />;
 }
