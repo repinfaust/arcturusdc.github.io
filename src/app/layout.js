@@ -1,3 +1,6 @@
+// src/app/layout.js (very top, before the default export)
+export const dynamic = 'force-dynamic';
+
 // src/app/layout.js
 import "./globals.css";
 import Header from "@/components/Header";
