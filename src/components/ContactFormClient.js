@@ -1,130 +1,139 @@
 "use client";
-
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function ContactFormClient() {
-  const [sent, setSent] = useState(false);
+  const formRef = useRef(null);
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault();
-    setLoading(true);
+    setStatus("loading");
     setError(null);
 
-    const form = e.target;
-    const data = {
+    const form = formRef.current;
+    const payload = {
       name: form.name.value,
       email: form.email.value,
       subject: form.subject.value,
       message: form.message.value,
+      company: form.company?.value || "" // honeypot
     };
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Failed to send");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        setError(data?.error || "server");
+        setStatus("error");
+        return;
+        }
 
-      setSent(true);
       form.reset();
-    } catch (err) {
-      console.error(err);
-      setError("Sorry, something went wrong. Please try again later.");
-    } finally {
-      setLoading(false);
+      setStatus("success");
+    } catch {
+      setError("network");
+      setStatus("error");
     }
   }
 
-  if (sent) {
+  if (status === "success") {
     return (
-      <div className="mt-6 rounded-lg bg-orange-100 border border-orange-300 p-4 text-orange-800">
-        <p className="font-semibold">Thanks — your message has been sent.</p>
-        <p className="text-sm">
-          We’ll get back to you within a couple of days from{" "}
-          <span className="font-medium">info@arcturusdc.com</span>.
-        </p>
+      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-orange-300 bg-orange-100/80 text-orange-900 p-6 sm:p-8">
+        <h2 className="text-xl font-semibold mb-1">Thanks — your message has been sent.</h2>
+        <p>We’ll get back to you within a couple of days from <strong>info@arcturusdc.com</strong>.</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-xl space-y-4">
-      {error && (
-        <div className="rounded-lg bg-red-100 border border-red-300 p-3 text-red-800">
-          {error}
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-neutral-900/70 backdrop-blur p-6 sm:p-8"
+      aria-busy={status === "loading" ? "true" : "false"}
+    >
+      {/* Error banner */}
+      {status === "error" && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-200 px-4 py-3 text-sm">
+          {error === "missing" && "Please fill in all required fields."}
+          {error === "email" && "That email address doesn’t look valid."}
+          {error === "smtp_not_configured" && "Email service isn’t configured yet."}
+          {error === "email_lib" && "Email service is temporarily unavailable."}
+          {error === "network" && "Network error — please try again."}
+          {!["missing","email","smtp_not_configured","email_lib","network"].includes(error) &&
+            "Something went wrong sending your message. Try again in a moment."}
         </div>
       )}
-      <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium text-white/80"
-        >
-          Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          required
-          className="mt-1 w-full rounded-md border border-white/20 bg-neutral-900/50 p-2 text-white placeholder-white/40 focus:border-orange-400 focus:ring focus:ring-orange-400/30"
-        />
+
+      {/* Honeypot (hidden) */}
+      <div className="hidden">
+        <label htmlFor="company">Company (leave blank)</label>
+        <input id="company" name="company" type="text" />
       </div>
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-white/80"
-        >
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          required
-          className="mt-1 w-full rounded-md border border-white/20 bg-neutral-900/50 p-2 text-white placeholder-white/40 focus:border-orange-400 focus:ring focus:ring-orange-400/30"
-        />
+
+      <h1 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight mb-2">Contact</h1>
+      <p className="text-white/70 mb-6">
+        Prefer email? Drop us a line at{" "}
+        <a className="underline decoration-white/40 hover:decoration-white" href="mailto:info@arcturusdc.com">
+          info@arcturusdc.com
+        </a>.
+      </p>
+
+      <div className="grid gap-4 sm:gap-5">
+        <div>
+          <label className="block text-sm text-white/80 mb-1" htmlFor="name">Your name</label>
+          <input
+            id="name" name="name" type="text" required
+            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+            placeholder="Jane Smith" disabled={status === "loading"}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-white/80 mb-1" htmlFor="email">Email</label>
+          <input
+            id="email" name="email" type="email" inputMode="email" required
+            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+            placeholder="you@example.com" disabled={status === "loading"}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-white/80 mb-1" htmlFor="subject">Subject</label>
+          <input
+            id="subject" name="subject" type="text" required
+            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+            placeholder="How we can help" disabled={status === "loading"}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-white/80 mb-1" htmlFor="message">Message</label>
+          <textarea
+            id="message" name="message" rows={6} required
+            className="w-full rounded-xl bg-neutral-800/80 border border-white/10 px-3 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+            placeholder="Tell us a bit about your needs, timelines, and goals."
+            disabled={status === "loading"}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-white/50">We’ll reply from <span className="text-white">info@arcturusdc.com</span>.</p>
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="inline-flex items-center rounded-full bg-white/90 text-black px-5 py-2.5 font-medium hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition disabled:opacity-70"
+          >
+            {status === "loading" ? "Sending…" : "Send message"}
+          </button>
+        </div>
       </div>
-      <div>
-        <label
-          htmlFor="subject"
-          className="block text-sm font-medium text-white/80"
-        >
-          Subject
-        </label>
-        <input
-          type="text"
-          id="subject"
-          name="subject"
-          required
-          className="mt-1 w-full rounded-md border border-white/20 bg-neutral-900/50 p-2 text-white placeholder-white/40 focus:border-orange-400 focus:ring focus:ring-orange-400/30"
-        />
-      </div>
-      <div>
-        <label
-          htmlFor="message"
-          className="block text-sm font-medium text-white/80"
-        >
-          Message
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          rows="5"
-          required
-          className="mt-1 w-full rounded-md border border-white/20 bg-neutral-900/50 p-2 text-white placeholder-white/40 focus:border-orange-400 focus:ring focus:ring-orange-400/30"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-md bg-orange-600 px-4 py-2 font-medium text-white hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-neutral-900 disabled:opacity-50"
-      >
-        {loading ? "Sending..." : "Send Message"}
-      </button>
     </form>
   );
 }
