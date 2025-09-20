@@ -4,10 +4,10 @@ export async function POST(req) {
   try {
     const form = await req.formData();
 
-    // Honeypot
+    // Honeypot (bots fill this)
     const hp = String(form.get("company") || "");
     if (hp.trim() !== "") {
-      return Response.json({ ok: true });
+      return Response.redirect(new URL("/contact?sent=1", req.url), 303);
     }
 
     const name = String(form.get("name") || "").trim();
@@ -16,35 +16,31 @@ export async function POST(req) {
     const message = String(form.get("message") || "").trim();
 
     if (!name || !email || !subject || !message) {
-      return Response.json({ ok: false, error: "Missing required fields." }, { status: 400 });
+      return Response.redirect(new URL("/contact?error=missing", req.url), 303);
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return Response.json({ ok: false, error: "Invalid email address." }, { status: 400 });
+      return Response.redirect(new URL("/contact?error=email", req.url), 303);
     }
 
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = process.env;
 
-    // If SMTP not set, or nodemailer not present, fall back gracefully
+    // If SMTP not configured, fall back to mailto (opens user’s mail client)
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
       return Response.redirect(
         `mailto:info@arcturusdc.com?subject=${encodeURIComponent(
           `[Website] ${subject}`
-        )}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`
+        )}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`,
+        302
       );
     }
 
-    // Try dynamic import so build doesn't choke if package is absent
+    // Dynamic import so builds don’t fail if dep is temporarily missing
     let nodemailer;
     try {
       nodemailer = (await import("nodemailer")).default;
-    } catch (e) {
-      console.warn("nodemailer not installed; falling back to mailto redirect.");
-      return Response.redirect(
-        `mailto:info@arcturusdc.com?subject=${encodeURIComponent(
-          `[Website] ${subject}`
-        )}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`
-      );
+    } catch {
+      return Response.redirect(new URL("/contact?error=email-lib", req.url), 303);
     }
 
     const transporter = nodemailer.createTransport({
@@ -55,7 +51,7 @@ export async function POST(req) {
     });
 
     const html = `
-      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height:1.6; color:#111;">
+      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height:1.6;">
         <h2>New contact form submission</h2>
         <p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>
         <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
@@ -74,16 +70,11 @@ export async function POST(req) {
       html,
     });
 
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { "content-type": "application/json", "cache-control": "no-store" },
-    });
+    // ✅ Back to the form with a success flag
+    return Response.redirect(new URL("/contact?sent=1", req.url), 303);
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ ok: false, error: "Server error" }), {
-      status: 500,
-      headers: { "content-type": "application/json" },
-    });
+    return Response.redirect(new URL("/contact?error=server", req.url), 303);
   }
 }
 
