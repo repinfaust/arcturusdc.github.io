@@ -38,7 +38,7 @@ export async function POST(req) {
     // Fallback if SMTP not configured
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
       const mailto = `mailto:info@arcturusdc.com?subject=${encodeURIComponent(
-        `[Website] ${subject}`
+        `[arcturusdc.com] ${subject}`
       )}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
       return wantsJson
         ? Response.json({ ok: false, error: "smtp_not_configured", mailto }, { status: 503 })
@@ -74,10 +74,10 @@ export async function POST(req) {
     `;
 
     await transporter.sendMail({
-      from: `"Website Contact" <${SMTP_USER}>`,
+      from: `"arcturusdc.com Contact" <${SMTP_USER}>`,
       replyTo: `${name} <${email}>`,
       to: "info@arcturusdc.com",
-      subject: `[Website] ${subject}`,
+      subject: `[arcturusdc.com] ${subject}`,
       text: `From: ${name} <${email}>\nSubject: ${subject}\n\n${message}`,
       html,
     });
