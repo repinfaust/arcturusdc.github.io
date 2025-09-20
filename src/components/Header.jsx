@@ -63,7 +63,7 @@ export default function Header() {
         >
           <Image
             src="/img/logo-mark.png"
-            alt="Arcturus Digital Consultancy"
+            alt="Arcturus Digital Consulting"
             width={28}
             height={28}
             className="rounded-full"
@@ -81,7 +81,7 @@ export default function Header() {
                 "transition-opacity duration-150",
               ].join(" ")}
             >
-              Arcturus Digital Consultancy
+              Arcturus Digital Consulting
             </span>
 
             {/* Short brand (contracted) */}
