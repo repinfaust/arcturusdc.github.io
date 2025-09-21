@@ -1,73 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-function Feature({ title, desc, icon = 'dot' }) {
-  // Simple icon set (inline SVGs so you don’t pull extra deps)
-  const icons = {
-    dot: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <circle cx="12" cy="12" r="5" />
-      </svg>
-    ),
-    tap: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <path d="M9 11a3 3 0 1 1 6 0v2.2l1.06.35a3 3 0 0 1 1.94 2.83V20H8v-3.62A3 3 0 0 1 9.94 13.9L11 13.6V11z" />
-        <path d="M12 4a4 4 0 0 1 4 4h-2a2 2 0 1 0-2-2V4z" />
-      </svg>
-    ),
-    lightning: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <path d="M13 2 3 14h7l-1 8 11-14h-7l0-6z" />
-      </svg>
-    ),
-    timer: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <path d="M10 2h4v2h-4zM12 7a7 7 0 1 1 0 14 7 7 0 0 1 0-14zm0 2v5h4" />
-      </svg>
-    ),
-    star: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <path d="m12 2 3.1 6.3 6.9 1-5 4.8 1.2 6.9L12 18l-6.2 3 1.2-6.9-5-4.8 6.9-1z" />
-      </svg>
-    ),
-    chart: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <path d="M4 20V4h2v16H4zm7 0V9h2v11h-2zm7 0v-7h2v7h-2z" />
-      </svg>
-    ),
-    mood: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="9" cy="10" r="1.5" fill="white" />
-        <circle cx="15" cy="10" r="1.5" fill="white" />
-        <path d="M8 14c1.2 1 2.5 1.5 4 1.5S14.8 15 16 14" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-    shield: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <path d="M12 2 4 5v6c0 5 3.6 8.7 8 11 4.4-2.3 8-6 8-11V5l-8-3z" />
-      </svg>
-    ),
-    phone: (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="w-5 h-5">
-        <path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3h10v14H7V5z" />
-      </svg>
-    ),
-  };
-
-  return (
-    <div className="flex items-start gap-3">
-      <span className="shrink-0 mt-1 grid place-items-center rounded-lg border border-black/10 bg-white/60 p-2 shadow-sm">
-        {icons[icon] || icons.dot}
-      </span>
-      <div>
-        <h4 className="font-semibold text-neutral-900">{title}</h4>
-        <p className="text-neutral-700 text-sm">{desc}</p>
-      </div>
-    </div>
-  );
-}
-
 export default function Mandrake() {
   return (
     <main className="pb-10">
@@ -84,10 +17,14 @@ export default function Mandrake() {
         <div>
           <div className="font-extrabold">Mandrake</div>
           <div className="text-muted text-sm">
-            Mandrake gives you a private, lightweight way to spot urges, take action fast, and see what’s really
-            going on beneath the surface. Every feature is designed to keep friction low, reinforcement immediate,
-            and insights clear — all while staying entirely on your terms.
+            Private urge logging, quick tactics, and pattern insights.
           </div>
+          <p className="mt-2 text-sm text-neutral-700">
+            Mandrake gives you a private, lightweight way to spot urges, take action fast, and see
+            what’s really going on beneath the surface. Every feature is designed to keep friction
+            low, reinforcement immediate, and insights clear — all while staying entirely on your
+            terms.
+          </p>
         </div>
       </div>
 
@@ -159,64 +96,64 @@ export default function Mandrake() {
             </div>
           </div>
 
-          {/* Key Features (NEW) */}
+          {/* Key Features */}
           <div className="mt-10 md:mt-12">
             <h2 className="text-2xl md:text-[28px] font-extrabold text-white text-center md:text-left">
               Key Features
             </h2>
 
-            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-white">
               <Feature
-                icon="tap"
                 title="One-Tap Logging"
                 desc="Quickly note when an urge hits, without friction."
+                icon="log"
               />
               <Feature
-                icon="lightning"
                 title="Fast Tactics Menu"
                 desc="Choose from practical actions (walk, music, call/text, shower, jot it down, etc.)."
+                icon="bolt"
               />
               <Feature
-                icon="timer"
                 title="Wave Timer"
                 desc="Optional 10–30 min timer to help ride out the peak safely."
+                icon="timer"
               />
               <Feature
-                icon="star"
                 title="Instant Reinforcement"
                 desc="Subtle haptics, points, and micro-messages for every logged win."
+                icon="star"
               />
               <Feature
-                icon="chart"
                 title="Pattern Insights"
                 desc="Heatmaps and trends show when urges spike and which tactics help most."
+                icon="chart"
               />
               <Feature
-                icon="mood"
                 title="Mood Tracking"
                 desc="Emoji-based check-ins before and after each urge log."
+                icon="smile"
               />
               <Feature
-                icon="shield"
                 title="Quiet Safety Rails"
                 desc="Gentle, optional signposting if heavy patterns appear."
+                icon="shield"
               />
               <Feature
-                icon="shield"
                 title="Private by Default"
                 desc="Local-first storage; export or delete anytime."
+                icon="lock"
               />
               <Feature
-                icon="phone"
                 title="Cross-Platform Access"
                 desc="Available on both Android and iOS."
+                icon="device"
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Policies section (separate from hero) */}
+      {/* Policies section */}
       <section className="card p-6 mt-4">
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
 
@@ -258,5 +195,76 @@ export default function Mandrake() {
         </div>
       </section>
     </main>
+  );
+}
+
+/* --- Feature component --- */
+function Feature({ title, desc, icon = 'dot' }) {
+  const icons = {
+    log: (
+      <svg width="20" height="20" fill="currentColor">
+        <path d="M4 4h12v2H4zm0 5h12v2H4zm0 5h8v2H4z" />
+      </svg>
+    ),
+    bolt: (
+      <svg width="20" height="20" fill="currentColor">
+        <path d="M11 1L3 10h5l-1 9 8-11h-5z" />
+      </svg>
+    ),
+    timer: (
+      <svg width="20" height="20" fill="currentColor">
+        <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+        <path d="M10 5v5l3 3" stroke="currentColor" strokeWidth="2" fill="none" />
+      </svg>
+    ),
+    star: (
+      <svg width="20" height="20" fill="currentColor">
+        <path d="M10 1l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" />
+      </svg>
+    ),
+    chart: (
+      <svg width="20" height="20" fill="currentColor">
+        <path d="M4 12h2v6H4zm5-4h2v10H9zm5-6h2v16h-2z" />
+      </svg>
+    ),
+    smile: (
+      <svg width="20" height="20" fill="currentColor">
+        <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+        <path d="M6 8h.01M14 8h.01M7 13a5 5 0 0 0 6 0" stroke="currentColor" strokeWidth="2" />
+      </svg>
+    ),
+    shield: (
+      <svg width="20" height="20" fill="currentColor">
+        <path d="M10 1l9 4v6c0 5-3.5 9-9 11-5.5-2-9-6-9-11V5z" />
+      </svg>
+    ),
+    lock: (
+      <svg width="20" height="20" fill="currentColor">
+        <rect x="4" y="9" width="12" height="8" rx="2" />
+        <path d="M6 9V6a4 4 0 0 1 8 0v3" />
+      </svg>
+    ),
+    device: (
+      <svg width="20" height="20" fill="currentColor">
+        <rect x="6" y="2" width="8" height="16" rx="2" />
+      </svg>
+    ),
+    dot: (
+      <svg width="20" height="20" fill="currentColor">
+        <circle cx="10" cy="10" r="3" />
+      </svg>
+    ),
+  };
+
+  return (
+    <div className="flex items-start gap-3">
+      <span className="shrink-0 mt-1 grid place-items-center rounded-lg border border-white/20 bg-white/10 p-2 shadow-sm text-white">
+        {icons[icon]}
+      </span>
+      <div>
+        <h4 className="font-semibold text-white">{title}</h4>
+        <p className="text-white/80 text-sm">{desc}</p>
+      </div>
+    </div>
   );
 }
