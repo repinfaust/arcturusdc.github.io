@@ -150,7 +150,7 @@ export default function HeroWithCapabilities() {
         </h3>
 
         <div className="grid gap-8 md:grid-cols-3 text-neutral-700">
-          {/* Swapped: App Development FIRST */}
+          {/* App Development FIRST */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
             <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
@@ -161,17 +161,20 @@ export default function HeroWithCapabilities() {
             </p>
           </div>
 
+          {/* Product strategy SECOND, with button-style CTA */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
             <p className="text-sm text-neutral-600">
-              Helping organisations cut through noise to find and deliver the next most valuable
-              outcome. The emphasis is on solving genuine problems in the simplest, most effective way.
+              Helping organisations cut through noise to find and deliver the next most valuable outcome.
+              The emphasis is on solving genuine problems in the simplest, most effective way.
             </p>
+
+            {/* Primary button — matches Hero & Apps CTAs */}
             <a
               href="/capabilities"
-              className="mt-3 inline-block text-sm text-red-700 hover:underline"
-              data-analytics="link"
+              className="mt-4 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+              data-analytics="button"
               data-name="Capabilities hero: Learn more"
               data-component="HeroWithCapabilities"
               data-location="hero"
@@ -180,18 +183,18 @@ export default function HeroWithCapabilities() {
             </a>
           </div>
 
+          {/* Data & analytics THIRD */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
             <p className="text-sm text-neutral-600">
-              From setup to insight, data is handled with clarity and purpose. No spin, no vanity
-              metrics — just reliable instrumentation and reporting that support decision-making and
-              improvement.
+              From setup to insight, data is handled with clarity and purpose. No spin, no vanity metrics —
+              just reliable instrumentation and reporting that support decision-making and improvement.
             </p>
           </div>
         </div>
 
-        {/* Updated chips */}
+        {/* Chips */}
         <div className="mt-6 badges">
           <span className="badge">Distinct, not cloned</span>
           <span className="badge">Solutions, not features</span>
