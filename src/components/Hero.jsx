@@ -33,7 +33,7 @@ export default function Hero() {
         w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]
         mt-6 sm:mt-10
         py-16 sm:py-24
-        mb-24 sm:mb-28            /* <-- extra breathing room before Capabilities */
+        mb-24 sm:mb-28
       "
     >
       {/* Background (video -> gif -> still) */}
@@ -110,7 +110,8 @@ export default function Hero() {
           </a>
         </div>
 
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        {/* Chips now match Capabilities hero */}
+        <div className="mt-6 badges">
           <span className="badge">UK Ltd</span>
           <span className="badge">App Store &amp; Google Play compliant</span>
           <span className="badge">UK based</span>
