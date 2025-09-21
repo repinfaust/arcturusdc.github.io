@@ -8,7 +8,7 @@ export default function Mandrake() {
     <>
       <Header />
       <main className="pb-10">
-        {/* Top summary card (unchanged) */}
+        {/* Top summary card */}
         <div className="card p-4 flex items-center gap-3 mt-2">
           <Image
             className="rounded-2xl border border-black/10"
@@ -37,13 +37,12 @@ export default function Mandrake() {
               className="object-cover"
               priority
             />
-            {/* subtle dark-to-transparent overlay for text legibility */}
             <div className="absolute inset-0 bg-black/40 mix-blend-multiply" />
-            {/* soft vignette to frame content */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
           </div>
 
           <div className="p-6 md:p-10">
+            {/* Title + intro */}
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
                 Inside Mandrake
@@ -54,7 +53,7 @@ export default function Mandrake() {
               </p>
             </div>
 
-            {/* Video hero */}
+            {/* Video */}
             <div className="mt-6 md:mt-8">
               <div className="relative max-w-4xl mx-auto flex justify-center">
                 <div className="rounded-xl border border-white/20 shadow-2xl overflow-hidden bg-black/50 backdrop-blur-sm">
@@ -69,7 +68,6 @@ export default function Mandrake() {
                     controls
                   />
                 </div>
-                {/* glow accent */}
                 <div
                   className="absolute -inset-2 -z-10 rounded-2xl blur-2xl opacity-40"
                   style={{
@@ -79,34 +77,26 @@ export default function Mandrake() {
                 />
               </div>
 
-              {/* CTAs under video */}
-              <div className="mt-5 flex flex-wrap gap-2 justify-center">
-                <Link className="btn btn-primary" href="/apps/mandrake/android">
+              {/* CTAs – centred + consistent size */}
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/apps/mandrake/android"
+                  className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-red-600 text-white hover:bg-red-700 transition"
+                >
                   Get it on Android
                 </Link>
-                <Link className="btn btn-secondary" href="/apps/mandrake/ios">
+                <Link
+                  href="/apps/mandrake/ios"
+                  className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-white text-black hover:bg-white/90 transition border border-black/10"
+                >
                   Get it on iOS
-                </Link>
-                <Link className="btn" href="/apps/mandrake#features">
-                  Explore features
                 </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Platform cards (kept) */}
-        <div className="card p-6 mt-3">
-          <div className="text-2xl font-extrabold mb-2">Choose a platform</div>
-          <div className="flex gap-2 flex-wrap">
-            <Link className="btn btn-primary" href="/apps/mandrake/android">
-              Android (Google Play)
-            </Link>
-            <Link className="btn btn-primary" href="/apps/mandrake/ios">
-              iOS (Apple App Store)
-            </Link>
-          </div>
-        </div>
+        {/* Removed the duplicate "Choose a platform" section */}
       </main>
       <Footer />
     </>
