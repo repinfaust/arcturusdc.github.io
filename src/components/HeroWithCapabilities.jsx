@@ -161,8 +161,8 @@ export default function HeroWithCapabilities() {
             </p>
           </div>
 
-          {/* Product strategy SECOND, with button-style CTA */}
-          <div>
+          {/* Product strategy SECOND, with left-aligned CTA */}
+          <div className="text-left">
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
             <p className="text-sm text-neutral-600">
@@ -170,17 +170,19 @@ export default function HeroWithCapabilities() {
               The emphasis is on solving genuine problems in the simplest, most effective way.
             </p>
 
-            {/* Primary button — matches Hero & Apps CTAs */}
-            <a
-              href="/capabilities"
-              className="mt-4 block w-fit rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
-              data-analytics="button"
-              data-name="Capabilities hero: Learn more"
-              data-component="HeroWithCapabilities"
-              data-location="hero"
-            >
-              Learn more
-            </a>
+            {/* Primary button — forced left alignment */}
+            <div className="mt-4 flex justify-start">
+              <a
+                href="/capabilities"
+                className="block w-fit rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+                data-analytics="button"
+                data-name="Capabilities hero: Learn more"
+                data-component="HeroWithCapabilities"
+                data-location="hero"
+              >
+                Learn more
+              </a>
+            </div>
           </div>
 
           {/* Data & analytics THIRD */}
