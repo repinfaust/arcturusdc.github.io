@@ -173,7 +173,7 @@ export default function HeroWithCapabilities() {
             {/* Primary button — matches Hero & Apps CTAs */}
             <a
               href="/capabilities"
-              className="mt-4 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+              className="mt-4 block w-fit rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
               data-analytics="button"
               data-name="Capabilities hero: Learn more"
               data-component="HeroWithCapabilities"
