@@ -19,7 +19,6 @@ function updateGaConsent(granted) {
     analytics_consent: granted ? "true" : "false",
   });
 
-  // 👇 Immediate nudge: fire page_view if just accepted
   if (granted) {
     gtag("event", "page_view", {
       page_location: window.location.href,
@@ -50,9 +49,26 @@ export default function ConsentManager() {
     }
   }, []);
 
+  // Allow other components to open the preferences modal
+  useEffect(() => {
+    const open = () => {
+      setSeen(true);        // ensure banner is hidden
+      setOpenPrefs(true);   // show modal
+    };
+    // Custom event
+    window.addEventListener("adc:open-consent", open);
+    // Optional helper for direct calls
+    window.adc = window.adc || {};
+    window.adc.openConsent = open;
+
+    return () => {
+      window.removeEventListener("adc:open-consent", open);
+    };
+  }, []);
+
   function persistAndClose(next) {
     setConsent({ analytics: next });
-    updateGaConsent(next); // includes the nudge
+    updateGaConsent(next);
     setAnalytics(next);
     setSeen(true);
     setOpenPrefs(false);
@@ -148,9 +164,7 @@ export default function ConsentManager() {
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="font-medium">
-                      Analytics (Google Analytics)
-                    </div>
+                    <div className="font-medium">Analytics (Google Analytics)</div>
                     <div className="text-sm text-white/70">
                       Helps us understand usage. No personal identifiers in our
                       events.
