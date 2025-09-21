@@ -89,48 +89,48 @@ export default function Mandrake() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Policies grouped */}
-          <div className="mt-10 max-w-3xl mx-auto text-white">
-            <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
+      {/* Policies section (separate from hero) */}
+      <section className="card p-6 mt-4">
+        <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
 
-            <div className="mb-6">
-              <h3 className="text-xl font-bold">Android</h3>
-              <ul className="list-disc ml-5 mt-2 space-y-1 text-red-400">
-                <li>
-                  <Link href="/assets/policies/Mandrake_Disclaimer_16plus.pdf">
-                    Disclaimer (PDF)
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/assets/policies/Mandrake_Privacy_Policy_16plus.pdf">
-                    Privacy Policy (PDF)
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/assets/policies/Mandrake_Terms_of_Service_16plus.pdf">
-                    Terms of Service (PDF)
-                  </Link>
-                </li>
-              </ul>
-            </div>
+        <div className="mb-6">
+          <h3 className="text-xl font-bold">Android</h3>
+          <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
+            <li>
+              <Link href="/assets/policies/Mandrake_Disclaimer_16plus.pdf">
+                Disclaimer (PDF)
+              </Link>
+            </li>
+            <li>
+              <Link href="/assets/policies/Mandrake_Privacy_Policy_16plus.pdf">
+                Privacy Policy (PDF)
+              </Link>
+            </li>
+            <li>
+              <Link href="/assets/policies/Mandrake_Terms_of_Service_16plus.pdf">
+                Terms of Service (PDF)
+              </Link>
+            </li>
+          </ul>
+        </div>
 
-            <div>
-              <h3 className="text-xl font-bold">iOS</h3>
-              <ul className="list-disc ml-5 mt-2 space-y-1 text-red-400">
-                <li>
-                  <Link href="/assets/policies/Mandrake_Disclaimer_iOS.pdf">
-                    Disclaimer (PDF)
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/assets/policies/Mandrake_Terms_of_Service_iOS.pdf">
-                    Terms of Service (PDF)
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
+        <div>
+          <h3 className="text-xl font-bold">iOS</h3>
+          <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
+            <li>
+              <Link href="/assets/policies/Mandrake_Disclaimer_iOS.pdf">
+                Disclaimer (PDF)
+              </Link>
+            </li>
+            <li>
+              <Link href="/assets/policies/Mandrake_Terms_of_Service_iOS.pdf">
+                Terms of Service (PDF)
+              </Link>
+            </li>
+          </ul>
         </div>
       </section>
     </main>
