@@ -1,158 +1,75 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from 'react';
 
-const fire = (...args) => (window.adc?.gtag || window.gtag || function(){})?.(...args);
+const cx = (...classes) => classes.filter(Boolean).join(' ');
 
-export default function HeroWithApps() {
-  const rootRef = useRef(null);
-  const bgRef = useRef(null);
-  const cardRef = useRef(null);
-  const [hasViewed, setHasViewed] = useState(false); // send impression once
+export default function Hero() {
+  const [fadeIn, setFadeIn] = useState(false);
 
-  // Parallax/animation
   useEffect(() => {
-    const root = rootRef.current;
-    const bg = bgRef.current;
-    const card = cardRef.current;
-    if (!root || !bg || !card) return;
-
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    bg.style.opacity = reduce ? "1" : "0";
-    card.style.opacity = reduce ? "1" : "0";
-
-    let raf = 0;
-    const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-    const getVH = () => window.visualViewport?.height ?? window.innerHeight ?? 1;
-
-    const tick = () => {
-      raf = 0;
-      const rect = root.getBoundingClientRect();
-      const vh = getVH();
-      const isSmall = matchMedia("(max-width: 640px)").matches;
-
-      const startY = vh * (isSmall ? 1.02 : 0.95);
-      const endY = vh * (isSmall ? 0.52 : 0.4);
-      const p = clamp01((startY - rect.top) / (startY - endY || 1));
-
-      if (!reduce) {
-        bg.style.opacity = String(p);
-        bg.style.transform = `translate3d(0, ${Math.round(-60 * p)}px, 0)`;
-
-        const startTopPct = isSmall ? 84 : 70;
-        const endTopPct = isSmall ? 47 : 42;
-        const topPct = startTopPct - (startTopPct - endTopPct) * p;
-
-        card.style.top = `${topPct}%`;
-        card.style.opacity = String(p);
-        card.style.transform = `translate(-50%, -50%) scale(${0.98 + 0.02 * p})`;
-      } else {
-        bg.style.opacity = "1";
-        card.style.top = "50%";
-        card.style.opacity = "1";
-        card.style.transform = "translate(-50%, -50%)";
-      }
-    };
-
-    const onScrollResize = () => {
-      if (!raf) raf = requestAnimationFrame(tick);
-    };
-
-    tick();
-    window.addEventListener("scroll", onScrollResize, { passive: true });
-    window.addEventListener("resize", onScrollResize, { passive: true });
-    window.visualViewport?.addEventListener("resize", onScrollResize, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScrollResize);
-      window.removeEventListener("resize", onScrollResize);
-      window.visualViewport?.removeEventListener("resize", onScrollResize);
-      if (raf) cancelAnimationFrame(raf);
-    };
+    const id = requestAnimationFrame(() => setFadeIn(true));
+    return () => cancelAnimationFrame(id);
   }, []);
-
-  // Impression (fires once when at least 50% of the card is visible)
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el || hasViewed) return;
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!hasViewed && entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            setHasViewed(true);
-            fire("event", "adc_section_view", {
-              section_id: "apps-hero",
-              component_name: "HeroWithApps",
-              location: "hero",
-            });
-          }
-        });
-      },
-      { threshold: [0.5] }
-    );
-
-    io.observe(el);
-    return () => io.disconnect();
-  }, [hasViewed]);
 
   return (
     <section
-      ref={rootRef}
-      aria-label="Apps hero"
-      className="relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] h-[88vh] md:h-[82vh] mt-12 sm:mt-16 mb-20"
+      className={cx(
+        "relative rounded-2xl p-6 sm:p-8 lg:p-10 overflow-hidden card",
+        "transition-opacity duration-700",
+        fadeIn ? "opacity-100" : "opacity-0"
+      )}
     >
-      <div ref={bgRef} className="absolute inset-0 will-change-transform will-change-opacity">
-        <Image
-          src="/img/network-orange-hero-2560.png"
-          alt="Abstract network (orange)"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
-      </div>
+      <div className="mb-2 text-xs font-semibold text-brand/80">Product &amp; Apps</div>
+      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
+        Practical software for real needs.
+      </h1>
+      <p className="mt-3 max-w-2xl text-muted">
+        Arcturus Digital Consulting builds apps and digital products that focus on real-world problems — not technology for its own sake. From ADHD support to family organisation and fitness planning, every product is designed around a clear need, with privacy and compliance built in from the start.
+      </p>
 
-      <div
-        ref={cardRef}
-        className={[
-          "absolute left-1/2",
-          "w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] max-w-[1200px]",
-          "rounded-3xl border border-black/10 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-2xl",
-          "px-6 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-10",
-          "will-change-transform will-change-opacity",
-        ].join(" ")}
-        style={{ top: "84%", transform: "translate(-50%, -50%)" }}
-      >
-        <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
-          Apps
-        </h2>
-
-        <p className="text-neutral-700 max-w-prose">
-          Every app is built with a clear purpose: to solve one problem well. The portfolio includes
-          ADHD motivation, shared-care family organisation, and fitness planning — each designed to
-          meet a need in a way that’s simple, compliant, and privacy-first.
-        </p>
-
+      {/* Buttons */}
+      <div className="mt-6 flex gap-3 flex-wrap">
         <a
           href="/apps"
-          className="mt-6 inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+          className="btn-primary"
           data-analytics="button"
-          data-name="Apps hero: Browse apps"
-          data-component="HeroWithApps"
+          data-name="Hero: Explore apps"
+          data-component="Hero"
           data-location="hero"
           data-variant="primary"
         >
-          Browse apps →
+          Explore apps
         </a>
+        <a
+          href="#capabilities"
+          className="btn-secondary"
+          data-analytics="button"
+          data-name="Hero: Capabilities"
+          data-component="Hero"
+          data-location="hero"
+          data-variant="secondary"
+        >
+          Capabilities
+        </a>
+      </div>
 
-        {/* centred chips — same classes everywhere */}
-        <div className="mt-4 badges">
-          <span className="badge">App Store &amp; Google Play</span>
-          <span className="badge">UK based</span>
-          <span className="badge">Privacy-first</span>
-        </div>
+      {/* soft brand glow in the corner */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand/10 blur-3xl" />
+      </div>
+
+      {/* Consistent badge row */}
+      <div className="badges mt-4">
+        <span className="badge">
+          <span className="badge-dot" /> UK Ltd
+        </span>
+        <span className="badge">
+          <span className="badge-dot" /> App Store &amp; Google Play compliant
+        </span>
+        <span className="badge">
+          <span className="badge-dot" /> UK based
+        </span>
       </div>
     </section>
   );
