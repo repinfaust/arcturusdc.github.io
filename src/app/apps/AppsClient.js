@@ -113,7 +113,7 @@ function AppCard({ app }) {
 /* Masonry via CSS columns — avoids grid’s equal-row-height behaviour */
 export default function AppsClient({ apps }) {
   return (
-    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 [column-fill:_balance]">
+    <div className="columns-1 sm:columns-2 xl:columns-3 2xl:columns-4 gap-6 [column-fill:_balance]">
       {apps.map((app) => (
         <AppCard key={app.id} app={app} />
       ))}
