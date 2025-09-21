@@ -114,11 +114,6 @@ export default function Mandrake() {
                 icon="bolt"
               />
               <Feature
-                title="Wave Timer"
-                desc="Optional 10–30 min timer to help ride out the peak safely."
-                icon="timer"
-              />
-              <Feature
                 title="Instant Reinforcement"
                 desc="Subtle haptics, points, and micro-messages for every logged win."
                 icon="star"
