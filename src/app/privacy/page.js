@@ -1,10 +1,22 @@
+// app/privacy/page.jsx (or pages/privacy.jsx)
 export default function Page() {
   return (
     <main className="py-10">
-      <h2 className="text-2xl font-extrabold">Privacy Policy</h2>
+      <h1 className="text-2xl font-extrabold">Privacy Policy</h1>
       <p className="text-muted mt-2">
         Effective date: <strong>1st September 2025</strong>
       </p>
+
+      {/* Cookie preferences trigger */}
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("adc:open-consent"))}
+          className="text-red-700 hover:underline"
+        >
+          Manage cookie preferences
+        </button>
+      </div>
 
       <p className="mt-6 text-muted">
         Arcturus Digital Consultancy (“we”, “our”, “us”) respects your privacy and is committed to
@@ -12,7 +24,7 @@ export default function Page() {
         information when you use our website and services.
       </p>
 
-      <h3 className="mt-8 font-bold text-lg">Information we collect</h3>
+      <h2 className="mt-8 font-bold text-lg">Information we collect</h2>
       <ul className="list-disc ml-6 mt-2 text-muted space-y-1">
         <li>
           <strong>Information you provide directly</strong>: such as when you contact us by email or
@@ -27,7 +39,7 @@ export default function Page() {
         </li>
       </ul>
 
-      <h3 className="mt-8 font-bold text-lg">How we use information</h3>
+      <h2 className="mt-8 font-bold text-lg">How we use information</h2>
       <ul className="list-disc ml-6 mt-2 text-muted space-y-1">
         <li>Provide and improve our services</li>
         <li>Respond to enquiries</li>
@@ -35,7 +47,7 @@ export default function Page() {
         <li>Ensure compliance with legal and regulatory obligations</li>
       </ul>
 
-      <h3 className="mt-8 font-bold text-lg">Use of Google Analytics</h3>
+      <h2 className="mt-8 font-bold text-lg">Use of Google Analytics</h2>
       <p className="text-muted mt-2">
         We use <strong>Google Analytics</strong> to understand how visitors interact with our site.
       </p>
@@ -60,14 +72,14 @@ export default function Page() {
         </li>
       </ul>
 
-      <h3 className="mt-8 font-bold text-lg">Cookies</h3>
+      <h2 className="mt-8 font-bold text-lg">Cookies</h2>
       <p className="text-muted mt-2">
         Our website uses cookies to enable basic functionality and collect analytics data for
         performance insights. You can control or disable cookies in your browser settings, though
         some site features may not function properly without them.
       </p>
 
-      <h3 className="mt-8 font-bold text-lg">Data sharing</h3>
+      <h2 className="mt-8 font-bold text-lg">Data sharing</h2>
       <p className="text-muted mt-2">
         We do not sell, trade, or rent your personal data. We may share limited information with:
       </p>
@@ -81,13 +93,13 @@ export default function Page() {
         </li>
       </ul>
 
-      <h3 className="mt-8 font-bold text-lg">Data retention</h3>
+      <h2 className="mt-8 font-bold text-lg">Data retention</h2>
       <p className="text-muted mt-2">
         We only retain personal information for as long as necessary to fulfil the purposes outlined
         in this policy or comply with legal requirements.
       </p>
 
-      <h3 className="mt-8 font-bold text-lg">Your rights</h3>
+      <h2 className="mt-8 font-bold text-lg">Your rights</h2>
       <p className="text-muted mt-2">
         Depending on your location, you may have the right to access the personal data we hold about
         you, request corrections or deletion, object to or restrict processing, and withdraw consent
@@ -101,7 +113,7 @@ export default function Page() {
         .
       </p>
 
-      <h3 className="mt-8 font-bold text-lg">Changes to this policy</h3>
+      <h2 className="mt-8 font-bold text-lg">Changes to this policy</h2>
       <p className="text-muted mt-2">
         We may update this Privacy Policy from time to time. Changes will be posted here with an
         updated effective date.
