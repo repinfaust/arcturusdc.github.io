@@ -32,7 +32,8 @@ export default function Hero() {
         relative
         w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]
         mt-6 sm:mt-10
-        py-10 sm:py-16        /* give the section its own vertical space */
+        py-16 sm:py-24
+        mb-24 sm:mb-28            /* <-- extra breathing room before Capabilities */
       "
     >
       {/* Background (video -> gif -> still) */}
@@ -54,15 +55,23 @@ export default function Hero() {
           />
         )}
         {mode === "gif" && (
-          <img src="/img/pulsating_arcturus.gif" alt="Pulsating Arcturus" className="w-full h-full object-cover" />
+          <img
+            src="/img/pulsating_arcturus.gif"
+            alt="Pulsating Arcturus"
+            className="w-full h-full object-cover"
+          />
         )}
         {mode === "still" && (
-          <img src="/img/network-hero-2560.png" alt="Abstract network" className="w-full h-full object-cover" />
+          <img
+            src="/img/network-hero-2560.png"
+            alt="Abstract network"
+            className="w-full h-full object-cover"
+          />
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Card: NORMAL FLOW (no absolute, no translate) */}
+      {/* Card in normal flow */}
       <div
         className={cx(
           "relative mx-auto",
@@ -80,9 +89,10 @@ export default function Hero() {
         </h1>
 
         <p className="mt-3 text-neutral-700 max-w-prose">
-          Arcturus Digital Consulting builds apps and digital products that focus on real-world problems — not
-          technology for its own sake. From ADHD support to family organisation and fitness planning, every product is
-          designed around a clear need, with privacy and compliance built in from the start.
+          Arcturus Digital Consulting builds apps and digital products that focus on real-world
+          problems — not technology for its own sake. From ADHD support to family organisation and
+          fitness planning, every product is designed around a clear need, with privacy and
+          compliance built in from the start.
         </p>
 
         <div className="mt-5 flex gap-3 flex-wrap">
