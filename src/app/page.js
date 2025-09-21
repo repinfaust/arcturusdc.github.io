@@ -27,11 +27,22 @@ export default function Home() {
         </span>
       </div>
 
-      {/* Hero (now a reusable component) */}
+      {/* HERO */}
       <Hero />
 
-      {/* Rest of homepage */}
+      {/* --- separation + in-page anchor target for the Capabilities button --- */}
+      {/* This invisible anchor lets #capabilities scroll to a sensible spot even with sticky headers */}
+      <div id="capabilities" className="relative h-0 -mt-16 sm:-mt-20" aria-hidden="true" />
+      {/* Visual breathing room between hero and the next full-bleed section */}
+      <div className="h-10 sm:h-16" />
+
+      {/* CAPABILITIES */}
       <HeroWithCapabilities />
+
+      {/* Space before the apps section so cards don't kiss each other on mobile */}
+      <div className="h-10 sm:h-16" />
+
+      {/* APPS */}
       <HeroWithApps />
     </main>
   );
