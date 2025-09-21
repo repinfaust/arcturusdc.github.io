@@ -193,9 +193,9 @@ export default function HeroWithCapabilities() {
 
         {/* Updated chips */}
         <div className="mt-6 badges">
-          <span className="badge">Discovery</span>
-          <span className="badge">Compliance support</span>
-          <span className="badge">Insight</span>
+          <span className="badge">Distinct, not cloned</span>
+          <span className="badge">Solutions, not features</span>
+          <span className="badge">Clarity, not vanity</span>
         </div>
       </div>
     </section>
