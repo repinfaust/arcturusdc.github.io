@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-const cx = (...classes) => classes.filter(Boolean).join(' ');
+const cx = (...classes) => classes.filter(Boolean).join(" ");
 
 export default function Hero() {
   const [fadeIn, setFadeIn] = useState(false);
@@ -58,7 +58,8 @@ export default function Hero() {
         <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-brand/10 blur-3xl" />
       </div>
 
-      <div className="mt-4 flex gap-2 flex-wrap text-sm">
+      {/* badges row – now consistent with HeroWithCapabilities */}
+      <div className="mt-4 flex gap-2 flex-wrap">
         <span className="badge">UK Ltd</span>
         <span className="badge">App Store &amp; Google Play compliant</span>
         <span className="badge">UK based</span>
