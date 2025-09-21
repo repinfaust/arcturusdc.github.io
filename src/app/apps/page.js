@@ -6,7 +6,7 @@ export const metadata = { title: "Apps — Arcturus Digital Consulting" };
 export default function AppsPage() {
   return (
     <main className="py-12">
-      {/* Wider container so three cards fit comfortably */}
+      {/* Wider container so three columns fit cleanly */}
       <section className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-extrabold mb-4">Apps</h1>
 
