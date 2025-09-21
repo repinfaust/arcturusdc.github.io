@@ -6,7 +6,7 @@ export const metadata = { title: "Apps — Arcturus Digital Consulting" };
 export default function AppsPage() {
   return (
     <main className="py-12">
-      {/* Align with hero width, give columns more room */}
+      {/* Wider container so three cards fit comfortably */}
       <section className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-extrabold mb-4">Apps</h1>
 
@@ -15,7 +15,6 @@ export default function AppsPage() {
           Our portfolio focuses on solving real problems in clear niches, without adding tech for the sake of it.
         </p>
 
-        {/* Masonry list */}
         <div className="mt-4">
           <AppsClient apps={apps} />
         </div>
