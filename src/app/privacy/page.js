@@ -1,4 +1,5 @@
-// app/privacy/page.jsx (or pages/privacy.jsx)
+import ConsentTrigger from "@/components/ConsentTrigger";
+
 export default function Page() {
   return (
     <main className="py-10">
@@ -7,32 +8,28 @@ export default function Page() {
         Effective date: <strong>1st September 2025</strong>
       </p>
 
-      {/* Cookie preferences trigger */}
+      {/* Cookie preferences trigger (client button rendered inside a server page) */}
       <div className="mt-3">
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new Event("adc:open-consent"))}
-          className="text-red-700 hover:underline"
-        >
+        <ConsentTrigger className="text-red-700 hover:underline">
           Manage cookie preferences
-        </button>
+        </ConsentTrigger>
       </div>
 
       <p className="mt-6 text-muted">
-        Arcturus Digital Consultancy (“we”, “our”, “us”) respects your privacy and is committed to
-        protecting your personal data. This policy explains how we collect, use, and safeguard
-        information when you use our website and services.
+        Arcturus Digital Consultancy (“we”, “our”, “us”) respects your privacy and is
+        committed to protecting your personal data. This policy explains how we
+        collect, use, and safeguard information when you use our website and services.
       </p>
 
       <h2 className="mt-8 font-bold text-lg">Information we collect</h2>
       <ul className="list-disc ml-6 mt-2 text-muted space-y-1">
         <li>
-          <strong>Information you provide directly</strong>: such as when you contact us by email or
-          submit details through a form.
+          <strong>Information you provide directly</strong>: such as when you contact us by
+          email or submit details through a form.
         </li>
         <li>
-          <strong>Usage data</strong>: including pages visited, time spent, and navigation paths on
-          our website.
+          <strong>Usage data</strong>: including pages visited, time spent, and navigation
+          paths on our website.
         </li>
         <li>
           <strong>Technical data</strong>: such as browser type, operating system, and IP address.
@@ -67,16 +64,15 @@ export default function Page() {
             className="text-red-700 hover:underline"
           >
             Google’s opt-out tool
-          </a>
-          .
+          </a>.
         </li>
       </ul>
 
       <h2 className="mt-8 font-bold text-lg">Cookies</h2>
       <p className="text-muted mt-2">
         Our website uses cookies to enable basic functionality and collect analytics data for
-        performance insights. You can control or disable cookies in your browser settings, though
-        some site features may not function properly without them.
+        performance insights. You can control or disable cookies in your browser settings,
+        though some site features may not function properly without them.
       </p>
 
       <h2 className="mt-8 font-bold text-lg">Data sharing</h2>
@@ -85,8 +81,8 @@ export default function Page() {
       </p>
       <ul className="list-disc ml-6 mt-2 text-muted space-y-1">
         <li>
-          <strong>Service providers</strong> (such as Google) who process data on our behalf under
-          strict agreements
+          <strong>Service providers</strong> (such as Google) who process data on our behalf
+          under strict agreements
         </li>
         <li>
           <strong>Legal authorities</strong> if required by law
@@ -95,22 +91,21 @@ export default function Page() {
 
       <h2 className="mt-8 font-bold text-lg">Data retention</h2>
       <p className="text-muted mt-2">
-        We only retain personal information for as long as necessary to fulfil the purposes outlined
-        in this policy or comply with legal requirements.
+        We only retain personal information for as long as necessary to fulfil the purposes
+        outlined in this policy or comply with legal requirements.
       </p>
 
       <h2 className="mt-8 font-bold text-lg">Your rights</h2>
       <p className="text-muted mt-2">
-        Depending on your location, you may have the right to access the personal data we hold about
-        you, request corrections or deletion, object to or restrict processing, and withdraw consent
-        (where applicable).
+        Depending on your location, you may have the right to access the personal data we hold
+        about you, request corrections or deletion, object to or restrict processing, and
+        withdraw consent (where applicable).
       </p>
       <p className="text-muted mt-2">
         To exercise your rights, contact us at{" "}
         <a href="mailto:info@arcturusdc.com" className="text-red-700 hover:underline">
           info@arcturusdc.com
-        </a>
-        .
+        </a>.
       </p>
 
       <h2 className="mt-8 font-bold text-lg">Changes to this policy</h2>
