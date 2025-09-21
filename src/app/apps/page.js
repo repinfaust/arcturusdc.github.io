@@ -6,8 +6,8 @@ export const metadata = { title: "Apps — Arcturus Digital Consulting" };
 export default function AppsPage() {
   return (
     <main className="py-12">
-      {/* Align with hero width */}
-      <section className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+      {/* Align with hero width, give columns more room */}
+      <section className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-extrabold mb-4">Apps</h1>
 
         <p className="text-neutral-700 max-w-[60ch] mb-6">
