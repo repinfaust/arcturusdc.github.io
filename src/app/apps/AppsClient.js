@@ -1,12 +1,59 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 /* ---------------------------------------
    GA helper (safe no-op if GA not ready)
 --------------------------------------- */
 const fire = (...args) => (window.adc?.gtag || window.gtag || function(){})?.(...args);
+
+/* ---------------------------------------
+   FLIP: smoothly animate column reflow
+--------------------------------------- */
+function useFlip(containerRef) {
+  const prevRects = useRef(new Map());
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const items = Array.from(container.querySelectorAll("[data-flip-item]"));
+
+    // collect current rects
+    const currRects = new Map();
+    for (const el of items) currRects.set(el.dataset.key, el.getBoundingClientRect());
+
+    // animate from previous -> current
+    for (const el of items) {
+      const key = el.dataset.key;
+      const prev = prevRects.current.get(key);
+      const curr = currRects.get(key);
+      if (!prev || !curr) continue;
+
+      const dx = prev.left - curr.left;
+      const dy = prev.top - curr.top;
+      if (dx || dy) {
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        el.style.willChange = "transform";
+
+        requestAnimationFrame(() => {
+          el.style.transition = "transform 320ms cubic-bezier(.2,.6,.2,1)";
+          el.style.transform = "translate(0,0)";
+          const clear = () => {
+            el.style.transition = "";
+            el.style.transform = "";
+            el.style.willChange = "";
+            el.removeEventListener("transitionend", clear);
+          };
+          el.addEventListener("transitionend", clear);
+        });
+      }
+    }
+
+    prevRects.current = currRects;
+  });
+}
 
 /* ---------------------------------------
    Measure inner content height (expand)
@@ -39,7 +86,7 @@ function useMeasuredMaxHeight(deps = []) {
 /* ---------------------------------------
    App card
 --------------------------------------- */
-function AppCard({ app }) {
+function AppCard({ app, onToggle }) {
   const [expanded, setExpanded] = useState(false);
   const { ref: expandRef, maxH } = useMeasuredMaxHeight([expanded, app.summary, app.desc]);
   const cardRootRef = useRef(null);
@@ -86,6 +133,7 @@ function AppCard({ app }) {
       component_name: "AppsGrid",
       location: "apps-grid",
     });
+    onToggle?.();
   };
 
   const onKeyDown = (e) => {
@@ -116,7 +164,6 @@ function AppCard({ app }) {
         "shadow-sm hover:shadow-lg transition",
         "hover:border-black/15 border-black/10",
         "overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800",
-        "md:min-h-[156px]",
       ].join(" ")}
       aria-expanded={expanded}
       aria-controls={`summary-${app.id}`}
@@ -204,13 +251,30 @@ function AppCard({ app }) {
 }
 
 /* ---------------------------------------
-   Client: responsive grid (desktop denser)
+   Client: masonry (CSS columns) + FLIP
 --------------------------------------- */
 export default function AppsClient({ apps }) {
+  const colRef = useRef(null);
+  useFlip(colRef); // animate reflow when a card expands
+
+  const handleToggle = () => {
+    // Trigger reflow; FLIP runs in layout effect on next paint
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7">
+    <div
+      ref={colRef}
+      className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]"
+    >
       {apps.map((app) => (
-        <AppCard key={app.id} app={app} />
+        <div
+          key={app.id}
+          data-flip-item
+          data-key={app.id}
+          className="mb-6 break-inside-avoid will-change-transform"
+        >
+          <AppCard app={app} onToggle={handleToggle} />
+        </div>
       ))}
     </div>
   );
