@@ -86,9 +86,9 @@ export default function HeroWithApps() {
         </a>
 
         <div className="mt-4 badges">
-          <span className="badge">App Store &amp; Google Play</span>
-          <span className="badge">UK based</span>
-          <span className="badge">Privacy-first</span>
+          <span className="badge">Real needs solved</span>
+          <span className="badge">No feature bloat</span>
+          <span className="badge">App-store ready</span>
         </div>
       </div>
     </section>
