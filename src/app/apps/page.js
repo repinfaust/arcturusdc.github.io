@@ -15,7 +15,7 @@ export default function AppsPage() {
           Our portfolio focuses on solving real problems in clear niches, without adding tech for the sake of it.
         </p>
 
-        {/* Grid lives inside the same container */}
+        {/* Masonry list */}
         <div className="mt-4">
           <AppsClient apps={apps} />
         </div>
