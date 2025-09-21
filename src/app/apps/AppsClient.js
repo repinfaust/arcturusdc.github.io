@@ -3,40 +3,29 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-/* ---------------------------------------
-   GA helper (safe no-op if GA not ready)
---------------------------------------- */
 const fire = (...args) => (window.adc?.gtag || window.gtag || function(){})?.(...args);
 
-/* ---------------------------------------
-   FLIP: smoothly animate column reflow
---------------------------------------- */
+/* FLIP to smooth reflow inside CSS columns */
 function useFlip(containerRef) {
   const prevRects = useRef(new Map());
-
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
     const items = Array.from(container.querySelectorAll("[data-flip-item]"));
 
-    // collect current rects
     const currRects = new Map();
     for (const el of items) currRects.set(el.dataset.key, el.getBoundingClientRect());
 
-    // animate from previous -> current
     for (const el of items) {
       const key = el.dataset.key;
       const prev = prevRects.current.get(key);
       const curr = currRects.get(key);
       if (!prev || !curr) continue;
-
       const dx = prev.left - curr.left;
       const dy = prev.top - curr.top;
       if (dx || dy) {
         el.style.transform = `translate(${dx}px, ${dy}px)`;
         el.style.willChange = "transform";
-
         requestAnimationFrame(() => {
           el.style.transition = "transform 320ms cubic-bezier(.2,.6,.2,1)";
           el.style.transform = "translate(0,0)";
@@ -50,42 +39,31 @@ function useFlip(containerRef) {
         });
       }
     }
-
     prevRects.current = currRects;
   });
 }
 
-/* ---------------------------------------
-   Measure inner content height (expand)
---------------------------------------- */
+/* measure height for the expanding section */
 function useMeasuredMaxHeight(deps = []) {
   const ref = useRef(null);
   const [maxH, setMaxH] = useState(0);
-
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-
     const set = () => setMaxH(el.scrollHeight);
     set();
-
     const ro = new ResizeObserver(set);
     ro.observe(el);
     window.addEventListener("resize", set, { passive: true });
-
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", set);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
-
   return { ref, maxH };
 }
 
-/* ---------------------------------------
-   App card
---------------------------------------- */
 function AppCard({ app, onToggle }) {
   const [expanded, setExpanded] = useState(false);
   const { ref: expandRef, maxH } = useMeasuredMaxHeight([expanded, app.summary, app.desc]);
@@ -96,29 +74,24 @@ function AppCard({ app, onToggle }) {
   const strap = app.strap || app.desc || "";
   const summary = app.summary || app.desc || "";
 
-  // Impression: fire once when card is ≥60% visible
+  // fire impression once
   useEffect(() => {
     const el = cardRootRef.current;
     if (!el || viewedRef.current) return;
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!viewedRef.current && entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            viewedRef.current = true;
-            fire("event", "adc_card_view", {
-              item_id: app.id,
-              item_name: app.name,
-              component_name: "AppsGrid",
-              location: "apps-grid",
-            });
-            io.disconnect();
-          }
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!viewedRef.current && entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+          viewedRef.current = true;
+          fire("event", "adc_card_view", {
+            item_id: app.id,
+            item_name: app.name,
+            component_name: "AppsGrid",
+            location: "apps-grid",
+          });
+          io.disconnect();
         }
-      },
-      { threshold: [0.6] }
-    );
-
+      }
+    }, { threshold: [0.6] });
     io.observe(el);
     return () => io.disconnect();
   }, [app.id, app.name]);
@@ -143,14 +116,11 @@ function AppCard({ app, onToggle }) {
     }
   };
 
-  // Platforms -> chips (supports apps.platforms OR boolean android/ios)
+  // platform chips (optional)
   const platforms =
     Array.isArray(app.platforms) && app.platforms.length
       ? app.platforms
-      : [
-          app.android ? "Android" : null,
-          app.ios ? "iOS" : null,
-        ].filter(Boolean);
+      : [app.android ? "Android" : null, app.ios ? "iOS" : null].filter(Boolean);
 
   return (
     <div
@@ -159,12 +129,7 @@ function AppCard({ app, onToggle }) {
       tabIndex={0}
       onClick={toggle}
       onKeyDown={onKeyDown}
-      className={[
-        "group relative rounded-2xl border bg-white p-5",
-        "shadow-sm hover:shadow-lg transition",
-        "hover:border-black/15 border-black/10",
-        "overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800",
-      ].join(" ")}
+      className="group relative rounded-2xl border bg-white p-5 shadow-sm hover:shadow-lg hover:border-black/15 border-black/10 transition overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800"
       aria-expanded={expanded}
       aria-controls={`summary-${app.id}`}
       data-analytics="card"
@@ -172,7 +137,6 @@ function AppCard({ app, onToggle }) {
       data-component="AppsGrid"
       data-location="apps-grid"
     >
-      {/* Background image */}
       {app.bg && (
         <>
           <Image
@@ -181,14 +145,12 @@ function AppCard({ app, onToggle }) {
             fill
             sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
             className="absolute inset-0 object-cover opacity-40 transition-opacity duration-300"
-            priority={false}
           />
           <div className="absolute inset-0 pointer-events-none bg-white/10" />
         </>
       )}
 
       <div className="relative">
-        {/* Header: logo + name is the link; clicking it should NOT toggle */}
         <div className="flex items-center gap-4 mb-3">
           <a
             href={href}
@@ -201,12 +163,8 @@ function AppCard({ app, onToggle }) {
             data-location="apps-grid"
           >
             <span className="w-12 h-12 rounded-xl overflow-hidden shrink-0 block border border-black/10 bg-white">
-              {app.icon ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={app.icon} alt="" className="w-full h-full object-cover" loading="lazy" />
-              ) : (
-                <span className="w-full h-full bg-neutral-200 block" />
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {app.icon ? <img src={app.icon} alt="" className="w-full h-full object-cover" loading="lazy" /> : <span className="w-full h-full bg-neutral-200 block" />}
             </span>
             <span className="font-semibold text-lg underline-offset-4 group-hover:underline">
               {app.name}
@@ -214,21 +172,16 @@ function AppCard({ app, onToggle }) {
           </a>
         </div>
 
-        {/* Strap / tagline (always visible) */}
         {strap && <p className="text-sm text-neutral-700 italic mb-2">{strap}</p>}
 
-        {/* Platform chips (optional) */}
         {platforms.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
             {platforms.map((p) => (
-              <span key={p} className="badge">
-                {p}
-              </span>
+              <span key={p} className="badge">{p}</span>
             ))}
           </div>
         )}
 
-        {/* Expandable summary */}
         <div
           id={`summary-${app.id}`}
           className="relative overflow-hidden transition-[max-height] duration-300 ease-out"
@@ -236,11 +189,7 @@ function AppCard({ app, onToggle }) {
         >
           <div
             ref={expandRef}
-            className={[
-              "pt-1",
-              "transition-opacity duration-300 ease-out",
-              expanded ? "opacity-100" : "opacity-0",
-            ].join(" ")}
+            className={["pt-1", "transition-opacity duration-300 ease-out", expanded ? "opacity-100" : "opacity-0"].join(" ")}
           >
             {summary && <p className="text-sm text-neutral-800">{summary}</p>}
           </div>
@@ -250,21 +199,24 @@ function AppCard({ app, onToggle }) {
   );
 }
 
-/* ---------------------------------------
-   Client: masonry (CSS columns) + FLIP
---------------------------------------- */
+/* Masonry via CSS columns (prevents row coupling when a card expands) */
 export default function AppsClient({ apps }) {
   const colRef = useRef(null);
-  useFlip(colRef); // animate reflow when a card expands
+  useFlip(colRef);
 
   const handleToggle = () => {
-    // Trigger reflow; FLIP runs in layout effect on next paint
+    /* FLIP runs on next paint */
   };
 
   return (
     <div
       ref={colRef}
-      className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]"
+      className="
+        columns-1
+        md:columns-3   /* force 3 columns earlier */
+        xl:columns-3  2xl:columns-4
+        gap-6 [column-fill:_balance]
+      "
     >
       {apps.map((app) => (
         <div
