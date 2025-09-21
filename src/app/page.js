@@ -22,20 +22,18 @@ export default function Home() {
           className="rounded-full"
           priority
         />
-        <span className="text-neutral-900 text-base font-semibold">Arcturus Digital Consulting</span>
+        <span className="text-neutral-900 text-base font-semibold">
+          Arcturus Digital Consulting
+        </span>
       </div>
 
-      {/* HERO (now normal flow) */}
+      {/* HERO */}
       <Hero />
 
-      {/* Anchor + breathing room before capabilities */}
-      <div id="capabilities" className="relative h-0 -mt-16 sm:-mt-20" aria-hidden="true" />
-      <div className="h-8 sm:h-12" />
-
+      {/* CAPABILITIES */}
       <HeroWithCapabilities />
 
-      <div className="h-8 sm:h-12" />
-
+      {/* APPS */}
       <HeroWithApps />
     </main>
   );
