@@ -6,9 +6,23 @@ const cx = (...classes) => classes.filter(Boolean).join(" ");
 
 export default function Hero() {
   const [fadeIn, setFadeIn] = useState(false);
+  const [mode, setMode] = useState("video"); // "video" | "gif" | "still"
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setFadeIn(true));
+
+    // decide background mode
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setMode("still");            // respect accessibility: show a still image
+    } else {
+      const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const slowTypes = ["slow-2g", "2g", "3g"];
+      const saveData = !!c?.saveData;
+      const slow = c && slowTypes.includes(c.effectiveType || "");
+      setMode(saveData || slow ? "gif" : "video");
+    }
+
     return () => cancelAnimationFrame(id);
   }, []);
 
@@ -16,21 +30,51 @@ export default function Hero() {
     <section
       aria-label="Intro hero"
       className="
-        relative w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]
+        relative z-10  /* keep above HeroWithCapabilities on mobile */
+        w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]
         mt-6 sm:mt-10 mb-10 sm:mb-16 sm:h-[70vh]
       "
     >
-      {/* Background GIF */}
-      <div className={`absolute inset-0 transition-opacity duration-700 ${fadeIn ? "opacity-100" : "opacity-0"}`}>
-        <img
-          src="/img/pulsating_arcturus.gif"
-          alt=""
-          className="w-full h-full object-cover"
-        />
+      {/* Background (video -> gif -> still) */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-700 ${
+          fadeIn ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {mode === "video" && (
+          <video
+            className="w-full h-full object-cover"
+            src="/vid/pulsating_arcturus_vid.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster="/img/network-hero-2560.png"
+          />
+        )}
+
+        {mode === "gif" && (
+          <img
+            src="/img/pulsating_arcturus.gif"
+            alt="Pulsating Arcturus"
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {mode === "still" && (
+          <img
+            src="/img/network-hero-2560.png"
+            alt="Abstract network"
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {/* readability gradient */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-black/6 to-black/25" />
       </div>
 
-      {/* Card sized like HeroWithCapabilities */}
+      {/* Card (same sizing language as HeroWithCapabilities) */}
       <div
         className={cx(
           "absolute left-1/2",
@@ -49,7 +93,10 @@ export default function Hero() {
         </h1>
 
         <p className="mt-3 text-neutral-700 max-w-prose">
-          Arcturus Digital Consulting builds apps and digital products that focus on real-world problems — not technology for its own sake. From ADHD support to family organisation and fitness planning, every product is designed around a clear need, with privacy and compliance built in from the start.
+          Arcturus Digital Consulting builds apps and digital products that focus on
+          real-world problems — not technology for its own sake. From ADHD support to
+          family organisation and fitness planning, every product is designed around a clear
+          need, with privacy and compliance built in from the start.
         </p>
 
         <div className="mt-5 flex gap-3 flex-wrap">
