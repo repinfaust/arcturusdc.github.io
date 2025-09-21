@@ -22,27 +22,20 @@ export default function Home() {
           className="rounded-full"
           priority
         />
-        <span className="text-neutral-900 text-base font-semibold">
-          Arcturus Digital Consulting
-        </span>
+        <span className="text-neutral-900 text-base font-semibold">Arcturus Digital Consulting</span>
       </div>
 
-      {/* HERO */}
+      {/* HERO (now normal flow) */}
       <Hero />
 
-      {/* --- separation + in-page anchor target for the Capabilities button --- */}
-      {/* This invisible anchor lets #capabilities scroll to a sensible spot even with sticky headers */}
+      {/* Anchor + breathing room before capabilities */}
       <div id="capabilities" className="relative h-0 -mt-16 sm:-mt-20" aria-hidden="true" />
-      {/* Visual breathing room between hero and the next full-bleed section */}
-      <div className="h-10 sm:h-16" />
+      <div className="h-8 sm:h-12" />
 
-      {/* CAPABILITIES */}
       <HeroWithCapabilities />
 
-      {/* Space before the apps section so cards don't kiss each other on mobile */}
-      <div className="h-10 sm:h-16" />
+      <div className="h-8 sm:h-12" />
 
-      {/* APPS */}
       <HeroWithApps />
     </main>
   );
