@@ -112,7 +112,7 @@ export default function Hero() {
 
         {/* Chips now match Capabilities hero */}
         <div className="mt-6 badges">
-          <span className="badge">UK Ltd</span>
+          <span className="badge">Independent</span>
           <span className="badge">App Store &amp; Google Play compliant</span>
           <span className="badge">UK based</span>
         </div>
