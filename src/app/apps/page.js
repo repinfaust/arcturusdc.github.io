@@ -9,15 +9,12 @@ export default function AppsPage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-extrabold mb-4">Apps</h1>
 
-        <p className="text-neutral-700 max-w-3xl">
+        <p className="text-neutral-700 max-w-[60ch]">
           Policies, platforms, and specifics for each app — kept compliant and privacy-first.
-          <br className="hidden sm:block" />
-          <span className="sm:ml-1">
-            Our portfolio focuses on solving real problems in clear niches, without adding tech for the sake of it.
-          </span>
+          Our portfolio focuses on solving real problems in clear niches, without adding tech for the sake of it.
         </p>
 
-        <div className="mt-10">
+        <div className="mt-8">
           <AppsClient apps={apps} />
         </div>
       </section>
