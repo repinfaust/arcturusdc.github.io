@@ -149,8 +149,8 @@ export default function HeroWithCapabilities() {
           Capabilities
         </h3>
 
+        {/* 3-column content (unchanged) */}
         <div className="grid gap-8 md:grid-cols-3 text-neutral-700">
-          {/* App Development FIRST */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
             <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
@@ -161,31 +161,15 @@ export default function HeroWithCapabilities() {
             </p>
           </div>
 
-          {/* Product strategy SECOND, with left-aligned CTA */}
-          <div className="text-left">
+          <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
             <p className="text-sm text-neutral-600">
               Helping organisations cut through noise to find and deliver the next most valuable outcome.
               The emphasis is on solving genuine problems in the simplest, most effective way.
             </p>
-
-            {/* Primary button — forced left alignment */}
-            <div className="mt-4 flex justify-start">
-              <a
-                href="/capabilities"
-                className="block w-fit rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
-                data-analytics="button"
-                data-name="Capabilities hero: Learn more"
-                data-component="HeroWithCapabilities"
-                data-location="hero"
-              >
-                Learn more
-              </a>
-            </div>
           </div>
 
-          {/* Data & analytics THIRD */}
           <div>
             <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
             <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
@@ -196,7 +180,21 @@ export default function HeroWithCapabilities() {
           </div>
         </div>
 
-        {/* Chips */}
+        {/* CTA moved BELOW the grid, left-aligned — matches HeroWithApps */}
+        <div className="mt-6">
+          <a
+            href="/capabilities"
+            className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
+            data-analytics="button"
+            data-name="Capabilities hero: Learn more"
+            data-component="HeroWithCapabilities"
+            data-location="hero"
+          >
+            Learn more
+          </a>
+        </div>
+
+        {/* Chips (unchanged) */}
         <div className="mt-6 badges">
           <span className="badge">Distinct, not cloned</span>
           <span className="badge">Solutions, not features</span>
