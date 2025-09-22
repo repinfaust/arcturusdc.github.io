@@ -1,4 +1,6 @@
 // src/app/contact/page.js
+import Image from "next/image";
+import Link from "next/link";
 import ContactFormClient from "../../components/ContactFormClient";
 
 export const metadata = {
@@ -24,6 +26,25 @@ export default function ContactPage() {
         </div>
 
         <ContactFormClient />
+
+        {/* Instagram link */}
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="https://www.instagram.com/arcturusdigitalconsulting?igsh=MWZuajQ0bHZ2dzJpcQ=="
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-white hover:text-pink-500"
+          >
+            <Image
+              src="/img/Instagram_Glyph_Gradient.png"
+              alt="Instagram"
+              width={28}
+              height={28}
+              className="rounded-md"
+            />
+            <span className="text-sm">Follow us on Instagram</span>
+          </Link>
+        </div>
       </div>
     </div>
   );
