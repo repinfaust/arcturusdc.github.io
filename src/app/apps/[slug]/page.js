@@ -1,13 +1,28 @@
 import apps from '@/data/apps.json';
 
+const STATIC_APP_ROUTES = new Set([
+  'mandrake',
+  'adhd-acclaim',
+  'syncfit',
+  'toume',      // static page at /apps/toume
+  // add any others you move to standalone pages
+]);
+
 export async function generateStaticParams() {
-  // apps is an array; return [{ slug: 'mandrake' }, ...]
-  return apps.map(a => ({ slug: a.id }));
+  // Only generate pages for apps that do NOT have a static route
+  return apps
+    .filter(a => !STATIC_APP_ROUTES.has(a.id))
+    .map(a => ({ slug: a.id }));
 }
 
 export default function AppOverview({ params }) {
+  const { slug } = params;
+
+  // If this slug has a dedicated static page, don't render it here.
+  if (STATIC_APP_ROUTES.has(slug)) return notFound();
+
   // Find the app by its id (slug)
-  const app = apps.find(a => a.id === params.slug);
+  const app = apps.find(a => a.id === slug);
   if (!app) return notFound();
 
   const platforms = app.platforms ? Object.keys(app.platforms) : [];
@@ -23,6 +38,7 @@ export default function AppOverview({ params }) {
             src={app.icon}
             alt={`${app.name} logo`}
             className="w-14 h-14 rounded-xl"
+            loading="lazy"
           />
         ) : null}
         <h1 className="text-3xl font-extrabold">{app.name}</h1>
@@ -39,7 +55,7 @@ export default function AppOverview({ params }) {
           {platforms.map((p) => (
             <a
               key={p}
-              href={`/apps/${params.slug}/${p}`}
+              href={`/apps/${slug}/${p}`}
               className="px-3 py-2 rounded-full border hover:border-brand"
             >
               {app.platforms[p].title}
