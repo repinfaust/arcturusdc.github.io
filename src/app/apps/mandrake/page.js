@@ -144,6 +144,40 @@ export default function Mandrake() {
                 icon="device"
               />
             </div>
+
+            {/* FAQ accordion under features */}
+            <div className="mt-10">
+              <h2 className="text-2xl md:text-[28px] font-extrabold text-white text-center md:text-left">
+                FAQ
+              </h2>
+              <div className="mt-5 space-y-3">
+                <AccordionItem question="Is Mandrake therapy or treatment?">
+                  <p>
+                    No. Mandrake is a self-management tool. It helps you log urges, try tactics, and
+                    spot patterns — but it does not diagnose, treat, or replace professional care.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="Is my data private?">
+                  <p>
+                    Yes. Logs are stored on your device by default. You can export or delete them
+                    anytime. Nothing is shared unless you choose to.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="What happens if urges feel too heavy?">
+                  <p>
+                    Mandrake includes gentle, optional signposts. If repeated patterns suggest extra
+                    support could help, you’ll see links to confidential external resources — you’re
+                    always in control.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="Do I need an account to use Mandrake?">
+                  <p>No. You can use the app straight away without creating an account.</p>
+                </AccordionItem>
+                <AccordionItem question="What platforms does Mandrake run on?">
+                  <p>Mandrake is available on both Android and iOS.</p>
+                </AccordionItem>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -156,19 +190,13 @@ export default function Mandrake() {
           <h3 className="text-xl font-bold">Android</h3>
           <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
             <li>
-              <Link href="/assets/policies/Mandrake_Disclaimer_16plus.pdf">
-                Disclaimer (PDF)
-              </Link>
+              <Link href="/assets/policies/Mandrake_Disclaimer_16plus.pdf">Disclaimer (PDF)</Link>
             </li>
             <li>
-              <Link href="/assets/policies/Mandrake_Privacy_Policy_16plus.pdf">
-                Privacy Policy (PDF)
-              </Link>
+              <Link href="/assets/policies/Mandrake_Privacy_Policy_16plus.pdf">Privacy Policy (PDF)</Link>
             </li>
             <li>
-              <Link href="/assets/policies/Mandrake_Terms_of_Service_16plus.pdf">
-                Terms of Service (PDF)
-              </Link>
+              <Link href="/assets/policies/Mandrake_Terms_of_Service_16plus.pdf">Terms of Service (PDF)</Link>
             </li>
           </ul>
         </div>
@@ -177,14 +205,10 @@ export default function Mandrake() {
           <h3 className="text-xl font-bold">iOS</h3>
           <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
             <li>
-              <Link href="/assets/policies/Mandrake_Disclaimer_iOS.pdf">
-                Disclaimer (PDF)
-              </Link>
+              <Link href="/assets/policies/Mandrake_Disclaimer_iOS.pdf">Disclaimer (PDF)</Link>
             </li>
             <li>
-              <Link href="/assets/policies/Mandrake_Terms_of_Service_iOS.pdf">
-                Terms of Service (PDF)
-              </Link>
+              <Link href="/assets/policies/Mandrake_Terms_of_Service_iOS.pdf">Terms of Service (PDF)</Link>
             </li>
           </ul>
         </div>
@@ -197,55 +221,55 @@ export default function Mandrake() {
 function Feature({ title, desc, icon = 'dot' }) {
   const icons = {
     log: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <path d="M4 4h12v2H4zm0 5h12v2H4zm0 5h8v2H4z" />
       </svg>
     ),
     bolt: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <path d="M11 1L3 10h5l-1 9 8-11h-5z" />
       </svg>
     ),
     timer: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
         <path d="M10 5v5l3 3" stroke="currentColor" strokeWidth="2" fill="none" />
       </svg>
     ),
     star: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <path d="M10 1l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" />
       </svg>
     ),
     chart: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <path d="M4 12h2v6H4zm5-4h2v10H9zm5-6h2v16h-2z" />
       </svg>
     ),
     smile: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
         <path d="M6 8h.01M14 8h.01M7 13a5 5 0 0 0 6 0" stroke="currentColor" strokeWidth="2" />
       </svg>
     ),
     shield: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <path d="M10 1l9 4v6c0 5-3.5 9-9 11-5.5-2-9-6-9-11V5z" />
       </svg>
     ),
     lock: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <rect x="4" y="9" width="12" height="8" rx="2" />
         <path d="M6 9V6a4 4 0 0 1 8 0v3" />
       </svg>
     ),
     device: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <rect x="6" y="2" width="8" height="16" rx="2" />
       </svg>
     ),
     dot: (
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
         <circle cx="10" cy="10" r="3" />
       </svg>
     ),
@@ -261,5 +285,30 @@ function Feature({ title, desc, icon = 'dot' }) {
         <p className="text-white/80 text-sm">{desc}</p>
       </div>
     </div>
+  );
+}
+
+/* --- Accordion components (native <details> for accessibility) --- */
+function AccordionItem({ question, children }) {
+  return (
+    <details className="group rounded-2xl border border-white/15 bg-white/5 text-white open:bg-white/10 transition">
+      <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 list-none">
+        <span className="text-base font-semibold select-none">{question}</span>
+        <Chevron />
+      </summary>
+      <div className="px-4 pb-4 pt-0 text-white/90 text-sm leading-relaxed">
+        {children}
+      </div>
+    </details>
+  );
+}
+
+function Chevron() {
+  return (
+    <span className="inline-block transition-transform group-open:rotate-180" aria-hidden>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M5.5 7.5L10 12l4.5-4.5" />
+      </svg>
+    </span>
   );
 }
