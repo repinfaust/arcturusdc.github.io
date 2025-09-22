@@ -17,13 +17,14 @@ export default function ADHDAcclaim() {
         <div>
           <div className="font-extrabold">ADHD Acclaim</div>
           <div className="text-muted text-sm">
-            Private urge logging, quick tactics, and pattern insights.
+            Celebrate wins, earn rewards, feel good — on your terms.
           </div>
           <p className="mt-2 text-sm text-neutral-700">
-            Mandrake gives you a private, lightweight way to spot urges, take action fast, and see
-            what’s really going on beneath the surface. Every feature is designed to keep friction
-            low, reinforcement immediate, and insights clear — all while staying entirely on your
-            terms.
+            ADHD Acclaim is a simple, gamified reward app built for ADHD brains. Instead of pressure,
+            deadlines, or streaks, you get to define your own “Wins” — anything from brushing your teeth
+            to finishing a project. Every win earns you points, progress, and celebration you can actually
+            feel good about. Trade points for rewards you set yourself, and enjoy visible progress without
+            the guilt of missed tasks. ADHD Acclaim is all about joy, not judgment.
           </p>
         </div>
       </div>
@@ -50,8 +51,7 @@ export default function ADHDAcclaim() {
               Inside ADHD Acclaim
             </h1>
             <p className="mt-3 text-white/85 max-w-2xl mx-auto">
-              A quick look at logging, fast tactics, and the insight flow. All private,
-              always on your terms.
+              A quick look at how wins, points, and rewards come together — pressure-free.
             </p>
           </div>
 
@@ -103,29 +103,172 @@ export default function ADHDAcclaim() {
             </h2>
 
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-white">
-              {/* Feature list remains to be updated with ADHD Acclaim copy */}
+              <Feature
+                title="One-Tap Wins"
+                desc="Log any achievement instantly, big or small."
+                icon="log"
+              />
+              <Feature
+                title="Instant Points"
+                desc="Earn points and get celebratory feedback the moment you log a win."
+                icon="bolt"
+              />
+              <Feature
+                title="Visible Progress"
+                desc="See your points grow and track how far you’ve come."
+                icon="chart"
+              />
+              <Feature
+                title="Personal Rewards"
+                desc="Create your own meaningful rewards and cash in points when you’re ready."
+                icon="gift"
+              />
+              <Feature
+                title="No Pressure, No Punishment"
+                desc="Forget streaks, deadlines, and overdue tasks — wins only, never shame."
+                icon="shield"
+              />
+              <Feature
+                title="Celebrate Everything"
+                desc="Fun visuals and uplifting animations every time you succeed."
+                icon="star"
+              />
             </div>
 
-            {/* FAQ accordion placeholder */}
+            {/* FAQ accordion */}
             <div className="mt-10">
               <h2 className="text-2xl md:text-[28px] font-extrabold text-white text-center md:text-left">
                 FAQ
               </h2>
               <div className="mt-5 space-y-3">
-                {/* FAQ items remain to be updated with ADHD Acclaim copy */}
+                <AccordionItem question="Is ADHD Acclaim a task manager or planner?">
+                  <p>
+                    No. ADHD Acclaim is not about schedules, lists, or productivity hacks. It’s a
+                    celebration app where you log wins and enjoy rewards — at your own pace.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="What counts as a “Win”?">
+                  <p>
+                    Anything you decide! Wins can be everyday actions (like making your bed), personal
+                    victories (like sending a message you’ve been avoiding), or big milestones. You
+                    choose what matters.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="Do I have to use the app every day?">
+                  <p>
+                    Not at all. There are no streaks or penalties. Log wins whenever you like — ADHD
+                    Acclaim will always celebrate with you.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="Are rewards built-in or do I add my own?">
+                  <p>
+                    You create your own rewards, tailored to what motivates you — from “watch an
+                    episode of my favourite show” to “buy that snack I’ve been craving.”
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="Is my data private?">
+                  <p>
+                    Yes. Wins and rewards are stored on your device, and you stay in control of your own
+                    data.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="Who is ADHD Acclaim for?">
+                  <p>
+                    Anyone who wants positive reinforcement without pressure. While designed for ADHD
+                    users, it’s helpful for anyone who finds motivation and joy in celebrating progress.
+                  </p>
+                </AccordionItem>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Policies section placeholder */}
+      {/* Policies section (optional) */}
       <section className="card p-6 mt-4">
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
-        {/* Policies will be added here */}
+        <p className="text-sm text-neutral-700">App policies and terms will appear here.</p>
       </section>
     </main>
   );
 }
 
-/* --- Feature component + Accordion component remain the same as before --- */
+/* --- Feature component --- */
+function Feature({ title, desc, icon = 'dot' }) {
+  const icons = {
+    log: (
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+        <path d="M4 4h12v2H4zm0 5h12v2H4zm0 5h8v2H4z" />
+      </svg>
+    ),
+    bolt: (
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+        <path d="M11 1L3 10h5l-1 9 8-11h-5z" />
+      </svg>
+    ),
+    star: (
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+        <path d="M10 1l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" />
+      </svg>
+    ),
+    chart: (
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+        <path d="M4 12h2v6H4zm5-4h2v10H9zm5-6h2v16h-2z" />
+      </svg>
+    ),
+    shield: (
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+        <path d="M10 1l9 4v6c0 5-3.5 9-9 11-5.5-2-9-6-9-11V5z" />
+      </svg>
+    ),
+    gift: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M2 7h16v4H2z" />
+        <path d="M9 2c-.8 0-1.5.6-1.5 1.4 0 .9.7 1.6 1.6 1.6H10V2H9zM11 2v3h.9c.9 0 1.6-.7 1.6-1.6 0-.8-.7-1.4-1.5-1.4H11z" />
+        <path d="M2 11h7v7H4a2 2 0 0 1-2-2v-5zm9 0h7v5a2 2 0 0 1-2 2h-5v-7z" />
+      </svg>
+    ),
+    dot: (
+      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+        <circle cx="10" cy="10" r="3" />
+      </svg>
+    ),
+  };
+
+  return (
+    <div className="flex items-start gap-3">
+      <span className="shrink-0 mt-1 grid place-items-center rounded-lg border border-white/20 bg-white/10 p-2 shadow-sm text-white">
+        {icons[icon]}
+      </span>
+      <div>
+        <h4 className="font-semibold text-white">{title}</h4>
+        <p className="text-white/80 text-sm">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+/* --- Accordion components (native <details> for accessibility) --- */}
+function AccordionItem({ question, children }) {
+  return (
+    <details className="group rounded-2xl border border-white/15 bg-white/5 text-white open:bg-white/10 transition">
+      <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 list-none">
+        <span className="text-base font-semibold select-none">{question}</span>
+        <Chevron />
+      </summary>
+      <div className="px-4 pb-4 pt-0 text-white/90 text-sm leading-relaxed">
+        {children}
+      </div>
+    </details>
+  );
+}
+
+function Chevron() {
+  return (
+    <span className="inline-block transition-transform group-open:rotate-180" aria-hidden>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M5.5 7.5L10 12l4.5-4.5" />
+      </svg>
+    </span>
+  );
+}
