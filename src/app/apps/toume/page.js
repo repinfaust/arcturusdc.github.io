@@ -148,17 +148,24 @@ export default function TouMe() {
         </div>
       </section>
 
-      {/* Policies section */}
-      <section className="card p-6 mt-4">
-        <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
-        <p className="text-sm text-neutral-700">App policies and terms will appear here.</p>
-        <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
-          <li><Link href="/privacy">Privacy Policy</Link> (generic)</li>
-          <li><Link href="/terms">Terms of Use</Link> (generic)</li>
-        </ul>
-      </section>
-    </main>
-  );
+{/* Policies section */}
+<section className="card p-6 mt-4">
+  <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
+  <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
+    <li>
+      <Link href="/assets/policies/Toume_PrivacyPolicy.pdf" target="_blank" rel="noopener noreferrer">
+        Privacy Policy
+      </Link>
+    </li>
+    <li>
+      <Link href="/assets/policies/Toume_TermsOfService.pdf" target="_blank" rel="noopener noreferrer">
+        Terms of Service
+      </Link>
+    </li>
+  </ul>
+</section>
+</main>
+);
 }
 
 /* --- Feature component --- */
