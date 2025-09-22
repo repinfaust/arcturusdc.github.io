@@ -248,7 +248,7 @@ function Feature({ title, desc, icon = 'dot' }) {
   );
 }
 
-/* --- Accordion components (native <details> for accessibility) --- */}
+/* --- Accordion components (native <details> for accessibility) --- */
 function AccordionItem({ question, children }) {
   return (
     <details className="group rounded-2xl border border-white/15 bg-white/5 text-white open:bg-white/10 transition">
