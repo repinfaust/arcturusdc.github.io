@@ -16,20 +16,20 @@ export default function TouMe() {
         />
         <div>
           <div className="font-extrabold">Tou.me</div>
-          <div className="text-muted text-sm">
-            For you, for me, for them.
-          </div>
+          <div className="text-muted text-sm">For you, for me, for them.</div>
           <p className="mt-2 text-sm text-neutral-700">
-            Tou.me is a calm, logistics-first family planner designed for separated, divorced, and blended families.
-            Unlike legal or chat-heavy apps, Tou.me focuses purely on the practical: schedules, handovers, essentials,
-            expenses, and wellbeing. It’s separation-aware but never adversarial, helping families avoid misunderstandings
-            and reduce friction. With neutral language, structured flows, and easy share-outs to calendars or WhatsApp,
-            Tou.me makes the everyday realities of raising children across two homes clearer, calmer, and fairer.
+            Tou.me is a calm, logistics-first family planner designed for separated, divorced,
+            and blended families. Unlike legal or chat-heavy apps, Tou.me focuses purely on
+            the practical: schedules, handovers, essentials, expenses, and wellbeing. It’s
+            separation-aware but never adversarial, helping families avoid misunderstandings
+            and reduce friction. With neutral language, structured flows, and easy share-outs
+            to calendars or WhatsApp, Tou.me makes the everyday realities of raising children
+            across two homes clearer, calmer, and fairer.
           </p>
         </div>
       </div>
 
-      {/* HERO section with background (no video) */}
+      {/* HERO section with background + video */}
       <section className="relative mt-3 overflow-hidden rounded-2xl border border-black/10">
         {/* Background image */}
         <div className="absolute inset-0 -z-10">
@@ -55,12 +55,36 @@ export default function TouMe() {
             </p>
           </div>
 
+          {/* Video showcase */}
+          <div className="mt-6 md:mt-8">
+            <div className="relative max-w-4xl mx-auto flex justify-center">
+              <div className="rounded-xl border border-white/20 shadow-2xl overflow-hidden bg-black/50 backdrop-blur-sm">
+                <video
+                  className="w-full h-auto aspect-video"
+                  src="/vid/toume_video_showcase.mp4"
+                  poster="/img/tou.me_logo.jpeg"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls
+                />
+              </div>
+              <div
+                className="absolute -inset-2 -z-10 rounded-2xl blur-2xl opacity-40"
+                style={{
+                  background:
+                    'radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,0.25), rgba(0,0,0,0))',
+                }}
+              />
+            </div>
+          </div>
+
           {/* Key Features */}
           <div className="mt-10 md:mt-12">
             <h2 className="text-2xl md:text-[28px] font-extrabold text-white text-center md:text-left">
               Key Features
             </h2>
-
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-white">
               <Feature title="Calendar" desc="Set up schedules with templates for repeats and term-time changes." icon="calendar" />
               <Feature title="Handover Playbooks" desc="Clear checklists and timings for smooth, predictable handovers." icon="book" />
@@ -85,39 +109,33 @@ export default function TouMe() {
                     not a legal tool.
                   </p>
                 </AccordionItem>
-
                 <AccordionItem question="Can I chat in Tou.me?">
                   <p>
                     No. There’s no in-app messaging. Instead, Tou.me generates structured summaries you can share through
                     WhatsApp, SMS, or email.
                   </p>
                 </AccordionItem>
-
                 <AccordionItem question="Do both parents need to use it?">
                   <p>
                     It works best if everyone’s involved, but it’s still useful solo. You can export schedules, checklists,
                     and digests to keep the other side informed without them needing the app.
                   </p>
                 </AccordionItem>
-
                 <AccordionItem question="How is my data protected?">
                   <p>
                     All data is encrypted in transit and at rest, hosted in the UK/EU under GDPR rules. No ads, no trackers.
                   </p>
                 </AccordionItem>
-
                 <AccordionItem question="What if only I want to use it with a grandparent or carer?">
                   <p>
                     That’s supported. You can invite carers or viewers with limited roles and only share what’s needed.
                   </p>
                 </AccordionItem>
-
                 <AccordionItem question="What about payments or reimbursements?">
                   <p>
                     Tou.me only tracks shared expenses and balances. It doesn’t handle payments — this avoids complexity and conflict.
                   </p>
                 </AccordionItem>
-
                 <AccordionItem question="Who is Tou.me for?">
                   <p>
                     Primarily separated/divorced parents raising kids across two homes, but also blended families, grandparents,
@@ -130,12 +148,10 @@ export default function TouMe() {
         </div>
       </section>
 
-      {/* Policies section (optional) */}
+      {/* Policies section */}
       <section className="card p-6 mt-4">
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
-        <p className="text-sm text-neutral-700">
-          App policies and terms will appear here.
-        </p>
+        <p className="text-sm text-neutral-700">App policies and terms will appear here.</p>
         <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
           <li><Link href="/privacy">Privacy Policy</Link> (generic)</li>
           <li><Link href="/terms">Terms of Use</Link> (generic)</li>
@@ -223,7 +239,7 @@ function Feature({ title, desc, icon = 'dot' }) {
   );
 }
 
-/* --- Accordion components (native <details> for accessibility) --- */
+/* --- Accordion components --- */
 function AccordionItem({ question, children }) {
   return (
     <details className="group rounded-2xl border border-white/15 bg-white/5 text-white open:bg-white/10 transition">
