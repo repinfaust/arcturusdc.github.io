@@ -46,7 +46,7 @@ function AppCard({ app }) {
         tabIndex={0}
         onClick={toggle}
         onKeyDown={(e) => (e.key === " " || e.key === "Enter") && (e.preventDefault(), toggle())}
-        className="relative rounded-2xl border border-black/10 bg-white p-5 shadow-sm hover:shadow-md transition overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800"
+        className="relative rounded-2xl border border-black/10 bg-white p-5 shadow-sm hover:shadow-md transition overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 min-h-[200px]" // 👈 equal height in resting state
         aria-expanded={expanded}
         aria-controls={`summary-${app.id}`}
       >
