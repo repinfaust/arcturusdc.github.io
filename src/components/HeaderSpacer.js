@@ -12,7 +12,7 @@ export default function HeaderSpacer() {
   const isContact = pathname === "/contact";
   const isApps = pathname.startsWith("/apps/");
 
-  const cls = isHome ? "h-10 md:h-12" : isContact ? "h-2 md:h-3" : isApps ? "h-6 md:h-8" : "h-6 md:h-8";
+  const cls = isHome ? "h-8 md:h-10" : isContact ? "h-2 md:h-3" : isApps ? "h-6 md:h-8" : "h-6 md:h-8";
 
   return <div className={cls} aria-hidden="true" />;
 }
