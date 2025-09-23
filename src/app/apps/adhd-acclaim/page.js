@@ -184,10 +184,31 @@ export default function ADHDAcclaim() {
         </div>
       </section>
 
-      {/* Policies section (optional) */}
+      {/* Policies section */}
       <section className="card p-6 mt-4">
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
-        <p className="text-sm text-neutral-700">App policies and terms will appear here.</p>
+        <ul className="space-y-2 text-sm">
+          <li>
+            <Link
+              href="/assets/policies/ADHD_Acclaim_PrivacyPolicy.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Privacy Policy (PDF)
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/assets/policies/ADHD_Acclaim_TermsOfUse.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Terms of Use (PDF)
+            </Link>
+          </li>
+        </ul>
       </section>
     </main>
   );
