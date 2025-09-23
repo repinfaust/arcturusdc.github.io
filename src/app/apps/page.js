@@ -29,9 +29,9 @@ export default function AppsPage() {
         </div>
       </section>
 
-      {/* Cards (centered) */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 flex justify-center">
-        <div className="w-full max-w-5xl">
+      {/* Cards */}
+      <section className="py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <AppsClient apps={apps} />
         </div>
       </section>
