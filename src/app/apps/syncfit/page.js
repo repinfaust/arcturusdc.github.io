@@ -170,10 +170,13 @@ export default function SyncFit() {
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
         <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
           <li>
-            <Link href="/privacy">Privacy Policy</Link> (generic)
+            <Link href="/assets/policies/SyncFit_PrivacyPolicy.pdf">Privacy Policy (SyncFit)</Link>
           </li>
           <li>
-            <Link href="/terms">Terms of Use</Link> (generic)
+            <Link href="/assets/policies/SyncFit_TermsOfService.pdf">Terms of Service (SyncFit)</Link>
+          </li>
+          <li>
+            <Link href="/assets/policies/SyncFit_PricingPolicy.pdf">Pricing Policy (SyncFit)</Link>
           </li>
         </ul>
       </section>
