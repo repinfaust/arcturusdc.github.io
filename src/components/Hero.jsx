@@ -31,9 +31,9 @@ export default function Hero() {
       className="
         relative
         w-screen ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]
-        mt-6 sm:mt-10
+        mt-8 sm:mt-12
         py-16 sm:py-24
-        mb-24 sm:mb-28
+        mb-20 sm:mb-24
       "
     >
       {/* Background (video -> gif -> still) */}
