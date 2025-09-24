@@ -1,5 +1,3 @@
-
-
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -83,18 +81,18 @@ export default function ADHDAcclaim() {
 
             {/* CTAs – centred */}
             <div className="mt-5 flex flex-wrap justify-center gap-3">
-              <Link
-                href="/apps/adhd-acclaim/android"
-                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-red-600 text-white hover:bg-red-700 transition"
+              <button
+                disabled
+                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-red-600 text-white opacity-70 cursor-not-allowed"
               >
-                Get it on Android
-              </Link>
-              <Link
-                href="/apps/adhd-acclaim/ios"
-                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-white text-black hover:bg-white/90 transition border border-black/10"
+                Android – Coming Soon
+              </button>
+              <button
+                disabled
+                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-white text-black opacity-70 cursor-not-allowed border border-black/10"
               >
-                Get it on iOS
-              </Link>
+                iOS – Coming Soon
+              </button>
             </div>
           </div>
 
