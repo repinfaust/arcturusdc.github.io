@@ -189,14 +189,10 @@ export default function ADHDAcclaim() {
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
         <ul className="space-y-2 text-sm">
           <li>
-            <Link
-              href="/apps/adhd-acclaim/adhd_acclaim_privacy_policy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Privacy Policy (PDF)
+            <Link href="/apps/adhd-acclaim/privacy-policy" className="text-blue-600 hover:underline">
+            Privacy Policy (HTML)
             </Link>
+
           </li>
           <li>
             <Link
