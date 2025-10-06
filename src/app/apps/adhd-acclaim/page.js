@@ -190,7 +190,7 @@ export default function ADHDAcclaim() {
         <ul className="space-y-2 text-sm">
           <li>
             <Link
-              href="#privacy-policy"
+              href="/apps/adhd-acclaim/adhd_acclaim_privacy_policy"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
