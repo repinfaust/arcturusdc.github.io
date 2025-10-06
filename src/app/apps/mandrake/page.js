@@ -192,9 +192,13 @@ export default function Mandrake() {
             <li>
               <Link href="/assets/policies/Mandrake_Disclaimer_16plus.pdf">Disclaimer (PDF)</Link>
             </li>
-            <li>
-              <Link href="/assets/policies/Mandrake_Privacy_Policy_16plus.pdf">Privacy Policy (PDF)</Link>
-            </li>
+            <Link
+            href="/apps/mandrake/privacy-policy"
+            className="text-blue-600 hover:underline"
+              >
+              Privacy Policy (HTML)
+            </Link>
+
             <li>
               <Link href="/assets/policies/Mandrake_Terms_of_Service_16plus.pdf">Terms of Service (PDF)</Link>
             </li>
