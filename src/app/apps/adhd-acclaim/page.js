@@ -238,4 +238,74 @@ export default function ADHDAcclaim() {
         <h2 className="mt-6 font-bold text-lg">4) Data storage and retention</h2>
         <p className="mt-2">
           App data is stored on your device and remains there until you delete it or uninstall the App. Support emails are retained
-          only as long as necessary to addr
+          only as long as necessary to address your request and for reasonable business, legal, or audit purposes.
+        </p>
+
+        <h2 className="mt-6 font-bold text-lg">5) Sharing and transfers</h2>
+        <ul className="list-disc pl-6 mt-2 space-y-2">
+          <li>We do <strong>not</strong> sell your data.</li>
+          <li>We may share limited information with service providers who help us operate (e.g., crash analytics),
+              under contracts that require appropriate safeguards.</li>
+          <li>We may disclose information where required by law or to protect rights, safety, or security.</li>
+        </ul>
+
+        <h2 className="mt-6 font-bold text-lg">6) Children’s privacy</h2>
+        <p className="mt-2">
+          The App is not intended for children under 13. If you believe a child has provided us information, please contact us
+          and we will take appropriate steps.
+        </p>
+
+        <h2 className="mt-6 font-bold text-lg">7) Your choices and rights</h2>
+        <ul className="list-disc pl-6 mt-2 space-y-2">
+          <li><strong>Access, export, or delete on-device data:</strong> you can clear App data via your device settings or by uninstalling the App.</li>
+          <li><strong>Permissions:</strong> you can change or revoke device permissions at any time in your device’s settings.</li>
+          <li><strong>Contact us:</strong> you may exercise applicable data rights by emailing us (details below).</li>
+        </ul>
+
+        <h2 className="mt-6 font-bold text-lg">8) Security</h2>
+        <p className="mt-2">
+          We take reasonable technical and organisational measures to protect information. No mobile or internet service is
+          100% secure; please keep your device and OS up to date and use a device passcode where available.
+        </p>
+
+        <h2 className="mt-6 font-bold text-lg">9) International users</h2>
+        <p className="mt-2">
+          We are a UK company. Where service providers are located outside your country, we use appropriate safeguards consistent
+          with applicable law.
+        </p>
+
+        <h2 className="mt-6 font-bold text-lg">10) Changes to this policy</h2>
+        <p className="mt-2">
+          We may update this policy from time to time. We will post the latest version on this page and update the effective date above.
+        </p>
+
+        <h2 className="mt-6 font-bold text-lg">11) Contact us</h2>
+        <p className="mt-2">
+          <strong>Arcturus Digital Consulting Ltd</strong><br />
+          82 Victoria Street, Nottingham, NG15 7EA, United Kingdom<br />
+          Email: <a href="mailto:info@arcturusdc.com" className="text-blue-600 hover:underline">info@arcturusdc.com</a>
+        </p>
+
+        <div className="mt-6">
+          <Link
+            href="/assets/policies/ADHD_Acclaim_PrivacyPolicy.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-xl px-4 h-10 text-sm font-semibold bg-white text-black border border-black/10 hover:bg-neutral-100"
+          >
+            Download PDF version
+          </Link>
+        </div>
+
+        <p className="mt-6 text-xs text-neutral-500">
+          Note: This page presents the full policy text in HTML to meet app store requirements for a readable privacy policy page.
+        </p>
+      </section>
+      {/* --------------------- END PRIVACY POLICY (HTML) --------------------- */}
+    </main>
+  );
+}
+
+/* --- Feature component --- */
+function Feature({ title, desc, icon = 'dot' }) {
+  const icons = {
