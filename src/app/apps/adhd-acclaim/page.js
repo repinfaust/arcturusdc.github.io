@@ -1,5 +1,7 @@
-import Link from 'next/link';
-import Image from 'next/image';
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
 
 export default function ADHDAcclaim() {
   return (
@@ -21,10 +23,10 @@ export default function ADHDAcclaim() {
           </div>
           <p className="mt-2 text-sm text-neutral-700">
             ADHD Acclaim is a simple, gamified reward app built for ADHD brains. Instead of pressure,
-            deadlines, or streaks, you get to define your own “Wins” — anything from brushing your teeth
-            to finishing a project. Every win earns you points, progress, and celebration you can actually
-            feel good about. Trade points for rewards you set yourself, and enjoy visible progress without
-            the guilt of missed tasks. ADHD Acclaim is all about joy, not judgment.
+            deadlines, or streaks, you define your own "Wins" — anything from brushing your teeth
+            to finishing a project. Every win earns you points, progress, and celebration you can
+            actually feel good about. Trade points for rewards you set yourself, and enjoy visible
+            progress without the guilt of missed tasks. ADHD Acclaim is all about joy, not judgment.
           </p>
         </div>
       </div>
@@ -74,7 +76,7 @@ export default function ADHDAcclaim() {
                 className="absolute -inset-2 -z-10 rounded-2xl blur-2xl opacity-40"
                 style={{
                   background:
-                    'radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,0.25), rgba(0,0,0,0))',
+                    "radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,0.25), rgba(0,0,0,0))",
                 }}
               />
             </div>
@@ -165,10 +167,7 @@ export default function ADHDAcclaim() {
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
         <ul className="space-y-2 text-sm">
           <li>
-            <Link
-              href="#privacy-policy"
-              className="text-blue-600 hover:underline"
-            >
+            <Link href="#privacy-policy" className="text-blue-600 hover:underline">
               View Privacy Policy (HTML, on this page)
             </Link>
           </li>
@@ -307,5 +306,88 @@ export default function ADHDAcclaim() {
 }
 
 /* --- Feature component --- */
-function Feature({ title, desc, icon = 'dot' }) {
-  const icons = {
+function Feature({ title, desc, icon = "dot" }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="shrink-0 mt-1 grid place-items-center rounded-lg border border-white/20 bg-white/10 p-2 shadow-sm text-white">
+        <Icon type={icon} />
+      </span>
+      <div>
+        <h4 className="font-semibold text-white">{title}</h4>
+        <p className="text-white/80 text-sm">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function Icon({ type }) {
+  switch (type) {
+    case "log":
+      return (
+        <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M4 4h12v2H4zM4 9h12v2H4zM4 14h8v2H4z" />
+        </svg>
+      );
+    case "bolt":
+      return (
+        <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M11 1 3 10h5l-1 9 8-11h-5z" />
+        </svg>
+      );
+    case "star":
+      return (
+        <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M10 1l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" />
+        </svg>
+      );
+    case "chart":
+      return (
+        <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M4 12h2v6H4zM9 8h2v10H9zM14 2h2v16h-2z" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M10 1 19 5v6c0 5-3.5 9-9 11C4.5 20 1 16 1 11V5z" />
+        </svg>
+      );
+    case "gift":
+      return (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M2 7h16v4H2z" />
+          <path d="M9 2c-.8 0-1.5.6-1.5 1.4 0 .9.7 1.6 1.6 1.6H10V2H9zM11 2v3h.9c.9 0 1.6-.7 1.6-1.6 0-.8-.7-1.4-1.5-1.4H11z" />
+          <path d="M2 11h7v7H4a2 2 0 0 1-2-2v-5zm9 0h7v5a2 2 0 0 1-2 2h-5v-7z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg width="20" height="20" fill="currentColor" aria-hidden="true">
+          <circle cx="10" cy="10" r="3" />
+        </svg>
+      );
+  }
+}
+
+/* --- Accordion components (native <details> for accessibility) --- */
+function AccordionItem({ question, children }) {
+  return (
+    <details className="group rounded-2xl border border-white/15 bg-white/5 text-white open:bg-white/10 transition">
+      <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 list-none">
+        <span className="text-base font-semibold select-none">{question}</span>
+        <Chevron />
+      </summary>
+      <div className="px-4 pb-4 pt-0 text-white/90 text-sm leading-relaxed">{children}</div>
+    </details>
+  );
+}
+
+function Chevron() {
+  return (
+    <span className="inline-block transition-transform group-open:rotate-180" aria-hidden>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M5.5 7.5 10 12l4.5-4.5" />
+      </svg>
+    </span>
+  );
+}
