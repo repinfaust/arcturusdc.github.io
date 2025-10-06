@@ -103,36 +103,12 @@ export default function ADHDAcclaim() {
             </h2>
 
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-white">
-              <Feature
-                title="One-Tap Wins"
-                desc="Log any achievement instantly, big or small."
-                icon="log"
-              />
-              <Feature
-                title="Instant Points"
-                desc="Earn points and get celebratory feedback the moment you log a win."
-                icon="bolt"
-              />
-              <Feature
-                title="Visible Progress"
-                desc="See your points grow and track how far you’ve come."
-                icon="chart"
-              />
-              <Feature
-                title="Personal Rewards"
-                desc="Create your own meaningful rewards and cash in points when you’re ready."
-                icon="gift"
-              />
-              <Feature
-                title="No Pressure, No Punishment"
-                desc="Forget streaks, deadlines, and overdue tasks — wins only, never shame."
-                icon="shield"
-              />
-              <Feature
-                title="Celebrate Everything"
-                desc="Fun visuals and uplifting animations every time you succeed."
-                icon="star"
-              />
+              <Feature title="One-Tap Wins" desc="Log any achievement instantly, big or small." icon="log" />
+              <Feature title="Instant Points" desc="Earn points and get celebratory feedback the moment you log a win." icon="bolt" />
+              <Feature title="Visible Progress" desc="See your points grow and track how far you’ve come." icon="chart" />
+              <Feature title="Personal Rewards" desc="Create your own meaningful rewards and cash in points when you’re ready." icon="gift" />
+              <Feature title="No Pressure, No Punishment" desc="Forget streaks, deadlines, and overdue tasks — wins only, never shame." icon="shield" />
+              <Feature title="Celebrate Everything" desc="Fun visuals and uplifting animations every time you succeed." icon="star" />
             </div>
 
             {/* FAQ accordion */}
@@ -184,10 +160,18 @@ export default function ADHDAcclaim() {
         </div>
       </section>
 
-      {/* Policies section */}
+      {/* Policies (links) */}
       <section className="card p-6 mt-4">
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
         <ul className="space-y-2 text-sm">
+          <li>
+            <Link
+              href="#privacy-policy"
+              className="text-blue-600 hover:underline"
+            >
+              View Privacy Policy (HTML, on this page)
+            </Link>
+          </li>
           <li>
             <Link
               href="/assets/policies/ADHD_Acclaim_PrivacyPolicy.pdf"
@@ -195,7 +179,7 @@ export default function ADHDAcclaim() {
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
             >
-              Privacy Policy (PDF)
+              Download Privacy Policy (PDF)
             </Link>
           </li>
           <li>
@@ -210,86 +194,48 @@ export default function ADHDAcclaim() {
           </li>
         </ul>
       </section>
-    </main>
-  );
-}
 
-/* --- Feature component --- */
-function Feature({ title, desc, icon = 'dot' }) {
-  const icons = {
-    log: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <path d="M4 4h12v2H4zm0 5h12v2H4zm0 5h8v2H4z" />
-      </svg>
-    ),
-    bolt: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <path d="M11 1L3 10h5l-1 9 8-11h-5z" />
-      </svg>
-    ),
-    star: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <path d="M10 1l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" />
-      </svg>
-    ),
-    chart: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <path d="M4 12h2v6H4zm5-4h2v10H9zm5-6h2v16h-2z" />
-      </svg>
-    ),
-    shield: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <path d="M10 1l9 4v6c0 5-3.5 9-9 11-5.5-2-9-6-9-11V5z" />
-      </svg>
-    ),
-    gift: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path d="M2 7h16v4H2z" />
-        <path d="M9 2c-.8 0-1.5.6-1.5 1.4 0 .9.7 1.6 1.6 1.6H10V2H9zM11 2v3h.9c.9 0 1.6-.7 1.6-1.6 0-.8-.7-1.4-1.5-1.4H11z" />
-        <path d="M2 11h7v7H4a2 2 0 0 1-2-2v-5zm9 0h7v5a2 2 0 0 1-2 2h-5v-7z" />
-      </svg>
-    ),
-    dot: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <circle cx="10" cy="10" r="3" />
-      </svg>
-    ),
-  };
+      {/* ----------------------- PRIVACY POLICY (HTML) ----------------------- */}
+      <section id="privacy-policy" className="card p-6 mt-4">
+        <h1 className="text-2xl md:text-3xl font-extrabold">ADHD Acclaim — Privacy Policy</h1>
+        <p className="mt-2 text-sm text-neutral-600">Effective date: 6 October 2025</p>
+        <p className="mt-4">
+          This Privacy Policy explains how <strong>Arcturus Digital Consulting Ltd</strong> (“Arcturus Digital Consulting”,
+          “we”, “our”, or “us”) collects, uses, and protects information when you use the <strong>ADHD Acclaim</strong> mobile application
+          (the “App”). By using the App, you agree to the practices described here.
+        </p>
 
-  return (
-    <div className="flex items-start gap-3">
-      <span className="shrink-0 mt-1 grid place-items-center rounded-lg border border-white/20 bg-white/10 p-2 shadow-sm text-white">
-        {icons[icon]}
-      </span>
-      <div>
-        <h4 className="font-semibold text-white">{title}</h4>
-        <p className="text-white/80 text-sm">{desc}</p>
-      </div>
-    </div>
-  );
-}
+        <h2 className="mt-6 font-bold text-lg">1) What information we collect</h2>
+        <ul className="list-disc pl-6 mt-2 space-y-2">
+          <li>
+            <strong>On-device app data (no account required):</strong> your Wins, points, rewards, and basic app preferences are
+            stored locally on your device. This information does not leave your device unless you choose to back it up
+            using your device/OS features or share it with us (e.g., via support email).
+          </li>
+          <li>
+            <strong>Crash or diagnostics data:</strong> your device’s operating system or app store may generate anonymised crash
+            reports and performance diagnostics. We use these to improve stability and performance.
+          </li>
+          <li>
+            <strong>Support communications:</strong> if you contact us by email, we will process the information you provide
+            to investigate and resolve your query.
+          </li>
+        </ul>
 
-/* --- Accordion components (native <details> for accessibility) --- */
-function AccordionItem({ question, children }) {
-  return (
-    <details className="group rounded-2xl border border-white/15 bg-white/5 text-white open:bg-white/10 transition">
-      <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 list-none">
-        <span className="text-base font-semibold select-none">{question}</span>
-        <Chevron />
-      </summary>
-      <div className="px-4 pb-4 pt-0 text-white/90 text-sm leading-relaxed">
-        {children}
-      </div>
-    </details>
-  );
-}
+        <h2 className="mt-6 font-bold text-lg">2) How we use information</h2>
+        <ul className="list-disc pl-6 mt-2 space-y-2">
+          <li>To operate the App’s core features (logging Wins, points, and rewards on your device).</li>
+          <li>To fix bugs, improve performance, and maintain security (e.g., using crash/diagnostic reports).</li>
+          <li>To provide user support and respond to enquiries.</li>
+        </ul>
 
-function Chevron() {
-  return (
-    <span className="inline-block transition-transform group-open:rotate-180" aria-hidden>
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M5.5 7.5L10 12l4.5-4.5" />
-      </svg>
-    </span>
-  );
-}
+        <h2 className="mt-6 font-bold text-lg">3) Legal bases (UK/EU)</h2>
+        <ul className="list-disc pl-6 mt-2 space-y-2">
+          <li><strong>Legitimate interests:</strong> running and improving the App, including diagnostics.</li>
+          <li><strong>Consent:</strong> where required by your platform settings (e.g., device permissions you opt in to).</li>
+        </ul>
+
+        <h2 className="mt-6 font-bold text-lg">4) Data storage and retention</h2>
+        <p className="mt-2">
+          App data is stored on your device and remains there until you delete it or uninstall the App. Support emails are retained
+          only as long as necessary to addr
