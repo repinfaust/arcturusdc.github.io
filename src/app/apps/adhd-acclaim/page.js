@@ -81,12 +81,15 @@ export default function ADHDAcclaim() {
 
             {/* CTAs – centred */}
             <div className="mt-5 flex flex-wrap justify-center gap-3">
-              <button
-                disabled
-                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-red-600 text-white opacity-70 cursor-not-allowed"
+              <Link
+                href="https://play.google.com/store/apps/details?id=com.adhdacclaim.app&pcampaignid=web_share"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label="Get ADHD Acclaim on Google Play (opens in a new tab)"
               >
-                Android – Coming Soon
-              </button>
+                Get it on Android
+              </Link>
               <button
                 disabled
                 className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-white text-black opacity-70 cursor-not-allowed border border-black/10"
@@ -190,9 +193,8 @@ export default function ADHDAcclaim() {
         <ul className="space-y-2 text-sm">
           <li>
             <Link href="/apps/adhd-acclaim/privacy-policy" className="text-blue-600 hover:underline">
-            Privacy Policy (HTML)
+              Privacy Policy (HTML)
             </Link>
-
           </li>
           <li>
             <Link
