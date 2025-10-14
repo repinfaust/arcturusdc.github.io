@@ -98,7 +98,6 @@ export default function SteaBoard() {
 
   const openEdit = async (id) => {
     setEditingId(id);
-    // Load latest data (in case of stale state)
     const snap = await getDoc(doc(db, 'stea_cards', id));
     const d = snap.data();
     setForm({
@@ -168,26 +167,49 @@ export default function SteaBoard() {
 
   return (
     <main className="pb-10 max-w-7xl mx-auto px-4">
-      <div className="card p-4 flex items-start gap-3 mt-2">
-        <Image src="/img/arcturusdc_mark.png" width={56} height={56} alt="Arcturus mark" className="rounded-2xl border border-black/10" />
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="font-extrabold text-2xl">STEa — Board</h1>
-            <span className="text-xs px-2 py-0.5 bg-gray-100 border border-gray-200 rounded">{user?.email}</span>
-            <button onClick={() => signOut(auth)} className="ml-auto px-3 py-1.5 bg-gray-100 border rounded hover:bg-gray-200 text-sm">
+      {/* Header */}
+      <div className="card p-4 flex flex-wrap items-center gap-3 mt-2">
+        <Image
+          src="/img/logo-mark.png"
+          width={56}
+          height={56}
+          alt="Arcturus mark"
+          className="rounded-2xl border border-black/10 flex-shrink-0"
+        />
+        <div className="flex-1 min-w-[200px]">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h1 className="font-extrabold text-2xl whitespace-nowrap">STEa — Board</h1>
+            <span className="text-xs px-2 py-0.5 bg-gray-100 border border-gray-200 rounded break-all">
+              {user?.email}
+            </span>
+            <button
+              onClick={() => signOut(auth)}
+              className="px-3 py-1.5 bg-gray-100 border rounded hover:bg-gray-200 text-sm ml-auto"
+            >
               Sign out
             </button>
           </div>
-          <p className="text-sm text-neutral-700 mt-1">Manage ideas → build phases. Auto-saved to Firestore.</p>
-          <button onClick={openCreate} className="mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+          <p className="text-sm text-neutral-700 mt-1">
+            Manage ideas → build phases. Auto-saved to Firestore.
+          </p>
+          <button
+            onClick={openCreate}
+            className="mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto"
+          >
             + New card
           </button>
         </div>
       </div>
 
+      {/* Columns */}
       <section className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {COLUMNS.map((col) => (
-          <div key={col} onDragOver={onDragOver} onDrop={(e) => onDrop(e, col)} className="card p-3 min-h-[360px] flex flex-col">
+          <div
+            key={col}
+            onDragOver={onDragOver}
+            onDrop={(e) => onDrop(e, col)}
+            className="card p-3 min-h-[360px] flex flex-col"
+          >
             <h2 className="font-bold mb-2">{col}</h2>
             <div className="space-y-2 flex-1">
               {(grouped[col] ?? []).map((card) => (
@@ -195,23 +217,30 @@ export default function SteaBoard() {
                   key={card.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, card.id)}
-                  className="border rounded-lg p-3 bg-white shadow-sm cursor-grab"
+                  className="border rounded-lg p-3 bg-white shadow-sm cursor-grab overflow-hidden"
                 >
-                  <div className="flex justify-between items-start gap-2">
-                    <h3 className="font-semibold">{card.title}</h3>
-                    <div className="flex items-center gap-2">
+                  <div className="flex justify-between items-start gap-2 flex-wrap">
+                    <h3 className="font-semibold break-words">{card.title}</h3>
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={() => openEdit(card.id)}
                         className="text-xs px-2 py-0.5 border rounded hover:bg-gray-50"
                       >
                         Edit
                       </button>
-                      <button onClick={() => deleteCard(card.id)} className="text-xs text-red-600">✕</button>
+                      <button
+                        onClick={() => deleteCard(card.id)}
+                        className="text-xs text-red-600"
+                      >
+                        ✕
+                      </button>
                     </div>
                   </div>
 
                   {card.description && (
-                    <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{card.description}</p>
+                    <p className="text-xs text-gray-600 mt-1 break-words whitespace-pre-wrap">
+                      {card.description}
+                    </p>
                   )}
 
                   {/* Badges */}
@@ -219,16 +248,20 @@ export default function SteaBoard() {
                     <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">{card.type}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">{card.urgency}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">{appLabel(card.app)}</span>
-                    {card.reporter ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">Reporter: {card.reporter}</span>
-                    ) : null}
-                    {card.assignee ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">Assigned: {card.assignee}</span>
-                    ) : null}
+                    {card.reporter && (
+                      <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50 break-all">
+                        Reporter: {card.reporter}
+                      </span>
+                    )}
+                    {card.assignee && (
+                      <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50 break-all">
+                        Assigned: {card.assignee}
+                      </span>
+                    )}
                   </div>
 
                   {/* Inline quick edits */}
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div className="flex flex-col">
                       <label className="text-[11px] text-gray-600">App</label>
                       <select
@@ -236,13 +269,15 @@ export default function SteaBoard() {
                         value={card.app || 'new'}
                         onChange={(e) => updateCardField(card.id, 'app', e.target.value)}
                       >
-                        {APPS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                        {APPS.map((a) => (
+                          <option key={a.value} value={a.value}>{a.label}</option>
+                        ))}
                       </select>
                     </div>
                     <div className="flex flex-col">
                       <label className="text-[11px] text-gray-600">Reporter</label>
                       <input
-                        className="border rounded px-2 py-1 text-sm"
+                        className="border rounded px-2 py-1 text-sm break-all"
                         defaultValue={card.reporter || ''}
                         onBlur={(e) => {
                           const v = e.target.value.trim();
@@ -253,7 +288,7 @@ export default function SteaBoard() {
                     <div className="flex flex-col">
                       <label className="text-[11px] text-gray-600">Assigned to</label>
                       <input
-                        className="border rounded px-2 py-1 text-sm"
+                        className="border rounded px-2 py-1 text-sm break-all"
                         defaultValue={card.assignee || ''}
                         onBlur={(e) => {
                           const v = e.target.value.trim();
@@ -263,10 +298,15 @@ export default function SteaBoard() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 mt-3 items-center">
+                  <div className="flex justify-end mt-3">
                     <button
-                      onClick={() => moveCard(card.id, COLUMNS[(COLUMNS.indexOf(card.status) + 1) % COLUMNS.length])}
-                      className="ml-auto text-xs px-2 py-0.5 bg-blue-100 border border-blue-200 rounded"
+                      onClick={() =>
+                        moveCard(
+                          card.id,
+                          COLUMNS[(COLUMNS.indexOf(card.status) + 1) % COLUMNS.length]
+                        )
+                      }
+                      className="text-xs px-2 py-0.5 bg-blue-100 border border-blue-200 rounded"
                     >
                       Move →
                     </button>
@@ -280,7 +320,7 @@ export default function SteaBoard() {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg relative">
             <h2 className="text-xl font-bold mb-4">{editingId ? 'Edit' : 'New'} Card</h2>
 
@@ -357,8 +397,18 @@ export default function SteaBoard() {
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setModalOpen(false)} className="px-4 py-2 border rounded bg-gray-100">Cancel</button>
-              <button onClick={saveForm} className="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 border rounded bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveForm}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
