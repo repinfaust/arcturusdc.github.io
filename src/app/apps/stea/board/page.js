@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import {
-  addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query,
+  addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query,
   serverTimestamp, updateDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
+/* -------------------- CONFIG -------------------- */
 const COLUMNS = ['Idea', 'Planning', 'Design', 'Build', 'Done', "Won't Do"];
 
 const TYPES = [
@@ -18,32 +19,59 @@ const TYPES = [
   { value: 'observation', label: 'Observation', emoji: '👀' },
 ];
 
-const APPS = [
-  'Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me', 'New App'
-];
-
+const APPS = ['Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me', 'New App'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', '?'];
 
+const priorityTheme = {
+  low:    'bg-emerald-50 text-emerald-800 border-emerald-200',
+  medium: 'bg-amber-50 text-amber-800 border-amber-200',
+  high:   'bg-orange-50 text-orange-800 border-orange-200',
+  critical:'bg-red-50 text-red-800 border-red-200',
+};
+
+const appTheme = {
+  'Adhd Acclaim': 'bg-violet-50 text-violet-800 border-violet-200',
+  'Mandrake':     'bg-sky-50 text-sky-800 border-sky-200',
+  'SyncFit':      'bg-green-50 text-green-800 border-green-200',
+  'Tou.Me':       'bg-pink-50 text-pink-800 border-pink-200',
+  'New App':      'bg-gray-50 text-gray-700 border-gray-200',
+};
+
+const sizeTheme = {
+  XS: 'bg-slate-50 text-slate-700 border-slate-200',
+  S:  'bg-slate-50 text-slate-700 border-slate-200',
+  M:  'bg-blue-50 text-blue-800 border-blue-200',
+  L:  'bg-indigo-50 text-indigo-800 border-indigo-200',
+  XL: 'bg-purple-50 text-purple-800 border-purple-200',
+  '?': 'bg-zinc-50 text-zinc-700 border-zinc-200',
+};
+
+/* -------------------- PAGE -------------------- */
 export default function SteaBoard() {
   const [user, setUser] = useState(null);
   const [cards, setCards] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
-  const [collapsedCols, setCollapsedCols] = useState(() => {
-    // default: collapse Won’t Do first time
+
+  // column visibility (default hide Won't Do)
+  const [hiddenCols, setHiddenCols] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('stea-collapsed-cols');
+      const saved = localStorage.getItem('stea-hidden-cols');
       if (saved) return JSON.parse(saved);
     }
     return { "Won't Do": true };
   });
+
+  // editing state
   const [editing, setEditing] = useState(null); // card object or null
   const [creating, setCreating] = useState(false);
 
+  /* ---------- auth ---------- */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsub();
   }, []);
 
+  /* ---------- data ---------- */
   useEffect(() => {
     const q = query(collection(db, 'stea_cards'), orderBy('createdAt', 'asc'));
     const unsub = onSnapshot(q, (snap) => {
@@ -55,9 +83,10 @@ export default function SteaBoard() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('stea-collapsed-cols', JSON.stringify(collapsedCols));
-  }, [collapsedCols]);
+    localStorage.setItem('stea-hidden-cols', JSON.stringify(hiddenCols));
+  }, [hiddenCols]);
 
+  /* ---------- derived ---------- */
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
     for (const c of cards) {
@@ -69,10 +98,9 @@ export default function SteaBoard() {
     return g;
   }, [cards, showArchived]);
 
-  const toggleCol = (col) => {
-    setCollapsedCols((prev) => ({ ...prev, [col]: !prev[col] }));
-  };
+  const visibleColumns = COLUMNS.filter((c) => !hiddenCols[c]);
 
+  /* ---------- helpers ---------- */
   const startNew = () => {
     setEditing({
       id: null,
@@ -93,7 +121,7 @@ export default function SteaBoard() {
 
   const saveCard = async (card) => {
     const payload = {
-      title: card.title?.trim() || 'Untitled',
+      title: (card.title || '').trim() || 'Untitled',
       description: card.description || '',
       type: card.type || 'idea',
       app: card.app || 'New App',
@@ -123,19 +151,6 @@ export default function SteaBoard() {
     setEditing(null);
   };
 
-  // Double-click & double-tap support
-  const tapTimes = useRef({});
-  const handleOpenEdit = (card) => setEditing(card);
-
-  const onCardPointerDown = (cardId, card) => (e) => {
-    const now = Date.now();
-    const last = tapTimes.current[cardId] || 0;
-    tapTimes.current[cardId] = now;
-    if (now - last < 300) {
-      handleOpenEdit(card);
-    }
-  };
-
   const moveTo = async (card, nextCol) => {
     await updateDoc(doc(db, 'stea_cards', card.id), {
       statusColumn: nextCol,
@@ -143,68 +158,77 @@ export default function SteaBoard() {
     });
   };
 
+  /* ---------- UI bits ---------- */
+
   const ColumnHeader = ({ name, count }) => (
-    <div className="flex items-center justify-between mb-2">
-      <div className="font-bold">{name}</div>
+    <div className="mb-3 flex items-center justify-between">
+      <div className="font-semibold">{name}</div>
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-500">{count}</span>
         <button
-          onClick={() => toggleCol(name)}
+          onClick={() =>
+            setHiddenCols((s) => ({ ...s, [name]: true }))
+          }
           className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-          aria-pressed={!!collapsedCols[name]}
         >
-          {collapsedCols[name] ? 'Show' : 'Hide'}
+          Hide
         </button>
       </div>
     </div>
   );
 
+  const tapTimes = useRef({});
+  const onCardPointerDown = (cardId, card) => () => {
+    const now = Date.now();
+    const last = tapTimes.current[cardId] || 0;
+    tapTimes.current[cardId] = now;
+    if (now - last < 300) setEditing(card);
+  };
+
   const Card = ({ card }) => {
-    const nextIdx =
-      Math.min(COLUMNS.indexOf(card.statusColumn || 'Idea') + 1, COLUMNS.length - 1);
-    const prevIdx =
-      Math.max(COLUMNS.indexOf(card.statusColumn || 'Idea') - 1, 0);
+    const idx = COLUMNS.indexOf(card.statusColumn || 'Idea');
+    const prev = COLUMNS[Math.max(idx - 1, 0)];
+    const next = COLUMNS[Math.min(idx + 1, COLUMNS.length - 1)];
 
     return (
       <div
-        className="relative rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow transition"
-        onDoubleClick={() => handleOpenEdit(card)}
+        className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow transition break-words whitespace-normal"
+        onDoubleClick={() => setEditing(card)}
         onPointerDown={onCardPointerDown(card.id, card)}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleOpenEdit(card);
-        }}
       >
-        <div className="absolute right-2 top-2">
+        {/* Top row: badges + edit */}
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="px-2 py-0.5 text-[11px] rounded border bg-gray-50">
+              {TYPES.find(t => t.value === card.type)?.emoji}{' '}
+              {TYPES.find(t => t.value === card.type)?.label || 'Item'}
+            </span>
+            <span className={`px-2 py-0.5 text-[11px] rounded border ${appTheme[card.app || 'New App']}`}>
+              {card.app || 'New App'}
+            </span>
+            <span className={`px-2 py-0.5 text-[11px] rounded border ${priorityTheme[card.priority || 'medium']}`}>
+              {String(card.priority || 'medium').toUpperCase()}
+            </span>
+            <span className={`px-2 py-0.5 text-[11px] rounded border ${sizeTheme[card.sizeEstimate || 'M']}`}>
+              Size {card.sizeEstimate || 'M'}
+            </span>
+            {card.statusColumn === 'Done' && card.appVersion ? (
+              <span className="px-2 py-0.5 text-[11px] rounded border bg-green-50 text-green-800 border-green-200">
+                v{card.appVersion}
+              </span>
+            ) : null}
+          </div>
           <button
-            onClick={() => handleOpenEdit(card)}
-            className="px-2 py-1 text-xs rounded bg-gray-800 text-white"
+            onClick={() => setEditing(card)}
+            className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black"
           >
             Edit
           </button>
         </div>
 
-        <div className="flex items-center gap-2 text-xs mb-1">
-          <span className="px-2 py-0.5 rounded bg-gray-100 border">
-            {TYPES.find(t => t.value === card.type)?.emoji}{' '}
-            {TYPES.find(t => t.value === card.type)?.label || 'Item'}
-          </span>
-          <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200">
-            {card.app || 'New App'}
-          </span>
-          <span className="px-2 py-0.5 rounded bg-gray-50 border">
-            Size: {card.sizeEstimate || 'M'}
-          </span>
-          {card.statusColumn === 'Done' && card.appVersion ? (
-            <span className="px-2 py-0.5 rounded bg-green-50 border border-green-200">
-              v{card.appVersion}
-            </span>
-          ) : null}
-        </div>
-
         <div className="font-semibold">{card.title}</div>
         {card.description ? (
-          <p className="text-sm text-gray-600 mt-1 line-clamp-3">{card.description}</p>
+          <p className="text-sm text-gray-600 mt-1">{card.description}</p>
         ) : null}
 
         <div className="mt-3 flex items-center justify-between">
@@ -214,13 +238,13 @@ export default function SteaBoard() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => moveTo(card, COLUMNS[prevIdx])}
+              onClick={() => moveTo(card, prev)}
               className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
             >
               ← Move
             </button>
             <button
-              onClick={() => moveTo(card, COLUMNS[nextIdx])}
+              onClick={() => moveTo(card, next)}
               className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
             >
               Move →
@@ -232,8 +256,8 @@ export default function SteaBoard() {
   };
 
   return (
-    <main className="pb-10 max-w-7xl mx-auto px-4">
-      {/* Top bar */}
+    <main className="pb-10 max-w-[1400px] mx-auto px-4">
+      {/* Header */}
       <div className="card p-4 flex items-start gap-3 mt-2">
         <Image
           className="rounded-2xl border border-black/10"
@@ -243,7 +267,7 @@ export default function SteaBoard() {
           alt="Arcturus mark"
           priority
         />
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="font-extrabold">STEa — Board</div>
           <div className="text-muted text-sm">
             Manage ideas → build phases. Auto-saved to Firestore.
@@ -263,42 +287,77 @@ export default function SteaBoard() {
               />
               Show archived
             </label>
-            {user ? (
-              <div className="ml-auto flex items-center gap-3">
-                <span className="text-sm text-gray-600">{user.email}</span>
+            <div className="ml-auto flex items-center gap-3">
+              {user && <span className="text-sm text-gray-600">{user.email}</span>}
+              {user && (
                 <button
                   onClick={() => signOut(auth)}
-                  className="px-3 py-1.5 rounded border hover:bg-gray-50"
+                  className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700"
                 >
                   Sign out
                 </button>
-              </div>
-            ) : null}
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Columns */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {COLUMNS.map((col) => {
-          const colCards = grouped[col] || [];
-          return (
-            <section key={col} className="card p-3">
-              <ColumnHeader name={col} count={colCards.length} />
-              {collapsedCols[col] ? (
-                <div className="text-xs text-gray-500 p-3 border rounded bg-gray-50">
-                  Column hidden
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {colCards.map((c) => (
-                    <Card key={c.id} card={c} />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })}
+      {/* Column visibility toolbar */}
+      <div className="mt-4 card p-3">
+        <div className="text-xs text-gray-500 mb-2">Columns</div>
+        <div className="flex flex-wrap gap-2">
+          {COLUMNS.map((c) => {
+            const hidden = !!hiddenCols[c];
+            return (
+              <button
+                key={c}
+                onClick={() =>
+                  setHiddenCols((s) => ({ ...s, [c]: !hidden }))
+                }
+                className={`px-3 py-1.5 rounded border text-sm ${
+                  hidden
+                    ? 'bg-white hover:bg-gray-50'
+                    : 'bg-gray-900 text-white hover:bg-black'
+                }`}
+                aria-pressed={!hidden}
+              >
+                {hidden ? `Show ${c}` : `Hide ${c}`}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Board: horizontal scroll, only visible columns rendered */}
+      <div
+        className="mt-4 overflow-x-auto pb-2"
+        style={{ scrollSnapType: 'x proximity' }}
+      >
+        <div className="flex gap-4 min-h-[420px]">
+          {visibleColumns.map((col) => {
+            const items = grouped[col] || [];
+            return (
+              <section
+                key={col}
+                className="card p-3 w-[340px] shrink-0"
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                <ColumnHeader name={col} count={items.length} />
+                {items.length === 0 ? (
+                  <div className="text-xs text-gray-500 p-3 border rounded bg-gray-50">
+                    No items
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {items.map((c) => (
+                      <Card key={c.id} card={c} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
       </div>
 
       {/* Edit/Create modal */}
@@ -349,6 +408,19 @@ export default function SteaBoard() {
                   className="w-full px-3 py-2 border rounded"
                 >
                   {APPS.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Priority</label>
+                <select
+                  value={editing.priority}
+                  onChange={(e) => setEditing({ ...editing, priority: e.target.value })}
+                  className="w-full px-3 py-2 border rounded"
+                >
+                  {['low','medium','high','critical'].map(p =>
+                    <option key={p} value={p}>{p}</option>
+                  )}
                 </select>
               </div>
 
@@ -421,7 +493,7 @@ export default function SteaBoard() {
                     checked={!!editing.archived}
                     onChange={(e) => setEditing({ ...editing, archived: e.target.checked })}
                   />
-                  Archived
+                Archived
                 </label>
 
                 <div className="flex gap-2">
@@ -441,6 +513,7 @@ export default function SteaBoard() {
                   </button>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
