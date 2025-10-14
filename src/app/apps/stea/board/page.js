@@ -23,9 +23,9 @@ const APPS = ['Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me', 'New App'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', '?'];
 
 const priorityTheme = {
-  low:    'bg-emerald-50 text-emerald-800 border-emerald-200',
-  medium: 'bg-amber-50 text-amber-800 border-amber-200',
-  high:   'bg-orange-50 text-orange-800 border-orange-200',
+  low:     'bg-emerald-50 text-emerald-800 border-emerald-200',
+  medium:  'bg-amber-50 text-amber-800 border-amber-200',
+  high:    'bg-orange-50 text-orange-800 border-orange-200',
   critical:'bg-red-50 text-red-800 border-red-200',
 };
 
@@ -52,7 +52,7 @@ export default function SteaBoard() {
   const [cards, setCards] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
 
-  // column visibility (default hide Won't Do)
+  // true hide/show per column (default hide Won't Do)
   const [hiddenCols, setHiddenCols] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('stea-hidden-cols');
@@ -61,9 +61,13 @@ export default function SteaBoard() {
     return { "Won't Do": true };
   });
 
-  // editing state
-  const [editing, setEditing] = useState(null); // card object or null
+  // editing
+  const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
+
+  // drag & drop
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOverCol, setDragOverCol] = useState(null);
 
   /* ---------- auth ---------- */
   useEffect(() => {
@@ -159,16 +163,13 @@ export default function SteaBoard() {
   };
 
   /* ---------- UI bits ---------- */
-
   const ColumnHeader = ({ name, count }) => (
     <div className="mb-3 flex items-center justify-between">
       <div className="font-semibold">{name}</div>
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-500">{count}</span>
         <button
-          onClick={() =>
-            setHiddenCols((s) => ({ ...s, [name]: true }))
-          }
+          onClick={() => setHiddenCols((s) => ({ ...s, [name]: true }))}
           className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
         >
           Hide
@@ -177,6 +178,7 @@ export default function SteaBoard() {
     </div>
   );
 
+  // double-tap logic
   const tapTimes = useRef({});
   const onCardPointerDown = (cardId, card) => () => {
     const now = Date.now();
@@ -189,10 +191,19 @@ export default function SteaBoard() {
     const idx = COLUMNS.indexOf(card.statusColumn || 'Idea');
     const prev = COLUMNS[Math.max(idx - 1, 0)];
     const next = COLUMNS[Math.min(idx + 1, COLUMNS.length - 1)];
+    const isDragging = draggingId === card.id;
 
     return (
       <div
-        className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow transition break-words whitespace-normal"
+        className={`rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow transition break-words whitespace-normal cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-60' : ''}`}
+        draggable
+        onDragStart={(e) => {
+          setDraggingId(card.id);
+          e.dataTransfer.setData('text/stea-card-id', card.id);
+          // nicer drag preview on some browsers
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
         onDoubleClick={() => setEditing(card)}
         onPointerDown={onCardPointerDown(card.id, card)}
       >
@@ -236,18 +247,34 @@ export default function SteaBoard() {
             Reporter: {card.reporter || '—'}
             {card.assignee ? ` • Assigned: ${card.assignee}` : ''}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-end">
             <button
               onClick={() => moveTo(card, prev)}
               className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
+              title={`Move to ${prev}`}
             >
-              ← Move
+              ←
             </button>
             <button
               onClick={() => moveTo(card, next)}
               className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
+              title={`Move to ${next}`}
             >
-              Move →
+              →
+            </button>
+            <button
+              onClick={() => moveTo(card, 'Done')}
+              className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700"
+              title="Mark Done"
+            >
+              ✓ Done
+            </button>
+            <button
+              onClick={() => moveTo(card, "Won't Do")}
+              className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+              title="Move to Won't Do"
+            >
+              ↯ Won’t Do
             </button>
           </div>
         </div>
@@ -311,9 +338,7 @@ export default function SteaBoard() {
             return (
               <button
                 key={c}
-                onClick={() =>
-                  setHiddenCols((s) => ({ ...s, [c]: !hidden }))
-                }
+                onClick={() => setHiddenCols((s) => ({ ...s, [c]: !hidden }))}
                 className={`px-3 py-1.5 rounded border text-sm ${
                   hidden
                     ? 'bg-white hover:bg-gray-50'
@@ -328,24 +353,41 @@ export default function SteaBoard() {
         </div>
       </div>
 
-      {/* Board: horizontal scroll, only visible columns rendered */}
-      <div
-        className="mt-4 overflow-x-auto pb-2"
-        style={{ scrollSnapType: 'x proximity' }}
-      >
+      {/* Board: horizontal scroll with DnD; only visible columns rendered */}
+      <div className="mt-4 overflow-x-auto pb-2" style={{ scrollSnapType: 'x proximity' }}>
         <div className="flex gap-4 min-h-[420px]">
           {visibleColumns.map((col) => {
             const items = grouped[col] || [];
+            const isOver = dragOverCol === col;
+
             return (
               <section
                 key={col}
-                className="card p-3 w-[340px] shrink-0"
+                className={`card p-3 w-[340px] shrink-0 transition ${
+                  isOver ? 'ring-2 ring-blue-400' : ''
+                }`}
                 style={{ scrollSnapAlign: 'start' }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverCol(col);
+                  e.dataTransfer.dropEffect = 'move';
+                }}
+                onDragLeave={() => setDragOverCol(null)}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  const id = e.dataTransfer.getData('text/stea-card-id');
+                  setDragOverCol(null);
+                  setDraggingId(null);
+                  if (!id) return;
+                  const card = cards.find((c) => c.id === id);
+                  if (!card || card.statusColumn === col) return;
+                  await moveTo(card, col);
+                }}
               >
                 <ColumnHeader name={col} count={items.length} />
                 {items.length === 0 ? (
                   <div className="text-xs text-gray-500 p-3 border rounded bg-gray-50">
-                    No items
+                    Drop cards here
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
@@ -365,9 +407,7 @@ export default function SteaBoard() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg">
             <div className="flex items-center justify-between p-4 border-b">
-              <div className="font-bold">
-                {creating ? 'New Card' : 'Edit Card'}
-              </div>
+              <div className="font-bold">{creating ? 'New Card' : 'Edit Card'}</div>
               <button
                 onClick={() => { setEditing(null); setCreating(false); }}
                 className="px-3 py-1 rounded border hover:bg-gray-50"
@@ -493,7 +533,7 @@ export default function SteaBoard() {
                     checked={!!editing.archived}
                     onChange={(e) => setEditing({ ...editing, archived: e.target.checked })}
                   />
-                Archived
+                  Archived
                 </label>
 
                 <div className="flex gap-2">
