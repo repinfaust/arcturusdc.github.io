@@ -1,450 +1,1400 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+
+
+
+
+
+import { useEffect, useMemo, useState } from 'react';
+
+
+import Link from 'next/link';
+
+
 import Image from 'next/image';
-import { auth, db } from '@/lib/firebase';
-import {
-  addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query,
-  serverTimestamp, updateDoc
-} from 'firebase/firestore';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 
-const COLUMNS = ['Idea', 'Planning', 'Design', 'Build', 'Done', "Won't Do"];
 
-const TYPES = [
+
+
+
+const LS_KEY = 'stea-board-v1';
+
+
+
+
+
+const COLUMNS = ['Idea', 'Planning', 'Design', 'Build'];
+
+
+
+
+
+const TYPE_OPTIONS = [
+
+
   { value: 'idea', label: 'Idea', emoji: '💡' },
+
+
   { value: 'feature', label: 'Feature', emoji: '✨' },
+
+
   { value: 'bug', label: 'Bug', emoji: '🐞' },
+
+
   { value: 'observation', label: 'Observation', emoji: '👀' },
+
+
+  { value: 'newapp', label: 'New App', emoji: '📱' },
+
+
 ];
 
-const APPS = [
-  'Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me', 'New App'
+
+
+
+
+const URGENCY_OPTIONS = [
+
+
+  { value: 'low', label: 'Low' },
+
+
+  { value: 'medium', label: 'Medium' },
+
+
+  { value: 'high', label: 'High' },
+
+
+  { value: 'critical', label: 'Critical' },
+
+
 ];
 
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', '?'];
 
-export default function SteaBoard() {
-  const [user, setUser] = useState(null);
+
+
+
+function classNames(...s) {
+
+
+  return s.filter(Boolean).join(' ');
+
+
+}
+
+
+
+
+
+function urgencyBadge(urgency) {
+
+
+  const map = {
+
+
+    low: 'bg-gray-100 text-gray-700 border-gray-200',
+
+
+    medium: 'bg-blue-100 text-blue-800 border-blue-200',
+
+
+    high: 'bg-orange-100 text-orange-800 border-orange-200',
+
+
+    critical: 'bg-red-100 text-red-800 border-red-200',
+
+
+  };
+
+
+  return map[urgency] || map.low;
+
+
+}
+
+
+
+
+
+function typeBadge(type) {
+
+
+  const map = {
+
+
+    idea: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+
+
+    feature: 'bg-purple-100 text-purple-800 border-purple-200',
+
+
+    bug: 'bg-rose-100 text-rose-800 border-rose-200',
+
+
+    observation: 'bg-amber-100 text-amber-800 border-amber-200',
+
+
+    newapp: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+
+
+  };
+
+
+  return map[type] || map.idea;
+
+
+}
+
+
+
+
+
+export default function SteaBoardPage() {
+
+
   const [cards, setCards] = useState([]);
-  const [showArchived, setShowArchived] = useState(false);
-  const [collapsedCols, setCollapsedCols] = useState(() => {
-    // default: collapse Won’t Do first time
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('stea-collapsed-cols');
-      if (saved) return JSON.parse(saved);
-    }
-    return { "Won't Do": true };
+
+
+  const [isModalOpen, setModalOpen] = useState(false);
+
+
+  const [editingId, setEditingId] = useState(null);
+
+
+
+
+
+  // Form state
+
+
+  const [form, setForm] = useState({
+
+
+    type: 'idea',
+
+
+    urgency: 'medium',
+
+
+    title: '',
+
+
+    description: '',
+
+
   });
-  const [editing, setEditing] = useState(null); // card object or null
-  const [creating, setCreating] = useState(false);
+
+
+
+
+
+  // Drag state
+
+
+  const [draggingId, setDraggingId] = useState(null);
+
+
+
+
+
+  // Load / Save
+
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsub();
+
+
+    const saved = localStorage.getItem(LS_KEY);
+
+
+    if (saved) {
+
+
+      try {
+
+
+        setCards(JSON.parse(saved));
+
+
+      } catch {
+
+
+        // ignore parse errors
+
+
+      }
+
+
+    }
+
+
   }, []);
 
+
+
+
+
   useEffect(() => {
-    const q = query(collection(db, 'stea_cards'), orderBy('createdAt', 'asc'));
-    const unsub = onSnapshot(q, (snap) => {
-      const list = [];
-      snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
-      setCards(list);
+
+
+    localStorage.setItem(LS_KEY, JSON.stringify(cards));
+
+
+  }, [cards]);
+
+
+
+
+
+  const openCreateModal = () => {
+
+
+    setEditingId(null);
+
+
+    setForm({ type: 'idea', urgency: 'medium', title: '', description: '' });
+
+
+    setModalOpen(true);
+
+
+  };
+
+
+
+
+
+  const openEditModal = (card) => {
+
+
+    setEditingId(card.id);
+
+
+    setForm({
+
+
+      type: card.type,
+
+
+      urgency: card.urgency,
+
+
+      title: card.title,
+
+
+      description: card.description ?? '',
+
+
     });
-    return () => unsub();
-  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('stea-collapsed-cols', JSON.stringify(collapsedCols));
-  }, [collapsedCols]);
+
+    setModalOpen(true);
+
+
+  };
+
+
+
+
+
+  const saveForm = () => {
+
+
+    const now = new Date().toISOString();
+
+
+    if (!form.title.trim()) {
+
+
+      alert('Please enter a title.');
+
+
+      return;
+
+
+    }
+
+
+    if (editingId) {
+
+
+      setCards((prev) =>
+
+
+        prev.map((c) =>
+
+
+          c.id === editingId
+
+
+            ? {
+
+
+                ...c,
+
+
+                ...form,
+
+
+                updatedAt: now,
+
+
+              }
+
+
+            : c
+
+
+        )
+
+
+      );
+
+
+    } else {
+
+
+      const newCard = {
+
+
+        id: `stea_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+
+
+        status: 'Idea', // new cards start in Idea
+
+
+        createdAt: now,
+
+
+        updatedAt: now,
+
+
+        ...form,
+
+
+      };
+
+
+      setCards((prev) => [newCard, ...prev]);
+
+
+    }
+
+
+    setModalOpen(false);
+
+
+  };
+
+
+
+
+
+  const deleteCard = (id) => {
+
+
+    if (confirm('Delete this card?')) {
+
+
+      setCards((prev) => prev.filter((c) => c.id !== id));
+
+
+    }
+
+
+  };
+
+
+
+
+
+  const moveCard = (id, status) => {
+
+
+    setCards((prev) =>
+
+
+      prev.map((c) =>
+
+
+        c.id === id
+
+
+          ? {
+
+
+              ...c,
+
+
+              status,
+
+
+              updatedAt: new Date().toISOString(),
+
+
+            }
+
+
+          : c
+
+
+      )
+
+
+    );
+
+
+  };
+
+
+
+
+
+  const onDragStart = (e, id) => {
+
+
+    setDraggingId(id);
+
+
+    e.dataTransfer.setData('text/plain', id);
+
+
+    e.dataTransfer.effectAllowed = 'move';
+
+
+  };
+
+
+
+
+
+  const onDragOver = (e) => {
+
+
+    e.preventDefault();
+
+
+    e.dataTransfer.dropEffect = 'move';
+
+
+  };
+
+
+
+
+
+  const onDrop = (e, status) => {
+
+
+    e.preventDefault();
+
+
+    const id = e.dataTransfer.getData('text/plain') || draggingId;
+
+
+    if (id) moveCard(id, status);
+
+
+    setDraggingId(null);
+
+
+  };
+
+
+
+
 
   const grouped = useMemo(() => {
+
+
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
-    for (const c of cards) {
-      if (!showArchived && c.archived) continue;
-      const col = c.statusColumn || 'Idea';
-      if (!g[col]) g[col] = [];
-      g[col].push(c);
-    }
+
+
+    cards.forEach((card) => {
+
+
+      if (!g[card.status]) g['Idea'].push(card);
+
+
+      else g[card.status].push(card);
+
+
+    });
+
+
+    // simple sort: critical/high first, then updatedAt desc
+
+
+    const weight = { critical: 3, high: 2, medium: 1, low: 0 };
+
+
+    COLUMNS.forEach((col) => {
+
+
+      g[col].sort((a, b) => {
+
+
+        const uw = (weight[b.urgency] ?? 0) - (weight[a.urgency] ?? 0);
+
+
+        if (uw !== 0) return uw;
+
+
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+
+
+      });
+
+
+    });
+
+
     return g;
-  }, [cards, showArchived]);
 
-  const toggleCol = (col) => {
-    setCollapsedCols((prev) => ({ ...prev, [col]: !prev[col] }));
-  };
 
-  const startNew = () => {
-    setEditing({
-      id: null,
-      title: '',
-      description: '',
-      type: 'idea',
-      app: 'New App',
-      priority: 'medium',
-      reporter: user?.email || '',
-      assignee: '',
-      sizeEstimate: 'M',
-      appVersion: '',
-      statusColumn: 'Idea',
-      archived: false,
-    });
-    setCreating(true);
-  };
+  }, [cards]);
 
-  const saveCard = async (card) => {
-    const payload = {
-      title: card.title?.trim() || 'Untitled',
-      description: card.description || '',
-      type: card.type || 'idea',
-      app: card.app || 'New App',
-      priority: card.priority || 'medium',
-      reporter: card.reporter || user?.email || '',
-      assignee: card.assignee || '',
-      sizeEstimate: card.sizeEstimate || 'M',
-      appVersion: card.appVersion || '',
-      statusColumn: card.statusColumn || 'Idea',
-      archived: !!card.archived,
-      updatedAt: serverTimestamp(),
-      ...(card.createdAt ? {} : { createdAt: serverTimestamp() }),
-    };
 
-    if (card.id) {
-      await updateDoc(doc(db, 'stea_cards', card.id), payload);
-    } else {
-      await addDoc(collection(db, 'stea_cards'), payload);
-    }
-    setEditing(null);
-    setCreating(false);
-  };
 
-  const deleteCard = async (id) => {
-    if (!id) return;
-    await deleteDoc(doc(db, 'stea_cards', id));
-    setEditing(null);
-  };
 
-  // Double-click & double-tap support
-  const tapTimes = useRef({});
-  const handleOpenEdit = (card) => setEditing(card);
-
-  const onCardPointerDown = (cardId, card) => (e) => {
-    const now = Date.now();
-    const last = tapTimes.current[cardId] || 0;
-    tapTimes.current[cardId] = now;
-    if (now - last < 300) {
-      handleOpenEdit(card);
-    }
-  };
-
-  const moveTo = async (card, nextCol) => {
-    await updateDoc(doc(db, 'stea_cards', card.id), {
-      statusColumn: nextCol,
-      updatedAt: serverTimestamp(),
-    });
-  };
-
-  const ColumnHeader = ({ name, count }) => (
-    <div className="flex items-center justify-between mb-2">
-      <div className="font-bold">{name}</div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-500">{count}</span>
-        <button
-          onClick={() => toggleCol(name)}
-          className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-          aria-pressed={!!collapsedCols[name]}
-        >
-          {collapsedCols[name] ? 'Show' : 'Hide'}
-        </button>
-      </div>
-    </div>
-  );
-
-  const Card = ({ card }) => {
-    const nextIdx =
-      Math.min(COLUMNS.indexOf(card.statusColumn || 'Idea') + 1, COLUMNS.length - 1);
-    const prevIdx =
-      Math.max(COLUMNS.indexOf(card.statusColumn || 'Idea') - 1, 0);
-
-    return (
-      <div
-        className="relative rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow transition"
-        onDoubleClick={() => handleOpenEdit(card)}
-        onPointerDown={onCardPointerDown(card.id, card)}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleOpenEdit(card);
-        }}
-      >
-        <div className="absolute right-2 top-2">
-          <button
-            onClick={() => handleOpenEdit(card)}
-            className="px-2 py-1 text-xs rounded bg-gray-800 text-white"
-          >
-            Edit
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs mb-1">
-          <span className="px-2 py-0.5 rounded bg-gray-100 border">
-            {TYPES.find(t => t.value === card.type)?.emoji}{' '}
-            {TYPES.find(t => t.value === card.type)?.label || 'Item'}
-          </span>
-          <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200">
-            {card.app || 'New App'}
-          </span>
-          <span className="px-2 py-0.5 rounded bg-gray-50 border">
-            Size: {card.sizeEstimate || 'M'}
-          </span>
-          {card.statusColumn === 'Done' && card.appVersion ? (
-            <span className="px-2 py-0.5 rounded bg-green-50 border border-green-200">
-              v{card.appVersion}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="font-semibold">{card.title}</div>
-        {card.description ? (
-          <p className="text-sm text-gray-600 mt-1 line-clamp-3">{card.description}</p>
-        ) : null}
-
-        <div className="mt-3 flex items-center justify-between">
-          <div className="text-xs text-gray-500">
-            Reporter: {card.reporter || '—'}
-            {card.assignee ? ` • Assigned: ${card.assignee}` : ''}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => moveTo(card, COLUMNS[prevIdx])}
-              className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-            >
-              ← Move
-            </button>
-            <button
-              onClick={() => moveTo(card, COLUMNS[nextIdx])}
-              className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-            >
-              Move →
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
+
+
     <main className="pb-10 max-w-7xl mx-auto px-4">
-      {/* Top bar */}
+
+
+      {/* Header */}
+
+
       <div className="card p-4 flex items-start gap-3 mt-2">
+
+
         <Image
+
+
           className="rounded-2xl border border-black/10"
-          src="/img/logo-mark.png"
-          width={64}
-          height={64}
+
+
+          src="/img/arcturusdc_mark.png"
+
+
+          width={56}
+
+
+          height={56}
+
+
           alt="Arcturus mark"
+
+
           priority
+
+
         />
+
+
         <div className="flex-1">
-          <div className="font-extrabold">STEa — Board</div>
-          <div className="text-muted text-sm">
-            Manage ideas → build phases. Auto-saved to Firestore.
+
+
+          <div className="flex items-center gap-3">
+
+
+            <h1 className="font-extrabold text-2xl">STEa — Studio Experiments & Apps</h1>
+
+
+            <span className="px-2 py-0.5 text-xs rounded bg-gray-100 border border-gray-200 text-gray-600">
+
+
+              Very light Jira/Kanban
+
+
+            </span>
+
+
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
+
+
+          <p className="text-sm text-neutral-700 mt-1">
+
+
+            Capture ideas, polish them, and move them through{' '}
+
+
+            <span className="font-semibold">Idea → Planning → Design → Build</span>. Data is saved locally
+
+
+            in your browser.
+
+
+          </p>
+
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+
+
             <button
-              onClick={startNew}
-              className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+
+
+              onClick={openCreateModal}
+
+
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+
+
             >
+
+
               + New card
+
+
             </button>
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showArchived}
-                onChange={(e) => setShowArchived(e.target.checked)}
-              />
-              Show archived
-            </label>
-            {user ? (
-              <div className="ml-auto flex items-center gap-3">
-                <span className="text-sm text-gray-600">{user.email}</span>
-                <button
-                  onClick={() => signOut(auth)}
-                  className="px-3 py-1.5 rounded border hover:bg-gray-50"
-                >
-                  Sign out
-                </button>
-              </div>
-            ) : null}
+
+
+            <button
+
+
+              onClick={() => {
+
+
+                if (confirm('Reset board to empty? This will clear local data.')) {
+
+
+                  setCards([]);
+
+
+                }
+
+
+              }}
+
+
+              className="px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 text-gray-800 transition-colors"
+
+
+            >
+
+
+              Reset board
+
+
+            </button>
+
+
+            <button
+
+
+              onClick={() => {
+
+
+                const blob = new Blob([JSON.stringify(cards, null, 2)], {
+
+
+                  type: 'application/json',
+
+
+                });
+
+
+                const url = URL.createObjectURL(blob);
+
+
+                const a = document.createElement('a');
+
+
+                a.href = url;
+
+
+                a.download = `stea-export-${new Date().toISOString().split('T')[0]}.json`;
+
+
+                a.click();
+
+
+              }}
+
+
+              className="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 transition-colors"
+
+
+            >
+
+
+              Export JSON
+
+
+            </button>
+
+
+            <button
+
+
+              onClick={async () => {
+
+
+                const input = document.createElement('input');
+
+
+                input.type = 'file';
+
+
+                input.accept = 'application/json';
+
+
+                input.onchange = (e) => {
+
+
+                  const file = e.target.files?.[0];
+
+
+                  if (!file) return;
+
+
+                  const reader = new FileReader();
+
+
+                  reader.onload = () => {
+
+
+                    try {
+
+
+                      const parsed = JSON.parse(reader.result);
+
+
+                      if (Array.isArray(parsed)) setCards(parsed);
+
+
+                      else alert('Invalid file format.');
+
+
+                    } catch {
+
+
+                      alert('Could not parse JSON.');
+
+
+                    }
+
+
+                  };
+
+
+                  reader.readAsText(file);
+
+
+                };
+
+
+                input.click();
+
+
+              }}
+
+
+              className="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 transition-colors"
+
+
+            >
+
+
+              Import JSON
+
+
+            </button>
+
+
+            <span className="ml-auto text-xs text-gray-500">
+
+
+              Need testers?{' '}
+
+
+              <Link className="underline hover:text-gray-700" href="/apps/toume/testersonlypage">
+
+
+                Tou.me testing portal
+
+
+              </Link>
+
+
+            </span>
+
+
           </div>
+
+
         </div>
+
+
       </div>
 
-      {/* Columns */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {COLUMNS.map((col) => {
-          const colCards = grouped[col] || [];
-          return (
-            <section key={col} className="card p-3">
-              <ColumnHeader name={col} count={colCards.length} />
-              {collapsedCols[col] ? (
-                <div className="text-xs text-gray-500 p-3 border rounded bg-gray-50">
-                  Column hidden
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {colCards.map((c) => (
-                    <Card key={c.id} card={c} />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })}
-      </div>
 
-      {/* Edit/Create modal */}
-      {editing && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="font-bold">
-                {creating ? 'New Card' : 'Edit Card'}
-              </div>
-              <button
-                onClick={() => { setEditing(null); setCreating(false); }}
-                className="px-3 py-1 rounded border hover:bg-gray-50"
-              >
-                Close
-              </button>
+
+
+
+      {/* Board */}
+
+
+      <section className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+
+        {COLUMNS.map((col) => (
+
+
+          <div
+
+
+            key={col}
+
+
+            onDragOver={onDragOver}
+
+
+            onDrop={(e) => onDrop(e, col)}
+
+
+            className="card p-3 min-h-[320px] flex flex-col"
+
+
+          >
+
+
+            <div className="flex items-center justify-between mb-2">
+
+
+              <h2 className="text-lg font-extrabold">{col}</h2>
+
+
+              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-gray-600">
+
+
+                {grouped[col]?.length ?? 0}
+
+
+              </span>
+
+
             </div>
 
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Title</label>
-                <input
-                  value={editing.title}
-                  onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="Short summary"
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select
-                  value={editing.type}
-                  onChange={(e) => setEditing({ ...editing, type: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
+            <div className="flex-1 space-y-2">
+
+
+              {(grouped[col] ?? []).map((card) => (
+
+
+                <article
+
+
+                  key={card.id}
+
+
+                  draggable
+
+
+                  onDragStart={(e) => onDragStart(e, card.id)}
+
+
+                  className={classNames(
+
+
+                    'border rounded-lg bg-white p-3 shadow-sm hover:shadow transition-shadow cursor-grab active:cursor-grabbing',
+
+
+                    draggingId === card.id ? 'opacity-70' : ''
+
+
+                  )}
+
+
                 >
-                  {TYPES.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">App</label>
-                <select
-                  value={editing.app}
-                  onChange={(e) => setEditing({ ...editing, app: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {APPS.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Column</label>
-                <select
-                  value={editing.statusColumn}
-                  onChange={(e) => setEditing({ ...editing, statusColumn: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {COLUMNS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
+                  <div className="flex items-start justify-between gap-2">
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Size estimate</label>
-                <select
-                  value={editing.sizeEstimate}
-                  onChange={(e) => setEditing({ ...editing, sizeEstimate: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">App version (for Done)</label>
-                <input
-                  value={editing.appVersion}
-                  onChange={(e) => setEditing({ ...editing, appVersion: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="e.g. 1.3.0"
-                />
-              </div>
+                    <h3 className="font-semibold leading-5">{card.title}</h3>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Reporter</label>
-                <input
-                  value={editing.reporter}
-                  onChange={(e) => setEditing({ ...editing, reporter: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="email"
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Assigned to</label>
-                <input
-                  value={editing.assignee}
-                  onChange={(e) => setEditing({ ...editing, assignee: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="name or email"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea
-                  value={editing.description}
-                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                  className="w-full px-3 py-2 border rounded min-h-[96px]"
-                  placeholder="Details, acceptance criteria, links…"
-                />
-              </div>
-
-              <div className="md:col-span-2 flex items-center justify-between">
-                <label className="inline-flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={!!editing.archived}
-                    onChange={(e) => setEditing({ ...editing, archived: e.target.checked })}
-                  />
-                  Archived
-                </label>
-
-                <div className="flex gap-2">
-                  {!creating && editing.id ? (
                     <button
-                      onClick={() => deleteCard(editing.id)}
-                      className="px-3 py-2 rounded border text-red-600 hover:bg-red-50"
+
+
+                      onClick={() => openEditModal(card)}
+
+
+                      className="text-xs px-2 py-1 rounded bg-gray-100 border border-gray-200 hover:bg-gray-200"
+
+
+                      title="Edit"
+
+
                     >
-                      Delete
+
+
+                      Edit
+
+
                     </button>
+
+
+                  </div>
+
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+
+
+                    <span
+
+
+                      className={classNames(
+
+
+                        'px-2 py-0.5 text-[10px] font-medium rounded border',
+
+
+                        typeBadge(card.type)
+
+
+                      )}
+
+
+                    >
+
+
+                      {TYPE_OPTIONS.find((t) => t.value === card.type)?.emoji}{' '}
+
+
+                      {TYPE_OPTIONS.find((t) => t.value === card.type)?.label}
+
+
+                    </span>
+
+
+                    <span
+
+
+                      className={classNames(
+
+
+                        'px-2 py-0.5 text-[10px] font-medium rounded border',
+
+
+                        urgencyBadge(card.urgency)
+
+
+                      )}
+
+
+                    >
+
+
+                      {card.urgency.toUpperCase()}
+
+
+                    </span>
+
+
+                    <span className="text-[10px] text-gray-500 ml-auto">
+
+
+                      {new Date(card.updatedAt).toLocaleString()}
+
+
+                    </span>
+
+
+                  </div>
+
+
+                  {card.description ? (
+
+
+                    <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+
+
+                      {card.description}
+
+
+                    </p>
+
+
                   ) : null}
-                  <button
-                    onClick={() => saveCard(editing)}
-                    className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
+
+
+                  <div className="mt-3 flex items-center gap-2">
+
+
+                    {COLUMNS.filter((c) => c !== card.status).map((next) => (
+
+
+                      <button
+
+
+                        key={next}
+
+
+                        onClick={() => moveCard(card.id, next)}
+
+
+                        className="text-xs px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800"
+
+
+                      >
+
+
+                        Move → {next}
+
+
+                      </button>
+
+
+                    ))}
+
+
+                    <button
+
+
+                      onClick={() => deleteCard(card.id)}
+
+
+                      className="ml-auto text-xs px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700"
+
+
+                    >
+
+
+                      Delete
+
+
+                    </button>
+
+
+                  </div>
+
+
+                </article>
+
+
+              ))}
+
+
             </div>
+
+
+            {/* Drop hint */}
+
+
+            <div className="mt-2 text-center text-xs text-gray-400">Drag cards here</div>
+
+
           </div>
+
+
+        ))}
+
+
+      </section>
+
+
+
+
+
+      {/* Modal */}
+
+
+      {isModalOpen && (
+
+
+        <div
+
+
+          role="dialog"
+
+
+          aria-modal="true"
+
+
+          className="fixed inset-0 z-50 flex items-center justify-center"
+
+
+        >
+
+
+          <div
+
+
+            className="absolute inset-0 bg-black/30"
+
+
+            onClick={() => setModalOpen(false)}
+
+
+          />
+
+
+          <div className="relative z-10 w-full max-w-xl card p-5">
+
+
+            <h3 className="text-xl font-extrabold mb-3">
+
+
+              {editingId ? 'Edit card' : 'Create a new card'}
+
+
+            </h3>
+
+
+
+
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+
+              <div>
+
+
+                <label className="block text-sm font-medium mb-1">Type</label>
+
+
+                <select
+
+
+                  value={form.type}
+
+
+                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+
+
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+
+                >
+
+
+                  {TYPE_OPTIONS.map((opt) => (
+
+
+                    <option key={opt.value} value={opt.value}>
+
+
+                      {opt.emoji} {opt.label}
+
+
+                    </option>
+
+
+                  ))}
+
+
+                </select>
+
+
+              </div>
+
+
+              <div>
+
+
+                <label className="block text-sm font-medium mb-1">Urgency</label>
+
+
+                <select
+
+
+                  value={form.urgency}
+
+
+                  onChange={(e) => setForm((f) => ({ ...f, urgency: e.target.value }))}
+
+
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+
+                >
+
+
+                  {URGENCY_OPTIONS.map((opt) => (
+
+
+                    <option key={opt.value} value={opt.value}>
+
+
+                      {opt.label}
+
+
+                    </option>
+
+
+                  ))}
+
+
+                </select>
+
+
+              </div>
+
+
+              <div className="md:col-span-2">
+
+
+                <label className="block text-sm font-medium mb-1">Title</label>
+
+
+                <input
+
+
+                  type="text"
+
+
+                  value={form.title}
+
+
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+
+
+                  placeholder="e.g., Add calendar free-time finder to SyncFit"
+
+
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+
+
+                />
+
+
+              </div>
+
+
+              <div className="md:col-span-2">
+
+
+                <label className="block text-sm font-medium mb-1">Description</label>
+
+
+                <textarea
+
+
+                  rows={5}
+
+
+                  value={form.description}
+
+
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+
+
+                  placeholder="Details, acceptance criteria, notes…"
+
+
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+
+
+                />
+
+
+              </div>
+
+
+            </div>
+
+
+
+
+
+            <div className="mt-4 flex items-center justify-between">
+
+
+              <div className="text-xs text-gray-500">
+
+
+                Cards are saved to your browser (localStorage).
+
+
+              </div>
+
+
+              <div className="flex gap-2">
+
+
+                <button
+
+
+                  onClick={() => setModalOpen(false)}
+
+
+                  className="px-4 py-2 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200"
+
+
+                >
+
+
+                  Cancel
+
+
+                </button>
+
+
+                <button
+
+
+                  onClick={saveForm}
+
+
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+
+
+                >
+
+
+                  {editingId ? 'Save changes' : 'Create card'}
+
+
+                </button>
+
+
+              </div>
+
+
+            </div>
+
+
+          </div>
+
+
         </div>
+
+
       )}
+
+
+
+
+
+      {/* Footer */}
+
+
+      <section className="card p-4 mt-4 text-center">
+
+
+        <p className="text-sm text-gray-600">
+
+
+          STEa lives at <code className="px-1 py-0.5 bg-gray-100 rounded border border-gray-200">/apps/stea</code>.
+
+
+          Keep it scrappy, keep it moving. 🚀
+
+
+        </p>
+
+
+      </section>
+
+
     </main>
+
+
   );
+
+
 }
