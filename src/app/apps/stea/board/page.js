@@ -68,7 +68,6 @@ export default function SteaBoard() {
 
       const q = query(
         collection(db, 'stea_cards'),
-        where('ownerUid', '==', u.uid),
         orderBy('updatedAt', 'desc')
       );
       const unsubData = onSnapshot(q, (snap) => {
