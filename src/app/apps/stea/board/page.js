@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   addDoc, collection, doc, onSnapshot, orderBy, query,
   serverTimestamp, updateDoc, deleteDoc, where, getDoc
@@ -45,9 +45,9 @@ export default function SteaBoard() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [draggingId, setDraggingId] = useState(null);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     type: 'idea',
     urgency: 'medium',
@@ -56,8 +56,10 @@ export default function SteaBoard() {
     assignee: '',
     title: '',
     description: '',
+    attachments: []
   });
 
+  // ---- Auth + Firestore sync ----
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       if (!u) {
@@ -81,6 +83,7 @@ export default function SteaBoard() {
     return () => unsubAuth();
   }, [router]);
 
+  // ---- Modal logic ----
   const openCreate = () => {
     setEditingId(null);
     setForm({
@@ -91,6 +94,7 @@ export default function SteaBoard() {
       assignee: '',
       title: '',
       description: '',
+      attachments: []
     });
     setModalOpen(true);
   };
@@ -107,6 +111,7 @@ export default function SteaBoard() {
       assignee: d?.assignee || '',
       title: d?.title || '',
       description: d?.description || '',
+      attachments: d?.attachments || []
     });
     setModalOpen(true);
   };
@@ -131,6 +136,39 @@ export default function SteaBoard() {
     setModalOpen(false);
   };
 
+  // ---- File upload ----
+  const handleFileUpload = async (files) => {
+    const storage = getStorage();
+    setUploading(true);
+    try {
+      const uploadedURLs = [];
+      for (const file of files) {
+        const fileRef = ref(storage, `stea_uploads/${Date.now()}_${file.name}`);
+        await uploadBytes(fileRef, file);
+        const url = await getDownloadURL(fileRef);
+        uploadedURLs.push(url);
+      }
+      setForm(f => ({ ...f, attachments: [...(f.attachments || []), ...uploadedURLs] }));
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    handleFileUpload(files);
+  };
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    handleFileUpload(files);
+  };
+
+  // ---- Card updates ----
   const moveCard = async (id, status) => {
     await updateDoc(doc(db, 'stea_cards', id), { status, updatedAt: serverTimestamp() });
   };
@@ -143,6 +181,7 @@ export default function SteaBoard() {
     if (confirm('Delete this card?')) await deleteDoc(doc(db, 'stea_cards', id));
   };
 
+  // ---- Drag + Drop columns ----
   const onDragStart = (e, id) => {
     setDraggingId(id);
     e.dataTransfer.setData('text/plain', id);
@@ -164,6 +203,7 @@ export default function SteaBoard() {
 
   if (loading) return <main className="max-w-5xl mx-auto p-10">Loading…</main>;
 
+  // ---- Render ----
   return (
     <main className="pb-10 max-w-7xl mx-auto px-4">
       {/* Header */}
@@ -242,73 +282,32 @@ export default function SteaBoard() {
                     </p>
                   )}
 
+                  {/* Attachments */}
+                  {card.attachments?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {card.attachments.map((url, i) => (
+                        <a
+                          key={i}
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block w-16 h-16 overflow-hidden border rounded"
+                        >
+                          <img
+                            src={url}
+                            alt={`attachment-${i}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Badges */}
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">{card.type}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">{card.urgency}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50">{appLabel(card.app)}</span>
-                    {card.reporter && (
-                      <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50 break-all">
-                        Reporter: {card.reporter}
-                      </span>
-                    )}
-                    {card.assignee && (
-                      <span className="text-[10px] px-2 py-0.5 rounded border bg-gray-50 break-all">
-                        Assigned: {card.assignee}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Inline quick edits */}
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <div className="flex flex-col">
-                      <label className="text-[11px] text-gray-600">App</label>
-                      <select
-                        className="border rounded px-2 py-1 text-sm"
-                        value={card.app || 'new'}
-                        onChange={(e) => updateCardField(card.id, 'app', e.target.value)}
-                      >
-                        {APPS.map((a) => (
-                          <option key={a.value} value={a.value}>{a.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-[11px] text-gray-600">Reporter</label>
-                      <input
-                        className="border rounded px-2 py-1 text-sm break-all"
-                        defaultValue={card.reporter || ''}
-                        onBlur={(e) => {
-                          const v = e.target.value.trim();
-                          if (v !== (card.reporter || '')) updateCardField(card.id, 'reporter', v);
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-[11px] text-gray-600">Assigned to</label>
-                      <input
-                        className="border rounded px-2 py-1 text-sm break-all"
-                        defaultValue={card.assignee || ''}
-                        onBlur={(e) => {
-                          const v = e.target.value.trim();
-                          if (v !== (card.assignee || '')) updateCardField(card.id, 'assignee', v);
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end mt-3">
-                    <button
-                      onClick={() =>
-                        moveCard(
-                          card.id,
-                          COLUMNS[(COLUMNS.indexOf(card.status) + 1) % COLUMNS.length]
-                        )
-                      }
-                      className="text-xs px-2 py-0.5 bg-blue-100 border border-blue-200 rounded"
-                    >
-                      Move →
-                    </button>
+                  <div className="flex gap-2 mt-2 flex-wrap text-[10px]">
+                    <span className="px-2 py-0.5 rounded border bg-gray-50">{card.type}</span>
+                    <span className="px-2 py-0.5 rounded border bg-gray-50">{card.urgency}</span>
+                    <span className="px-2 py-0.5 rounded border bg-gray-50">{appLabel(card.app)}</span>
                   </div>
                 </article>
               ))}
@@ -320,7 +319,11 @@ export default function SteaBoard() {
       {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg relative">
+          <div
+            className="bg-white rounded-lg p-6 w-full max-w-lg relative"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+          >
             <h2 className="text-xl font-bold mb-4">{editingId ? 'Edit' : 'New'} Card</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -344,36 +347,6 @@ export default function SteaBoard() {
                   {URGENCY.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-1">App</label>
-                <select
-                  value={form.app}
-                  onChange={(e) => setForm(f => ({ ...f, app: e.target.value }))}
-                  className="w-full border rounded px-2 py-1"
-                >
-                  {APPS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1">Reporter</label>
-                <input
-                  type="text"
-                  value={form.reporter}
-                  onChange={(e) => setForm(f => ({ ...f, reporter: e.target.value }))}
-                  className="w-full border rounded px-2 py-1"
-                  placeholder="name or email"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1">Assigned to</label>
-                <input
-                  type="text"
-                  value={form.assignee}
-                  onChange={(e) => setForm(f => ({ ...f, assignee: e.target.value }))}
-                  className="w-full border rounded px-2 py-1"
-                  placeholder="name or email"
-                />
-              </div>
             </div>
 
             <div className="mt-3">
@@ -385,6 +358,7 @@ export default function SteaBoard() {
                 className="w-full border rounded px-2 py-1"
               />
             </div>
+
             <div className="mt-3">
               <label className="text-sm font-medium mb-1">Description</label>
               <textarea
@@ -394,6 +368,39 @@ export default function SteaBoard() {
                 className="w-full border rounded px-2 py-1"
               />
             </div>
+
+            {/* Upload area */}
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className="mt-4 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer bg-gray-50 hover:bg-gray-100"
+              onClick={() => document.getElementById('fileInput').click()}
+            >
+              <p className="text-sm text-gray-700">
+                {uploading ? 'Uploading...' : 'Drag & drop screenshots here or click to upload'}
+              </p>
+              <input
+                id="fileInput"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+
+            {form.attachments?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {form.attachments.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`preview-${i}`}
+                    className="w-16 h-16 object-cover border rounded"
+                  />
+                ))}
+              </div>
+            )}
 
             <div className="mt-4 flex justify-end gap-2">
               <button
@@ -405,6 +412,7 @@ export default function SteaBoard() {
               <button
                 onClick={saveForm}
                 className="px-4 py-2 bg-blue-600 text-white rounded"
+                disabled={uploading}
               >
                 Save
               </button>
