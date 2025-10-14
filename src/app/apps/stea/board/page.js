@@ -61,6 +61,15 @@ export default function SteaBoard() {
     return { "Won't Do": true };
   });
 
+  // sorting
+  // 'none' | 'priority_desc' (critical → low) | 'priority_asc' (low → critical)
+  const [sortMode, setSortMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('stea-sort-mode') || 'none';
+    }
+    return 'none';
+  });
+
   // editing
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -90,6 +99,10 @@ export default function SteaBoard() {
     localStorage.setItem('stea-hidden-cols', JSON.stringify(hiddenCols));
   }, [hiddenCols]);
 
+  useEffect(() => {
+    localStorage.setItem('stea-sort-mode', sortMode);
+  }, [sortMode]);
+
   /* ---------- derived ---------- */
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
@@ -103,6 +116,29 @@ export default function SteaBoard() {
   }, [cards, showArchived]);
 
   const visibleColumns = COLUMNS.filter((c) => !hiddenCols[c]);
+
+  // priority comparator
+  const getPriorityRank = (p) => {
+    switch ((p || 'medium').toLowerCase()) {
+      case 'critical': return 3;
+      case 'high': return 2;
+      case 'medium': return 1;
+      case 'low': return 0;
+      default: return 1; // treat unknown like medium
+    }
+  };
+
+  const compareByPriority = (a, b) => {
+    const ar = getPriorityRank(a.priority);
+    const br = getPriorityRank(b.priority);
+    if (ar !== br) {
+      return sortMode === 'priority_desc' ? br - ar : ar - br;
+    }
+    // tie-breaker: createdAt asc (older first)
+    const at = a.createdAt?.toMillis?.() ?? (a.createdAt?._seconds ? a.createdAt._seconds * 1000 : 0);
+    const bt = b.createdAt?.toMillis?.() ?? (b.createdAt?._seconds ? b.createdAt._seconds * 1000 : 0);
+    return at - bt;
+  };
 
   /* ---------- helpers ---------- */
   const startNew = () => {
@@ -200,7 +236,6 @@ export default function SteaBoard() {
         onDragStart={(e) => {
           setDraggingId(card.id);
           e.dataTransfer.setData('text/stea-card-id', card.id);
-          // nicer drag preview on some browsers
           e.dataTransfer.effectAllowed = 'move';
         }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -314,6 +349,21 @@ export default function SteaBoard() {
               />
               Show archived
             </label>
+
+            {/* Sort control */}
+            <label className="inline-flex items-center gap-2 text-sm">
+              <span className="text-gray-600">Sort</span>
+              <select
+                value={sortMode}
+                onChange={(e) => setSortMode(e.target.value)}
+                className="px-2 py-1.5 border rounded"
+              >
+                <option value="none">None</option>
+                <option value="priority_desc">Priority (High→Low)</option>
+                <option value="priority_asc">Priority (Low→High)</option>
+              </select>
+            </label>
+
             <div className="ml-auto flex items-center gap-3">
               {user && <span className="text-sm text-gray-600">{user.email}</span>}
               {user && (
@@ -357,7 +407,12 @@ export default function SteaBoard() {
       <div className="mt-4 overflow-x-auto pb-2" style={{ scrollSnapType: 'x proximity' }}>
         <div className="flex gap-4 min-h-[420px]">
           {visibleColumns.map((col) => {
-            const items = grouped[col] || [];
+            const baseItems = grouped[col] || [];
+            const items =
+              sortMode === 'none'
+                ? baseItems
+                : [...baseItems].sort(compareByPriority);
+
             const isOver = dragOverCol === col;
 
             return (
