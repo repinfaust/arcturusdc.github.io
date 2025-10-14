@@ -8,10 +8,11 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   addDoc, collection, doc, onSnapshot, orderBy, query,
-  serverTimestamp, updateDoc, deleteDoc, getDoc
+  serverTimestamp, updateDoc, deleteDoc, getDoc, where
 } from 'firebase/firestore';
 
-const COLUMNS = ['Idea', 'Planning', 'Design', 'Build'];
+/** Now includes completion/dismissal columns */
+const COLUMNS = ['Idea', 'Planning', 'Design', 'Build', 'Done', "Won't Do"];
 
 const TYPES = [
   { value: 'idea', label: 'Idea', emoji: '💡' },
@@ -57,7 +58,9 @@ export default function SteaBoard() {
     assignee: '',
     title: '',
     description: '',
-    attachments: []
+    attachments: [],
+    archived: false,
+    status: 'Idea',
   });
 
   // Comments state (only loaded while modal is open on a specific card)
@@ -66,6 +69,9 @@ export default function SteaBoard() {
   const commentsUnsubRef = useRef(null);
 
   const [uploading, setUploading] = useState(false);
+
+  // Board controls
+  const [showArchived, setShowArchived] = useState(false);
 
   /* ---------- Auth + board sync ---------- */
   useEffect(() => {
@@ -76,6 +82,7 @@ export default function SteaBoard() {
       }
       setUser(u);
 
+      // Listen to all cards; client-side we’ll hide archived unless toggled.
       const qCards = query(collection(db, 'stea_cards'), orderBy('updatedAt', 'desc'));
       const unsubData = onSnapshot(qCards, (snap) => {
         const arr = [];
@@ -109,7 +116,9 @@ export default function SteaBoard() {
       assignee: '',
       title: '',
       description: '',
-      attachments: []
+      attachments: [],
+      status: 'Idea',
+      archived: false,
     });
     setModalOpen(true);
   };
@@ -126,7 +135,9 @@ export default function SteaBoard() {
       assignee: d?.assignee || '',
       title: d?.title || '',
       description: d?.description || '',
-      attachments: d?.attachments || []
+      attachments: d?.attachments || [],
+      status: d?.status || 'Idea',
+      archived: !!d?.archived,
     });
 
     // Live comments for this card
@@ -160,6 +171,7 @@ export default function SteaBoard() {
       const newDoc = await addDoc(collection(db, 'stea_cards'), {
         ...form,
         status: 'Idea',
+        archived: false,
         ownerUid: user.uid,
         ownerEmail: user.email,
         createdAt: serverTimestamp(),
@@ -221,9 +233,19 @@ export default function SteaBoard() {
     await updateDoc(doc(db, 'stea_cards', id), { [field]: value, updatedAt: serverTimestamp() });
   };
 
+  const setStatus = async (id, status) => {
+    await updateDoc(doc(db, 'stea_cards', id), { status, updatedAt: serverTimestamp() });
+  };
+
+  const toggleArchive = async (id, archived) => {
+    await updateDoc(doc(db, 'stea_cards', id), { archived, updatedAt: serverTimestamp() });
+    // if archiving the card we're editing, reflect immediately
+    if (editingId === id) setForm((f) => ({ ...f, archived }));
+  };
+
   const deleteCard = async (id) => {
     if (confirm('Delete this card?')) {
-      // (Optional) you could also delete subcollection comments via a Cloud Function
+      // (Optional) delete subcollection comments via Cloud Function
       await deleteDoc(doc(db, 'stea_cards', id));
       if (editingId === id) closeModal();
     }
@@ -264,11 +286,16 @@ export default function SteaBoard() {
     setDraggingId(null);
   };
 
+  /* ---------- Derived: grouped + filtered ---------- */
+  const visibleCards = useMemo(() => {
+    return cards.filter(c => (showArchived ? true : !c.archived));
+  }, [cards, showArchived]);
+
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
-    cards.forEach((c) => (g[c.status] ? g[c.status].push(c) : g.Idea.push(c)));
+    visibleCards.forEach((c) => (g[c.status] ? g[c.status].push(c) : g.Idea.push(c)));
     return g;
-  }, [cards]);
+  }, [visibleCards]);
 
   if (loading) return <main className="max-w-5xl mx-auto p-10">Loading…</main>;
 
@@ -290,12 +317,22 @@ export default function SteaBoard() {
             <span className="text-xs px-2 py-0.5 bg-gray-100 border border-gray-200 rounded break-all">
               {user?.email}
             </span>
-            <button
-              onClick={() => signOut(auth)}
-              className="px-3 py-1.5 bg-gray-100 border rounded hover:bg-gray-200 text-sm ml-auto"
-            >
-              Sign out
-            </button>
+            <div className="ml-auto flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={showArchived}
+                  onChange={(e) => setShowArchived(e.target.checked)}
+                />
+                Show archived
+              </label>
+              <button
+                onClick={() => signOut(auth)}
+                className="px-3 py-1.5 bg-gray-100 border rounded hover:bg-gray-200 text-sm"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
           <p className="text-sm text-neutral-700 mt-1">
             Manage ideas → build phases. Auto-saved to Firestore.
@@ -310,7 +347,7 @@ export default function SteaBoard() {
       </div>
 
       {/* Columns */}
-      <section className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <section className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
         {COLUMNS.map((col) => (
           <div
             key={col}
@@ -318,92 +355,138 @@ export default function SteaBoard() {
             onDrop={(e) => onDropColumn(e, col)}
             className="card p-3 min-h-[360px] flex flex-col"
           >
-            <h2 className="font-bold mb-2">{col}</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-bold">{col}</h2>
+              <span className="text-xs px-2 py-0.5 rounded border bg-gray-50">
+                {(grouped[col] ?? []).length}
+              </span>
+            </div>
             <div className="space-y-2 flex-1">
-              {(grouped[col] ?? []).map((card) => (
-                <article
-                  key={card.id}
-                  draggable
-                  onDragStart={(e) => onDragStart(e, card.id)}
-                  className="border rounded-lg p-3 bg-white shadow-sm cursor-grab overflow-hidden"
-                >
-                  <div className="flex justify-between items-start gap-2 flex-wrap">
-                    <h3 className="font-semibold break-words">{card.title}</h3>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => openEdit(card.id)}
-                        className="text-xs px-2 py-0.5 border rounded hover:bg-gray-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => deleteCard(card.id)}
-                        className="text-xs text-red-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-
-                  {card.description && (
-                    <p className="text-xs text-gray-600 mt-1 break-words whitespace-pre-wrap">
-                      {card.description}
-                    </p>
-                  )}
-
-                  {/* Attachments */}
-                  {card.attachments?.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {card.attachments.map((url, i) => (
-                        <a
-                          key={i}
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block w-16 h-16 overflow-hidden border rounded"
+              {(grouped[col] ?? []).map((card) => {
+                const isTerminal = card.status === 'Done' || card.status === "Won't Do";
+                return (
+                  <article
+                    key={card.id}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, card.id)}
+                    className={`border rounded-lg p-3 bg-white shadow-sm cursor-grab overflow-hidden ${
+                      card.archived ? 'opacity-60' : ''
+                    }`}
+                  >
+                    <div className="flex justify-between items-start gap-2 flex-wrap">
+                      <h3 className="font-semibold break-words">{card.title}</h3>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Quick actions */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            title="Mark Done"
+                            onClick={() => setStatus(card.id, 'Done')}
+                            className="text-xs px-2 py-0.5 border rounded hover:bg-green-50"
+                          >
+                            ✓ Done
+                          </button>
+                          <button
+                            title="Mark Won't Do"
+                            onClick={() => setStatus(card.id, "Won't Do")}
+                            className="text-xs px-2 py-0.5 border rounded hover:bg-gray-50"
+                          >
+                            ↯ Won’t Do
+                          </button>
+                          <button
+                            title={card.archived ? 'Unarchive' : 'Archive'}
+                            onClick={() => toggleArchive(card.id, !card.archived)}
+                            className="text-xs px-2 py-0.5 border rounded hover:bg-amber-50"
+                          >
+                            {card.archived ? 'Unarchive' : 'Archive'}
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => openEdit(card.id)}
+                          className="text-xs px-2 py-0.5 border rounded hover:bg-gray-50"
                         >
-                          <img
-                            src={url}
-                            alt={`attachment-${i}`}
-                            className="object-cover w-full h-full"
-                          />
-                        </a>
-                      ))}
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteCard(card.id)}
+                          className="text-xs text-red-600"
+                          title="Delete"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
-                  )}
 
-                  {/* Badges */}
-                  <div className="flex gap-2 mt-2 flex-wrap text-[10px]">
-                    <span className="px-2 py-0.5 rounded border bg-gray-50">{card.type}</span>
-                    <span className="px-2 py-0.5 rounded border bg-gray-50">{card.urgency}</span>
-                    <span className="px-2 py-0.5 rounded border bg-gray-50">{appLabel(card.app)}</span>
-                    {card.reporter && (
-                      <span className="px-2 py-0.5 rounded border bg-gray-50 break-all">
-                        Reporter: {card.reporter}
-                      </span>
+                    {card.description && (
+                      <p className="text-xs text-gray-600 mt-1 break-words whitespace-pre-wrap">
+                        {card.description}
+                      </p>
                     )}
-                    {card.assignee && (
-                      <span className="px-2 py-0.5 rounded border bg-gray-50 break-all">
-                        Assigned: {card.assignee}
-                      </span>
-                    )}
-                  </div>
 
-                  <div className="flex justify-end mt-3">
-                    <button
-                      onClick={() =>
-                        moveCard(
-                          card.id,
-                          COLUMNS[(COLUMNS.indexOf(card.status) + 1) % COLUMNS.length]
-                        )
-                      }
-                      className="text-xs px-2 py-0.5 bg-blue-100 border border-blue-200 rounded"
-                    >
-                      Move →
-                    </button>
-                  </div>
-                </article>
-              ))}
+                    {/* Attachments */}
+                    {card.attachments?.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {card.attachments.map((url, i) => (
+                          <a
+                            key={i}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block w-16 h-16 overflow-hidden border rounded"
+                          >
+                            <img
+                              src={url}
+                              alt={`attachment-${i}`}
+                              className="object-cover w-full h-full"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Badges */}
+                    <div className="flex gap-2 mt-2 flex-wrap text-[10px]">
+                      <span className="px-2 py-0.5 rounded border bg-gray-50">{card.type}</span>
+                      <span className="px-2 py-0.5 rounded border bg-gray-50">{card.urgency}</span>
+                      <span className="px-2 py-0.5 rounded border bg-gray-50">{appLabel(card.app)}</span>
+                      <span className={`px-2 py-0.5 rounded border ${card.status === 'Done' ? 'bg-green-50' : card.status === "Won't Do" ? 'bg-gray-100' : 'bg-gray-50'}`}>
+                        Status: {card.status}
+                      </span>
+                      {card.archived && (
+                        <span className="px-2 py-0.5 rounded border bg-amber-50">Archived</span>
+                      )}
+                      {card.reporter && (
+                        <span className="px-2 py-0.5 rounded border bg-gray-50 break-all">
+                          Reporter: {card.reporter}
+                        </span>
+                      )}
+                      {card.assignee && (
+                        <span className="px-2 py-0.5 rounded border bg-gray-50 break-all">
+                          Assigned: {card.assignee}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end mt-3">
+                      <button
+                        onClick={() =>
+                          moveCard(
+                            card.id,
+                            COLUMNS[(COLUMNS.indexOf(card.status) + 1) % COLUMNS.length]
+                          )
+                        }
+                        disabled={isTerminal}
+                        className={`text-xs px-2 py-0.5 border rounded ${
+                          isTerminal
+                            ? 'opacity-40 cursor-not-allowed'
+                            : 'bg-blue-100 border-blue-200 hover:bg-blue-200'
+                        }`}
+                      >
+                        Move →
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -456,6 +539,19 @@ export default function SteaBoard() {
                       {APPS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                     </select>
                   </div>
+
+                  {/* Status control (optional manual override) */}
+                  <div>
+                    <label className="text-sm font-medium mb-1">Status</label>
+                    <select
+                      value={form.status}
+                      onChange={(e) => setForm(f => ({ ...f, status: e.target.value }))}
+                      className="w-full border rounded px-2 py-1"
+                    >
+                      {COLUMNS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="text-sm font-medium mb-1">Reporter</label>
                     <input
@@ -531,15 +627,18 @@ export default function SteaBoard() {
                 )}
               </div>
 
-              {/* Right column: comments */}
+              {/* Right column: comments + archive */}
               <div className="lg:border-l lg:pl-6">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold">Comments</h3>
-                  {!editingId && (
-                    <span className="text-xs text-gray-500">
-                      Save the card to enable comments
-                    </span>
-                  )}
+                  <label className="text-sm flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!form.archived}
+                      onChange={(e) => setForm(f => ({ ...f, archived: e.target.checked }))}
+                    />
+                    Archived
+                  </label>
                 </div>
 
                 <div className="max-h-64 overflow-auto space-y-2 pr-1">
@@ -599,7 +698,31 @@ export default function SteaBoard() {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              {/* Quick completion in modal as well */}
+              {editingId && (
+                <>
+                  <button
+                    onClick={() => setStatus(editingId, 'Done')}
+                    className="px-3 py-2 border rounded bg-green-50 hover:bg-green-100"
+                  >
+                    ✓ Mark Done
+                  </button>
+                  <button
+                    onClick={() => setStatus(editingId, "Won't Do")}
+                    className="px-3 py-2 border rounded bg-gray-50 hover:bg-gray-100"
+                  >
+                    ↯ Mark Won’t Do
+                  </button>
+                  <button
+                    onClick={() => toggleArchive(editingId, !form.archived)}
+                    className="px-3 py-2 border rounded bg-amber-50 hover:bg-amber-100"
+                  >
+                    {form.archived ? 'Unarchive' : 'Archive'}
+                  </button>
+                </>
+              )}
+              <div className="flex-1" />
               <button
                 onClick={closeModal}
                 className="px-4 py-2 border rounded bg-gray-100"
