@@ -46,6 +46,101 @@ const sizeTheme = {
   '?': 'bg-zinc-50 text-zinc-700 border-zinc-200',
 };
 
+/* -------------------- COMMENTS SECTION -------------------- */
+function CommentsSection({ cardId, user }) {
+  const [comments, setComments] = useState([]);
+  const [text, setText] = useState('');
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    if (!cardId) return;
+    const q = query(
+      collection(db, 'stea_cards', cardId, 'comments'),
+      orderBy('createdAt', 'asc')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const list = [];
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+      setComments(list);
+    });
+    return () => unsub();
+  }, [cardId]);
+
+  const addComment = async () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setAdding(true);
+    await addDoc(collection(db, 'stea_cards', cardId, 'comments'), {
+      text: trimmed,
+      commenter: user?.email || 'anonymous',
+      createdAt: serverTimestamp(),
+    });
+    setText('');
+    setAdding(false);
+  };
+
+  const removeComment = async (cid) => {
+    await deleteDoc(doc(db, 'stea_cards', cardId, 'comments', cid));
+  };
+
+  const formatTime = (ts) => {
+    try {
+      const ms = ts?.toMillis?.() ?? (ts?._seconds ? ts._seconds * 1000 : null);
+      if (!ms) return '';
+      return new Date(ms).toLocaleString();
+    } catch {
+      return '';
+    }
+  };
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="font-semibold">Comments</div>
+        <div className="text-xs text-gray-500">{comments.length}</div>
+      </div>
+
+      <div className="space-y-2 max-h-60 overflow-auto pr-1">
+        {comments.length === 0 ? (
+          <div className="text-sm text-gray-500">No comments yet.</div>
+        ) : comments.map((c) => (
+          <div key={c.id} className="border rounded p-2 bg-gray-50">
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-sm whitespace-pre-wrap break-words">{c.text}</div>
+              <button
+                onClick={() => removeComment(c.id)}
+                className="text-xs px-2 py-1 rounded border hover:bg-red-50 text-red-600"
+                title="Delete comment"
+              >
+                Delete
+              </button>
+            </div>
+            <div className="mt-1 text-xs text-gray-500">
+              From {c.commenter || '—'} • {formatTime(c.createdAt)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="flex-1 px-3 py-2 border rounded"
+          placeholder="Write a comment…"
+        />
+        <button
+          onClick={addComment}
+          disabled={adding}
+          className="px-3 py-2 rounded bg-gray-900 text-white hover:bg-black disabled:opacity-60"
+        >
+          {adding ? 'Adding…' : 'Add'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* -------------------- PAGE -------------------- */
 export default function SteaBoard() {
   const [user, setUser] = useState(null);
@@ -179,7 +274,9 @@ export default function SteaBoard() {
     if (card.id) {
       await updateDoc(doc(db, 'stea_cards', card.id), payload);
     } else {
-      await addDoc(collection(db, 'stea_cards'), payload);
+      const ref = await addDoc(collection(db, 'stea_cards'), payload);
+      // attach the new id so the modal keeps working consistently
+      setEditing({ ...card, id: ref.id });
     }
     setEditing(null);
     setCreating(false);
@@ -608,6 +705,13 @@ export default function SteaBoard() {
                   </button>
                 </div>
               </div>
+
+              {/* ---- Comments (live) ---- */}
+              {editing?.id ? (
+                <div className="md:col-span-2">
+                  <CommentsSection cardId={editing.id} user={user} />
+                </div>
+              ) : null}
 
             </div>
           </div>
