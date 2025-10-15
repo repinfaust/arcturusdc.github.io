@@ -90,7 +90,7 @@ function CommentsSection({ cardId, user }) {
   };
 
   return (
-    <div className="mt-4">
+    <div className="mt-6">
       <div className="flex items-center justify-between mb-2">
         <div className="font-semibold">Comments</div>
         <div className="text-xs text-gray-500">{comments.length}</div>
@@ -139,7 +139,14 @@ function CommentsSection({ cardId, user }) {
 }
 
 /* -------------------- ATTACHMENTS -------------------- */
-function AttachmentsSection({ card, onAdd, onDelete }) {
+const isPreviewableImage = (name = '', type = '') => {
+  const t = type.toLowerCase();
+  if (t.startsWith('image/')) return true;
+  const ext = name.toLowerCase().split('.').pop();
+  return ['png','jpg','jpeg','gif','webp','svg'].includes(ext);
+};
+
+function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -184,6 +191,7 @@ function AttachmentsSection({ card, onAdd, onDelete }) {
                 onChange={(e) => handleFiles(e.target.files)}
               />
             </div>
+            {uploading && <div className="mt-2 text-sm text-gray-600">Uploading…</div>}
           </div>
 
           <ul className="mt-3 space-y-2">
@@ -192,10 +200,25 @@ function AttachmentsSection({ card, onAdd, onDelete }) {
             ) : (
               card.attachments.map((a, i) => (
                 <li key={`${a.path}-${i}`} className="flex items-center justify-between gap-3 border rounded p-2">
-                  <a href={a.url} target="_blank" rel="noreferrer" className="truncate underline">
-                    {a.name}
-                  </a>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Preview thumbnail if image */}
+                    {isPreviewableImage(a.name, a.contentType) ? (
+                      <a href={a.url} target="_blank" rel="noreferrer" className="shrink-0">
+                        <img
+                          src={a.url}
+                          alt={a.name}
+                          className="h-12 w-12 object-cover rounded border"
+                          referrerPolicy="no-referrer"
+                        />
+                      </a>
+                    ) : (
+                      <div className="h-12 w-12 rounded border bg-gray-100 grid place-items-center text-xs text-gray-500">FILE</div>
+                    )}
+                    <a href={a.url} target="_blank" rel="noreferrer" className="truncate underline">
+                      {a.name}
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 shrink-0">
                     {typeof a.size === 'number' ? `${(a.size/1024).toFixed(1)} KB` : ''}
                     <button
                       onClick={() => onDelete(a)}
@@ -382,33 +405,34 @@ export default function SteaBoard() {
     if (!editing?.id || !files?.length) return;
     setUploading(true);
     const storage = getStorage();
-    const updates = [];
+    const atts = [];
 
     for (const file of files) {
       const path = `stea_uploads/${editing.id}/${Date.now()}_${file.name}`;
       const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
+      // include contentType so previews are reliable
+      await uploadBytes(storageRef, file, { contentType: file.type || undefined });
       const url = await getDownloadURL(storageRef);
 
-      const att = {
+      atts.push({
         name: file.name,
         path,
         url,
         size: file.size || null,
+        contentType: file.type || '',
         createdAt: Date.now(),
         by: user?.email || 'anonymous',
-      };
-
-      updates.push(updateDoc(doc(db, 'stea_cards', editing.id), {
-        attachments: arrayUnion(att),
-        updatedAt: serverTimestamp(),
-      }));
+      });
     }
 
-    await Promise.all(updates);
+    // Write all to Firestore
+    await updateDoc(doc(db, 'stea_cards', editing.id), {
+      attachments: arrayUnion(...atts),
+      updatedAt: serverTimestamp(),
+    });
 
-    // reflect locally without full refetch
-    setEditing((c) => ({ ...c, attachments: [...(c.attachments || []), ...updates.map(() => null)] }));
+    // Update local modal state
+    setEditing((c) => ({ ...c, attachments: [...(c.attachments || []), ...atts] }));
     setUploading(false);
   };
 
@@ -700,8 +724,8 @@ export default function SteaBoard() {
                     card={editing}
                     onAdd={addFiles}
                     onDelete={deleteFile}
+                    uploading={uploading}
                   />
-                  {uploading && <div className="mt-2 text-sm text-gray-600">Uploading…</div>}
                 </div>
 
                 {/* Comments */}
@@ -718,4 +742,3 @@ export default function SteaBoard() {
     </main>
   );
 }
-
