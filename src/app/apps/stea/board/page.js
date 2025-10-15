@@ -8,6 +8,7 @@ import {
   serverTimestamp, updateDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 /* -------------------- CONFIG -------------------- */
 const COLUMNS = ['Idea', 'Planning', 'Design', 'Build', 'Done', "Won't Do"];
@@ -46,7 +47,7 @@ const sizeTheme = {
   '?': 'bg-zinc-50 text-zinc-700 border-zinc-200',
 };
 
-/* -------------------- COMMENTS SECTION -------------------- */
+/* -------------------- COMMENTS -------------------- */
 function CommentsSection({ cardId, user }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState('');
@@ -54,10 +55,7 @@ function CommentsSection({ cardId, user }) {
 
   useEffect(() => {
     if (!cardId) return;
-    const q = query(
-      collection(db, 'stea_cards', cardId, 'comments'),
-      orderBy('createdAt', 'asc')
-    );
+    const q = query(collection(db, 'stea_cards', cardId, 'comments'), orderBy('createdAt', 'asc'));
     const unsub = onSnapshot(q, (snap) => {
       const list = [];
       snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
@@ -84,17 +82,12 @@ function CommentsSection({ cardId, user }) {
   };
 
   const formatTime = (ts) => {
-    try {
-      const ms = ts?.toMillis?.() ?? (ts?._seconds ? ts._seconds * 1000 : null);
-      if (!ms) return '';
-      return new Date(ms).toLocaleString();
-    } catch {
-      return '';
-    }
+    const ms = ts?.toMillis?.() ?? (ts?._seconds ? ts._seconds * 1000 : null);
+    return ms ? new Date(ms).toLocaleString() : '';
   };
 
   return (
-    <div className="mt-4">
+    <div className="mt-6">
       <div className="flex items-center justify-between mb-2">
         <div className="font-semibold">Comments</div>
         <div className="text-xs text-gray-500">{comments.length}</div>
@@ -123,13 +116,10 @@ function CommentsSection({ cardId, user }) {
       </div>
 
       <div className="mt-3 flex items-start gap-2">
-        {/* TEXTAREA so it wraps while typing */}
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') addComment();
-          }}
+          onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') addComment(); }}
           className="flex-1 px-3 py-2 border rounded min-h-[44px] leading-5 overflow-y-auto resize-y break-words"
           placeholder="Write a comment… (Ctrl/⌘+Enter to add)"
         />
@@ -140,6 +130,135 @@ function CommentsSection({ cardId, user }) {
         >
           {adding ? 'Adding…' : 'Add'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------- ATTACHMENTS -------------------- */
+function Attachments({ cardId, user }) {
+  const [items, setItems] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const inputRef = useRef(null);
+  const storage = getStorage();
+
+  useEffect(() => {
+    if (!cardId) return;
+    const q = query(collection(db, 'stea_cards', cardId, 'attachments'), orderBy('createdAt', 'asc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const list = [];
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
+      setItems(list);
+    });
+    return () => unsub();
+  }, [cardId]);
+
+  const humanSize = (n) => {
+    if (!n && n !== 0) return '';
+    const u = ['B','KB','MB','GB']; let i=0; let s=n;
+    while (s >= 1024 && i < u.length-1) { s/=1024; i++; }
+    return `${s.toFixed(1)} ${u[i]}`;
+    };
+
+  const handleFiles = async (files) => {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      for (const file of files) {
+        const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+        const path = `stea_uploads/${cardId}/${Date.now()}_${safeName}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, file, { contentType: file.type || 'application/octet-stream' });
+        const url = await getDownloadURL(storageRef);
+        await addDoc(collection(db, 'stea_cards', cardId, 'attachments'), {
+          name: file.name,
+          path,
+          url,
+          size: file.size || null,
+          type: file.type || null,
+          uploader: user?.email || 'anonymous',
+          createdAt: serverTimestamp(),
+        });
+      }
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const onDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer?.files;
+    await handleFiles(files);
+  };
+
+  const onDelete = async (att) => {
+    if (!confirm(`Delete ${att.name}?`)) return;
+    await deleteDoc(doc(db, 'stea_cards', cardId, 'attachments', att.id));
+    if (att.path) {
+      try { await deleteObject(ref(storage, att.path)); } catch { /* ignore if already gone */ }
+    }
+  };
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-2">
+        <div className="font-semibold">Attachments</div>
+        <div className="text-xs text-gray-500">{items.length}</div>
+      </div>
+
+      {/* Dropzone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+        onDrop={onDrop}
+        className="rounded border-2 border-dashed p-4 text-sm bg-gray-50 hover:bg-gray-100 transition"
+      >
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>Drag & drop files here, or</div>
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              onChange={(e) => handleFiles(e.target.files)}
+              className="hidden"
+            />
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="px-3 py-1.5 rounded border bg-white hover:bg-gray-50"
+              disabled={busy}
+            >
+              Choose files
+            </button>
+            {busy && <span className="text-xs text-gray-500">Uploading…</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="mt-3 space-y-2 max-h-48 overflow-auto pr-1">
+        {items.length === 0 ? (
+          <div className="text-sm text-gray-500">No attachments yet.</div>
+        ) : items.map((a) => (
+          <div key={a.id} className="border rounded p-2 bg-white flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <a href={a.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-700 break-all">
+                {a.name || 'Download'}
+              </a>
+              <div className="text-xs text-gray-500">
+                {a.type || 'file'}{a.size ? ` • ${humanSize(a.size)}` : ''}{a.uploader ? ` • by ${a.uploader}` : ''}
+              </div>
+            </div>
+            <button
+              onClick={() => onDelete(a)}
+              className="text-xs px-2 py-1 rounded border hover:bg-red-50 text-red-600 shrink-0"
+              title="Delete attachment"
+            >
+              Delete
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -160,8 +279,7 @@ export default function SteaBoard() {
     return { "Won't Do": true };
   });
 
-  // sorting
-  // 'none' | 'priority_desc' (critical → low) | 'priority_asc' (low → critical)
+  // 'none' | 'priority_desc' | 'priority_asc'
   const [sortMode, setSortMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('stea-sort-mode') || 'none';
@@ -169,7 +287,6 @@ export default function SteaBoard() {
     return 'none';
   });
 
-  // editing
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
 
@@ -177,13 +294,10 @@ export default function SteaBoard() {
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
 
-  /* ---------- auth ---------- */
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsub();
-  }, []);
+  /* auth */
+  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u)), []);
 
-  /* ---------- data ---------- */
+  /* data */
   useEffect(() => {
     const q = query(collection(db, 'stea_cards'), orderBy('createdAt', 'asc'));
     const unsub = onSnapshot(q, (snap) => {
@@ -194,15 +308,10 @@ export default function SteaBoard() {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('stea-hidden-cols', JSON.stringify(hiddenCols));
-  }, [hiddenCols]);
+  useEffect(() => { localStorage.setItem('stea-hidden-cols', JSON.stringify(hiddenCols)); }, [hiddenCols]);
+  useEffect(() => { localStorage.setItem('stea-sort-mode', sortMode); }, [sortMode]);
 
-  useEffect(() => {
-    localStorage.setItem('stea-sort-mode', sortMode);
-  }, [sortMode]);
-
-  /* ---------- lock page scroll when modal open ---------- */
+  /* lock page scroll when modal open */
   useEffect(() => {
     if (editing) {
       const prev = document.body.style.overflow;
@@ -211,7 +320,7 @@ export default function SteaBoard() {
     }
   }, [editing]);
 
-  /* ---------- derived ---------- */
+  /* derived */
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
     for (const c of cards) {
@@ -225,7 +334,6 @@ export default function SteaBoard() {
 
   const visibleColumns = COLUMNS.filter((c) => !hiddenCols[c]);
 
-  // priority comparator
   const getPriorityRank = (p) => {
     switch ((p || 'medium').toLowerCase()) {
       case 'critical': return 3;
@@ -239,15 +347,13 @@ export default function SteaBoard() {
   const compareByPriority = (a, b) => {
     const ar = getPriorityRank(a.priority);
     const br = getPriorityRank(b.priority);
-    if (ar !== br) {
-      return sortMode === 'priority_desc' ? br - ar : ar - br;
-    }
+    if (ar !== br) return sortMode === 'priority_desc' ? br - ar : ar - br;
     const at = a.createdAt?.toMillis?.() ?? (a.createdAt?._seconds ? a.createdAt._seconds * 1000 : 0);
     const bt = b.createdAt?.toMillis?.() ?? (b.createdAt?._seconds ? b.createdAt._seconds * 1000 : 0);
     return at - bt;
   };
 
-  /* ---------- helpers ---------- */
+  /* helpers */
   const startNew = () => {
     setEditing({
       id: null,
@@ -275,472 +381,4 @@ export default function SteaBoard() {
       priority: card.priority || 'medium',
       reporter: card.reporter || user?.email || '',
       assignee: card.assignee || '',
-      sizeEstimate: card.sizeEstimate || 'M',
-      appVersion: card.appVersion || '',
-      statusColumn: card.statusColumn || 'Idea',
-      archived: !!card.archived,
-      updatedAt: serverTimestamp(),
-      ...(card.createdAt ? {} : { createdAt: serverTimestamp() }),
-    };
-
-    if (card.id) {
-      await updateDoc(doc(db, 'stea_cards', card.id), payload);
-    } else {
-      const ref = await addDoc(collection(db, 'stea_cards'), payload);
-      setEditing({ ...card, id: ref.id });
-    }
-    setEditing(null);
-    setCreating(false);
-  };
-
-  const deleteCard = async (id) => {
-    if (!id) return;
-    await deleteDoc(doc(db, 'stea_cards', id));
-    setEditing(null);
-  };
-
-  const moveTo = async (card, nextCol) => {
-    await updateDoc(doc(db, 'stea_cards', card.id), {
-      statusColumn: nextCol,
-      updatedAt: serverTimestamp(),
-    });
-  };
-
-  /* ---------- UI bits ---------- */
-  const ColumnHeader = ({ name, count }) => (
-    <div className="mb-3 flex items-center justify-between">
-      <div className="font-semibold">{name}</div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-500">{count}</span>
-        <button
-          onClick={() => setHiddenCols((s) => ({ ...s, [name]: true }))}
-          className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-        >
-          Hide
-        </button>
-      </div>
-    </div>
-  );
-
-  // double-tap logic (mobile)
-  const tapTimes = useRef({});
-  const onCardPointerDown = (cardId, card) => () => {
-    const now = Date.now();
-    const last = tapTimes.current[cardId] || 0;
-    tapTimes.current[cardId] = now;
-    if (now - last < 300) setEditing(card);
-  };
-
-  const Card = ({ card }) => {
-    const idx = COLUMNS.indexOf(card.statusColumn || 'Idea');
-    const prev = COLUMNS[Math.max(idx - 1, 0)];
-    const next = COLUMNS[Math.min(idx + 1, COLUMNS.length - 1)];
-    const isDragging = draggingId === card.id;
-
-    return (
-      <div
-        className={`rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow transition break-words whitespace-normal cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-60' : ''}`}
-        draggable
-        onDragStart={(e) => {
-          setDraggingId(card.id);
-          e.dataTransfer.setData('text/stea-card-id', card.id);
-          e.dataTransfer.effectAllowed = 'move';
-        }}
-        onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
-        onDoubleClick={() => setEditing(card)}
-        onPointerDown={onCardPointerDown(card.id, card)}
-      >
-        {/* Top row: badges + edit */}
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="px-2 py-0.5 text-[11px] rounded border bg-gray-50">
-              {TYPES.find(t => t.value === card.type)?.emoji}{' '}
-              {TYPES.find(t => t.value === card.type)?.label || 'Item'}
-            </span>
-            <span className={`px-2 py-0.5 text-[11px] rounded border ${appTheme[card.app || 'New App']}`}>
-              {card.app || 'New App'}
-            </span>
-            <span className={`px-2 py-0.5 text-[11px] rounded border ${priorityTheme[card.priority || 'medium']}`}>
-              {String(card.priority || 'medium').toUpperCase()}
-            </span>
-            <span className={`px-2 py-0.5 text-[11px] rounded border ${sizeTheme[card.sizeEstimate || 'M']}`}>
-              Size {card.sizeEstimate || 'M'}
-            </span>
-            {card.statusColumn === 'Done' && card.appVersion ? (
-              <span className="px-2 py-0.5 text-[11px] rounded border bg-green-50 text-green-800 border-green-200">
-                v{card.appVersion}
-              </span>
-            ) : null}
-          </div>
-          <button
-            onClick={() => setEditing(card)}
-            className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black"
-          >
-            Edit
-          </button>
-        </div>
-
-        <div className="font-semibold">{card.title}</div>
-        {card.description ? (
-          <p className="text-sm text-gray-600 mt-1">{card.description}</p>
-        ) : null}
-
-        <div className="mt-3 flex items-center justify-between">
-          <div className="text-xs text-gray-500">
-            Reporter: {card.reporter || '—'}
-            {card.assignee ? ` • Assigned: ${card.assignee}` : ''}
-          </div>
-          <div className="flex flex-wrap gap-2 justify-end">
-            <button
-              onClick={() => moveTo(card, prev)}
-              className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-              title={`Move to ${prev}`}
-            >
-              ←
-            </button>
-            <button
-              onClick={() => moveTo(card, next)}
-              className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-              title={`Move to ${next}`}
-            >
-              →
-            </button>
-            <button
-              onClick={() => moveTo(card, 'Done')}
-              className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700"
-              title="Mark Done"
-            >
-              ✓ Done
-            </button>
-            <button
-              onClick={() => moveTo(card, "Won't Do")}
-              className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700"
-              title="Move to Won't Do"
-            >
-              ↯ Won’t Do
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <main className="pb-10 max-w-[1400px] mx-auto px-4">
-      {/* Header */}
-      <div className="card p-4 flex items-start gap-3 mt-2">
-        <Image
-          className="rounded-2xl border border-black/10"
-          src="/img/logo-mark.png"
-          width={64}
-          height={64}
-          alt="Arcturus mark"
-          priority
-        />
-        <div className="flex-1 min-w-0">
-          <div className="font-extrabold">STEa — Board</div>
-          <div className="text-muted text-sm">
-            Manage ideas → build phases. Auto-saved to Firestore.
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <button
-              onClick={startNew}
-              className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-            >
-              + New card
-            </button>
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showArchived}
-                onChange={(e) => setShowArchived(e.target.checked)}
-              />
-              Show archived
-            </label>
-
-            {/* Sort control */}
-            <label className="inline-flex items-center gap-2 text-sm">
-              <span className="text-gray-600">Sort</span>
-              <select
-                value={sortMode}
-                onChange={(e) => setSortMode(e.target.value)}
-                className="px-2 py-1.5 border rounded"
-              >
-                <option value="none">None</option>
-                <option value="priority_desc">Priority (High→Low)</option>
-                <option value="priority_asc">Priority (Low→High)</option>
-              </select>
-            </label>
-
-            <div className="ml-auto flex items-center gap-3">
-              {user && <span className="text-sm text-gray-600">{user.email}</span>}
-              {user && (
-                <button
-                  onClick={() => signOut(auth)}
-                  className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Sign out
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Column visibility toolbar */}
-      <div className="mt-4 card p-3">
-        <div className="text-xs text-gray-500 mb-2">Columns</div>
-        <div className="flex flex-wrap gap-2">
-          {COLUMNS.map((c) => {
-            const hidden = !!hiddenCols[c];
-            return (
-              <button
-                key={c}
-                onClick={() => setHiddenCols((s) => ({ ...s, [c]: !hidden }))}
-                className={`px-3 py-1.5 rounded border text-sm ${
-                  hidden
-                    ? 'bg-white hover:bg-gray-50'
-                    : 'bg-gray-900 text-white hover:bg-black'
-                }`}
-                aria-pressed={!hidden}
-              >
-                {hidden ? `Show ${c}` : `Hide ${c}`}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Board: horizontal scroll with DnD; only visible columns rendered */}
-      <div className="mt-4 overflow-x-auto pb-2" style={{ scrollSnapType: 'x proximity' }}>
-        <div className="flex gap-4 min-h-[420px]">
-          {visibleColumns.map((col) => {
-            const baseItems = grouped[col] || [];
-            const items =
-              sortMode === 'none'
-                ? baseItems
-                : [...baseItems].sort(compareByPriority);
-
-            const isOver = dragOverCol === col;
-
-            return (
-              <section
-                key={col}
-                className={`card p-3 w-[340px] shrink-0 transition ${
-                  isOver ? 'ring-2 ring-blue-400' : ''
-                }`}
-                style={{ scrollSnapAlign: 'start' }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverCol(col);
-                  e.dataTransfer.dropEffect = 'move';
-                }}
-                onDragLeave={() => setDragOverCol(null)}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  const id = e.dataTransfer.getData('text/stea-card-id');
-                  setDragOverCol(null);
-                  setDraggingId(null);
-                  if (!id) return;
-                  const card = cards.find((c) => c.id === id);
-                  if (!card || card.statusColumn === col) return;
-                  await moveTo(card, col);
-                }}
-              >
-                <ColumnHeader name={col} count={items.length} />
-                {items.length === 0 ? (
-                  <div className="text-xs text-gray-500 p-3 border rounded bg-gray-50">
-                    Drop cards here
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {items.map((c) => (
-                      <Card key={c.id} card={c} />
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Edit/Create modal (page-locked; modal scrolls) */}
-      {editing && (
-        <div className="fixed inset-0 z-50">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => { setEditing(null); setCreating(false); }}
-          />
-          {/* Modal container */}
-          <div className="relative z-10 flex min-h-full items-center justify-center p-4">
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="w-full max-w-2xl rounded-xl bg-white shadow-lg max-h-[85vh] flex flex-col overscroll-contain"
-            >
-              {/* Header (sticky) */}
-              <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
-                <div className="font-bold">{creating ? 'New Card' : 'Edit Card'}</div>
-                <button
-                  onClick={() => { setEditing(null); setCreating(false); }}
-                  className="px-3 py-1 rounded border hover:bg-gray-50"
-                >
-                  Close
-                </button>
-              </div>
-
-              {/* Scrollable content */}
-              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Title</label>
-                  <input
-                    value={editing.title}
-                    onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                    placeholder="Short summary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Type</label>
-                  <select
-                    value={editing.type}
-                    onChange={(e) => setEditing({ ...editing, type: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                  >
-                    {TYPES.map(t => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">App</label>
-                  <select
-                    value={editing.app}
-                    onChange={(e) => setEditing({ ...editing, app: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                  >
-                    {APPS.map(a => <option key={a} value={a}>{a}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Priority</label>
-                  <select
-                    value={editing.priority}
-                    onChange={(e) => setEditing({ ...editing, priority: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                  >
-                    {['low','medium','high','critical'].map(p =>
-                      <option key={p} value={p}>{p}</option>
-                    )}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Column</label>
-                  <select
-                    value={editing.statusColumn}
-                    onChange={(e) => setEditing({ ...editing, statusColumn: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                  >
-                    {COLUMNS.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Size estimate</label>
-                  <select
-                    value={editing.sizeEstimate}
-                    onChange={(e) => setEditing({ ...editing, sizeEstimate: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                  >
-                    {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">App version (for Done)</label>
-                  <input
-                    value={editing.appVersion}
-                    onChange={(e) => setEditing({ ...editing, appVersion: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                    placeholder="e.g. 1.3.0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Reporter</label>
-                  <input
-                    value={editing.reporter}
-                    onChange={(e) => setEditing({ ...editing, reporter: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                    placeholder="email"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Assigned to</label>
-                  <input
-                    value={editing.assignee}
-                    onChange={(e) => setEditing({ ...editing, assignee: e.target.value })}
-                    className="w-full px-3 py-2 border rounded"
-                    placeholder="name or email"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea
-                    value={editing.description}
-                    onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                    className="w-full px-3 py-2 border rounded min-h-[96px]"
-                    placeholder="Details, acceptance criteria, links…"
-                  />
-                </div>
-
-                <div className="md:col-span-2 flex items-center justify-between">
-                  <label className="inline-flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={!!editing.archived}
-                      onChange={(e) => setEditing({ ...editing, archived: e.target.checked })}
-                    />
-                    Archived
-                  </label>
-
-                  <div className="flex gap-2">
-                    {!creating && editing.id ? (
-                      <button
-                        onClick={() => deleteCard(editing.id)}
-                        className="px-3 py-2 rounded border text-red-600 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    ) : null}
-                    <button
-                      onClick={() => saveCard(editing)}
-                      className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-
-                {/* ---- Comments (live) ---- */}
-                {editing?.id ? (
-                  <div className="md:col-span-2">
-                    <CommentsSection cardId={editing.id} user={user} />
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
-  );
-}
+      sizeEstimate
