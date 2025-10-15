@@ -122,12 +122,16 @@ function CommentsSection({ cardId, user }) {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
-        <input
+      <div className="mt-3 flex items-start gap-2">
+        {/* TEXTAREA so it wraps while typing */}
+        <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1 px-3 py-2 border rounded"
-          placeholder="Write a comment…"
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') addComment();
+          }}
+          className="flex-1 px-3 py-2 border rounded min-h-[44px] leading-5 overflow-y-auto resize-y break-words"
+          placeholder="Write a comment… (Ctrl/⌘+Enter to add)"
         />
         <button
           onClick={addComment}
@@ -740,4 +744,3 @@ export default function SteaBoard() {
     </main>
   );
 }
-
