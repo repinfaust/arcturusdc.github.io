@@ -198,6 +198,15 @@ export default function SteaBoard() {
     localStorage.setItem('stea-sort-mode', sortMode);
   }, [sortMode]);
 
+  /* ---------- lock page scroll when modal open ---------- */
+  useEffect(() => {
+    if (editing) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [editing]);
+
   /* ---------- derived ---------- */
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
@@ -219,7 +228,7 @@ export default function SteaBoard() {
       case 'high': return 2;
       case 'medium': return 1;
       case 'low': return 0;
-      default: return 1; // treat unknown like medium
+      default: return 1;
     }
   };
 
@@ -229,7 +238,6 @@ export default function SteaBoard() {
     if (ar !== br) {
       return sortMode === 'priority_desc' ? br - ar : ar - br;
     }
-    // tie-breaker: createdAt asc (older first)
     const at = a.createdAt?.toMillis?.() ?? (a.createdAt?._seconds ? a.createdAt._seconds * 1000 : 0);
     const bt = b.createdAt?.toMillis?.() ?? (b.createdAt?._seconds ? b.createdAt._seconds * 1000 : 0);
     return at - bt;
@@ -275,7 +283,6 @@ export default function SteaBoard() {
       await updateDoc(doc(db, 'stea_cards', card.id), payload);
     } else {
       const ref = await addDoc(collection(db, 'stea_cards'), payload);
-      // attach the new id so the modal keeps working consistently
       setEditing({ ...card, id: ref.id });
     }
     setEditing(null);
@@ -311,7 +318,7 @@ export default function SteaBoard() {
     </div>
   );
 
-  // double-tap logic
+  // double-tap logic (mobile)
   const tapTimes = useRef({});
   const onCardPointerDown = (cardId, card) => () => {
     const now = Date.now();
@@ -554,165 +561,178 @@ export default function SteaBoard() {
         </div>
       </div>
 
-      {/* Edit/Create modal */}
+      {/* Edit/Create modal (page-locked; modal scrolls) */}
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="font-bold">{creating ? 'New Card' : 'Edit Card'}</div>
-              <button
-                onClick={() => { setEditing(null); setCreating(false); }}
-                className="px-3 py-1 rounded border hover:bg-gray-50"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Title</label>
-                <input
-                  value={editing.title}
-                  onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="Short summary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select
-                  value={editing.type}
-                  onChange={(e) => setEditing({ ...editing, type: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => { setEditing(null); setCreating(false); }}
+          />
+          {/* Modal container */}
+          <div className="relative z-10 flex min-h-full items-center justify-center p-4">
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="w-full max-w-2xl rounded-xl bg-white shadow-lg max-h-[85vh] flex flex-col overscroll-contain"
+            >
+              {/* Header (sticky) */}
+              <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
+                <div className="font-bold">{creating ? 'New Card' : 'Edit Card'}</div>
+                <button
+                  onClick={() => { setEditing(null); setCreating(false); }}
+                  className="px-3 py-1 rounded border hover:bg-gray-50"
                 >
-                  {TYPES.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
+                  Close
+                </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">App</label>
-                <select
-                  value={editing.app}
-                  onChange={(e) => setEditing({ ...editing, app: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {APPS.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Priority</label>
-                <select
-                  value={editing.priority}
-                  onChange={(e) => setEditing({ ...editing, priority: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {['low','medium','high','critical'].map(p =>
-                    <option key={p} value={p}>{p}</option>
-                  )}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Column</label>
-                <select
-                  value={editing.statusColumn}
-                  onChange={(e) => setEditing({ ...editing, statusColumn: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {COLUMNS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Size estimate</label>
-                <select
-                  value={editing.sizeEstimate}
-                  onChange={(e) => setEditing({ ...editing, sizeEstimate: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">App version (for Done)</label>
-                <input
-                  value={editing.appVersion}
-                  onChange={(e) => setEditing({ ...editing, appVersion: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="e.g. 1.3.0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Reporter</label>
-                <input
-                  value={editing.reporter}
-                  onChange={(e) => setEditing({ ...editing, reporter: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Assigned to</label>
-                <input
-                  value={editing.assignee}
-                  onChange={(e) => setEditing({ ...editing, assignee: e.target.value })}
-                  className="w-full px-3 py-2 border rounded"
-                  placeholder="name or email"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea
-                  value={editing.description}
-                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                  className="w-full px-3 py-2 border rounded min-h-[96px]"
-                  placeholder="Details, acceptance criteria, links…"
-                />
-              </div>
-
-              <div className="md:col-span-2 flex items-center justify-between">
-                <label className="inline-flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={!!editing.archived}
-                    onChange={(e) => setEditing({ ...editing, archived: e.target.checked })}
-                  />
-                  Archived
-                </label>
-
-                <div className="flex gap-2">
-                  {!creating && editing.id ? (
-                    <button
-                      onClick={() => deleteCard(editing.id)}
-                      className="px-3 py-2 rounded border text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  ) : null}
-                  <button
-                    onClick={() => saveCard(editing)}
-                    className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-
-              {/* ---- Comments (live) ---- */}
-              {editing?.id ? (
+              {/* Scrollable content */}
+              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
                 <div className="md:col-span-2">
-                  <CommentsSection cardId={editing.id} user={user} />
+                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <input
+                    value={editing.title}
+                    onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                    placeholder="Short summary"
+                  />
                 </div>
-              ) : null}
 
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <select
+                    value={editing.type}
+                    onChange={(e) => setEditing({ ...editing, type: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                  >
+                    {TYPES.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">App</label>
+                  <select
+                    value={editing.app}
+                    onChange={(e) => setEditing({ ...editing, app: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                  >
+                    {APPS.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Priority</label>
+                  <select
+                    value={editing.priority}
+                    onChange={(e) => setEditing({ ...editing, priority: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                  >
+                    {['low','medium','high','critical'].map(p =>
+                      <option key={p} value={p}>{p}</option>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Column</label>
+                  <select
+                    value={editing.statusColumn}
+                    onChange={(e) => setEditing({ ...editing, statusColumn: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                  >
+                    {COLUMNS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Size estimate</label>
+                  <select
+                    value={editing.sizeEstimate}
+                    onChange={(e) => setEditing({ ...editing, sizeEstimate: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                  >
+                    {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">App version (for Done)</label>
+                  <input
+                    value={editing.appVersion}
+                    onChange={(e) => setEditing({ ...editing, appVersion: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                    placeholder="e.g. 1.3.0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Reporter</label>
+                  <input
+                    value={editing.reporter}
+                    onChange={(e) => setEditing({ ...editing, reporter: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                    placeholder="email"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Assigned to</label>
+                  <input
+                    value={editing.assignee}
+                    onChange={(e) => setEditing({ ...editing, assignee: e.target.value })}
+                    className="w-full px-3 py-2 border rounded"
+                    placeholder="name or email"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    value={editing.description}
+                    onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                    className="w-full px-3 py-2 border rounded min-h-[96px]"
+                    placeholder="Details, acceptance criteria, links…"
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex items-center justify-between">
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={!!editing.archived}
+                      onChange={(e) => setEditing({ ...editing, archived: e.target.checked })}
+                    />
+                    Archived
+                  </label>
+
+                  <div className="flex gap-2">
+                    {!creating && editing.id ? (
+                      <button
+                        onClick={() => deleteCard(editing.id)}
+                        className="px-3 py-2 rounded border text-red-600 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    ) : null}
+                    <button
+                      onClick={() => saveCard(editing)}
+                      className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+
+                {/* ---- Comments (live) ---- */}
+                {editing?.id ? (
+                  <div className="md:col-span-2">
+                    <CommentsSection cardId={editing.id} user={user} />
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
@@ -720,3 +740,4 @@ export default function SteaBoard() {
     </main>
   );
 }
+
