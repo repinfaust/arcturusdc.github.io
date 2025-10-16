@@ -153,9 +153,10 @@ export default function TouMe() {
   <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
   <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
     <li>
-      <Link href="/apps/toume/privacy-policy">
-        Privacy Policy
-      </Link>
+      <Link href="/apps/toume/privacy-policy">Privacy Policy</Link>
+    </li>
+    <li>
+      <Link href="/apps/toume/terms">Terms & Conditions</Link>
     </li>
     <li>
       <Link href="/assets/policies/Toume_TermsOfService.pdf" target="_blank" rel="noopener noreferrer">
