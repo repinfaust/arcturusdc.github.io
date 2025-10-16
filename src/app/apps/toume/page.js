@@ -158,10 +158,8 @@ export default function TouMe() {
     <li>
       <Link href="/apps/toume/terms">Terms & Conditions</Link>
     </li>
-    <li>
-      <Link href="/assets/policies/Toume_TermsOfService.pdf" target="_blank" rel="noopener noreferrer">
-        Terms of Service
-      </Link>
+      <li>
+      <Link href="/apps/toume/delete-account">Delete Account & Data</Link>
     </li>
   </ul>
 </section>
