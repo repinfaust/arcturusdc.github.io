@@ -20,7 +20,7 @@ const TYPES = [
   { value: 'observation', label: 'Observation', emoji: '👀' },
 ];
 
-const APPS = ['Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me', 'New App'];
+const DEFAULT_APPS = ['Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me', 'New App'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', '?'];
 
 const priorityTheme = {
@@ -151,11 +151,7 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
   const [dragOver, setDragOver] = useState(false);
 
   const handleBrowse = () => inputRef.current?.click();
-
-  const handleFiles = (files) => {
-    if (!files?.length) return;
-    onAdd(Array.from(files));
-  };
+  const handleFiles = (files) => { if (!files?.length) return; onAdd(Array.from(files)); };
 
   return (
     <div className="mt-6">
@@ -177,19 +173,8 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
             <div className="flex items-center justify-between gap-2">
               <div>Drag & drop files here</div>
               <div className="shrink-0">or</div>
-              <button
-                className="px-3 py-1.5 rounded border bg-white hover:bg-gray-50"
-                onClick={handleBrowse}
-              >
-                Browse…
-              </button>
-              <input
-                ref={inputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => handleFiles(e.target.files)}
-              />
+              <button className="px-3 py-1.5 rounded border bg-white hover:bg-gray-50" onClick={handleBrowse}>Browse…</button>
+              <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
             </div>
             {uploading && <div className="mt-2 text-sm text-gray-600">Uploading…</div>}
           </div>
@@ -201,31 +186,18 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
               card.attachments.map((a, i) => (
                 <li key={`${a.path}-${i}`} className="flex items-center justify-between gap-3 border rounded p-2">
                   <div className="flex items-center gap-3 min-w-0">
-                    {/* Preview thumbnail if image */}
                     {isPreviewableImage(a.name, a.contentType) ? (
                       <a href={a.url} target="_blank" rel="noreferrer" className="shrink-0">
-                        <img
-                          src={a.url}
-                          alt={a.name}
-                          className="h-12 w-12 object-cover rounded border"
-                          referrerPolicy="no-referrer"
-                        />
+                        <img src={a.url} alt={a.name} className="h-12 w-12 object-cover rounded border" referrerPolicy="no-referrer" />
                       </a>
                     ) : (
                       <div className="h-12 w-12 rounded border bg-gray-100 grid place-items-center text-xs text-gray-500">FILE</div>
                     )}
-                    <a href={a.url} target="_blank" rel="noreferrer" className="truncate underline">
-                      {a.name}
-                    </a>
+                    <a href={a.url} target="_blank" rel="noreferrer" className="truncate underline">{a.name}</a>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-gray-500 shrink-0">
                     {typeof a.size === 'number' ? `${(a.size/1024).toFixed(1)} KB` : ''}
-                    <button
-                      onClick={() => onDelete(a)}
-                      className="px-2 py-1 rounded border text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
+                    <button onClick={() => onDelete(a)} className="px-2 py-1 rounded border text-red-600 hover:bg-red-50">Delete</button>
                   </div>
                 </li>
               ))
@@ -233,9 +205,7 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
           </ul>
         </>
       ) : (
-        <div className="text-sm text-gray-500">
-          Save the card first to attach files.
-        </div>
+        <div className="text-sm text-gray-500">Save the card first to attach files.</div>
       )}
     </div>
   );
@@ -264,6 +234,23 @@ export default function SteaBoard() {
     return 'none';
   });
 
+  // filters (created by, assigned to, App, Type)
+  const [filters, setFilters] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('stea-filters');
+      if (saved) return JSON.parse(saved);
+    }
+    return { reporter: '', assignee: '', app: '', type: '' };
+  });
+
+  // dynamic Apps list (defaults + custom + discovered from cards)
+  const [customApps, setCustomApps] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try { return JSON.parse(localStorage.getItem('stea-custom-apps') || '[]'); } catch { return []; }
+    }
+    return [];
+  });
+
   // editing
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -289,13 +276,10 @@ export default function SteaBoard() {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('stea-hidden-cols', JSON.stringify(hiddenCols));
-  }, [hiddenCols]);
-
-  useEffect(() => {
-    localStorage.setItem('stea-sort-mode', sortMode);
-  }, [sortMode]);
+  useEffect(() => { localStorage.setItem('stea-hidden-cols', JSON.stringify(hiddenCols)); }, [hiddenCols]);
+  useEffect(() => { localStorage.setItem('stea-sort-mode', sortMode); }, [sortMode]);
+  useEffect(() => { localStorage.setItem('stea-filters', JSON.stringify(filters)); }, [filters]);
+  useEffect(() => { localStorage.setItem('stea-custom-apps', JSON.stringify(customApps)); }, [customApps]);
 
   /* ---------- lock page scroll when modal open ---------- */
   useEffect(() => {
@@ -306,17 +290,35 @@ export default function SteaBoard() {
     }
   }, [editing]);
 
+  /* ---------- helpers ---------- */
+  const appsList = useMemo(() => {
+    const discovered = cards.map(c => c.app).filter(Boolean);
+    return Array.from(new Set([...DEFAULT_APPS, ...customApps, ...discovered]));
+  }, [cards, customApps]);
+
+  const reporterOptions = useMemo(() => Array.from(new Set(cards.map(c => c.reporter).filter(Boolean))).sort(), [cards]);
+  const assigneeOptions = useMemo(() => Array.from(new Set(cards.map(c => c.assignee).filter(Boolean))).sort(), [cards]);
+
+  const matchesFilters = (c) => {
+    if (!showArchived && c.archived) return false;
+    if (filters.app && (c.app || '') !== filters.app) return false;
+    if (filters.type && (c.type || '') !== filters.type) return false;
+    if (filters.reporter && !(c.reporter || '').toLowerCase().includes(filters.reporter.toLowerCase())) return false;
+    if (filters.assignee && !(c.assignee || '').toLowerCase().includes(filters.assignee.toLowerCase())) return false;
+    return true;
+  };
+
   /* ---------- derived ---------- */
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
     for (const c of cards) {
-      if (!showArchived && c.archived) continue;
+      if (!matchesFilters(c)) continue;
       const col = c.statusColumn || 'Idea';
       if (!g[col]) g[col] = [];
       g[col].push(c);
     }
     return g;
-  }, [cards, showArchived]);
+  }, [cards, showArchived, filters]);
 
   const visibleColumns = COLUMNS.filter((c) => !hiddenCols[c]);
 
@@ -339,7 +341,6 @@ export default function SteaBoard() {
     return at - bt;
   };
 
-  /* ---------- helpers ---------- */
   const startNew = () => {
     setEditing({
       id: null,
@@ -387,17 +388,10 @@ export default function SteaBoard() {
     setCreating(false);
   };
 
-  const deleteCard = async (id) => {
-    if (!id) return;
-    await deleteDoc(doc(db, 'stea_cards', id));
-    setEditing(null);
-  };
+  const deleteCard = async (id) => { if (!id) return; await deleteDoc(doc(db, 'stea_cards', id)); setEditing(null); };
 
   const moveTo = async (card, nextCol) => {
-    await updateDoc(doc(db, 'stea_cards', card.id), {
-      statusColumn: nextCol,
-      updatedAt: serverTimestamp(),
-    });
+    await updateDoc(doc(db, 'stea_cards', card.id), { statusColumn: nextCol, updatedAt: serverTimestamp() });
   };
 
   /* ---------- attachments handlers ---------- */
@@ -410,7 +404,6 @@ export default function SteaBoard() {
     for (const file of files) {
       const path = `stea_uploads/${editing.id}/${Date.now()}_${file.name}`;
       const storageRef = ref(storage, path);
-      // include contentType so previews are reliable
       await uploadBytes(storageRef, file, { contentType: file.type || undefined });
       const url = await getDownloadURL(storageRef);
 
@@ -425,13 +418,7 @@ export default function SteaBoard() {
       });
     }
 
-    // Write all to Firestore
-    await updateDoc(doc(db, 'stea_cards', editing.id), {
-      attachments: arrayUnion(...atts),
-      updatedAt: serverTimestamp(),
-    });
-
-    // Update local modal state
+    await updateDoc(doc(db, 'stea_cards', editing.id), { attachments: arrayUnion(...atts), updatedAt: serverTimestamp() });
     setEditing((c) => ({ ...c, attachments: [...(c.attachments || []), ...atts] }));
     setUploading(false);
   };
@@ -440,10 +427,7 @@ export default function SteaBoard() {
     if (!editing?.id || !att?.path) return;
     const storage = getStorage();
     await deleteObject(ref(storage, att.path)).catch(() => {});
-    await updateDoc(doc(db, 'stea_cards', editing.id), {
-      attachments: arrayRemove(att),
-      updatedAt: serverTimestamp(),
-    });
+    await updateDoc(doc(db, 'stea_cards', editing.id), { attachments: arrayRemove(att), updatedAt: serverTimestamp() });
     setEditing((c) => ({ ...c, attachments: (c.attachments || []).filter((x) => x.path !== att.path) }));
   };
 
@@ -453,12 +437,7 @@ export default function SteaBoard() {
       <div className="font-semibold">{name}</div>
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-500">{count}</span>
-        <button
-          onClick={() => setHiddenCols((s) => ({ ...s, [name]: true }))}
-          className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-        >
-          Hide
-        </button>
+        <button onClick={() => setHiddenCols((s) => ({ ...s, [name]: true }))} className="px-2 py-1 text-xs rounded border hover:bg-gray-50">Hide</button>
       </div>
     </div>
   );
@@ -482,11 +461,7 @@ export default function SteaBoard() {
       <div
         className={`rounded-lg border border-gray-200 bg-white p-3 shadow-sm hover:shadow transition break-words whitespace-normal cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-60' : ''}`}
         draggable
-        onDragStart={(e) => {
-          setDraggingId(card.id);
-          e.dataTransfer.setData('text/stea-card-id', card.id);
-          e.dataTransfer.effectAllowed = 'move';
-        }}
+        onDragStart={(e) => { setDraggingId(card.id); e.dataTransfer.setData('text/stea-card-id', card.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
         onDoubleClick={() => setEditing(card)}
         onPointerDown={onCardPointerDown(card.id, card)}
@@ -497,7 +472,7 @@ export default function SteaBoard() {
               {TYPES.find(t => t.value === card.type)?.emoji}{' '}
               {TYPES.find(t => t.value === card.type)?.label || 'Item'}
             </span>
-            <span className={`px-2 py-0.5 text-[11px] rounded border ${appTheme[card.app || 'New App']}`}>
+            <span className={`px-2 py-0.5 text-[11px] rounded border ${appTheme[card.app || 'New App'] || 'bg-gray-50 text-gray-700 border-gray-200'}`}>
               {card.app || 'New App'}
             </span>
             <span className={`px-2 py-0.5 text-[11px] rounded border ${priorityTheme[card.priority || 'medium']}`}>
@@ -507,23 +482,14 @@ export default function SteaBoard() {
               Size {card.sizeEstimate || 'M'}
             </span>
             {card.statusColumn === 'Done' && card.appVersion ? (
-              <span className="px-2 py-0.5 text-[11px] rounded border bg-green-50 text-green-800 border-green-200">
-                v{card.appVersion}
-              </span>
+              <span className="px-2 py-0.5 text-[11px] rounded border bg-green-50 text-green-800 border-green-200">v{card.appVersion}</span>
             ) : null}
           </div>
-          <button
-            onClick={() => setEditing(card)}
-            className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black"
-          >
-            Edit
-          </button>
+          <button onClick={() => setEditing(card)} className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black">Edit</button>
         </div>
 
         <div className="font-semibold">{card.title}</div>
-        {card.description ? (
-          <p className="text-sm text-gray-600 mt-1">{card.description}</p>
-        ) : null}
+        {card.description ? (<p className="text-sm text-gray-600 mt-1">{card.description}</p>) : null}
 
         <div className="mt-3 flex items-center justify-between">
           <div className="text-xs text-gray-500">
@@ -537,6 +503,22 @@ export default function SteaBoard() {
             <button onClick={() => moveTo(card, "Won't Do")} className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700" title="Move to Won't Do">↯ Won’t Do</button>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  const AddAppControl = () => {
+    const [val, setVal] = useState('');
+    const add = () => {
+      const name = val.trim();
+      if (!name) return;
+      setCustomApps((prev) => Array.from(new Set([...(prev || []), name])));
+      setVal('');
+    };
+    return (
+      <div className="flex items-center gap-2">
+        <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="Add new app…" className="px-2 py-1.5 border rounded text-sm" />
+        <button onClick={add} className="px-3 py-1.5 rounded bg-gray-900 text-white hover:bg-black text-sm">Add App</button>
       </div>
     );
   };
@@ -568,6 +550,45 @@ export default function SteaBoard() {
               {user && (
                 <button onClick={() => signOut(auth)} className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">Sign out</button>
               )}
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="mt-3 card p-3">
+            <div className="text-xs text-gray-500 mb-2">Filters</div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              <div className="md:col-span-2 flex items-center gap-2">
+                <label className="text-sm text-gray-600 shrink-0">Created by</label>
+                <input list="reporterOptions" value={filters.reporter} onChange={(e) => setFilters({ ...filters, reporter: e.target.value })} className="w-full px-2 py-1.5 border rounded text-sm" placeholder="email contains…" />
+                <datalist id="reporterOptions">
+                  {reporterOptions.map((r) => (<option value={r} key={r} />))}
+                </datalist>
+              </div>
+              <div className="md:col-span-2 flex items-center gap-2">
+                <label className="text-sm text-gray-600 shrink-0">Assigned to</label>
+                <input list="assigneeOptions" value={filters.assignee} onChange={(e) => setFilters({ ...filters, assignee: e.target.value })} className="w-full px-2 py-1.5 border rounded text-sm" placeholder="name/email contains…" />
+                <datalist id="assigneeOptions">
+                  {assigneeOptions.map((a) => (<option value={a} key={a} />))}
+                </datalist>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 shrink-0">App</label>
+                <select value={filters.app} onChange={(e) => setFilters({ ...filters, app: e.target.value })} className="w-full px-2 py-1.5 border rounded text-sm">
+                  <option value="">All</option>
+                  {appsList.map((a) => (<option key={a} value={a}>{a}</option>))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 shrink-0">Type</label>
+                <select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className="w-full px-2 py-1.5 border rounded text-sm">
+                  <option value="">All</option>
+                  {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <button onClick={() => setFilters({ reporter: '', assignee: '', app: '', type: '' })} className="text-sm px-3 py-1.5 rounded border hover:bg-gray-50">Clear filters</button>
+              <AddAppControl />
             </div>
           </div>
         </div>
@@ -658,9 +679,18 @@ export default function SteaBoard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">App</label>
+                  <label className="block text-sm font-medium mb-1 flex items-center justify-between">
+                    <span>App</span>
+                    <button type="button" onClick={() => {
+                      const name = prompt('Add a new App name');
+                      if (!name) return;
+                      const trimmed = name.trim();
+                      if (!trimmed) return;
+                      setCustomApps((prev) => Array.from(new Set([...(prev || []), trimmed])));
+                    }} className="text-xs px-2 py-1 rounded border hover:bg-gray-50">Add…</button>
+                  </label>
                   <select value={editing.app} onChange={(e) => setEditing({ ...editing, app: e.target.value })} className="w-full px-3 py-2 border rounded">
-                    {APPS.map(a => <option key={a} value={a}>{a}</option>)}
+                    {appsList.map(a => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
 
