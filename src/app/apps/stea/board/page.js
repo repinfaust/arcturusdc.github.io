@@ -50,7 +50,7 @@ const sizeTheme = {
 /* -------------------- COMMENTS -------------------- */
 function CommentsSection({ cardId, user }) {
   const [comments, setComments] = useState([]);
-  const [text, setText] = useState('');
+  the const [text, setText] = useState('');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
@@ -211,6 +211,55 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
   );
 }
 
+/* -------------------- HELPERS (search & highlight) -------------------- */
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function useSlashFocus(ref) {
+  useEffect(() => {
+    const handler = (e) => {
+      const tag = (e.target?.tagName || '').toLowerCase();
+      const typingInField = tag === 'input' || tag === 'textarea';
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (!typingInField) {
+          e.preventDefault();
+          ref.current?.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [ref]);
+}
+
+function usePersistentState(key, initial) {
+  const [val, setVal] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(key);
+      if (saved != null) return JSON.parse(saved);
+    }
+    return initial;
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, JSON.stringify(val));
+    }
+  }, [key, val]);
+  return [val, setVal];
+}
+
+function highlightText(text, query) {
+  if (!query) return text;
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return text;
+  const re = new RegExp(`(${tokens.map(escapeRegExp).join('|')})`, 'gi');
+  const parts = String(text || '').split(re);
+  return parts.map((part, i) =>
+    re.test(part)
+      ? <mark key={i} className="bg-yellow-200 rounded px-0.5">{part}</mark>
+      : <span key={i}>{part}</span>
+  );
+}
+
 /* -------------------- PAGE -------------------- */
 export default function SteaBoard() {
   const [user, setUser] = useState(null);
@@ -218,38 +267,21 @@ export default function SteaBoard() {
   const [showArchived, setShowArchived] = useState(false);
 
   // hide/show per column (default hide Won't Do)
-  const [hiddenCols, setHiddenCols] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('stea-hidden-cols');
-      if (saved) return JSON.parse(saved);
-    }
-    return { "Won't Do": true };
-  });
+  const [hiddenCols, setHiddenCols] = usePersistentState('stea-hidden-cols', { "Won't Do": true });
 
   // sorting
-  const [sortMode, setSortMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('stea-sort-mode') || 'none';
-    }
-    return 'none';
-  });
+  const [sortMode, setSortMode] = usePersistentState('stea-sort-mode', 'none');
 
   // filters (created by, assigned to, App, Type)
-  const [filters, setFilters] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('stea-filters');
-      if (saved) return JSON.parse(saved);
-    }
-    return { reporter: '', assignee: '', app: '', type: '' };
-  });
+  const [filters, setFilters] = usePersistentState('stea-filters', { reporter: '', assignee: '', app: '', type: '' });
 
   // dynamic Apps list (defaults + custom + discovered from cards)
-  const [customApps, setCustomApps] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try { return JSON.parse(localStorage.getItem('stea-custom-apps') || '[]'); } catch { return []; }
-    }
-    return [];
-  });
+  const [customApps, setCustomApps] = usePersistentState('stea-custom-apps', []);
+
+  // progressive search
+  const [search, setSearch] = usePersistentState('stea-search', '');
+  const searchRef = useRef(null);
+  useSlashFocus(searchRef);
 
   // editing
   const [editing, setEditing] = useState(null);
@@ -276,20 +308,6 @@ export default function SteaBoard() {
     return () => unsub();
   }, []);
 
-  useEffect(() => { localStorage.setItem('stea-hidden-cols', JSON.stringify(hiddenCols)); }, [hiddenCols]);
-  useEffect(() => { localStorage.setItem('stea-sort-mode', sortMode); }, [sortMode]);
-  useEffect(() => { localStorage.setItem('stea-filters', JSON.stringify(filters)); }, [filters]);
-  useEffect(() => { localStorage.setItem('stea-custom-apps', JSON.stringify(customApps)); }, [customApps]);
-
-  /* ---------- lock page scroll when modal open ---------- */
-  useEffect(() => {
-    if (editing) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = prev; };
-    }
-  }, [editing]);
-
   /* ---------- helpers ---------- */
   const appsList = useMemo(() => {
     const discovered = cards.map(c => c.app).filter(Boolean);
@@ -308,17 +326,30 @@ export default function SteaBoard() {
     return true;
   };
 
+  const matchesSearch = (c) => {
+    const q = (search || '').trim().toLowerCase();
+    if (!q) return true;
+    const tokens = q.split(/\s+/).filter(Boolean);
+    if (!tokens.length) return true;
+    const hay = [
+      c.title, c.description, c.reporter, c.assignee,
+      c.type, c.app, c.priority, c.sizeEstimate, c.appVersion, c.statusColumn
+    ].map(x => (x || '').toString().toLowerCase()).join(' • ');
+    return tokens.every(t => hay.includes(t));
+  };
+
   /* ---------- derived ---------- */
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
     for (const c of cards) {
       if (!matchesFilters(c)) continue;
+      if (!matchesSearch(c)) continue;
       const col = c.statusColumn || 'Idea';
       if (!g[col]) g[col] = [];
       g[col].push(c);
     }
     return g;
-  }, [cards, showArchived, filters]);
+  }, [cards, showArchived, filters, search]);
 
   const visibleColumns = COLUMNS.filter((c) => !hiddenCols[c]);
 
@@ -488,8 +519,8 @@ export default function SteaBoard() {
           <button onClick={() => setEditing(card)} className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black">Edit</button>
         </div>
 
-        <div className="font-semibold">{card.title}</div>
-        {card.description ? (<p className="text-sm text-gray-600 mt-1">{card.description}</p>) : null}
+        <div className="font-semibold">{highlightText(card.title, search)}</div>
+        {card.description ? (<p className="text-sm text-gray-600 mt-1">{highlightText(card.description, search)}</p>) : null}
 
         <div className="mt-3 flex items-center justify-between">
           <div className="text-xs text-gray-500">
@@ -517,7 +548,12 @@ export default function SteaBoard() {
     };
     return (
       <div className="flex items-center gap-2">
-        <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="Add new app…" className="px-2 py-1.5 border rounded text-sm" />
+        <input
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          placeholder="Add new app…"
+          className="px-2 py-1.5 border rounded text-sm"
+        />
         <button onClick={add} className="px-3 py-1.5 rounded bg-gray-900 text-white hover:bg-black text-sm">Add App</button>
       </div>
     );
@@ -545,6 +581,28 @@ export default function SteaBoard() {
                 <option value="priority_asc">Priority (Low→High)</option>
               </select>
             </label>
+
+            {/* Progressive search */}
+            <div className="relative flex-1 min-w-[220px] max-w-[420px]">
+              <input
+                ref={searchRef}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search title, description, people, tags… (press / to focus)"
+                className="w-full px-3 py-2 pl-9 border rounded"
+              />
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">🔎</span>
+              {search ? (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm px-1 py-0.5 border rounded hover:bg-gray-50"
+                  title="Clear"
+                >
+                  ✕
+                </button>
+              ) : null}
+            </div>
+
             <div className="ml-auto flex items-center gap-3">
               {user && <span className="text-sm text-gray-600">{user.email}</span>}
               {user && (
@@ -587,7 +645,10 @@ export default function SteaBoard() {
               </div>
             </div>
             <div className="mt-2 flex items-center justify-between">
-              <button onClick={() => setFilters({ reporter: '', assignee: '', app: '', type: '' })} className="text-sm px-3 py-1.5 rounded border hover:bg-gray-50">Clear filters</button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setFilters({ reporter: '', assignee: '', app: '', type: '' })} className="text-sm px-3 py-1.5 rounded border hover:bg-gray-50">Clear filters</button>
+                <button onClick={() => setSearch('')} className="text-sm px-3 py-1.5 rounded border hover:bg-gray-50">Clear search</button>
+              </div>
               <AddAppControl />
             </div>
           </div>
