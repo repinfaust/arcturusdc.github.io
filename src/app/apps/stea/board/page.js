@@ -47,10 +47,75 @@ const sizeTheme = {
   '?': 'bg-zinc-50 text-zinc-700 border-zinc-200',
 };
 
+/* -------------------- UTILITIES -------------------- */
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const tokenize = (s) => String(s || '')
+  .toLowerCase()
+  .split(/[^a-z0-9]+/i)
+  .filter(Boolean);
+
+// robust localStorage state (handles old non-JSON values)
+function usePersistentState(key, initial) {
+  const [val, setVal] = useState(() => {
+    if (typeof window === 'undefined') return initial;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved == null) return initial;
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // accept raw string for string initial values; otherwise fallback
+        return typeof initial === 'string' ? saved : initial;
+      }
+    } catch {
+      return initial;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch { /* ignore */ }
+  }, [key, val]);
+
+  return [val, setVal];
+}
+
+function useSlashFocus(ref) {
+  useEffect(() => {
+    const handler = (e) => {
+      const tag = (e.target?.tagName || '').toLowerCase();
+      const typingInField = tag === 'input' || tag === 'textarea';
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (!typingInField) {
+          e.preventDefault();
+          ref.current?.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [ref]);
+}
+
+function highlightText(text, query) {
+  if (!query) return text;
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return text;
+  const re = new RegExp(`(${tokens.map(escapeRegExp).join('|')})`, 'gi');
+  const parts = String(text || '').split(re);
+  return parts.map((part, i) =>
+    i % 2 === 1
+      ? <mark key={i} className="bg-yellow-200 rounded px-0.5">{part}</mark>
+      : <span key={i}>{part}</span>
+  );
+}
+
 /* -------------------- COMMENTS -------------------- */
 function CommentsSection({ cardId, user }) {
   const [comments, setComments] = useState([]);
-  const [text, setText] = useState(''); // FIXED typo here
+  const [text, setText] = useState('');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
@@ -106,7 +171,6 @@ function CommentsSection({ cardId, user }) {
               <button
                 onClick={() => removeComment(c.id)}
                 className="text-xs px-2 py-1 rounded border hover:bg-red-50 text-red-600"
-                title="Delete comment"
               >
                 Delete
               </button>
@@ -123,7 +187,7 @@ function CommentsSection({ cardId, user }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') addComment(); }}
-          className="flex-1 px-3 py-2 border rounded min-h-[44px] leading-5 overflow-y-auto resize-y break-words"
+          className="flex-1 px-3 py-2 border rounded min-h-[44px]"
           placeholder="Write a comment… (Ctrl/⌘+Enter to add)"
         />
         <button
@@ -211,59 +275,6 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
   );
 }
 
-/* -------------------- SEARCH HELPERS -------------------- */
-const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const tokenize = (s) => String(s || '')
-  .toLowerCase()
-  .split(/[^a-z0-9]+/i)
-  .filter(Boolean);
-
-function useSlashFocus(ref) {
-  useEffect(() => {
-    const handler = (e) => {
-      const tag = (e.target?.tagName || '').toLowerCase();
-      const typingInField = tag === 'input' || tag === 'textarea';
-      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        if (!typingInField) {
-          e.preventDefault();
-          ref.current?.focus();
-        }
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [ref]);
-}
-
-function usePersistentState(key, initial) {
-  const [val, setVal] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(key);
-      if (saved != null) return JSON.parse(saved);
-    }
-    return initial;
-  });
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, JSON.stringify(val));
-    }
-  }, [key, val]);
-  return [val, setVal];
-}
-
-function highlightText(text, query) {
-  if (!query) return text;
-  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (!tokens.length) return text;
-  const re = new RegExp(`(${tokens.map(escapeRegExp).join('|')})`, 'gi');
-  const parts = String(text || '').split(re);
-  return parts.map((part, i) =>
-    re.test(part)
-      ? <mark key={i} className="bg-yellow-200 rounded px-0.5">{part}</mark>
-      : <span key={i}>{part}</span>
-  );
-}
-
 /* -------------------- PAGE -------------------- */
 export default function SteaBoard() {
   const [user, setUser] = useState(null);
@@ -288,7 +299,7 @@ export default function SteaBoard() {
   const searchRef = useRef(null);
   useSlashFocus(searchRef);
 
-  // editing
+  // modal/edit
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
 
@@ -298,6 +309,23 @@ export default function SteaBoard() {
 
   // uploading
   const [uploading, setUploading] = useState(false);
+
+  /* ---------- one-time cleanup for legacy bad values ---------- */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const keys = [
+      'stea-hidden-cols',
+      'stea-sort-mode',
+      'stea-filters',
+      'stea-custom-apps',
+      'stea-search',
+      'stea-search-match',
+    ];
+    for (const k of keys) {
+      const v = localStorage.getItem(k);
+      if (v && (v === 'undefined' || v === 'null')) localStorage.removeItem(k);
+    }
+  }, []);
 
   /* ---------- auth ---------- */
   useEffect(() => onAuthStateChanged(auth, setUser), []);
@@ -385,7 +413,7 @@ export default function SteaBoard() {
       card.title, card.description, card.reporter, card.assignee,
       card.type, card.app, card.priority, card.sizeEstimate, card.appVersion, card.statusColumn
     ].join(' ');
-    return Array.from(new Set(tokenize(base))).slice(0, 200); // cap to keep doc small
+    return Array.from(new Set(tokenize(base))).slice(0, 200);
   };
 
   const startNew = () => {
@@ -421,7 +449,7 @@ export default function SteaBoard() {
       statusColumn: card.statusColumn || 'Idea',
       archived: !!card.archived,
       attachments: card.attachments || [],
-      searchTokens: buildSearchTokens(card), // future-friendly
+      searchTokens: buildSearchTokens(card),
       updatedAt: serverTimestamp(),
       ...(card.createdAt ? {} : { createdAt: serverTimestamp() }),
     };
