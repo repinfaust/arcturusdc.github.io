@@ -50,7 +50,7 @@ const sizeTheme = {
 /* -------------------- COMMENTS -------------------- */
 function CommentsSection({ cardId, user }) {
   const [comments, setComments] = useState([]);
-  the const [text, setText] = useState('');
+  const [text, setText] = useState(''); // FIXED typo here
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
@@ -211,8 +211,12 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
   );
 }
 
-/* -------------------- HELPERS (search & highlight) -------------------- */
+/* -------------------- SEARCH HELPERS -------------------- */
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const tokenize = (s) => String(s || '')
+  .toLowerCase()
+  .split(/[^a-z0-9]+/i)
+  .filter(Boolean);
 
 function useSlashFocus(ref) {
   useEffect(() => {
@@ -278,8 +282,9 @@ export default function SteaBoard() {
   // dynamic Apps list (defaults + custom + discovered from cards)
   const [customApps, setCustomApps] = usePersistentState('stea-custom-apps', []);
 
-  // progressive search
+  // progressive search (works like filters)
   const [search, setSearch] = usePersistentState('stea-search', '');
+  const [matchMode, setMatchMode] = usePersistentState('stea-search-match', 'all'); // 'all' | 'any'
   const searchRef = useRef(null);
   useSlashFocus(searchRef);
 
@@ -299,8 +304,8 @@ export default function SteaBoard() {
 
   /* ---------- data ---------- */
   useEffect(() => {
-    const q = query(collection(db, 'stea_cards'), orderBy('createdAt', 'asc'));
-    const unsub = onSnapshot(q, (snap) => {
+    const qy = query(collection(db, 'stea_cards'), orderBy('createdAt', 'asc'));
+    const unsub = onSnapshot(qy, (snap) => {
       const list = [];
       snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
       setCards(list);
@@ -329,13 +334,16 @@ export default function SteaBoard() {
   const matchesSearch = (c) => {
     const q = (search || '').trim().toLowerCase();
     if (!q) return true;
-    const tokens = q.split(/\s+/).filter(Boolean);
-    if (!tokens.length) return true;
+    const terms = q.split(/\s+/).filter(Boolean);
+    if (!terms.length) return true;
+
     const hay = [
       c.title, c.description, c.reporter, c.assignee,
       c.type, c.app, c.priority, c.sizeEstimate, c.appVersion, c.statusColumn
     ].map(x => (x || '').toString().toLowerCase()).join(' • ');
-    return tokens.every(t => hay.includes(t));
+
+    if (matchMode === 'all') return terms.every(t => hay.includes(t));
+    return terms.some(t => hay.includes(t));
   };
 
   /* ---------- derived ---------- */
@@ -349,7 +357,7 @@ export default function SteaBoard() {
       g[col].push(c);
     }
     return g;
-  }, [cards, showArchived, filters, search]);
+  }, [cards, showArchived, filters, search, matchMode]);
 
   const visibleColumns = COLUMNS.filter((c) => !hiddenCols[c]);
 
@@ -370,6 +378,14 @@ export default function SteaBoard() {
     const at = a.createdAt?.toMillis?.() ?? (a.createdAt?._seconds ? a.createdAt._seconds * 1000 : 0);
     const bt = b.createdAt?.toMillis?.() ?? (b.createdAt?._seconds ? b.createdAt._seconds * 1000 : 0);
     return at - bt;
+  };
+
+  const buildSearchTokens = (card) => {
+    const base = [
+      card.title, card.description, card.reporter, card.assignee,
+      card.type, card.app, card.priority, card.sizeEstimate, card.appVersion, card.statusColumn
+    ].join(' ');
+    return Array.from(new Set(tokenize(base))).slice(0, 200); // cap to keep doc small
   };
 
   const startNew = () => {
@@ -405,6 +421,7 @@ export default function SteaBoard() {
       statusColumn: card.statusColumn || 'Idea',
       archived: !!card.archived,
       attachments: card.attachments || [],
+      searchTokens: buildSearchTokens(card), // future-friendly
       updatedAt: serverTimestamp(),
       ...(card.createdAt ? {} : { createdAt: serverTimestamp() }),
     };
@@ -548,12 +565,7 @@ export default function SteaBoard() {
     };
     return (
       <div className="flex items-center gap-2">
-        <input
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          placeholder="Add new app…"
-          className="px-2 py-1.5 border rounded text-sm"
-        />
+        <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="Add new app…" className="px-2 py-1.5 border rounded text-sm" />
         <button onClick={add} className="px-3 py-1.5 rounded bg-gray-900 text-white hover:bg-black text-sm">Add App</button>
       </div>
     );
@@ -588,7 +600,7 @@ export default function SteaBoard() {
                 ref={searchRef}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search title, description, people, tags… (press / to focus)"
+                placeholder="Search title, description, people, tags… (press /)"
                 className="w-full px-3 py-2 pl-9 border rounded"
               />
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">🔎</span>
@@ -602,6 +614,14 @@ export default function SteaBoard() {
                 </button>
               ) : null}
             </div>
+
+            <label className="inline-flex items-center gap-2 text-sm">
+              <span className="text-gray-600">Terms</span>
+              <select value={matchMode} onChange={(e) => setMatchMode(e.target.value)} className="px-2 py-1.5 border rounded">
+                <option value="all">Match all</option>
+                <option value="any">Match any</option>
+              </select>
+            </label>
 
             <div className="ml-auto flex items-center gap-3">
               {user && <span className="text-sm text-gray-600">{user.email}</span>}
