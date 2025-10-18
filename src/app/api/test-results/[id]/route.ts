@@ -1,23 +1,26 @@
+// src/app/api/test-results/[id]/route.js
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req, { params }) {
   try {
-    const REPORTS_DIR = process.env.TEST_REPORTS_DIR || '/tmp/test-reports';
-    const file = path.join(REPORTS_DIR, `${params.id}.json`);
-    if (!fs.existsSync(file)) {
-      return NextResponse.json({ testRunId: params.id, ready: false }, { status: 200 });
+    const { id } = params;
+    const ref = doc(db, 'test_results', id);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      return NextResponse.json(
+        { error: 'Results not found', id },
+        { status: 404 },
+      );
     }
-    const json = JSON.parse(fs.readFileSync(file, 'utf8'));
-    return NextResponse.json(json);
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'read failed' }, { status: 500 });
+
+    return NextResponse.json(snap.data());
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Failed to load results', details: String(err?.message || err) },
+      { status: 500 },
+    );
   }
 }
