@@ -18,16 +18,16 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid configType' }, { status: 400 });
     }
 
-    console.log(`🚀 Starting test execution: ${configType} (${testRunId})`);
+    console.log(`🚀 Starting REAL test execution: ${configType} (${testRunId})`);
 
-    // Start the test execution (simulation mode for now)
-    simulateTestExecution(configType, testRunId);
+    // Execute the REAL test suite
+    executeRealTestSuite(configType, testRunId);
 
     return NextResponse.json({
       success: true,
       testRunId,
       configType,
-      message: 'Test execution started',
+      message: 'Real test execution started',
     }, { status: 202 });
 
   } catch (error) {
@@ -39,49 +39,96 @@ export async function POST(request) {
   }
 }
 
-// Optional: make GET clearly not allowed (helps debugging vs 404)
 export async function GET() {
   return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405 });
 }
 
-// Test execution simulation function
-async function simulateTestExecution(configType, testRunId) {
-  console.log(`🎭 Starting simulation for ${configType} (${testRunId})`);
+async function executeRealTestSuite(configType, testRunId) {
+  try {
+    console.log(`🧪 Importing real test orchestrator...`);
+    
+    // Import the REAL test orchestrator and configs
+    const { testOrchestrator } = await import('../../../../__tests__/utils/TestOrchestrator');
+    const { COMPREHENSIVE_TEST_CONFIG, QUICK_TEST_CONFIG, CRITICAL_TEST_CONFIG } = 
+      await import('../../../../__tests__/comprehensive-test-config');
 
-  const testCounts = { quick: 45, critical: 89, comprehensive: 135 };
-  const totalTests = testCounts[configType] || 45;
-  const duration = configType === 'comprehensive' ? 30000 : configType === 'critical' ? 15000 : 8000;
-  const steps = 20;
-  const stepDuration = duration / steps;
-
-  for (let i = 0; i <= steps; i++) {
-    await new Promise(resolve => setTimeout(resolve, stepDuration));
-
-    const progress = (i / steps) * 100;
-    const passed = Math.floor((i / steps) * totalTests * 0.95);
-    const failed = Math.floor((i / steps) * totalTests * 0.05);
-
-    const progressData = {
-      testRunId,
-      progress,
-      completed: i === steps,
-      passed,
-      failed,
-      status: i === steps ? (failed > 0 ? 'failed' : 'completed') : 'running',
-      currentPhase: i === steps ? 'Completed' : `Running tests... (${Math.floor(progress)}%)`,
-      startTime: new Date().toISOString(),
+    const configs = {
+      comprehensive: COMPREHENSIVE_TEST_CONFIG,
+      quick: QUICK_TEST_CONFIG,
+      critical: CRITICAL_TEST_CONFIG,
     };
 
-    if (i === steps) {
-      progressData.endTime = new Date().toISOString();
+    const testConfig = configs[configType];
+    if (!testConfig) {
+      throw new Error(`Unknown test configuration: ${configType}`);
     }
 
-    saveProgressData(testRunId, progressData);
+    console.log(`🧪 Executing REAL ${configType} test suite with ${
+      (testConfig.unitTests?.length || 0) +
+      (testConfig.integrationTests?.length || 0) +
+      (testConfig.e2eTests?.length || 0) +
+      (testConfig.performanceTests?.length || 0) +
+      (testConfig.accessibilityTests?.length || 0) +
+      (testConfig.securityTests?.length || 0)
+    } tests`);
 
-    console.log(`🎭 Progress: ${progress.toFixed(1)}% (${passed}/${totalTests} passed)`);
+    // Initialize progress tracking
+    const initialProgress = {
+      testRunId,
+      progress: 0,
+      completed: false,
+      passed: 0,
+      failed: 0,
+      startTime: new Date().toISOString(),
+      status: 'running',
+    };
+    saveProgressData(testRunId, initialProgress);
+
+    // Execute the REAL comprehensive test suite
+    const testSuiteResult = await testOrchestrator.executeTestSuite(testConfig);
+
+    console.log(`✅ REAL test suite completed: ${testSuiteResult.summary.successRate.toFixed(1)}% success rate`);
+
+    // Save final results
+    const finalProgress = {
+      testRunId,
+      progress: 100,
+      completed: true,
+      passed: testSuiteResult.summary.passed,
+      failed: testSuiteResult.summary.failed,
+      endTime: new Date().toISOString(),
+      status: testSuiteResult.summary.failed > 0 ? 'failed' : 'completed',
+    };
+    saveProgressData(testRunId, finalProgress);
+
+    // Save detailed results
+    const finalResults = {
+      testRunId,
+      summary: testSuiteResult.summary,
+      coverage: testSuiteResult.coverage,
+      performance: testSuiteResult.performance,
+      accessibility: testSuiteResult.accessibility,
+      security: testSuiteResult.security,
+      recommendations: testSuiteResult.recommendations,
+      detailedResults: testSuiteResult.detailedResults,
+      completed: true,
+    };
+    saveResultsData(testRunId, finalResults);
+
+  } catch (error) {
+    console.error(`❌ REAL test suite execution failed:`, error);
+    
+    const errorProgress = {
+      testRunId,
+      progress: 0,
+      completed: true,
+      passed: 0,
+      failed: 1,
+      status: 'failed',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+    saveProgressData(testRunId, errorProgress);
   }
-
-  console.log(`🎭 Simulation completed for ${testRunId}`);
 }
 
 function saveProgressData(testRunId, data) {
@@ -90,9 +137,9 @@ function saveProgressData(testRunId, data) {
     if (!fs.existsSync(progressDir)) {
       fs.mkdirSync(progressDir, { recursive: true });
     }
-
     const progressFile = path.join(progressDir, `${testRunId}.json`);
     fs.writeFileSync(progressFile, JSON.stringify(data, null, 2));
+    console.log(`💾 Progress saved: ${data.progress}% (${data.passed}/${data.passed + data.failed} tests)`);
   } catch (error) {
     console.error('Failed to save progress data:', error);
   }
@@ -104,7 +151,6 @@ function saveResultsData(testRunId, data) {
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
-
     const reportFile = path.join(reportsDir, `${testRunId}.json`);
     fs.writeFileSync(reportFile, JSON.stringify(data, null, 2));
   } catch (error) {
