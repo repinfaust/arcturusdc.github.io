@@ -75,7 +75,7 @@ function usePersistentState(key, initial) {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(key, JSON.stringify(val));
-    } catch { /* ignore */ }
+    } catch {}
   }, [key, val]);
 
   return [val, setVal];
@@ -310,7 +310,7 @@ export default function SteaBoard() {
   const [uploading, setUploading] = useState(false);
 
   // per-card board expand state (non-persistent)
-  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  const [expandedCards, setExpandedCards] = useState({});
 
   /* ---------- one-time cleanup for legacy bad values ---------- */
   useEffect(() => {
@@ -796,7 +796,6 @@ export default function SteaBoard() {
                 <button onClick={() => { setEditing(null); setCreating(false); }} className="px-3 py-1 rounded border hover:bg-gray-50">Close</button>
               </div>
 
-              {/* description expand state (modal) */}
               <ModalBody
                 editing={editing}
                 setEditing={setEditing}
@@ -807,6 +806,8 @@ export default function SteaBoard() {
                 deleteFile={deleteFile}
                 uploading={uploading}
                 user={user}
+                appsList={appsList}
+                onAddApp={(name) => setCustomApps((prev) => Array.from(new Set([...(prev || []), name])))}
               />
             </div>
           </div>
@@ -816,10 +817,10 @@ export default function SteaBoard() {
   );
 }
 
-/* ---------- Modal Body split for cleaner local state ---------- */
+/* ---------- Modal Body ---------- */
 function ModalBody({
   editing, setEditing, creating, saveCard, deleteCard,
-  addFiles, deleteFile, uploading, user
+  addFiles, deleteFile, uploading, user, appsList, onAddApp
 }) {
   const [descExpanded, setDescExpanded] = useState(false);
 
@@ -840,17 +841,24 @@ function ModalBody({
       <div>
         <label className="block text-sm font-medium mb-1 flex items-center justify-between">
           <span>App</span>
-          <button type="button" onClick={() => {
-            const name = prompt('Add a new App name');
-            if (!name) return;
-            const trimmed = name.trim();
-            if (!trimmed) return;
-            // This relies on parent component state setter via closure – safe in this file structure.
-            const ev = new CustomEvent('stea-add-app', { detail: trimmed });
-            window.dispatchEvent(ev);
-          }} className="text-xs px-2 py-1 rounded border hover:bg-gray-50">Add…</button>
+          <button
+            type="button"
+            onClick={() => {
+              const name = prompt('Add a new App name');
+              if (!name) return;
+              const trimmed = name.trim();
+              if (!trimmed) return;
+              onAddApp(trimmed);
+              setEditing({ ...editing, app: trimmed });
+            }}
+            className="text-xs px-2 py-1 rounded border hover:bg-gray-50"
+          >
+            Add…
+          </button>
         </label>
-        <AppSelect editing={editing} setEditing={setEditing} />
+        <select value={editing.app} onChange={(e) => setEditing({ ...editing, app: e.target.value })} className="w-full px-3 py-2 border rounded">
+          {appsList.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
       </div>
 
       <div>
@@ -940,27 +948,5 @@ function ModalBody({
         </div>
       ) : null}
     </div>
-  );
-}
-
-/* Hook up the App "Add…" button to the parent select without prop drilling */
-function AppSelect({ editing, setEditing }) {
-  const [options, setOptions] = useState<string[]>([]);
-
-  useEffect(() => {
-    const handler = (e: any) => setOptions((prev) => Array.from(new Set([...(prev || []), e.detail])));
-    window.addEventListener('stea-add-app', handler as any);
-    return () => window.removeEventListener('stea-add-app', handler as any);
-  }, []);
-
-  // Fallback: user can still type a new value if not present
-  return (
-    <select
-      value={editing.app}
-      onChange={(e) => setEditing({ ...editing, app: e.target.value })}
-      className="w-full px-3 py-2 border rounded"
-    >
-      {[...new Set([...DEFAULT_APPS, ...options])].map(a => <option key={a} value={a}>{a}</option>)}
-    </select>
   );
 }
