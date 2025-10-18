@@ -1,27 +1,30 @@
+// src/app/api/test-progress/[id]/route.js
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req, { params }) {
   try {
-    const PROGRESS_DIR = process.env.TEST_PROGRESS_DIR || '/tmp/test-progress';
-    const file = path.join(PROGRESS_DIR, `${params.id}.json`);
-    if (!fs.existsSync(file)) {
-      // Return a safe placeholder so the UI doesn't crash
-      return NextResponse.json(
-        { testRunId: params.id, progress: 0, running: true, status: 'running' },
-        { status: 200 }
-      );
+    const { id } = params;
+    const ref = doc(db, 'test_progress', id);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      // Return a stable shape so the UI doesn’t choke while the run warms up
+      return NextResponse.json({
+        id,
+        status: 'pending',
+        percent: 0,
+        counts: { total: 0, passed: 0, failed: 0, running: 0 },
+        lastLine: '',
+      });
     }
-    const json = JSON.parse(fs.readFileSync(file, 'utf8'));
-    return NextResponse.json(json);
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'read failed' }, { status: 500 });
+
+    return NextResponse.json(snap.data());
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Failed to load progress', details: String(err?.message || err) },
+      { status: 500 },
+    );
   }
 }
