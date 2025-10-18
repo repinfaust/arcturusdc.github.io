@@ -4,11 +4,10 @@ import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { randomUUID } from 'crypto';
 import { spawn } from 'child_process';
 import { createRequire } from 'module';
+import path from 'path';
 
 const SESSION_COOKIE_NAME = '__session';
 const require = createRequire(import.meta.url);
-const jestPackageJson = require('jest/package.json');
-const JEST_PACKAGE_NAME = jestPackageJson.name || 'jest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -69,11 +68,12 @@ export async function POST(request) {
 
     let jestBin;
     try {
-      jestBin = require.resolve('jest/bin/jest.js');
+      const jestCliPackagePath = require.resolve('jest-cli/package.json');
+      jestBin = path.join(path.dirname(jestCliPackagePath), 'bin/jest.js');
     } catch (error) {
-      console.error('Failed to resolve jest binary path', error);
+      console.error('Failed to locate jest CLI binary', error);
       return NextResponse.json(
-        { error: 'Failed to start tests', details: `${JEST_PACKAGE_NAME} binary not found on server` },
+        { error: 'Failed to start tests', details: 'Jest CLI binary not found on server' },
         { status: 500 },
       );
     }
