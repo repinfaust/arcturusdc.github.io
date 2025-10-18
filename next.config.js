@@ -2,11 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // Ensure App Router is enabled (harmless if already default)
-  experimental: {
-    appDir: true,
-  },
-
   // DO NOT set output: 'export' — that would disable API routes
   // output: undefined,
 
@@ -15,7 +10,7 @@ const nextConfig = {
     return [];
   },
 
-  // Optional: security headers (HSTS) — middleware already forces HTTPS
+  // Optional: security headers (HSTS lives in your middleware already)
   async headers() {
     return [
       {
@@ -23,11 +18,11 @@ const nextConfig = {
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        ],
-      },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
+        ]
+      }
     ];
-  },
+  }
 };
 
 module.exports = nextConfig;
