@@ -49,10 +49,10 @@ process.env.TEST_PROGRESS_DIR = process.env.TEST_PROGRESS_DIR || '/tmp/test-prog
 process.env.TEST_REPORTS_DIR = process.env.TEST_REPORTS_DIR || '/tmp/test-reports';
 
 jestCli
-  .run(argv)
-  .then(() => {
-    console.log('🧪 Jest run complete');
-    process.exit(0);
+  .run(argv, process.cwd())
+  .then(({ results }) => {
+    console.log('🧪 Jest run complete with', results.numFailedTests, 'failed tests');
+    process.exit(results.success ? 0 : 1);
   })
   .catch((error) => {
     console.error('🧪 Jest run failed', error);
