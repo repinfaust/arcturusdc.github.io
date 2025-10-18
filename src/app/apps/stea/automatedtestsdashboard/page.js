@@ -99,7 +99,7 @@ const executeRealTestSuite = async (configType, onProgress) => {
         let useSimulation = false;
         try {
             console.log(`🚀 Starting API call to /api/run-tests with:`, { configType, testRunId });
-            
+
             const response = await fetch('/api/run-tests', {
                 method: 'POST',
                 headers: {
@@ -140,7 +140,7 @@ const executeRealTestSuite = async (configType, onProgress) => {
                 console.log(`🔄 Polling progress for ${testRunId}...`);
                 const progressResponse = await fetch(`/api/test-progress/${testRunId}`);
                 console.log(`📡 Progress response status: ${progressResponse.status}`);
-                
+
                 if (progressResponse.ok) {
                     const progressData = await progressResponse.json();
                     console.log(`📊 Progress data:`, progressData);
@@ -163,7 +163,7 @@ const executeRealTestSuite = async (configType, onProgress) => {
                         // Get final results
                         const finalResponse = await fetch(`/api/test-results/${testRunId}`);
                         console.log(`📋 Final results response status: ${finalResponse.status}`);
-                        
+
                         if (finalResponse.ok) {
                             const finalData = await finalResponse.json();
                             console.log(`📋 Final results data:`, finalData);
@@ -887,10 +887,42 @@ export default function AutomatedTestsDashboard() {
                         onClick={async () => {
                             try {
                                 console.log('🔍 Testing API connection...');
-                                const response = await fetch('/api/test-status');
-                                const data = await response.json();
-                                console.log('✅ API Status:', data);
-                                alert(`API Status: ${data.status} at ${data.timestamp}`);
+                                console.log('🌐 Current URL:', window.location.href);
+
+                                // Test with a dummy test run ID to see if the endpoint exists
+                                const testId = 'test-connection-check';
+                                console.log('📡 Fetching: /api/test-progress/' + testId);
+
+                                const response = await fetch(`/api/test-progress/${testId}`);
+                                console.log('📡 Response status:', response.status);
+                                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
+                                const responseText = await response.text();
+                                console.log('📡 Raw response text:', responseText);
+
+                                if (response.status === 404) {
+                                    // Expected for non-existent test ID, but means API is working
+                                    try {
+                                        const data = JSON.parse(responseText);
+                                        console.log('✅ API is working (404 expected):', data);
+                                        alert(`API Connection OK: Got expected 404 for test ID "${testId}"`);
+                                    } catch (parseError) {
+                                        console.error('❌ JSON Parse Error:', parseError);
+                                        alert(`API returned non-JSON 404: ${responseText.substring(0, 100)}...`);
+                                    }
+                                } else if (response.ok) {
+                                    try {
+                                        const data = JSON.parse(responseText);
+                                        console.log('✅ API Response:', data);
+                                        alert(`API Connection OK: ${JSON.stringify(data)}`);
+                                    } catch (parseError) {
+                                        console.error('❌ JSON Parse Error:', parseError);
+                                        alert(`API returned non-JSON response: ${responseText.substring(0, 100)}...`);
+                                    }
+                                } else {
+                                    console.error('❌ API Error:', response.status, responseText);
+                                    alert(`API Error: ${response.status} - ${responseText.substring(0, 100)}...`);
+                                }
                             } catch (error) {
                                 console.error('❌ API Test failed:', error);
                                 alert(`API Test failed: ${error.message}`);
@@ -914,24 +946,53 @@ export default function AutomatedTestsDashboard() {
                     <button
                         onClick={async () => {
                             try {
-                                console.log('🧪 Testing quick API call...');
+                                console.log('🧪 Testing run-tests API call...');
                                 const testId = `debug-test-${Date.now()}`;
+                                console.log('📡 Calling /api/run-tests with:', { configType: 'quick', testRunId: testId });
+
                                 const response = await fetch('/api/run-tests', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ configType: 'quick', testRunId: testId })
                                 });
-                                const data = await response.json();
-                                console.log('🧪 Quick test response:', data);
-                                alert(`Quick test started: ${data.message || 'Check console for details'}`);
+
+                                console.log('📡 Run-tests response status:', response.status);
+                                const responseText = await response.text();
+                                console.log('📡 Run-tests raw response:', responseText);
+
+                                if (response.ok) {
+                                    try {
+                                        const data = JSON.parse(responseText);
+                                        console.log('🧪 Run-tests response data:', data);
+                                        alert(`Test API call successful: ${data.message || 'Check console for details'}`);
+                                    } catch (parseError) {
+                                        alert(`API returned non-JSON: ${responseText.substring(0, 100)}...`);
+                                    }
+                                } else {
+                                    alert(`API Error: ${response.status} - ${responseText.substring(0, 100)}...`);
+                                }
                             } catch (error) {
-                                console.error('❌ Quick test failed:', error);
-                                alert(`Quick test failed: ${error.message}`);
+                                console.error('❌ Run-tests API test failed:', error);
+                                alert(`API test failed: ${error.message}`);
                             }
                         }}
                         className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded border border-green-300 hover:bg-green-200"
                     >
-                        Test Quick API Call
+                        Test Run-Tests API
+                    </button>
+                    <button
+                        onClick={() => {
+                            console.log('🌐 Environment Info:');
+                            console.log('  - URL:', window.location.href);
+                            console.log('  - Origin:', window.location.origin);
+                            console.log('  - Pathname:', window.location.pathname);
+                            console.log('  - User Agent:', navigator.userAgent);
+                            console.log('  - Timestamp:', new Date().toISOString());
+                            alert('Environment info logged to console');
+                        }}
+                        className="px-3 py-1 text-xs bg-purple-100 text-purple-800 rounded border border-purple-300 hover:bg-purple-200"
+                    >
+                        Log Environment
                     </button>
                 </div>
                 <div className="mt-2 text-xs text-yellow-700">
