@@ -98,6 +98,8 @@ const executeRealTestSuite = async (configType, onProgress) => {
         // Try API first, fall back to simulation if it fails
         let useSimulation = false;
         try {
+            console.log(`🚀 Starting API call to /api/run-tests with:`, { configType, testRunId });
+            
             const response = await fetch('/api/run-tests', {
                 method: 'POST',
                 headers: {
@@ -109,11 +111,20 @@ const executeRealTestSuite = async (configType, onProgress) => {
                 }),
             });
 
+            console.log(`📡 API Response status: ${response.status} ${response.statusText}`);
+
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`❌ API Error response:`, errorText);
                 console.warn('API not available, using simulation mode');
                 useSimulation = true;
+            } else {
+                const responseData = await response.json();
+                console.log(`✅ API Response data:`, responseData);
+                console.log(`🚀 Real test execution started: ${configType}`);
             }
         } catch (error) {
+            console.error('❌ API connection failed:', error);
             console.warn('API not available, using simulation mode:', error.message);
             useSimulation = true;
         }
@@ -126,26 +137,36 @@ const executeRealTestSuite = async (configType, onProgress) => {
         // Poll for progress updates
         const progressInterval = setInterval(async () => {
             try {
+                console.log(`🔄 Polling progress for ${testRunId}...`);
                 const progressResponse = await fetch(`/api/test-progress/${testRunId}`);
+                console.log(`📡 Progress response status: ${progressResponse.status}`);
+                
                 if (progressResponse.ok) {
                     const progressData = await progressResponse.json();
+                    console.log(`📊 Progress data:`, progressData);
 
                     results.progress = progressData.progress || 0;
                     results.summary.passed = progressData.passed || 0;
                     results.summary.failed = progressData.failed || 0;
+                    results.status = progressData.status || 'running';
 
                     if (onProgress) {
+                        console.log(`🔄 Calling onProgress with:`, { ...results });
                         onProgress({ ...results });
                     }
 
                     // Check if completed
                     if (progressData.completed) {
+                        console.log(`✅ Test completed, getting final results...`);
                         clearInterval(progressInterval);
 
                         // Get final results
                         const finalResponse = await fetch(`/api/test-results/${testRunId}`);
+                        console.log(`📋 Final results response status: ${finalResponse.status}`);
+                        
                         if (finalResponse.ok) {
                             const finalData = await finalResponse.json();
+                            console.log(`📋 Final results data:`, finalData);
 
                             results.status = finalData.summary.failed > 0 ? 'failed' : 'completed';
                             results.endTime = new Date();
@@ -153,6 +174,9 @@ const executeRealTestSuite = async (configType, onProgress) => {
                             results.issues = convertCommandResultsToIssues(finalData.commandResults, testRunId);
                         }
                     }
+                } else {
+                    const errorText = await progressResponse.text();
+                    console.error(`❌ Progress polling error: ${progressResponse.status} - ${errorText}`);
                 }
             } catch (error) {
                 console.error('Error polling test progress:', error);
@@ -311,11 +335,11 @@ const simulateTestExecution = async (configType, testRunId, onProgress) => {
 
     for (let i = 0; i <= steps; i++) {
         await new Promise(resolve => setTimeout(resolve, stepDuration));
-        
+
         results.progress = (i / steps) * 100;
         results.summary.passed = Math.floor((i / steps) * config.testCount * 0.95); // 95% pass rate
         results.summary.failed = Math.floor((i / steps) * config.testCount * 0.05); // 5% fail rate
-        
+
         if (onProgress) {
             onProgress({ ...results });
         }
@@ -483,21 +507,32 @@ export default function AutomatedTestsDashboard() {
     }, []);
 
     const runTestSuite = async (configType) => {
-        if (currentTestRun) return;
+        if (currentTestRun) {
+            console.log('❌ Test already running, ignoring new request');
+            return;
+        }
+
+        console.log(`🚀 Starting test suite: ${configType}`);
+        console.log(`📋 Test config:`, TEST_CONFIGS[configType]);
 
         try {
             const testRun = await executeRealTestSuite(configType, (progress) => {
+                console.log(`📈 Progress update received:`, progress);
                 setCurrentTestRun(progress);
             });
 
+            console.log(`✅ Test run completed:`, testRun);
+
             // Save completed test run to Firestore
             try {
+                console.log(`💾 Saving test run to Firestore...`);
                 const testRunDoc = await addDoc(collection(db, 'automated_test_runs'), {
                     ...testRun,
                     startTime: testRun.startTime ?? serverTimestamp(),
                     endTime: testRun.endTime ?? serverTimestamp(),
                 });
 
+                console.log(`💾 Saving ${testRun.issues.length} issues to Firestore...`);
                 // Save issues to Firestore
                 for (const issue of testRun.issues) {
                     await addDoc(collection(db, 'automated_test_issues'), {
@@ -521,6 +556,7 @@ export default function AutomatedTestsDashboard() {
                 ? `✅ Test suite completed! Success rate: ${successRate}%`
                 : `❌ Test suite failed. Success rate: ${successRate}%`;
 
+            console.log(`🎉 Test completion message:`, message);
             alert(message);
 
         } catch (error) {
@@ -840,6 +876,66 @@ export default function AutomatedTestsDashboard() {
                         This dashboard provides real-time visibility into automated test execution,
                         performance metrics, and issue tracking with direct integration to your STEa board.
                     </p>
+                </div>
+            </div>
+
+            {/* Debug Section */}
+            <div className="mt-4 card p-4 bg-yellow-50 border-yellow-200">
+                <h3 className="text-sm font-semibold mb-2 text-yellow-800">🔧 Debug Tools</h3>
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={async () => {
+                            try {
+                                console.log('🔍 Testing API connection...');
+                                const response = await fetch('/api/test-status');
+                                const data = await response.json();
+                                console.log('✅ API Status:', data);
+                                alert(`API Status: ${data.status} at ${data.timestamp}`);
+                            } catch (error) {
+                                console.error('❌ API Test failed:', error);
+                                alert(`API Test failed: ${error.message}`);
+                            }
+                        }}
+                        className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded border border-yellow-300 hover:bg-yellow-200"
+                    >
+                        Test API Connection
+                    </button>
+                    <button
+                        onClick={() => {
+                            console.log('📊 Current test run:', currentTestRun);
+                            console.log('📋 Test history:', testHistory);
+                            console.log('🐛 Test issues:', testIssues);
+                            console.log('👤 User:', user);
+                        }}
+                        className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded border border-blue-300 hover:bg-blue-200"
+                    >
+                        Log Debug Info
+                    </button>
+                    <button
+                        onClick={async () => {
+                            try {
+                                console.log('🧪 Testing quick API call...');
+                                const testId = `debug-test-${Date.now()}`;
+                                const response = await fetch('/api/run-tests', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ configType: 'quick', testRunId: testId })
+                                });
+                                const data = await response.json();
+                                console.log('🧪 Quick test response:', data);
+                                alert(`Quick test started: ${data.message || 'Check console for details'}`);
+                            } catch (error) {
+                                console.error('❌ Quick test failed:', error);
+                                alert(`Quick test failed: ${error.message}`);
+                            }
+                        }}
+                        className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded border border-green-300 hover:bg-green-200"
+                    >
+                        Test Quick API Call
+                    </button>
+                </div>
+                <div className="mt-2 text-xs text-yellow-700">
+                    Use these tools to debug API connectivity and test execution issues. Check browser console for detailed logs.
                 </div>
             </div>
 
