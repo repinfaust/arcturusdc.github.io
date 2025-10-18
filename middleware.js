@@ -29,6 +29,16 @@ export function middleware(req) {
     return NextResponse.redirect(url, 308);
   }
 
+  const protectedPaths = ['/apps/stea/automatedtestsdashboard', '/apps/stea/board'];
+  const isProtected = protectedPaths.some((path) => url.pathname.startsWith(path));
+  const sessionCookie = req.cookies.get('__session');
+
+  if (isProtected && !sessionCookie) {
+    const redirectUrl = new URL('/apps/stea', req.url);
+    redirectUrl.searchParams.set('next', url.pathname + url.search);
+    return NextResponse.redirect(redirectUrl);
+  }
+
   return NextResponse.next();
 }
 

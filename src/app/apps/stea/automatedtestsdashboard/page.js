@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, googleProvider } from '@/lib/firebase';
 import {
   addDoc,
   collection,
@@ -13,7 +13,7 @@ import {
   updateDoc,
   doc,
 } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 /* ===== Constants ===== */
 const TEST_CONFIGS = {
@@ -83,7 +83,7 @@ const toDate = (v) => {
 
 /* ===== Real Test Execution Integration ===== */
 const executeRealTestSuite = async (configType, onProgress) => {
-  const testRunId = `test-run-${Date.now()}`;
+  let testRunId = `test-run-${Date.now()}`;
 
   const results = {
     id: testRunId,
@@ -129,8 +129,15 @@ const executeRealTestSuite = async (configType, onProgress) => {
         useSimulation = true;
       } else {
         const responseData = await response.json();
+        if (responseData?.testRunId) {
+          testRunId = responseData.testRunId;
+          results.id = testRunId;
+        }
+        if (responseData?.configType) {
+          results.config = responseData.configType;
+        }
         console.log(`✅ API Response data:`, responseData);
-        console.log(`🚀 Real test execution started: ${configType}`);
+        console.log(`🚀 Real test execution started: ${results.config}`);
       }
     } catch (error) {
       console.error('❌ API connection failed:', error);
@@ -518,17 +525,58 @@ const getSizeFromSeverity = (severity) => {
 /* ===== Main Component ===== */
 export default function AutomatedTestsDashboard() {
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [currentTestRun, setCurrentTestRun] = useState(null);
   const [testHistory, setTestHistory] = useState([]);
   const [testIssues, setTestIssues] = useState([]);
   const [selectedTab, setSelectedTab] = useState('dashboard');
   const [creatingCards, setCreatingCards] = useState(new Set());
 
+  const ensureSessionCookie = useCallback(async (firebaseUser) => {
+    if (!firebaseUser) return;
+
+    try {
+      const idToken = await firebaseUser.getIdToken();
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Session cookie creation failed (${response.status})`);
+      }
+    } catch (error) {
+      console.error('Failed to ensure session cookie', error);
+    }
+  }, []);
+
   // Auth
-  useEffect(() => onAuthStateChanged(auth, setUser), []);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthReady(true);
+
+      if (firebaseUser) {
+        ensureSessionCookie(firebaseUser);
+      } else {
+        setCurrentTestRun(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [ensureSessionCookie]);
 
   // Load test history and issues from Firestore
   useEffect(() => {
+    if (!user) {
+      setTestHistory([]);
+      setTestIssues([]);
+      return;
+    }
+
     const historyQuery = query(collection(db, 'automated_test_runs'), orderBy('startTime', 'desc'));
     const issuesQuery = query(collection(db, 'automated_test_issues'), orderBy('createdAt', 'desc'));
 
@@ -548,9 +596,50 @@ export default function AutomatedTestsDashboard() {
       unsubHistory();
       unsubIssues();
     };
-  }, []);
+  }, [user]);
+
+  const handleSignIn = async () => {
+    if (signingIn) return;
+    setSigningIn(true);
+    try {
+      const credential = await signInWithPopup(auth, googleProvider);
+      await ensureSessionCookie(credential.user);
+    } catch (error) {
+      console.error('Google sign-in failed', error);
+      alert(`Google sign-in failed: ${error.message}`);
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Failed to call logout API', error);
+    }
+
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Firebase sign-out failed', error);
+    }
+
+    setUser(null);
+    setCurrentTestRun(null);
+    setTestHistory([]);
+    setTestIssues([]);
+    setSigningOut(false);
+  };
 
   const runTestSuite = async (configType) => {
+    if (!user) {
+      alert('Please sign in before starting a test run.');
+      return;
+    }
+
     if (currentTestRun) {
       console.log('❌ Test already running, ignoring new request');
       return;
@@ -560,6 +649,7 @@ export default function AutomatedTestsDashboard() {
     console.log(`📋 Test config:`, TEST_CONFIGS[configType]);
 
     try {
+      await ensureSessionCookie(user);
       const testRun = await executeRealTestSuite(configType, (progress) => {
         console.log(`📈 Progress update received:`, progress);
         setCurrentTestRun(progress);
@@ -918,6 +1008,46 @@ export default function AutomatedTestsDashboard() {
     </div>
   );
 
+  if (!authReady) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-20">
+        <div className="card p-6 text-center">
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm text-gray-600">Checking authentication…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-20">
+        <div className="card p-8 text-center space-y-4">
+          <h1 className="text-2xl font-semibold">Sign in to run automated tests</h1>
+          <p className="text-sm text-gray-600">
+            Connect with your Google account to access the STEa automated testing dashboard and trigger real Jest runs.
+          </p>
+          <button
+            onClick={handleSignIn}
+            disabled={signingIn}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            {signingIn ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Signing in…
+              </>
+            ) : (
+              <>
+                <span>Continue with Google</span>
+              </>
+            )}
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="pb-10 max-w-6xl mx-auto px-4">
       {/* Header */}
@@ -940,6 +1070,19 @@ export default function AutomatedTestsDashboard() {
             metrics, and issue tracking with direct integration to your STEa board.
           </p>
         </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+        <div className="text-gray-600">
+          Signed in as <span className="font-medium text-gray-900">{user?.email ?? 'unknown'}</span>
+        </div>
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-60"
+        >
+          {signingOut ? 'Signing out…' : 'Sign out'}
+        </button>
       </div>
 
       {/* Debug Section */}
