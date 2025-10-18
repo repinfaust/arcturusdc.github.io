@@ -3,8 +3,10 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { randomUUID } from 'crypto';
 import { spawn } from 'child_process';
+import { createRequire } from 'module';
 
 const SESSION_COOKIE_NAME = '__session';
+const require = createRequire(import.meta.url);
 
 // --- Helpers ---
 function parseJestLine(line) {
@@ -60,7 +62,16 @@ export async function POST(request) {
       lastLine: '',
     });
 
-    const jestBin = 'node_modules/jest/bin/jest.js';
+    let jestBin;
+    try {
+      jestBin = require.resolve('jest/bin/jest.js');
+    } catch (error) {
+      console.error('Failed to resolve jest binary path', error);
+      return NextResponse.json(
+        { error: 'Failed to start tests', details: 'Jest binary not found on server' },
+        { status: 500 },
+      );
+    }
     const args = ['--runInBand', '--verbose', '--reporters=default', '--colors'];
 
     const child = spawn('node', [jestBin, ...args], {
