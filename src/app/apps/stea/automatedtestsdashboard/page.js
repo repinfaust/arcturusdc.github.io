@@ -47,8 +47,10 @@ const TEST_CONFIGS = {
 };
 
 const TEST_STATUS_COLORS = {
+  queued: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   running: 'bg-blue-100 text-blue-800 border-blue-200',
   completed: 'bg-green-100 text-green-800 border-green-200',
+  passed: 'bg-green-100 text-green-800 border-green-200',
   failed: 'bg-red-100 text-red-800 border-red-200',
   cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
 };
@@ -82,194 +84,38 @@ const toDate = (v) => {
 };
 
 /* ===== Real Test Execution Integration ===== */
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const executeRealTestSuite = async (configType, initiatedBy, onProgress) => {
+  console.log(`🚀 Dispatching ${configType} suite to GitHub Actions`);
 
-const executeRealTestSuite = async (configType, onProgress) => {
-  let testRunId = `test-run-${Date.now()}`;
-
-  const results = {
-    id: testRunId,
-    config: configType,
-    startTime: new Date(),
-    status: 'running',
-    progress: 0,
-    summary: {
-      totalTests: TEST_CONFIGS[configType]?.testCount || 0,
-      passed: 0,
-      failed: 0,
-      skipped: 0,
-      duration: 0,
-      successRate: 0,
+  const response = await fetch('/api/run-tests', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    issues: [],
+    body: JSON.stringify({ configType, initiatedBy }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Run tests API failed (${response.status}): ${errorText || response.statusText}`,
+    );
+  }
+
+  const data = await response.json();
+  const runId = data?.runId || `test-run-${Date.now()}`;
+  const status = data?.status || 'queued';
+
+  const run = {
+    id: runId,
+    config: configType,
+    status,
+    progress: 0,
+    startTime: new Date(),
   };
 
-  try {
-    console.log(`🚀 Starting ${configType} test suite...`);
-    console.log(`🚀 Calling /api/run-tests with:`, { configType, testRunId });
-
-    const response = await fetch('/api/run-tests', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-vercel-background': '1',
-      },
-      body: JSON.stringify({ configType, testRunId }),
-    });
-
-    console.log(`📡 API Response status: ${response.status} ${response.statusText}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Run tests API failed (${response.status}): ${errorText || response.statusText}`,
-      );
-    }
-
-    const responseData = await response.json();
-    if (responseData?.testRunId) {
-      testRunId = responseData.testRunId;
-      results.id = testRunId;
-    }
-    if (responseData?.configType) {
-      results.config = responseData.configType;
-    }
-    console.log(`✅ API Response data:`, responseData);
-
-    const timeoutMs =
-      TEST_CONFIGS[configType]?.estimatedTime === '25-30 minutes' ? 40 * 60 * 1000 : 15 * 60 * 1000;
-    const startedAt = Date.now();
-    const pollDelayMs = 2000;
-
-    while (true) {
-      if (Date.now() - startedAt > timeoutMs) {
-        throw new Error('Test suite execution timeout');
-      }
-
-      const progressResponse = await fetch(
-        `/api/test-progress/${encodeURIComponent(testRunId)}`,
-        { cache: 'no-store' },
-      );
-
-      if (progressResponse.status === 404) {
-        await sleep(pollDelayMs);
-        continue;
-      }
-
-      if (!progressResponse.ok) {
-        const errorText = await progressResponse.text();
-        throw new Error(
-          `Failed to load test progress (${progressResponse.status}): ${errorText || progressResponse.statusText}`,
-        );
-      }
-
-      const progressData = await progressResponse.json();
-      console.log(`📊 Progress data:`, progressData);
-
-      const percent =
-        typeof progressData.percent === 'number'
-          ? progressData.percent
-          : typeof progressData.progress === 'number'
-            ? progressData.progress
-            : results.progress;
-      results.progress = percent;
-
-      const passed =
-        typeof progressData?.counts?.passed === 'number'
-          ? progressData.counts.passed
-          : typeof progressData.passed === 'number'
-            ? progressData.passed
-            : results.summary.passed;
-      const failed =
-        typeof progressData?.counts?.failed === 'number'
-          ? progressData.counts.failed
-          : typeof progressData.failed === 'number'
-            ? progressData.failed
-            : results.summary.failed;
-      results.summary.passed = passed;
-      results.summary.failed = failed;
-      results.status = progressData.status || results.status;
-
-      onProgress?.({ ...results });
-
-      const isDone =
-        (progressData.status && progressData.status !== 'running') ||
-        (typeof percent === 'number' && percent >= 100);
-
-      if (isDone) {
-        console.log(`✅ Test reported completion; fetching final results...`);
-        const finalResponse = await fetch(
-          `/api/test-results/${encodeURIComponent(testRunId)}`,
-          { cache: 'no-store' },
-        );
-
-        if (finalResponse.status === 404) {
-          await sleep(pollDelayMs);
-          continue;
-        }
-
-        if (!finalResponse.ok) {
-          const errorText = await finalResponse.text();
-          throw new Error(
-            `Failed to load final results (${finalResponse.status}): ${errorText || finalResponse.statusText}`,
-          );
-        }
-
-        const finalData = await finalResponse.json();
-        console.log(`📋 Final results data:`, finalData);
-
-        const failedCount =
-          finalData?.summary?.failed ??
-          finalData?.results?.numFailedTests ??
-          results.summary.failed;
-
-        const totalTests =
-          finalData?.summary?.total ??
-          finalData?.results?.numTotalTests ??
-          results.summary.totalTests;
-        const passedCount =
-          finalData?.summary?.passed ??
-          finalData?.results?.numPassedTests ??
-          passed;
-
-        results.status = failedCount > 0 ? 'failed' : 'completed';
-        results.endTime = new Date();
-        results.summary = {
-          totalTests,
-          passed: passedCount,
-          failed: failedCount,
-          duration: finalData?.results?.perfStats?.runtime ?? results.summary.duration,
-          successRate: totalTests ? (passedCount / totalTests) * 100 : 0,
-        };
-
-        results.issues = Array.isArray(finalData?.commandResults)
-          ? convertCommandResultsToIssues(finalData.commandResults, testRunId)
-          : results.issues;
-
-        return results;
-      }
-
-      await sleep(pollDelayMs);
-    }
-  } catch (error) {
-    console.error('Test suite execution failed:', error);
-    results.status = 'failed';
-    results.endTime = new Date();
-    results.issues = [
-      {
-        id: `error-${Date.now()}`,
-        title: 'Test Suite Execution Error',
-        description: error.message || 'Unknown error occurred during test execution',
-        severity: 'critical',
-        category: 'system',
-        testName: 'test-execution',
-        recommendation: 'Check test environment setup and network connectivity',
-        createdAt: new Date(),
-      },
-    ];
-
-    throw error;
-  }
+  onProgress?.(run);
+  return run;
 };
 
 const calculateTotalTests = (testConfig) => {
@@ -423,6 +269,7 @@ export default function AutomatedTestsDashboard() {
   const [testIssues, setTestIssues] = useState([]);
   const [selectedTab, setSelectedTab] = useState('dashboard');
   const [creatingCards, setCreatingCards] = useState(new Set());
+  const [isStoppingRun, setIsStoppingRun] = useState(false);
 
   const ensureSessionCookie = useCallback(async (firebaseUser) => {
     if (!firebaseUser) return;
@@ -459,34 +306,67 @@ export default function AutomatedTestsDashboard() {
     return () => unsubscribe();
   }, [ensureSessionCookie]);
 
-  // Load test history and issues from Firestore
+  // Load test history from Firestore
   useEffect(() => {
     if (!user) {
       setTestHistory([]);
       setTestIssues([]);
+      setCurrentTestRun(null);
       return;
     }
 
-    const historyQuery = query(collection(db, 'automated_test_runs'), orderBy('startTime', 'desc'));
-    const issuesQuery = query(collection(db, 'automated_test_issues'), orderBy('createdAt', 'desc'));
-
-    const unsubHistory = onSnapshot(historyQuery, (snapshot) => {
+    const runsQuery = query(collection(db, 'testRuns'), orderBy('startedAt', 'desc'));
+    const unsubscribe = onSnapshot(runsQuery, (snapshot) => {
       const runs = [];
-      snapshot.forEach((d) => runs.push({ id: d.id, ...d.data() }));
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const config = data?.config || 'quick';
+        const expectedTotal =
+          data?.summary?.totalTests ?? TEST_CONFIGS[config]?.testCount ?? 0;
+        const completed = (data?.passed || 0) + (data?.failed || 0);
+        const progress =
+          expectedTotal > 0 ? Math.min(100, Math.round((completed / expectedTotal) * 100)) : 0;
+
+        const summaryData = data?.summary || {};
+        const passed = summaryData.passed ?? data?.passed ?? 0;
+        const failed = summaryData.failed ?? data?.failed ?? 0;
+        const skipped = summaryData.skipped ?? 0;
+        const totalTests = summaryData.totalTests ?? expectedTotal;
+        const successRate =
+          summaryData.successRate ?? (totalTests > 0 ? (passed / totalTests) * 100 : 0);
+
+        runs.push({
+          id: doc.id,
+          ...data,
+          progress,
+          summary: {
+            totalTests,
+            passed,
+            failed,
+            skipped,
+            successRate,
+          },
+        });
+      });
+
       setTestHistory(runs);
+
+      const active = runs.find((run) => run.id === currentTestRun?.id);
+      if (active) {
+        if (active.status === 'running' || active.status === 'queued') {
+          setCurrentTestRun((prev) => ({ ...(prev || {}), ...active }));
+        } else {
+          setCurrentTestRun(null);
+        }
+      }
     });
 
-    const unsubIssues = onSnapshot(issuesQuery, (snapshot) => {
-      const issues = [];
-      snapshot.forEach((d) => issues.push({ id: d.id, ...d.data() }));
-      setTestIssues(issues);
-    });
+    setTestIssues([]);
 
     return () => {
-      unsubHistory();
-      unsubIssues();
+      unsubscribe();
     };
-  }, [user]);
+  }, [user, currentTestRun?.id]);
 
   const handleSignIn = async () => {
     if (signingIn) return;
@@ -540,53 +420,53 @@ export default function AutomatedTestsDashboard() {
 
     try {
       await ensureSessionCookie(user);
-      const testRun = await executeRealTestSuite(configType, (progress) => {
-        console.log(`📈 Progress update received:`, progress);
-        setCurrentTestRun(progress);
+      await executeRealTestSuite(configType, user.email ?? 'dashboard', (run) => {
+        console.log('📈 Test run queued:', run);
+        setCurrentTestRun(run);
       });
 
-      console.log(`✅ Test run completed:`, testRun);
-
-      // Save completed test run to Firestore
-      try {
-        console.log(`💾 Saving test run to Firestore...`);
-        const testRunDoc = await addDoc(collection(db, 'automated_test_runs'), {
-          ...testRun,
-          startTime: testRun.startTime ?? serverTimestamp(),
-          endTime: testRun.endTime ?? serverTimestamp(),
-        });
-
-        console.log(`💾 Saving ${testRun.issues?.length || 0} issues to Firestore...`);
-        for (const issue of testRun.issues || []) {
-          await addDoc(collection(db, 'automated_test_issues'), {
-            ...issue,
-            testRunId: testRunDoc.id,
-            createdAt: serverTimestamp(),
-          });
-        }
-
-        console.log(`✅ Test run completed and saved: ${testRunDoc.id}`);
-      } catch (error) {
-        console.error('Failed to save test results:', error);
-        alert('Test completed but failed to save results to database');
-      }
-
-      setCurrentTestRun(null);
-
-      const successRate = (testRun.summary?.successRate || 0).toFixed(1);
-      const message =
-        testRun.status === 'completed'
-          ? `✅ Test suite completed! Success rate: ${successRate}%`
-          : `❌ Test suite failed. Success rate: ${successRate}%`;
-
-      console.log(`🎉 Test completion message:`, message);
-      alert(message);
+      alert('✅ Test run queued. Follow the live status below while GitHub Actions executes it.');
     } catch (error) {
       console.error('Test suite execution failed:', error);
       setCurrentTestRun(null);
       alert(`❌ Test suite execution failed: ${error.message}`);
     }
   };
+
+  const stopCurrentRun = useCallback(async () => {
+    if (!currentTestRun) return;
+    if (isStoppingRun) return;
+
+    const confirmStop = window.confirm(
+      'Stop the current test run? This will cancel the GitHub Actions job and mark the run as cancelled.',
+    );
+    if (!confirmStop) return;
+
+    try {
+      setIsStoppingRun(true);
+      const response = await fetch('/api/run-tests/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          runId: currentTestRun.id,
+          cancelledBy: user?.email ?? 'dashboard',
+          reason: 'Cancelled from dashboard',
+        }),
+      });
+
+      if (!response.ok) {
+        const details = await response.text();
+        throw new Error(details || 'Failed to cancel run');
+      }
+
+      alert('🛑 Cancellation requested. GitHub Actions will halt shortly.');
+    } catch (error) {
+      console.error('Failed to cancel run', error);
+      alert(`Failed to cancel run: ${error.message}`);
+    } finally {
+      setIsStoppingRun(false);
+    }
+  }, [currentTestRun, isStoppingRun, user]);
 
   const createCardFromIssue = async (issue) => {
     const issueId = issue.id;
@@ -639,8 +519,20 @@ export default function AutomatedTestsDashboard() {
       {currentTestRun && (
         <div className="card p-6 border-l-4 border-l-blue-500">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <h3 className="text-lg font-semibold">Test Suite Running</h3>
+            <div
+              className={`w-6 h-6 border-2 border-blue-600 rounded-full ${
+                currentTestRun.status === 'running'
+                  ? 'border-t-transparent animate-spin'
+                  : 'border-dashed'
+              }`}
+            ></div>
+            <h3 className="text-lg font-semibold">
+              {currentTestRun.status === 'running'
+                ? 'Test Suite Running'
+                : currentTestRun.status === 'queued'
+                ? 'Test Suite Queued'
+                : 'Active Test Suite'}
+            </h3>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -656,6 +548,18 @@ export default function AutomatedTestsDashboard() {
             <p className="text-sm text-gray-600">
               Started: {toDate(currentTestRun.startTime)?.toLocaleTimeString?.() || '—'}
             </p>
+            <p className="text-sm text-gray-600">
+              Status: {currentTestRun.status?.toUpperCase?.() || 'QUEUED'}
+            </p>
+            {(currentTestRun.status === 'running' || currentTestRun.status === 'queued') && (
+              <button
+                onClick={stopCurrentRun}
+                disabled={isStoppingRun}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-60"
+              >
+                {isStoppingRun ? 'Stopping…' : 'Stop Tests'}
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 name: STEa Run Tests
+run-name: STEa Run Tests - ${{ github.event.client_payload.runId }}
 
 on:
   repository_dispatch:

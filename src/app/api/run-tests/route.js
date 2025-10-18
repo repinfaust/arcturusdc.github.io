@@ -1,3 +1,6 @@
+import { NextRequest } from 'next/server';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
@@ -23,6 +26,10 @@ export async function POST(request) {
       typeof body?.configType === 'string' && body.configType.trim().length > 0
         ? body.configType.trim()
         : 'quick';
+    const initiatedBy =
+      typeof body?.initiatedBy === 'string' && body.initiatedBy.trim().length > 0
+        ? body.initiatedBy.trim()
+        : 'dashboard';
 
     const owner = process.env.GH_REPO_OWNER;
     const repo = process.env.GH_REPO_NAME;
@@ -51,7 +58,7 @@ export async function POST(request) {
         client_payload: {
           runId,
           configType,
-          initiatedBy: 'dashboard',
+          initiatedBy,
         },
       }),
     });
@@ -66,6 +73,22 @@ export async function POST(request) {
         },
         500,
       );
+    }
+
+    try {
+      const { db, FieldValue } = getFirebaseAdmin();
+      await db.collection('testRuns').doc(runId).set(
+        {
+          status: 'queued',
+          config: configType,
+          initiatedBy,
+          createdAt: FieldValue.serverTimestamp(),
+          startedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    } catch (firestoreError) {
+      console.error('[run-tests] Failed to seed Firestore doc', firestoreError);
     }
 
     return json({ status: 'queued', runId, configType }, 202);
