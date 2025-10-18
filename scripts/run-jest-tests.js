@@ -1,5 +1,5 @@
-const { spawn } = require('child_process');
 const path = require('path');
+const jestCli = require('jest-cli');
 
 // Pick up config type and test run ID from environment or defaults
 const configType = process.env.CONFIG_TYPE || 'comprehensive';
@@ -13,37 +13,48 @@ const patternMap = {
 };
 const testPathPattern = patternMap[configType] || '__tests__';
 
-// Resolve Jest binary and config
-const jestBin = require.resolve('jest/bin/jest.js');
 const jestConfig = path.join(process.cwd(), '__tests__', 'jest.config.ts');
 
-// Spawn Jest as a child process
-const child = spawn(
-  process.execPath,
-  [
-    jestBin,
-    '--config',
-    jestConfig,
-    '--runInBand',
-    '--testPathPattern',
-    testPathPattern
-  ],
-  {
-    cwd: process.cwd(),
-    stdio: 'inherit', // shows Jest output in Vercel logs
-    env: {
-      ...process.env,
-      NODE_ENV: 'test',
-      TEST_RUN_ID: testRunId,
-      CONFIG_TYPE: configType,
-      TEST_PROGRESS_DIR: process.env.TEST_PROGRESS_DIR || '/tmp/test-progress',
-      TEST_REPORTS_DIR: process.env.TEST_REPORTS_DIR || '/tmp/test-reports'
-    }
-  }
-);
+const argv = process.argv.slice(2);
 
-// When Jest exits, propagate the same exit code
-child.on('exit', (code) => {
-  console.log(`🧪 Jest process finished with code ${code}`);
-  process.exit(code ?? 1);
-});
+if (!argv.includes('--config')) {
+  argv.push('--config', jestConfig);
+}
+
+if (!argv.includes('--runInBand')) {
+  argv.push('--runInBand');
+}
+
+if (!argv.some((arg) => arg.startsWith('--testPathPattern'))) {
+  argv.push('--testPathPattern', testPathPattern);
+}
+
+if (!argv.includes('--reporters=default')) {
+  argv.push('--reporters=default');
+}
+
+if (!argv.includes('--colors')) {
+  argv.push('--colors');
+}
+
+if (!argv.includes('--verbose')) {
+  argv.push('--verbose');
+}
+
+// Ensure env variables propagate for reporters
+process.env.NODE_ENV = 'test';
+process.env.TEST_RUN_ID = testRunId;
+process.env.CONFIG_TYPE = configType;
+process.env.TEST_PROGRESS_DIR = process.env.TEST_PROGRESS_DIR || '/tmp/test-progress';
+process.env.TEST_REPORTS_DIR = process.env.TEST_REPORTS_DIR || '/tmp/test-reports';
+
+jestCli
+  .run(argv)
+  .then(() => {
+    console.log('🧪 Jest run complete');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('🧪 Jest run failed', error);
+    process.exit(1);
+  });

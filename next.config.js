@@ -4,6 +4,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: [
       'jest',
+      'jest-cli',
       'ts-jest',
       '@jest/types',
       '@jest/console',
@@ -19,6 +20,7 @@ const nextConfig = {
       '/api/run-tests': [
         './scripts/run-jest-tests.js',
         './node_modules/jest/**/*',
+        './node_modules/jest-cli/**/*',
         './node_modules/@jest/**/*',
         './node_modules/ts-jest/**/*',
         './node_modules/@types/jest/**/*',

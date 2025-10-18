@@ -3,11 +3,9 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { randomUUID } from 'crypto';
 import { spawn } from 'child_process';
-import { createRequire } from 'module';
 import path from 'path';
 
 const SESSION_COOKIE_NAME = '__session';
-const require = createRequire(import.meta.url);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -66,20 +64,9 @@ export async function POST(request) {
       lastLine: '',
     });
 
-    let jestBin;
-    try {
-      const jestCliPackagePath = require.resolve('jest-cli/package.json');
-      jestBin = path.join(path.dirname(jestCliPackagePath), 'bin/jest.js');
-    } catch (error) {
-      console.error('Failed to locate jest CLI binary', error);
-      return NextResponse.json(
-        { error: 'Failed to start tests', details: 'Jest CLI binary not found on server' },
-        { status: 500 },
-      );
-    }
-    const args = ['--runInBand', '--verbose', '--reporters=default', '--colors'];
-
-    const child = spawn('node', [jestBin, ...args], {
+    const runnerScript = path.join(process.cwd(), 'scripts', 'run-jest-tests.js');
+    console.log('[run-tests] Spawning runner script', runnerScript);
+    const child = spawn(process.execPath, [runnerScript], {
       env: {
         ...process.env,
         FORCE_COLOR: '1',
