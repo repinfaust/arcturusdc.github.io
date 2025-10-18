@@ -22,8 +22,6 @@
     "eslint-config-next": "14.2.5",
     "postcss": "8.4.35",
     "tailwindcss": "3.4.7",
-
-    /* --- ✅ ADDED TEST TOOLCHAIN --- */
     "typescript": "^5.4.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
@@ -32,7 +30,9 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "roots": ["<rootDir>/__tests__"],
+    "roots": [
+      "<rootDir>/__tests__"
+    ],
     "modulePathIgnorePatterns": [
       "<rootDir>/.next",
       "<rootDir>/node_modules",
@@ -51,5 +51,8 @@
         }
       ]
     }
+  },
+  "engines": {
+    "node": ">=18 <=20"
   }
 }
