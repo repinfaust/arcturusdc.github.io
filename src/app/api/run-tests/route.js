@@ -11,14 +11,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-export const routeSegmentConfig = {
-  unstable_includeFiles: [
-    'node_modules/**',
-    'scripts/run-jest-tests.js',
-    '__tests__/**',
-  ],
-};
-
 // --- Helpers ---
 function parseJestLine(line) {
   // Very light parsing of Jest verbose output lines to infer progress.

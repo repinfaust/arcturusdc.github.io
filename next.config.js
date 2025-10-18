@@ -2,62 +2,25 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    serverComponentsExternalPackages: [
-      'jest',
-      'jest-cli',
-      'jest-util',
-      'exit',
-      'jest-watcher',
-      'emittery',
-      'ansi-escapes',
-      'string-length',
-      'yargs',
-      'ts-jest',
-      '@jest/types',
-      '@jest/console',
-      '@jest/reporters',
-      '@jest/transform',
-      'babel-jest',
-      '@babel/core',
-      'chalk',
-      'graceful-fs',
-      'glob',
-    ],
     outputFileTracingIncludes: {
       '/api/run-tests': [
         './scripts/run-jest-tests.js',
-        './node_modules/jest/**/*',
+        './__tests__/**/*',
         './node_modules/jest-cli/**/*',
-        './node_modules/jest-util/**/*',
-        './node_modules/exit/**/*',
-        './node_modules/jest-watcher/**/*',
-        './node_modules/emittery/**/*',
-        './node_modules/ansi-escapes/**/*',
-        './node_modules/string-length/**/*',
-        './node_modules/yargs/**/*',
+        './node_modules/jest-worker/**/*',
+        './node_modules/jest-config/**/*',
+        './node_modules/jest-resolve/**/*',
         './node_modules/@jest/**/*',
-        './node_modules/ts-jest/**/*',
-        './node_modules/@types/jest/**/*',
-        './node_modules/babel-jest/**/*',
-        './node_modules/@babel/**/*',
-        './node_modules/chalk/**/*',
-        './node_modules/graceful-fs/**/*',
-        './node_modules/glob/**/*',
-        './node_modules/ansi-styles/**/*',
-        './node_modules/supports-color/**/*',
+        './node_modules/yargs/**/*',
+        './node_modules/y18n/**/*',
       ],
     },
   },
 
-  // DO NOT set output: 'export' — that would disable API routes
-  // output: undefined,
-
-  // No rewrites that could steal /api/*
   async rewrites() {
     return [];
   },
 
-  // Optional: security headers (HSTS lives in your middleware already)
   async headers() {
     return [
       {
