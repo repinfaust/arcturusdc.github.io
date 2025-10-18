@@ -32,4 +32,4 @@ jobs:
           STEA_CONFIG_TYPE: ${{ github.event.client_payload.configType }}
         run: |
           echo "Running Jest for runId=${STEA_RUN_ID}"
-          npx jest --reporters=default --reporters="<rootDir>/scripts/firestore-jest-reporter.js"
+          node scripts/run-jest-tests.js --reporters="<rootDir>/scripts/firestore-jest-reporter.js"

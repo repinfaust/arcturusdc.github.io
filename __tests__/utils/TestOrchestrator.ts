@@ -137,14 +137,14 @@ export class TestOrchestrator {
     this.startTime = performance.now();
     this.testResults = [];
 
-    // Set up timeout handling
+    let timeoutHandle: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
+      timeoutHandle = setTimeout(() => {
         reject(new Error(`Test suite execution timeout after ${suiteConfig.timeout}ms`));
       }, suiteConfig.timeout);
     });
 
-    try {
+    const executeSuite = async (): Promise<TestSuiteResult> => {
       // Phase 1: Fast feedback tests (Unit tests)
       console.log('📋 Phase 1: Running unit tests...');
       const unitResults = await this.runUnitTests(suiteConfig.unitTests || []);
@@ -176,12 +176,20 @@ export class TestOrchestrator {
       this.testResults.push(...e2eResults);
 
       return this.generateComprehensiveReport();
+    };
+
+    try {
+      return await Promise.race([executeSuite(), timeoutPromise]);
     } catch (error) {
       console.error('❌ Test suite execution failed:', error);
       if (error instanceof Error && error.message.includes('timeout')) {
         console.error('⏰ Test suite timed out - consider increasing timeout or reducing test scope');
       }
       return this.generateErrorReport(error);
+    } finally {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
     }
   }
 
