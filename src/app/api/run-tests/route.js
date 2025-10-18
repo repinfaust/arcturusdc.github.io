@@ -7,6 +7,11 @@ import { createRequire } from 'module';
 
 const SESSION_COOKIE_NAME = '__session';
 const require = createRequire(import.meta.url);
+const jestPackageJson = require('jest/package.json');
+const JEST_PACKAGE_NAME = jestPackageJson.name || 'jest';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // --- Helpers ---
 function parseJestLine(line) {
@@ -68,7 +73,7 @@ export async function POST(request) {
     } catch (error) {
       console.error('Failed to resolve jest binary path', error);
       return NextResponse.json(
-        { error: 'Failed to start tests', details: 'Jest binary not found on server' },
+        { error: 'Failed to start tests', details: `${JEST_PACKAGE_NAME} binary not found on server` },
         { status: 500 },
       );
     }
