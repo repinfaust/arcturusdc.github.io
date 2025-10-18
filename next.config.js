@@ -1,20 +1,30 @@
-// next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
 
-  // keep dynamic API routes working (DO NOT set output: 'export')
+  // Ensure App Router is enabled (harmless if already default)
+  experimental: {
+    appDir: true,
+  },
+
+  // DO NOT set output: 'export' — that would disable API routes
+  // output: undefined,
+
+  // No rewrites that could steal /api/*
   async rewrites() {
+    return [];
+  },
+
+  // Optional: security headers (HSTS) — middleware already forces HTTPS
+  async headers() {
     return [
       {
-        // /mandrake/android -> /apps/mandrake/android (and similar)
-        source: "/:slug(mandrake|syncfit|adhd-acclaim|toume)/:platform(android|ios)",
-        destination: "/apps/:slug/:platform",
-      },
-      {
-        // optional legacy form
-        source: "/mandrake/:platform(android|ios)",
-        destination: "/apps/mandrake/:platform",
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
       },
     ];
   },
