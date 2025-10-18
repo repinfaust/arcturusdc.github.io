@@ -64,7 +64,6 @@ function usePersistentState(key, initial) {
       try {
         return JSON.parse(saved);
       } catch {
-        // accept raw string for string initial values; otherwise fallback
         return typeof initial === 'string' ? saved : initial;
       }
     } catch {
@@ -310,6 +309,9 @@ export default function SteaBoard() {
   // uploading
   const [uploading, setUploading] = useState(false);
 
+  // per-card board expand state (non-persistent)
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+
   /* ---------- one-time cleanup for legacy bad values ---------- */
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -457,8 +459,8 @@ export default function SteaBoard() {
     if (card.id) {
       await updateDoc(doc(db, 'stea_cards', card.id), payload);
     } else {
-      const ref = await addDoc(collection(db, 'stea_cards'), payload);
-      setEditing({ ...card, id: ref.id });
+      const refDoc = await addDoc(collection(db, 'stea_cards'), payload);
+      setEditing({ ...card, id: refDoc.id });
     }
     setEditing(null);
     setCreating(false);
@@ -532,6 +534,7 @@ export default function SteaBoard() {
     const prev = COLUMNS[Math.max(idx - 1, 0)];
     const next = COLUMNS[Math.min(idx + 1, COLUMNS.length - 1)];
     const isDragging = draggingId === card.id;
+    const expanded = !!expandedCards[card.id];
 
     return (
       <div
@@ -564,20 +567,39 @@ export default function SteaBoard() {
           <button onClick={() => setEditing(card)} className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black">Edit</button>
         </div>
 
-        <div className="font-semibold">{highlightText(card.title, search)}</div>
-        {card.description ? (<p className="text-sm text-gray-600 mt-1">{highlightText(card.description, search)}</p>) : null}
+        {/* CAPPED CONTENT AREA */}
+        <div className={`relative ${expanded ? '' : 'max-h-64 overflow-hidden pr-1'}`}>
+          <div className="font-semibold">{highlightText(card.title, search)}</div>
+          {card.description ? (<p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{highlightText(card.description, search)}</p>) : null}
 
-        <div className="mt-3 flex items-center justify-between">
+          {!expanded && (
+            <>
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent" />
+              <div className="mt-2" />
+            </>
+          )}
+        </div>
+
+        <div className="mt-2 flex items-center justify-between">
+          <button
+            onClick={() => setExpandedCards((s) => ({ ...s, [card.id]: !expanded }))}
+            className="text-xs px-2 py-1 rounded border bg-white hover:bg-gray-50"
+            title={expanded ? 'Collapse' : 'Expand to show full content'}
+          >
+            {expanded ? 'Collapse' : 'Expand'}
+          </button>
+
           <div className="text-xs text-gray-500">
             Reporter: {card.reporter || '—'}
             {card.assignee ? ` • Assigned: ${card.assignee}` : ''}
           </div>
-          <div className="flex flex-wrap gap-2 justify-end">
-            <button onClick={() => moveTo(card, prev)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
-            <button onClick={() => moveTo(card, next)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
-            <button onClick={() => moveTo(card, 'Done')} className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700" title="Mark Done">✓ Done</button>
-            <button onClick={() => moveTo(card, "Won't Do")} className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700" title="Move to Won't Do">↯ Won’t Do</button>
-          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <button onClick={() => moveTo(card, prev)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
+          <button onClick={() => moveTo(card, next)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
+          <button onClick={() => moveTo(card, 'Done')} className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700" title="Mark Done">✓ Done</button>
+          <button onClick={() => moveTo(card, "Won't Do")} className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700" title="Move to Won't Do">↯ Won’t Do</button>
         </div>
       </div>
     );
@@ -774,110 +796,171 @@ export default function SteaBoard() {
                 <button onClick={() => { setEditing(null); setCreating(false); }} className="px-3 py-1 rounded border hover:bg-gray-50">Close</button>
               </div>
 
-              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Title</label>
-                  <input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="Short summary" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Type</label>
-                  <select value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value })} className="w-full px-3 py-2 border rounded">
-                    {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1 flex items-center justify-between">
-                    <span>App</span>
-                    <button type="button" onClick={() => {
-                      const name = prompt('Add a new App name');
-                      if (!name) return;
-                      const trimmed = name.trim();
-                      if (!trimmed) return;
-                      setCustomApps((prev) => Array.from(new Set([...(prev || []), trimmed])));
-                    }} className="text-xs px-2 py-1 rounded border hover:bg-gray-50">Add…</button>
-                  </label>
-                  <select value={editing.app} onChange={(e) => setEditing({ ...editing, app: e.target.value })} className="w-full px-3 py-2 border rounded">
-                    {appsList.map(a => <option key={a} value={a}>{a}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Priority</label>
-                  <select value={editing.priority} onChange={(e) => setEditing({ ...editing, priority: e.target.value })} className="w-full px-3 py-2 border rounded">
-                    {['low','medium','high','critical'].map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Column</label>
-                  <select value={editing.statusColumn} onChange={(e) => setEditing({ ...editing, statusColumn: e.target.value })} className="w-full px-3 py-2 border rounded">
-                    {COLUMNS.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Size estimate</label>
-                  <select value={editing.sizeEstimate} onChange={(e) => setEditing({ ...editing, sizeEstimate: e.target.value })} className="w-full px-3 py-2 border rounded">
-                    {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">App version (for Done)</label>
-                  <input value={editing.appVersion} onChange={(e) => setEditing({ ...editing, appVersion: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="e.g. 1.3.0" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Reporter</label>
-                  <input value={editing.reporter} onChange={(e) => setEditing({ ...editing, reporter: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="email" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Assigned to</label>
-                  <input value={editing.assignee} onChange={(e) => setEditing({ ...editing, assignee: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="name or email" />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="w-full px-3 py-2 border rounded min-h-[96px]" placeholder="Details, acceptance criteria, links…" />
-                </div>
-
-                <div className="md:col-span-2 flex items-center justify-between">
-                  <label className="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={!!editing.archived} onChange={(e) => setEditing({ ...editing, archived: e.target.checked })} />
-                    Archived
-                  </label>
-                  <div className="flex gap-2">
-                    {!creating && editing.id ? (
-                      <button onClick={() => deleteCard(editing.id)} className="px-3 py-2 rounded border text-red-600 hover:bg-red-50">Delete</button>
-                    ) : null}
-                    <button onClick={() => saveCard(editing)} className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
-                  </div>
-                </div>
-
-                {/* Attachments */}
-                <div className="md:col-span-2">
-                  <AttachmentsSection
-                    card={editing}
-                    onAdd={addFiles}
-                    onDelete={deleteFile}
-                    uploading={uploading}
-                  />
-                </div>
-
-                {/* Comments */}
-                {editing?.id ? (
-                  <div className="md:col-span-2">
-                    <CommentsSection cardId={editing.id} user={user} />
-                  </div>
-                ) : null}
-              </div>
+              {/* description expand state (modal) */}
+              <ModalBody
+                editing={editing}
+                setEditing={setEditing}
+                creating={creating}
+                saveCard={saveCard}
+                deleteCard={deleteCard}
+                addFiles={addFiles}
+                deleteFile={deleteFile}
+                uploading={uploading}
+                user={user}
+              />
             </div>
           </div>
         </div>
       )}
     </main>
+  );
+}
+
+/* ---------- Modal Body split for cleaner local state ---------- */
+function ModalBody({
+  editing, setEditing, creating, saveCard, deleteCard,
+  addFiles, deleteFile, uploading, user
+}) {
+  const [descExpanded, setDescExpanded] = useState(false);
+
+  return (
+    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium mb-1">Title</label>
+        <input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="Short summary" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Type</label>
+        <select value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value })} className="w-full px-3 py-2 border rounded">
+          {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1 flex items-center justify-between">
+          <span>App</span>
+          <button type="button" onClick={() => {
+            const name = prompt('Add a new App name');
+            if (!name) return;
+            const trimmed = name.trim();
+            if (!trimmed) return;
+            // This relies on parent component state setter via closure – safe in this file structure.
+            const ev = new CustomEvent('stea-add-app', { detail: trimmed });
+            window.dispatchEvent(ev);
+          }} className="text-xs px-2 py-1 rounded border hover:bg-gray-50">Add…</button>
+        </label>
+        <AppSelect editing={editing} setEditing={setEditing} />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Priority</label>
+        <select value={editing.priority} onChange={(e) => setEditing({ ...editing, priority: e.target.value })} className="w-full px-3 py-2 border rounded">
+          {['low','medium','high','critical'].map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Column</label>
+        <select value={editing.statusColumn} onChange={(e) => setEditing({ ...editing, statusColumn: e.target.value })} className="w-full px-3 py-2 border rounded">
+          {COLUMNS.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Size estimate</label>
+        <select value={editing.sizeEstimate} onChange={(e) => setEditing({ ...editing, sizeEstimate: e.target.value })} className="w-full px-3 py-2 border rounded">
+          {SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">App version (for Done)</label>
+        <input value={editing.appVersion} onChange={(e) => setEditing({ ...editing, appVersion: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="e.g. 1.3.0" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Reporter</label>
+        <input value={editing.reporter} onChange={(e) => setEditing({ ...editing, reporter: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="email" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Assigned to</label>
+        <input value={editing.assignee} onChange={(e) => setEditing({ ...editing, assignee: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="name or email" />
+      </div>
+
+      {/* Description with capped height and expand */}
+      <div className="md:col-span-2">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium mb-1">Description</label>
+          <button
+            type="button"
+            onClick={() => setDescExpanded(v => !v)}
+            className="text-xs px-2 py-1 rounded border bg-white hover:bg-gray-50"
+            title={descExpanded ? 'Collapse description' : 'Expand description'}
+          >
+            {descExpanded ? 'Collapse' : 'Expand'}
+          </button>
+        </div>
+        <textarea
+          value={editing.description}
+          onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+          className={`w-full px-3 py-2 border rounded ${descExpanded ? 'min-h-[240px] max-h-[70vh] resize-y' : 'min-h-[96px] max-h-40 overflow-auto resize-none'}`}
+          placeholder="Details, acceptance criteria, links…"
+        />
+      </div>
+
+      <div className="md:col-span-2 flex items-center justify-between">
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={!!editing.archived} onChange={(e) => setEditing({ ...editing, archived: e.target.checked })} />
+          Archived
+        </label>
+        <div className="flex gap-2">
+          {!creating && editing.id ? (
+            <button onClick={() => deleteCard(editing.id)} className="px-3 py-2 rounded border text-red-600 hover:bg-red-50">Delete</button>
+          ) : null}
+          <button onClick={() => saveCard(editing)} className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
+        </div>
+      </div>
+
+      {/* Attachments */}
+      <div className="md:col-span-2">
+        <AttachmentsSection
+          card={editing}
+          onAdd={addFiles}
+          onDelete={deleteFile}
+          uploading={uploading}
+        />
+      </div>
+
+      {/* Comments */}
+      {editing?.id ? (
+        <div className="md:col-span-2">
+          <CommentsSection cardId={editing.id} user={user} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/* Hook up the App "Add…" button to the parent select without prop drilling */
+function AppSelect({ editing, setEditing }) {
+  const [options, setOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const handler = (e: any) => setOptions((prev) => Array.from(new Set([...(prev || []), e.detail])));
+    window.addEventListener('stea-add-app', handler as any);
+    return () => window.removeEventListener('stea-add-app', handler as any);
+  }, []);
+
+  // Fallback: user can still type a new value if not present
+  return (
+    <select
+      value={editing.app}
+      onChange={(e) => setEditing({ ...editing, app: e.target.value })}
+      className="w-full px-3 py-2 border rounded"
+    >
+      {[...new Set([...DEFAULT_APPS, ...options])].map(a => <option key={a} value={a}>{a}</option>)}
+    </select>
   );
 }
