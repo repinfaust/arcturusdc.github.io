@@ -1,9 +1,14 @@
-// Force HTTPS and 'www' canonical host.
+// Force HTTPS and 'www' canonical host, skip API routes
 import { NextResponse } from 'next/server';
 
 export function middleware(req) {
   const url = req.nextUrl;
   const host = url.host;
+
+  // Skip API routes entirely (they must not be redirected)
+  if (url.pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
 
   // Force HTTPS
   if (url.protocol === 'http:') {
@@ -27,6 +32,9 @@ export function middleware(req) {
   return NextResponse.next();
 }
 
+// ✅ Updated matcher — exclude API, _next assets, and static files
 export const config = {
-  matcher: ['/((?!_next|.*\..*).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)',
+  ],
 };
