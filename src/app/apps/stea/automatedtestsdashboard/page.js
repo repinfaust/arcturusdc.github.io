@@ -82,6 +82,8 @@ const toDate = (v) => {
 };
 
 /* ===== Real Test Execution Integration ===== */
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const executeRealTestSuite = async (configType, onProgress) => {
   let testRunId = `test-run-${Date.now()}`;
 
@@ -104,169 +106,151 @@ const executeRealTestSuite = async (configType, onProgress) => {
 
   try {
     console.log(`🚀 Starting ${configType} test suite...`);
+    console.log(`🚀 Calling /api/run-tests with:`, { configType, testRunId });
 
-    // Try API first, fall back to simulation if it fails
-    let useSimulation = false;
-    try {
-      console.log(`🚀 Starting API call to /api/run-tests with:`, { configType, testRunId });
-
-      const response = await fetch('/api/run-tests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Important for Vercel to keep the child process alive
-          'x-vercel-background': '1',
-        },
-        body: JSON.stringify({ configType, testRunId }),
-      });
-
-      console.log(`📡 API Response status: ${response.status} ${response.statusText}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ API Error response:`, errorText);
-        console.warn('API not available, using simulation mode');
-        useSimulation = true;
-      } else {
-        const responseData = await response.json();
-        if (responseData?.testRunId) {
-          testRunId = responseData.testRunId;
-          results.id = testRunId;
-        }
-        if (responseData?.configType) {
-          results.config = responseData.configType;
-        }
-        console.log(`✅ API Response data:`, responseData);
-        console.log(`🚀 Real test execution started: ${results.config}`);
-      }
-    } catch (error) {
-      console.error('❌ API connection failed:', error);
-      console.warn('API not available, using simulation mode:', error.message);
-      useSimulation = true;
-    }
-
-    if (useSimulation) {
-      return await simulateTestExecution(configType, testRunId, onProgress);
-    }
-
-    // Poll for progress updates from our new routes
-    const progressInterval = setInterval(async () => {
-      try {
-        const url = `/api/test-progress/${encodeURIComponent(testRunId)}`;
-        console.log(`🔄 Polling progress: ${url}`);
-        const progressResponse = await fetch(url, { cache: 'no-store' });
-        console.log(`📡 Progress response status: ${progressResponse.status}`);
-
-        if (progressResponse.ok) {
-          const progressData = await progressResponse.json();
-          console.log(`📊 Progress data:`, progressData);
-
-          results.progress = typeof progressData.progress === 'number' ? progressData.progress : results.progress;
-          results.summary.passed = typeof progressData.passed === 'number' ? progressData.passed : results.summary.passed;
-          results.summary.failed = typeof progressData.failed === 'number' ? progressData.failed : results.summary.failed;
-          results.status = progressData.status || results.status;
-
-          onProgress?.({ ...results });
-
-          // Treat either a non-running status OR 100% as completion
-          const isDone =
-            progressData.status && progressData.status !== 'running'
-              ? true
-              : (typeof progressData.progress === 'number' && progressData.progress >= 100);
-
-          if (isDone) {
-            console.log(`✅ Test reported completion; fetching final results...`);
-            clearInterval(progressInterval);
-
-            const finalUrl = `/api/test-results/${encodeURIComponent(testRunId)}`;
-            const finalResponse = await fetch(finalUrl, { cache: 'no-store' });
-            console.log(`📋 Final results response status: ${finalResponse.status}`);
-
-            if (finalResponse.ok) {
-              const finalData = await finalResponse.json();
-              console.log(`📋 Final results data:`, finalData);
-
-              const failed =
-                finalData?.summary?.failed ??
-                finalData?.results?.numFailedTests ??
-                results.summary.failed;
-
-              results.status = failed > 0 ? 'failed' : 'completed';
-              results.endTime = new Date();
-              results.summary = {
-                totalTests:
-                  finalData?.summary?.total ??
-                  finalData?.results?.numTotalTests ??
-                  results.summary.totalTests,
-                passed:
-                  finalData?.summary?.passed ??
-                  finalData?.results?.numPassedTests ??
-                  results.summary.passed,
-                failed:
-                  finalData?.summary?.failed ??
-                  finalData?.results?.numFailedTests ??
-                  results.summary.failed,
-                duration:
-                  finalData?.results?.perfStats?.runtime ??
-                  results.summary.duration,
-                successRate: (() => {
-                  const total =
-                    finalData?.summary?.total ??
-                    finalData?.results?.numTotalTests ??
-                    results.summary.totalTests;
-                  const passedCount =
-                    finalData?.summary?.passed ??
-                    finalData?.results?.numPassedTests ??
-                    results.summary.passed;
-                  return total ? (passedCount / total) * 100 : 0;
-                })(),
-              };
-
-              // If your reporter emits commandResults; otherwise leave empty
-              results.issues = Array.isArray(finalData?.commandResults)
-                ? convertCommandResultsToIssues(finalData.commandResults, testRunId)
-                : results.issues;
-            }
-          }
-        } else {
-          const errorText = await progressResponse.text();
-          console.error(`❌ Progress polling error: ${progressResponse.status} - ${errorText}`);
-        }
-      } catch (error) {
-        console.error('Error polling test progress:', error);
-      }
-    }, 2000);
-
-    // Wait for completion (with timeout)
-    const timeout =
-      TEST_CONFIGS[configType]?.estimatedTime === '25-30 minutes' ? 40 * 60 * 1000 : 15 * 60 * 1000;
-
-    return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        clearInterval(progressInterval);
-        results.status = 'failed';
-        results.issues.push({
-          id: `timeout-${Date.now()}`,
-          title: 'Test Suite Timeout',
-          description: `Test suite exceeded maximum execution time of ${timeout / 60000} minutes`,
-          severity: 'high',
-          category: 'system',
-          testName: 'test-timeout',
-          recommendation: 'Check for hanging tests or increase timeout limit',
-          createdAt: new Date(),
-        });
-        reject(new Error('Test suite execution timeout'));
-      }, timeout);
-
-      const checkCompletion = setInterval(() => {
-        if (results.status !== 'running') {
-          clearInterval(checkCompletion);
-          clearTimeout(timeoutId);
-          clearInterval(progressInterval);
-          resolve(results);
-        }
-      }, 1000);
+    const response = await fetch('/api/run-tests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-vercel-background': '1',
+      },
+      body: JSON.stringify({ configType, testRunId }),
     });
+
+    console.log(`📡 API Response status: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Run tests API failed (${response.status}): ${errorText || response.statusText}`,
+      );
+    }
+
+    const responseData = await response.json();
+    if (responseData?.testRunId) {
+      testRunId = responseData.testRunId;
+      results.id = testRunId;
+    }
+    if (responseData?.configType) {
+      results.config = responseData.configType;
+    }
+    console.log(`✅ API Response data:`, responseData);
+
+    const timeoutMs =
+      TEST_CONFIGS[configType]?.estimatedTime === '25-30 minutes' ? 40 * 60 * 1000 : 15 * 60 * 1000;
+    const startedAt = Date.now();
+    const pollDelayMs = 2000;
+
+    while (true) {
+      if (Date.now() - startedAt > timeoutMs) {
+        throw new Error('Test suite execution timeout');
+      }
+
+      const progressResponse = await fetch(
+        `/api/test-progress/${encodeURIComponent(testRunId)}`,
+        { cache: 'no-store' },
+      );
+
+      if (progressResponse.status === 404) {
+        await sleep(pollDelayMs);
+        continue;
+      }
+
+      if (!progressResponse.ok) {
+        const errorText = await progressResponse.text();
+        throw new Error(
+          `Failed to load test progress (${progressResponse.status}): ${errorText || progressResponse.statusText}`,
+        );
+      }
+
+      const progressData = await progressResponse.json();
+      console.log(`📊 Progress data:`, progressData);
+
+      const percent =
+        typeof progressData.percent === 'number'
+          ? progressData.percent
+          : typeof progressData.progress === 'number'
+            ? progressData.progress
+            : results.progress;
+      results.progress = percent;
+
+      const passed =
+        typeof progressData?.counts?.passed === 'number'
+          ? progressData.counts.passed
+          : typeof progressData.passed === 'number'
+            ? progressData.passed
+            : results.summary.passed;
+      const failed =
+        typeof progressData?.counts?.failed === 'number'
+          ? progressData.counts.failed
+          : typeof progressData.failed === 'number'
+            ? progressData.failed
+            : results.summary.failed;
+      results.summary.passed = passed;
+      results.summary.failed = failed;
+      results.status = progressData.status || results.status;
+
+      onProgress?.({ ...results });
+
+      const isDone =
+        (progressData.status && progressData.status !== 'running') ||
+        (typeof percent === 'number' && percent >= 100);
+
+      if (isDone) {
+        console.log(`✅ Test reported completion; fetching final results...`);
+        const finalResponse = await fetch(
+          `/api/test-results/${encodeURIComponent(testRunId)}`,
+          { cache: 'no-store' },
+        );
+
+        if (finalResponse.status === 404) {
+          await sleep(pollDelayMs);
+          continue;
+        }
+
+        if (!finalResponse.ok) {
+          const errorText = await finalResponse.text();
+          throw new Error(
+            `Failed to load final results (${finalResponse.status}): ${errorText || finalResponse.statusText}`,
+          );
+        }
+
+        const finalData = await finalResponse.json();
+        console.log(`📋 Final results data:`, finalData);
+
+        const failedCount =
+          finalData?.summary?.failed ??
+          finalData?.results?.numFailedTests ??
+          results.summary.failed;
+
+        const totalTests =
+          finalData?.summary?.total ??
+          finalData?.results?.numTotalTests ??
+          results.summary.totalTests;
+        const passedCount =
+          finalData?.summary?.passed ??
+          finalData?.results?.numPassedTests ??
+          passed;
+
+        results.status = failedCount > 0 ? 'failed' : 'completed';
+        results.endTime = new Date();
+        results.summary = {
+          totalTests,
+          passed: passedCount,
+          failed: failedCount,
+          duration: finalData?.results?.perfStats?.runtime ?? results.summary.duration,
+          successRate: totalTests ? (passedCount / totalTests) * 100 : 0,
+        };
+
+        results.issues = Array.isArray(finalData?.commandResults)
+          ? convertCommandResultsToIssues(finalData.commandResults, testRunId)
+          : results.issues;
+
+        return results;
+      }
+
+      await sleep(pollDelayMs);
+    }
   } catch (error) {
     console.error('Test suite execution failed:', error);
     results.status = 'failed';
@@ -367,100 +351,6 @@ const getRecommendationForFailure = (test) => {
     default:
       return 'Investigate test failure and implement appropriate fix';
   }
-};
-
-// Fallback simulation when API is not available
-const simulateTestExecution = async (configType, testRunId, onProgress) => {
-  const config = TEST_CONFIGS[configType];
-  const results = {
-    id: testRunId,
-    config: configType,
-    startTime: new Date(),
-    status: 'running',
-    progress: 0,
-    summary: {
-      totalTests: config.testCount,
-      passed: 0,
-      failed: 0,
-      skipped: 0,
-      duration: 0,
-      successRate: 0,
-    },
-  };
-
-  const duration =
-    configType === 'comprehensive' ? 30000 : configType === 'critical' ? 10000 : 5000;
-  const steps = 20;
-  const stepDuration = duration / steps;
-
-  for (let i = 0; i <= steps; i++) {
-    await new Promise((resolve) => setTimeout(resolve, stepDuration));
-
-    results.progress = Math.round((i / steps) * 100);
-    results.summary.passed = Math.floor((i / steps) * config.testCount * 0.95);
-    results.summary.failed = Math.floor((i / steps) * config.testCount * 0.05);
-
-    onProgress?.({ ...results });
-  }
-
-  results.status = results.summary.failed > 0 ? 'failed' : 'completed';
-  results.endTime = new Date();
-  results.summary.duration = duration;
-  results.summary.successRate = (results.summary.passed / config.testCount) * 100;
-  results.issues = generateMockIssues(results.summary.failed, configType);
-
-  return results;
-};
-
-const generateMockIssues = (count) => {
-  const mockIssues = [
-    {
-      title: 'Authentication token validation failing',
-      description: 'JWT token validation is rejecting valid tokens in test environment',
-      severity: 'high',
-      category: 'security',
-      testName: 'auth-token-validation',
-      recommendation: 'Check token signing key configuration in test environment',
-    },
-    {
-      title: 'Calendar sync performance regression',
-      description: 'Google Calendar sync taking >5 seconds, exceeding performance threshold',
-      severity: 'medium',
-      category: 'performance',
-      testName: 'calendar-sync-performance',
-      recommendation: 'Optimize calendar API batch requests and implement caching',
-    },
-    {
-      title: 'Screen reader navigation broken',
-      description: 'VoiceOver cannot navigate through circle member list properly',
-      severity: 'medium',
-      category: 'accessibility',
-      testName: 'screen-reader-navigation',
-      recommendation: 'Add proper ARIA labels and focus management to member list',
-    },
-    {
-      title: 'Handover creation E2E test timeout',
-      description: 'End-to-end test for handover creation timing out after 30 seconds',
-      severity: 'high',
-      category: 'e2e',
-      testName: 'handover-creation-flow',
-      recommendation: 'Investigate UI loading states and optimize handover form submission',
-    },
-    {
-      title: 'Gift reservation unit test assertion failure',
-      description: 'Unit test expecting gift to be reserved but finding it available',
-      severity: 'low',
-      category: 'unit',
-      testName: 'gift-reservation-logic',
-      recommendation: 'Review gift reservation state management logic',
-    },
-  ];
-
-  return mockIssues.slice(0, count).map((issue, index) => ({
-    ...issue,
-    id: `issue-${Date.now()}-${index}`,
-    createdAt: new Date(),
-  }));
 };
 
 /* ===== STEa Card Creation ===== */

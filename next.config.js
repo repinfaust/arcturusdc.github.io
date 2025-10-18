@@ -1,6 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    outputFileTracingIncludes: {
+      '/api/run-tests': [
+        './scripts/run-jest-tests.js',
+        './node_modules/jest/**',
+        './node_modules/@jest/**',
+        './node_modules/ts-jest/**',
+        './node_modules/@types/jest/**',
+        './node_modules/babel-jest/**',
+        './node_modules/typescript/**',
+      ],
+    },
+  },
 
   // DO NOT set output: 'export' — that would disable API routes
   // output: undefined,
