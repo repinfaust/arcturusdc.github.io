@@ -1,119 +1,153 @@
+// src/app/api/run-tests/route.js
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { db } from '@/lib/firebase';
+import {
+  doc, setDoc, updateDoc, serverTimestamp, collection
+} from 'firebase/firestore';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
+import { randomUUID } from 'crypto';
+import { spawn } from 'child_process';
 
-function ensureDir(p) { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); }
-function writeProgress(id, data, dir) {
-  ensureDir(dir);
-  fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify(data, null, 2));
+// --- Helpers ---
+function parseJestLine(line) {
+  // Very light parsing of Jest verbose output lines to infer progress.
+  // Adjust heuristics as needed for your reporter/output.
+  const txt = line.toString();
+  const isPass = /\bPASS\b/.test(txt);
+  const isFail = /\bFAIL\b/.test(txt);
+  const isRuns = /\bRUNS\b/.test(txt);
+  return { isPass, isFail, isRuns };
 }
 
-export async function POST(request) {
+export async function POST() {
   try {
-    const { configType, testRunId } = await request.json();
-    if (!configType || !testRunId) {
-      return NextResponse.json({ error: 'Missing configType or testRunId' }, { status: 400 });
-    }
+    const testRunId = randomUUID();
 
-    const PROGRESS_DIR = process.env.TEST_PROGRESS_DIR || '/tmp/test-progress';
-    const REPORTS_DIR  = process.env.TEST_REPORTS_DIR  || '/tmp/test-reports';
+    // Create run + progress docs up-front
+    const runRef = doc(collection(db, 'test_runs'), testRunId);
+    const progressRef = doc(collection(db, 'test_progress'), testRunId);
 
-    writeProgress(testRunId, {
-      testRunId, status: 'running', progress: 0, passed: 0, failed: 0, startedAt: new Date().toISOString()
-    }, PROGRESS_DIR);
+    await setDoc(runRef, {
+      id: testRunId,
+      createdAt: serverTimestamp(),
+      startedAt: serverTimestamp(),
+      status: 'running', // queued | running | completed | failed
+      source: 'dashboard',
+    });
 
-    (async () => {
-      try {
-        const jestConfig = {
-          rootDir: path.join(process.cwd(), ''),
-          testMatch: ['<rootDir>/__tests__/**/*.test.{ts,tsx,js}'],
-          transform: { '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }] },
-          testEnvironment: 'node',
-          moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
-          reporters: ['default', '<rootDir>/__tests__/utils/ProgressReporter.js'],
-          modulePathIgnorePatterns: [
-            '<rootDir>/.next',
-            '<rootDir>/node_modules',
-            '<rootDir>/test-progress',
-            '<rootDir>/test-reports'
-          ]
-        };
+    await setDoc(progressRef, {
+      id: testRunId,
+      updatedAt: serverTimestamp(),
+      status: 'running',
+      percent: 0,
+      counts: { total: 0, passed: 0, failed: 0, running: 0 },
+      lastLine: '',
+    });
 
-        const patternMap = { comprehensive: '__tests__', quick: '__tests__/quick', critical: '__tests__/critical' };
-        const testPathPattern = patternMap[configType] || '__tests__';
+    // Spawn Jest in-band so we can read stdout
+    // Tweak args to your needs (e.g., patterns)
+    const jestBin = 'node_modules/jest/bin/jest.js';
+    const args = ['--runInBand', '--verbose', '--reporters=default', '--colors'];
 
-        // Set only the custom env vars the reporter needs
-        process.env.TEST_RUN_ID = testRunId;
-        process.env.TEST_PROGRESS_DIR = PROGRESS_DIR;
-        process.env.TEST_REPORTS_DIR = REPORTS_DIR;
-        process.env.CONFIG_TYPE = configType;
+    const child = spawn('node', [jestBin, ...args], {
+      env: { ...process.env, FORCE_COLOR: '1' },
+      cwd: process.cwd(),
+    });
 
-        const { runCLI } = await import('jest');
+    // Track rough counts
+    const state = {
+      total: 0,     // if you know total ahead of time, set it; else we approximate
+      passed: 0,
+      failed: 0,
+      running: 0,
+    };
 
-        const result = await runCLI(
-          {
-            config: JSON.stringify(jestConfig),
-            runInBand: true,
-            testPathPattern
-          },
-          [jestConfig.rootDir]
-        );
+    // Optional: if you emit your own "TOTAL n" line before running, capture it here.
+    // Otherwise, total remains 0 and percent will be based on (passed+failed) only.
 
-        const finalSummary = {
-          passed: result.results.numPassedTests,
-          failed: result.results.numFailedTests,
-          total:  result.results.numTotalTests,
-          successRate: result.results.numTotalTests
-            ? (result.results.numPassedTests / result.results.numTotalTests) * 100
-            : 0
-        };
+    const bumpProgress = async (lastLine) => {
+      const done = state.passed + state.failed;
+      const denom = state.total > 0 ? state.total : Math.max(1, done + state.running);
+      const percent = Math.max(0, Math.min(100, Math.round((done / denom) * 100)));
 
-        ensureDir(REPORTS_DIR);
-        fs.writeFileSync(
-          path.join(REPORTS_DIR, `${testRunId}.json`),
-          JSON.stringify({ testRunId, summary: finalSummary, results: result.results }, null, 2)
-        );
+      await updateDoc(progressRef, {
+        updatedAt: serverTimestamp(),
+        status: 'running',
+        percent,
+        counts: { ...state },
+        lastLine,
+      });
+    };
 
-        writeProgress(testRunId, {
-          testRunId,
-          status: finalSummary.failed > 0 ? 'failed' : 'completed',
-          progress: 100,
-          passed: finalSummary.passed,
-          failed: finalSummary.failed,
-          completed: true
-        }, PROGRESS_DIR);
-      } catch (err) {
-        writeProgress(testRunId, {
-          testRunId,
-          status: 'failed',
-          progress: 100,
-          passed: 0,
-          failed: 1,
-          error: (err && err.message) || String(err),
-          completed: true
-        }, PROGRESS_DIR);
+    child.stdout.on('data', async (chunk) => {
+      const lines = chunk.toString().split('\n');
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const { isPass, isFail, isRuns } = parseJestLine(line);
+
+        if (isRuns) state.running += 1;
+        if (isPass) { state.passed += 1; state.running = Math.max(0, state.running - 1); }
+        if (isFail) { state.failed += 1; state.running = Math.max(0, state.running - 1); }
+
+        // If you can infer total, set state.total once.
+        // Example heuristic: when first RUNS appears, set total to running+passed+failed
+        if (state.total === 0 && (isRuns || isPass || isFail)) {
+          state.total = Math.max(state.total, state.running + state.passed + state.failed);
+        }
+
+        await bumpProgress(line);
       }
-    })();
+    });
 
-    const headers = new Headers();
-    headers.set('x-vercel-background', '1');
+    child.stderr.on('data', async (chunk) => {
+      // Still update lastLine so the UI can surface issues
+      await bumpProgress(chunk.toString());
+    });
 
-    return new NextResponse(
-      JSON.stringify({ success: true, message: 'Jest run started', testRunId, configType }),
-      { status: 202, headers }
-    );
-  } catch (error) {
+    child.on('close', async (code) => {
+      const finishedStatus = code === 0 ? 'completed' : 'failed';
+      const done = state.passed + state.failed;
+      const percent = 100;
+
+      // Write final results in a separate collection
+      const resultsRef = doc(collection(db, 'test_results'), testRunId);
+      await setDoc(resultsRef, {
+        id: testRunId,
+        finishedAt: serverTimestamp(),
+        status: finishedStatus,
+        summary: {
+          total: state.total || done,
+          passed: state.passed,
+          failed: state.failed,
+        },
+      });
+
+      // Final progress snapshot
+      await updateDoc(progressRef, {
+        updatedAt: serverTimestamp(),
+        status: finishedStatus,
+        percent,
+        counts: { ...state },
+      });
+
+      // Update run record
+      await updateDoc(runRef, {
+        status: finishedStatus,
+        finishedAt: serverTimestamp(),
+        exitCode: code,
+      });
+    });
+
+    // Return 202 immediately so the dashboard can start polling Firestore-backed APIs
     return NextResponse.json(
-      { error: 'Failed to start tests', details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { message: 'Jest run started', testRunId },
+      { status: 202 },
+    );
+  } catch (err) {
+    console.error('run-tests error', err);
+    return NextResponse.json(
+      { error: 'Failed to start tests', details: String(err?.message || err) },
+      { status: 500 },
     );
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405 });
 }
