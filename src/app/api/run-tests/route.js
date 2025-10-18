@@ -5,7 +5,7 @@ import path from 'path';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
+export async function POST(request) {
   try {
     const { configType, testRunId } = await request.json();
 
@@ -45,11 +45,11 @@ export async function GET() {
 }
 
 // Test execution simulation function
-async function simulateTestExecution(configType: string, testRunId: string) {
+async function simulateTestExecution(configType, testRunId) {
   console.log(`🎭 Starting simulation for ${configType} (${testRunId})`);
 
   const testCounts = { quick: 45, critical: 89, comprehensive: 135 };
-  const totalTests = testCounts[configType as keyof typeof testCounts] || 45;
+  const totalTests = testCounts[configType] || 45;
   const duration = configType === 'comprehensive' ? 30000 : configType === 'critical' ? 15000 : 8000;
   const steps = 20;
   const stepDuration = duration / steps;
@@ -84,7 +84,7 @@ async function simulateTestExecution(configType: string, testRunId: string) {
   console.log(`🎭 Simulation completed for ${testRunId}`);
 }
 
-function saveProgressData(testRunId: string, data: any) {
+function saveProgressData(testRunId, data) {
   try {
     const progressDir = path.join(process.cwd(), 'test-progress');
     if (!fs.existsSync(progressDir)) {
@@ -98,7 +98,7 @@ function saveProgressData(testRunId: string, data: any) {
   }
 }
 
-function saveResultsData(testRunId: string, data: any) {
+function saveResultsData(testRunId, data) {
   try {
     const reportsDir = path.join(process.cwd(), 'test-reports');
     if (!fs.existsSync(reportsDir)) {
