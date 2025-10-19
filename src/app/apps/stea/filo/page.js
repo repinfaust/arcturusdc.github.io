@@ -6,11 +6,10 @@ import {
   addDoc, arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query,
   runTransaction, serverTimestamp, setDoc, updateDoc
 } from 'firebase/firestore';
-import { setLogLevel } from 'firebase/firestore';   // 👈 import this
+import { setLogLevel } from 'firebase/firestore';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
-setLogLevel('debug');  // 👈 do this once at module load (before any Firestore calls)
-
+setLogLevel('debug');
 
 /* =========================
    CONFIG & CONSTANTS
@@ -18,8 +17,9 @@ setLogLevel('debug');  // 👈 do this once at module load (before any Firestore
 const LANE_OPTIONS = [null, 'now', 'next', 'later']; // null = backlog
 const DEFAULT_PROJECT_NAME = 'Felix Product Lab';
 const DEFAULT_BOARD_NAME = 'Main Whiteboard';
+const STICKY_COLORS = ['#FEF3C7', '#E0F2FE', '#E9D5FF', '#DCFCE7', '#FFE4E6']; // amber, sky, violet, green, rose
+const NEW_PLACEHOLDER = 'New idea…';
 
-// Minimal badge catalog
 const BADGES = {
   brainstormer: { id: 'brainstormer', name: 'Brainstormer', emoji: '🧠', xp: 10, lesson: 'Ideas are seeds — quantity helps quality.' },
   powerup:      { id: 'powerup',      name: 'Power-Up!',    emoji: '⚡️', xp: 20, lesson: 'You turned an idea into something buildable.' },
@@ -32,79 +32,48 @@ const BADGES = {
    AUTH HOOK
    ========================= */
 function useAuth() {
-  const [user, setUser] = useState(null);
-  useEffect(() => {
-    return onAuthStateChanged(auth, setUser);
-  }, []);
-  const login = async () => {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  };
-  const logout = async () => {
-    await signOut(auth);
-  };
+  const [user, setUser] = useState<any>(null);
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
+  const login = async () => { await signInWithPopup(auth, new GoogleAuthProvider()); };
+  const logout = async () => { await signOut(auth); };
   return { user, login, logout };
 }
 
 /* =========================
    PROJECT INIT
-   Creates or reuses:
-   - /projects/{projectId}
-   - /projects/{projectId}/whiteboards/{boardId}
    ========================= */
-async function ensureProjectAndBoard(uid) {
-  // Try to find existing project by name & membership; for simplicity create fixed IDs
+async function ensureProjectAndBoard(uid: string) {
   const projectId = uid.slice(0, 6) + '_felix_lab';
   const projectRef = doc(db, 'projects', projectId);
   const snap = await getDoc(projectRef);
   if (!snap.exists()) {
     await setDoc(projectRef, {
-      ownerUid: uid,
-      name: DEFAULT_PROJECT_NAME,
-      members: [uid],
-      createdAt: serverTimestamp(),
+      ownerUid: uid, name: DEFAULT_PROJECT_NAME, members: [uid], createdAt: serverTimestamp(),
     });
   } else {
     const data = snap.data();
-    if (!data.members?.includes(uid)) {
-      await updateDoc(projectRef, { members: arrayUnion(uid) });
-    }
+    if (!data?.members?.includes(uid)) await updateDoc(projectRef, { members: arrayUnion(uid) });
   }
 
-  // Whiteboard
   const boardId = 'main';
   const boardRef = doc(db, `projects/${projectId}/whiteboards`, boardId);
-  const boardSnap = await getDoc(boardRef);
-  if (!boardSnap.exists()) {
-    await setDoc(boardRef, {
-      name: DEFAULT_BOARD_NAME,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+  if (!(await getDoc(boardRef)).exists()) {
+    await setDoc(boardRef, { name: DEFAULT_BOARD_NAME, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   }
 
-  // Init user profile (for XP/level)
   const userRef = doc(db, 'users', uid);
-  const uSnap = await getDoc(userRef);
-  if (!uSnap.exists()) {
+  if (!(await getDoc(userRef)).exists()) {
     await setDoc(userRef, {
       displayName: auth.currentUser?.displayName || 'User',
-      totalXP: 0,
-      level: 1,
-      badgesEarned: 0,
-      createdAt: serverTimestamp(),
+      totalXP: 0, level: 1, badgesEarned: 0, createdAt: serverTimestamp(),
     });
   }
 
-  // Init metrics doc (to track thresholds)
   const metricsRef = doc(db, `users/${uid}/metrics`, 'main');
-  const mSnap = await getDoc(metricsRef);
-  if (!mSnap.exists()) {
+  if (!(await getDoc(metricsRef)).exists()) {
     await setDoc(metricsRef, {
-      notesCreated: 0,
-      storiesCreated: 0,
-      movedToNowCount: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      notesCreated: 0, storiesCreated: 0, movedToNowCount: 0,
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
     });
   }
 
@@ -114,7 +83,7 @@ async function ensureProjectAndBoard(uid) {
 /* =========================
    BADGE ENGINE
    ========================= */
-async function earnBadge(uid, badgeKey) {
+async function earnBadge(uid: string, badgeKey: keyof typeof BADGES) {
   const badge = BADGES[badgeKey];
   if (!badge) return;
 
@@ -123,20 +92,11 @@ async function earnBadge(uid, badgeKey) {
 
   await runTransaction(db, async (tx) => {
     const badgeSnap = await tx.get(badgeRef);
-    if (badgeSnap.exists()) {
-      // Already earned
-      return;
-    }
-    tx.set(badgeRef, {
-      name: badge.name,
-      emoji: badge.emoji,
-      xp: badge.xp,
-      lesson: badge.lesson,
-      earnedAt: serverTimestamp(),
-    });
+    if (badgeSnap.exists()) return;
 
+    tx.set(badgeRef, { ...badge, earnedAt: serverTimestamp() });
     const userSnap = await tx.get(userRef);
-    const d = userSnap.exists() ? userSnap.data() : { totalXP: 0, level: 1, badgesEarned: 0 };
+    const d = userSnap.exists() ? userSnap.data() as any : { totalXP: 0, level: 1, badgesEarned: 0 };
     const totalXP = (d.totalXP || 0) + badge.xp;
     const level = Math.floor(totalXP / 100) + 1;
     const badgesEarned = (d.badgesEarned || 0) + 1;
@@ -144,44 +104,126 @@ async function earnBadge(uid, badgeKey) {
   });
 }
 
-// Helpers that update metrics and potentially award badges
-async function incMetric(uid, field, incBy = 1) {
+async function incMetric(uid: string, field: 'notesCreated' | 'storiesCreated' | 'movedToNowCount', incBy = 1) {
   const metricsRef = doc(db, `users/${uid}/metrics`, 'main');
   await runTransaction(db, async (tx) => {
     const m = await tx.get(metricsRef);
-    const curr = m.exists() ? m.data() : {};
+    const curr = m.exists() ? (m.data() as any) : {};
     const nextVal = (curr[field] || 0) + incBy;
     tx.set(metricsRef, { [field]: nextVal, updatedAt: serverTimestamp() }, { merge: true });
 
-    // Evaluate thresholds → award badges
-    if (field === 'notesCreated' && nextVal >= 5) {
-      await earnBadge(uid, 'brainstormer');
-    }
-    if (field === 'storiesCreated' && nextVal >= 1) {
-      await earnBadge(uid, 'storyteller');
-    }
-    if (field === 'movedToNowCount' && nextVal >= 3) {
-      await earnBadge(uid, 'mvp_arch');
-    }
+    if (field === 'notesCreated' && nextVal >= 5) await earnBadge(uid, 'brainstormer');
+    if (field === 'storiesCreated' && nextVal >= 1) await earnBadge(uid, 'storyteller');
+    if (field === 'movedToNowCount' && nextVal >= 3) await earnBadge(uid, 'mvp_arch');
   });
 }
 
 /* =========================
-   WHITEBOARD COMPONENT
+   LEFT SIDEBAR: JTBD / QUESTIONS
    ========================= */
-function Whiteboard({ projectId, boardId, user }) {
-  const [elements, setElements] = useState([]);
-  const boardRef = useRef(null);
+function JobsSidebar({ projectId, boardId }: { projectId: string; boardId: string }) {
+  const [tab, setTab] = useState<'jtbd' | 'q'>('jtbd');
+  const [items, setItems] = useState<any[]>([]);
+  const [text, setText] = useState('');
+
+  const collPath = `projects/${projectId}/whiteboards/${boardId}/jobs`;
+  useEffect(() => {
+    const qy = query(collection(db, collPath), orderBy('createdAt', 'asc'));
+    const unsub = onSnapshot(qy, (s) => {
+      const arr: any[] = [];
+      s.forEach((d) => arr.push({ id: d.id, ...(d.data() as any) }));
+      setItems(arr);
+    });
+    return () => unsub();
+  }, [projectId, boardId]);
+
+  const addItem = async () => {
+    if (!text.trim()) return;
+    await addDoc(collection(db, collPath), {
+      type: tab === 'jtbd' ? 'jtbd' : 'question',
+      text: text.trim(),
+      done: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    setText('');
+  };
+
+  const toggleDone = async (id: string, done: boolean) => {
+    await updateDoc(doc(db, collPath, id), { done: !done, updatedAt: serverTimestamp() });
+  };
+
+  const shown = items.filter((i) => i.type === (tab === 'jtbd' ? 'jtbd' : 'question'));
+
+  return (
+    <aside className="w-full sm:w-64 shrink-0 rounded-2xl border bg-white/70 p-3">
+      <div className="mb-2 flex gap-2">
+        <button
+          onClick={() => setTab('jtbd')}
+          className={`flex-1 rounded-lg px-2 py-1 text-sm ${tab==='jtbd'?'bg-neutral-900 text-white':'bg-neutral-200 hover:bg-neutral-300'}`}
+        >
+          Jobs to be done
+        </button>
+        <button
+          onClick={() => setTab('q')}
+          className={`flex-1 rounded-lg px-2 py-1 text-sm ${tab==='q'?'bg-neutral-900 text-white':'bg-neutral-200 hover:bg-neutral-300'}`}
+        >
+          Questions
+        </button>
+      </div>
+
+      <div className="mb-2">
+        <form
+          onSubmit={(e)=>{e.preventDefault(); addItem();}}
+          className="flex gap-2"
+        >
+          <input
+            value={text}
+            onChange={(e)=>setText(e.target.value)}
+            placeholder={tab==='jtbd' ? 'Add a job…' : 'Add a question…'}
+            className="flex-1 rounded-md border px-2 py-1 text-sm"
+          />
+          <button className="rounded-md bg-emerald-200 px-3 py-1 text-xs hover:bg-emerald-300">Add</button>
+        </form>
+      </div>
+
+      <ul className="space-y-2">
+        {shown.map((i)=>(
+          <li key={i.id} className="flex items-start gap-2 rounded-lg border bg-neutral-50 p-2">
+            <input
+              type="checkbox"
+              checked={!!i.done}
+              onChange={()=>toggleDone(i.id, !!i.done)}
+              className="mt-0.5"
+            />
+            <span className={`text-sm break-words ${i.done?'line-through text-neutral-400':''}`}>
+              {i.text}
+            </span>
+          </li>
+        ))}
+        {shown.length===0 && (
+          <li className="text-xs text-neutral-500">Nothing here yet.</li>
+        )}
+      </ul>
+    </aside>
+  );
+}
+
+/* =========================
+   WHITEBOARD
+   ========================= */
+function Whiteboard({ projectId, boardId, user }: { projectId: string; boardId: string; user: any }) {
+  const [elements, setElements] = useState<any[]>([]);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!projectId || !boardId) return;
-    const q = query(
+    const qy = query(
       collection(db, `projects/${projectId}/whiteboards/${boardId}/elements`),
       orderBy('updatedAt', 'asc')
     );
-    const unsub = onSnapshot(q, (snap) => {
-      const arr = [];
-      snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
+    const unsub = onSnapshot(qy, (snap) => {
+      const arr: any[] = [];
+      snap.forEach((d) => arr.push({ id: d.id, ...(d.data() as any) }));
       setElements(arr);
     });
     return () => unsub();
@@ -195,8 +237,8 @@ function Whiteboard({ projectId, boardId, user }) {
 
     await addDoc(collection(db, `projects/${projectId}/whiteboards/${boardId}/elements`), {
       type: 'sticky',
-      text: 'New idea…',
-      meta: { color: '#FEF3C7', emoji: '📝', tag: 'Idea' },
+      text: NEW_PLACEHOLDER,          // saved initially, cleared on first focus
+      meta: { color: STICKY_COLORS[0], emoji: '📝', tag: 'Idea' },
       position: { x, y, z: 1 },
       size: { w: 220, h: 120 },
       links: {},
@@ -205,11 +247,10 @@ function Whiteboard({ projectId, boardId, user }) {
       updatedAt: serverTimestamp(),
     });
 
-    // Metrics + potential badge
     await incMetric(user.uid, 'notesCreated', 1);
   };
 
-  const onDrag = async (e, el) => {
+  const onDrag = async (e: React.DragEvent, el: any) => {
     const rect = boardRef.current?.getBoundingClientRect();
     if (!rect) return;
     const nx = e.clientX - rect.left - (el.size?.w || 220) / 2;
@@ -220,24 +261,31 @@ function Whiteboard({ projectId, boardId, user }) {
     });
   };
 
-  const updateText = async (id, text) => {
+  const updateText = async (id: string, text: string) => {
     await updateDoc(doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, id), {
-      text,
-      updatedAt: serverTimestamp(),
+      text, updatedAt: serverTimestamp(),
     });
   };
 
-  const upgradeToStory = async (el) => {
+  const setColor = async (id: string, color: string) => {
+    await updateDoc(doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, id), {
+      'meta.color': color, updatedAt: serverTimestamp(),
+    });
+  };
+
+  const upgradeToStory = async (el: any) => {
     if (!user) return;
     const storiesCol = collection(db, `projects/${projectId}/stories`);
     const storyRef = doc(storiesCol);
     const elRef = doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, el.id);
 
     await runTransaction(db, async (tx) => {
-      const title = (el.text || 'Untitled').split('\n')[0].slice(0, 100);
+      const title = ((el.text || 'Untitled').replace(NEW_PLACEHOLDER, '').trim() || 'Untitled')
+        .split('\n')[0].slice(0, 100);
+
       tx.set(storyRef, {
         title,
-        description: el.text || '',
+        description: (el.text || '').replace(NEW_PLACEHOLDER, '').trim(),
         acceptanceCriteria: [],
         source: { boardId, elementId: el.id },
         status: 'idea',
@@ -258,119 +306,128 @@ function Whiteboard({ projectId, boardId, user }) {
   };
 
   return (
-    <div className="rounded-2xl border bg-white/70 p-4 shadow-sm">
-      <div className="flex items-center justify-between pb-2">
-        <h2 className="text-lg font-semibold">Whiteboard</h2>
-        <button onClick={createSticky} className="rounded-xl bg-amber-200 px-3 py-1 text-sm hover:bg-amber-300">
-          + Sticky
-        </button>
-      </div>
+    <div className="flex flex-col sm:flex-row gap-4">
+      {/* Left sidebar */}
+      <JobsSidebar projectId={projectId} boardId={boardId} />
 
-      <div
-        ref={boardRef}
-        className="relative h-[420px] w-full rounded-xl border bg-neutral-50"
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => e.preventDefault()}
-      >
-        {elements.map((el) => (
-          <div
-            key={el.id}
-            draggable
-            onDragEnd={(e) => onDrag(e, el)}
-            className="absolute rounded-xl shadow-md"
-            style={{
-              left: el.position?.x || 20,
-              top: el.position?.y || 20,
-              width: el.size?.w || 220,
-              height: el.size?.h || 120,
-              background: el.meta?.color || '#FFF',
-            }}
-          >
-            <div className="flex items-center justify-between p-2">
-              <span className="text-lg">{el.meta?.emoji || '📝'}</span>
-              <div className="flex gap-2">
-                {el.links?.toStoryId ? (
-                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Linked</span>
-                ) : (
-                  <button
-                    onClick={() => upgradeToStory(el)}
-                    className="rounded bg-indigo-100 px-2 py-0.5 text-xs hover:bg-indigo-200"
-                  >
-                    Upgrade → Story
-                  </button>
-                )}
+      {/* Canvas */}
+      <div className="flex-1 rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
+        <div className="flex items-center justify-between pb-2">
+          <h2 className="text-lg font-semibold">Whiteboard</h2>
+          <button onClick={createSticky} className="rounded-xl bg-amber-200 px-3 py-1 text-sm hover:bg-amber-300">
+            + Sticky
+          </button>
+        </div>
+
+        <div
+          ref={boardRef}
+          className="relative h-[420px] w-full rounded-xl border bg-neutral-50 overflow-hidden"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => e.preventDefault()}
+        >
+          {elements.map((el) => (
+            <div
+              key={el.id}
+              draggable
+              onDragEnd={(e) => onDrag(e, el)}
+              className="absolute rounded-xl shadow-md"
+              style={{
+                left: el.position?.x ?? 20,
+                top: el.position?.y ?? 20,
+                width: el.size?.w ?? 220,
+                height: el.size?.h ?? 120,
+                background: el.meta?.color || '#FFF',
+              }}
+            >
+              <div className="flex items-center justify-between p-2">
+                <span className="text-lg">{el.meta?.emoji || '📝'}</span>
+
+                {/* Color palette */}
+                <div className="flex items-center gap-1">
+                  {STICKY_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      className="h-4 w-4 rounded-full border shadow-sm"
+                      style={{ background: c }}
+                      title="Change colour"
+                      onClick={() => setColor(el.id, c)}
+                    />
+                  ))}
+                  {el.links?.toStoryId ? (
+                    <span className="ml-2 rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Linked</span>
+                  ) : (
+                    <button
+                      onClick={() => upgradeToStory(el)}
+                      className="ml-2 rounded bg-indigo-100 px-2 py-0.5 text-xs hover:bg-indigo-200"
+                    >
+                      Upgrade → Story
+                    </button>
+                  )}
+                </div>
               </div>
+
+              <textarea
+                defaultValue={el.text || ''}
+                placeholder={NEW_PLACEHOLDER}
+                onFocus={(e) => {
+                  if (e.currentTarget.value === NEW_PLACEHOLDER) {
+                    e.currentTarget.value = '';
+                    // ensure placeholder text isn’t accidentally persisted
+                    updateText(el.id, '');
+                  }
+                }}
+                onBlur={(e) => updateText(el.id, e.target.value)}
+                className="h-[78px] w-full resize-none bg-transparent p-2 text-sm outline-none break-words"
+              />
             </div>
-            <textarea
-              defaultValue={el.text || ''}
-              onBlur={(e) => updateText(el.id, e.target.value)}
-              className="h-[78px] w-full resize-none bg-transparent p-2 text-sm outline-none"
-            />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 /* =========================
-   STORIES KANBAN (Now/Next/Later)
+   STORIES KANBAN
    ========================= */
-function StoriesKanban({ projectId, user }) {
-  const [stories, setStories] = useState([]);
+function StoriesKanban({ projectId, user }: { projectId: string; user: any }) {
+  const [stories, setStories] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!projectId) return;
-    const qAll = query(
-      collection(db, `projects/${projectId}/stories`),
-      orderBy('updatedAt', 'desc')
-    );
+    const qAll = query(collection(db, `projects/${projectId}/stories`), orderBy('updatedAt', 'desc'));
     const unsub = onSnapshot(qAll, (snap) => {
-      const arr = [];
-      snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
+      const arr: any[] = [];
+      snap.forEach((d) => arr.push({ id: d.id, ...(d.data() as any) }));
       setStories(arr);
     });
     return () => unsub();
   }, [projectId]);
 
-  const moveToLane = async (story, lane) => {
-    if (!user) return;
-    await updateDoc(doc(db, `projects/${projectId}/stories`, story.id), {
-      lane,
-      updatedAt: serverTimestamp(),
-    });
-    if (lane === 'now') {
-      await incMetric(user.uid, 'movedToNowCount', 1);
-    }
+  const moveToLane = async (story: any, lane: string | null) => {
+    await updateDoc(doc(db, `projects/${projectId}/stories`, story.id), { lane, updatedAt: serverTimestamp() });
+    if (lane === 'now') await incMetric(user.uid, 'movedToNowCount', 1);
   };
 
-  const setPriority = async (story, priority) => {
-    await updateDoc(doc(db, `projects/${projectId}/stories`, story.id), {
-      priority,
-      updatedAt: serverTimestamp(),
-    });
+  const setPriority = async (story: any, priority: string) => {
+    await updateDoc(doc(db, `projects/${projectId}/stories`, story.id), { priority, updatedAt: serverTimestamp() });
   };
 
-  const addAC = async (story, text) => {
+  const addAC = async (story: any, text: string) => {
     if (!text?.trim()) return;
     const ref = doc(db, `projects/${projectId}/stories`, story.id);
     await runTransaction(db, async (tx) => {
       const s = await tx.get(ref);
-      const data = s.data();
+      const data = s.data() as any;
       const ac = Array.isArray(data.acceptanceCriteria) ? data.acceptanceCriteria.slice() : [];
       ac.push(text.trim());
       tx.update(ref, { acceptanceCriteria: ac, updatedAt: serverTimestamp() });
-
-      // Award "Precision Master" at 3+ AC
-      if (ac.length >= 3) {
-        await earnBadge(story.createdBy || user.uid, 'precision');
-      }
+      if (ac.length >= 3) await earnBadge(story.createdBy || user.uid, 'precision');
     });
   };
 
-  const Column = ({ title, lane }) => {
+  const Column = ({ title, lane }: { title: string; lane: string | null }) => {
     const items = stories.filter((s) => (lane === null ? s.lane == null : s.lane === lane));
-    const onDrop = async (e) => {
+    const onDrop = async (e: React.DragEvent) => {
       const id = e.dataTransfer.getData('text/story-id');
       const story = stories.find((s) => s.id === id);
       if (story) await moveToLane(story, lane);
@@ -378,7 +435,7 @@ function StoriesKanban({ projectId, user }) {
 
     return (
       <div
-        className="min-h-[360px] flex-1 rounded-xl border bg-white/70 p-3"
+        className="min-h-[360px] flex-1 rounded-xl border bg-white/70 p-3 min-w-0"
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
       >
@@ -395,12 +452,14 @@ function StoriesKanban({ projectId, user }) {
               className="rounded-xl border bg-neutral-50 p-3 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="font-medium">{s.title || 'Untitled'}</div>
-                  <div className="mt-1 text-xs text-neutral-600 line-clamp-3">{s.description}</div>
+                <div className="min-w-0">
+                  <div className="font-medium break-words">{s.title || 'Untitled'}</div>
+                  <div className="mt-1 text-xs text-neutral-600 whitespace-pre-wrap break-words">
+                    {s.description}
+                  </div>
                 </div>
                 <select
-                  className="rounded-md border bg-white px-2 py-1 text-xs"
+                  className="rounded-md border bg-white px-2 py-1 text-xs shrink-0"
                   value={s.priority || 'medium'}
                   onChange={(e) => setPriority(s, e.target.value)}
                 >
@@ -413,15 +472,15 @@ function StoriesKanban({ projectId, user }) {
 
               <div className="mt-2">
                 <div className="text-[11px] font-semibold uppercase text-neutral-500">Acceptance Criteria</div>
-                <ul className="ml-4 list-disc text-sm">
-                  {(s.acceptanceCriteria || []).map((a, i) => (
-                    <li key={i}>{a}</li>
+                <ul className="ml-4 list-disc text-sm break-words">
+                  {(s.acceptanceCriteria || []).map((a: string, i: number) => (
+                    <li key={i} className="break-words">{a}</li>
                   ))}
                 </ul>
                 <ACInput onSubmit={(text) => addAC(s, text)} />
               </div>
 
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-[11px] uppercase text-neutral-500">Move:</span>
                 {LANE_OPTIONS.map((ln) => (
                   <button
@@ -443,7 +502,7 @@ function StoriesKanban({ projectId, user }) {
   };
 
   return (
-    <div className="mt-6 grid grid-cols-4 gap-3">
+    <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-3">
       <Column title="Backlog" lane={null} />
       <Column title="Now" lane="now" />
       <Column title="Next" lane="next" />
@@ -452,16 +511,12 @@ function StoriesKanban({ projectId, user }) {
   );
 }
 
-function ACInput({ onSubmit }) {
+function ACInput({ onSubmit }: { onSubmit: (t: string)=>void }) {
   const [val, setVal] = useState('');
   return (
     <form
       className="mt-2 flex gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit?.(val);
-        setVal('');
-      }}
+      onSubmit={(e) => { e.preventDefault(); onSubmit?.(val); setVal(''); }}
     >
       <input
         value={val}
@@ -475,11 +530,11 @@ function ACInput({ onSubmit }) {
 }
 
 /* =========================
-   BADGE STRIP (read-only view)
+   BADGE STRIP
    ========================= */
-function BadgeStrip({ user }) {
-  const [profile, setProfile] = useState(null);
-  const [badges, setBadges] = useState([]);
+function BadgeStrip({ user }: { user: any }) {
+  const [profile, setProfile] = useState<any>(null);
+  const [badges, setBadges] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -487,14 +542,11 @@ function BadgeStrip({ user }) {
     const unsub1 = onSnapshot(uref, (snap) => setProfile(snap.data() || null));
     const qB = query(collection(db, `users/${user.uid}/badges`), orderBy('earnedAt', 'desc'));
     const unsub2 = onSnapshot(qB, (snap) => {
-      const arr = [];
-      snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
+      const arr: any[] = [];
+      snap.forEach((d) => arr.push({ id: d.id, ...(d.data() as any) }));
       setBadges(arr);
     });
-    return () => {
-      unsub1?.();
-      unsub2?.();
-    };
+    return () => { unsub1?.(); unsub2?.(); };
   }, [user]);
 
   if (!user) return null;
@@ -514,7 +566,7 @@ function BadgeStrip({ user }) {
         {badges.map((b) => (
           <span key={b.id} className="inline-flex items-center gap-1 rounded-xl border bg-neutral-50 px-3 py-1 text-sm">
             <span>{b.emoji}</span>
-            <span className="font-medium">{b.name}</span>
+            <span className="font-medium break-words">{b.name}</span>
           </span>
         ))}
       </div>
@@ -527,9 +579,8 @@ function BadgeStrip({ user }) {
    ========================= */
 export default function ProductLabPage() {
   const { user, login, logout } = useAuth();
-  const [project, setProject] = useState(null);
+  const [project, setProject] = useState<{projectId:string;boardId:string}|null>(null);
 
-  // Bootstrap project & board on login
   useEffect(() => {
     (async () => {
       if (!user) return setProject(null);
@@ -541,7 +592,7 @@ export default function ProductLabPage() {
   return (
     <main className="mx-auto max-w-6xl p-4">
       <header className="mb-4 flex items-center justify-between">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-extrabold">Felix Product Lab</h1>
           <p className="text-sm text-neutral-600">
             Whiteboard → Upgrade to Story → Plan in Now/Next/Later — with badges & XP.
@@ -550,7 +601,7 @@ export default function ProductLabPage() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <span className="text-sm text-neutral-600">Hi, {user.displayName || 'there'} 👋</span>
+              <span className="hidden sm:block text-sm text-neutral-600">Hi, {user.displayName || 'there'} 👋</span>
               <button onClick={logout} className="rounded-xl border px-3 py-1 text-sm hover:bg-neutral-100">Sign out</button>
             </>
           ) : (
