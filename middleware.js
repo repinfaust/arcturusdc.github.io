@@ -31,11 +31,14 @@ export function middleware(req) {
   }
 
   /* ---------------- Protected Routes ---------------- */
-  // Add any page or subtree that requires Google/Firebase auth
+  // Add any page or subtree that requires Google/Firebase auth (include /apps and vanity /stea paths)
   const protectedPaths = [
     '/apps/stea/automatedtestsdashboard',
     '/apps/stea/board',
     '/apps/stea/filo', // ✅ newly protected route (and its children)
+    '/stea/automatedtestsdashboard',
+    '/stea/board',
+    '/stea/filo',
   ];
 
   // True if request path exactly matches or is a child of a protected path
