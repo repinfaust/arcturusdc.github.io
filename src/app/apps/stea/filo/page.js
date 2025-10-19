@@ -157,7 +157,7 @@ function JobsSidebar({ projectId, boardId }) {
   const shown = items.filter((i) => i.type === (tab === 'jtbd' ? 'jtbd' : 'question'));
 
   return (
-    <aside className="w-full sm:w-64 shrink-0 rounded-2xl border bg-white/70 p-3">
+    <aside className="w-full sm:w-64 shrink-0 rounded-2xl border bg-white/70 p-3 min-w-0">
       <div className="mb-2 flex gap-2">
         <button
           onClick={() => setTab('jtbd')}
@@ -192,7 +192,8 @@ function JobsSidebar({ projectId, boardId }) {
               onChange={()=>toggleDone(i.id, !!i.done)}
               className="mt-0.5"
             />
-            <span className={`text-[13px] leading-snug whitespace-pre-wrap break-words ${i.done?'line-through text-neutral-400':''}`}>
+            {/* ultra-safe wrapping: min-w-0 + block + break-all + pre-wrap */}
+            <span className={`block min-w-0 max-w-full text-[13px] leading-snug whitespace-pre-wrap break-all ${i.done?'line-through text-neutral-400':''}`}>
               {i.text}
             </span>
           </li>
@@ -211,6 +212,9 @@ function JobsSidebar({ projectId, boardId }) {
 function Whiteboard({ projectId, boardId, user }) {
   const [elements, setElements] = useState([]);
   const boardRef = useRef(null);
+
+  // store drag offsets per-sticky to prevent “snap down” on drop
+  const dragOffsetRef = useRef(new Map()); // id -> {offsetX, offsetY}
 
   useEffect(() => {
     const qy = query(
@@ -233,10 +237,10 @@ function Whiteboard({ projectId, boardId, user }) {
 
     await addDoc(collection(db, `projects/${projectId}/whiteboards/${boardId}/elements`), {
       type: 'sticky',
-      text: NEW_PLACEHOLDER, // cleared on first focus
+      text: NEW_PLACEHOLDER,
       meta: { color: STICKY_COLORS[0], emoji: '📝', tag: 'Idea' },
       position: { x, y, z: 1 },
-      size: { w: 200, h: 110 }, // smaller default
+      size: { w: 200, h: 110 },
       links: {},
       authorUid: user.uid,
       createdAt: serverTimestamp(),
@@ -246,15 +250,34 @@ function Whiteboard({ projectId, boardId, user }) {
     await incMetric(user.uid, 'notesCreated', 1);
   };
 
-  const onDrag = async (e, el) => {
+  const onDragStart = (e, el) => {
+    // calculate pointer’s offset inside the sticky at drag start
+    const r = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - r.left;
+    const offsetY = e.clientY - r.top;
+    dragOffsetRef.current.set(el.id, { offsetX, offsetY });
+  };
+
+  const onDragEnd = async (e, el) => {
     const rect = boardRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const nx = e.clientX - rect.left - (el.size?.w || 200) / 2;
-    const ny = e.clientY - rect.top - 16;
+
+    const { offsetX = (el.size?.w || 200) / 2, offsetY = 16 } =
+      dragOffsetRef.current.get(el.id) || {};
+
+    const nx = e.clientX - rect.left - offsetX;
+    const ny = e.clientY - rect.top  - offsetY;
+
     await updateDoc(doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, el.id), {
-      position: { ...(el.position || {}), x: Math.max(0, nx), y: Math.max(0, ny) },
+      position: {
+        ...(el.position || {}),
+        x: Math.max(0, Math.min(nx, (rect.width  - (el.size?.w || 200)))),
+        y: Math.max(0, Math.min(ny, (rect.height - (el.size?.h || 110)))),
+      },
       updatedAt: serverTimestamp(),
     });
+
+    dragOffsetRef.current.delete(el.id);
   };
 
   const updateText = async (id, text) => {
@@ -316,14 +339,13 @@ function Whiteboard({ projectId, boardId, user }) {
         <div
           ref={boardRef}
           className="relative h-[420px] w-full rounded-xl border bg-neutral-50 overflow-hidden"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => e.preventDefault()}
         >
           {elements.map((el) => (
             <div
               key={el.id}
               draggable
-              onDragEnd={(e) => onDrag(e, el)}
+              onDragStart={(e) => onDragStart(e, el)}
+              onDragEnd={(e) => onDragEnd(e, el)}
               className="absolute rounded-xl shadow-sm"
               style={{
                 left: el.position?.x ?? 20,
