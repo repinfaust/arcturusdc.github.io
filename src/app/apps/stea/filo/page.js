@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
 import {
   addDoc, arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query,
-  runTransaction, serverTimestamp, setDoc, updateDoc, where
+  runTransaction, serverTimestamp, setDoc, updateDoc
 } from 'firebase/firestore';
+import { setLogLevel } from 'firebase/firestore';   // 👈 import this
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+
+setLogLevel('debug');  // 👈 do this once at module load (before any Firestore calls)
+
 
 /* =========================
    CONFIG & CONSTANTS
