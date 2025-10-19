@@ -122,7 +122,7 @@ async function incMetric(uid, field, incBy = 1) {
    LEFT SIDEBAR: JTBD / QUESTIONS
    ========================= */
 function JobsSidebar({ projectId, boardId }) {
-  const [tab, setTab] = useState('jtbd'); // 'jtbd' | 'q'
+  const [tab, setTab] = useState('jtbd');
   const [items, setItems] = useState([]);
   const [text, setText] = useState('');
 
@@ -192,7 +192,7 @@ function JobsSidebar({ projectId, boardId }) {
               onChange={()=>toggleDone(i.id, !!i.done)}
               className="mt-0.5"
             />
-            <span className={`text-sm break-words ${i.done?'line-through text-neutral-400':''}`}>
+            <span className={`text-[13px] leading-snug whitespace-pre-wrap break-words ${i.done?'line-through text-neutral-400':''}`}>
               {i.text}
             </span>
           </li>
@@ -228,15 +228,15 @@ function Whiteboard({ projectId, boardId, user }) {
   const createSticky = async () => {
     if (!user) return;
     const rect = boardRef.current?.getBoundingClientRect();
-    const x = (rect?.width || 800) / 2 - 110;
-    const y = (rect?.height || 500) / 2 - 70;
+    const x = (rect?.width || 800) / 2 - 100;
+    const y = (rect?.height || 500) / 2 - 60;
 
     await addDoc(collection(db, `projects/${projectId}/whiteboards/${boardId}/elements`), {
       type: 'sticky',
       text: NEW_PLACEHOLDER, // cleared on first focus
       meta: { color: STICKY_COLORS[0], emoji: '📝', tag: 'Idea' },
       position: { x, y, z: 1 },
-      size: { w: 220, h: 120 },
+      size: { w: 200, h: 110 }, // smaller default
       links: {},
       authorUid: user.uid,
       createdAt: serverTimestamp(),
@@ -249,8 +249,8 @@ function Whiteboard({ projectId, boardId, user }) {
   const onDrag = async (e, el) => {
     const rect = boardRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const nx = e.clientX - rect.left - (el.size?.w || 220) / 2;
-    const ny = e.clientY - rect.top - 20;
+    const nx = e.clientX - rect.left - (el.size?.w || 200) / 2;
+    const ny = e.clientY - rect.top - 16;
     await updateDoc(doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, el.id), {
       position: { ...(el.position || {}), x: Math.max(0, nx), y: Math.max(0, ny) },
       updatedAt: serverTimestamp(),
@@ -315,7 +315,7 @@ function Whiteboard({ projectId, boardId, user }) {
 
         <div
           ref={boardRef}
-          className="relative h[420px] sm:h-[420px] h-[420px] w-full rounded-xl border bg-neutral-50 overflow-hidden"
+          className="relative h-[420px] w-full rounded-xl border bg-neutral-50 overflow-hidden"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => e.preventDefault()}
         >
@@ -324,34 +324,35 @@ function Whiteboard({ projectId, boardId, user }) {
               key={el.id}
               draggable
               onDragEnd={(e) => onDrag(e, el)}
-              className="absolute rounded-xl shadow-md"
+              className="absolute rounded-xl shadow-sm"
               style={{
                 left: el.position?.x ?? 20,
                 top: el.position?.y ?? 20,
-                width: el.size?.w ?? 220,
-                height: el.size?.h ?? 120,
+                width: el.size?.w ?? 200,
+                height: el.size?.h ?? 110,
                 background: el.meta?.color || '#FFF',
               }}
             >
-              <div className="flex items-center justify-between p-2">
-                <span className="text-lg">{el.meta?.emoji || '📝'}</span>
+              <div className="flex items-center justify-between px-2 py-1">
+                <span className="text-base">{el.meta?.emoji || '📝'}</span>
 
+                {/* Color palette */}
                 <div className="flex items-center gap-1">
                   {STICKY_COLORS.map((c) => (
                     <button
                       key={c}
-                      className="h-4 w-4 rounded-full border shadow-sm"
+                      className="h-3.5 w-3.5 rounded-full border shadow-sm"
                       style={{ background: c }}
                       title="Change colour"
                       onClick={() => setColor(el.id, c)}
                     />
                   ))}
                   {el.links?.toStoryId ? (
-                    <span className="ml-2 rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Linked</span>
+                    <span className="ml-2 rounded bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">Linked</span>
                   ) : (
                     <button
                       onClick={() => upgradeToStory(el)}
-                      className="ml-2 rounded bg-indigo-100 px-2 py-0.5 text-xs hover:bg-indigo-200"
+                      className="ml-2 rounded bg-indigo-100 px-2 py-0.5 text-[10px] hover:bg-indigo-200"
                     >
                       Upgrade → Story
                     </button>
@@ -369,7 +370,7 @@ function Whiteboard({ projectId, boardId, user }) {
                   }
                 }}
                 onBlur={(e) => updateText(el.id, e.target.value)}
-                className="h-[78px] w-full resize-none bg-transparent p-2 text-sm outline-none break-words"
+                className="h-[74px] w-full resize-none bg-transparent px-2 pb-2 text-[13px] leading-snug outline-none whitespace-pre-wrap break-words"
               />
             </div>
           ))}
@@ -441,12 +442,12 @@ function StoriesKanban({ projectId, user }) {
               key={s.id}
               draggable
               onDragStart={(e) => e.dataTransfer.setData('text/story-id', s.id)}
-              className="rounded-xl border bg-neutral-50 p-3 shadow-sm"
+              className="rounded-xl border bg-neutral-50 p-3 shadow-sm max-w-full"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-3 min-w-0">
                 <div className="min-w-0">
-                  <div className="font-medium break-words">{s.title || 'Untitled'}</div>
-                  <div className="mt-1 text-xs text-neutral-600 whitespace-pre-wrap break-words">
+                  <div className="text-sm font-medium break-words">{s.title || 'Untitled'}</div>
+                  <div className="mt-1 text-[12px] text-neutral-700 whitespace-pre-wrap break-words">
                     {s.description}
                   </div>
                 </div>
@@ -463,8 +464,8 @@ function StoriesKanban({ projectId, user }) {
               </div>
 
               <div className="mt-2">
-                <div className="text-[11px] font-semibold uppercase text-neutral-500">Acceptance Criteria</div>
-                <ul className="ml-4 list-disc text-sm break-words">
+                <div className="text-[10px] font-semibold uppercase text-neutral-500">Acceptance Criteria</div>
+                <ul className="ml-4 list-disc text-[13px] leading-snug whitespace-pre-wrap break-words">
                   {(s.acceptanceCriteria || []).map((a, i) => (
                     <li key={i} className="break-words">{a}</li>
                   ))}
@@ -473,7 +474,7 @@ function StoriesKanban({ projectId, user }) {
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-[11px] uppercase text-neutral-500">Move:</span>
+                <span className="text-[10px] uppercase text-neutral-500">Move:</span>
                 {LANE_OPTIONS.map((ln) => (
                   <button
                     key={String(ln)}
@@ -507,14 +508,14 @@ function ACInput({ onSubmit }) {
   const [val, setVal] = useState('');
   return (
     <form
-      className="mt-2 flex gap-2"
+      className="mt-2 flex gap-2 flex-wrap"
       onSubmit={(e) => { e.preventDefault(); onSubmit?.(val); setVal(''); }}
     >
       <input
         value={val}
         onChange={(e) => setVal(e.target.value)}
         placeholder="Add acceptance criterion…"
-        className="flex-1 rounded-md border px-2 py-1 text-sm"
+        className="flex-1 rounded-md border px-2 py-1 text-sm min-w-[180px]"
       />
       <button className="rounded-md bg-emerald-200 px-3 py-1 text-xs hover:bg-emerald-300">Add</button>
     </form>
