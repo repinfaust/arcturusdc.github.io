@@ -124,6 +124,7 @@ async function incMetric(uid, field, incBy = 1) {
    JTBD / QUESTIONS
    ========================= */
 function JobsSidebar({ projectId, boardId }) {
+  if (!projectId || !boardId) return null; // guard
   const [tab, setTab] = useState('jtbd');
   const [items, setItems] = useState([]);
   const [text, setText] = useState('');
@@ -135,6 +136,8 @@ function JobsSidebar({ projectId, boardId }) {
       const arr = [];
       s.forEach((d) => arr.push({ id: d.id, ...d.data() }));
       setItems(arr);
+    }, (e) => {
+      console.error('[JobsSidebar onSnapshot]', collPath, e);
     });
     return () => unsub();
   }, [projectId, boardId]);
@@ -206,6 +209,7 @@ function JobsSidebar({ projectId, boardId }) {
    TLDraw Whiteboard with Firestore persistence
    ========================= */
 function TLDrawWhiteboard({ projectId, boardId, user }) {
+  if (!projectId || !boardId) return null; // guard
   const editorRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -225,33 +229,45 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   // Load initial snapshot (if any) from board doc
   useEffect(() => {
     (async () => {
-      const snap = await getDoc(boardDocRef);
-      const data = snap.exists() ? snap.data() : null;
-      const initial = data?.tldrawSnapshot || null;
-      if (!editorRef.current) {
-        editorRef.current = { __initialSnapshot: initial };
-      } else if (initial) {
-        try { editorRef.current.store.loadSnapshot(initial); } catch {}
+      try {
+        const snap = await getDoc(boardDocRef);
+        const data = snap.exists() ? snap.data() : null;
+        const initial = data?.tldrawSnapshot || null;
+        if (!editorRef.current) {
+          editorRef.current = { __initialSnapshot: initial };
+        } else if (initial) {
+          try { editorRef.current.store.loadSnapshot(initial); } catch {}
+        }
+        setLoaded(true);
+      } catch (e) {
+        console.error('[TLDraw load boardDocRef]', `projects/${projectId}/whiteboards/${boardId}`, e);
       }
-      setLoaded(true);
     })();
-  }, [boardDocRef]);
+  }, [boardDocRef, boardId, projectId]);
 
   // Live watcher (pull updates from other tabs)
   useEffect(() => {
-    const unsub = onSnapshot(boardDocRef, (snap) => {
-      if (!editorRef.current || !snap.exists()) return;
-      const remote = snap.data();
-      if (!remote?.tldrawSnapshot) return;
-      try {
-        const current = editorRef.current.store.getSnapshot();
-        if (JSON.stringify(current) !== JSON.stringify(remote.tldrawSnapshot)) {
-          editorRef.current.store.loadSnapshot(remote.tldrawSnapshot);
+    const unsub = onSnapshot(
+      boardDocRef,
+      (snap) => {
+        if (!editorRef.current || !snap.exists()) return;
+        const remote = snap.data();
+        if (!remote?.tldrawSnapshot) return;
+        try {
+          const current = editorRef.current.store.getSnapshot();
+          if (JSON.stringify(current) !== JSON.stringify(remote.tldrawSnapshot)) {
+            editorRef.current.store.loadSnapshot(remote.tldrawSnapshot);
+          }
+        } catch (e) {
+          console.error('[TLDraw onSnapshot apply]', e);
         }
-      } catch {}
-    });
+      },
+      (err) => {
+        console.error('[TLDraw onSnapshot error]', `projects/${projectId}/whiteboards/${boardId}`, err);
+      }
+    );
     return () => unsub();
-  }, [boardDocRef]);
+  }, [boardDocRef, boardId, projectId]);
 
   // Upgrade → Story button (floating)
   const UpgradeButton = () => {
@@ -406,6 +422,8 @@ function StoriesKanban({ projectId, user }) {
       const arr = [];
       snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
       setStories(arr);
+    }, (e) => {
+      console.error('[StoriesKanban onSnapshot]', `projects/${projectId}/stories`, e);
     });
     return () => unsub();
   }, [projectId]);
@@ -587,6 +605,7 @@ function BadgeStrip({ user }) {
 export default function ProductLabPage() {
   const { user, login, logout } = useAuth();
   const [project, setProject] = useState(null);
+  const [diagOpen, setDiagOpen] = useState(true); // temporary diagnostics
 
   useEffect(() => {
     (async () => {
@@ -629,6 +648,14 @@ export default function ProductLabPage() {
 
       {user && project && (
         <>
+          {diagOpen && (
+            <QuickDiag
+              user={user}
+              projectId={project.projectId}
+              boardId={project.boardId}
+              onClose={() => setDiagOpen(false)}
+            />
+          )}
           <div className="flex flex-col sm:flex-row gap-4">
             <JobsSidebar projectId={project.projectId} boardId={project.boardId} />
             <TLDrawWhiteboard projectId={project.projectId} boardId={project.boardId} user={user} />
@@ -640,6 +667,64 @@ export default function ProductLabPage() {
         </>
       )}
     </main>
+  );
+}
+
+/** ---------------- Quick permissions & runtime diagnostics (temporary) ---------------- */
+function QuickDiag({ user, projectId, boardId, onClose }) {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    (async () => {
+      const out = [];
+      const push = (name, ok, msg) => out.push({ name, ok, msg });
+      try {
+        const p = await getDoc(doc(db, 'projects', projectId));
+        push(`GET /projects/${projectId}`, true, p.exists() ? 'ok (exists)' : 'ok (missing)');
+      } catch (e) {
+        push(`GET /projects/${projectId}`, false, String(e));
+      }
+      try {
+        const b = await getDoc(doc(db, 'projects', projectId, 'whiteboards', boardId));
+        push(`GET /projects/${projectId}/whiteboards/${boardId}`, true, b.exists() ? 'ok (exists)' : 'ok (missing)');
+      } catch (e) {
+        push(`GET /projects/${projectId}/whiteboards/${boardId}`, false, String(e));
+      }
+      try {
+        const u = await getDoc(doc(db, 'users', user.uid));
+        push(`GET /users/${user.uid}`, true, u.exists() ? 'ok (exists)' : 'ok (missing)');
+      } catch (e) {
+        push(`GET /users/${user.uid}`, false, String(e));
+      }
+      try {
+        // probe a doc id under jobs (rules still evaluated even if missing)
+        const probe = doc(collection(db, `projects/${projectId}/whiteboards/${boardId}/jobs`));
+        await getDoc(probe);
+        push(`DOC READ /projects/${projectId}/whiteboards/${boardId}/jobs/{probe}`, true, 'ok');
+      } catch (e) {
+        push(`DOC READ /projects/${projectId}/whiteboards/${boardId}/jobs/{probe}`, false, String(e));
+      }
+      setRows(out);
+    })();
+  }, [user?.uid, projectId, boardId]);
+
+  return (
+    <div className="mb-4 rounded-xl border bg-amber-50 p-3 text-sm">
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">Diagnostics</div>
+        <button onClick={onClose} className="text-xs underline">hide</button>
+      </div>
+      <div className="mt-2 space-y-1">
+        {rows.map((r, i) => (
+          <div key={i} className="flex gap-2 items-start">
+            <span className={`mt-0.5 inline-block h-2 w-2 rounded-full ${r.ok ? 'bg-green-600' : 'bg-red-600'}`} />
+            <div className="min-w-0">
+              <div className="font-mono break-all">{r.name}</div>
+              {!r.ok && <div className="text-[12px] text-red-700 break-all">{r.msg}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
