@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { auth, db } from '@/lib/firebase';
 import {
   addDoc, arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query,
@@ -161,7 +162,7 @@ function JobsSidebar({ projectId, boardId }) {
   const shown = items.filter((i) => i.type === (tab === 'jtbd' ? 'jtbd' : 'question'));
 
   return (
-    <aside className="w-full sm:w-64 shrink-0 rounded-2xl border bg-white/70 p-3 min-w-0">
+    <aside className="w-full lg:w-72 shrink-0 rounded-2xl border bg-white/70 p-3 min-w-0">
       <div className="mb-2 flex gap-2">
         <button
           onClick={() => setTab('jtbd')}
@@ -177,14 +178,14 @@ function JobsSidebar({ projectId, boardId }) {
         </button>
       </div>
 
-      <form onSubmit={(e)=>{e.preventDefault(); addItem();}} className="mb-2 flex gap-2">
+      <form onSubmit={(e)=>{e.preventDefault(); addItem();}} className="mb-2 flex items-center gap-2">
         <input
           value={text}
           onChange={(e)=>setText(e.target.value)}
           placeholder={tab==='jtbd' ? 'Add a job…' : 'Add a question…'}
-          className="flex-1 rounded-md border px-2 py-1 text-sm"
+          className="flex-1 min-w-0 rounded-md border px-2 py-1 text-sm"
         />
-        <button className="rounded-md bg-emerald-200 px-3 py-1 text-xs hover:bg-emerald-300">Add</button>
+        <button className="shrink-0 rounded-md bg-emerald-200 px-3 py-1 text-xs hover:bg-emerald-300">Add</button>
       </form>
 
       <ul className="space-y-2">
@@ -363,7 +364,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   };
 
   return (
-    <div className="relative rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
+    <div className="relative flex-1 rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
       <div className="flex items-center justify-between pb-2">
         <h2 className="text-lg font-semibold">Whiteboard</h2>
         <span className="text-xs text-neutral-500">Powered by tldraw</span>
@@ -426,6 +427,9 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
    ========================= */
 function StoriesKanban({ projectId, user }) {
   const [stories, setStories] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ title: '', description: '' });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     const qAll = query(collection(db, `projects/${projectId}/stories`), orderBy('updatedAt', 'desc'));
@@ -461,6 +465,39 @@ function StoriesKanban({ projectId, user }) {
     });
   };
 
+  const startEdit = (story) => {
+    setEditingId(story.id);
+    setEditForm({
+      title: story.title || '',
+      description: story.description || '',
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ title: '', description: '' });
+    setSavingEdit(false);
+  };
+
+  const saveEdit = async (story) => {
+    const title = editForm.title.trim();
+    const description = editForm.description.trim();
+    setSavingEdit(true);
+    try {
+      await updateDoc(doc(db, `projects/${projectId}/stories`, story.id), {
+        title: title || 'Untitled',
+        description,
+        updatedAt: serverTimestamp(),
+      });
+      setEditingId(null);
+      setEditForm({ title: '', description: '' });
+    } catch (err) {
+      console.error('Failed to update story', err);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const Column = ({ title, lane }) => {
     const items = stories.filter((s) => (lane === null ? s.lane == null : s.lane === lane));
     const onDrop = async (e) => {
@@ -488,22 +525,69 @@ function StoriesKanban({ projectId, user }) {
               className="rounded-xl border bg-neutral-50 p-3 shadow-sm max-w-full"
             >
               <div className="flex items-start justify-between gap-3 min-w-0">
-                <div className="min-w-0">
-                  <div className="text-sm font-medium break-words">{s.title || 'Untitled'}</div>
-                  <div className="mt-1 text-[12px] text-neutral-700 whitespace-pre-wrap break-words">
-                    {s.description}
+                {editingId === s.id ? (
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <input
+                      value={editForm.title}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-md border px-2 py-1 text-sm"
+                      placeholder="Story title"
+                    />
+                    <textarea
+                      value={editForm.description}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                      className="w-full rounded-md border px-2 py-2 text-sm"
+                      rows={3}
+                      placeholder="Describe the story…"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => saveEdit(s)}
+                        disabled={savingEdit}
+                        className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+                      >
+                        {savingEdit ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className="rounded-lg border px-3 py-1 text-xs hover:bg-neutral-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium break-words">{s.title || 'Untitled'}</div>
+                    <div className="mt-1 text-[12px] text-neutral-700 whitespace-pre-wrap break-words">
+                      {s.description}
+                    </div>
+                  </div>
+                )}
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <select
+                    className="rounded-md border bg-white px-2 py-1 text-xs"
+                    value={s.priority || 'medium'}
+                    onChange={(e) => setPriority(s, e.target.value)}
+                    disabled={editingId === s.id}
+                  >
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                    <option value="critical">critical</option>
+                  </select>
+                  {editingId === s.id ? null : (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(s)}
+                      className="rounded-lg border px-3 py-0.5 text-xs hover:bg-neutral-100"
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
-                <select
-                  className="rounded-md border bg-white px-2 py-1 text-xs shrink-0"
-                  value={s.priority || 'medium'}
-                  onChange={(e) => setPriority(s, e.target.value)}
-                >
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                  <option value="critical">critical</option>
-                </select>
               </div>
 
               <div className="mt-2">
@@ -639,6 +723,9 @@ export default function ProductLabPage() {
           {user ? (
             <>
               <span className="hidden sm:block text-sm text-neutral-600">Hi, {user.displayName || 'there'} 👋</span>
+              <Link href="/apps/stea" className="rounded-xl border px-3 py-1 text-sm hover:bg-neutral-100">
+                STEa Home
+              </Link>
               <button onClick={logout} className="rounded-xl border px-3 py-1 text-sm hover:bg-neutral-100">Sign out</button>
             </>
           ) : (
@@ -667,7 +754,7 @@ export default function ProductLabPage() {
               onClose={() => setDiagOpen(false)}
             />
           )}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
             <JobsSidebar projectId={project.projectId} boardId={project.boardId} />
             <TLDrawWhiteboard projectId={project.projectId} boardId={project.boardId} user={user} />
           </div>

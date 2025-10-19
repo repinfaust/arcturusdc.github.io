@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import {
   addDoc,
@@ -920,13 +921,21 @@ export default function AutomatedTestsDashboard() {
         <div className="text-gray-600">
           Signed in as <span className="font-medium text-gray-900">{user?.email ?? 'unknown'}</span>
         </div>
-        <button
-          onClick={handleSignOut}
-          disabled={signingOut}
-          className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-60"
-        >
-          {signingOut ? 'Signing out…' : 'Sign out'}
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/apps/stea"
+            className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100"
+          >
+            STEa Home
+          </Link>
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-60"
+          >
+            {signingOut ? 'Signing out…' : 'Sign out'}
+          </button>
+        </div>
       </div>
       {/* Tabs */}
       <div className="mt-4 border-b border-gray-200">

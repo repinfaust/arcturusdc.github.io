@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -675,6 +676,14 @@ export default function SteaBoard() {
 
             <div className="ml-auto flex items-center gap-3">
               {user && <span className="text-sm text-gray-600">{user.email}</span>}
+              {user && (
+                <Link
+                  href="/apps/stea"
+                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 text-sm"
+                >
+                  STEa Home
+                </Link>
+              )}
               {user && (
                 <button onClick={() => signOut(auth)} className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">Sign out</button>
               )}

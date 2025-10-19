@@ -35,10 +35,12 @@ export function middleware(req) {
   const protectedPaths = [
     '/apps/stea/automatedtestsdashboard',
     '/apps/stea/board',
-    '/apps/stea/filo', // ✅ newly protected route (and its children)
+    '/apps/stea/filo',
+    '/apps/stea/toume',
     '/stea/automatedtestsdashboard',
     '/stea/board',
     '/stea/filo',
+    '/stea/toume',
   ];
 
   // True if request path exactly matches or is a child of a protected path
@@ -47,7 +49,7 @@ export function middleware(req) {
   );
 
   // Check for Firebase session cookie (__session)
-  const sessionCookie = req.cookies.get('__session');
+  const sessionCookie = req.cookies.get('__session')?.value || '';
 
   if (isProtected && !sessionCookie) {
     // Redirect unauthenticated users to /apps/stea (login)
