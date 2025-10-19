@@ -226,6 +226,19 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
     saveTimer.current = setTimeout(fn, ms);
   };
 
+  // Small helper: wait until editor.store is available, then run setup
+  const whenStoreReady = (editor, fn, tries = 40) => {
+    if (editor && editor.store && typeof editor.store.listen === 'function') {
+      try { fn(); } catch (e) { console.error('[TLDraw setup error]', e); }
+      return;
+    }
+    if (tries <= 0) {
+      console.error('[TLDraw] store not ready after retries');
+      return;
+    }
+    setTimeout(() => whenStoreReady(editor, fn, tries - 1), 50);
+  };
+
   // Load initial snapshot (if any) from board doc
   useEffect(() => {
     (async () => {
@@ -234,8 +247,9 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
         const data = snap.exists() ? snap.data() : null;
         const initial = data?.tldrawSnapshot || null;
         if (!editorRef.current) {
+          // stash until onMount runs
           editorRef.current = { __initialSnapshot: initial };
-        } else if (initial) {
+        } else if (initial && editorRef.current?.store?.loadSnapshot) {
           try { editorRef.current.store.loadSnapshot(initial); } catch {}
         }
         setLoaded(true);
@@ -254,9 +268,11 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
         const remote = snap.data();
         if (!remote?.tldrawSnapshot) return;
         try {
-          const current = editorRef.current.store.getSnapshot();
-          if (JSON.stringify(current) !== JSON.stringify(remote.tldrawSnapshot)) {
-            editorRef.current.store.loadSnapshot(remote.tldrawSnapshot);
+          const current = editorRef.current?.store?.getSnapshot
+            ? editorRef.current.store.getSnapshot()
+            : null;
+          if (!current || JSON.stringify(current) !== JSON.stringify(remote.tldrawSnapshot)) {
+            editorRef.current?.store?.loadSnapshot?.(remote.tldrawSnapshot);
           }
         } catch (e) {
           console.error('[TLDraw onSnapshot apply]', e);
@@ -275,22 +291,29 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
     const [title, setTitle] = useState('');
     useEffect(() => {
       if (!editorRef.current) return;
-      const stop = editorRef.current.store.listen(() => {
-        const sel = editorRef.current.getSelectedShapes();
-        const note = sel.find((s) => s.type === 'note' || s.type === 'text');
-        if (note) {
-          setTitle((note.props && note.props.text) || '');
-          setVisible(true);
-        } else {
-          setVisible(false);
-        }
-      }, { scope: 'user' });
-      return () => stop?.();
+      // wait for store then attach listener
+      whenStoreReady(editorRef.current, () => {
+        const stop = editorRef.current.store.listen(() => {
+          const sel = editorRef.current.getSelectedShapes?.() || [];
+          const note = sel.find((s) => s.type === 'note' || s.type === 'text');
+          if (note) {
+            setTitle((note.props && note.props.text) || '');
+            setVisible(true);
+          } else {
+            setVisible(false);
+          }
+        }, { scope: 'user' });
+        // cleanup
+        editorRef.current._unmountUser = stop;
+      });
+      return () => {
+        try { editorRef.current?._unmountUser?.(); } catch {}
+      };
     }, []);
     if (!visible) return null;
 
     const doUpgrade = async () => {
-      const sel = editorRef.current.getSelectedShapes();
+      const sel = editorRef.current?.getSelectedShapes?.() || [];
       const note = sel.find((s) => s.type === 'note' || s.type === 'text');
       if (!note || !user) return;
 
@@ -315,7 +338,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
 
       // mark shape with storyId in meta
       try {
-        editorRef.current.updateShapes([{
+        editorRef.current?.updateShapes?.([{
           id: note.id,
           type: note.type,
           meta: { ...(note.meta || {}), storyId: storyRef.id }
@@ -359,48 +382,36 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
 
               // Load any earlier snapshot grabbed during pre-mount fetch
               const init = editor.__initialSnapshot || editorRef.current?.__initialSnapshot;
-              if (init) {
+              if (init && editor?.store?.loadSnapshot) {
                 try { editor.store.loadSnapshot(init); } catch {}
               }
 
               // Persist on every change (debounced) → write to BOARD DOC
-              const unlisten = editor.store.listen(
-                () => {
-                  const snapshot = editor.store.getSnapshot();
-                  debounceSave(async () => {
-                    await setDoc(
-                      boardDocRef,
-                      {
-                        tldrawSnapshot: snapshot,
-                        tldrawUpdatedAt: serverTimestamp(),
-                        tldrawUpdatedBy: user?.uid || null,
-                      },
-                      { merge: true }
-                    );
-                  });
-                },
-                { scope: 'document' }
-              );
-
-              // award brainstormer badge lazily when user inserts notes 5+ times (approx)
-              let noteCount = 0;
-              const unlistenUser = editor.store.listen(
-                (e) => {
-                  if (e.source === 'user' && e.changes?.added) {
-                    const added = Object.values(e.changes.added);
-                    if (added.some((c) => c.typeName === 'shape' && (c.type === 'note' || c.type === 'text'))) {
-                      noteCount += 1;
-                      if (user && noteCount >= 5) earnBadge(user.uid, 'brainstormer');
-                    }
-                  }
-                },
-                { scope: 'user' }
-              );
-
-              editor._unmount = () => { unlisten?.(); unlistenUser?.(); };
+              whenStoreReady(editor, () => {
+                const unlisten = editor.store.listen(
+                  () => {
+                    const snapshot = editor.store.getSnapshot?.();
+                    if (!snapshot) return;
+                    debounceSave(async () => {
+                      await setDoc(
+                        boardDocRef,
+                        {
+                          tldrawSnapshot: snapshot,
+                          tldrawUpdatedAt: serverTimestamp(),
+                          tldrawUpdatedBy: user?.uid || null,
+                        },
+                        { merge: true }
+                      );
+                    });
+                  },
+                  { scope: 'document' }
+                );
+                editor._unmountDoc = unlisten;
+              });
             }}
             onUnmount={() => {
-              try { editorRef.current?._unmount?.(); } catch {}
+              try { editorRef.current?._unmountDoc?.(); } catch {}
+              try { editorRef.current?._unmountUser?.(); } catch {}
               editorRef.current = null;
             }}
           />
@@ -605,7 +616,7 @@ function BadgeStrip({ user }) {
 export default function ProductLabPage() {
   const { user, login, logout } = useAuth();
   const [project, setProject] = useState(null);
-  const [diagOpen, setDiagOpen] = useState(true); // temporary diagnostics
+  const [diagOpen, setDiagOpen] = useState(false); // flip to true to debug quickly
 
   useEffect(() => {
     (async () => {
@@ -670,7 +681,7 @@ export default function ProductLabPage() {
   );
 }
 
-/** ---------------- Quick permissions & runtime diagnostics (temporary) ---------------- */
+/** ---------------- Quick permissions & runtime diagnostics (optional) ---------------- */
 function QuickDiag({ user, projectId, boardId, onClose }) {
   const [rows, setRows] = useState([]);
   useEffect(() => {
@@ -696,7 +707,6 @@ function QuickDiag({ user, projectId, boardId, onClose }) {
         push(`GET /users/${user.uid}`, false, String(e));
       }
       try {
-        // probe a doc id under jobs (rules still evaluated even if missing)
         const probe = doc(collection(db, `projects/${projectId}/whiteboards/${boardId}/jobs`));
         await getDoc(probe);
         push(`DOC READ /projects/${projectId}/whiteboards/${boardId}/jobs/{probe}`, true, 'ok');
