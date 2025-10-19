@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
 import {
   addDoc, arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query,
@@ -8,6 +8,10 @@ import {
 } from 'firebase/firestore';
 import { setLogLevel } from 'firebase/firestore';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+
+/** ✅ tldraw */
+import { Tldraw } from '@tldraw/tldraw';
+import '@tldraw/tldraw/tldraw.css';
 
 setLogLevel('debug');
 
@@ -17,8 +21,6 @@ setLogLevel('debug');
 const LANE_OPTIONS = [null, 'now', 'next', 'later']; // null = backlog
 const DEFAULT_PROJECT_NAME = 'Felix Product Lab';
 const DEFAULT_BOARD_NAME = 'Main Whiteboard';
-const STICKY_COLORS = ['#FEF3C7', '#E0F2FE', '#E9D5FF', '#DCFCE7', '#FFE4E6']; // amber, sky, violet, green, rose
-const NEW_PLACEHOLDER = 'New idea…';
 
 const BADGES = {
   brainstormer: { id: 'brainstormer', name: 'Brainstormer', emoji: '🧠', xp: 10, lesson: 'Ideas are seeds — quantity helps quality.' },
@@ -119,13 +121,12 @@ async function incMetric(uid, field, incBy = 1) {
 }
 
 /* =========================
-   LEFT SIDEBAR: JTBD / QUESTIONS
+   JTBD / QUESTIONS (unchanged, with safe wrapping)
    ========================= */
 function JobsSidebar({ projectId, boardId }) {
   const [tab, setTab] = useState('jtbd');
   const [items, setItems] = useState([]);
   const [text, setText] = useState('');
-
   const collPath = `projects/${projectId}/whiteboards/${boardId}/jobs`;
 
   useEffect(() => {
@@ -186,127 +187,110 @@ function JobsSidebar({ projectId, boardId }) {
       <ul className="space-y-2">
         {shown.map((i)=>(
           <li key={i.id} className="flex items-start gap-2 rounded-lg border bg-neutral-50 p-2">
-            <input
-              type="checkbox"
-              checked={!!i.done}
-              onChange={()=>toggleDone(i.id, !!i.done)}
-              className="mt-0.5"
-            />
-            {/* ultra-safe wrapping: min-w-0 + block + break-all + pre-wrap */}
-            <span className={`block min-w-0 max-w-full text-[13px] leading-snug whitespace-pre-wrap break-all ${i.done?'line-through text-neutral-400':''}`}>
+            <input type="checkbox" checked={!!i.done} onChange={()=>toggleDone(i.id, !!i.done)} className="mt-0.5" />
+            <span
+              className={`block min-w-0 max-w-full text-[13px] leading-snug whitespace-pre-wrap break-all ${i.done?'line-through text-neutral-400':''}`}
+              style={{ overflowWrap: 'anywhere' }}
+            >
               {i.text}
             </span>
           </li>
         ))}
-        {shown.length===0 && (
-          <li className="text-xs text-neutral-500">Nothing here yet.</li>
-        )}
+        {shown.length===0 && <li className="text-xs text-neutral-500">Nothing here yet.</li>}
       </ul>
     </aside>
   );
 }
 
 /* =========================
-   WHITEBOARD
+   TLDraw Whiteboard with Firestore persistence
    ========================= */
-function Whiteboard({ projectId, boardId, user }) {
-  const [elements, setElements] = useState([]);
-  const boardRef = useRef(null);
+function TLDrawWhiteboard({ projectId, boardId, user }) {
+  const editorRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
 
-  // store drag offsets per-sticky to prevent “snap down” on drop
-  const dragOffsetRef = useRef(new Map()); // id -> {offsetX, offsetY}
+  // Firestore doc for tldraw state
+  const stateDocRef = useMemo(
+    () => doc(db, `projects/${projectId}/whiteboards/${boardId}`, 'tldraw'),
+    [projectId, boardId]
+  );
 
+  // Debounce helper
+  const saveTimer = useRef(null);
+  const debounceSave = (fn, ms = 750) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(fn, ms);
+  };
+
+  // Load initial snapshot (if any)
   useEffect(() => {
-    const qy = query(
-      collection(db, `projects/${projectId}/whiteboards/${boardId}/elements`),
-      orderBy('updatedAt', 'asc')
-    );
-    const unsub = onSnapshot(qy, (snap) => {
-      const arr = [];
-      snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
-      setElements(arr);
+    (async () => {
+      const snap = await getDoc(stateDocRef);
+      const data = snap.exists() ? snap.data() : null;
+      // We load via onMount below once editor exists; stash in ref
+      if (!editorRef.current) {
+        // store it on ref so onMount can read it
+        editorRef.current = { __initialSnapshot: data?.snapshot || null };
+      } else if (data?.snapshot) {
+        // if editor is already mounted (hot reload), load immediately
+        try {
+          editorRef.current.store.loadSnapshot(data.snapshot);
+        } catch {}
+      }
+      setLoaded(true);
+    })();
+  }, [stateDocRef]);
+
+  // Firestore live watcher to pull in updates from other tabs (simple last-write-wins)
+  useEffect(() => {
+    const unsub = onSnapshot(stateDocRef, (snap) => {
+      if (!editorRef.current || !snap.exists()) return;
+      const remote = snap.data();
+      if (!remote?.snapshot) return;
+      // Avoid echo: compare known revision id if present
+      try {
+        const current = editorRef.current.store.getSnapshot();
+        if (JSON.stringify(current) !== JSON.stringify(remote.snapshot)) {
+          editorRef.current.store.loadSnapshot(remote.snapshot);
+        }
+      } catch {}
     });
     return () => unsub();
-  }, [projectId, boardId]);
+  }, [stateDocRef]);
 
-  const createSticky = async () => {
-    if (!user) return;
-    const rect = boardRef.current?.getBoundingClientRect();
-    const x = (rect?.width || 800) / 2 - 100;
-    const y = (rect?.height || 500) / 2 - 60;
+  // Upgrade → Story button (floating)
+  const UpgradeButton = () => {
+    const [visible, setVisible] = useState(false);
+    const [title, setTitle] = useState('');
+    useEffect(() => {
+      if (!editorRef.current) return;
+      const stop = editorRef.current.store.listen(() => {
+        const sel = editorRef.current.getSelectedShapes();
+        const note = sel.find((s) => s.type === 'note' || s.type === 'text');
+        if (note) {
+          setTitle((note.props && note.props.text) || '');
+          setVisible(true);
+        } else {
+          setVisible(false);
+        }
+      }, { scope: 'user' });
+      return () => stop?.();
+    }, []);
+    if (!visible) return null;
 
-    await addDoc(collection(db, `projects/${projectId}/whiteboards/${boardId}/elements`), {
-      type: 'sticky',
-      text: NEW_PLACEHOLDER,
-      meta: { color: STICKY_COLORS[0], emoji: '📝', tag: 'Idea' },
-      position: { x, y, z: 1 },
-      size: { w: 200, h: 110 },
-      links: {},
-      authorUid: user.uid,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+    const doUpgrade = async () => {
+      const sel = editorRef.current.getSelectedShapes();
+      const note = sel.find((s) => s.type === 'note' || s.type === 'text');
+      if (!note || !user) return;
 
-    await incMetric(user.uid, 'notesCreated', 1);
-  };
-
-  const onDragStart = (e, el) => {
-    // calculate pointer’s offset inside the sticky at drag start
-    const r = e.currentTarget.getBoundingClientRect();
-    const offsetX = e.clientX - r.left;
-    const offsetY = e.clientY - r.top;
-    dragOffsetRef.current.set(el.id, { offsetX, offsetY });
-  };
-
-  const onDragEnd = async (e, el) => {
-    const rect = boardRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    const { offsetX = (el.size?.w || 200) / 2, offsetY = 16 } =
-      dragOffsetRef.current.get(el.id) || {};
-
-    const nx = e.clientX - rect.left - offsetX;
-    const ny = e.clientY - rect.top  - offsetY;
-
-    await updateDoc(doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, el.id), {
-      position: {
-        ...(el.position || {}),
-        x: Math.max(0, Math.min(nx, (rect.width  - (el.size?.w || 200)))),
-        y: Math.max(0, Math.min(ny, (rect.height - (el.size?.h || 110)))),
-      },
-      updatedAt: serverTimestamp(),
-    });
-
-    dragOffsetRef.current.delete(el.id);
-  };
-
-  const updateText = async (id, text) => {
-    await updateDoc(doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, id), {
-      text, updatedAt: serverTimestamp(),
-    });
-  };
-
-  const setColor = async (id, color) => {
-    await updateDoc(doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, id), {
-      'meta.color': color, updatedAt: serverTimestamp(),
-    });
-  };
-
-  const upgradeToStory = async (el) => {
-    if (!user) return;
-    const storiesCol = collection(db, `projects/${projectId}/stories`);
-    const storyRef = doc(storiesCol);
-    const elRef = doc(db, `projects/${projectId}/whiteboards/${boardId}/elements`, el.id);
-
-    await runTransaction(db, async (tx) => {
-      const title = ((el.text || 'Untitled').replace(NEW_PLACEHOLDER, '').trim() || 'Untitled')
-        .split('\n')[0].slice(0, 100);
-
-      tx.set(storyRef, {
-        title,
-        description: (el.text || '').replace(NEW_PLACEHOLDER, '').trim(),
+      // create story
+      const storiesCol = collection(db, `projects/${projectId}/stories`);
+      const storyRef = doc(storiesCol);
+      await setDoc(storyRef, {
+        title: (title || 'Untitled').split('\n')[0].slice(0, 100),
+        description: title || '',
         acceptanceCriteria: [],
-        source: { boardId, elementId: el.id },
+        source: { boardId, elementId: note.id, shapeType: note.type },
         status: 'idea',
         priority: 'medium',
         lane: null,
@@ -317,93 +301,102 @@ function Whiteboard({ projectId, boardId, user }) {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      tx.update(elRef, { 'links.toStoryId': storyRef.id, updatedAt: serverTimestamp() });
-    });
 
-    await earnBadge(user.uid, 'powerup');
-    await incMetric(user.uid, 'storiesCreated', 1);
+      // mark shape with storyId in meta
+      try {
+        editorRef.current.updateShapes([{
+          id: note.id,
+          type: note.type,
+          meta: { ...(note.meta || {}), storyId: storyRef.id }
+        }]);
+      } catch {}
+
+      await earnBadge(user.uid, 'powerup');
+      await incMetric(user.uid, 'storiesCreated', 1);
+    };
+
+    return (
+      <div className="pointer-events-none absolute right-3 top-3 z-10 flex gap-2">
+        <button
+          onClick={doUpgrade}
+          className="pointer-events-auto rounded bg-indigo-600 px-3 py-1 text-xs text-white shadow hover:bg-indigo-700"
+          title="Create a Story from the selected note/text"
+        >
+          Upgrade → Story
+        </button>
+      </div>
+    );
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      <JobsSidebar projectId={projectId} boardId={boardId} />
+    <div className="relative rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
+      <div className="flex items-center justify-between pb-2">
+        <h2 className="text-lg font-semibold">Whiteboard</h2>
+        <span className="text-xs text-neutral-500">Powered by tldraw</span>
+      </div>
 
-      <div className="flex-1 rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
-        <div className="flex items-center justify-between pb-2">
-          <h2 className="text-lg font-semibold">Whiteboard</h2>
-          <button onClick={createSticky} className="rounded-xl bg-amber-200 px-3 py-1 text-sm hover:bg-amber-300">
-            + Sticky
-          </button>
-        </div>
+      <div className="relative h-[520px] w-full overflow-hidden rounded-xl border bg-neutral-50">
+        {/* Floating upgrade button */}
+        <UpgradeButton />
 
-        <div
-          ref={boardRef}
-          className="relative h-[420px] w-full rounded-xl border bg-neutral-50 overflow-hidden"
-        >
-          {elements.map((el) => (
-            <div
-              key={el.id}
-              draggable
-              onDragStart={(e) => onDragStart(e, el)}
-              onDragEnd={(e) => onDragEnd(e, el)}
-              className="absolute rounded-xl shadow-sm"
-              style={{
-                left: el.position?.x ?? 20,
-                top: el.position?.y ?? 20,
-                width: el.size?.w ?? 200,
-                height: el.size?.h ?? 110,
-                background: el.meta?.color || '#FFF',
-              }}
-            >
-              <div className="flex items-center justify-between px-2 py-1">
-                <span className="text-base">{el.meta?.emoji || '📝'}</span>
+        {/* tldraw canvas */}
+        {loaded && (
+          <Tldraw
+            onMount={(editor) => {
+              // attach editor
+              editorRef.current = editor;
 
-                {/* Color palette */}
-                <div className="flex items-center gap-1">
-                  {STICKY_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      className="h-3.5 w-3.5 rounded-full border shadow-sm"
-                      style={{ background: c }}
-                      title="Change colour"
-                      onClick={() => setColor(el.id, c)}
-                    />
-                  ))}
-                  {el.links?.toStoryId ? (
-                    <span className="ml-2 rounded bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">Linked</span>
-                  ) : (
-                    <button
-                      onClick={() => upgradeToStory(el)}
-                      className="ml-2 rounded bg-indigo-100 px-2 py-0.5 text-[10px] hover:bg-indigo-200"
-                    >
-                      Upgrade → Story
-                    </button>
-                  )}
-                </div>
-              </div>
+              // Load any earlier snapshot grabbed during pre-mount fetch
+              const init = editor.__initialSnapshot || editorRef.current?.__initialSnapshot;
+              if (init) {
+                try { editor.store.loadSnapshot(init); } catch {}
+              }
 
-              <textarea
-                defaultValue={el.text || ''}
-                placeholder={NEW_PLACEHOLDER}
-                onFocus={(e) => {
-                  if (e.currentTarget.value === NEW_PLACEHOLDER) {
-                    e.currentTarget.value = '';
-                    updateText(el.id, '');
+              // Persist on every change (debounced)
+              const unlisten = editor.store.listen(
+                () => {
+                  const snapshot = editor.store.getSnapshot();
+                  debounceSave(async () => {
+                    await setDoc(stateDocRef, {
+                      snapshot,
+                      updatedAt: serverTimestamp(),
+                      updatedBy: user?.uid || null,
+                    }, { merge: true });
+                  });
+                },
+                { scope: 'document' }
+              );
+
+              // award brainstormer badge lazily when user inserts notes 5+ times (approx)
+              let noteCount = 0;
+              const unlistenUser = editor.store.listen(
+                (e) => {
+                  if (e.source === 'user' && e.changes?.added) {
+                    const added = Object.values(e.changes.added);
+                    if (added.some((c) => c.typeName === 'shape' && (c.type === 'note' || c.type === 'text'))) {
+                      noteCount += 1;
+                      if (user && noteCount >= 5) earnBadge(user.uid, 'brainstormer');
+                    }
                   }
-                }}
-                onBlur={(e) => updateText(el.id, e.target.value)}
-                className="h-[74px] w-full resize-none bg-transparent px-2 pb-2 text-[13px] leading-snug outline-none whitespace-pre-wrap break-words"
-              />
-            </div>
-          ))}
-        </div>
+                },
+                { scope: 'user' }
+              );
+
+              editor._unmount = () => { unlisten?.(); unlistenUser?.(); };
+            }}
+            onUnmount={() => {
+              try { editorRef.current?._unmount?.(); } catch {}
+              editorRef.current = null;
+            }}
+          />
+        )}
       </div>
     </div>
   );
 }
 
 /* =========================
-   STORIES KANBAN
+   STORIES KANBAN (unchanged, with wrapping tweaks)
    ========================= */
 function StoriesKanban({ projectId, user }) {
   const [stories, setStories] = useState([]);
@@ -637,7 +630,11 @@ export default function ProductLabPage() {
 
       {user && project && (
         <>
-          <Whiteboard projectId={project.projectId} boardId={project.boardId} user={user} />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <JobsSidebar projectId={project.projectId} boardId={project.boardId} />
+            <TLDrawWhiteboard projectId={project.projectId} boardId={project.boardId} user={user} />
+          </div>
+
           <StoriesKanban projectId={project.projectId} user={user} />
           <BadgeStrip user={user} />
           <FooterTips />
@@ -652,11 +649,11 @@ function FooterTips() {
     <div className="mt-6 rounded-2xl border bg-white/70 p-4 text-sm text-neutral-700">
       <div className="font-semibold">Teaching tips</div>
       <ul className="ml-5 list-disc space-y-1">
-        <li>Turn a sticky into a story with “Upgrade → Story”.</li>
+        <li>Select a note/text on the whiteboard and press <span className="font-medium">Upgrade → Story</span>.</li>
         <li>Drag stories between Backlog / Now / Next / Later to plan your MVP.</li>
         <li>Add 3+ acceptance criteria to earn <span className="font-medium">🎯 Precision Master</span>.</li>
         <li>Move 3 stories into “Now” to earn <span className="font-medium">🧩 MVP Architect</span>.</li>
-        <li>Create 5 stickies to earn <span className="font-medium">🧠 Brainstormer</span>.</li>
+        <li>Create 5 notes to earn <span className="font-medium">🧠 Brainstormer</span>.</li>
       </ul>
     </div>
   );
