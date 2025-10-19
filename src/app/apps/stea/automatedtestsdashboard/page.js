@@ -199,6 +199,21 @@ const getRecommendationForFailure = (test) => {
   }
 };
 
+const formatDuration = (ms = 0) => {
+  if (!ms || ms < 0) return '0:00';
+
+  const totalSeconds = Math.floor(ms / 1000);
+  const seconds = totalSeconds % 60;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const minutes = totalMinutes % 60;
+  const hours = Math.floor(totalMinutes / 60);
+
+  const minutePart = hours > 0 ? minutes.toString().padStart(2, '0') : minutes.toString();
+  const secondPart = seconds.toString().padStart(2, '0');
+
+  return hours > 0 ? `${hours}:${minutePart}:${secondPart}` : `${minutePart}:${secondPart}`;
+};
+
 /* ===== STEa Card Creation ===== */
 const createSteaCardFromIssue = async (issue, testRun) => {
   const cardData = {
@@ -270,6 +285,7 @@ export default function AutomatedTestsDashboard() {
   const [selectedTab, setSelectedTab] = useState('dashboard');
   const [creatingCards, setCreatingCards] = useState(new Set());
   const [isStoppingRun, setIsStoppingRun] = useState(false);
+  const [elapsedMs, setElapsedMs] = useState(0);
 
   const ensureSessionCookie = useCallback(async (firebaseUser) => {
     if (!firebaseUser) return;
@@ -503,6 +519,38 @@ export default function AutomatedTestsDashboard() {
     }
   };
 
+  useEffect(() => {
+    if (!currentTestRun) {
+      setElapsedMs(0);
+      return;
+    }
+
+    const start = toDate(currentTestRun.startedAt || currentTestRun.startTime);
+    if (!start) {
+      setElapsedMs(0);
+      return;
+    }
+
+    const setElapsed = (ms) => setElapsedMs(Math.max(0, ms));
+    const updateElapsed = () => setElapsed(Date.now() - start.getTime());
+    const isActive = ['running', 'queued'].includes(currentTestRun.status);
+
+    if (isActive) {
+      updateElapsed();
+      const interval = setInterval(updateElapsed, 1000);
+      return () => clearInterval(interval);
+    }
+
+    const finished = toDate(currentTestRun.finishedAt);
+    if (finished) {
+      setElapsed(finished.getTime() - start.getTime());
+    } else if (currentTestRun.summary?.time) {
+      setElapsed(currentTestRun.summary.time);
+    } else {
+      updateElapsed();
+    }
+  }, [currentTestRun]);
+
   const getSuccessRate = () => {
     if (testHistory.length === 0) return 0;
     const latest = testHistory[0];
@@ -546,11 +594,13 @@ export default function AutomatedTestsDashboard() {
               />
             </div>
             <p className="text-sm text-gray-600">
-              Started: {toDate(currentTestRun.startTime)?.toLocaleTimeString?.() || '—'}
+              Started:{' '}
+              {toDate(currentTestRun.startedAt || currentTestRun.startTime)?.toLocaleTimeString?.() || '—'}
             </p>
             <p className="text-sm text-gray-600">
               Status: {currentTestRun.status?.toUpperCase?.() || 'QUEUED'}
             </p>
+            <p className="text-sm text-gray-600">Elapsed: {formatDuration(elapsedMs)}</p>
             {(currentTestRun.status === 'running' || currentTestRun.status === 'queued') && (
               <button
                 onClick={stopCurrentRun}
@@ -878,88 +928,6 @@ export default function AutomatedTestsDashboard() {
           {signingOut ? 'Signing out…' : 'Sign out'}
         </button>
       </div>
-
-      {/* Debug Section */}
-      <div className="mt-4 card p-4 bg-yellow-50 border-yellow-200">
-        <h3 className="text-sm font-semibold mb-2 text-yellow-800">🔧 Debug Tools</h3>
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={async () => {
-              try {
-                const testId = 'test-connection-check';
-                const response = await fetch(`/api/test-progress/${testId}`);
-                const text = await response.text();
-                console.log('Progress route status:', response.status, 'body:', text);
-                alert(`Progress route responded with ${response.status}`);
-              } catch (e) {
-                console.error(e);
-                alert(`Error: ${e.message}`);
-              }
-            }}
-            className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded border border-yellow-300 hover:bg-yellow-200"
-          >
-            Test API Connection
-          </button>
-
-          <button
-            onClick={() => {
-              console.log('📊 Current test run:', currentTestRun);
-              console.log('📋 Test history:', testHistory);
-              console.log('🐛 Test issues:', testIssues);
-              console.log('👤 User:', user);
-            }}
-            className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded border border-blue-300 hover:bg-blue-200"
-          >
-            Log Debug Info
-          </button>
-
-          <button
-            onClick={async () => {
-              try {
-                const testId = `debug-test-${Date.now()}`;
-                const response = await fetch('/api/run-tests', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-vercel-background': '1',
-                  },
-                  body: JSON.stringify({ configType: 'quick', testRunId: testId }),
-                });
-                const txt = await response.text();
-                console.log('run-tests status:', response.status, 'body:', txt);
-                alert(`Run-tests responded with ${response.status}`);
-              } catch (e) {
-                console.error(e);
-                alert(`Error: ${e.message}`);
-              }
-            }}
-            className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded border border-green-300 hover:bg-green-200"
-          >
-            Test Run-Tests API
-          </button>
-
-          <button
-            onClick={() => {
-              console.log('🌐 Environment Info:', {
-                href: window.location.href,
-                origin: window.location.origin,
-                pathname: window.location.pathname,
-                ua: navigator.userAgent,
-                at: new Date().toISOString(),
-              });
-              alert('Environment info logged to console');
-            }}
-            className="px-3 py-1 text-xs bg-purple-100 text-purple-800 rounded border border-purple-300 hover:bg-purple-200"
-          >
-            Log Environment
-          </button>
-        </div>
-        <div className="mt-2 text-xs text-yellow-700">
-          Use these tools to debug API connectivity and test execution issues. Check browser console
-          for detailed logs.
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className="mt-4 border-b border-gray-200">
         <nav className="flex space-x-8">
