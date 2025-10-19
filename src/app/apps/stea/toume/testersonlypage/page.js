@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
 /* ===== Firestore ===== */
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import {
   addDoc,
   collection,
   serverTimestamp,
 } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 /* ===== Constants ===== */
 const BOARD_LS_KEY = 'stea-board-v1';
@@ -31,6 +33,9 @@ const URGENCY_MAP_FROM_PRIORITY = {
 const DEFAULT_URGENCY = 'medium';
 
 export default function TouMeTestersOnly() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [testResults, setTestResults] = useState({});
   const [feedback, setFeedback] = useState('');
   const [testerName, setTesterName] = useState('');
@@ -46,6 +51,18 @@ export default function TouMeTestersOnly() {
     title: '',
     description: '',
   });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthReady(true);
+      if (!firebaseUser) {
+        const next = encodeURIComponent('/apps/stea/toume/testersonlypage');
+        router.replace(`/apps/stea?next=${next}`);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   // Load saved results from localStorage
   useEffect(() => {
@@ -282,6 +299,26 @@ export default function TouMeTestersOnly() {
     HIGH: 'bg-orange-100 text-orange-800 border-orange-200',
     MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   };
+
+  if (!authReady) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border bg-white/70 p-6 text-center text-sm text-neutral-600">
+          Checking your STEa access…
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border bg-white/70 p-6 text-center text-sm text-neutral-600">
+          Redirecting you to the STEa home to sign in…
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pb-10 max-w-6xl mx-auto px-4">

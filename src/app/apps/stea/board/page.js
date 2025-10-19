@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
@@ -277,7 +278,9 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
 
 /* -------------------- PAGE -------------------- */
 export default function SteaBoard() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [cards, setCards] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
 
@@ -331,10 +334,24 @@ export default function SteaBoard() {
   }, []);
 
   /* ---------- auth ---------- */
-  useEffect(() => onAuthStateChanged(auth, setUser), []);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthReady(true);
+      if (!firebaseUser) {
+        const next = encodeURIComponent('/apps/stea/board');
+        router.replace(`/apps/stea?next=${next}`);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   /* ---------- data ---------- */
   useEffect(() => {
+    if (!user) {
+      setCards([]);
+      return undefined;
+    }
     const qy = query(collection(db, 'stea_cards'), orderBy('createdAt', 'asc'));
     const unsub = onSnapshot(qy, (snap) => {
       const list = [];
@@ -342,7 +359,7 @@ export default function SteaBoard() {
       setCards(list);
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   /* ---------- helpers ---------- */
   const appsList = useMemo(() => {
@@ -621,6 +638,26 @@ export default function SteaBoard() {
       </div>
     );
   };
+
+  if (!authReady) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-16">
+        <div className="rounded-2xl border bg-white/70 p-6 text-center text-sm text-gray-600">
+          Checking your STEa access…
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-16">
+        <div className="rounded-2xl border bg-white/70 p-6 text-center text-sm text-gray-600">
+          Redirecting you to the STEa home to sign in…
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pb-10 max-w-[1400px] mx-auto px-4">
