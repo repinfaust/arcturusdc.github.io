@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const jestCli = require('jest-cli');
 
@@ -8,10 +9,13 @@ const testRunId = process.env.TEST_RUN_ID || process.env.STEA_RUN_ID || `run-${D
 // Map test suite names to paths (optional)
 const patternMap = {
   comprehensive: '__tests__',
-  quick: '__tests__/quick',
-  critical: '__tests__/critical'
+  full: '__tests__',
+  quick: '__tests__/unit',
+  critical: '__tests__/integration'
 };
-const testPathPattern = patternMap[configType] || '__tests__';
+const preferredPattern = patternMap[configType] || '__tests__';
+const preferredPath = path.join(process.cwd(), preferredPattern);
+const testPathPattern = fs.existsSync(preferredPath) ? preferredPattern : '__tests__';
 
 const jestConfig = path.join(process.cwd(), 'jest.config.cjs');
 
