@@ -121,7 +121,7 @@ async function incMetric(uid, field, incBy = 1) {
 }
 
 /* =========================
-   JTBD / QUESTIONS (unchanged, with safe wrapping)
+   JTBD / QUESTIONS
    ========================= */
 function JobsSidebar({ projectId, boardId }) {
   const [tab, setTab] = useState('jtbd');
@@ -209,9 +209,9 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   const editorRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
 
-  // Firestore doc for tldraw state
-  const stateDocRef = useMemo(
-    () => doc(db, `projects/${projectId}/whiteboards/${boardId}`, 'tldraw'),
+  // ✅ Reference the BOARD document (store snapshot as a field)
+  const boardDocRef = useMemo(
+    () => doc(db, 'projects', projectId, 'whiteboards', boardId),
     [projectId, boardId]
   );
 
@@ -222,41 +222,36 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
     saveTimer.current = setTimeout(fn, ms);
   };
 
-  // Load initial snapshot (if any)
+  // Load initial snapshot (if any) from board doc
   useEffect(() => {
     (async () => {
-      const snap = await getDoc(stateDocRef);
+      const snap = await getDoc(boardDocRef);
       const data = snap.exists() ? snap.data() : null;
-      // We load via onMount below once editor exists; stash in ref
+      const initial = data?.tldrawSnapshot || null;
       if (!editorRef.current) {
-        // store it on ref so onMount can read it
-        editorRef.current = { __initialSnapshot: data?.snapshot || null };
-      } else if (data?.snapshot) {
-        // if editor is already mounted (hot reload), load immediately
-        try {
-          editorRef.current.store.loadSnapshot(data.snapshot);
-        } catch {}
+        editorRef.current = { __initialSnapshot: initial };
+      } else if (initial) {
+        try { editorRef.current.store.loadSnapshot(initial); } catch {}
       }
       setLoaded(true);
     })();
-  }, [stateDocRef]);
+  }, [boardDocRef]);
 
-  // Firestore live watcher to pull in updates from other tabs (simple last-write-wins)
+  // Live watcher (pull updates from other tabs)
   useEffect(() => {
-    const unsub = onSnapshot(stateDocRef, (snap) => {
+    const unsub = onSnapshot(boardDocRef, (snap) => {
       if (!editorRef.current || !snap.exists()) return;
       const remote = snap.data();
-      if (!remote?.snapshot) return;
-      // Avoid echo: compare known revision id if present
+      if (!remote?.tldrawSnapshot) return;
       try {
         const current = editorRef.current.store.getSnapshot();
-        if (JSON.stringify(current) !== JSON.stringify(remote.snapshot)) {
-          editorRef.current.store.loadSnapshot(remote.snapshot);
+        if (JSON.stringify(current) !== JSON.stringify(remote.tldrawSnapshot)) {
+          editorRef.current.store.loadSnapshot(remote.tldrawSnapshot);
         }
       } catch {}
     });
     return () => unsub();
-  }, [stateDocRef]);
+  }, [boardDocRef]);
 
   // Upgrade → Story button (floating)
   const UpgradeButton = () => {
@@ -352,16 +347,20 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
                 try { editor.store.loadSnapshot(init); } catch {}
               }
 
-              // Persist on every change (debounced)
+              // Persist on every change (debounced) → write to BOARD DOC
               const unlisten = editor.store.listen(
                 () => {
                   const snapshot = editor.store.getSnapshot();
                   debounceSave(async () => {
-                    await setDoc(stateDocRef, {
-                      snapshot,
-                      updatedAt: serverTimestamp(),
-                      updatedBy: user?.uid || null,
-                    }, { merge: true });
+                    await setDoc(
+                      boardDocRef,
+                      {
+                        tldrawSnapshot: snapshot,
+                        tldrawUpdatedAt: serverTimestamp(),
+                        tldrawUpdatedBy: user?.uid || null,
+                      },
+                      { merge: true }
+                    );
                   });
                 },
                 { scope: 'document' }
@@ -396,7 +395,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
 }
 
 /* =========================
-   STORIES KANBAN (unchanged, with wrapping tweaks)
+   STORIES KANBAN
    ========================= */
 function StoriesKanban({ projectId, user }) {
   const [stories, setStories] = useState([]);
@@ -443,7 +442,7 @@ function StoriesKanban({ projectId, user }) {
 
     return (
       <div
-        className="min-h-[360px] flex-1 rounded-xl border bg-white/70 p-3 min-w-0"
+        className="min-h+[360px] flex-1 rounded-xl border bg-white/70 p-3 min-w-0"
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
       >
