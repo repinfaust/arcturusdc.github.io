@@ -5,6 +5,7 @@ export function middleware(req) {
   const url = req.nextUrl;
   const host = url.host;
 
+  /* ---------------- HTTPS & Canonical ---------------- */
   // Skip API routes entirely (they must not be redirected)
   if (url.pathname.startsWith('/api/')) {
     return NextResponse.next();
@@ -29,20 +30,35 @@ export function middleware(req) {
     return NextResponse.redirect(url, 308);
   }
 
-  const protectedPaths = ['/apps/stea/automatedtestsdashboard', '/apps/stea/board'];
-  const isProtected = protectedPaths.some((path) => url.pathname.startsWith(path));
+  /* ---------------- Protected Routes ---------------- */
+  // Add any page or subtree that requires Google/Firebase auth
+  const protectedPaths = [
+    '/apps/stea/automatedtestsdashboard',
+    '/apps/stea/board',
+    '/apps/stea/filo', // ✅ newly protected route (and its children)
+  ];
+
+  // True if request path exactly matches or is a child of a protected path
+  const isProtected = protectedPaths.some(
+    (path) => url.pathname === path || url.pathname.startsWith(`${path}/`)
+  );
+
+  // Check for Firebase session cookie (__session)
   const sessionCookie = req.cookies.get('__session');
 
   if (isProtected && !sessionCookie) {
+    // Redirect unauthenticated users to /apps/stea (login)
     const redirectUrl = new URL('/apps/stea', req.url);
     redirectUrl.searchParams.set('next', url.pathname + url.search);
     return NextResponse.redirect(redirectUrl);
   }
 
+  /* ---------------- Default ---------------- */
   return NextResponse.next();
 }
 
-// ✅ Updated matcher — exclude API, _next assets, and static files
+/* ---------------- Matcher ---------------- */
+// Exclude API routes, Next.js assets, and static files
 export const config = {
   matcher: [
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)',
