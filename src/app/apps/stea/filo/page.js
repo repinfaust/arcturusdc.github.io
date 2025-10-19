@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -11,10 +11,10 @@ import { setLogLevel } from 'firebase/firestore';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 /** ✅ tldraw */
-import { Tldraw } from '@tldraw/tldraw';
+import { Tldraw, getSnapshot as getTlSnapshot, loadSnapshot as loadTlSnapshot } from '@tldraw/tldraw';
 import '@tldraw/tldraw/tldraw.css';
 
-setLogLevel('debug');
+setLogLevel('error');
 
 /* =========================
    CONFIG & CONSTANTS
@@ -211,8 +211,27 @@ function JobsSidebar({ projectId, boardId }) {
    ========================= */
 function TLDrawWhiteboard({ projectId, boardId, user }) {
   if (!projectId || !boardId) return null; // guard
+
   const editorRef = useRef(null);
+  const initialSnapshotRef = useRef(null);
+  const lastWriteTokenRef = useRef(null);
+  const suppressSaveRef = useRef(false);
+  const saveTimer = useRef(null);
   const [loaded, setLoaded] = useState(false);
+
+  const clientIdRef = useRef(null);
+  if (!clientIdRef.current) {
+    clientIdRef.current =
+      typeof window !== 'undefined' && window.crypto?.randomUUID
+        ? window.crypto.randomUUID()
+        : `client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, []);
 
   // ✅ Reference the BOARD document (store snapshot as a field)
   const boardDocRef = useMemo(
@@ -221,11 +240,28 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   );
 
   // Debounce helper
-  const saveTimer = useRef(null);
   const debounceSave = (fn, ms = 750) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(fn, ms);
   };
+
+  const applySnapshot = useCallback((snapshot) => {
+    if (!editorRef.current || !snapshot) return;
+    suppressSaveRef.current = true;
+    try {
+      loadTlSnapshot(editorRef.current.store, snapshot);
+    } catch (err) {
+      console.error('[TLDraw apply snapshot]', err);
+    } finally {
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(() => {
+          suppressSaveRef.current = false;
+        });
+      } else {
+        suppressSaveRef.current = false;
+      }
+    }
+  }, []);
 
   // Small helper: wait until editor.store is available, then run setup
   const whenStoreReady = (editor, fn, tries = 40) => {
@@ -242,23 +278,27 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
 
   // Load initial snapshot (if any) from board doc
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const snap = await getDoc(boardDocRef);
+        if (cancelled) return;
         const data = snap.exists() ? snap.data() : null;
-        const initial = data?.tldrawSnapshot || null;
-        if (!editorRef.current) {
-          // stash until onMount runs
-          editorRef.current = { __initialSnapshot: initial };
-        } else if (initial && editorRef.current?.store?.loadSnapshot) {
-          try { editorRef.current.store.loadSnapshot(initial); } catch {}
-        }
+        initialSnapshotRef.current = data?.tldrawSnapshot || null;
+        lastWriteTokenRef.current = data?.tldrawWriteToken || null;
         setLoaded(true);
+        if (editorRef.current && initialSnapshotRef.current) {
+          applySnapshot(initialSnapshotRef.current);
+        }
       } catch (e) {
-        console.error('[TLDraw load boardDocRef]', `projects/${projectId}/whiteboards/${boardId}`, e);
+        if (!cancelled) {
+          console.error('[TLDraw load boardDocRef]', `projects/${projectId}/whiteboards/${boardId}`, e);
+          setLoaded(true);
+        }
       }
     })();
-  }, [boardDocRef, boardId, projectId]);
+    return () => { cancelled = true; };
+  }, [applySnapshot, boardDocRef, boardId, projectId]);
 
   // Live watcher (pull updates from other tabs)
   useEffect(() => {
@@ -268,13 +308,13 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
         if (!editorRef.current || !snap.exists()) return;
         const remote = snap.data();
         if (!remote?.tldrawSnapshot) return;
+        if (remote?.tldrawWriteToken && remote.tldrawWriteToken === lastWriteTokenRef.current) {
+          return;
+        }
         try {
-          const current = editorRef.current?.store?.getSnapshot
-            ? editorRef.current.store.getSnapshot()
-            : null;
-          if (!current || JSON.stringify(current) !== JSON.stringify(remote.tldrawSnapshot)) {
-            editorRef.current?.store?.loadSnapshot?.(remote.tldrawSnapshot);
-          }
+          applySnapshot(remote.tldrawSnapshot);
+          initialSnapshotRef.current = remote.tldrawSnapshot;
+          lastWriteTokenRef.current = remote?.tldrawWriteToken || null;
         } catch (e) {
           console.error('[TLDraw onSnapshot apply]', e);
         }
@@ -284,7 +324,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
       }
     );
     return () => unsub();
-  }, [boardDocRef, boardId, projectId]);
+  }, [applySnapshot, boardDocRef, boardId, projectId]);
 
   // Upgrade → Story button (floating)
   const UpgradeButton = () => {
@@ -378,31 +418,48 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
         {loaded && (
           <Tldraw
             onMount={(editor) => {
-              // attach editor
               editorRef.current = editor;
 
-              // Load any earlier snapshot grabbed during pre-mount fetch
-              const init = editor.__initialSnapshot || editorRef.current?.__initialSnapshot;
-              if (init && editor?.store?.loadSnapshot) {
-                try { editor.store.loadSnapshot(init); } catch {}
+              if (initialSnapshotRef.current) {
+                applySnapshot(initialSnapshotRef.current);
+              } else {
+                try {
+                  initialSnapshotRef.current = getTlSnapshot(editor.store);
+                } catch {}
               }
 
-              // Persist on every change (debounced) → write to BOARD DOC
+              setLoaded(true);
+
               whenStoreReady(editor, () => {
                 const unlisten = editor.store.listen(
                   () => {
-                    const snapshot = editor.store.getSnapshot?.();
+                    if (suppressSaveRef.current) return;
+                    let snapshot;
+                    try {
+                      snapshot = getTlSnapshot(editor.store);
+                    } catch (err) {
+                      console.error('[TLDraw snapshot capture]', err);
+                      return;
+                    }
                     if (!snapshot) return;
+                    const writeToken = `${clientIdRef.current}:${Date.now()}`;
+                    lastWriteTokenRef.current = writeToken;
+                    initialSnapshotRef.current = snapshot;
                     debounceSave(async () => {
-                      await setDoc(
-                        boardDocRef,
-                        {
-                          tldrawSnapshot: snapshot,
-                          tldrawUpdatedAt: serverTimestamp(),
-                          tldrawUpdatedBy: user?.uid || null,
-                        },
-                        { merge: true }
-                      );
+                      try {
+                        await setDoc(
+                          boardDocRef,
+                          {
+                            tldrawSnapshot: snapshot,
+                            tldrawUpdatedAt: serverTimestamp(),
+                            tldrawUpdatedBy: user?.uid || null,
+                            tldrawWriteToken: writeToken,
+                          },
+                          { merge: true }
+                        );
+                      } catch (err) {
+                        console.error('[TLDraw persist error]', err);
+                      }
                     });
                   },
                   { scope: 'document' }
