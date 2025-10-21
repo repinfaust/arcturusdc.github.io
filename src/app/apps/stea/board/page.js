@@ -49,6 +49,18 @@ const sizeTheme = {
   '?': 'bg-zinc-50 text-zinc-700 border-zinc-200',
 };
 
+const COLLECTION_MAP = {
+  card: 'stea_cards',
+  feature: 'stea_features',
+  epic: 'stea_epics',
+};
+
+const ENTITY_LABEL = {
+  card: 'Card',
+  feature: 'Feature',
+  epic: 'Epic',
+};
+
 /* -------------------- UTILITIES -------------------- */
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const tokenize = (s) => String(s || '')
@@ -130,6 +142,8 @@ const normalizeId = (value) => {
   return asString.toLowerCase() === 'null' ? '' : asString;
 };
 
+const getEntityCollection = (entityType = 'card') => COLLECTION_MAP[entityType] || COLLECTION_MAP.card;
+
 const sortLayers = (entries) => {
   return [...entries].sort((a, b) => {
     const aOrder = Number.isFinite(a?.order) ? a.order : Number.isFinite(a?.sortOrder) ? a.sortOrder : Number.MAX_SAFE_INTEGER;
@@ -140,27 +154,27 @@ const sortLayers = (entries) => {
 };
 
 /* -------------------- COMMENTS -------------------- */
-function CommentsSection({ cardId, user }) {
+function CommentsSection({ entityCollection, entityId, user }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState('');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    if (!cardId) return;
-    const q = query(collection(db, 'stea_cards', cardId, 'comments'), orderBy('createdAt', 'asc'));
+    if (!entityCollection || !entityId) return;
+    const q = query(collection(db, entityCollection, entityId, 'comments'), orderBy('createdAt', 'asc'));
     const unsub = onSnapshot(q, (snap) => {
       const list = [];
       snap.forEach((d) => list.push({ id: d.id, ...d.data() }));
       setComments(list);
     });
     return () => unsub();
-  }, [cardId]);
+  }, [entityCollection, entityId]);
 
   const addComment = async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
     setAdding(true);
-    await addDoc(collection(db, 'stea_cards', cardId, 'comments'), {
+    await addDoc(collection(db, entityCollection, entityId, 'comments'), {
       text: trimmed,
       commenter: user?.email || 'anonymous',
       createdAt: serverTimestamp(),
@@ -170,7 +184,7 @@ function CommentsSection({ cardId, user }) {
   };
 
   const removeComment = async (cid) => {
-    await deleteDoc(doc(db, 'stea_cards', cardId, 'comments', cid));
+    await deleteDoc(doc(db, entityCollection, entityId, 'comments', cid));
   };
 
   const formatTime = (ts) => {
@@ -240,6 +254,7 @@ const isPreviewableImage = (name = '', type = '') => {
 function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
+  const entityLabel = ENTITY_LABEL[card?.entityType || 'card'] || 'Card';
 
   const handleBrowse = () => inputRef.current?.click();
   const handleFiles = (files) => { if (!files?.length) return; onAdd(Array.from(files)); };
@@ -296,7 +311,7 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
           </ul>
         </>
       ) : (
-        <div className="text-sm text-gray-500">Save the card first to attach files.</div>
+        <div className="text-sm text-gray-500">Save the {entityLabel.toLowerCase()} first to attach files.</div>
       )}
     </div>
   );
@@ -409,6 +424,8 @@ export default function SteaBoard() {
         list.push({
           id: d.id,
           ...data,
+          type: data.type || 'idea',
+          entityType: 'card',
           epicId: normalizeId(data.epicId),
           featureId: normalizeId(data.featureId),
           epicLabel: data.epicLabel || '',
@@ -436,6 +453,8 @@ export default function SteaBoard() {
         list.push({
           id: d.id,
           ...data,
+          type: data.type || 'epic',
+          entityType: 'epic',
           epicId: normalizeId(d.id),
         });
       });
@@ -449,6 +468,8 @@ export default function SteaBoard() {
         list.push({
           id: d.id,
           ...data,
+          type: data.type || 'feature',
+          entityType: 'feature',
           epicId: normalizeId(data.epicId),
         });
       });
@@ -476,6 +497,39 @@ export default function SteaBoard() {
     }
     return map;
   }, [features]);
+
+  const featuresByEpic = useMemo(() => {
+    const grouped = {};
+    for (const feature of features) {
+      const key = normalizeId(feature.epicId);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(feature);
+    }
+    Object.keys(grouped).forEach((key) => {
+      grouped[key] = sortLayers(grouped[key]);
+    });
+    return grouped;
+  }, [features]);
+
+  const cardsByFeature = useMemo(() => {
+    const grouped = {};
+    for (const card of cards) {
+      const key = normalizeId(card.featureId);
+      grouped[key] = (grouped[key] || 0) + 1;
+    }
+    return grouped;
+  }, [cards]);
+
+  const cardsByEpic = useMemo(() => {
+    const grouped = {};
+    for (const card of cards) {
+      const key = normalizeId(card.epicId);
+      grouped[key] = (grouped[key] || 0) + 1;
+    }
+    return grouped;
+  }, [cards]);
+
+  const unassignedFeatures = featuresByEpic[''] || [];
 
   /* ---------- helpers ---------- */
   const appsList = useMemo(() => {
@@ -559,74 +613,6 @@ export default function SteaBoard() {
     return Array.from(new Set(tokenize(base))).slice(0, 200);
   };
 
-  const createEpic = async (label) => {
-    const name = (label || '').trim();
-    if (!name) return null;
-    const payload = {
-      label: name,
-      searchTokens: tokenize(name),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      ownerUid: user?.uid || null,
-      ownerEmail: user?.email || null,
-    };
-    const refDoc = await addDoc(collection(db, 'stea_epics'), payload);
-    return refDoc.id;
-  };
-
-  const createFeature = async (epicId, label) => {
-    const name = (label || '').trim();
-    if (!name) return null;
-    const normalizedEpicId = normalizeId(epicId);
-    const parentEpic = normalizedEpicId ? epicMap[normalizedEpicId] : null;
-    const parentLabel = getDocLabel(parentEpic);
-    const payload = {
-      label: name,
-      epicId: normalizedEpicId || null,
-      epicLabel: parentLabel || null,
-      searchTokens: tokenize([name, parentLabel].join(' ')),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      ownerUid: user?.uid || null,
-      ownerEmail: user?.email || null,
-    };
-    const refDoc = await addDoc(collection(db, 'stea_features'), payload);
-    return refDoc.id;
-  };
-
-  const promptCreateEpic = async () => {
-    const name = window.prompt('Epic name');
-    if (!name || !name.trim()) return null;
-    try {
-      const newId = await createEpic(name);
-      return newId;
-    } catch (err) {
-      console.error('[STEa Board] Failed to create epic', err);
-      return null;
-    }
-  };
-
-  const promptCreateFeature = async (defaultEpicId = '') => {
-    const label = window.prompt('Feature name');
-    if (!label || !label.trim()) return null;
-    let epicIdChoice = normalizeId(defaultEpicId);
-    if (!epicIdChoice && epics.length) {
-      const options = epics.map((epic, idx) => `${idx + 1}. ${getDocLabel(epic) || epic.id}`).join('\n');
-      const promptText = options ? `Enter Epic ID (optional) from list:\n${options}` : 'Enter Epic ID (optional)';
-      const response = window.prompt(promptText);
-      if (response && response.trim()) {
-        epicIdChoice = normalizeId(response);
-      }
-    }
-    try {
-      const newId = await createFeature(epicIdChoice, label);
-      return newId;
-    } catch (err) {
-      console.error('[STEa Board] Failed to create feature', err);
-      return null;
-    }
-  };
-
   const assignCardToFeature = async (cardId, targetFeatureId) => {
     const normalizedFeatureId = normalizeId(targetFeatureId);
     const featureDoc = normalizedFeatureId ? featureMap[normalizedFeatureId] : null;
@@ -670,12 +656,22 @@ export default function SteaBoard() {
     const epicLabel = getDocLabel(epicDoc) || null;
     const featureDoc = featureMap[normalizedFeatureId];
     const featureLabel = getDocLabel(featureDoc) || '';
-    const featureTokens = tokenize([featureLabel, epicLabel || ''].join(' '));
+    const featureSearchTokens = buildSearchTokens(
+      {
+        ...(featureDoc || {}),
+        epicId: normalizedEpicId || null,
+        epicLabel,
+        featureLabel,
+      },
+      featureLabel,
+      epicLabel || '',
+    );
     try {
       await updateDoc(doc(db, 'stea_features', normalizedFeatureId), {
         epicId: normalizedEpicId || null,
         epicLabel,
-        searchTokens: featureTokens,
+        featureLabel: featureLabel || null,
+        searchTokens: featureSearchTokens,
         updatedAt: serverTimestamp(),
       });
       const impactedCards = cards.filter((c) => normalizeId(c.featureId) === normalizedFeatureId);
@@ -702,70 +698,97 @@ export default function SteaBoard() {
     }
   };
 
-  const startNewCard = ({ epicId = '', featureId = '' } = {}) => {
-    setEditing({
+  const startNewEntity = (entityType = 'card', defaults = {}) => {
+    const normalizedEpicId = normalizeId(defaults.epicId);
+    const normalizedFeatureId = normalizeId(defaults.featureId);
+    const base = {
       id: null,
-      title: '',
-      description: '',
-      type: 'idea',
-      app: 'New App',
-      priority: 'medium',
+      entityType,
+      title: defaults.title || '',
+      description: defaults.description || '',
+      type: entityType === 'card' ? (defaults.type || 'idea') : entityType,
+      app: defaults.app || 'New App',
+      priority: defaults.priority || 'medium',
       reporter: user?.email || '',
       assignee: '',
-      sizeEstimate: 'M',
+      sizeEstimate: defaults.sizeEstimate || 'M',
       appVersion: '',
-      statusColumn: 'Idea',
-      archived: false,
-      attachments: [],
-      epicId: normalizeId(epicId),
-      featureId: normalizeId(featureId),
-    });
+      statusColumn: defaults.statusColumn || 'Idea',
+      archived: !!defaults.archived,
+      attachments: Array.isArray(defaults.attachments) ? defaults.attachments : [],
+      epicId: entityType === 'epic' ? '' : normalizedEpicId,
+      featureId: entityType === 'card' ? normalizedFeatureId : '',
+      epicLabel: defaults.epicLabel || '',
+      featureLabel: defaults.featureLabel || '',
+    };
+    setEditing(base);
     setCreating(true);
     setNewMenuOpen(false);
   };
 
-  const handleNewPick = async (type) => {
-    if (type === 'card') {
-      startNewCard();
-      return;
-    }
+  const openEntityEditor = (entityType, entity) => {
+    if (!entity) return;
+    setEditing({
+      ...entity,
+      entityType,
+      epicId: normalizeId(entity.epicId),
+      featureId: normalizeId(entity.featureId),
+      attachments: Array.isArray(entity.attachments) ? entity.attachments : [],
+    });
+    setCreating(false);
     setNewMenuOpen(false);
-    if (type === 'feature') {
-      await promptCreateFeature();
-      return;
-    }
-    if (type === 'epic') {
-      await promptCreateEpic();
-    }
   };
 
-  const saveCard = async (card) => {
-    const normalizedFeatureId = normalizeId(card.featureId);
-    const featureDoc = normalizedFeatureId ? featureMap[normalizedFeatureId] : null;
-    const featureLabel = getDocLabel(featureDoc) || (card.featureLabel || '');
-    const normalizedEpicId = normalizeId(card.epicId || featureDoc?.epicId);
-    const epicDoc = normalizedEpicId ? epicMap[normalizedEpicId] : null;
-    const epicLabel = getDocLabel(epicDoc) || (card.epicLabel || '');
+  const handleNewPick = (type) => {
+    if (!type) return;
+    startNewEntity(type);
+  };
 
-    const title = (card.title || '').trim() || 'Untitled';
-    const description = card.description || '';
-    const type = card.type || 'idea';
-    const appValue = card.app || 'New App';
-    const priority = card.priority || 'medium';
-    const reporter = card.reporter || user?.email || '';
-    const assignee = card.assignee || '';
-    const sizeEstimate = card.sizeEstimate || 'M';
-    const appVersion = card.appVersion || '';
-    const statusColumn = card.statusColumn || 'Idea';
-    const archived = !!card.archived;
-    const attachments = card.attachments || [];
+  const saveEntity = async (entity) => {
+    const entityType = entity.entityType || 'card';
+    const collectionName = getEntityCollection(entityType);
+    const normalizedFeatureId = entityType === 'card' ? normalizeId(entity.featureId) : '';
+    const featureDoc = normalizedFeatureId ? featureMap[normalizedFeatureId] : null;
+    const featureLabel = entityType === 'card'
+      ? (getDocLabel(featureDoc) || entity.featureLabel || '')
+      : (entity.featureLabel || entity.title || entity.label || '');
+    const derivedEpicFromFeature = featureDoc ? normalizeId(featureDoc.epicId) : '';
+    const normalizedEpicId = entityType === 'epic'
+      ? ''
+      : normalizeId(entity.epicId || derivedEpicFromFeature);
+    const epicDoc = normalizedEpicId ? epicMap[normalizedEpicId] : null;
+    const epicLabel = entityType === 'epic'
+      ? (entity.title || entity.epicLabel || '')
+      : (getDocLabel(epicDoc) || entity.epicLabel || '');
+
+    const title = (entity.title || '').trim() || `Untitled ${ENTITY_LABEL[entityType] || 'Item'}`;
+    const description = entity.description || '';
+    const dataType = entityType === 'card' ? (entity.type || 'idea') : (entity.type || entityType);
+    const appValue = entity.app || 'New App';
+    const priority = entity.priority || 'medium';
+    const reporter = entity.reporter || user?.email || '';
+    const assignee = entity.assignee || '';
+    const sizeEstimate = entity.sizeEstimate || 'M';
+    const appVersion = entity.appVersion || '';
+    const statusColumn = entity.statusColumn || 'Idea';
+    const archived = !!entity.archived;
+    const attachments = entity.attachments || [];
+
+    const featureNameForTokens = entityType === 'card'
+      ? featureLabel
+      : entityType === 'feature'
+        ? title
+        : '';
+    const epicNameForTokens = entityType === 'epic'
+      ? title
+      : epicLabel;
 
     const searchTokens = buildSearchTokens(
       {
-        ...card,
+        ...entity,
         title,
         description,
-        type,
+        type: dataType,
         app: appValue,
         priority,
         reporter,
@@ -775,14 +798,14 @@ export default function SteaBoard() {
         statusColumn,
         archived,
       },
-      featureLabel,
-      epicLabel,
+      featureNameForTokens,
+      epicNameForTokens,
     );
 
     const payload = {
       title,
       description,
-      type,
+      type: dataType,
       app: appValue,
       priority,
       reporter,
@@ -792,31 +815,48 @@ export default function SteaBoard() {
       statusColumn,
       archived,
       attachments,
-      epicId: normalizedEpicId || null,
-      epicLabel: epicLabel || null,
-      featureId: normalizedFeatureId || null,
-      featureLabel: featureLabel || null,
       searchTokens,
+      entityType,
       updatedAt: serverTimestamp(),
-      ...(card.createdAt ? {} : { createdAt: serverTimestamp() }),
+      ...(entity.createdAt ? {} : { createdAt: serverTimestamp() }),
     };
 
-    if (card.id) {
-      await updateDoc(doc(db, 'stea_cards', card.id), payload);
-    } else {
-      const refDoc = await addDoc(collection(db, 'stea_cards'), payload);
-      setEditing({
-        ...card,
-        id: refDoc.id,
-        epicId: normalizedEpicId,
-        featureId: normalizedFeatureId,
-      });
+    if (entityType !== 'card') {
+      payload.label = title;
     }
+
+    if (entityType === 'card' || entityType === 'feature') {
+      payload.epicId = normalizedEpicId || null;
+      payload.epicLabel = epicLabel || null;
+    }
+    if (entityType === 'card') {
+      payload.featureId = normalizedFeatureId || null;
+      payload.featureLabel = featureLabel || null;
+    }
+    if (entityType === 'feature') {
+      payload.featureLabel = title;
+    }
+    if (entityType === 'epic') {
+      payload.epicLabel = title;
+    }
+
+    if (entity.id) {
+      await updateDoc(doc(db, collectionName, entity.id), payload);
+    } else {
+      await addDoc(collection(db, collectionName), payload);
+    }
+
     setEditing(null);
     setCreating(false);
   };
 
-  const deleteCard = async (id) => { if (!id) return; await deleteDoc(doc(db, 'stea_cards', id)); setEditing(null); };
+  const deleteEntity = async (entity) => {
+    if (!entity?.id) return;
+    const entityType = entity.entityType || 'card';
+    const collectionName = getEntityCollection(entityType);
+    await deleteDoc(doc(db, collectionName, entity.id));
+    setEditing(null);
+  };
 
   const moveTo = async (card, nextCol) => {
     await updateDoc(doc(db, 'stea_cards', card.id), { statusColumn: nextCol, updatedAt: serverTimestamp() });
@@ -828,9 +868,11 @@ export default function SteaBoard() {
     setUploading(true);
     const storage = getStorage();
     const atts = [];
+    const entityType = editing.entityType || 'card';
+    const collectionName = getEntityCollection(entityType);
 
     for (const file of files) {
-      const path = `stea_uploads/${editing.id}/${Date.now()}_${file.name}`;
+      const path = `stea_uploads/${entityType}/${editing.id}/${Date.now()}_${file.name}`;
       const storageRef = ref(storage, path);
       await uploadBytes(storageRef, file, { contentType: file.type || undefined });
       const url = await getDownloadURL(storageRef);
@@ -846,7 +888,7 @@ export default function SteaBoard() {
       });
     }
 
-    await updateDoc(doc(db, 'stea_cards', editing.id), { attachments: arrayUnion(...atts), updatedAt: serverTimestamp() });
+    await updateDoc(doc(db, collectionName, editing.id), { attachments: arrayUnion(...atts), updatedAt: serverTimestamp() });
     setEditing((c) => ({ ...c, attachments: [...(c.attachments || []), ...atts] }));
     setUploading(false);
   };
@@ -855,7 +897,9 @@ export default function SteaBoard() {
     if (!editing?.id || !att?.path) return;
     const storage = getStorage();
     await deleteObject(ref(storage, att.path)).catch(() => {});
-    await updateDoc(doc(db, 'stea_cards', editing.id), { attachments: arrayRemove(att), updatedAt: serverTimestamp() });
+    const entityType = editing.entityType || 'card';
+    const collectionName = getEntityCollection(entityType);
+    await updateDoc(doc(db, collectionName, editing.id), { attachments: arrayRemove(att), updatedAt: serverTimestamp() });
     setEditing((c) => ({ ...c, attachments: (c.attachments || []).filter((x) => x.path !== att.path) }));
   };
 
@@ -876,7 +920,7 @@ export default function SteaBoard() {
     const now = Date.now();
     const last = tapTimes.current[cardId] || 0;
     tapTimes.current[cardId] = now;
-    if (now - last < 300) setEditing(card);
+    if (now - last < 300) openEntityEditor('card', card);
   };
 
   const Card = ({ card }) => {
@@ -963,19 +1007,21 @@ export default function SteaBoard() {
       setDragOverEpic('');
     };
 
-    const addFeatureWithinEpic = async () => {
-      if (!normalizedEpicId) return;
-      await promptCreateFeature(normalizedEpicId);
+    const addFeatureWithinEpic = () => {
+      if (normalizedEpicId) {
+        startNewEntity('feature', { epicId: normalizedEpicId, epicLabel });
+      } else {
+        startNewEntity('feature');
+      }
     };
 
     const addCardWithinFeature = () => {
-      if (normalizedFeatureId) {
-        startNewCard({ featureId: normalizedFeatureId, epicId: normalizedEpicId });
-      } else if (normalizedEpicId) {
-        startNewCard({ epicId: normalizedEpicId });
-      } else {
-        startNewCard();
-      }
+      startNewEntity('card', {
+        featureId: normalizedFeatureId,
+        epicId: normalizedEpicId,
+        featureLabel,
+        epicLabel,
+      });
     };
 
     const cardShell = (
@@ -984,7 +1030,7 @@ export default function SteaBoard() {
         draggable
         onDragStart={(e) => { setDraggingId(card.id); e.dataTransfer.setData('text/stea-card-id', card.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
-        onDoubleClick={() => setEditing(card)}
+        onDoubleClick={() => openEntityEditor('card', card)}
         onPointerDown={onCardPointerDown(card.id, card)}
       >
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -1006,7 +1052,7 @@ export default function SteaBoard() {
               <span className="px-2 py-0.5 text-[11px] rounded border bg-green-50 text-green-800 border-green-200">v{card.appVersion}</span>
             ) : null}
           </div>
-          <button onClick={() => setEditing(card)} className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black">Edit</button>
+          <button onClick={() => openEntityEditor('card', card)} className="px-2 py-1 text-xs rounded bg-gray-800 text-white hover:bg-black">Edit</button>
         </div>
 
         {/* CAPPED CONTENT AREA */}
@@ -1274,7 +1320,101 @@ export default function SteaBoard() {
               </div>
               <AddAppControl />
             </div>
+      </div>
+    </div>
+  </div>
+
+      {/* Hierarchy overview */}
+      <div className="mt-4 card p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-semibold">Hierarchy</div>
+            <div className="text-xs text-gray-500">Epics, features, and their linked cards</div>
           </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => startNewEntity('epic')} className="px-3 py-1.5 rounded border border-red-200 bg-red-50 text-sm text-red-700 hover:bg-red-100">+ Epic</button>
+            <button onClick={() => startNewEntity('feature')} className="px-3 py-1.5 rounded border border-orange-200 bg-orange-50 text-sm text-orange-700 hover:bg-orange-100">+ Feature</button>
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-3">
+          {epics.length === 0 && unassignedFeatures.length === 0 ? (
+            <div className="rounded border border-dashed p-4 text-sm text-gray-500 bg-gray-50">
+              No epics or features yet. Use the buttons above to start mapping your work.
+            </div>
+          ) : null}
+
+          {epics.map((epic) => {
+            const epicId = normalizeId(epic.id);
+            const featureList = featuresByEpic[epicId] || [];
+            const epicName = getDocLabel(epic) || epic.title || epicId;
+            const epicCardCount = cardsByEpic[epicId] || 0;
+            return (
+              <div key={epic.id} className="rounded-2xl border border-red-200 bg-gradient-to-br from-red-50 to-white p-3 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-red-700">{epicName}</div>
+                    <div className="text-xs text-gray-500">{featureList.length} feature{featureList.length === 1 ? '' : 's'} • {epicCardCount} card{epicCardCount === 1 ? '' : 's'}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => openEntityEditor('epic', epic)} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">Edit</button>
+                    <button onClick={() => startNewEntity('feature', { epicId: epicId, epicLabel: epicName })} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Feature</button>
+                  </div>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {featureList.length === 0 ? (
+                    <div className="text-xs text-gray-500 border border-dashed rounded px-3 py-2 bg-white">No features yet.</div>
+                  ) : featureList.map((feature) => {
+                    const featureId = feature.id;
+                    const featureName = getDocLabel(feature) || feature.title || featureId;
+                    const featureCardCount = cardsByFeature[normalizeId(featureId)] || 0;
+                    return (
+                      <div key={featureId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-orange-200 bg-white/90 px-3 py-2">
+                        <div>
+                          <div className="text-sm font-medium text-orange-700">{featureName}</div>
+                          <div className="text-xs text-gray-500">{featureCardCount} card{featureCardCount === 1 ? '' : 's'}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openEntityEditor('feature', feature)} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">Edit</button>
+                          <button onClick={() => startNewEntity('card', { featureId: featureId, epicId: epicId, featureLabel: featureName, epicLabel: epicName })} className="px-2 py-1 text-xs rounded border border-blue-200 bg-white text-blue-600 hover:bg-blue-50">+ Card</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {unassignedFeatures.length ? (
+            <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-3 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="font-semibold text-orange-700">Unassigned Features</div>
+                  <div className="text-xs text-gray-500">{unassignedFeatures.length} total</div>
+                </div>
+              </div>
+              <div className="mt-2 space-y-2">
+                {unassignedFeatures.map((feature) => {
+                  const featureId = feature.id;
+                  const featureName = getDocLabel(feature) || feature.title || featureId;
+                  const featureCardCount = cardsByFeature[normalizeId(featureId)] || 0;
+                  return (
+                    <div key={featureId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-orange-200 bg-white/90 px-3 py-2">
+                      <div>
+                        <div className="text-sm font-medium text-orange-700">{featureName}</div>
+                        <div className="text-xs text-gray-500">{featureCardCount} card{featureCardCount === 1 ? '' : 's'}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => openEntityEditor('feature', feature)} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">Edit</button>
+                        <button onClick={() => startNewEntity('card', { featureId: featureId, featureLabel: featureName })} className="px-2 py-1 text-xs rounded border border-blue-200 bg-white text-blue-600 hover:bg-blue-50">+ Card</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -1345,7 +1485,9 @@ export default function SteaBoard() {
           <div className="relative z-10 flex min-h-full items-center justify-center p-4">
             <div role="dialog" aria-modal="true" className="w-full max-w-2xl rounded-xl bg-white shadow-lg max-h-[85vh] flex flex-col overscroll-contain">
               <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
-                <div className="font-bold">{creating ? 'New Card' : 'Edit Card'}</div>
+                <div className="font-bold">
+                  {creating ? `New ${ENTITY_LABEL[editing.entityType || 'card'] || 'Item'}` : `Edit ${ENTITY_LABEL[editing.entityType || 'card'] || 'Item'}`}
+                </div>
                 <button onClick={() => { setEditing(null); setCreating(false); }} className="px-3 py-1 rounded border hover:bg-gray-50">Close</button>
               </div>
 
@@ -1353,8 +1495,8 @@ export default function SteaBoard() {
                 editing={editing}
                 setEditing={setEditing}
                 creating={creating}
-                saveCard={saveCard}
-                deleteCard={deleteCard}
+                saveEntity={saveEntity}
+                deleteEntity={deleteEntity}
                 addFiles={addFiles}
                 deleteFile={deleteFile}
                 uploading={uploading}
@@ -1365,8 +1507,6 @@ export default function SteaBoard() {
                 features={features}
                 epicMap={epicMap}
                 featureMap={featureMap}
-                onCreateEpic={createEpic}
-                onCreateFeature={createFeature}
               />
             </div>
           </div>
@@ -1378,16 +1518,21 @@ export default function SteaBoard() {
 
 /* ---------- Modal Body ---------- */
 function ModalBody({
-  editing, setEditing, creating, saveCard, deleteCard,
+  editing, setEditing, creating, saveEntity, deleteEntity,
   addFiles, deleteFile, uploading, user, appsList, onAddApp,
-  epics, features, epicMap, featureMap, onCreateEpic, onCreateFeature,
+  epics, features, epicMap, featureMap,
 }) {
   const [descExpanded, setDescExpanded] = useState(false);
   const selectedEpicId = normalizeId(editing?.epicId);
   const selectedFeatureId = normalizeId(editing?.featureId);
 
+  const entityType = editing?.entityType || 'card';
+  const entityLabel = ENTITY_LABEL[entityType] || 'Item';
+  const isCard = entityType === 'card';
+  const isEpic = entityType === 'epic';
+
   const featureOptions = useMemo(() => {
-    if (!features?.length) return [];
+    if (!features?.length || !isCard) return [];
     const filtered = selectedEpicId
       ? features.filter((f) => normalizeId(f.epicId) === selectedEpicId)
       : features;
@@ -1396,9 +1541,10 @@ function ModalBody({
       if (current) return [...filtered, current];
     }
     return filtered;
-  }, [features, selectedEpicId, selectedFeatureId]);
+  }, [features, selectedEpicId, selectedFeatureId, isCard]);
 
   const handleEpicSelect = (value) => {
+    if (isEpic) return;
     setEditing((prev) => {
       if (!prev) return prev;
       const normalized = normalizeId(value);
@@ -1413,6 +1559,7 @@ function ModalBody({
   };
 
   const handleFeatureSelect = (value) => {
+    if (!isCard) return;
     setEditing((prev) => {
       if (!prev) return prev;
       const normalized = normalizeId(value);
@@ -1427,36 +1574,6 @@ function ModalBody({
     });
   };
 
-  const handleAddEpic = async () => {
-    try {
-      const name = window.prompt('Epic name');
-      if (!name) return;
-      const newId = await onCreateEpic(name);
-      if (newId) {
-        setEditing((prev) => ({ ...prev, epicId: normalizeId(newId), featureId: '' }));
-      }
-    } catch (err) {
-      console.error('[STEa Board] Failed to create epic', err);
-    }
-  };
-
-  const handleAddFeature = async () => {
-    if (!selectedEpicId) {
-      window.alert('Select an Epic before adding a Feature.');
-      return;
-    }
-    try {
-      const name = window.prompt('Feature name');
-      if (!name) return;
-      const newId = await onCreateFeature(selectedEpicId, name);
-      if (newId) {
-        setEditing((prev) => ({ ...prev, featureId: normalizeId(newId), epicId: selectedEpicId }));
-      }
-    } catch (err) {
-      console.error('[STEa Board] Failed to create feature', err);
-    }
-  };
-
   return (
     <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
       <div className="md:col-span-2">
@@ -1464,63 +1581,58 @@ function ModalBody({
         <input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full px-3 py-2 border rounded" placeholder="Short summary" />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Type</label>
-        <select value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value })} className="w-full px-3 py-2 border rounded">
-          {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
-      </div>
+      {isCard ? (
+        <div>
+          <label className="block text-sm font-medium mb-1">Type</label>
+          <select value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value })} className="w-full px-3 py-2 border rounded">
+            {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+      ) : (
+        <div>
+          <label className="block text-sm font-medium mb-1">Type</label>
+          <div className="px-3 py-2 border rounded bg-gray-50 text-sm text-gray-600">
+            {entityLabel}
+          </div>
+        </div>
+      )}
 
-      <div>
-        <label className="block text-sm font-medium mb-1 flex items-center justify-between">
-          <span>Epic</span>
-          <button
-            type="button"
-            onClick={handleAddEpic}
-            className="text-xs px-2 py-1 rounded border hover:bg-gray-50"
+      {!isEpic ? (
+        <div>
+          <label className="block text-sm font-medium mb-1">Epic</label>
+          <select
+            value={selectedEpicId}
+            onChange={(e) => handleEpicSelect(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
           >
-            Add…
-          </button>
-        </label>
-        <select
-          value={selectedEpicId}
-          onChange={(e) => handleEpicSelect(e.target.value)}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">— None —</option>
-          {epics.map((epic) => (
-            <option key={epic.id} value={epic.id}>{getDocLabel(epic)}</option>
-          ))}
-        </select>
-      </div>
+            <option value="">— None —</option>
+            {epics.map((epic) => (
+              <option key={epic.id} value={epic.id}>{getDocLabel(epic)}</option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
-      <div>
-        <label className="block text-sm font-medium mb-1 flex items-center justify-between">
-          <span>Feature</span>
-          <button
-            type="button"
-            onClick={handleAddFeature}
-            className="text-xs px-2 py-1 rounded border hover:bg-gray-50"
+      {isCard ? (
+        <div>
+          <label className="block text-sm font-medium mb-1">Feature</label>
+          <select
+            value={selectedFeatureId}
+            onChange={(e) => handleFeatureSelect(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
           >
-            Add…
-          </button>
-        </label>
-        <select
-          value={selectedFeatureId}
-          onChange={(e) => handleFeatureSelect(e.target.value)}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">— None —</option>
-          {featureOptions.map((feature) => (
-            <option key={feature.id} value={feature.id}>
-              {getDocLabel(feature)}
-              {feature.epicId && normalizeId(feature.epicId) !== selectedEpicId
-                ? ` — ${getDocLabel(epicMap[normalizeId(feature.epicId)])}`
-                : ''}
-            </option>
-          ))}
-        </select>
-      </div>
+            <option value="">— None —</option>
+            {featureOptions.map((feature) => (
+              <option key={feature.id} value={feature.id}>
+                {getDocLabel(feature)}
+                {feature.epicId && normalizeId(feature.epicId) !== selectedEpicId
+                  ? ` — ${getDocLabel(epicMap[normalizeId(feature.epicId)])}`
+                  : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <div>
         <label className="block text-sm font-medium mb-1 flex items-center justify-between">
@@ -1609,9 +1721,9 @@ function ModalBody({
         </label>
         <div className="flex gap-2">
           {!creating && editing.id ? (
-            <button onClick={() => deleteCard(editing.id)} className="px-3 py-2 rounded border text-red-600 hover:bg-red-50">Delete</button>
+            <button onClick={() => deleteEntity(editing)} className="px-3 py-2 rounded border text-red-600 hover:bg-red-50">Delete</button>
           ) : null}
-          <button onClick={() => saveCard(editing)} className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
+          <button onClick={() => saveEntity(editing)} className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
         </div>
       </div>
 
@@ -1628,7 +1740,7 @@ function ModalBody({
       {/* Comments */}
       {editing?.id ? (
         <div className="md:col-span-2">
-          <CommentsSection cardId={editing.id} user={user} />
+          <CommentsSection entityCollection={getEntityCollection(entityType)} entityId={editing.id} user={user} />
         </div>
       ) : null}
     </div>

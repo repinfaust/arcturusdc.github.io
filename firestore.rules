@@ -50,6 +50,20 @@ service cloud.firestore {
     /* ==========================================================
        STEa board
        ========================================================== */
+    match /stea_epics/{epicId} {
+      allow read, create, update, delete: if authed();
+      match /comments/{cid} {
+        allow read, create, delete: if authed();
+      }
+    }
+
+    match /stea_features/{featureId} {
+      allow read, create, update, delete: if authed();
+      match /comments/{cid} {
+        allow read, create, delete: if authed();
+      }
+    }
+
     match /stea_cards/{doc} {
       allow read, create, update, delete: if authed();
       match /comments/{cid} {
