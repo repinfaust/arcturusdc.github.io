@@ -958,7 +958,7 @@ export default function SteaBoard() {
   };
 
   /* Epic Component */
-  const Epic = ({ epic }) => {
+  const Epic = ({ epic, children }) => {
     const idx = COLUMNS.indexOf(epic.statusColumn || 'Idea');
     const prev = COLUMNS[Math.max(idx - 1, 0)];
     const next = COLUMNS[Math.min(idx + 1, COLUMNS.length - 1)];
@@ -1086,6 +1086,13 @@ export default function SteaBoard() {
           <span>Reporter: {epic.reporter || '—'}</span>
           {epic.assignee ? <span>Assigned: {epic.assignee}</span> : null}
         </div>
+        {/* Nested children (features/cards) */}
+        {children && (
+          <div className="mt-3 space-y-3">
+            {children}
+          </div>
+        )}
+
         <div className="mt-3 flex items-center justify-end gap-2">
           <button onClick={() => startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic' })} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
           <button onClick={() => moveTo({ id: epic.id, statusColumn: epic.statusColumn }, prev)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
@@ -1096,7 +1103,7 @@ export default function SteaBoard() {
   };
 
   /* Feature Component */
-  const Feature = ({ feature }) => {
+  const Feature = ({ feature, children }) => {
     const idx = COLUMNS.indexOf(feature.statusColumn || 'Idea');
     const prev = COLUMNS[Math.max(idx - 1, 0)];
     const next = COLUMNS[Math.min(idx + 1, COLUMNS.length - 1)];
@@ -1186,6 +1193,14 @@ export default function SteaBoard() {
           <span>Reporter: {feature.reporter || '—'}</span>
           {feature.assignee ? <span>Assigned: {feature.assignee}</span> : null}
         </div>
+
+        {/* Nested children (cards) */}
+        {children && (
+          <div className="mt-3 space-y-3">
+            {children}
+          </div>
+        )}
+
         <div className="mt-3 flex items-center justify-end gap-2">
           <button onClick={() => startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel })} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
           <button onClick={() => moveTo({ id: feature.id, statusColumn: feature.statusColumn }, prev)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
@@ -1696,12 +1711,58 @@ export default function SteaBoard() {
                   <div className="text-xs text-gray-500 p-3 border rounded bg-gray-50">Drop items here</div>
                 ) : (
                   <div className="flex flex-col gap-3">
-                    {items.map((item) => {
-                      const entityType = item.entityType || 'card';
-                      if (entityType === 'epic') return <Epic key={item.id} epic={item} />;
-                      if (entityType === 'feature') return <Feature key={item.id} feature={item} />;
-                      return <Card key={item.id} card={item} />;
-                    })}
+                    {(() => {
+                      // Group items hierarchically
+                      const epicItems = items.filter(i => i.entityType === 'epic');
+                      const featureItems = items.filter(i => i.entityType === 'feature');
+                      const cardItems = items.filter(i => i.entityType === 'card');
+
+                      // Orphan features (no epic)
+                      const orphanFeatures = featureItems.filter(f => !f.epicId);
+                      // Orphan cards (no feature, no epic)
+                      const orphanCards = cardItems.filter(c => !c.featureId && !c.epicId);
+
+                      return (
+                        <>
+                          {/* Render epics with their nested features and cards */}
+                          {epicItems.map(epic => (
+                            <Epic key={epic.id} epic={epic}>
+                              {/* Features belonging to this epic */}
+                              {featureItems
+                                .filter(f => normalizeId(f.epicId) === normalizeId(epic.id))
+                                .map(feature => (
+                                  <Feature key={feature.id} feature={feature}>
+                                    {/* Cards belonging to this feature */}
+                                    {cardItems
+                                      .filter(c => normalizeId(c.featureId) === normalizeId(feature.id))
+                                      .map(card => <Card key={card.id} card={card} />)
+                                    }
+                                  </Feature>
+                                ))}
+                              {/* Cards belonging directly to epic (no feature) */}
+                              {cardItems
+                                .filter(c => !c.featureId && normalizeId(c.epicId) === normalizeId(epic.id))
+                                .map(card => <Card key={card.id} card={card} />)
+                              }
+                            </Epic>
+                          ))}
+
+                          {/* Orphan features (no epic) */}
+                          {orphanFeatures.map(feature => (
+                            <Feature key={feature.id} feature={feature}>
+                              {/* Cards belonging to this orphan feature */}
+                              {cardItems
+                                .filter(c => normalizeId(c.featureId) === normalizeId(feature.id))
+                                .map(card => <Card key={card.id} card={card} />)
+                              }
+                            </Feature>
+                          ))}
+
+                          {/* Orphan cards (no feature, no epic) */}
+                          {orphanCards.map(card => <Card key={card.id} card={card} />)}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </section>
