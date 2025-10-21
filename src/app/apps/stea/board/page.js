@@ -982,6 +982,11 @@ export default function SteaBoard() {
       const featureId = event.dataTransfer.getData('text/stea-feature-id');
       if (featureId) {
         await assignFeatureToEpic(featureId, normalizedEpicId);
+        // Also move feature to same column as epic
+        const feature = features.find((f) => f.id === featureId);
+        if (feature && feature.statusColumn !== epic.statusColumn) {
+          await moveTo({ ...feature, entityType: 'feature' }, epic.statusColumn);
+        }
       }
       setDragOverEpic('');
     };
@@ -1044,6 +1049,11 @@ export default function SteaBoard() {
       const cardId = event.dataTransfer.getData('text/stea-card-id');
       if (cardId) {
         await assignCardToFeature(cardId, normalizedFeatureId);
+        // Also move card to same column as feature
+        const card = cards.find((c) => c.id === cardId);
+        if (card && card.statusColumn !== feature.statusColumn) {
+          await moveTo({ ...card, entityType: 'card' }, feature.statusColumn);
+        }
       }
       setDragOverFeature('');
     };
@@ -1546,13 +1556,38 @@ export default function SteaBoard() {
                 onDragLeave={() => setDragOverCol(null)}
                 onDrop={async (e) => {
                   e.preventDefault();
-                  const id = e.dataTransfer.getData('text/stea-card-id');
                   setDragOverCol(null);
                   setDraggingId(null);
-                  if (!id) return;
-                  const card = cards.find((c) => c.id === id);
-                  if (!card || card.statusColumn === col) return;
-                  await moveTo(card, col);
+
+                  // Try card first
+                  const cardId = e.dataTransfer.getData('text/stea-card-id');
+                  if (cardId) {
+                    const card = cards.find((c) => c.id === cardId);
+                    if (card && card.statusColumn !== col) {
+                      await moveTo({ ...card, entityType: 'card' }, col);
+                    }
+                    return;
+                  }
+
+                  // Try feature
+                  const featureId = e.dataTransfer.getData('text/stea-feature-id');
+                  if (featureId) {
+                    const feature = features.find((f) => f.id === featureId);
+                    if (feature && feature.statusColumn !== col) {
+                      await moveTo({ ...feature, entityType: 'feature' }, col);
+                    }
+                    return;
+                  }
+
+                  // Try epic
+                  const epicId = e.dataTransfer.getData('text/stea-epic-id');
+                  if (epicId) {
+                    const epic = epics.find((e) => e.id === epicId);
+                    if (epic && epic.statusColumn !== col) {
+                      await moveTo({ ...epic, entityType: 'epic' }, col);
+                    }
+                    return;
+                  }
                 }}
               >
                 <ColumnHeader name={col} count={items.length} />
