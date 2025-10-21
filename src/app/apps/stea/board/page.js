@@ -1055,7 +1055,7 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4' : 'p-4'}`}
+        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[120px]' : 'p-4 min-h-[180px]'}`}
         draggable
         onDragStart={(e) => { setDraggingId(epic.id); e.dataTransfer.setData('text/stea-epic-id', epic.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1093,7 +1093,7 @@ export default function SteaBoard() {
               <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
               <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
             </div>
-            <div className="font-semibold text-lg">{highlightText(epic.title, search)}</div>
+            <div className="font-semibold text-base break-words">{highlightText(epic.title, search)}</div>
             {epic.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(epic.description, search)}</p>) : null}
             <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
               <span>Reporter: {epic.reporter || '—'}</span>
@@ -1178,7 +1178,7 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3' : 'p-3'}`}
+        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[100px]' : 'p-3 min-h-[150px]'}`}
         draggable
         onDragStart={(e) => { setDraggingId(feature.id); e.dataTransfer.setData('text/stea-feature-id', feature.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1221,7 +1221,7 @@ export default function SteaBoard() {
                 Epic: {epicLabel}
               </div>
             )}
-            <div className="font-semibold text-lg">{highlightText(feature.title, search)}</div>
+            <div className="font-semibold text-base break-words">{highlightText(feature.title, search)}</div>
             {feature.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(feature.description, search)}</p>) : null}
             <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
               <span>Reporter: {feature.reporter || '—'}</span>
