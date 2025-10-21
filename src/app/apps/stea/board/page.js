@@ -981,11 +981,56 @@ export default function SteaBoard() {
       event.stopPropagation();
       const featureId = event.dataTransfer.getData('text/stea-feature-id');
       if (featureId) {
-        await assignFeatureToEpic(featureId, normalizedEpicId);
-        // Also move feature to same column as epic
-        const feature = features.find((f) => f.id === featureId);
-        if (feature && feature.statusColumn !== epic.statusColumn) {
-          await moveTo({ ...feature, entityType: 'feature' }, epic.statusColumn);
+        const normalizedFeatureId = normalizeId(featureId);
+        const feature = features.find((f) => f.id === normalizedFeatureId);
+        const epicLabel = getDocLabel(epic) || epic.title || '';
+        const featureLabel = getDocLabel(feature) || feature?.title || '';
+
+        // Build search tokens
+        const featureSearchTokens = buildSearchTokens(
+          {
+            ...(feature || {}),
+            epicId: normalizedEpicId || null,
+            epicLabel,
+            featureLabel,
+            statusColumn: epic.statusColumn,
+          },
+          featureLabel,
+          epicLabel || '',
+        );
+
+        // Update feature with both epicId AND statusColumn in one call
+        try {
+          await updateDoc(doc(db, 'stea_features', normalizedFeatureId), {
+            epicId: normalizedEpicId || null,
+            epicLabel,
+            statusColumn: epic.statusColumn,
+            searchTokens: featureSearchTokens,
+            updatedAt: serverTimestamp(),
+          });
+
+          // Update any cards linked to this feature
+          const impactedCards = cards.filter((c) => normalizeId(c.featureId) === normalizedFeatureId);
+          if (impactedCards.length) {
+            await Promise.all(impactedCards.map((c) =>
+              updateDoc(doc(db, 'stea_cards', c.id), {
+                epicId: normalizedEpicId || null,
+                epicLabel,
+                searchTokens: buildSearchTokens(
+                  {
+                    ...c,
+                    epicId: normalizedEpicId || null,
+                    epicLabel,
+                  },
+                  c.featureLabel || featureLabel,
+                  epicLabel || '',
+                ),
+                updatedAt: serverTimestamp(),
+              })
+            ));
+          }
+        } catch (err) {
+          console.error('[STEa Board] Failed to nest feature under epic', err);
         }
       }
       setDragOverEpic('');
@@ -1048,11 +1093,39 @@ export default function SteaBoard() {
       event.stopPropagation();
       const cardId = event.dataTransfer.getData('text/stea-card-id');
       if (cardId) {
-        await assignCardToFeature(cardId, normalizedFeatureId);
-        // Also move card to same column as feature
         const card = cards.find((c) => c.id === cardId);
-        if (card && card.statusColumn !== feature.statusColumn) {
-          await moveTo({ ...card, entityType: 'card' }, feature.statusColumn);
+        const featureLabel = getDocLabel(feature) || feature?.title || '';
+        const normalizedEpicId = normalizeId(feature.epicId);
+        const epicDoc = normalizedEpicId ? epicMap[normalizedEpicId] : null;
+        const epicLabel = getDocLabel(epicDoc) || '';
+
+        // Build search tokens
+        const searchTokens = buildSearchTokens(
+          {
+            ...(card || {}),
+            featureId: normalizedFeatureId || null,
+            featureLabel,
+            epicId: normalizedEpicId || null,
+            epicLabel,
+            statusColumn: feature.statusColumn,
+          },
+          featureLabel || '',
+          epicLabel || '',
+        );
+
+        // Update card with featureId, epicId, AND statusColumn in one call
+        try {
+          await updateDoc(doc(db, 'stea_cards', cardId), {
+            featureId: normalizedFeatureId || null,
+            featureLabel,
+            epicId: normalizedEpicId || null,
+            epicLabel,
+            statusColumn: feature.statusColumn,
+            searchTokens,
+            updatedAt: serverTimestamp(),
+          });
+        } catch (err) {
+          console.error('[STEa Board] Failed to nest card under feature', err);
         }
       }
       setDragOverFeature('');
