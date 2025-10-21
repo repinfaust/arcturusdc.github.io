@@ -367,6 +367,7 @@ export default function SteaBoard() {
   const [peekLevels, setPeekLevels] = useState({}); // Track peek state per card
   const [collapsedFeatures, setCollapsedFeatures] = useState({}); // Track collapsed state per feature
   const [hoveredLayer, setHoveredLayer] = useState(null); // Track which epic/feature is being hovered
+  const [peeking, setPeeking] = useState(null); // Track which epic/feature is being peeked (click+hold on title)
 
   useEffect(() => {
     if (!newMenuOpen) return;
@@ -1097,6 +1098,22 @@ export default function SteaBoard() {
 
     const hasChildren = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
     const isHovered = hoveredLayer === `epic-${epic.id}`;
+    const isPeeking = peeking === `epic-${epic.id}`;
+
+    const handleTitleMouseDown = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setPeeking(`epic-${epic.id}`);
+    };
+
+    const handleTitleMouseUp = (e) => {
+      e.stopPropagation();
+      setPeeking(null);
+    };
+
+    const handleTitleMouseLeave = () => {
+      setPeeking(null);
+    };
 
     return (
       <div
@@ -1114,21 +1131,45 @@ export default function SteaBoard() {
       >
         {hasChildren ? (
           <>
-            {/* Minimal border mode - title on left edge */}
-            <div className="absolute left-1 top-0 bottom-0 flex items-center justify-center overflow-hidden">
-              <div className="text-red-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                {epic.title || 'Epic'}
-              </div>
-            </div>
-            {/* Label at top */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-red-700 text-[10px] font-bold uppercase tracking-wide">Epic</div>
-              <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-1.5 py-0.5 text-[10px] rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
-            </div>
-            {/* Nested children */}
-            <div className="space-y-3">
-              {children}
-            </div>
+            {isPeeking ? (
+              <>
+                {/* Peek mode - show full epic details */}
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
+                  <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
+                </div>
+                <div className="font-semibold text-base break-words">{highlightText(epic.title, search)}</div>
+                {epic.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(epic.description, search)}</p>) : null}
+                <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                  <span>Reporter: {epic.reporter || '—'}</span>
+                  {epic.assignee ? <span>Assigned: {epic.assignee}</span> : null}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Minimal border mode - title on left edge */}
+                <div
+                  className="absolute left-1 top-0 bottom-0 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-red-100/30 transition-colors"
+                  onMouseDown={handleTitleMouseDown}
+                  onMouseUp={handleTitleMouseUp}
+                  onMouseLeave={handleTitleMouseLeave}
+                  title="Click and hold to peek"
+                >
+                  <div className="text-red-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                    {epic.title || 'Epic'}
+                  </div>
+                </div>
+                {/* Label at top */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-red-700 text-[10px] font-bold uppercase tracking-wide">Epic</div>
+                  <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-1.5 py-0.5 text-[10px] rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
+                </div>
+                {/* Nested children */}
+                <div className="space-y-3">
+                  {children}
+                </div>
+              </>
+            )}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic' }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
             </div>
@@ -1224,6 +1265,7 @@ export default function SteaBoard() {
     const hasChildren = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
     const isCollapsed = collapsedFeatures[feature.id];
     const isHovered = hoveredLayer === `feature-${feature.id}`;
+    const isPeeking = peeking === `feature-${feature.id}`;
 
     const toggleCollapse = (e) => {
       e.stopPropagation();
@@ -1231,6 +1273,21 @@ export default function SteaBoard() {
         ...prev,
         [feature.id]: !prev[feature.id]
       }));
+    };
+
+    const handleTitleMouseDown = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setPeeking(`feature-${feature.id}`);
+    };
+
+    const handleTitleMouseUp = (e) => {
+      e.stopPropagation();
+      setPeeking(null);
+    };
+
+    const handleTitleMouseLeave = () => {
+      setPeeking(null);
     };
 
     return (
@@ -1254,38 +1311,67 @@ export default function SteaBoard() {
       >
         {hasChildren ? (
           <>
-            {/* Minimal border mode - title on left edge */}
-            <div className="absolute left-1 top-0 bottom-0 flex items-center justify-center overflow-hidden">
-              <div className="text-orange-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                {feature.title || 'Feature'}
-              </div>
-            </div>
-            {/* Label at top */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="text-orange-700 text-[10px] font-bold uppercase tracking-wide">Feature</div>
-                {hasChildren && (
-                  <button
-                    onClick={toggleCollapse}
-                    className="text-orange-700 hover:text-orange-900 text-xs px-1 py-0.5 rounded hover:bg-orange-100"
-                    title={isCollapsed ? 'Expand' : 'Collapse'}
-                  >
-                    {isCollapsed ? '▶' : '▼'}
-                  </button>
+            {isPeeking ? (
+              <>
+                {/* Peek mode - show full feature details */}
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="font-bold text-orange-700 text-sm uppercase tracking-wide">Feature</div>
+                  <button onClick={(e) => { e.stopPropagation(); openEntityEditor('feature', feature); }} className="px-2 py-1 text-xs rounded bg-orange-700 text-white hover:bg-orange-800">Edit</button>
+                </div>
+                {epicLabel && (
+                  <div className="mb-2 inline-block px-2 py-0.5 text-[10px] rounded border border-red-200 bg-red-50 text-red-700 uppercase tracking-wide">
+                    Epic: {epicLabel}
+                  </div>
                 )}
-              </div>
-              <button onClick={(e) => { e.stopPropagation(); openEntityEditor('feature', feature); }} className="px-1.5 py-0.5 text-[10px] rounded bg-orange-700 text-white hover:bg-orange-800">Edit</button>
-            </div>
-            {/* Nested children - only show if not collapsed */}
-            {!isCollapsed && (
-              <div className="space-y-3">
-                {children}
-              </div>
-            )}
-            {isCollapsed && (
-              <div className="text-xs text-orange-600 italic">
-                {Array.isArray(children) ? children.filter(Boolean).length : 1} card{Array.isArray(children) && children.filter(Boolean).length !== 1 ? 's' : ''} hidden
-              </div>
+                <div className="font-semibold text-base break-words">{highlightText(feature.title, search)}</div>
+                {feature.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(feature.description, search)}</p>) : null}
+                <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                  <span>Reporter: {feature.reporter || '—'}</span>
+                  {feature.assignee ? <span>Assigned: {feature.assignee}</span> : null}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Minimal border mode - title on left edge */}
+                <div
+                  className="absolute left-1 top-0 bottom-0 flex items-center justify-center overflow-hidden cursor-pointer hover:bg-orange-100/30 transition-colors"
+                  onMouseDown={handleTitleMouseDown}
+                  onMouseUp={handleTitleMouseUp}
+                  onMouseLeave={handleTitleMouseLeave}
+                  title="Click and hold to peek"
+                >
+                  <div className="text-orange-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                    {feature.title || 'Feature'}
+                  </div>
+                </div>
+                {/* Label at top */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-orange-700 text-[10px] font-bold uppercase tracking-wide">Feature</div>
+                    {hasChildren && (
+                      <button
+                        onClick={toggleCollapse}
+                        className="text-orange-700 hover:text-orange-900 text-xs px-1 py-0.5 rounded hover:bg-orange-100"
+                        title={isCollapsed ? 'Expand' : 'Collapse'}
+                      >
+                        {isCollapsed ? '▶' : '▼'}
+                      </button>
+                    )}
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); openEntityEditor('feature', feature); }} className="px-1.5 py-0.5 text-[10px] rounded bg-orange-700 text-white hover:bg-orange-800">Edit</button>
+                </div>
+                {/* Nested children - only show if not collapsed */}
+                {!isCollapsed && (
+                  <div className="space-y-3">
+                    {children}
+                  </div>
+                )}
+                {isCollapsed && (
+                  <div className="text-xs text-orange-600 italic">
+                    {Array.isArray(children) ? children.filter(Boolean).length : 1} card{Array.isArray(children) && children.filter(Boolean).length !== 1 ? 's' : ''} hidden
+                  </div>
+                )}
+              </>
             )}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
