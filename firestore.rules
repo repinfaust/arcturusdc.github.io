@@ -1,0 +1,150 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ---------- Helpers ---------- */
+    function authed() { return request.auth != null; }
+    function isTsOrIso(x) { return x is timestamp || x is string; }
+    function isNullOrStr(x) { return x == null || x is string; }
+    function inArray(v, arr) { return arr.hasAll([v]); }
+
+    // Membership helper: require auth, project exists, and user is owner or in members
+    function inProject(projectId) {
+      let p = /databases/$(database)/documents/projects/$(projectId);
+      return authed() && exists(p) && (
+        get(p).data.ownerUid == request.auth.uid ||
+        (('members' in get(p).data) && get(p).data.members.hasAny([request.auth.uid]))
+      );
+    }
+
+    /* ---------- Validators for Tou.me testing ---------- */
+    function isValidResult() {
+      return request.resource.data.keys().hasAll(
+               ['testId','status','timestamp','tester','build','platform','notes']
+             ) &&
+             request.resource.data.testId is string &&
+             inArray(request.resource.data.status, ['pass','fail','skip']) &&
+             isTsOrIso(request.resource.data.timestamp) &&
+             isNullOrStr(request.resource.data.tester) &&
+             isNullOrStr(request.resource.data.build) &&
+             isNullOrStr(request.resource.data.platform) &&
+             isNullOrStr(request.resource.data.notes);
+    }
+
+    function isValidSession() {
+      return request.resource.data.keys().hasAll(
+               ['tester','build','platform','timestamp','testResults','summary','generalFeedback']
+             ) &&
+             isNullOrStr(request.resource.data.tester) &&
+             isNullOrStr(request.resource.data.build) &&
+             isNullOrStr(request.resource.data.platform) &&
+             isTsOrIso(request.resource.data.timestamp) &&
+             (request.resource.data.testResults is map || request.resource.data.testResults is list) &&
+             request.resource.data.summary.total is number &&
+             request.resource.data.summary.passed is number &&
+             request.resource.data.summary.failed is number &&
+             request.resource.data.summary.skipped is number &&
+             isNullOrStr(request.resource.data.generalFeedback);
+    }
+
+    /* ==========================================================
+       STEa board
+       ========================================================== */
+    match /stea_cards/{doc} {
+      allow read, create, update, delete: if authed();
+      match /comments/{cid} {
+        allow read, create, delete: if authed();
+      }
+    }
+
+    /* ==========================================================
+       Automated testing + CI
+       ========================================================== */
+    match /automated_test_runs/{doc} {
+      allow read, create, update: if authed();
+    }
+    match /automated_test_issues/{doc} {
+      allow read, create, update: if authed();
+    }
+
+    match /testRuns/{runId} {
+      allow read: if authed();   // dashboard watch
+      allow write: if false;     // CI writes via Admin SDK only
+    }
+
+    /* Tou.me testing collections */
+    match /toume_test_results/{doc} {
+      allow read, create: if authed() && isValidResult();
+      allow update, delete: if authed();
+    }
+    match /toume_test_sessions/{doc} {
+      allow read, create: if authed() && isValidSession();
+      allow update, delete: if authed();
+    }
+
+    /* ==========================================================
+       Product Lab (Felix)
+       ========================================================== */
+    match /projects/{projectId} {
+      // Create: owner = self and self included in members
+      allow create: if authed()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.members.hasAny([request.auth.uid]);
+
+      // Allow bootstrap GET if doc doesn't exist; otherwise require membership
+      allow get: if !exists(/databases/$(database)/documents/projects/$(projectId)) || inProject(projectId);
+
+      // Update / delete only for members/owner
+      allow update, delete: if inProject(projectId);
+
+      // Subcollection: whiteboards (board doc holds tldrawSnapshot field)
+      match /whiteboards/{boardId} {
+        allow read, write: if inProject(projectId);
+
+        // Sidebar: Jobs to be done / Questions
+        match /jobs/{jobId} {
+          allow read, write: if inProject(projectId);
+        }
+
+        // If you later persist TLDraw shapes per element
+        match /elements/{elementId} {
+          allow read, write: if inProject(projectId);
+        }
+      }
+
+      // Subcollection: stories
+      match /stories/{storyId} {
+        allow read, write: if inProject(projectId);
+      }
+
+      // Subcollection: specs (optional)
+      match /specs/{specId} {
+        allow read, write: if inProject(projectId);
+      }
+
+      // Subcollection: presence (only self can write)
+      match /presence/{uid} {
+        allow read: if inProject(projectId);
+        allow write: if inProject(projectId) && authed() && request.auth.uid == uid;
+      }
+    }
+
+    /* ==========================================================
+       User profiles, badges, metrics
+       ========================================================== */
+    match /users/{uid} {
+      // Self-only profile access
+      allow read, create, update: if authed() && request.auth.uid == uid;
+
+      match /badges/{badgeId} {
+        allow read, create, update, delete: if authed() && request.auth.uid == uid;
+      }
+
+      match /metrics/{docId} {
+        allow read: if authed() && request.auth.uid == uid;
+        allow create, update: if authed() && request.auth.uid == uid;
+        allow delete: if false;
+      }
+    }
+  }
+}
