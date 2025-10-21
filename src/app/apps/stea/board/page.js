@@ -365,6 +365,8 @@ export default function SteaBoard() {
   // per-card board expand state (non-persistent)
   const [expandedCards, setExpandedCards] = useState({});
   const [peekLevels, setPeekLevels] = useState({}); // Track peek state per card
+  const [collapsedFeatures, setCollapsedFeatures] = useState({}); // Track collapsed state per feature
+  const [hoveredLayer, setHoveredLayer] = useState(null); // Track which epic/feature is being hovered
 
   useEffect(() => {
     if (!newMenuOpen) return;
@@ -1094,10 +1096,11 @@ export default function SteaBoard() {
     };
 
     const hasChildren = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
+    const isHovered = hoveredLayer === `epic-${epic.id}`;
 
     return (
       <div
-        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[120px]' : 'p-4 min-h-[180px]'}`}
+        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition-all cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${isHovered ? 'ring-2 ring-red-300 shadow-red-200/50' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[120px]' : 'p-4 min-h-[180px]'}`}
         draggable
         onDragStart={(e) => { setDraggingId(epic.id); e.dataTransfer.setData('text/stea-epic-id', epic.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1106,6 +1109,8 @@ export default function SteaBoard() {
         onDrop={handleEpicDrop}
         onDoubleClick={() => openEntityEditor('epic', epic)}
         onPointerDown={onEntityPointerDown(epic.id, epic, 'epic')}
+        onMouseEnter={() => setHoveredLayer(`epic-${epic.id}`)}
+        onMouseLeave={() => setHoveredLayer(null)}
       >
         {hasChildren ? (
           <>
@@ -1217,10 +1222,25 @@ export default function SteaBoard() {
     };
 
     const hasChildren = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
+    const isCollapsed = collapsedFeatures[feature.id];
+    const isHovered = hoveredLayer === `feature-${feature.id}`;
+
+    const toggleCollapse = (e) => {
+      e.stopPropagation();
+      setCollapsedFeatures(prev => ({
+        ...prev,
+        [feature.id]: !prev[feature.id]
+      }));
+    };
 
     return (
       <div
-        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[100px]' : 'p-3 min-h-[150px]'}`}
+        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100/70 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[100px]' : 'p-3 min-h-[150px]'}`}
+        style={{
+          boxShadow: hasChildren
+            ? '0 4px 6px -1px rgba(251, 146, 60, 0.15), 0 2px 4px -1px rgba(251, 146, 60, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+            : undefined
+        }}
         draggable
         onDragStart={(e) => { setDraggingId(feature.id); e.dataTransfer.setData('text/stea-feature-id', feature.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1229,6 +1249,8 @@ export default function SteaBoard() {
         onDrop={handleFeatureDrop}
         onDoubleClick={() => openEntityEditor('feature', feature)}
         onPointerDown={onEntityPointerDown(feature.id, feature, 'feature')}
+        onMouseEnter={() => setHoveredLayer(`feature-${feature.id}`)}
+        onMouseLeave={() => setHoveredLayer(null)}
       >
         {hasChildren ? (
           <>
@@ -1240,13 +1262,31 @@ export default function SteaBoard() {
             </div>
             {/* Label at top */}
             <div className="flex items-center justify-between mb-2">
-              <div className="text-orange-700 text-[10px] font-bold uppercase tracking-wide">Feature</div>
+              <div className="flex items-center gap-2">
+                <div className="text-orange-700 text-[10px] font-bold uppercase tracking-wide">Feature</div>
+                {hasChildren && (
+                  <button
+                    onClick={toggleCollapse}
+                    className="text-orange-700 hover:text-orange-900 text-xs px-1 py-0.5 rounded hover:bg-orange-100"
+                    title={isCollapsed ? 'Expand' : 'Collapse'}
+                  >
+                    {isCollapsed ? '▶' : '▼'}
+                  </button>
+                )}
+              </div>
               <button onClick={(e) => { e.stopPropagation(); openEntityEditor('feature', feature); }} className="px-1.5 py-0.5 text-[10px] rounded bg-orange-700 text-white hover:bg-orange-800">Edit</button>
             </div>
-            {/* Nested children */}
-            <div className="space-y-3">
-              {children}
-            </div>
+            {/* Nested children - only show if not collapsed */}
+            {!isCollapsed && (
+              <div className="space-y-3">
+                {children}
+              </div>
+            )}
+            {isCollapsed && (
+              <div className="text-xs text-orange-600 italic">
+                {Array.isArray(children) ? children.filter(Boolean).length : 1} card{Array.isArray(children) && children.filter(Boolean).length !== 1 ? 's' : ''} hidden
+              </div>
+            )}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
             </div>
