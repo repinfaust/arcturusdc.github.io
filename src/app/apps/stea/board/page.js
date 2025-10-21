@@ -880,7 +880,49 @@ export default function SteaBoard() {
   const moveTo = async (entity, nextCol) => {
     const entityType = entity.entityType || 'card';
     const collectionName = getEntityCollection(entityType);
-    await updateDoc(doc(db, collectionName, entity.id), { statusColumn: nextCol, updatedAt: serverTimestamp() });
+
+    // Update the entity itself
+    await updateDoc(doc(db, collectionName, entity.id), {
+      statusColumn: nextCol,
+      updatedAt: serverTimestamp()
+    });
+
+    // If epic, also move all nested features and cards
+    if (entityType === 'epic') {
+      const normalizedEpicId = normalizeId(entity.id);
+      const nestedFeatures = features.filter(f => normalizeId(f.epicId) === normalizedEpicId);
+      const nestedCards = cards.filter(c => normalizeId(c.epicId) === normalizedEpicId);
+
+      await Promise.all([
+        ...nestedFeatures.map(f =>
+          updateDoc(doc(db, 'stea_features', f.id), {
+            statusColumn: nextCol,
+            updatedAt: serverTimestamp()
+          })
+        ),
+        ...nestedCards.map(c =>
+          updateDoc(doc(db, 'stea_cards', c.id), {
+            statusColumn: nextCol,
+            updatedAt: serverTimestamp()
+          })
+        )
+      ]);
+    }
+
+    // If feature, also move all nested cards
+    if (entityType === 'feature') {
+      const normalizedFeatureId = normalizeId(entity.id);
+      const nestedCards = cards.filter(c => normalizeId(c.featureId) === normalizedFeatureId);
+
+      await Promise.all(
+        nestedCards.map(c =>
+          updateDoc(doc(db, 'stea_cards', c.id), {
+            statusColumn: nextCol,
+            updatedAt: serverTimestamp()
+          })
+        )
+      );
+    }
   };
 
   /* ---------- attachments handlers ---------- */
@@ -1051,7 +1093,7 @@ export default function SteaBoard() {
       setDragOverEpic('');
     };
 
-    const hasChildren = children && (Array.isArray(children) ? children.length > 0 : true);
+    const hasChildren = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
 
     return (
       <div
@@ -1174,7 +1216,7 @@ export default function SteaBoard() {
       setDragOverFeature('');
     };
 
-    const hasChildren = children && (Array.isArray(children) ? children.length > 0 : true);
+    const hasChildren = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
 
     return (
       <div
