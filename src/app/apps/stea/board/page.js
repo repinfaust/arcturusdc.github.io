@@ -720,23 +720,10 @@ export default function SteaBoard() {
     const normalizedEpicId = normalizeId(defaults.epicId);
     const normalizedFeatureId = normalizeId(defaults.featureId);
 
-    // Auto-fill title based on parent context
-    let autoTitle = defaults.title || '';
-    if (!autoTitle) {
-      if (entityType === 'feature' && defaults.epicLabel) {
-        // Feature gets Epic name
-        autoTitle = defaults.epicLabel;
-      } else if (entityType === 'card' && (defaults.epicLabel || defaults.featureLabel)) {
-        // Card gets "Epic - Feature" or just one if the other is missing
-        const parts = [defaults.epicLabel, defaults.featureLabel].filter(Boolean);
-        autoTitle = parts.join(' - ');
-      }
-    }
-
     const base = {
       id: null,
       entityType,
-      title: autoTitle,
+      title: defaults.title || '',
       description: defaults.description || '',
       type: entityType === 'card' ? (defaults.type || 'idea') : entityType,
       app: defaults.app || 'New App',
