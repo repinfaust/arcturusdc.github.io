@@ -1100,7 +1100,7 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition-all cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${isHovered ? 'ring-2 ring-red-300 shadow-red-200/50' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[120px]' : 'p-4 min-h-[180px]'}`}
+        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition-all cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${isHovered ? 'ring-2 ring-red-300 shadow-red-200/50' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4' : 'p-4 min-h-[180px]'}`}
         draggable
         onDragStart={(e) => { setDraggingId(epic.id); e.dataTransfer.setData('text/stea-epic-id', epic.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1235,7 +1235,7 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100/70 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[100px]' : 'p-3 min-h-[150px]'}`}
+        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100/70 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3' : 'p-3 min-h-[150px]'}`}
         style={{
           boxShadow: hasChildren
             ? '0 4px 6px -1px rgba(251, 146, 60, 0.15), 0 2px 4px -1px rgba(251, 146, 60, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.1)'
