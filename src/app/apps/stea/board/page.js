@@ -1064,9 +1064,11 @@ export default function SteaBoard() {
       setDragOverEpic('');
     };
 
+    const hasChildren = children && (Array.isArray(children) ? children.length > 0 : true);
+
     return (
       <div
-        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 p-4 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''}`}
+        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4' : 'p-4'}`}
         draggable
         onDragStart={(e) => { setDraggingId(epic.id); e.dataTransfer.setData('text/stea-epic-id', epic.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1076,28 +1078,47 @@ export default function SteaBoard() {
         onDoubleClick={() => openEntityEditor('epic', epic)}
         onPointerDown={onEntityPointerDown(epic.id, epic, 'epic')}
       >
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
-          <button onClick={() => openEntityEditor('epic', epic)} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
-        </div>
-        <div className="font-semibold text-lg">{highlightText(epic.title, search)}</div>
-        {epic.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(epic.description, search)}</p>) : null}
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-          <span>Reporter: {epic.reporter || '—'}</span>
-          {epic.assignee ? <span>Assigned: {epic.assignee}</span> : null}
-        </div>
-        {/* Nested children (features/cards) */}
-        {children && (
-          <div className="mt-3 space-y-3">
-            {children}
-          </div>
+        {hasChildren ? (
+          <>
+            {/* Minimal border mode - title on left edge */}
+            <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-6">
+              <div className="text-red-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                {epic.title || 'Epic'}
+              </div>
+            </div>
+            {/* Label at top */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-red-700 text-[10px] font-bold uppercase tracking-wide">Epic</div>
+              <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-1.5 py-0.5 text-[10px] rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
+            </div>
+            {/* Nested children */}
+            <div className="space-y-3">
+              {children}
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic' }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Full display mode - standalone epic */}
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
+              <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
+            </div>
+            <div className="font-semibold text-lg">{highlightText(epic.title, search)}</div>
+            {epic.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(epic.description, search)}</p>) : null}
+            <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+              <span>Reporter: {epic.reporter || '—'}</span>
+              {epic.assignee ? <span>Assigned: {epic.assignee}</span> : null}
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic' }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
+              <button onClick={(e) => { e.stopPropagation(); moveTo({ id: epic.id, statusColumn: epic.statusColumn }, prev); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
+              <button onClick={(e) => { e.stopPropagation(); moveTo({ id: epic.id, statusColumn: epic.statusColumn }, next); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
+            </div>
+          </>
         )}
-
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <button onClick={() => startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic' })} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
-          <button onClick={() => moveTo({ id: epic.id, statusColumn: epic.statusColumn }, prev)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
-          <button onClick={() => moveTo({ id: epic.id, statusColumn: epic.statusColumn }, next)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
-        </div>
       </div>
     );
   };
@@ -1166,9 +1187,11 @@ export default function SteaBoard() {
       setDragOverFeature('');
     };
 
+    const hasChildren = children && (Array.isArray(children) ? children.length > 0 : true);
+
     return (
       <div
-        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''}`}
+        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/50 shadow-md hover:shadow-lg transition cursor-grab active:cursor-grabbing relative ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3' : 'p-3'}`}
         draggable
         onDragStart={(e) => { setDraggingId(feature.id); e.dataTransfer.setData('text/stea-feature-id', feature.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1178,34 +1201,52 @@ export default function SteaBoard() {
         onDoubleClick={() => openEntityEditor('feature', feature)}
         onPointerDown={onEntityPointerDown(feature.id, feature, 'feature')}
       >
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="font-bold text-orange-700 text-sm uppercase tracking-wide">Feature</div>
-          <button onClick={() => openEntityEditor('feature', feature)} className="px-2 py-1 text-xs rounded bg-orange-700 text-white hover:bg-orange-800">Edit</button>
-        </div>
-        {epicLabel && (
-          <div className="mb-2 inline-block px-2 py-0.5 text-[10px] rounded border border-red-200 bg-red-50 text-red-700 uppercase tracking-wide">
-            Epic: {epicLabel}
-          </div>
+        {hasChildren ? (
+          <>
+            {/* Minimal border mode - title on left edge */}
+            <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-5">
+              <div className="text-orange-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                {feature.title || 'Feature'}
+              </div>
+            </div>
+            {/* Label at top */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-orange-700 text-[10px] font-bold uppercase tracking-wide">Feature</div>
+              <button onClick={(e) => { e.stopPropagation(); openEntityEditor('feature', feature); }} className="px-1.5 py-0.5 text-[10px] rounded bg-orange-700 text-white hover:bg-orange-800">Edit</button>
+            </div>
+            {/* Nested children */}
+            <div className="space-y-3">
+              {children}
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Full display mode - standalone feature */}
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="font-bold text-orange-700 text-sm uppercase tracking-wide">Feature</div>
+              <button onClick={(e) => { e.stopPropagation(); openEntityEditor('feature', feature); }} className="px-2 py-1 text-xs rounded bg-orange-700 text-white hover:bg-orange-800">Edit</button>
+            </div>
+            {epicLabel && (
+              <div className="mb-2 inline-block px-2 py-0.5 text-[10px] rounded border border-red-200 bg-red-50 text-red-700 uppercase tracking-wide">
+                Epic: {epicLabel}
+              </div>
+            )}
+            <div className="font-semibold text-lg">{highlightText(feature.title, search)}</div>
+            {feature.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(feature.description, search)}</p>) : null}
+            <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+              <span>Reporter: {feature.reporter || '—'}</span>
+              {feature.assignee ? <span>Assigned: {feature.assignee}</span> : null}
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
+              <button onClick={(e) => { e.stopPropagation(); moveTo({ id: feature.id, statusColumn: feature.statusColumn }, prev); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
+              <button onClick={(e) => { e.stopPropagation(); moveTo({ id: feature.id, statusColumn: feature.statusColumn }, next); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
+            </div>
+          </>
         )}
-        <div className="font-semibold text-lg">{highlightText(feature.title, search)}</div>
-        {feature.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(feature.description, search)}</p>) : null}
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-          <span>Reporter: {feature.reporter || '—'}</span>
-          {feature.assignee ? <span>Assigned: {feature.assignee}</span> : null}
-        </div>
-
-        {/* Nested children (cards) */}
-        {children && (
-          <div className="mt-3 space-y-3">
-            {children}
-          </div>
-        )}
-
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <button onClick={() => startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel })} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
-          <button onClick={() => moveTo({ id: feature.id, statusColumn: feature.statusColumn }, prev)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
-          <button onClick={() => moveTo({ id: feature.id, statusColumn: feature.statusColumn }, next)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
-        </div>
       </div>
     );
   };
@@ -1216,132 +1257,15 @@ export default function SteaBoard() {
     const next = COLUMNS[Math.min(idx + 1, COLUMNS.length - 1)];
     const isDragging = draggingId === card.id;
     const expanded = !!expandedCards[card.id];
-    const featureDoc = card.featureId ? featureMap[card.featureId] : null;
-    const cardEpicId = normalizeId(card.epicId);
-    const featureEpicId = featureDoc ? normalizeId(featureDoc.epicId) : '';
-    const derivedEpicId = cardEpicId || featureEpicId;
-    const epicDoc = derivedEpicId ? epicMap[derivedEpicId] : null;
-    const featureLabel = getDocLabel(featureDoc) || (card.featureLabel || '');
-    const epicLabel = getDocLabel(epicDoc) || (card.epicLabel || '');
-    const normalizedFeatureId = normalizeId(card.featureId || featureDoc?.id);
-    const normalizedEpicId = normalizeId(derivedEpicId);
 
-    const handleFeatureDragStart = (event) => {
-      if (!normalizedFeatureId) return event.preventDefault();
-      event.dataTransfer.setData('text/stea-feature-id', normalizedFeatureId);
-      event.dataTransfer.effectAllowed = 'move';
-      setDragOverFeature('');
-      event.stopPropagation();
-    };
-
-    const handleFeatureDragOver = (event) => {
-      if (!normalizedFeatureId) return;
-      const types = Array.from(event.dataTransfer.types || []);
-      if (types.includes('text/stea-card-id')) {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-        setDragOverFeature(normalizedFeatureId);
-      }
-    };
-
-    const clearFeatureHover = (event) => {
-      if (!normalizedFeatureId) return;
-      if (event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
-      setDragOverFeature((prev) => (prev === normalizedFeatureId ? '' : prev));
-    };
-
-    const handleFeatureDrop = async (event) => {
-      if (!normalizedFeatureId) return;
-      event.preventDefault();
-      const cardId = event.dataTransfer.getData('text/stea-card-id');
-      if (cardId) {
-        if (cardId !== card.id) {
-          await assignCardToFeature(cardId, normalizedFeatureId);
-        }
-        setDragOverFeature('');
-        return;
-      }
-      const featureId = event.dataTransfer.getData('text/stea-feature-id');
-      if (featureId && featureId !== normalizedFeatureId && normalizedEpicId) {
-        await assignFeatureToEpic(featureId, normalizedEpicId);
-      }
-      setDragOverFeature('');
-    };
-
-    const handleEpicDragOver = (event) => {
-      if (!normalizedEpicId) return;
-      const types = Array.from(event.dataTransfer.types || []);
-      if (types.includes('text/stea-feature-id')) {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-        setDragOverEpic(normalizedEpicId);
-      }
-    };
-
-    const clearEpicHover = (event) => {
-      if (!normalizedEpicId) return;
-      if (event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
-      setDragOverEpic((prev) => (prev === normalizedEpicId ? '' : prev));
-    };
-
-    const handleEpicDrop = async (event) => {
-      if (!normalizedEpicId) return;
-      event.preventDefault();
-      const featureId = event.dataTransfer.getData('text/stea-feature-id');
-      if (featureId) {
-        await assignFeatureToEpic(featureId, normalizedEpicId);
-      }
-      setDragOverEpic('');
-    };
-
-    const addFeatureWithinEpic = () => {
-      if (normalizedEpicId) {
-        startNewEntity('feature', { epicId: normalizedEpicId, epicLabel });
-      } else {
-        startNewEntity('feature');
-      }
-    };
-
-    const addCardWithinFeature = () => {
-      startNewEntity('card', {
-        featureId: normalizedFeatureId,
-        epicId: normalizedEpicId,
-        featureLabel,
-        epicLabel,
-      });
-    };
-
-    const peekLevel = peekLevels[card.id] || 0;
-
-    const handleWheel = (e) => {
-      // Only activate peek mode if card has epic/feature layers
-      if (!epicLabel && !featureLabel) return;
-
-      // Check for modifier key (Cmd/Ctrl) - optional, can be removed for always-on scroll peek
-      if (e.metaKey || e.ctrlKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        const delta = e.deltaY > 0 ? 1 : -1;
-        setPeekLevels(prev => ({
-          ...prev,
-          [card.id]: Math.max(0, Math.min(2, (prev[card.id] || 0) + delta))
-        }));
-      }
-    };
-
-    const cardShell = (
+    return (
       <div
-        className={`rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-sm hover:shadow transition-all break-words whitespace-normal cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-60' : ''}`}
-        style={{
-          transform: peekLevel > 0 ? `translateY(${peekLevel * 8}px) scale(${1 - peekLevel * 0.02})` : undefined,
-          transition: 'transform 0.2s ease-out'
-        }}
+        className={`rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-sm hover:shadow transition break-words whitespace-normal cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-60' : ''}`}
         draggable
         onDragStart={(e) => { setDraggingId(card.id); e.dataTransfer.setData('text/stea-card-id', card.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
         onDoubleClick={() => openEntityEditor('card', card)}
         onPointerDown={onEntityPointerDown(card.id, card, 'card')}
-        onWheel={handleWheel}
       >
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1">
@@ -1399,72 +1323,6 @@ export default function SteaBoard() {
           <button onClick={() => moveTo(card, 'Done')} className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700" title="Mark Done">✓ Done</button>
           <button onClick={() => moveTo(card, "Won't Do")} className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700" title="Move to Won't Do">↯ Won’t Do</button>
         </div>
-      </div>
-    );
-
-    const featureLayer = featureLabel ? (
-      <div
-        className={`space-y-3 rounded-[22px] border-2 border-orange-200/80 bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-[1px] transition ${
-          dragOverFeature === normalizedFeatureId ? 'ring-2 ring-orange-400/70' : ''
-        }`}
-      >
-        <div
-          className={`flex items-center justify-between gap-2 rounded-[16px] border border-orange-200/70 bg-white/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-orange-700`}
-          draggable={!!normalizedFeatureId}
-          onDragStart={handleFeatureDragStart}
-          onDragEnd={() => setDragOverFeature('')}
-          onDragOver={handleFeatureDragOver}
-          onDragLeave={clearFeatureHover}
-          onDrop={handleFeatureDrop}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <span className="truncate">Feature {featureLabel}</span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={addCardWithinFeature}
-              className="rounded border border-orange-200 bg-white px-2 py-1 text-[11px] font-normal text-orange-700 hover:bg-orange-50"
-            >
-              + Card
-            </button>
-          </div>
-        </div>
-        {cardShell}
-      </div>
-    ) : cardShell;
-
-    const epicLayer = epicLabel ? (
-      <div
-        className={`space-y-4 rounded-[28px] border-4 border-red-200/80 bg-gradient-to-br from-red-50 to-red-100/50 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition ${
-          dragOverEpic === normalizedEpicId ? 'ring-2 ring-red-400/70' : ''
-        }`}
-      >
-        <div
-          className="flex items-center justify-between gap-2 rounded-[20px] border border-red-200/70 bg-white/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-red-700"
-          onDragOver={handleEpicDragOver}
-          onDragLeave={clearEpicHover}
-          onDrop={handleEpicDrop}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <span className="truncate">Epic {epicLabel}</span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={addFeatureWithinEpic}
-              className="rounded border border-red-200 bg-white px-2 py-1 text-[11px] font-normal text-red-700 hover:bg-red-50 disabled:opacity-40"
-              disabled={!normalizedEpicId}
-            >
-              + Feature
-            </button>
-          </div>
-        </div>
-        {featureLayer}
-      </div>
-    ) : featureLayer;
-
-    return (
-      <div className="relative">
-        {epicLayer}
       </div>
     );
   };
