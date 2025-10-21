@@ -334,15 +334,36 @@ export default function SteaBoard() {
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
 
+  // new menu
+  const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const newMenuRef = useRef(null);
+
   // drag & drop
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
+  const [dragOverEpic, setDragOverEpic] = useState('');
+  const [dragOverFeature, setDragOverFeature] = useState('');
 
   // uploading
   const [uploading, setUploading] = useState(false);
 
   // per-card board expand state (non-persistent)
   const [expandedCards, setExpandedCards] = useState({});
+
+  useEffect(() => {
+    if (!newMenuOpen) return;
+    const handle = (event) => {
+      if (!newMenuRef.current?.contains(event.target)) {
+        setNewMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handle);
+    document.addEventListener('focusin', handle);
+    return () => {
+      document.removeEventListener('mousedown', handle);
+      document.removeEventListener('focusin', handle);
+    };
+  }, [newMenuOpen]);
 
   /* ---------- one-time cleanup for legacy bad values ---------- */
   useEffect(() => {
@@ -573,7 +594,115 @@ export default function SteaBoard() {
     return refDoc.id;
   };
 
-  const startNew = () => {
+  const promptCreateEpic = async () => {
+    const name = window.prompt('Epic name');
+    if (!name || !name.trim()) return null;
+    try {
+      const newId = await createEpic(name);
+      return newId;
+    } catch (err) {
+      console.error('[STEa Board] Failed to create epic', err);
+      return null;
+    }
+  };
+
+  const promptCreateFeature = async (defaultEpicId = '') => {
+    const label = window.prompt('Feature name');
+    if (!label || !label.trim()) return null;
+    let epicIdChoice = normalizeId(defaultEpicId);
+    if (!epicIdChoice && epics.length) {
+      const options = epics.map((epic, idx) => `${idx + 1}. ${getDocLabel(epic) || epic.id}`).join('\n');
+      const promptText = options ? `Enter Epic ID (optional) from list:\n${options}` : 'Enter Epic ID (optional)';
+      const response = window.prompt(promptText);
+      if (response && response.trim()) {
+        epicIdChoice = normalizeId(response);
+      }
+    }
+    try {
+      const newId = await createFeature(epicIdChoice, label);
+      return newId;
+    } catch (err) {
+      console.error('[STEa Board] Failed to create feature', err);
+      return null;
+    }
+  };
+
+  const assignCardToFeature = async (cardId, targetFeatureId) => {
+    const normalizedFeatureId = normalizeId(targetFeatureId);
+    const featureDoc = normalizedFeatureId ? featureMap[normalizedFeatureId] : null;
+    const featureLabel = getDocLabel(featureDoc) || null;
+    const normalizedEpicId = normalizeId(featureDoc?.epicId);
+    const epicDoc = normalizedEpicId ? epicMap[normalizedEpicId] : null;
+    const epicLabel = getDocLabel(epicDoc) || null;
+    const cardData = cards.find((c) => c.id === cardId);
+    const searchTokens = cardData
+      ? buildSearchTokens(
+          {
+            ...cardData,
+            featureId: normalizedFeatureId || null,
+            featureLabel,
+            epicId: normalizedEpicId || null,
+            epicLabel,
+          },
+          featureLabel || '',
+          epicLabel || '',
+        )
+      : null;
+    try {
+      await updateDoc(doc(db, 'stea_cards', cardId), {
+        featureId: normalizedFeatureId || null,
+        featureLabel,
+        epicId: normalizedEpicId || null,
+        epicLabel,
+        ...(searchTokens ? { searchTokens } : {}),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error('[STEa Board] Failed to reassign card feature', err);
+    }
+  };
+
+  const assignFeatureToEpic = async (featureId, targetEpicId) => {
+    const normalizedFeatureId = normalizeId(featureId);
+    if (!normalizedFeatureId) return;
+    const normalizedEpicId = normalizeId(targetEpicId);
+    const epicDoc = normalizedEpicId ? epicMap[normalizedEpicId] : null;
+    const epicLabel = getDocLabel(epicDoc) || null;
+    const featureDoc = featureMap[normalizedFeatureId];
+    const featureLabel = getDocLabel(featureDoc) || '';
+    const featureTokens = tokenize([featureLabel, epicLabel || ''].join(' '));
+    try {
+      await updateDoc(doc(db, 'stea_features', normalizedFeatureId), {
+        epicId: normalizedEpicId || null,
+        epicLabel,
+        searchTokens: featureTokens,
+        updatedAt: serverTimestamp(),
+      });
+      const impactedCards = cards.filter((c) => normalizeId(c.featureId) === normalizedFeatureId);
+      if (impactedCards.length) {
+        await Promise.all(impactedCards.map((c) =>
+          updateDoc(doc(db, 'stea_cards', c.id), {
+            epicId: normalizedEpicId || null,
+            epicLabel,
+            searchTokens: buildSearchTokens(
+              {
+                ...c,
+                epicId: normalizedEpicId || null,
+                epicLabel,
+              },
+              c.featureLabel || featureLabel,
+              epicLabel || '',
+            ),
+            updatedAt: serverTimestamp(),
+          })
+        ));
+      }
+    } catch (err) {
+      console.error('[STEa Board] Failed to reassign feature epic', err);
+    }
+  };
+
+  const startNewCard = ({ epicId = '', featureId = '' } = {}) => {
     setEditing({
       id: null,
       title: '',
@@ -588,10 +717,26 @@ export default function SteaBoard() {
       statusColumn: 'Idea',
       archived: false,
       attachments: [],
-      epicId: '',
-      featureId: '',
+      epicId: normalizeId(epicId),
+      featureId: normalizeId(featureId),
     });
     setCreating(true);
+    setNewMenuOpen(false);
+  };
+
+  const handleNewPick = async (type) => {
+    if (type === 'card') {
+      startNewCard();
+      return;
+    }
+    setNewMenuOpen(false);
+    if (type === 'feature') {
+      await promptCreateFeature();
+      return;
+    }
+    if (type === 'epic') {
+      await promptCreateEpic();
+    }
   };
 
   const saveCard = async (card) => {
@@ -747,6 +892,91 @@ export default function SteaBoard() {
     const epicDoc = derivedEpicId ? epicMap[derivedEpicId] : null;
     const featureLabel = getDocLabel(featureDoc) || (card.featureLabel || '');
     const epicLabel = getDocLabel(epicDoc) || (card.epicLabel || '');
+    const normalizedFeatureId = normalizeId(card.featureId || featureDoc?.id);
+    const normalizedEpicId = normalizeId(derivedEpicId);
+
+    const handleFeatureDragStart = (event) => {
+      if (!normalizedFeatureId) return event.preventDefault();
+      event.dataTransfer.setData('text/stea-feature-id', normalizedFeatureId);
+      event.dataTransfer.effectAllowed = 'move';
+      setDragOverFeature('');
+      event.stopPropagation();
+    };
+
+    const handleFeatureDragOver = (event) => {
+      if (!normalizedFeatureId) return;
+      const types = Array.from(event.dataTransfer.types || []);
+      if (types.includes('text/stea-card-id')) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        setDragOverFeature(normalizedFeatureId);
+      }
+    };
+
+    const clearFeatureHover = (event) => {
+      if (!normalizedFeatureId) return;
+      if (event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
+      setDragOverFeature((prev) => (prev === normalizedFeatureId ? '' : prev));
+    };
+
+    const handleFeatureDrop = async (event) => {
+      if (!normalizedFeatureId) return;
+      event.preventDefault();
+      const cardId = event.dataTransfer.getData('text/stea-card-id');
+      if (cardId) {
+        if (cardId !== card.id) {
+          await assignCardToFeature(cardId, normalizedFeatureId);
+        }
+        setDragOverFeature('');
+        return;
+      }
+      const featureId = event.dataTransfer.getData('text/stea-feature-id');
+      if (featureId && featureId !== normalizedFeatureId && normalizedEpicId) {
+        await assignFeatureToEpic(featureId, normalizedEpicId);
+      }
+      setDragOverFeature('');
+    };
+
+    const handleEpicDragOver = (event) => {
+      if (!normalizedEpicId) return;
+      const types = Array.from(event.dataTransfer.types || []);
+      if (types.includes('text/stea-feature-id')) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        setDragOverEpic(normalizedEpicId);
+      }
+    };
+
+    const clearEpicHover = (event) => {
+      if (!normalizedEpicId) return;
+      if (event.relatedTarget && event.currentTarget.contains(event.relatedTarget)) return;
+      setDragOverEpic((prev) => (prev === normalizedEpicId ? '' : prev));
+    };
+
+    const handleEpicDrop = async (event) => {
+      if (!normalizedEpicId) return;
+      event.preventDefault();
+      const featureId = event.dataTransfer.getData('text/stea-feature-id');
+      if (featureId) {
+        await assignFeatureToEpic(featureId, normalizedEpicId);
+      }
+      setDragOverEpic('');
+    };
+
+    const addFeatureWithinEpic = async () => {
+      if (!normalizedEpicId) return;
+      await promptCreateFeature(normalizedEpicId);
+    };
+
+    const addCardWithinFeature = () => {
+      if (normalizedFeatureId) {
+        startNewCard({ featureId: normalizedFeatureId, epicId: normalizedEpicId });
+      } else if (normalizedEpicId) {
+        startNewCard({ epicId: normalizedEpicId });
+      } else {
+        startNewCard();
+      }
+    };
 
     const cardShell = (
       <div
@@ -817,18 +1047,60 @@ export default function SteaBoard() {
     );
 
     const featureLayer = featureLabel ? (
-      <div className="space-y-3 rounded-[22px] border-2 border-orange-200/80 bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-[1px]">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-orange-700">
-          Feature {featureLabel}
+      <div
+        className={`space-y-3 rounded-[22px] border-2 border-orange-200/80 bg-gradient-to-br from-orange-50 to-orange-100/50 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-[1px] transition ${
+          dragOverFeature === normalizedFeatureId ? 'ring-2 ring-orange-400/70' : ''
+        }`}
+      >
+        <div
+          className={`flex items-center justify-between gap-2 rounded-[16px] border border-orange-200/70 bg-white/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-orange-700`}
+          draggable={!!normalizedFeatureId}
+          onDragStart={handleFeatureDragStart}
+          onDragEnd={() => setDragOverFeature('')}
+          onDragOver={handleFeatureDragOver}
+          onDragLeave={clearFeatureHover}
+          onDrop={handleFeatureDrop}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <span className="truncate">Feature {featureLabel}</span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={addCardWithinFeature}
+              className="rounded border border-orange-200 bg-white px-2 py-1 text-[11px] font-normal text-orange-700 hover:bg-orange-50"
+            >
+              + Card
+            </button>
+          </div>
         </div>
         {cardShell}
       </div>
     ) : cardShell;
 
     const epicLayer = epicLabel ? (
-      <div className="space-y-4 rounded-[28px] border-4 border-red-200/80 bg-gradient-to-br from-red-50 to-red-100/50 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-red-700">
-          Epic {epicLabel}
+      <div
+        className={`space-y-4 rounded-[28px] border-4 border-red-200/80 bg-gradient-to-br from-red-50 to-red-100/50 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition ${
+          dragOverEpic === normalizedEpicId ? 'ring-2 ring-red-400/70' : ''
+        }`}
+      >
+        <div
+          className="flex items-center justify-between gap-2 rounded-[20px] border border-red-200/70 bg-white/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-red-700"
+          onDragOver={handleEpicDragOver}
+          onDragLeave={clearEpicHover}
+          onDrop={handleEpicDrop}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <span className="truncate">Epic {epicLabel}</span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={addFeatureWithinEpic}
+              className="rounded border border-red-200 bg-white px-2 py-1 text-[11px] font-normal text-red-700 hover:bg-red-50 disabled:opacity-40"
+              disabled={!normalizedEpicId}
+            >
+              + Feature
+            </button>
+          </div>
         </div>
         {featureLayer}
       </div>
@@ -886,7 +1158,24 @@ export default function SteaBoard() {
           <div className="font-extrabold">STEa — Board</div>
           <div className="text-muted text-sm">Manage ideas → build phases. Auto-saved to Firestore.</div>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <button onClick={startNew} className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">+ New card</button>
+            <div className="relative" ref={newMenuRef}>
+              <button
+                onClick={() => setNewMenuOpen((open) => !open)}
+                className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1"
+                aria-haspopup="menu"
+                aria-expanded={newMenuOpen}
+              >
+                +New
+                <span className="text-xs">▾</span>
+              </button>
+              {newMenuOpen ? (
+                <div className="absolute z-20 mt-1 w-40 rounded-md border border-gray-200 bg-white shadow-lg">
+                  <button onClick={() => handleNewPick('card')} className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50">Card</button>
+                  <button onClick={() => handleNewPick('feature')} className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50">Feature</button>
+                  <button onClick={() => handleNewPick('epic')} className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50">Epic</button>
+                </div>
+              ) : null}
+            </div>
             <label className="inline-flex items-center gap-2 text-sm">
               <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
               Show archived
