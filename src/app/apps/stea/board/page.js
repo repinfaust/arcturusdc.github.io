@@ -980,11 +980,31 @@ export default function SteaBoard() {
       event.preventDefault();
       event.stopPropagation();
       const featureId = event.dataTransfer.getData('text/stea-feature-id');
+      console.log('[Epic Drop] Feature ID:', featureId);
+      console.log('[Epic Drop] Epic ID:', normalizedEpicId);
+      console.log('[Epic Drop] Epic:', epic);
+
       if (featureId) {
         const normalizedFeatureId = normalizeId(featureId);
         const feature = features.find((f) => f.id === normalizedFeatureId);
         const epicLabel = getDocLabel(epic) || epic.title || '';
         const featureLabel = getDocLabel(feature) || feature?.title || '';
+
+        console.log('[Epic Drop] Normalized Feature ID:', normalizedFeatureId);
+        console.log('[Epic Drop] Feature found:', feature);
+        console.log('[Epic Drop] Epic label:', epicLabel);
+
+        if (!normalizedFeatureId) {
+          console.error('[Epic Drop] Invalid feature ID');
+          setDragOverEpic('');
+          return;
+        }
+
+        if (!feature) {
+          console.error('[Epic Drop] Feature not found');
+          setDragOverEpic('');
+          return;
+        }
 
         // Build search tokens
         const featureSearchTokens = buildSearchTokens(
@@ -999,18 +1019,25 @@ export default function SteaBoard() {
           epicLabel || '',
         );
 
+        const updateData = {
+          epicId: normalizedEpicId || null,
+          epicLabel,
+          statusColumn: epic.statusColumn,
+          searchTokens: featureSearchTokens,
+          updatedAt: serverTimestamp(),
+        };
+
+        console.log('[Epic Drop] Update data:', updateData);
+
         // Update feature with both epicId AND statusColumn in one call
         try {
-          await updateDoc(doc(db, 'stea_features', normalizedFeatureId), {
-            epicId: normalizedEpicId || null,
-            epicLabel,
-            statusColumn: epic.statusColumn,
-            searchTokens: featureSearchTokens,
-            updatedAt: serverTimestamp(),
-          });
+          await updateDoc(doc(db, 'stea_features', normalizedFeatureId), updateData);
+          console.log('[Epic Drop] Feature updated successfully');
 
           // Update any cards linked to this feature
           const impactedCards = cards.filter((c) => normalizeId(c.featureId) === normalizedFeatureId);
+          console.log('[Epic Drop] Impacted cards:', impactedCards.length);
+
           if (impactedCards.length) {
             await Promise.all(impactedCards.map((c) =>
               updateDoc(doc(db, 'stea_cards', c.id), {
@@ -1028,6 +1055,7 @@ export default function SteaBoard() {
                 updatedAt: serverTimestamp(),
               })
             ));
+            console.log('[Epic Drop] Cards updated successfully');
           }
         } catch (err) {
           console.error('[STEa Board] Failed to nest feature under epic', err);
