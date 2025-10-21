@@ -1081,8 +1081,8 @@ export default function SteaBoard() {
         {hasChildren ? (
           <>
             {/* Minimal border mode - title on left edge */}
-            <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-6">
-              <div className="text-red-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+            <div className="absolute left-1 top-0 bottom-0 flex items-center justify-center">
+              <div className="text-red-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                 {epic.title || 'Epic'}
               </div>
             </div>
@@ -1204,8 +1204,8 @@ export default function SteaBoard() {
         {hasChildren ? (
           <>
             {/* Minimal border mode - title on left edge */}
-            <div className="absolute left-0 top-0 bottom-0 flex items-center justify-center w-5">
-              <div className="text-orange-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+            <div className="absolute left-1 top-0 bottom-0 flex items-center justify-center">
+              <div className="text-orange-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                 {feature.title || 'Feature'}
               </div>
             </div>
