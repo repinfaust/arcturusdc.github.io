@@ -1832,6 +1832,158 @@ export default function SteaBoard() {
   );
 }
 
+/* ---------- Send to Hans Button Component ---------- */
+function SendToHansButton({ card }) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  // Check if card has existing test case link
+  const hasTestCase = card?.testing?.testCaseId;
+
+  // Check if card has minimum required fields
+  const hasUserStory = card?.userStory && card.userStory.trim().length > 0;
+  const hasAcceptanceCriteria = card?.acceptanceCriteria && card.acceptanceCriteria.length > 0;
+  const hasUserFlow = card?.userFlow && card.userFlow.length > 0;
+  const hasMinimumData = hasUserStory || hasAcceptanceCriteria || hasUserFlow;
+
+  const canSend = !sending && !hasTestCase && hasMinimumData && card?.id;
+
+  const handleSendToHans = async () => {
+    if (!canSend) return;
+
+    setSending(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/hans/createFromCard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardId: card.id,
+          boardId: 'main', // Default board for now
+          app: card.app || 'New App',
+          title: card.title,
+          description: card.description || '',
+          userStory: card.userStory || '',
+          acceptanceCriteria: card.acceptanceCriteria || [],
+          userFlow: card.userFlow || [],
+          priority: card.priority || 'medium',
+          epicId: card.epicId || null,
+          featureId: card.featureId || null,
+          epicLabel: card.epicLabel || '',
+          featureLabel: card.featureLabel || '',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to create test case (${response.status})`);
+      }
+
+      const result = await response.json();
+      setSent(true);
+
+      // Show success message briefly
+      setTimeout(() => {
+        setSent(false);
+      }, 3000);
+
+    } catch (err) {
+      console.error('Failed to send to Hans:', err);
+      setError(err.message || 'Failed to send to Hans. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (hasTestCase) {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">✅</span>
+          <div className="flex-1">
+            <h4 className="text-sm font-semibold text-green-900 mb-1">Test Case Created</h4>
+            <p className="text-xs text-green-700 mb-2">
+              This card has been sent to Hans for testing.
+            </p>
+            <Link
+              href={`/apps/stea/hans?case=${card.testing.testCaseId}`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-900 underline"
+            >
+              View Test Case →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="flex items-start gap-3 mb-3">
+        <span className="text-2xl">🧪</span>
+        <div className="flex-1">
+          <h4 className="text-sm font-semibold text-blue-900 mb-1">Send to Hans Testing Suite</h4>
+          <p className="text-xs text-blue-700">
+            Create a structured test case from this card that can be shared with testers and tracked across testing sessions.
+          </p>
+        </div>
+      </div>
+
+      {!hasMinimumData && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-3">
+          <p className="text-xs text-yellow-800">
+            <strong>Tip:</strong> Add at least a User Story, Acceptance Criteria, or User Flow above to create a meaningful test case.
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded p-3 mb-3">
+          <p className="text-xs text-red-800">{error}</p>
+        </div>
+      )}
+
+      {sent && (
+        <div className="bg-green-50 border border-green-200 rounded p-3 mb-3">
+          <p className="text-xs text-green-800">
+            ✓ Test case created successfully! Reload to see the link.
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={handleSendToHans}
+        disabled={!canSend}
+        className={`w-full px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+          canSend
+            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow'
+            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+        }`}
+      >
+        {sending ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Creating Test Case...
+          </span>
+        ) : (
+          '📤 Send to Hans'
+        )}
+      </button>
+
+      {!card?.id && (
+        <p className="text-xs text-neutral-500 mt-2 text-center">
+          Save this card first before sending to Hans
+        </p>
+      )}
+    </div>
+  );
+}
+
 /* ---------- Modal Body ---------- */
 function ModalBody({
   editing, setEditing, creating, saveEntity, deleteEntity,
@@ -2143,6 +2295,11 @@ function ModalBody({
               <p className="text-xs text-neutral-500 mt-1">
                 Step-by-step user journey to validate the feature
               </p>
+            </div>
+
+            {/* Send to Hans Button */}
+            <div className="border-t pt-4 mt-4">
+              <SendToHansButton card={editing} />
             </div>
           </div>
         </>
