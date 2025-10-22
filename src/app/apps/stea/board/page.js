@@ -742,6 +742,10 @@ export default function SteaBoard() {
       featureId: entityType === 'card' ? normalizedFeatureId : '',
       epicLabel: defaults.epicLabel || '',
       featureLabel: defaults.featureLabel || '',
+      // New testing fields
+      userStory: defaults.userStory || '',
+      acceptanceCriteria: Array.isArray(defaults.acceptanceCriteria) ? defaults.acceptanceCriteria : [],
+      userFlow: Array.isArray(defaults.userFlow) ? defaults.userFlow : [],
     };
     setEditing(base);
     setCreating(true);
@@ -756,6 +760,9 @@ export default function SteaBoard() {
       epicId: normalizeId(entity.epicId),
       featureId: normalizeId(entity.featureId),
       attachments: Array.isArray(entity.attachments) ? entity.attachments : [],
+      userStory: entity.userStory || '',
+      acceptanceCriteria: Array.isArray(entity.acceptanceCriteria) ? entity.acceptanceCriteria : [],
+      userFlow: Array.isArray(entity.userFlow) ? entity.userFlow : [],
     });
     setCreating(false);
     setNewMenuOpen(false);
@@ -839,6 +846,9 @@ export default function SteaBoard() {
       attachments,
       searchTokens,
       entityType,
+      userStory: entity.userStory || '',
+      acceptanceCriteria: Array.isArray(entity.acceptanceCriteria) ? entity.acceptanceCriteria : [],
+      userFlow: Array.isArray(entity.userFlow) ? entity.userFlow : [],
       updatedAt: serverTimestamp(),
       ...(entity.createdAt ? {} : { createdAt: serverTimestamp() }),
     };
@@ -2019,6 +2029,124 @@ function ModalBody({
           placeholder="Details, acceptance criteria, links…"
         />
       </div>
+
+      {/* Testing Fields - User Story */}
+      {isCard && (
+        <>
+          <div className="md:col-span-2 border-t pt-4 mt-2">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">🧪</span>
+              <h3 className="text-sm font-semibold text-neutral-700">Testing & QA Fields</h3>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">User Story</label>
+              <textarea
+                value={editing.userStory || ''}
+                onChange={(e) => setEditing({ ...editing, userStory: e.target.value })}
+                className="w-full px-3 py-2 border rounded min-h-[80px] resize-y text-sm"
+                placeholder="As a [user type], I want [goal] so that [benefit]..."
+              />
+              <p className="text-xs text-neutral-500 mt-1">
+                Define the context and objective from the user's perspective
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Acceptance Criteria</label>
+              <div className="space-y-2">
+                {(editing.acceptanceCriteria || []).map((criterion, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <input
+                      type="text"
+                      value={criterion}
+                      onChange={(e) => {
+                        const updated = [...(editing.acceptanceCriteria || [])];
+                        updated[idx] = e.target.value;
+                        setEditing({ ...editing, acceptanceCriteria: updated });
+                      }}
+                      className="flex-1 px-3 py-2 border rounded text-sm"
+                      placeholder={`Criterion ${idx + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (editing.acceptanceCriteria || []).filter((_, i) => i !== idx);
+                        setEditing({ ...editing, acceptanceCriteria: updated });
+                      }}
+                      className="px-2 py-2 text-red-600 hover:bg-red-50 rounded border"
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = [...(editing.acceptanceCriteria || []), ''];
+                    setEditing({ ...editing, acceptanceCriteria: updated });
+                  }}
+                  className="w-full px-3 py-2 border border-dashed rounded text-sm text-neutral-600 hover:bg-neutral-50"
+                >
+                  + Add Criterion
+                </button>
+              </div>
+              <p className="text-xs text-neutral-500 mt-1">
+                Specific, measurable conditions that must be met
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">User Flow</label>
+              <div className="space-y-2">
+                {(editing.userFlow || []).map((step, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-medium mt-2">
+                      {idx + 1}
+                    </span>
+                    <input
+                      type="text"
+                      value={step}
+                      onChange={(e) => {
+                        const updated = [...(editing.userFlow || [])];
+                        updated[idx] = e.target.value;
+                        setEditing({ ...editing, userFlow: updated });
+                      }}
+                      className="flex-1 px-3 py-2 border rounded text-sm"
+                      placeholder={`Step ${idx + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = (editing.userFlow || []).filter((_, i) => i !== idx);
+                        setEditing({ ...editing, userFlow: updated });
+                      }}
+                      className="px-2 py-2 text-red-600 hover:bg-red-50 rounded border"
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = [...(editing.userFlow || []), ''];
+                    setEditing({ ...editing, userFlow: updated });
+                  }}
+                  className="w-full px-3 py-2 border border-dashed rounded text-sm text-neutral-600 hover:bg-neutral-50"
+                >
+                  + Add Step
+                </button>
+              </div>
+              <p className="text-xs text-neutral-500 mt-1">
+                Step-by-step user journey to validate the feature
+              </p>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="md:col-span-2 flex items-center justify-between">
         <label className="inline-flex items-center gap-2 text-sm">

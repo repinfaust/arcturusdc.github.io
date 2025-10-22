@@ -20,9 +20,9 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Trigger Jest suites and review the latest run results.',
   },
   {
-    label: 'User Testing',
+    label: 'Hans Testing Suite',
     href: '/apps/stea/hans',
-    description: 'tou.me tester workspace for coordinating research sessions.',
+    description: 'Test case management and user testing coordination across all apps.',
   },
   {
     label: 'Filo',
