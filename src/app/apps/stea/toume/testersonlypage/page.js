@@ -41,6 +41,7 @@ export default function TouMeTestersOnly() {
   const [testerName, setTesterName] = useState('');
   const [currentBuild, setCurrentBuild] = useState('');
   const [platform, setPlatform] = useState('');
+  const [expandedTests, setExpandedTests] = useState({});
 
   // Modal state for creating a STEa card from a result/feedback
   const [cardModalOpen, setCardModalOpen] = useState(false);
@@ -269,28 +270,1199 @@ export default function TouMeTestersOnly() {
     alert('Card created! Check /apps/stea/board.');
   };
 
-  /* ===== Test cases (unchanged list) ===== */
+  /* ===== Test cases (from USER_TESTING_SCRIPT.md) ===== */
   const testCases = [
-    { id: 'TC-001', name: 'Complete User Onboarding Flow', priority: 'CRITICAL', time: '5 min', description: 'Sign in → Create circle → Add child → Create event → Complete tour' },
-    { id: 'TC-002', name: 'Circle Creation and Member Invitation', priority: 'CRITICAL', time: '3 min', description: 'Create circle → Invite member → Accept invitation' },
-    { id: 'TC-003', name: 'Event Creation with Privacy Controls', priority: 'CRITICAL', time: '3 min', description: 'Create event → Set privacy to Private → Verify visibility' },
-    { id: 'TC-004', name: 'Google Calendar Connection', priority: 'CRITICAL', time: '4 min', description: 'Connect Google Calendar → Import events → Add overlay metadata' },
-    { id: 'TC-005', name: 'Handover Creation and Completion', priority: 'CRITICAL', time: '4 min', description: 'Create handover → Add checklist → Attach inventory → Complete → Verify location update' },
-    { id: 'TC-006', name: 'Gift Reservation System', priority: 'CRITICAL', time: '3 min', description: 'Add gift → Reserve as User A → Verify User B cannot reserve' },
-    { id: 'TC-007', name: 'Real-Time Multi-User Updates', priority: 'HIGH', time: '4 min', description: 'Two users edit same data → Verify real-time sync' },
-    { id: 'TC-008', name: 'App Store Reviewer Access', priority: 'CRITICAL', time: '2 min', description: 'Tap logo 7 times → Verify demo mode → Test features' },
-    { id: 'TC-009', name: 'Inventory Location Tracking', priority: 'HIGH', time: '3 min', description: 'Add item → Create handover → Complete → Verify location update' },
-    { id: 'TC-010', name: 'Calendar Conflict Detection', priority: 'HIGH', time: '3 min', description: 'Create overlapping events → Verify conflict badge → Check suggestions' },
-    { id: 'TC-011', name: 'Permission Enforcement', priority: 'HIGH', time: '3 min', description: 'Sign in as Trusted Adult → Verify blocked actions' },
-    { id: 'TC-012', name: 'Data Deletion Compliance', priority: 'CRITICAL', time: '3 min', description: 'Create test account → Delete account → Verify complete removal' },
-    { id: 'TC-013', name: 'Large Circle Performance', priority: 'MEDIUM', time: '4 min', description: 'Test with 8+ members, 50+ events → Measure response times' },
-    { id: 'TC-014', name: 'Offline/Online Synchronization', priority: 'HIGH', time: '4 min', description: 'Edit offline → Reconnect → Verify sync' },
-    { id: 'TC-015', name: 'File Upload Security', priority: 'HIGH', time: '3 min', description: 'Test file size limits → Type validation → Security checks' },
-    { id: 'TC-016', name: 'App Crash Prevention', priority: 'HIGH', time: '5 min', description: 'Rapid navigation → Invalid data → Network errors → Monitor crashes' },
-    { id: 'TC-017', name: 'Onboarding Completion Rate', priority: 'MEDIUM', time: '6 min', description: 'Fresh install → Complete onboarding → Note confusing steps' },
-    { id: 'TC-018', name: 'Calendar Confusion Prevention', priority: 'HIGH', time: '4 min', description: 'Connect Google Calendar → Verify clear distinction between calendar types' },
-    { id: 'TC-019', name: 'Accessibility Basics', priority: 'MEDIUM', time: '4 min', description: 'Enable screen reader → Test navigation → Check contrast' },
-    { id: 'TC-020', name: 'Cross-Platform Consistency', priority: 'MEDIUM', time: '5 min', description: 'Compare iOS/Android → Check feature parity → Performance' },
+    // CRITICAL TEST CASES
+    {
+      id: 'TC-001a',
+      name: 'First-Time User Onboarding',
+      priority: 'CRITICAL',
+      time: '2-3 min',
+      description: 'Fresh app install onboarding flow',
+      details: `**Preconditions:**
+- Fresh app install
+- Cache cleared
+- WiFi connected
+- No prior account on device
+
+**Test Steps:**
+1. Launch app
+2. Observe welcome screen appears
+3. Tap "Sign in with Google"
+4. Complete Google authentication
+5. Tour modal automatically appears
+6. Read first tour step
+7. Tap "Next" through all tour steps (observe each screen navigation)
+8. Tap "Done" on final step
+9. Observe landing screen (should be "Create Circle" or "Join Circle")
+
+**Expected Results:**
+- Welcome screen displays clearly with tou.me branding
+- Google sign-in completes without errors
+- Tour modal appears automatically (no manual trigger needed)
+- Tour modal positioned at bottom ~40% of screen height
+- Screen content visible behind light backdrop
+- All 6 tour steps navigate correctly
+- Each tour step matches the screen shown behind modal
+- "Done" dismisses tour and shows appropriate next screen`
+    },
+    {
+      id: 'TC-001b',
+      name: 'Core Setup Flow',
+      priority: 'CRITICAL',
+      time: '3-5 min',
+      description: 'Create circle → Add child → Create event',
+      details: `**Preconditions:**
+- Completed TC-001a
+- Signed in with valid account
+- No circles created yet
+
+**Test Steps:**
+1. From circle creation screen, enter circle name: "My Family"
+2. Tap "Create circle"
+3. Wait for circle creation (observe loading state)
+4. Verify landing on Home screen
+5. Navigate to Inventory tab
+6. Tap "Add Child" or equivalent
+7. Enter child name and details
+8. Save child profile
+9. Navigate to Schedule tab
+10. Tap "Create Event"
+11. Enter event details (name, date, time)
+12. Save event
+13. Verify event appears in calendar
+
+**Expected Results:**
+- Circle creation shows loading indicator
+- Successfully creates circle without timeout
+- Home screen shows new circle as active
+- Child profile saves and appears in list
+- Event creation form is intuitive
+- Event appears in calendar view
+- No crashes or data loss`
+    },
+    {
+      id: 'TC-002',
+      name: 'Circle Creation and Member Invitation',
+      priority: 'CRITICAL',
+      time: '5-7 min',
+      description: 'Create circle → Invite member → Accept invitation',
+      details: `**Preconditions:**
+- Two devices/accounts available (User A & User B)
+- Both users signed in
+- WiFi connected on both devices
+
+**Test Steps:**
+
+**User A (Inviter):**
+1. Create circle: "Shared Circle"
+2. Navigate to circle settings
+3. Tap "Invite Members"
+4. Generate invite link
+5. Copy link
+6. Send link to User B (via test messaging)
+
+**User B (Invitee):**
+7. Open invite link on device
+8. App opens to invite acceptance screen
+9. Review circle details
+10. Tap "Accept Invitation"
+11. Wait for processing
+
+**User A:**
+12. Verify User B appears in member list
+13. Check User B's role/permissions
+
+**User B:**
+14. Verify circle appears in circle list
+15. Switch to shared circle
+16. Verify access to circle data
+
+**Expected Results:**
+- Invite link generates successfully
+- Link opens app (or app store if not installed)
+- Invite details display clearly (circle name, inviter)
+- Acceptance processes without errors
+- Both users see each other in member list
+- Permissions assigned correctly
+- Real-time update when member joins`
+    },
+    {
+      id: 'TC-003',
+      name: 'Event Creation with Privacy Controls',
+      priority: 'CRITICAL',
+      time: '4-6 min',
+      description: 'Create event → Set privacy to Private → Verify visibility',
+      details: `**Preconditions:**
+- Two users in same circle (from TC-002)
+- Both devices available
+- At least one child profile exists
+
+**Test Steps:**
+
+**User A:**
+1. Navigate to Schedule tab
+2. Tap "Create Event"
+3. Enter event name: "Private Test Event"
+4. Select child/recipient
+5. Set privacy level to "Private"
+6. Note the privacy description/icon
+7. Save event
+8. Verify event appears with privacy indicator
+
+**User B:**
+9. Navigate to Schedule tab in same circle
+10. Look for "Private Test Event"
+11. Note: event should NOT be visible
+
+**User A:**
+12. Edit event, change privacy to "Visible"
+13. Save changes
+
+**User B:**
+14. Refresh/check schedule again
+15. Verify event NOW appears
+
+**Expected Results:**
+- Privacy options clearly labeled
+- "Private" events invisible to other users
+- "Visible" events shown to all circle members
+- Privacy indicators visible on events
+- Changes sync in real-time`
+    },
+    {
+      id: 'TC-006',
+      name: 'Gift Reservation System',
+      priority: 'CRITICAL',
+      time: '4-5 min',
+      description: 'Add gift → Reserve as User A → Verify User B cannot reserve',
+      details: `**Preconditions:**
+- Two users in same circle
+- Both devices available
+- At least one child profile exists
+
+**Test Steps:**
+
+**User A:**
+1. Navigate to Inventory tab
+2. Tap "Add Gift"
+3. Enter gift details: "Test Toy"
+4. Assign to child
+5. Save gift
+6. Tap on gift to view details
+7. Tap "Reserve" or "I'll buy this"
+8. Confirm reservation
+
+**User B:**
+9. Navigate to Inventory tab
+10. Locate "Test Toy" in gift list
+11. Tap on gift to view details
+12. Observe reservation status
+13. Attempt to reserve the same gift
+14. Note the button state/message
+
+**User A:**
+15. View gift details again
+16. Verify your reservation is marked
+17. Tap "Unreserve" or "Cancel reservation"
+18. Confirm cancellation
+
+**User B:**
+19. Refresh or wait for sync
+20. Verify gift is now available to reserve
+21. Reserve the gift
+22. Confirm your reservation
+
+**User A:**
+23. Verify you can no longer reserve
+24. Check that User B's name appears as reserver
+
+**Expected Results:**
+- Gift creation successful
+- Reservation marks gift immediately
+- Other users see "Reserved by [Name]"
+- Reserved gifts cannot be reserved by others
+- Unreserving makes gift available again
+- Real-time sync between users
+- Clear visual indicators for reservation status`
+    },
+    {
+      id: 'TC-008',
+      name: 'App Store Reviewer Access',
+      priority: 'CRITICAL',
+      time: '5-7 min',
+      description: 'Tap logo 7 times → Verify demo mode → Test features',
+      details: `**Preconditions:**
+- Fresh app launch
+- Not currently in reviewer mode
+- Any user account (or no account)
+
+**Test Steps:**
+1. Navigate to any screen with tou.me logo
+2. Tap logo 7 times rapidly
+3. Observe reviewer mode activation
+4. Note the reviewer badge appearance
+5. Navigate to Home screen
+6. Create a demo circle (should auto-populate)
+7. Verify demo data exists (members, events, gifts)
+8. Navigate to Inventory tab
+9. Add a test gift
+10. Navigate to Schedule tab
+11. Create a test event
+12. Switch between tabs
+13. Test all major features
+14. Tap reviewer badge or logo again
+15. Exit reviewer mode
+16. Verify return to normal state
+
+**Expected Results:**
+- Logo tap activates reviewer mode (7 taps)
+- Clear visual indicator (badge) shows reviewer mode is active
+- Demo circle auto-created with sample data
+- All features work in reviewer mode
+- Can create/edit data without real Firebase calls
+- Badge visible throughout session
+- Easy exit from reviewer mode
+- Clean return to normal app state`
+    },
+    {
+      id: 'TC-012',
+      name: 'Data Deletion Compliance',
+      priority: 'CRITICAL',
+      time: '3-5 min',
+      description: 'Create test account → Delete account → Verify complete removal',
+      details: `**Preconditions:**
+- Test account created with some data
+- Account has: 1 circle, 1 child, 1 event, 1 gift
+- Device connected to internet
+
+**Test Steps:**
+1. Sign in with test account
+2. Verify test data is visible
+3. Navigate to Settings
+4. Scroll to "Delete Account" option
+5. Tap "Delete Account"
+6. Read warning/confirmation dialog
+7. Confirm deletion (may require re-auth)
+8. Wait for deletion to complete
+9. Observe result (should sign out)
+10. Attempt to sign back in with same account
+11. Verify account no longer exists or all data gone
+12. (Optional) Check shared circles from another account
+13. Verify deleted user removed from member lists
+
+**Expected Results:**
+- Clear warning about data deletion
+- Deletion requires confirmation
+- May require re-authentication
+- Deletion completes within 30 seconds
+- User signed out after deletion
+- Cannot sign back in with deleted account, OR sign-in succeeds but all user data is gone
+- User removed from all circles
+- No orphaned data remains`
+    },
+    {
+      id: 'TC-021',
+      name: 'Tour Replay from Settings',
+      priority: 'CRITICAL',
+      time: '2-3 min',
+      description: 'Replay tour → Verify no circle switching',
+      details: `**Preconditions:**
+- Existing user account with circles
+- User has completed tour at least once
+- Currently in a specific circle (e.g., "My Family")
+- Note the current circle name before starting
+
+**Test Steps:**
+1. Navigate to Settings screen
+2. Scroll to "Replay Tour" button
+3. Note your current circle (top of screen)
+4. Tap "Replay Tour"
+5. Observe tour modal appears
+6. Check that you're still in the same circle
+7. Complete first tour step
+8. Observe screen navigation (should go to Home tab)
+9. Verify circle hasn't changed
+10. Tap "Next" through remaining tour steps
+11. Observe each screen as tour navigates
+12. On final step, tap "Done"
+13. Verify you land on Home screen
+14. Check circle selector - should be same circle as step 3
+15. Navigate to other tabs
+16. Verify all your existing data is intact
+
+**Expected Results:**
+- "Replay Tour" button visible in Settings
+- Tour modal appears immediately on tap
+- User stays in their current circle throughout
+- Tour navigates to appropriate screens (Home, Inventory, Schedule, Circle)
+- Modal positioned at bottom ~40% height
+- Screen content visible behind modal
+- Tour completes without errors
+- User returns to normal app state in same circle
+- No data loss or circle switching`
+    },
+    {
+      id: 'TC-022',
+      name: 'Circle Switching Stability',
+      priority: 'CRITICAL',
+      time: '4-6 min',
+      description: 'Switch between circles → Verify data loads correctly',
+      details: `**Preconditions:**
+- User account with 2+ circles created
+- Each circle has different data (members, events)
+- App freshly launched
+
+**Test Steps:**
+1. Launch app
+2. Note which circle is active on launch
+3. Navigate to Home tab
+4. Tap circle selector at top
+5. Switch to Circle B
+6. Wait for data to load
+7. Verify Circle B's events/members display
+8. Navigate to Inventory tab
+9. Note which tab is active
+10. Switch back to Circle A via selector
+11. Verify Circle A's data loads
+12. Check which tab is now active (should remember Inventory)
+13. Navigate to Schedule tab
+14. Switch to Circle B again
+15. Verify Schedule tab is remembered for Circle B
+16. Rapidly switch between circles 3-4 times
+17. Force close app
+18. Relaunch app
+19. Verify last active circle is restored
+20. Verify last active tab per circle is restored
+
+**Expected Results:**
+- Circle switching loads within 2-3 seconds
+- Correct data displays for each circle
+- Last active tab remembered per circle
+- No crashes during rapid switching
+- Last active circle persists across app restarts
+- Tab state persists per circle
+- No data mixing between circles
+- Smooth tab animations`
+    },
+    {
+      id: 'TC-023',
+      name: 'Invite Link Handling',
+      priority: 'CRITICAL',
+      time: '5-7 min',
+      description: 'Generate invite → Send link → Accept invitation',
+      details: `**Preconditions:**
+- Two devices with app installed (User A & User B)
+- User A has existing circle
+- User B signed in but not in the circle
+- Test messaging app available to send links
+
+**Test Steps:**
+
+**User A:**
+1. Open circle settings
+2. Generate invite link
+3. Copy link to clipboard
+4. Send via test messaging app to User B
+
+**User B:**
+5. Receive link in messaging app
+6. Tap link
+7. Observe app behavior (should open tou.me)
+8. Review invite details screen
+9. Verify circle name, inviter name visible
+10. Tap "Accept"
+11. Wait for processing
+12. Verify circle appears in circle list
+13. Switch to newly joined circle
+14. Verify access to circle data
+
+**User A:**
+15. Check member list
+16. Verify User B appears
+
+**Additional Test:**
+17. User A generates new invite link
+18. User B (already member) taps link
+19. Observe behavior (should show "already a member")
+
+**Expected Results:**
+- Link opens app directly (deep link works)
+- Invite screen shows clear circle details
+- Accept button processes successfully
+- Circle appears in user's list immediately
+- Both users see updated member list
+- Duplicate join handled gracefully
+- No orphaned invites`
+    },
+    // HIGH PRIORITY TEST CASES
+    {
+      id: 'TC-004',
+      name: 'Google Calendar Connection (Enhanced)',
+      priority: 'HIGH',
+      time: '5-8 min',
+      description: 'Connect Google Calendar → Import events → Add overlay metadata',
+      details: `**Preconditions:**
+- User signed in with Google account
+- Google Calendar with events exists
+- WiFi connected
+
+**Test Steps:**
+1. Navigate to Settings or Calendar
+2. Find "Connect Google Calendar" option
+3. Tap to initiate connection
+4. Complete Google OAuth flow
+5. If multiple calendars, verify selection screen appears
+6. Select calendar to connect
+7. Grant permissions
+8. Wait for sync to complete
+9. Navigate to Schedule tab
+10. Verify Google Calendar events appear
+11. Identify visual distinction (icon/label) between:
+    - tou.me events
+    - Google Calendar events
+12. Tap on a Google Calendar event
+13. Observe event details
+14. Look for "Add overlay metadata" or similar option
+15. Add tou.me metadata (notes, child assignment)
+16. Save changes
+17. Return to calendar view
+18. Verify metadata attached to Google event
+19. In Google Calendar (separate app/web), add new event
+20. Return to tou.me
+21. Pull to refresh or wait for sync
+22. Verify new Google event appears
+
+**Expected Results:**
+- OAuth flow completes without errors
+- Calendar selection shown if multiple calendars
+- Events sync within 30 seconds
+- Clear visual distinction between event types
+- Google events not editable directly
+- Can add tou.me metadata overlay
+- New Google events sync into tou.me
+- Bi-directional sync works
+- Disconnection option available`
+    },
+    {
+      id: 'TC-005',
+      name: 'Handover Creation and Completion',
+      priority: 'HIGH',
+      time: '5-7 min',
+      description: 'Create handover → Add checklist → Attach inventory → Complete → Verify location update',
+      details: `**Preconditions:**
+- Two users in same circle
+- Both devices available
+- At least 2 inventory items exist
+
+**Test Steps:**
+
+**User A (Creating Handover):**
+1. Navigate to Handovers or Schedule tab
+2. Tap "Create Handover"
+3. Select handover date/time
+4. Select recipient (User B)
+5. Add checklist item: "Pack snacks"
+6. Add checklist item: "Include favorite toy"
+7. Tap "Attach Inventory"
+8. Select 2 inventory items to include
+9. Add notes: "Pickup at 3pm"
+10. Save handover
+
+**User B (Receiving Notification):**
+11. Observe notification of new handover
+12. Navigate to handover details
+13. Review checklist
+14. Review attached inventory items
+15. Note current location of inventory items
+
+**User A (Completing):**
+16. Open handover
+17. Check off first checklist item
+18. Save progress
+
+**User B:**
+19. Refresh/observe real-time update
+20. Verify first item checked
+
+**User A:**
+21. Check off second checklist item
+22. Tap "Complete Handover"
+23. Confirm completion
+
+**Both Users:**
+24. Navigate to Inventory
+25. Verify location of inventory items updated to User B
+26. Check handover status shows "Completed"
+
+**Expected Results:**
+- Handover creation smooth and intuitive
+- Checklist items save correctly
+- Inventory items attach successfully
+- User B receives notification
+- Real-time sync of checklist progress
+- Completion updates inventory locations
+- Historical record maintained`
+    },
+    {
+      id: 'TC-007',
+      name: 'Real-Time Multi-User Updates',
+      priority: 'HIGH',
+      time: '4-6 min',
+      description: 'Two users edit same data → Verify real-time sync',
+      details: `**Preconditions:**
+- Two devices with same circle
+- Both users viewing same screen
+- WiFi connected on both
+
+**Test Steps:**
+
+**Setup:**
+1. Both users navigate to Inventory tab
+2. Both viewing same item list
+
+**User A:**
+3. Add new gift: "Real-Time Test Item"
+4. Save gift
+
+**User B:**
+5. Observe screen (pull to refresh if needed)
+6. Note time until "Real-Time Test Item" appears
+7. Record time: _____ seconds
+
+**User A:**
+8. Edit "Real-Time Test Item"
+9. Change name to "Updated Test Item"
+10. Save changes
+
+**User B:**
+11. Observe update
+12. Record time until update appears: _____ seconds
+
+**User B:**
+13. Reserve "Updated Test Item"
+
+**User A:**
+14. Observe reservation status update
+15. Record time: _____ seconds
+
+**User A:**
+16. Navigate to Schedule tab
+
+**User B:**
+17. Navigate to Schedule tab
+
+**User A:**
+18. Create event: "Sync Test Event"
+
+**User B:**
+19. Observe schedule update
+20. Record time: _____ seconds
+
+**Expected Results:**
+- New items appear within 5-10 seconds
+- Edits sync within 5-10 seconds
+- Reservations sync immediately or within 5 seconds
+- Consistent data across all users
+- No conflicts or data loss`
+    },
+    {
+      id: 'TC-024',
+      name: 'Dark Mode Theming',
+      priority: 'HIGH',
+      time: '5-8 min',
+      description: 'Toggle dark/light mode → Check readability across all screens',
+      details: `**Preconditions:**
+- App installed
+- User signed in
+- Access to device Settings or in-app theme toggle
+
+**Test Steps:**
+1. Ensure app is in Light mode
+2. Navigate through all major screens:
+   - Home
+   - Inventory
+   - Schedule
+   - Circle Settings
+   - User Settings
+3. Note any readability issues in Light mode
+4. Toggle to Dark mode (device Settings or in-app)
+5. Observe theme transition
+6. Navigate through same screens in Dark mode
+7. Check text readability on all screens
+8. Look for white-on-white or black-on-black issues
+9. Check button visibility and contrast
+10. Open modals/dialogs (tour modal, create gift, etc.)
+11. Verify modal backgrounds appropriate for dark mode
+12. Toggle back to Light mode
+13. Verify smooth transition
+
+**Areas to Check:**
+- Text on backgrounds (primary, secondary text)
+- Button text on buttons
+- Input field text and borders
+- Card backgrounds vs screen backgrounds
+- Modal backdrops
+- Icon colors
+- Status bar style
+- Navigation bar colors
+- Tab bar colors
+
+**Expected Results:**
+- Smooth transition between themes
+- All text readable in both modes
+- Appropriate contrast ratios (WCAG AA minimum)
+- No white-on-white or black-on-black text
+- Buttons clearly visible
+- Consistent theming across all screens
+- Modals styled appropriately
+- Theme preference persists across sessions`
+    },
+    {
+      id: 'TC-025',
+      name: 'Tour Modal UX Validation',
+      priority: 'HIGH',
+      time: '3-5 min',
+      description: 'Validate tour modal positioning and visibility',
+      details: `**Preconditions:**
+- Fresh install OR access to replay tour
+- User ready to complete tour
+
+**Test Steps:**
+1. Trigger tour (first launch or Settings → Replay Tour)
+2. Observe modal appearance animation
+3. Measure/estimate modal height as % of screen
+4. Estimate backdrop opacity (light/medium/heavy)
+5. Try to see screen content behind modal
+6. Read tour step content in modal
+7. Observe screen behind modal (Home, Inventory, etc.)
+8. Rate how well you can see the feature being described
+9. Tap backdrop (outside modal)
+10. Verify tour dismisses
+11. Re-trigger tour
+12. Tap "Skip tour"
+13. Verify immediate dismissal
+14. Re-trigger tour
+15. Use "Previous" button
+16. Verify smooth back navigation
+17. Use "Next" button through all steps
+18. Observe slide animations between steps
+19. On last step, verify "Done" button appears
+20. Tap "Done"
+21. Observe dismissal animation
+
+**Evaluation Criteria:**
+- Modal Size: Should be ~40% of screen height, bottom-aligned
+- Backdrop: Should be light enough to see behind (40% opacity)
+- Readability: Modal content easily readable
+- Visibility: Screen features behind modal clearly visible
+- Animations: Smooth slide-up/down, no janky movements
+- Controls: Previous/Next/Skip/Done all work correctly
+
+**Expected Results:**
+- Modal appears at bottom, not center
+- Modal takes up ~40% or less of screen height
+- Very light backdrop (semi-transparent)
+- Can clearly see and understand screen behind modal
+- Modal content readable and clear
+- Smooth animations
+- All navigation controls work
+- Progress dots update correctly`
+    },
+    {
+      id: 'TC-026',
+      name: 'Welcome Screen Transition',
+      priority: 'HIGH',
+      time: '2-3 min',
+      description: 'Test welcome screen timing and transition',
+      details: `**Preconditions:**
+- Fresh install OR cleared app data
+- No existing circles for account
+
+**Test Steps:**
+1. Launch app
+2. Sign in with account that has no circles
+3. Welcome screen should appear
+4. Read welcome screen content
+5. Note the "Continue" button
+6. Tap "Continue"
+7. Start timer
+8. Observe loading state/animation
+9. Wait for transition to complete
+10. Stop timer when next screen appears
+11. Record time: _____ seconds
+12. Verify next screen is appropriate (Create/Join Circle)
+
+**Repeat Test:**
+13. Sign out
+14. Sign back in with same account
+15. Welcome screen should NOT appear (already seen)
+16. Verify direct navigation to home or onboarding
+
+**Expected Results:**
+- Welcome screen appears for new users with no circles
+- Content is clear and welcoming
+- "Continue" button visible and tappable
+- Transition completes within 2-3 seconds
+- Loading state visible if delay
+- No hanging or frozen states
+- Lands on appropriate next screen
+- Welcome screen doesn't repeat unnecessarily`
+    },
+    {
+      id: 'TC-027',
+      name: 'Household Query Performance',
+      priority: 'HIGH',
+      time: '6-10 min',
+      description: 'Test app performance with realistic data load',
+      details: `**Preconditions:**
+- User account with circle
+- WiFi connected
+- Ability to create test data
+
+**Test Steps:**
+
+**Setup (Create Load):**
+1. Create circle: "Performance Test"
+2. Add 5 members (or invite 5 test accounts)
+3. Add 5 child profiles
+4. Create 10 events over next 30 days
+5. Add 15 gifts to inventory
+6. Create 3 handovers
+
+**Performance Testing:**
+7. Force close app
+8. Launch app
+9. Start timer
+10. Wait for data to load
+11. Stop timer when Home screen fully loaded
+12. Record load time: _____ seconds
+13. Navigate to Inventory tab
+14. Record time to display: _____ seconds
+15. Navigate to Schedule tab
+16. Record time to display: _____ seconds
+17. Switch to different circle (if available)
+18. Record switch time: _____ seconds
+19. Switch back to "Performance Test" circle
+20. Record switch time: _____ seconds
+21. Scroll through event list (Schedule)
+22. Observe any lag or stuttering
+23. Scroll through inventory list
+24. Observe any lag or stuttering
+25. Open event details (tap event)
+26. Record time to open: _____ seconds
+27. Close and open another event
+28. Record time: _____ seconds
+
+**Expected Results:**
+- Initial app load: <5 seconds
+- Tab switching: <1 second
+- Circle switching: <3 seconds
+- Event/gift details: <1 second
+- Smooth scrolling, no stutters
+- No noticeable lag during navigation`
+    },
+    {
+      id: 'TC-028',
+      name: 'Function Timeout Handling',
+      priority: 'HIGH',
+      time: '4-6 min',
+      description: 'Test graceful handling of slow network and timeouts',
+      details: `**Preconditions:**
+- Ability to simulate slow network (or use slow 3G)
+- User account ready to create circle
+
+**Test Steps:**
+
+**Simulate Slow Network:**
+1. Enable slow network simulation:
+   - iOS: Settings → Developer → Network Link Conditioner → Very Bad Network
+   - Android: Developer Options → Networking → Slow 3G
+2. Launch tou.me app
+
+**Test Circle Creation Timeout:**
+3. Navigate to Create Circle screen
+4. Enter circle name: "Timeout Test"
+5. Tap "Create Circle"
+6. Observe loading state
+7. Wait up to 15 seconds
+8. Note any timeout message or behavior
+9. Observe if button stays in loading state
+10. Wait additional 10 seconds
+11. Check if circle eventually appears in list
+
+**Test with Better Network:**
+12. Disable network throttling (restore normal speed)
+13. Check if "Timeout Test" circle now appears
+14. If not, try creating another circle
+15. Verify it works normally with good network
+
+**Test Offline Handling:**
+16. Enable Airplane Mode
+17. Try to create circle: "Offline Test"
+18. Observe error handling
+19. Note any helpful error messages
+
+**Expected Results:**
+- Loading indicator shows during operation
+- Timeout handled gracefully (no crash)
+- Clear feedback if operation times out
+- Eventual sync when network improves
+- Offline operations show helpful errors
+- User not stuck on loading screen forever`
+    },
+    // MEDIUM PRIORITY TEST CASES
+    {
+      id: 'TC-009',
+      name: 'Inventory Location Tracking',
+      priority: 'MEDIUM',
+      time: '5-7 min',
+      description: 'Add item → Create handover → Complete → Verify location update',
+      details: `**Preconditions:**
+- Two users in same circle
+- At least 2 inventory items exist
+
+**Test Steps:**
+1. User A adds item: "Tracking Test Item"
+2. Note initial location (User A)
+3. Create handover from User A to User B
+4. Attach "Tracking Test Item" to handover
+5. User B accepts handover
+6. Complete handover
+7. Check item location (should update to User B)
+8. Verify location history/log if available
+9. Create return handover from User B to User A
+10. Attach same item
+11. Complete handover
+12. Verify location back to User A
+
+**Expected Results:**
+- Location tracks correctly
+- Updates on handover completion
+- Historical record maintained
+- Both users see consistent location`
+    },
+    {
+      id: 'TC-010',
+      name: 'Calendar Conflict Detection',
+      priority: 'MEDIUM',
+      time: '4-6 min',
+      description: 'Create overlapping events → Verify conflict badge → Check suggestions',
+      details: `**Preconditions:**
+- User with calendar access
+- Ability to create events
+
+**Test Steps:**
+1. Create event: "Event A" at 2:00 PM - 3:00 PM
+2. Create event: "Event B" at 2:30 PM - 3:30 PM (overlapping)
+3. Observe any conflict warning or badge
+4. Check if suggestions provided
+5. View calendar to see visual conflict indication
+6. Edit Event B to resolve conflict
+7. Verify conflict warning removed
+
+**Expected Results:**
+- Conflicts detected and indicated
+- Visual badge or warning shown
+- Suggestions for resolution (optional)
+- Easy to identify conflicts in calendar view`
+    },
+    {
+      id: 'TC-011',
+      name: 'Permission Enforcement',
+      priority: 'MEDIUM',
+      time: '4-6 min',
+      description: 'Sign in as Trusted Adult → Verify blocked actions',
+      details: `**Preconditions:**
+- Two users in circle with different roles
+- User B has "Trusted Adult" role (limited permissions)
+
+**Test Steps:**
+
+**User B (Trusted Adult):**
+1. Attempt to delete circle
+2. Observe if blocked or allowed
+3. Attempt to remove admin member
+4. Observe result
+5. Attempt to change circle settings
+6. Note what is allowed vs blocked
+7. Attempt to invite new members
+8. Note result
+
+**User A (Admin):**
+9. Verify User B cannot perform admin actions
+10. Perform same actions as admin
+11. Verify they work for admin
+
+**Expected Results:**
+- Clear permission boundaries
+- Trusted Adults cannot perform admin actions
+- Attempts blocked with helpful message
+- No confusion about permissions`
+    },
+    {
+      id: 'TC-013',
+      name: 'Large Circle Performance',
+      priority: 'MEDIUM',
+      time: '10-15 min',
+      description: 'Test with 8+ members, 50+ events → Measure response times',
+      details: `**Preconditions:**
+- Ability to create large dataset
+- Test account
+
+**Test Steps:**
+1. Create circle with 8 members
+2. Add 10 child profiles
+3. Create 50 events over 3 months
+4. Add 50 gifts to inventory
+5. Navigate to Home
+6. Observe load time
+7. Scroll through event list
+8. Measure scrolling smoothness
+9. Switch tabs multiple times
+10. Measure response times
+11. Search for specific event/gift
+12. Measure search speed
+13. Filter calendar by child
+14. Measure filter speed
+
+**Expected Results:**
+- Reasonable load times (<10 seconds)
+- Smooth scrolling with large lists
+- Search/filter remain responsive
+- No crashes with large datasets`
+    },
+    {
+      id: 'TC-014',
+      name: 'Offline/Online Synchronization',
+      priority: 'MEDIUM',
+      time: '5-7 min',
+      description: 'Edit offline → Reconnect → Verify sync',
+      details: `**Preconditions:**
+- Device with WiFi
+- User signed in with circle
+
+**Test Steps:**
+1. With WiFi on, view circle data
+2. Enable Airplane Mode
+3. Attempt to add gift "Offline Item"
+4. Note any offline indicators
+5. Edit existing event
+6. Navigate between screens
+7. Disable Airplane Mode (go online)
+8. Observe sync behavior
+9. Verify "Offline Item" appears
+10. Verify event edit synced
+11. Check for conflicts or duplicates
+
+**Expected Results:**
+- Clear offline indicator
+- Some operations cached
+- Automatic sync when online
+- No data loss
+- Conflicts handled gracefully`
+    },
+    {
+      id: 'TC-015',
+      name: 'File Upload Security',
+      priority: 'MEDIUM',
+      time: '5-7 min',
+      description: 'Test file size limits → Type validation → Security checks',
+      details: `**Preconditions:**
+- Access to test files (images, PDFs, large files)
+
+**Test Steps:**
+1. Attempt to upload child profile photo
+2. Try very large file (>10MB)
+3. Observe size limit enforcement
+4. Try invalid file type (.exe, .zip)
+5. Observe type validation
+6. Upload valid image (<5MB)
+7. Verify successful upload
+8. Attempt to upload gift photo
+9. Repeat file validation tests
+10. Upload PDF (if supported)
+11. Test size/type limits
+
+**Expected Results:**
+- Clear file size limits
+- Type validation enforced
+- Helpful error messages
+- Valid uploads succeed
+- Invalid uploads blocked gracefully`
+    },
+    {
+      id: 'TC-016',
+      name: 'App Crash Prevention',
+      priority: 'MEDIUM',
+      time: '5-8 min',
+      description: 'Rapid navigation → Invalid data → Network errors → Monitor crashes',
+      details: `**Preconditions:**
+- User signed in
+- Circle with data
+
+**Test Steps:**
+
+**Rapid Navigation:**
+1. Quickly tap between tabs 10 times
+2. Rapidly switch circles 5 times
+3. Open and close modals rapidly
+
+**Invalid Data:**
+4. Try to create event with empty name
+5. Create gift with very long name (1000+ chars)
+6. Enter invalid date (e.g., Feb 31)
+
+**Network Errors:**
+7. Enable Airplane Mode mid-operation
+8. Try to save data
+9. Force network timeout
+
+**Edge Cases:**
+10. Sign out while data loading
+11. Background app mid-save
+12. Return and observe state
+
+**Monitor:**
+- Any crashes
+- Frozen screens
+- Error dialogs
+- Recovery behavior
+
+**Expected Results:**
+- No crashes in any scenario
+- Graceful error handling
+- Validation prevents bad data
+- Network errors handled
+- App recovers from interruptions`
+    },
+    {
+      id: 'TC-017',
+      name: 'Onboarding Completion Rate',
+      priority: 'MEDIUM',
+      time: '5-10 min',
+      description: 'Fresh install → Complete onboarding → Note confusing steps',
+      details: `**Preconditions:**
+- Fresh install
+- User ready for full onboarding
+
+**Test Steps:**
+1. Launch app (fresh install)
+2. Complete sign-in
+3. Start tour
+4. Note any confusing steps
+5. Rate each tour step clarity (1-5)
+6. Complete tour
+7. Follow prompts to create circle
+8. Note any confusion
+9. Add first child
+10. Note clarity of process
+11. Create first event
+12. Complete onboarding flow
+13. Rate overall experience
+
+**Things to Note:**
+- Which steps caused hesitation
+- Where you looked for help
+- Any unclear terminology
+- Missing information
+- Overwhelming steps
+
+**Expected Results:**
+- Smooth progression through onboarding
+- Clear next steps at each stage
+- Minimal confusion
+- Completed within 10 minutes`
+    },
+    {
+      id: 'TC-019',
+      name: 'Accessibility Basics',
+      priority: 'MEDIUM',
+      time: '8-10 min',
+      description: 'Enable screen reader → Test navigation → Check contrast',
+      details: `**Preconditions:**
+- Device with accessibility features
+- User signed in
+
+**Test Steps:**
+
+**Screen Reader (iOS VoiceOver / Android TalkBack):**
+1. Enable screen reader
+2. Navigate Home screen
+3. Verify all elements announced
+4. Try to create event using screen reader
+5. Navigate through form fields
+6. Submit form
+7. Verify success message announced
+
+**Font Scaling:**
+8. Disable screen reader
+9. Increase device font size to largest
+10. Open tou.me
+11. Check if text scales
+12. Verify no text cutoff
+13. Verify buttons still usable
+
+**Color Contrast:**
+14. Check text readability in light mode
+15. Check text readability in dark mode
+16. Verify buttons have sufficient contrast
+17. Check disabled states are distinguishable
+
+**Touch Targets:**
+18. Verify buttons large enough (min 44x44 points)
+19. Check adequate spacing between tap targets
+
+**Expected Results:**
+- Screen reader announces all elements
+- Navigation possible with screen reader
+- Font scaling works
+- No text cutoff at large sizes
+- Good contrast ratios (WCAG AA)
+- Touch targets adequate size`
+    },
+    {
+      id: 'TC-020',
+      name: 'Cross-Platform Consistency',
+      priority: 'MEDIUM',
+      time: '15-20 min',
+      description: 'Compare iOS/Android → Check feature parity → Performance',
+      details: `**Preconditions:**
+- iOS and Android devices available
+- Same account on both
+- Same circle with data
+
+**Test Steps:**
+1. Sign in on iOS device
+2. Note visual design
+3. Create event on iOS
+4. Sign in on Android device
+5. Verify event appears
+6. Note visual design differences
+7. Create gift on Android
+8. Switch to iOS
+9. Verify gift appears
+10. Compare feature availability
+11. Test same workflows on both
+12. Compare performance
+13. Note any iOS-only or Android-only features
+
+**Areas to Compare:**
+- Visual design consistency
+- Feature parity
+- Navigation patterns
+- Performance
+- Push notifications
+- File uploads
+- Calendar integration
+
+**Expected Results:**
+- Core features available on both
+- Similar visual design
+- Comparable performance
+- Data syncs between platforms
+- Platform-specific features acceptable`
+    },
   ];
 
   /* ===== UI ===== */
@@ -393,7 +1565,7 @@ export default function TouMeTestersOnly() {
                 onClick={saveSessionSnapshot}
                 className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
-                Save Snapshot
+                Save Feedback
               </button>
             </div>
           </div>
@@ -433,6 +1605,7 @@ export default function TouMeTestersOnly() {
         <div className="space-y-4">
           {testCases.map((test) => {
             const result = testResults[test.id];
+            const isExpanded = expandedTests[test.id];
 
             return (
               <div key={test.id} className="border border-gray-200 rounded-lg p-4">
@@ -447,6 +1620,16 @@ export default function TouMeTestersOnly() {
                     </div>
                     <h3 className="font-semibold text-lg">{test.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">{test.description}</p>
+
+                    {/* Expand/Collapse button */}
+                    {test.details && (
+                      <button
+                        onClick={() => setExpandedTests((prev) => ({ ...prev, [test.id]: !prev[test.id] }))}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                      >
+                        {isExpanded ? '▼' : '▶'} {isExpanded ? 'Hide' : 'Show'} detailed steps
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex gap-2 ml-4">
@@ -476,6 +1659,30 @@ export default function TouMeTestersOnly() {
                     </button>
                   </div>
                 </div>
+
+                {/* Expanded details section */}
+                {isExpanded && test.details && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="prose prose-sm max-w-none">
+                      {test.details.split('\n').map((line, idx) => {
+                        // Simple markdown-like rendering
+                        if (line.startsWith('**') && line.endsWith('**')) {
+                          return <h4 key={idx} className="font-bold text-sm mt-3 mb-1">{line.replace(/\*\*/g, '')}</h4>;
+                        }
+                        if (line.startsWith('- ')) {
+                          return <li key={idx} className="text-sm ml-4">{line.substring(2)}</li>;
+                        }
+                        if (line.match(/^\d+\./)) {
+                          return <li key={idx} className="text-sm ml-4">{line}</li>;
+                        }
+                        if (line.trim() === '') {
+                          return <br key={idx} />;
+                        }
+                        return <p key={idx} className="text-sm">{line}</p>;
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Notes + Actions */}
                 <div className="mt-3 p-3 bg-gray-50 rounded border-l-4 border-l-blue-500">
@@ -539,14 +1746,11 @@ export default function TouMeTestersOnly() {
         />
         <div className="mt-4 flex flex-wrap gap-2 items-center">
           <p className="text-sm text-gray-600 flex-1">
-            Feedback is saved locally. Use "Save Snapshot" to push a full copy to Firestore.
+            Click "Save Feedback" to save all test results and feedback to Firestore.
           </p>
           <button
-            onClick={() => {
-              localStorage.setItem('toume-feedback', feedback);
-              alert('Feedback saved locally!');
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            onClick={saveSessionSnapshot}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Save Feedback
           </button>
