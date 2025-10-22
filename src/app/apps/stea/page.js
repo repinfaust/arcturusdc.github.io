@@ -21,7 +21,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'User Testing',
-    href: '/apps/stea/toume/testersonlypage',
+    href: '/apps/stea/hans',
     description: 'tou.me tester workspace for coordinating research sessions.',
   },
   {

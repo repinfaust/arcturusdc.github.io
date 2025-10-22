@@ -58,7 +58,7 @@ export default function TouMeTestersOnly() {
       setUser(firebaseUser);
       setAuthReady(true);
       if (!firebaseUser) {
-        const next = encodeURIComponent('/apps/stea/toume/testersonlypage');
+        const next = encodeURIComponent('/apps/stea/hans');
         router.replace(`/apps/stea?next=${next}`);
       }
     });
