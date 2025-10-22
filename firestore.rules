@@ -97,6 +97,33 @@ service cloud.firestore {
     }
 
     /* ==========================================================
+       Hans Testing Suite
+       ========================================================== */
+    match /hans_cases/{caseId} {
+      // Authenticated users can do everything (internal testing team)
+      allow read, update, delete: if authed();
+
+      // Creation only via API (to ensure proper token generation)
+      allow create: if false;
+
+      // Public read access via token for /t/[token] page
+      // Note: This is handled by Admin SDK in the API route for security
+
+      // Subcollection: submissions from testers
+      match /submissions/{submissionId} {
+        // Authenticated users can read all submissions
+        allow read: if authed();
+
+        // Public can create submissions (testers don't need auth)
+        // Validation happens in the API
+        allow create: if true;
+
+        // Only authenticated users can update/delete
+        allow update, delete: if authed();
+      }
+    }
+
+    /* ==========================================================
        Product Lab (Felix)
        ========================================================== */
     match /projects/{projectId} {
