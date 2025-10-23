@@ -971,7 +971,7 @@ export default function AutomatedTestsDashboard() {
       <div className="mt-8 card p-4 text-center text-sm text-gray-600">
         <p>
           Automated testing dashboard for Tou.me development team. Issues automatically sync to{' '}
-          <a href="/apps/stea/board" className="text-blue-600 hover:underline">
+          <a href="/apps/stea/filo" className="text-blue-600 hover:underline">
             STEa board
           </a>
           .

@@ -267,7 +267,7 @@ export default function TouMeTestersOnly() {
     setCardModalOpen(false);
     setCardSeed(null);
     setCardForm({ type: 'bug', urgency: 'medium', title: '', description: '' });
-    alert('Card created! Check /apps/stea/board.');
+    alert('Card created! Check /apps/stea/filo.');
   };
 
   /* ===== Test cases (from USER_TESTING_SCRIPT.md) ===== */
@@ -1805,7 +1805,7 @@ export default function TouMeTestersOnly() {
           This testing portal is for internal use only. Results save locally and to Firestore on each action.
           <br />
           Need the board?{' '}
-          <Link href="/apps/stea/board" className="text-blue-600 hover:underline">
+          <Link href="/apps/stea/filo" className="text-blue-600 hover:underline">
             Open STEa board
           </Link>
           .

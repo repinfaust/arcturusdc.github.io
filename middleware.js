@@ -34,12 +34,12 @@ export function middleware(req) {
   // Add any page or subtree that requires Google/Firebase auth (include /apps and vanity /stea paths)
   const protectedPaths = [
     '/apps/stea/automatedtestsdashboard',
-    '/apps/stea/board',
     '/apps/stea/filo',
+    '/apps/stea/harls',
     '/apps/stea/toume',
     '/stea/automatedtestsdashboard',
-    '/stea/board',
     '/stea/filo',
+    '/stea/harls',
     '/stea/toume',
   ];
 

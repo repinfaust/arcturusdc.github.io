@@ -10,8 +10,8 @@ import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 const IN_SESSION_DESTINATIONS = [
   {
     label: 'STEa Board',
-    href: '/apps/stea/board',
-    note: 'Also available at /stea/board',
+    href: '/apps/stea/filo',
+    note: 'Also available at /stea/filo',
     description: 'Plan, prioritise, and track the STEa backlog.',
   },
   {
@@ -26,7 +26,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Filo',
-    href: '/apps/stea/filo',
+    href: '/apps/stea/harls',
     description: 'Felix Product Lab collaborative whiteboard environment.',
   },
 ];

@@ -134,7 +134,7 @@ export default function HansTestingSuite() {
           </p>
         </div>
         <Link
-          href="/apps/stea/board"
+          href="/apps/stea/filo"
           className="px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
         >
           Open Filo Board
@@ -256,7 +256,7 @@ export default function HansTestingSuite() {
             </p>
             {testCases.length === 0 && (
               <Link
-                href="/apps/stea/board"
+                href="/apps/stea/filo"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
               >
                 Open Filo Board →
@@ -378,7 +378,7 @@ function TestCaseCard({ testCase, expanded, onToggleExpand }) {
           </button>
 
           <Link
-            href={`/apps/stea/board`}
+            href={`/apps/stea/filo`}
             className="px-3 py-2 text-sm border rounded-lg hover:bg-neutral-50 transition-colors"
             title="View source card in Filo"
           >
