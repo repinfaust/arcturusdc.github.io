@@ -104,6 +104,52 @@ const listCardsByFeatureSchema = z.object({
   featureId: z.string(),
 });
 
+const updateCardSchema = z.object({
+  cardId: z.string(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  column: z.string().optional(),
+  size: sizeSchema.optional(),
+  testing: z
+    .object({
+      userStory: z.string().optional(),
+      acceptanceCriteria: z.array(z.string()).optional(),
+      userFlow: z.array(z.string()).optional(),
+    })
+    .optional(),
+});
+
+const updateEpicSchema = z.object({
+  epicId: z.string(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  column: z.string().optional(),
+  size: sizeSchema.optional(),
+});
+
+const updateFeatureSchema = z.object({
+  featureId: z.string(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  priority: priorityEnum.optional(),
+  column: z.string().optional(),
+  size: sizeSchema.optional(),
+});
+
+const deleteCardSchema = z.object({
+  cardId: z.string(),
+});
+
+const deleteEpicSchema = z.object({
+  epicId: z.string(),
+});
+
+const deleteFeatureSchema = z.object({
+  featureId: z.string(),
+});
+
 // ---------- Tool Handlers ----------
 
 async function handleCreateEpic(args: z.infer<typeof createEpicSchema>) {
@@ -255,6 +301,158 @@ async function handleListCardsByFeature(
       {
         type: 'text' as const,
         text: JSON.stringify(rows, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleUpdateCard(args: z.infer<typeof updateCardSchema>) {
+  const { cardId, column, ...rest } = args;
+
+  const cardRef = db.collection('stea_cards').doc(cardId);
+  const card = await cardRef.get();
+
+  if (!card.exists) {
+    throw new Error(`Card not found: ${cardId}`);
+  }
+
+  const updates: any = { ...rest };
+  if (column) {
+    updates.statusColumn = column;
+  }
+
+  await cardRef.update(updates);
+
+  const updated = await cardRef.get();
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ cardId, ...updated.data() }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleUpdateEpic(args: z.infer<typeof updateEpicSchema>) {
+  const { epicId, column, name, ...rest } = args;
+
+  const epicRef = db.collection('stea_epics').doc(epicId);
+  const epic = await epicRef.get();
+
+  if (!epic.exists) {
+    throw new Error(`Epic not found: ${epicId}`);
+  }
+
+  const updates: any = { ...rest };
+  if (column) {
+    updates.statusColumn = column;
+  }
+  if (name) {
+    updates.name = name;
+    updates.title = name;
+  }
+
+  await epicRef.update(updates);
+
+  const updated = await epicRef.get();
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ epicId, ...updated.data() }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleUpdateFeature(args: z.infer<typeof updateFeatureSchema>) {
+  const { featureId, column, name, ...rest } = args;
+
+  const featureRef = db.collection('stea_features').doc(featureId);
+  const feature = await featureRef.get();
+
+  if (!feature.exists) {
+    throw new Error(`Feature not found: ${featureId}`);
+  }
+
+  const updates: any = { ...rest };
+  if (column) {
+    updates.statusColumn = column;
+  }
+  if (name) {
+    updates.name = name;
+    updates.title = name;
+  }
+
+  await featureRef.update(updates);
+
+  const updated = await featureRef.get();
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ featureId, ...updated.data() }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleDeleteCard(args: z.infer<typeof deleteCardSchema>) {
+  const cardRef = db.collection('stea_cards').doc(args.cardId);
+  const card = await cardRef.get();
+
+  if (!card.exists) {
+    throw new Error(`Card not found: ${args.cardId}`);
+  }
+
+  await cardRef.delete();
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ cardId: args.cardId, deleted: true }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleDeleteEpic(args: z.infer<typeof deleteEpicSchema>) {
+  const epicRef = db.collection('stea_epics').doc(args.epicId);
+  const epic = await epicRef.get();
+
+  if (!epic.exists) {
+    throw new Error(`Epic not found: ${args.epicId}`);
+  }
+
+  await epicRef.delete();
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ epicId: args.epicId, deleted: true }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleDeleteFeature(args: z.infer<typeof deleteFeatureSchema>) {
+  const featureRef = db.collection('stea_features').doc(args.featureId);
+  const feature = await featureRef.get();
+
+  if (!feature.exists) {
+    throw new Error(`Feature not found: ${args.featureId}`);
+  }
+
+  await featureRef.delete();
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ featureId: args.featureId, deleted: true }, null, 2),
       },
     ],
   };
@@ -412,6 +610,126 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['featureId'],
         },
       },
+      {
+        name: 'stea.updateCard',
+        description: 'Update an existing card',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            cardId: { type: 'string', description: 'Card ID' },
+            title: { type: 'string', description: 'Card title' },
+            description: { type: 'string', description: 'Card description' },
+            priority: {
+              type: 'string',
+              enum: ['LOW', 'MEDIUM', 'HIGH'],
+              description: 'Priority level',
+            },
+            column: {
+              type: 'string',
+              description: 'Column/status',
+            },
+            size: {
+              description: 'Size estimate',
+            },
+            testing: {
+              type: 'object',
+              description: 'Testing specifications',
+              properties: {
+                userStory: { type: 'string' },
+                acceptanceCriteria: {
+                  type: 'array',
+                  items: { type: 'string' },
+                },
+                userFlow: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+          required: ['cardId'],
+        },
+      },
+      {
+        name: 'stea.updateEpic',
+        description: 'Update an existing epic',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            epicId: { type: 'string', description: 'Epic ID' },
+            name: { type: 'string', description: 'Epic name' },
+            description: { type: 'string', description: 'Epic description' },
+            priority: {
+              type: 'string',
+              enum: ['LOW', 'MEDIUM', 'HIGH'],
+              description: 'Priority level',
+            },
+            column: {
+              type: 'string',
+              description: 'Column/status',
+            },
+            size: {
+              description: 'Size estimate',
+            },
+          },
+          required: ['epicId'],
+        },
+      },
+      {
+        name: 'stea.updateFeature',
+        description: 'Update an existing feature',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            featureId: { type: 'string', description: 'Feature ID' },
+            name: { type: 'string', description: 'Feature name' },
+            description: { type: 'string', description: 'Feature description' },
+            priority: {
+              type: 'string',
+              enum: ['LOW', 'MEDIUM', 'HIGH'],
+              description: 'Priority level',
+            },
+            column: {
+              type: 'string',
+              description: 'Column/status',
+            },
+            size: {
+              description: 'Size estimate',
+            },
+          },
+          required: ['featureId'],
+        },
+      },
+      {
+        name: 'stea.deleteCard',
+        description: 'Delete a card',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            cardId: { type: 'string', description: 'Card ID to delete' },
+          },
+          required: ['cardId'],
+        },
+      },
+      {
+        name: 'stea.deleteEpic',
+        description: 'Delete an epic',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            epicId: { type: 'string', description: 'Epic ID to delete' },
+          },
+          required: ['epicId'],
+        },
+      },
+      {
+        name: 'stea.deleteFeature',
+        description: 'Delete a feature',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            featureId: { type: 'string', description: 'Feature ID to delete' },
+          },
+          required: ['featureId'],
+        },
+      },
     ],
   };
 });
@@ -444,6 +762,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await handleListCardsByFeature(
           listCardsByFeatureSchema.parse(args || {})
         );
+
+      case 'stea.updateCard':
+        return await handleUpdateCard(updateCardSchema.parse(args || {}));
+
+      case 'stea.updateEpic':
+        return await handleUpdateEpic(updateEpicSchema.parse(args || {}));
+
+      case 'stea.updateFeature':
+        return await handleUpdateFeature(updateFeatureSchema.parse(args || {}));
+
+      case 'stea.deleteCard':
+        return await handleDeleteCard(deleteCardSchema.parse(args || {}));
+
+      case 'stea.deleteEpic':
+        return await handleDeleteEpic(deleteEpicSchema.parse(args || {}));
+
+      case 'stea.deleteFeature':
+        return await handleDeleteFeature(deleteFeatureSchema.parse(args || {}));
 
       default:
         throw new Error(`Unknown tool: ${name}`);
