@@ -107,8 +107,12 @@ const listCardsByFeatureSchema = z.object({
 // ---------- Tool Handlers ----------
 
 async function handleCreateEpic(args: z.infer<typeof createEpicSchema>) {
+  const { column, name, ...rest } = args;
   const payload = {
-    ...args,
+    ...rest,
+    title: name, // Filo uses 'title' field
+    name, // Keep name for compatibility
+    statusColumn: column, // Filo uses 'statusColumn' not 'column'
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
   };
@@ -134,8 +138,12 @@ async function handleCreateFeature(
     throw new Error(`Epic not found: ${args.epicId}`);
   }
 
+  const { column, name, ...rest } = args;
   const payload = {
-    ...args,
+    ...rest,
+    title: name, // Filo uses 'title' field
+    name, // Keep name for compatibility
+    statusColumn: column, // Filo uses 'statusColumn' not 'column'
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
   };
@@ -167,8 +175,10 @@ async function handleCreateCard(args: z.infer<typeof createCardSchema>) {
     );
   }
 
+  const { column, ...rest } = args;
   const payload = {
-    ...args,
+    ...rest,
+    statusColumn: column, // Filo uses 'statusColumn' not 'column'
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
   };
