@@ -1290,7 +1290,7 @@ export default function SteaBoard() {
               </>
             )}
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic' }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic', app: epic.app }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
             </div>
           </>
         ) : (
@@ -1314,7 +1314,7 @@ export default function SteaBoard() {
               {epic.assignee ? <span>Assigned: {epic.assignee}</span> : null}
             </div>
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic' }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic', app: epic.app }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
               <button onClick={(e) => { e.stopPropagation(); moveTo({ id: epic.id, statusColumn: epic.statusColumn }, prev); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
               <button onClick={(e) => { e.stopPropagation(); moveTo({ id: epic.id, statusColumn: epic.statusColumn }, next); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
             </div>
@@ -1337,6 +1337,9 @@ export default function SteaBoard() {
 
     // Get completion stats for this feature
     const completionStats = featureCompletionStats[normalizedFeatureId] || { completed: 0, total: 0, percentage: 0 };
+
+    // Get effective app for inheritance (feature's app or epic's app)
+    const featureApp = feature.app || epicDoc?.app || '';
 
     const handleFeatureDragOver = (event) => {
       const types = Array.from(event.dataTransfer.types || []);
@@ -1514,7 +1517,7 @@ export default function SteaBoard() {
               </>
             )}
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel, app: featureApp }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
             </div>
           </>
         ) : (
@@ -1543,7 +1546,7 @@ export default function SteaBoard() {
               {feature.assignee ? <span>Assigned: {feature.assignee}</span> : null}
             </div>
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
+              <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel, app: featureApp }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
               <button onClick={(e) => { e.stopPropagation(); moveTo({ id: feature.id, statusColumn: feature.statusColumn }, prev); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
               <button onClick={(e) => { e.stopPropagation(); moveTo({ id: feature.id, statusColumn: feature.statusColumn }, next); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${next}`}>→</button>
             </div>
