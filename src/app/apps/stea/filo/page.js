@@ -358,6 +358,7 @@ export default function SteaBoard() {
   const [dragOverCol, setDragOverCol] = useState(null);
   const [dragOverEpic, setDragOverEpic] = useState('');
   const [dragOverFeature, setDragOverFeature] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // uploading
   const [uploading, setUploading] = useState(false);
@@ -535,6 +536,49 @@ export default function SteaBoard() {
 
   const unassignedFeatures = featuresByEpic[''] || [];
 
+  // Completion tracking for features (based on their cards)
+  const featureCompletionStats = useMemo(() => {
+    const stats = {};
+    for (const feature of features) {
+      const featureId = normalizeId(feature.id);
+      const featureCards = cards.filter(c => normalizeId(c.featureId) === featureId);
+      const completed = featureCards.filter(c => c.statusColumn === 'Done').length;
+      const total = featureCards.length;
+      stats[featureId] = { completed, total, percentage: total > 0 ? (completed / total) * 100 : 0 };
+    }
+    return stats;
+  }, [features, cards]);
+
+  // Completion tracking for epics (based on their features and direct cards)
+  const epicCompletionStats = useMemo(() => {
+    const stats = {};
+    for (const epic of epics) {
+      const epicId = normalizeId(epic.id);
+      const epicFeatures = features.filter(f => normalizeId(f.epicId) === epicId);
+      const epicDirectCards = cards.filter(c => normalizeId(c.epicId) === epicId && !c.featureId);
+
+      // Count completed features (features where all cards are done)
+      const completedFeatures = epicFeatures.filter(f => {
+        const featureStats = featureCompletionStats[normalizeId(f.id)];
+        return featureStats && featureStats.total > 0 && featureStats.completed === featureStats.total;
+      }).length;
+
+      // Count completed direct cards
+      const completedDirectCards = epicDirectCards.filter(c => c.statusColumn === 'Done').length;
+
+      // Total items = features + direct cards
+      const totalItems = epicFeatures.length + epicDirectCards.length;
+      const completedItems = completedFeatures + completedDirectCards;
+
+      stats[epicId] = {
+        completed: completedItems,
+        total: totalItems,
+        percentage: totalItems > 0 ? (completedItems / totalItems) * 100 : 0
+      };
+    }
+    return stats;
+  }, [epics, features, cards, featureCompletionStats]);
+
   /* ---------- helpers ---------- */
   const appsList = useMemo(() => {
     const discovered = cards.map(c => c.app).filter(Boolean);
@@ -602,7 +646,7 @@ export default function SteaBoard() {
     }
 
     return g;
-  }, [cards, epics, features, showArchived, filters, search, matchMode]);
+  }, [cards, epics, features, showArchived, filters, search, matchMode, refreshKey]);
 
   const visibleColumns = COLUMNS.filter((c) => !hiddenCols[c]);
 
@@ -999,6 +1043,20 @@ export default function SteaBoard() {
     if (now - last < 300) openEntityEditor(entityType, entity);
   };
 
+  /* Completion gradient helper */
+  const getCompletionGradient = (percentage, baseColorLight, baseColorDark) => {
+    // Convert percentage to 0-1 range
+    const ratio = Math.min(Math.max(percentage / 100, 0), 1);
+
+    // Calculate color stops for bottom-to-top gradient
+    // At 0%: full light color
+    // At 100%: full dark color at top
+    const lightStop = 100 - (ratio * 50); // Light color starts fading from bottom
+    const darkStop = 100 - (ratio * 100); // Dark color fills from top
+
+    return `linear-gradient(to top, ${baseColorLight} 0%, ${baseColorLight} ${lightStop}%, ${baseColorDark} ${darkStop}%, ${baseColorDark} 100%)`;
+  };
+
   /* Epic Component */
   const Epic = ({ epic, children }) => {
     const idx = COLUMNS.indexOf(epic.statusColumn || 'Idea');
@@ -1007,6 +1065,9 @@ export default function SteaBoard() {
     const isDragging = draggingId === epic.id;
     const normalizedEpicId = normalizeId(epic.id);
     const isEpicDropTarget = dragOverEpic === normalizedEpicId;
+
+    // Get completion stats for this epic
+    const completionStats = epicCompletionStats[normalizedEpicId] || { completed: 0, total: 0, percentage: 0 };
 
     const handleEpicDragOver = (event) => {
       const types = Array.from(event.dataTransfer.types || []);
@@ -1099,6 +1160,8 @@ export default function SteaBoard() {
             ));
             console.log('[Epic Drop] Cards updated successfully');
           }
+          // Force re-render to ensure UI updates
+          setRefreshKey(prev => prev + 1);
         } catch (err) {
           console.error('[STEa Board] Failed to nest feature under epic', err);
         }
@@ -1127,7 +1190,8 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[28px] border-4 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 shadow-md hover:shadow-lg transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${isHovered ? 'ring-2 ring-red-300 shadow-red-200/50' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[140px]' : 'p-4 min-h-[180px]'}`}
+        className={`rounded-[28px] border-4 border-red-200 shadow-md hover:shadow-lg transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${isHovered ? 'ring-2 ring-red-300 shadow-red-200/50' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[140px]' : 'p-4 min-h-[180px]'}`}
+        style={{ background: getCompletionGradient(completionStats.percentage, '#fef2f2', '#fca5a5') }}
         draggable
         onDragStart={(e) => { setDraggingId(epic.id); e.dataTransfer.setData('text/stea-epic-id', epic.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
@@ -1148,7 +1212,14 @@ export default function SteaBoard() {
                   <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
                   <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
                 </div>
-                <div className="font-semibold text-base break-words">{highlightText(epic.title, search)}</div>
+                <div className="font-semibold text-base break-words">
+                  {highlightText(epic.title, search)}
+                  {completionStats.total > 0 && (
+                    <span className="ml-2 text-xs font-normal text-red-600">
+                      {completionStats.completed}/{completionStats.total}
+                    </span>
+                  )}
+                </div>
                 {epic.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(epic.description, search)}</p>) : null}
                 <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                   <span>Reporter: {epic.reporter || '—'}</span>
@@ -1167,6 +1238,7 @@ export default function SteaBoard() {
                 >
                   <div className="text-red-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                     {epic.title || 'Epic'}
+                    {completionStats.total > 0 && ` ${completionStats.completed}/${completionStats.total}`}
                   </div>
                 </div>
                 {/* Label at top */}
@@ -1191,7 +1263,14 @@ export default function SteaBoard() {
               <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
               <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
             </div>
-            <div className="font-semibold text-base break-words">{highlightText(epic.title, search)}</div>
+            <div className="font-semibold text-base break-words">
+              {highlightText(epic.title, search)}
+              {completionStats.total > 0 && (
+                <span className="ml-2 text-xs font-normal text-red-600">
+                  {completionStats.completed}/{completionStats.total}
+                </span>
+              )}
+            </div>
             {epic.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(epic.description, search)}</p>) : null}
             <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
               <span>Reporter: {epic.reporter || '—'}</span>
@@ -1218,6 +1297,9 @@ export default function SteaBoard() {
     const epicLabel = getDocLabel(epicDoc) || '';
     const normalizedFeatureId = normalizeId(feature.id);
     const isFeatureDropTarget = dragOverFeature === normalizedFeatureId;
+
+    // Get completion stats for this feature
+    const completionStats = featureCompletionStats[normalizedFeatureId] || { completed: 0, total: 0, percentage: 0 };
 
     const handleFeatureDragOver = (event) => {
       const types = Array.from(event.dataTransfer.types || []);
@@ -1265,6 +1347,8 @@ export default function SteaBoard() {
             searchTokens,
             updatedAt: serverTimestamp(),
           });
+          // Force re-render to ensure UI updates
+          setRefreshKey(prev => prev + 1);
         } catch (err) {
           console.error('[STEa Board] Failed to nest card under feature', err);
         }
@@ -1302,8 +1386,9 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[22px] border-2 border-orange-200 bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100/70 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[115px]' : 'p-3 min-h-[150px]'}`}
+        className={`rounded-[22px] border-2 border-orange-200 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[115px]' : 'p-3 min-h-[150px]'}`}
         style={{
+          background: getCompletionGradient(completionStats.percentage, '#fff7ed', '#fb923c'),
           boxShadow: hasChildren
             ? '0 4px 6px -1px rgba(251, 146, 60, 0.15), 0 2px 4px -1px rgba(251, 146, 60, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.1)'
             : undefined
@@ -1333,7 +1418,14 @@ export default function SteaBoard() {
                     Epic: {epicLabel}
                   </div>
                 )}
-                <div className="font-semibold text-base break-words">{highlightText(feature.title, search)}</div>
+                <div className="font-semibold text-base break-words">
+                  {highlightText(feature.title, search)}
+                  {completionStats.total > 0 && (
+                    <span className="ml-2 text-xs font-normal text-orange-600">
+                      {completionStats.completed}/{completionStats.total}
+                    </span>
+                  )}
+                </div>
                 {feature.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(feature.description, search)}</p>) : null}
                 <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                   <span>Reporter: {feature.reporter || '—'}</span>
@@ -1352,6 +1444,7 @@ export default function SteaBoard() {
                 >
                   <div className="text-orange-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                     {feature.title || 'Feature'}
+                    {completionStats.total > 0 && ` ${completionStats.completed}/${completionStats.total}`}
                   </div>
                 </div>
                 {/* Label at top */}
@@ -1399,7 +1492,14 @@ export default function SteaBoard() {
                 Epic: {epicLabel}
               </div>
             )}
-            <div className="font-semibold text-base break-words">{highlightText(feature.title, search)}</div>
+            <div className="font-semibold text-base break-words">
+              {highlightText(feature.title, search)}
+              {completionStats.total > 0 && (
+                <span className="ml-2 text-xs font-normal text-orange-600">
+                  {completionStats.completed}/{completionStats.total}
+                </span>
+              )}
+            </div>
             {feature.description ? (<p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{highlightText(feature.description, search)}</p>) : null}
             <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
               <span>Reporter: {feature.reporter || '—'}</span>
