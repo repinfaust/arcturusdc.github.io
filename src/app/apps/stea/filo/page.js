@@ -1048,13 +1048,21 @@ export default function SteaBoard() {
     // Convert percentage to 0-1 range
     const ratio = Math.min(Math.max(percentage / 100, 0), 1);
 
-    // Calculate color stops for bottom-to-top gradient
-    // At 0%: full light color
-    // At 100%: full dark color at top
-    const lightStop = 100 - (ratio * 50); // Light color starts fading from bottom
-    const darkStop = 100 - (ratio * 100); // Dark color fills from top
+    // Smooth gradient that fills from bottom up
+    // At 0%: all light (empty)
+    // At 100%: darker at bottom, smoothly transitioning to lighter at top (full)
 
-    return `linear-gradient(to top, ${baseColorLight} 0%, ${baseColorLight} ${lightStop}%, ${baseColorDark} ${darkStop}%, ${baseColorDark} 100%)`;
+    if (ratio === 0) {
+      // Empty state - just light color
+      return baseColorLight;
+    }
+
+    // The "fill level" - how far up the dark color reaches
+    const fillLevel = ratio * 70; // Dark color can fill up to 70% of height at 100%
+    const fadeStart = fillLevel * 0.6; // Where the gradient starts to fade
+
+    // Create smooth gradient from dark at bottom to light at top
+    return `linear-gradient(to top, ${baseColorDark} 0%, ${baseColorDark} ${fadeStart}%, ${baseColorLight} ${fillLevel}%, ${baseColorLight} 100%)`;
   };
 
   /* Epic Component */
