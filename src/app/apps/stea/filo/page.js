@@ -1249,7 +1249,7 @@ export default function SteaBoard() {
                   <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
                   <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
                 </div>
-                <div className="font-semibold text-base break-words">
+                <div className="font-semibold text-base break-words" title={epic.title}>
                   {highlightText(epic.title, search)}
                   {completionStats.total > 0 && (
                     <span className="ml-2 text-xs font-normal text-red-600">
@@ -1271,7 +1271,7 @@ export default function SteaBoard() {
                   onMouseDown={handleTitleMouseDown}
                   onMouseUp={handleTitleMouseUp}
                   onMouseLeave={handleTitleMouseLeave}
-                  title="Click and hold to peek"
+                  title={`${epic.title || 'Epic'}${completionStats.total > 0 ? ` ${completionStats.completed}/${completionStats.total}` : ''} - Click and hold to peek`}
                 >
                   <div className="text-red-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                     {epic.title || 'Epic'}
@@ -1300,7 +1300,7 @@ export default function SteaBoard() {
               <div className="font-bold text-red-700 text-sm uppercase tracking-wide">Epic</div>
               <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-2 py-1 text-xs rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
             </div>
-            <div className="font-semibold text-base break-words">
+            <div className="font-semibold text-base break-words" title={epic.title}>
               {highlightText(epic.title, search)}
               {completionStats.total > 0 && (
                 <span className="ml-2 text-xs font-normal text-red-600">
@@ -1426,7 +1426,7 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[22px] border-2 border-orange-200 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[155px]' : 'p-3 min-h-[190px]'}`}
+        className={`rounded-[22px] border-2 border-orange-200 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[175px]' : 'p-3 min-h-[210px]'}`}
         style={{
           background: getCompletionGradient(completionStats.percentage, '#fff7ed', '#fb923c'),
           boxShadow: hasChildren
@@ -1458,7 +1458,7 @@ export default function SteaBoard() {
                     Epic: {epicLabel}
                   </div>
                 )}
-                <div className="font-semibold text-base break-words">
+                <div className="font-semibold text-base break-words" title={feature.title}>
                   {highlightText(feature.title, search)}
                   {completionStats.total > 0 && (
                     <span className="ml-2 text-xs font-normal text-orange-600">
@@ -1480,7 +1480,7 @@ export default function SteaBoard() {
                   onMouseDown={handleTitleMouseDown}
                   onMouseUp={handleTitleMouseUp}
                   onMouseLeave={handleTitleMouseLeave}
-                  title="Click and hold to peek"
+                  title={`${feature.title || 'Feature'}${completionStats.total > 0 ? ` ${completionStats.completed}/${completionStats.total}` : ''} - Click and hold to peek`}
                 >
                   <div className="text-orange-700 text-xs font-bold uppercase tracking-wider whitespace-nowrap origin-center max-h-full overflow-hidden text-ellipsis" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                     {feature.title || 'Feature'}
@@ -1532,7 +1532,7 @@ export default function SteaBoard() {
                 Epic: {epicLabel}
               </div>
             )}
-            <div className="font-semibold text-base break-words">
+            <div className="font-semibold text-base break-words" title={feature.title}>
               {highlightText(feature.title, search)}
               {completionStats.total > 0 && (
                 <span className="ml-2 text-xs font-normal text-orange-600">
