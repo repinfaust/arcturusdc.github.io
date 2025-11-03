@@ -1227,7 +1227,7 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[28px] border-4 border-red-200 shadow-md hover:shadow-lg transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${isHovered ? 'ring-2 ring-red-300 shadow-red-200/50' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[140px]' : 'p-4 min-h-[180px]'}`}
+        className={`rounded-[28px] border-4 border-red-200 shadow-md hover:shadow-lg transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isEpicDropTarget ? 'ring-4 ring-red-400' : ''} ${isHovered ? 'ring-2 ring-red-300 shadow-red-200/50' : ''} ${hasChildren ? 'pl-8 pr-4 pt-2 pb-4 min-h-[180px]' : 'p-4 min-h-[220px]'}`}
         style={{ background: getCompletionGradient(completionStats.percentage, '#fef2f2', '#fca5a5') }}
         draggable
         onDragStart={(e) => { setDraggingId(epic.id); e.dataTransfer.setData('text/stea-epic-id', epic.id); e.dataTransfer.effectAllowed = 'move'; }}
@@ -1426,7 +1426,7 @@ export default function SteaBoard() {
 
     return (
       <div
-        className={`rounded-[22px] border-2 border-orange-200 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[115px]' : 'p-3 min-h-[150px]'}`}
+        className={`rounded-[22px] border-2 border-orange-200 shadow-lg hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ${isDragging ? 'opacity-60' : ''} ${isFeatureDropTarget ? 'ring-4 ring-orange-400' : ''} ${isHovered ? 'ring-2 ring-orange-300 shadow-orange-200/50' : ''} ${hasChildren ? 'pl-7 pr-3 pt-2 pb-3 min-h-[155px]' : 'p-3 min-h-[190px]'}`}
         style={{
           background: getCompletionGradient(completionStats.percentage, '#fff7ed', '#fb923c'),
           boxShadow: hasChildren
