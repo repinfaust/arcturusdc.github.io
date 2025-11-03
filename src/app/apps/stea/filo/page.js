@@ -588,12 +588,39 @@ export default function SteaBoard() {
   const reporterOptions = useMemo(() => Array.from(new Set(cards.map(c => c.reporter).filter(Boolean))).sort(), [cards]);
   const assigneeOptions = useMemo(() => Array.from(new Set(cards.map(c => c.assignee).filter(Boolean))).sort(), [cards]);
 
-  const matchesFilters = (c) => {
-    if (!showArchived && c.archived) return false;
-    if (filters.app && (c.app || '') !== filters.app) return false;
-    if (filters.type && (c.type || '') !== filters.type) return false;
-    if (filters.reporter && !(c.reporter || '').toLowerCase().includes(filters.reporter.toLowerCase())) return false;
-    if (filters.assignee && !(c.assignee || '').toLowerCase().includes(filters.assignee.toLowerCase())) return false;
+  // Hierarchical app filtering: check entity's app, or parent's app if not set
+  const getEffectiveApp = (entity, entityType) => {
+    // If entity has an app set, use it
+    if (entity.app) return entity.app;
+
+    // Otherwise, check parent hierarchy
+    if (entityType === 'card') {
+      // Card: check feature's app, then epic's app
+      const featureDoc = entity.featureId ? featureMap[normalizeId(entity.featureId)] : null;
+      if (featureDoc?.app) return featureDoc.app;
+      const epicDoc = entity.epicId ? epicMap[normalizeId(entity.epicId)] : (featureDoc?.epicId ? epicMap[normalizeId(featureDoc.epicId)] : null);
+      if (epicDoc?.app) return epicDoc.app;
+    } else if (entityType === 'feature') {
+      // Feature: check epic's app
+      const epicDoc = entity.epicId ? epicMap[normalizeId(entity.epicId)] : null;
+      if (epicDoc?.app) return epicDoc.app;
+    }
+    // Epic has no parent, so return empty if no app set
+    return '';
+  };
+
+  const matchesFilters = (entity, entityType = 'card') => {
+    if (!showArchived && entity.archived) return false;
+
+    // App filter: use hierarchical app lookup
+    if (filters.app) {
+      const effectiveApp = getEffectiveApp(entity, entityType);
+      if (effectiveApp !== filters.app) return false;
+    }
+
+    if (filters.type && (entity.type || '') !== filters.type) return false;
+    if (filters.reporter && !(entity.reporter || '').toLowerCase().includes(filters.reporter.toLowerCase())) return false;
+    if (filters.assignee && !(entity.assignee || '').toLowerCase().includes(filters.assignee.toLowerCase())) return false;
     return true;
   };
 
@@ -622,23 +649,25 @@ export default function SteaBoard() {
   const grouped = useMemo(() => {
     const g = Object.fromEntries(COLUMNS.map((c) => [c, []]));
 
-    // Add epics to columns
+    // Add epics to columns (with filtering)
     for (const epic of epics) {
+      if (!matchesFilters(epic, 'epic')) continue;
       const col = epic.statusColumn || 'Idea';
       if (!g[col]) g[col] = [];
       g[col].push({ ...epic, entityType: 'epic' });
     }
 
-    // Add features to columns
+    // Add features to columns (with filtering)
     for (const feature of features) {
+      if (!matchesFilters(feature, 'feature')) continue;
       const col = feature.statusColumn || 'Idea';
       if (!g[col]) g[col] = [];
       g[col].push({ ...feature, entityType: 'feature' });
     }
 
-    // Add cards to columns
+    // Add cards to columns (with filtering)
     for (const c of cards) {
-      if (!matchesFilters(c)) continue;
+      if (!matchesFilters(c, 'card')) continue;
       if (!matchesSearch(c)) continue;
       const col = c.statusColumn || 'Idea';
       if (!g[col]) g[col] = [];
