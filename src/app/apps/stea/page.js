@@ -9,6 +9,11 @@ import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 const IN_SESSION_DESTINATIONS = [
   {
+    label: 'STEa Demo',
+    href: '/apps/stea/demo',
+    description: 'Interactive showcase of the complete STEa tech stack and closed-loop workflow.',
+  },
+  {
     label: 'STEa Board',
     href: '/apps/stea/filo',
     note: 'Also available at /stea/filo',
