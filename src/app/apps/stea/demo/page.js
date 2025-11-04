@@ -183,9 +183,9 @@ export default function SteaDemoPage() {
                   <h4 className="font-bold text-amber-700 mb-1">Discovery</h4>
                   <p className="text-xs text-neutral-600">Brief → Prompts</p>
                 </div>
-                {/* Arrow pointing down-right */}
-                <div className="absolute -bottom-16 left-full ml-2 text-3xl text-amber-500 animate-pulse-slow">
-                  ↓
+                {/* Arrow pointing right */}
+                <div className="absolute top-1/2 left-full ml-2 -translate-y-1/2 text-3xl text-amber-500 animate-pulse-slow">
+                  →
                 </div>
               </div>
 
