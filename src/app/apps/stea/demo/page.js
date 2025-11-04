@@ -160,35 +160,80 @@ export default function SteaDemoPage() {
               Information flows seamlessly through the entire product lifecycle
             </p>
 
-            {/* Flow Diagram with animated arrows */}
-            <div className="flex flex-wrap items-center justify-center gap-4 my-8">
-              <div className="card p-4 border-2 border-amber-300 bg-amber-50/50 min-w-[160px] text-center hover:shadow-lg transition-all">
-                <h4 className="font-bold text-amber-700 mb-1">Discovery</h4>
-                <p className="text-xs text-neutral-600">Brief → Prompts</p>
+            {/* Circular Loop Diagram */}
+            <div className="relative w-full max-w-2xl mx-auto my-16" style={{ height: '500px' }}>
+              {/* Rotating circle background */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-80 h-80 rounded-full border-4 border-dashed border-neutral-300 animate-spin-very-slow"></div>
               </div>
-              <div className="text-3xl text-amber-500 animate-pulse-slow">→</div>
-              <div className="card p-4 border-2 border-violet-300 bg-violet-50/50 min-w-[160px] text-center hover:shadow-lg transition-all">
-                <h4 className="font-bold text-violet-700 mb-1">Backlog</h4>
-                <p className="text-xs text-neutral-600">Epics → Features → Cards</p>
-              </div>
-              <div className="text-3xl text-violet-500 animate-pulse-slow animation-delay-300">→</div>
-              <div className="card p-4 border-2 border-emerald-300 bg-emerald-50/50 min-w-[160px] text-center hover:shadow-lg transition-all">
-                <h4 className="font-bold text-emerald-700 mb-1">Testing</h4>
-                <p className="text-xs text-neutral-600">Test Cases → Evidence</p>
-              </div>
-              <div className="text-3xl text-emerald-500 animate-pulse-slow animation-delay-600">→</div>
-              <div className="card p-4 border-2 border-orange-300 bg-orange-50/50 min-w-[160px] text-center hover:shadow-lg transition-all">
-                <h4 className="font-bold text-orange-700 mb-1">Feedback</h4>
-                <p className="text-xs text-neutral-600">Bugs → Fixes → Retest</p>
-              </div>
-            </div>
 
-            {/* Center Text */}
-            <div className="text-center mt-8 p-6 bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-2xl border-2 border-neutral-200 shadow-inner">
-              <h3 className="text-lg font-extrabold bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-                Continuous Flow
-              </h3>
-              <p className="text-sm text-neutral-600">No context switching • Full traceability</p>
+              {/* Animated flowing dots */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-80 h-80 relative">
+                  <div className="absolute w-3 h-3 rounded-full bg-amber-500 animate-orbit-1 shadow-lg"></div>
+                  <div className="absolute w-3 h-3 rounded-full bg-violet-500 animate-orbit-2 shadow-lg"></div>
+                  <div className="absolute w-3 h-3 rounded-full bg-emerald-500 animate-orbit-3 shadow-lg"></div>
+                  <div className="absolute w-3 h-3 rounded-full bg-orange-500 animate-orbit-4 shadow-lg"></div>
+                </div>
+              </div>
+
+              {/* Top - Discovery */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2">
+                <div className="card p-4 border-2 border-amber-300 bg-amber-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-amber-700 mb-1">Discovery</h4>
+                  <p className="text-xs text-neutral-600">Brief → Prompts</p>
+                </div>
+                {/* Arrow pointing down-right */}
+                <div className="absolute -bottom-16 left-full ml-2 text-3xl text-amber-500 animate-pulse-slow">
+                  ↓
+                </div>
+              </div>
+
+              {/* Right - Backlog */}
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-2">
+                <div className="card p-4 border-2 border-violet-300 bg-violet-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-violet-700 mb-1">Backlog</h4>
+                  <p className="text-xs text-neutral-600">Epics → Features → Cards</p>
+                </div>
+                {/* Arrow pointing down */}
+                <div className="absolute top-full mt-2 right-1/2 translate-x-1/2 text-3xl text-violet-500 animate-pulse-slow animation-delay-300">
+                  ↓
+                </div>
+              </div>
+
+              {/* Bottom - Testing */}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2">
+                <div className="card p-4 border-2 border-emerald-300 bg-emerald-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-emerald-700 mb-1">Testing</h4>
+                  <p className="text-xs text-neutral-600">Test Cases → Evidence</p>
+                </div>
+                {/* Arrow pointing left */}
+                <div className="absolute top-1/2 right-full mr-2 -translate-y-1/2 text-3xl text-emerald-500 animate-pulse-slow animation-delay-600">
+                  ←
+                </div>
+              </div>
+
+              {/* Left - Feedback */}
+              <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-2">
+                <div className="card p-4 border-2 border-orange-300 bg-orange-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-orange-700 mb-1">Feedback</h4>
+                  <p className="text-xs text-neutral-600">Bugs → Fixes → Retest</p>
+                </div>
+                {/* Arrow pointing up to complete the loop */}
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 text-3xl text-orange-500 animate-pulse-slow animation-delay-900">
+                  ↑
+                </div>
+              </div>
+
+              {/* Center Text */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                <div className="p-6 bg-white rounded-2xl border-2 border-neutral-200 shadow-xl">
+                  <h3 className="text-lg font-extrabold bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent mb-2 whitespace-nowrap">
+                    Continuous Flow
+                  </h3>
+                  <p className="text-xs text-neutral-600 whitespace-nowrap">No context switching<br/>Full traceability</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -347,8 +392,49 @@ export default function SteaDemoPage() {
           }
         }
 
+        @keyframes spin-very-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes orbit {
+          0% {
+            transform: rotate(0deg) translateX(160px) rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg) translateX(160px) rotate(-360deg);
+          }
+        }
+
         .animate-pulse-slow {
           animation: pulse-slow 2s ease-in-out infinite;
+        }
+
+        .animate-spin-very-slow {
+          animation: spin-very-slow 30s linear infinite;
+        }
+
+        .animate-orbit-1 {
+          animation: orbit 8s linear infinite;
+        }
+
+        .animate-orbit-2 {
+          animation: orbit 8s linear infinite;
+          animation-delay: 2s;
+        }
+
+        .animate-orbit-3 {
+          animation: orbit 8s linear infinite;
+          animation-delay: 4s;
+        }
+
+        .animate-orbit-4 {
+          animation: orbit 8s linear infinite;
+          animation-delay: 6s;
         }
 
         .animation-delay-300 {
@@ -357,6 +443,10 @@ export default function SteaDemoPage() {
 
         .animation-delay-600 {
           animation-delay: 0.6s;
+        }
+
+        .animation-delay-900 {
+          animation-delay: 0.9s;
         }
       `}</style>
     </main>
