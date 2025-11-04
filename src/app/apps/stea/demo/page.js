@@ -1,9 +1,39 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function SteaDemoPage() {
+  const [modalImage, setModalImage] = useState(null);
+
+  const productImages = [
+    {
+      src: '/img/harls.png',
+      alt: 'Harls - Discovery & Planning',
+      title: 'Harls',
+      category: 'Discovery & Planning',
+      description: 'Capture problem framing, JTBD, workshop notes, and decisions. Transform discovery briefs into structured backlogs with AI-powered generation.',
+      gradient: 'from-pink-50 to-red-50',
+    },
+    {
+      src: '/img/filo.png',
+      alt: 'Filo - Board & Delivery',
+      title: 'Filo',
+      category: 'Board & Delivery',
+      description: 'Manage Epics → Features → Cards with complete user stories, acceptance criteria, and user flows. Send cards directly to testing in one click.',
+      gradient: 'from-blue-50 to-cyan-50',
+    },
+    {
+      src: '/img/hans.png',
+      alt: 'Hans - Testing & Validation',
+      title: 'Hans',
+      category: 'Testing & Validation',
+      description: 'Run structured test cases, capture evidence, and automatically create bug cards back in Filo when tests fail. Close the feedback loop.',
+      gradient: 'from-emerald-50 to-teal-50',
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-starburst">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -30,107 +60,33 @@ export default function SteaDemoPage() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Harls */}
-            <Link
-              href="/apps/stea/harls"
-              className="group card p-6 hover:shadow-lg transition-all hover:-translate-y-1"
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-black/10 bg-gradient-to-br from-pink-50 to-red-50">
-                  <Image
-                    src="/img/harls.png"
-                    width={48}
-                    height={48}
-                    alt="Harls"
-                    className="rounded-xl"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = '<span class="text-3xl">🎯</span>';
-                    }}
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="text-xs uppercase tracking-wide text-neutral-500 mb-1">
-                    Discovery & Planning
+            {productImages.map((product, idx) => (
+              <div key={idx} className="card p-6">
+                <div className="mb-4">
+                  <div className="text-xs uppercase tracking-wide text-neutral-500 mb-2">
+                    {product.category}
                   </div>
-                  <h3 className="text-xl font-bold text-neutral-900">Harls</h3>
+                  <h3 className="text-xl font-bold text-neutral-900 mb-4">{product.title}</h3>
                 </div>
-              </div>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Capture problem framing, JTBD, workshop notes, and decisions. Transform discovery briefs into structured backlogs with AI-powered generation.
-              </p>
-              <div className="mt-4 text-sm text-neutral-400 group-hover:text-neutral-700 transition-colors">
-                Learn more →
-              </div>
-            </Link>
 
-            {/* Filo */}
-            <Link
-              href="/apps/stea/filo"
-              className="group card p-6 hover:shadow-lg transition-all hover:-translate-y-1"
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-black/10 bg-gradient-to-br from-blue-50 to-cyan-50">
+                {/* Large clickable image */}
+                <div
+                  className={`relative w-full aspect-[4/3] mb-4 rounded-2xl border border-black/10 bg-gradient-to-br ${product.gradient} overflow-hidden cursor-pointer hover:shadow-lg transition-all`}
+                  onClick={() => setModalImage(product)}
+                >
                   <Image
-                    src="/img/filo.png"
-                    width={48}
-                    height={48}
-                    alt="Filo"
-                    className="rounded-xl"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = '<span class="text-3xl">📋</span>';
-                    }}
+                    src={product.src}
+                    alt={product.alt}
+                    fill
+                    className="object-contain p-4"
                   />
                 </div>
-                <div className="flex-1">
-                  <div className="text-xs uppercase tracking-wide text-neutral-500 mb-1">
-                    Board & Delivery
-                  </div>
-                  <h3 className="text-xl font-bold text-neutral-900">Filo</h3>
-                </div>
-              </div>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Manage Epics → Features → Cards with complete user stories, acceptance criteria, and user flows. Send cards directly to testing in one click.
-              </p>
-              <div className="mt-4 text-sm text-neutral-400 group-hover:text-neutral-700 transition-colors">
-                Learn more →
-              </div>
-            </Link>
 
-            {/* Hans */}
-            <Link
-              href="/apps/stea/hans"
-              className="group card p-6 hover:shadow-lg transition-all hover:-translate-y-1"
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-black/10 bg-gradient-to-br from-emerald-50 to-teal-50">
-                  <Image
-                    src="/img/hans.png"
-                    width={48}
-                    height={48}
-                    alt="Hans"
-                    className="rounded-xl"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.innerHTML = '<span class="text-3xl">✓</span>';
-                    }}
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="text-xs uppercase tracking-wide text-neutral-500 mb-1">
-                    Testing & Validation
-                  </div>
-                  <h3 className="text-xl font-bold text-neutral-900">Hans</h3>
-                </div>
+                <p className="text-sm text-neutral-600 leading-relaxed">
+                  {product.description}
+                </p>
               </div>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Run structured test cases, capture evidence, and automatically create bug cards back in Filo when tests fail. Close the feedback loop.
-              </p>
-              <div className="mt-4 text-sm text-neutral-400 group-hover:text-neutral-700 transition-colors">
-                Learn more →
-              </div>
-            </Link>
+            ))}
           </div>
         </section>
 
@@ -200,7 +156,7 @@ export default function SteaDemoPage() {
               {
                 icon: '🐛',
                 title: 'Auto Bug Creation',
-                description: 'When a test fails, Hans automatically creates a bug card in Filo with repro steps and evidence.',
+                description: 'When a test fails, Hans can automatically create a bug card in Filo with repro steps and evidence.',
               },
               {
                 icon: '📊',
@@ -248,8 +204,8 @@ export default function SteaDemoPage() {
                 {
                   number: 1,
                   color: 'bg-pink-100 text-pink-700',
-                  title: 'Start in Harls',
-                  description: 'Paste a problem brief or workshop notes. Click "Generate Backlog" to seed epics, features, and cards via AI.',
+                  title: 'Start in Harls or your LLM',
+                  description: 'Work directly in Harls to capture discovery notes, or use your preferred LLM with MCP server integration to turn a single prompt into a complete roadmap of epics, features, and cards that auto-populate in Filo.',
                 },
                 {
                   number: 2,
@@ -310,6 +266,38 @@ export default function SteaDemoPage() {
           </p>
         </div>
       </div>
+
+      {/* Image Modal */}
+      {modalImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setModalImage(null)}
+        >
+          <div className="relative max-w-7xl max-h-[90vh] w-full h-full">
+            <button
+              onClick={() => setModalImage(null)}
+              className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="w-full h-full flex items-center justify-center">
+              <Image
+                src={modalImage.src}
+                alt={modalImage.alt}
+                width={2000}
+                height={1500}
+                className="object-contain max-h-full"
+              />
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-sm text-white p-4 rounded-xl">
+              <h3 className="text-xl font-bold mb-1">{modalImage.title}</h3>
+              <p className="text-sm opacity-90">{modalImage.category}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
