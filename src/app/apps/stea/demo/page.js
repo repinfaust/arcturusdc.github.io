@@ -164,16 +164,16 @@ export default function SteaDemoPage() {
             <div className="relative w-full max-w-2xl mx-auto my-16" style={{ height: '500px' }}>
               {/* Rotating circle background */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-80 h-80 rounded-full border-4 border-dashed border-neutral-300 animate-spin-very-slow"></div>
+                <div className="w-96 h-96 rounded-full border-4 border-dashed border-neutral-300 animate-spin-very-slow"></div>
               </div>
 
               {/* Animated flowing dots */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-80 h-80 relative">
-                  <div className="absolute w-3 h-3 rounded-full bg-amber-500 animate-orbit-1 shadow-lg"></div>
-                  <div className="absolute w-3 h-3 rounded-full bg-violet-500 animate-orbit-2 shadow-lg"></div>
-                  <div className="absolute w-3 h-3 rounded-full bg-emerald-500 animate-orbit-3 shadow-lg"></div>
-                  <div className="absolute w-3 h-3 rounded-full bg-orange-500 animate-orbit-4 shadow-lg"></div>
+                <div className="w-96 h-96 relative">
+                  <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-amber-500 animate-orbit-1 shadow-lg"></div>
+                  <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-violet-500 animate-orbit-2 shadow-lg"></div>
+                  <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-emerald-500 animate-orbit-3 shadow-lg"></div>
+                  <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-orange-500 animate-orbit-4 shadow-lg"></div>
                 </div>
               </div>
 
@@ -403,10 +403,10 @@ export default function SteaDemoPage() {
 
         @keyframes orbit {
           0% {
-            transform: rotate(0deg) translateX(160px) rotate(0deg);
+            transform: rotate(0deg) translateX(192px) rotate(0deg);
           }
           100% {
-            transform: rotate(360deg) translateX(160px) rotate(-360deg);
+            transform: rotate(360deg) translateX(192px) rotate(-360deg);
           }
         }
 
