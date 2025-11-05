@@ -51,6 +51,7 @@ export function TenantProvider({ children }) {
 
       // If super admin, load all tenants
       if (isAdmin) {
+        console.log('[TENANT DEBUG] User is super admin, loading all tenants');
         const tenantsRef = collection(db, 'tenants');
         const tenantsSnap = await getDocs(tenantsRef);
         const allTenants = [];
@@ -65,6 +66,8 @@ export function TenantProvider({ children }) {
         if (allTenants.length > 0) {
           const lastTenantId = localStorage.getItem('lastTenantId');
           const lastTenant = allTenants.find(t => t.id === lastTenantId);
+          console.log('[TENANT DEBUG] Super admin has', allTenants.length, 'tenants. Last tenant from localStorage:', lastTenantId);
+          console.log('[TENANT DEBUG] Auto-selecting:', lastTenant ? lastTenant.name : allTenants[0].name);
           setCurrentTenant(lastTenant || allTenants[0]);
         }
       } else {
@@ -96,12 +99,16 @@ export function TenantProvider({ children }) {
 
         // Auto-select tenant
         if (tenants.length === 1) {
+          console.log('[TENANT DEBUG] User has 1 tenant, auto-selecting:', tenants[0].name, tenants[0].id);
           setCurrentTenant(tenants[0]);
         } else if (tenants.length > 1) {
           const lastTenantId = localStorage.getItem('lastTenantId');
           const lastTenant = tenants.find(t => t.id === lastTenantId);
+          console.log('[TENANT DEBUG] User has', tenants.length, 'tenants. Last tenant from localStorage:', lastTenantId, 'Found:', !!lastTenant);
+          console.log('[TENANT DEBUG] Available tenants:', tenants.map(t => ({ name: t.name, id: t.id })));
           setCurrentTenant(lastTenant || tenants[0]);
         } else {
+          console.log('[TENANT DEBUG] User has no tenants');
           setCurrentTenant(null);
         }
       }

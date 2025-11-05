@@ -6,7 +6,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where, doc, updateDoc } from 'firebase/firestore';
+import { useTenant } from '@/contexts/TenantContext';
+import TenantSwitcher from '@/components/TenantSwitcher';
 
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Open', color: 'bg-gray-100 text-gray-700 border-gray-200' },
@@ -24,6 +26,7 @@ const PRIORITY_COLORS = {
 
 export default function HansTestingSuite() {
   const router = useRouter();
+  const { currentTenant, loading: tenantLoading } = useTenant();
   const searchParams = useSearchParams();
   const caseIdParam = searchParams?.get('case');
 
@@ -52,10 +55,15 @@ export default function HansTestingSuite() {
 
   // Load test cases from Firestore
   useEffect(() => {
-    if (!user) return;
+    if (!user || !currentTenant?.id) {
+      setTestCases([]);
+      setLoading(false);
+      return;
+    }
 
     const q = query(
       collection(db, 'hans_cases'),
+      where('tenantId', '==', currentTenant.id),
       orderBy('createdAt', 'desc')
     );
 
@@ -72,7 +80,7 @@ export default function HansTestingSuite() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, currentTenant]);
 
   // Get unique apps for filter
   const availableApps = useMemo(() => {
@@ -120,6 +128,35 @@ export default function HansTestingSuite() {
     );
   }
 
+  if (tenantLoading) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border bg-white/70 p-6 text-center text-sm text-neutral-600">
+          Loading workspace…
+        </div>
+      </main>
+    );
+  }
+
+  if (!currentTenant) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <h2 className="mb-2 text-lg font-semibold text-amber-900">No Workspace Access</h2>
+          <p className="mb-4 text-sm text-amber-700">
+            You don&apos;t have access to any workspaces yet. Contact your administrator.
+          </p>
+          <Link
+            href="/apps/stea"
+            className="inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700"
+          >
+            Back to STEa
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="pb-10 max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
@@ -133,12 +170,15 @@ export default function HansTestingSuite() {
             Manage test cases, coordinate user testing sessions, and track quality across all apps
           </p>
         </div>
-        <Link
-          href="/apps/stea/filo"
-          className="px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
-        >
-          Open Filo Board
-        </Link>
+        <div className="flex items-center gap-3">
+          <TenantSwitcher />
+          <Link
+            href="/apps/stea/filo"
+            className="px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
+          >
+            Open Filo Board
+          </Link>
+        </div>
       </div>
 
       {/* Quick Stats */}

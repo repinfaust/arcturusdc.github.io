@@ -22,14 +22,15 @@ const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
 export default function AdminPage() {
   const router = useRouter();
-  const { isSuperAdmin, refreshTenants } = useTenant();
+  const { isSuperAdmin, availableTenants, currentTenant, refreshTenants } = useTenant();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [tenants, setTenants] = useState([]);
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('tenants'); // 'tenants' | 'members'
+  const [activeTab, setActiveTab] = useState('members'); // Start on members tab
+  const [isWorkspaceAdmin, setIsWorkspaceAdmin] = useState(false);
 
   // Forms state
   const [showCreateTenant, setShowCreateTenant] = useState(false);
@@ -48,13 +49,39 @@ export default function AdminPage() {
       setUser(firebaseUser);
       setAuthReady(true);
 
-      if (!firebaseUser || !SUPER_ADMINS.includes(firebaseUser.email)) {
+      if (!firebaseUser) {
         router.replace('/apps/stea');
       }
     });
 
     return () => unsubscribe();
   }, [router]);
+
+  // Check if user is workspace admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user || !availableTenants.length) return;
+
+      // Check if user is admin of any workspace
+      const adminTenants = [];
+      for (const tenant of availableTenants) {
+        const members = await getTenantMembers(tenant.id);
+        const userMember = members.find(m => m.userEmail === user.email);
+        if (userMember && userMember.role === 'admin') {
+          adminTenants.push(tenant);
+        }
+      }
+
+      setIsWorkspaceAdmin(adminTenants.length > 0);
+
+      // If not super admin AND not workspace admin, redirect
+      if (!isSuperAdmin && adminTenants.length === 0) {
+        router.replace('/apps/stea');
+      }
+    };
+
+    checkAdminStatus();
+  }, [user, availableTenants, isSuperAdmin, router]);
 
   // Load tenants
   useEffect(() => {
