@@ -1,7 +1,7 @@
 // src/lib/firebase.js
-import { initializeApp, getApps, deleteApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, initializeFirestore, terminate } from 'firebase/firestore';
+import { initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,90 +13,28 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Use global variable to persist across hot reloads in development
-// This prevents multiple Firebase instances during Next.js hot module replacement
-const globalForFirebase = globalThis;
+// Initialize Firebase - simple, single initialization
+let app;
+let db;
+let auth;
 
-if (!globalForFirebase._firebaseInitialized) {
-  globalForFirebase._firebaseApp = null;
-  globalForFirebase._firebaseDb = null;
-  globalForFirebase._firebaseAuth = null;
-  globalForFirebase._firebaseInitialized = false;
+if (typeof window !== 'undefined' && getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+
+  // Initialize Firestore with disabled persistence to avoid all cache-related errors
+  db = initializeFirestore(app, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+    experimentalForceLongPolling: true,
+  });
+
+  auth = getAuth(app);
+} else if (typeof window !== 'undefined') {
+  app = getApps()[0];
+  auth = getAuth(app);
+  // Get firestore from existing app
+  const { getFirestore } = require('firebase/firestore');
+  db = getFirestore(app);
 }
-
-function initializeFirebaseApp() {
-  // Return existing instance if already initialized
-  if (globalForFirebase._firebaseInitialized && globalForFirebase._firebaseApp) {
-    return {
-      app: globalForFirebase._firebaseApp,
-      db: globalForFirebase._firebaseDb,
-      auth: globalForFirebase._firebaseAuth,
-    };
-  }
-
-  // Only initialize in browser
-  if (typeof window === 'undefined') {
-    return { app: null, db: null, auth: null };
-  }
-
-  try {
-    // Get or create Firebase app
-    let app;
-    const existingApps = getApps();
-
-    if (existingApps.length > 0) {
-      app = existingApps[0];
-    } else {
-      app = initializeApp(firebaseConfig);
-    }
-
-    // Initialize Firestore with long polling to avoid WebChannel/Listen errors
-    // This forces the use of long polling instead of WebSocket connections
-    // which can fail in certain network/browser configurations
-    let db;
-    try {
-      // Try to initialize with long polling settings
-      // This will fail if already initialized, so we'll catch and use getFirestore
-      db = initializeFirestore(app, {
-        experimentalForceLongPolling: true,
-        experimentalAutoDetectLongPolling: true,
-      });
-    } catch (error) {
-      // If already initialized (e.g., hot reload), get the existing instance
-      console.log('Using existing Firestore instance');
-      db = getFirestore(app);
-    }
-
-    const auth = getAuth(app);
-
-    // Store in global to survive hot reloads
-    globalForFirebase._firebaseApp = app;
-    globalForFirebase._firebaseDb = db;
-    globalForFirebase._firebaseAuth = auth;
-    globalForFirebase._firebaseInitialized = true;
-
-    // Cleanup on hot module replacement
-    if (module.hot) {
-      module.hot.dispose(async () => {
-        try {
-          if (db) await terminate(db);
-          if (app) await deleteApp(app);
-        } catch (error) {
-          console.warn('Firebase cleanup warning:', error);
-        }
-        globalForFirebase._firebaseInitialized = false;
-      });
-    }
-
-    return { app, db, auth };
-  } catch (error) {
-    console.error('Firebase initialization error:', error);
-    throw error;
-  }
-}
-
-// Initialize once
-const { app, db, auth } = initializeFirebaseApp();
 
 export { auth, db };
 export const googleProvider = new GoogleAuthProvider();
