@@ -9,14 +9,10 @@
  */
 
 const admin = require('firebase-admin');
-const path = require('path');
 
 // Initialize Firebase Admin
-// Load service account credentials
-const serviceAccount = require('./stea-775cd-1adc69763f06.json');
-
+// Uses default credentials from Firebase CLI
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
   projectId: 'stea-775cd'
 });
 

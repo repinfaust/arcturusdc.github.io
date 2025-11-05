@@ -14,6 +14,10 @@ import {
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
+/* ===== Multi-tenant ===== */
+import { useTenant } from '@/contexts/TenantContext';
+import TenantSwitcher from '@/components/TenantSwitcher';
+
 /* ===== Constants ===== */
 const BOARD_LS_KEY = 'stea-board-v1';
 const STEA_COLUMNS = ['Idea', 'Planning', 'Design', 'Build'];
@@ -34,6 +38,7 @@ const DEFAULT_URGENCY = 'medium';
 
 export default function TouMeTestersOnly() {
   const router = useRouter();
+  const { currentTenant, loading: tenantLoading } = useTenant();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [testResults, setTestResults] = useState({});
@@ -93,10 +98,15 @@ export default function TouMeTestersOnly() {
 
   // Firestore: save a single test case result row immediately
   const saveResultToFirestore = async (testId, payload) => {
+    if (!currentTenant?.id) {
+      console.warn('No tenant selected, skipping Firestore save');
+      return;
+    }
     try {
       await addDoc(collection(db, 'toume_test_results'), {
         testId,
         ...payload,
+        tenantId: currentTenant.id,
         savedAt: serverTimestamp(),
       });
       // no toast here to keep UX quiet
@@ -105,8 +115,12 @@ export default function TouMeTestersOnly() {
     }
   };
 
-  // Firestore: optional “session snapshot” save (called manually if you want)
+  // Firestore: optional "session snapshot" save (called manually if you want)
   const saveSessionSnapshot = async () => {
+    if (!currentTenant?.id) {
+      alert('No workspace selected. Please select a workspace first.');
+      return;
+    }
     try {
       await addDoc(collection(db, 'toume_test_sessions'), {
         tester: testerName || null,
@@ -121,6 +135,7 @@ export default function TouMeTestersOnly() {
           skipped: Object.values(testResults).filter((r) => r.status === 'skip').length,
         },
         generalFeedback: feedback || '',
+        tenantId: currentTenant.id,
       });
       alert('Session snapshot saved to Firestore ✅');
     } catch (e) {
@@ -251,8 +266,12 @@ export default function TouMeTestersOnly() {
 
     // 1) Save in Firestore (future board sync)
     try {
+      if (!currentTenant?.id) {
+        throw new Error('No workspace selected');
+      }
       await addDoc(collection(db, 'stea_cards'), {
         ...newCard,
+        tenantId: currentTenant.id,
         savedAt: serverTimestamp(),
         source: 'toume_test_portal',
       });
@@ -1492,6 +1511,35 @@ export default function TouMeTestersOnly() {
     );
   }
 
+  if (tenantLoading) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border bg-white/70 p-6 text-center text-sm text-neutral-600">
+          Loading workspace…
+        </div>
+      </main>
+    );
+  }
+
+  if (!currentTenant) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <h2 className="mb-2 text-lg font-semibold text-amber-900">No Workspace Access</h2>
+          <p className="mb-4 text-sm text-amber-700">
+            You don&apos;t have access to any workspaces yet. Contact your administrator.
+          </p>
+          <Link
+            href="/apps/stea"
+            className="inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700"
+          >
+            Back to STEa
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="pb-10 max-w-6xl mx-auto px-4">
       {/* Header */}
@@ -1504,9 +1552,14 @@ export default function TouMeTestersOnly() {
           alt="Tou.me logo"
           priority
         />
-        <div>
-          <div className="font-extrabold text-red-600">🧪 Tou.me Testing Portal</div>
-          <div className="text-muted text-sm">Internal testing for team and user group</div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="font-extrabold text-red-600">🧪 Tou.me Testing Portal</div>
+              <div className="text-muted text-sm">Internal testing for team and user group</div>
+            </div>
+            <TenantSwitcher className="ml-auto" />
+          </div>
           <p className="mt-2 text-sm text-neutral-700">
             This page is for coordinated testing of Tou.me MVP 1.3. Complete the test cases below,
             report issues, and provide feedback. Results now save to Firestore and you can create STEa cards directly.
