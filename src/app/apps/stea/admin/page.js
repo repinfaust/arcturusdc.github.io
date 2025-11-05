@@ -22,7 +22,7 @@ const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
 export default function AdminPage() {
   const router = useRouter();
-  const { isSuperAdmin, availableTenants, currentTenant, refreshTenants } = useTenant();
+  const { isSuperAdmin, isWorkspaceAdmin, availableTenants, currentTenant, refreshTenants } = useTenant();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [tenants, setTenants] = useState([]);
@@ -30,7 +30,6 @@ export default function AdminPage() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('members'); // Start on members tab
-  const [isWorkspaceAdmin, setIsWorkspaceAdmin] = useState(false);
 
   // Forms state
   const [showCreateTenant, setShowCreateTenant] = useState(false);
@@ -51,44 +50,28 @@ export default function AdminPage() {
 
       if (!firebaseUser) {
         router.replace('/apps/stea');
+      } else if (!isSuperAdmin && !isWorkspaceAdmin) {
+        // Redirect if not admin (check happens after context loads)
+        router.replace('/apps/stea');
       }
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, isSuperAdmin, isWorkspaceAdmin]);
 
-  // Check if user is workspace admin
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user || !availableTenants.length) return;
-
-      // Check if user is admin of any workspace
-      const adminTenants = [];
-      for (const tenant of availableTenants) {
-        const members = await getTenantMembers(tenant.id);
-        const userMember = members.find(m => m.userEmail === user.email);
-        if (userMember && userMember.role === 'admin') {
-          adminTenants.push(tenant);
-        }
-      }
-
-      setIsWorkspaceAdmin(adminTenants.length > 0);
-
-      // If not super admin AND not workspace admin, redirect
-      if (!isSuperAdmin && adminTenants.length === 0) {
-        router.replace('/apps/stea');
-      }
-    };
-
-    checkAdminStatus();
-  }, [user, availableTenants, isSuperAdmin, router]);
-
-  // Load tenants
+  // Load tenants (super admins only)
   useEffect(() => {
     if (authReady && user && isSuperAdmin) {
       loadTenants();
     }
   }, [authReady, user, isSuperAdmin]);
+
+  // Auto-select current tenant for workspace admins
+  useEffect(() => {
+    if (authReady && user && isWorkspaceAdmin && !isSuperAdmin && currentTenant) {
+      setSelectedTenant(currentTenant);
+    }
+  }, [authReady, user, isWorkspaceAdmin, isSuperAdmin, currentTenant]);
 
   // Load members when tenant selected
   useEffect(() => {
@@ -299,16 +282,18 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="mb-6 flex gap-4 border-b border-neutral-200">
-          <button
-            onClick={() => setActiveTab('tenants')}
-            className={`px-4 py-2 text-sm font-medium transition ${
-              activeTab === 'tenants'
-                ? 'border-b-2 border-pink-600 text-pink-600'
-                : 'text-neutral-600 hover:text-neutral-900'
-            }`}
-          >
-            Workspaces ({tenants.length})
-          </button>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setActiveTab('tenants')}
+              className={`px-4 py-2 text-sm font-medium transition ${
+                activeTab === 'tenants'
+                  ? 'border-b-2 border-pink-600 text-pink-600'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              Workspaces ({tenants.length})
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('members')}
             className={`px-4 py-2 text-sm font-medium transition ${
