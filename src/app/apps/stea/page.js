@@ -11,9 +11,14 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 
 const IN_SESSION_DESTINATIONS = [
   {
-    label: 'STEa Demo',
-    href: '/apps/stea/demo',
-    description: 'Interactive showcase of the complete STEa tech stack and closed-loop workflow.',
+    label: 'Harls',
+    href: '/apps/stea/harls',
+    description: 'Felix Product Lab collaborative whiteboard environment.',
+  },
+  {
+    label: 'Auto Product',
+    href: '/apps/stea/autoproduct',
+    description: 'AI-powered backlog generation via MCP. Turn product specs into structured Epics, Features, and Cards.',
   },
   {
     label: 'Filo',
@@ -22,19 +27,19 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Plan, prioritise, and track the STEa backlog.',
   },
   {
-    label: 'Automated Tests',
-    href: '/apps/stea/automatedtestsdashboard',
-    description: 'Trigger Jest suites and review the latest run results.',
-  },
-  {
     label: 'Hans Testing Suite',
     href: '/apps/stea/hans',
     description: 'Test case management and user testing coordination across all apps.',
   },
   {
-    label: 'Harls',
-    href: '/apps/stea/harls',
-    description: 'Felix Product Lab collaborative whiteboard environment.',
+    label: 'Automated Tests',
+    href: '/apps/stea/automatedtestsdashboard',
+    description: 'Trigger Jest suites and review the latest run results.',
+  },
+  {
+    label: 'STEa Demo',
+    href: '/apps/stea/demo',
+    description: 'Interactive showcase of the complete STEa tech stack and closed-loop workflow.',
   },
 ];
 

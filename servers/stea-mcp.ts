@@ -221,9 +221,13 @@ async function handleCreateCard(args: z.infer<typeof createCardSchema>) {
     );
   }
 
-  const { column, ...rest } = args;
+  const { column, testing, ...rest } = args;
   const payload = {
     ...rest,
+    // Flatten testing fields to root level
+    ...(testing?.userStory && { userStory: testing.userStory }),
+    ...(testing?.acceptanceCriteria && { acceptanceCriteria: testing.acceptanceCriteria }),
+    ...(testing?.userFlow && { userFlow: testing.userFlow }),
     statusColumn: column, // Filo uses 'statusColumn' not 'column'
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
@@ -307,7 +311,7 @@ async function handleListCardsByFeature(
 }
 
 async function handleUpdateCard(args: z.infer<typeof updateCardSchema>) {
-  const { cardId, column, ...rest } = args;
+  const { cardId, column, testing, ...rest } = args;
 
   const cardRef = db.collection('stea_cards').doc(cardId);
   const card = await cardRef.get();
@@ -320,6 +324,10 @@ async function handleUpdateCard(args: z.infer<typeof updateCardSchema>) {
   if (column) {
     updates.statusColumn = column;
   }
+  // Flatten testing fields to root level
+  if (testing?.userStory) updates.userStory = testing.userStory;
+  if (testing?.acceptanceCriteria) updates.acceptanceCriteria = testing.acceptanceCriteria;
+  if (testing?.userFlow) updates.userFlow = testing.userFlow;
 
   await cardRef.update(updates);
 
