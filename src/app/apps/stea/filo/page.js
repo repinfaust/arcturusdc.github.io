@@ -6,11 +6,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import {
-  addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query,
+  addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, where,
   serverTimestamp, updateDoc, arrayUnion, arrayRemove
 } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useTenant } from '@/contexts/TenantContext';
+import TenantSwitcher from '@/components/TenantSwitcher';
 
 /* -------------------- CONFIG -------------------- */
 const COLUMNS = ['Idea', 'Planning', 'Design', 'Build', 'Done', "Won't Do"];
@@ -320,6 +322,7 @@ function AttachmentsSection({ card, onAdd, onDelete, uploading }) {
 /* -------------------- PAGE -------------------- */
 export default function SteaBoard() {
   const router = useRouter();
+  const { currentTenant, loading: tenantLoading } = useTenant();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [cards, setCards] = useState([]);
@@ -417,11 +420,15 @@ export default function SteaBoard() {
 
   /* ---------- data ---------- */
   useEffect(() => {
-    if (!user) {
+    if (!user || !currentTenant?.id) {
       setCards([]);
       return undefined;
     }
-    const qy = query(collection(db, 'stea_cards'), orderBy('createdAt', 'asc'));
+    const qy = query(
+      collection(db, 'stea_cards'),
+      where('tenantId', '==', currentTenant.id),
+      orderBy('createdAt', 'asc')
+    );
     const unsub = onSnapshot(qy, (snap) => {
       const list = [];
       snap.forEach((d) => {
@@ -440,18 +447,24 @@ export default function SteaBoard() {
       setCards(list);
     });
     return () => unsub();
-  }, [user]);
+  }, [user, currentTenant]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !currentTenant?.id) {
       setEpics([]);
       setFeatures([]);
       return undefined;
     }
-    const epicsRef = collection(db, 'stea_epics');
-    const featuresRef = collection(db, 'stea_features');
+    const epicsQ = query(
+      collection(db, 'stea_epics'),
+      where('tenantId', '==', currentTenant.id)
+    );
+    const featuresQ = query(
+      collection(db, 'stea_features'),
+      where('tenantId', '==', currentTenant.id)
+    );
 
-    const unsubscribeEpics = onSnapshot(epicsRef, (snap) => {
+    const unsubscribeEpics = onSnapshot(epicsQ, (snap) => {
       const list = [];
       snap.forEach((d) => {
         const data = d.data();
@@ -466,7 +479,7 @@ export default function SteaBoard() {
       setEpics(sortLayers(list));
     });
 
-    const unsubscribeFeatures = onSnapshot(featuresRef, (snap) => {
+    const unsubscribeFeatures = onSnapshot(featuresQ, (snap) => {
       const list = [];
       snap.forEach((d) => {
         const data = d.data();
@@ -485,7 +498,7 @@ export default function SteaBoard() {
       unsubscribeEpics();
       unsubscribeFeatures();
     };
-  }, [user]);
+  }, [user, currentTenant]);
 
   const epicMap = useMemo(() => {
     const map = {};
@@ -924,6 +937,7 @@ export default function SteaBoard() {
       userFlow: Array.isArray(entity.userFlow) ? entity.userFlow : [],
       updatedAt: serverTimestamp(),
       ...(entity.createdAt ? {} : { createdAt: serverTimestamp() }),
+      ...(currentTenant?.id && !entity.id ? { tenantId: currentTenant.id } : {}),
     };
 
     if (entityType !== 'card') {
@@ -1668,14 +1682,48 @@ export default function SteaBoard() {
     );
   }
 
+  if (tenantLoading) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-16">
+        <div className="rounded-2xl border bg-white/70 p-6 text-center text-sm text-gray-600">
+          Loading workspace…
+        </div>
+      </main>
+    );
+  }
+
+  if (!currentTenant) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-16">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <h2 className="mb-2 text-lg font-semibold text-amber-900">No Workspace Access</h2>
+          <p className="mb-4 text-sm text-amber-700">
+            You don&apos;t have access to any workspaces yet. Contact your administrator.
+          </p>
+          <Link
+            href="/apps/stea"
+            className="inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700"
+          >
+            Back to STEa
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="pb-10 max-w-[1400px] mx-auto px-4">
       {/* Header */}
       <div className="card p-4 flex items-start gap-3 mt-2">
         <Image className="rounded-2xl border border-black/10" src="/img/logo-mark.png" width={64} height={64} alt="Arcturus mark" priority />
         <div className="flex-1 min-w-0">
-          <div className="font-extrabold">STEa — Board</div>
-          <div className="text-muted text-sm">Manage ideas → build phases. Auto-saved to Firestore.</div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="font-extrabold">STEa — Board</div>
+              <div className="text-muted text-sm">Manage ideas → build phases. Auto-saved to Firestore.</div>
+            </div>
+            <TenantSwitcher />
+          </div>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <div className="relative" ref={newMenuRef}>
               <button
