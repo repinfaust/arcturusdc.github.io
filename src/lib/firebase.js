@@ -1,7 +1,7 @@
 // src/lib/firebase.js
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,33 +13,26 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase app only once
+// Initialize Firebase app - use default settings to avoid cache conflicts
+// The previous persistent/memory cache configurations were causing "ns binding aborted" errors
 let app;
 let db;
+let auth;
 
+// Only initialize in browser environment
 if (typeof window !== 'undefined') {
-  // Only initialize in browser
-  if (!getApps().length) {
+  // Ensure single initialization
+  if (getApps().length === 0) {
     app = initializeApp(firebaseConfig);
-
-    // Initialize Firestore with proper settings to prevent ns binding errors
-    try {
-      db = initializeFirestore(app, {
-        localCache: persistentLocalCache({
-          tabManager: persistentMultipleTabManager()
-        })
-      });
-    } catch (error) {
-      // If initialization fails (e.g., already initialized), get existing instance
-      console.warn('Firestore initialization warning:', error.message);
-      db = getFirestore(app);
-    }
   } else {
     app = getApps()[0];
-    db = getFirestore(app);
   }
+
+  // Use default Firestore settings - no custom cache configuration
+  // This prevents ns binding and Listen channel errors
+  db = getFirestore(app);
+  auth = getAuth(app);
 }
 
-export const auth = app ? getAuth(app) : null;
+export { auth, db };
 export const googleProvider = new GoogleAuthProvider();
-export { db };
