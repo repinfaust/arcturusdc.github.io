@@ -232,8 +232,8 @@ export default function SteaAccessPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-5xl flex-col gap-10 px-4 py-16">
-      <div className="flex flex-col items-start gap-4 rounded-3xl border border-neutral-200 bg-white/80 p-8 shadow-sm shadow-neutral-800/10 backdrop-blur">
-        <div className="flex w-full flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col items-start gap-4 rounded-3xl border border-neutral-200 bg-white/80 p-8 shadow-sm shadow-neutral-800/10 backdrop-blur overflow-visible">
+        <div className="flex w-full flex-wrap items-center justify-between gap-4 relative">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">STEa workspace</p>
             <h1 className="mt-1 text-3xl font-semibold text-neutral-900">Welcome back, {user.displayName || user.email || 'teammate'}.</h1>

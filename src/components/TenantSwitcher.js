@@ -1,18 +1,34 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTenant } from '@/contexts/TenantContext';
 import Link from 'next/link';
 
 export default function TenantSwitcher({ className = '' }) {
   const { currentTenant, availableTenants, switchTenant, loading, isSuperAdmin, isWorkspaceAdmin } = useTenant();
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  // Calculate dropdown position
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.right + window.scrollX - 256, // 256px = w-64
+        width: 256,
+      });
+    }
+  }, [isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     }
@@ -140,7 +156,31 @@ export default function TenantSwitcher({ className = '' }) {
             </>
           )}
         </div>
-      )}
+      </div>
+  );
+
+  return (
+    <div className={`relative ${className}`}>
+      <button
+        ref={buttonRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white/80 px-3 py-2 text-sm transition hover:border-neutral-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
+      >
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-semibold text-white">
+          {currentTenant?.name?.[0]?.toUpperCase() || 'W'}
+        </div>
+        <span className="font-medium text-neutral-900">{currentTenant?.name || 'Select workspace'}</span>
+        <svg
+          className={`h-4 w-4 text-neutral-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {typeof window !== 'undefined' && dropdownContent && createPortal(dropdownContent, document.body)}
     </div>
   );
 }
