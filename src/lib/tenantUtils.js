@@ -17,53 +17,69 @@ import {
  * Create a new tenant/workspace
  */
 export async function createTenant({ name, plan = 'team', ownerEmail }) {
-  const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
+  try {
+    const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
-  const tenantData = {
-    name,
-    plan, // 'solo', 'team', 'agency'
-    createdAt: serverTimestamp(),
-    ownerEmail,
-    settings: {
-      customBranding: {},
-      features: {},
-    },
-  };
+    const tenantData = {
+      name,
+      plan, // 'solo', 'team', 'agency'
+      createdAt: serverTimestamp(),
+      ownerEmail,
+      settings: {
+        customBranding: {},
+        features: {},
+      },
+    };
 
-  const tenantRef = await addDoc(collection(db, 'tenants'), tenantData);
+    const tenantRef = await addDoc(collection(db, 'tenants'), tenantData);
 
-  // Don't add super admins as members - they manage but don't access customer data
-  if (!SUPER_ADMINS.includes(ownerEmail)) {
-    await addTenantMember({
-      tenantId: tenantRef.id,
-      userEmail: ownerEmail,
-      role: 'admin',
-      invitedBy: ownerEmail,
-    });
+    // Don't add super admins as members - they manage but don't access customer data
+    if (!SUPER_ADMINS.includes(ownerEmail)) {
+      await addTenantMember({
+        tenantId: tenantRef.id,
+        userEmail: ownerEmail,
+        role: 'admin',
+        invitedBy: ownerEmail,
+      });
+    }
+
+    return { id: tenantRef.id, ...tenantData };
+  } catch (error) {
+    console.error('Error creating tenant:', error);
+    if (error.code === 'failed-precondition' || error.message?.includes('ns binding')) {
+      throw new Error('Database connection error. Please refresh the page and try again.');
+    }
+    throw error;
   }
-
-  return { id: tenantRef.id, ...tenantData };
 }
 
 /**
  * Add a user to a tenant
  */
 export async function addTenantMember({ tenantId, userEmail, role = 'member', invitedBy }) {
-  const membershipId = `${userEmail}_${tenantId}`;
+  try {
+    const membershipId = `${userEmail}_${tenantId}`;
 
-  const memberData = {
-    tenantId,
-    userEmail: userEmail.toLowerCase(),
-    uid: null, // Will be set on first login
-    role, // 'admin' | 'member' | 'tester'
-    invitedAt: serverTimestamp(),
-    invitedBy,
-    status: 'active',
-  };
+    const memberData = {
+      tenantId,
+      userEmail: userEmail.toLowerCase(),
+      uid: null, // Will be set on first login
+      role, // 'admin' | 'member' | 'tester'
+      invitedAt: serverTimestamp(),
+      invitedBy,
+      status: 'active',
+    };
 
-  await setDoc(doc(db, 'tenant_members', membershipId), memberData);
+    await setDoc(doc(db, 'tenant_members', membershipId), memberData);
 
-  return { id: membershipId, ...memberData };
+    return { id: membershipId, ...memberData };
+  } catch (error) {
+    console.error('Error adding tenant member:', error);
+    if (error.code === 'failed-precondition' || error.message?.includes('ns binding')) {
+      throw new Error('Database connection error. Please refresh the page and try again.');
+    }
+    throw error;
+  }
 }
 
 /**
@@ -88,31 +104,48 @@ export async function updateMemberRole(tenantId, userEmail, newRole) {
  * Get all members of a tenant
  */
 export async function getTenantMembers(tenantId) {
-  const membersRef = collection(db, 'tenant_members');
-  const q = query(membersRef, where('tenantId', '==', tenantId));
-  const snapshot = await getDocs(q);
+  try {
+    const membersRef = collection(db, 'tenant_members');
+    const q = query(membersRef, where('tenantId', '==', tenantId));
+    const snapshot = await getDocs(q);
 
-  const members = [];
-  snapshot.forEach((doc) => {
-    members.push({ id: doc.id, ...doc.data() });
-  });
+    const members = [];
+    snapshot.forEach((doc) => {
+      members.push({ id: doc.id, ...doc.data() });
+    });
 
-  return members;
+    return members;
+  } catch (error) {
+    console.error('Error fetching tenant members:', error);
+    // Return empty array instead of throwing to prevent UI crashes
+    if (error.code === 'failed-precondition' || error.message?.includes('ns binding')) {
+      console.error('Firestore initialization error. Try refreshing the page.');
+    }
+    throw error;
+  }
 }
 
 /**
  * Get all tenants (admin only)
  */
 export async function getAllTenants() {
-  const tenantsRef = collection(db, 'tenants');
-  const snapshot = await getDocs(tenantsRef);
+  try {
+    const tenantsRef = collection(db, 'tenants');
+    const snapshot = await getDocs(tenantsRef);
 
-  const tenants = [];
-  snapshot.forEach((doc) => {
-    tenants.push({ id: doc.id, ...doc.data() });
-  });
+    const tenants = [];
+    snapshot.forEach((doc) => {
+      tenants.push({ id: doc.id, ...doc.data() });
+    });
 
-  return tenants;
+    return tenants;
+  } catch (error) {
+    console.error('Error fetching all tenants:', error);
+    if (error.code === 'failed-precondition' || error.message?.includes('ns binding')) {
+      console.error('Firestore initialization error. Try refreshing the page.');
+    }
+    throw error;
+  }
 }
 
 /**

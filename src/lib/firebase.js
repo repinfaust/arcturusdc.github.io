@@ -1,7 +1,7 @@
 // src/lib/firebase.js
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,8 +13,33 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+// Initialize Firebase app only once
+let app;
+let db;
 
-export const auth = getAuth(app);
+if (typeof window !== 'undefined') {
+  // Only initialize in browser
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+
+    // Initialize Firestore with proper settings to prevent ns binding errors
+    try {
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        })
+      });
+    } catch (error) {
+      // If initialization fails (e.g., already initialized), get existing instance
+      console.warn('Firestore initialization warning:', error.message);
+      db = getFirestore(app);
+    }
+  } else {
+    app = getApps()[0];
+    db = getFirestore(app);
+  }
+}
+
+export const auth = app ? getAuth(app) : null;
 export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
+export { db };
