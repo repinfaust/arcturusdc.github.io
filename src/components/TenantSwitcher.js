@@ -5,7 +5,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import Link from 'next/link';
 
 export default function TenantSwitcher({ className = '' }) {
-  const { currentTenant, availableTenants, switchTenant, loading, isSuperAdmin } = useTenant();
+  const { currentTenant, availableTenants, switchTenant, loading, isSuperAdmin, isWorkspaceAdmin } = useTenant();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -47,7 +47,7 @@ export default function TenantSwitcher({ className = '' }) {
           {currentTenant?.name?.[0]?.toUpperCase() || 'W'}
         </div>
         <span className="font-medium text-neutral-900">{currentTenant?.name || 'Workspace'}</span>
-        {isSuperAdmin && (
+        {(isSuperAdmin || isWorkspaceAdmin) && (
           <Link
             href="/apps/stea/admin"
             className="ml-1 text-xs text-neutral-500 hover:text-neutral-900 hover:underline"
@@ -118,7 +118,7 @@ export default function TenantSwitcher({ className = '' }) {
             ))}
           </div>
 
-          {isSuperAdmin && (
+          {(isSuperAdmin || isWorkspaceAdmin) && (
             <>
               <div className="border-t border-neutral-200" />
               <Link

@@ -13,6 +13,7 @@ const TenantContext = createContext({
   switchTenant: () => {},
   refreshTenants: () => {},
   isSuperAdmin: false,
+  isWorkspaceAdmin: false,
 });
 
 export function useTenant() {
@@ -32,6 +33,7 @@ export function TenantProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isWorkspaceAdmin, setIsWorkspaceAdmin] = useState(false);
 
   // Load user's tenants from tenant_members collection
   const loadTenants = useCallback(async (userEmail) => {
@@ -146,6 +148,33 @@ export function TenantProvider({ children }) {
     }
   }, [currentTenant]);
 
+  // Check if user is admin of current tenant
+  useEffect(() => {
+    const checkWorkspaceAdmin = async () => {
+      if (!user?.email || !currentTenant?.id || isSuperAdmin) {
+        setIsWorkspaceAdmin(false);
+        return;
+      }
+
+      try {
+        const membershipId = `${user.email}_${currentTenant.id}`;
+        const memberDoc = await getDoc(doc(db, 'tenant_members', membershipId));
+
+        if (memberDoc.exists()) {
+          const memberData = memberDoc.data();
+          setIsWorkspaceAdmin(memberData.role === 'admin' && memberData.status === 'active');
+        } else {
+          setIsWorkspaceAdmin(false);
+        }
+      } catch (err) {
+        console.error('Failed to check workspace admin status:', err);
+        setIsWorkspaceAdmin(false);
+      }
+    };
+
+    checkWorkspaceAdmin();
+  }, [user, currentTenant, isSuperAdmin]);
+
   const switchTenant = useCallback((tenant) => {
     setCurrentTenant(tenant);
   }, []);
@@ -164,6 +193,7 @@ export function TenantProvider({ children }) {
     switchTenant,
     refreshTenants,
     isSuperAdmin,
+    isWorkspaceAdmin,
   };
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
