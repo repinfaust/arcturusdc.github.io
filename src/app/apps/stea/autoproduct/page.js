@@ -79,11 +79,14 @@ export default function AutoProductPage() {
                 1
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">Get Your API Token</h3>
+                <h3 className="font-semibold text-neutral-900">Get Your Workspace Token</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Sign in to STEa and generate a personal API token from your workspace settings. This token is
-                  scoped to your workspace and can be revoked anytime.
+                  Sign in to STEa and generate a workspace JWT token from your settings. This short-lived token
+                  (expires in 30 minutes) is scoped to your workspace and validates your subscription.
                 </p>
+                <div className="mt-2 text-xs rounded bg-amber-50 border border-amber-200 p-2 text-amber-800">
+                  <strong>Security:</strong> Tokens expire automatically and can be revoked instantly.
+                </div>
               </div>
             </div>
 
@@ -92,14 +95,11 @@ export default function AutoProductPage() {
                 2
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">Install STEa MCP Client</h3>
+                <h3 className="font-semibold text-neutral-900">Set Up Your LLM Client</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Install the lightweight MCP client package via npm. Configure it with your API token and
-                  workspace ID. The client connects to STEa's secure API relay—no Firebase credentials needed.
+                  Configure any LLM (Claude, GPT-4, etc.) to generate structured backlog JSON. Use our prompt
+                  template to get properly formatted Epics, Features, and Cards with user stories and acceptance criteria.
                 </p>
-                <pre className="mt-2 rounded bg-neutral-900 p-2 text-xs text-neutral-100">
-                  npm install -g @arcturusdc/stea-mcp-client
-                </pre>
               </div>
             </div>
 
@@ -108,10 +108,10 @@ export default function AutoProductPage() {
                 3
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">Register with Claude Code</h3>
+                <h3 className="font-semibold text-neutral-900">Generate Your Backlog</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Add the MCP client to your Claude Desktop config. Set your API token and workspace ID as
-                  environment variables. Claude Code will then have access to backlog-generation tools.
+                  Send your product spec to the LLM. It returns structured JSON with Epics, Features, and Cards
+                  including user stories, acceptance criteria, and user flows—ready to import into Filo.
                 </p>
               </div>
             </div>
@@ -121,11 +121,15 @@ export default function AutoProductPage() {
                 4
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">Write Your Prompt</h3>
+                <h3 className="font-semibold text-neutral-900">POST to Import Endpoint</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Give Claude a product brief or feature idea. Ask it to generate Epics, Features, and Cards
-                  with testing details. The MCP client calls STEa's API, which handles Firestore operations securely.
+                  Send the LLM output to <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs">/api/stea/import-backlog</code> with
+                  your workspace token in the Authorization header. The server validates your subscription and writes
+                  to Firestore using the Admin SDK.
                 </p>
+                <pre className="mt-2 rounded bg-neutral-900 p-2 text-xs text-neutral-100">
+                  Authorization: Bearer {'{WORKSPACE_TOKEN}'}
+                </pre>
               </div>
             </div>
 
@@ -136,8 +140,8 @@ export default function AutoProductPage() {
               <div>
                 <h3 className="font-semibold text-neutral-900">Review in Filo</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Open Filo and see your AI-generated backlog. Refine, assign, prioritize—then send cards
-                  directly to Hans for testing.
+                  Open Filo and see your AI-generated backlog instantly. Refine, assign, prioritize—then send cards
+                  directly to Hans for testing. No manual entry, no copy-paste.
                 </p>
               </div>
             </div>
@@ -152,51 +156,61 @@ export default function AutoProductPage() {
           </p>
           <div className="rounded-lg border border-neutral-300 bg-neutral-50 p-6">
             <pre className="text-xs text-neutral-800 font-mono overflow-x-auto">
-{`┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│  Claude Code    │  HTTPS  │   STEa API       │  Admin  │   Firebase      │
-│  (Your Machine) │────────▶│   (Relay Server) │────────▶│   Firestore     │
-│                 │  Token  │                  │  SDK    │                 │
-└─────────────────┘         └──────────────────┘         └─────────────────┘
-         │                           │
-         │                           │
-         ▼                           ▼
-  Environment Vars:          Server Credentials:
-  - STEA_API_TOKEN           - FIREBASE_ADMIN_KEY
-  - STEA_WORKSPACE_ID        - PROJECT_ID
-                             - SERVICE_ACCOUNT`}
+{`┌─────────────────┐                  ┌──────────────────────────┐
+│   LLM Client    │                  │   STEa Relay Server      │
+│  (Your Machine) │  JSON + Token    │ /api/stea/import-backlog │
+│                 │─────────────────▶│                          │
+│  • Claude/GPT   │  HTTPS POST      │  1. Verify JWT Token     │
+│  • Custom Script│                  │  2. Check Subscription   │
+└─────────────────┘                  │  3. Validate JSON        │
+                                     │  4. Firestore Write      │
+                                     └────────┬─────────────────┘
+                                              │ Admin SDK
+                                              ▼
+                                     ┌─────────────────┐
+                                     │   Firebase      │
+                                     │   Firestore     │
+                                     │                 │
+                                     │ /workspaces/    │
+                                     │   {id}/projects │
+                                     └─────────────────┘`}
             </pre>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-green-900">✓ Customer Side</h3>
+              <h3 className="mb-2 text-sm font-semibold text-green-900">✓ Your Side</h3>
               <ul className="space-y-1 text-xs text-green-800">
-                <li>• Only has API token (revocable)</li>
-                <li>• No Firebase credentials</li>
-                <li>• Workspace-scoped access</li>
-                <li>• Rate-limited requests</li>
+                <li>• Only workspace JWT token (30min TTL)</li>
+                <li>• No Firebase credentials needed</li>
+                <li>• Works with any LLM/MCP tool</li>
+                <li>• Subscription validated server-side</li>
               </ul>
             </div>
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
               <h3 className="mb-2 text-sm font-semibold text-blue-900">✓ STEa Server</h3>
               <ul className="space-y-1 text-xs text-blue-800">
-                <li>• Validates all requests</li>
-                <li>• Enforces security rules</li>
-                <li>• Handles Firebase operations</li>
-                <li>• Maintains audit logs</li>
+                <li>• JWT signature verification</li>
+                <li>• Active subscription check</li>
+                <li>• JSON schema validation (Zod)</li>
+                <li>• Atomic Firestore batch writes</li>
               </ul>
             </div>
           </div>
         </section>
 
-        {/* Example Prompt */}
-        <section className="mb-12 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-          <h2 className="mb-4 text-2xl font-semibold text-neutral-900">Example Prompt Template</h2>
-          <p className="mb-4 text-sm text-neutral-600">
-            Use this template in Claude Code to generate a structured backlog:
-          </p>
-          <div className="rounded-lg bg-neutral-900 p-6 font-mono text-sm text-neutral-100">
-            <pre className="overflow-x-auto whitespace-pre-wrap">
-{`Project: SyncFit Mobile App
+        {/* Example Prompt & Client Code */}
+        <section className="mb-12 space-y-6">
+          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+            <h2 className="mb-4 text-2xl font-semibold text-neutral-900">1. LLM Prompt Template</h2>
+            <p className="mb-4 text-sm text-neutral-600">
+              Use this prompt to generate structured backlog JSON:
+            </p>
+            <div className="rounded-lg bg-neutral-900 p-6 font-mono text-sm text-neutral-100">
+              <pre className="overflow-x-auto whitespace-pre-wrap">
+{`You are a product planner. Output JSON with Epics, Features, and Cards.
+Include for each Card: id, featureId, userStory, acceptanceCriteria[3-5], userFlows[steps].
+
+Project: SyncFit Mobile App
 Audience: Fitness enthusiasts, ages 18-45
 Goal: Help users track workouts and sync with wearables
 Constraints: iOS 15+, Android 10+, offline-first
@@ -204,17 +218,52 @@ Must-have areas:
   - User onboarding & authentication
   - Workout tracking & history
   - Wearable sync (Apple Health, Google Fit)
-  - Social sharing & challenges
-Out of scope: Diet tracking, coaching, in-app purchases
-Quality bar: 60fps animations, <3s load time, WCAG AA
-Output size: ~2 Epics, ~5 Features, ~15-20 Cards
+Out of scope: Diet tracking, coaching
+Quality bar: 60fps animations, <3s load, WCAG AA
+Output size: ~2 Epics, ~5 Features, ~15 Cards
 
-Use the STEa MCP tools to create this backlog in Filo.
-For each Card, include:
-- User Story
-- Acceptance Criteria (3-5 items)
-- User Flow (step-by-step)`}
-            </pre>
+Return valid JSON only.`}
+              </pre>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+            <h2 className="mb-4 text-2xl font-semibold text-neutral-900">2. Client Code Example (Python)</h2>
+            <p className="mb-4 text-sm text-neutral-600">
+              Send the LLM output to the import endpoint:
+            </p>
+            <div className="rounded-lg bg-neutral-900 p-6 font-mono text-xs text-neutral-100">
+              <pre className="overflow-x-auto whitespace-pre-wrap">
+{`import requests, openai, os
+
+API_URL = "https://www.arcturusdc.com/api/stea/import-backlog"
+WORKSPACE_TOKEN = os.getenv("WORKSPACE_TOKEN")
+
+# Step 1: Generate with LLM
+response = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=[{"role": "system", "content": your_prompt}]
+)
+
+backlog_json = response["choices"][0]["message"]["content"]
+
+# Step 2: POST to STEa relay
+res = requests.post(
+    API_URL,
+    headers={
+        "Authorization": f"Bearer {WORKSPACE_TOKEN}",
+        "Content-Type": "application/json"
+    },
+    data=backlog_json.encode("utf-8")
+)
+
+print(f"Status: {res.status_code}")
+print(f"Response: {res.text}")`}
+              </pre>
+            </div>
+            <p className="mt-4 text-xs text-neutral-600">
+              The server validates your token, checks subscription, and writes to Firestore atomically.
+            </p>
           </div>
         </section>
 
@@ -225,33 +274,28 @@ For each Card, include:
             {[
               {
                 id: 'config',
-                question: 'What config files do I need?',
+                question: 'What do I need to get started?',
                 answer: (
                   <div className="space-y-3 text-sm text-neutral-700">
-                    <p>You'll need to configure your Claude Desktop config file:</p>
-                    <div className="rounded bg-neutral-900 p-3 mt-2">
-                      <code className="text-xs text-neutral-100">
-                        ~/Library/Application Support/Claude/claude_desktop_config.json
-                      </code>
-                    </div>
-                    <p className="mt-3">Example configuration:</p>
+                    <p>Just two things:</p>
+                    <ol className="list-decimal pl-5 space-y-2">
+                      <li>
+                        <strong>Workspace JWT Token</strong>: Generated from your STEa workspace settings.
+                        Expires in 30 minutes for security.
+                      </li>
+                      <li>
+                        <strong>LLM Access</strong>: Any LLM that can generate JSON (Claude, GPT-4, etc.).
+                        Use our prompt template to get the right structure.
+                      </li>
+                    </ol>
+                    <p className="mt-3">
+                      Store your token as an environment variable:
+                    </p>
                     <pre className="rounded bg-neutral-900 p-3 text-xs text-neutral-100 overflow-x-auto">
-{`{
-  "mcpServers": {
-    "stea": {
-      "command": "npx",
-      "args": ["-y", "@arcturusdc/stea-mcp-client"],
-      "env": {
-        "STEA_API_TOKEN": "your-api-token-here",
-        "STEA_WORKSPACE_ID": "your-workspace-id"
-      }
-    }
-  }
-}`}
+export WORKSPACE_TOKEN="eyJhbGc..."
                     </pre>
                     <p className="mt-3 text-amber-800">
-                      <strong>Important:</strong> Never commit your API token. Use environment variables or a secure
-                      credential manager.
+                      <strong>Security:</strong> Never commit tokens. They're short-lived and workspace-scoped.
                     </p>
                   </div>
                 ),
@@ -278,18 +322,29 @@ For each Card, include:
                 ),
               },
               {
-                id: 'where',
-                question: 'Where does the MCP client run?',
+                id: 'endpoint',
+                question: 'What endpoint do I POST to?',
                 answer: (
-                  <div className="text-sm text-neutral-700">
+                  <div className="text-sm text-neutral-700 space-y-2">
                     <p>
-                      The MCP client runs <strong>locally on your dev machine</strong> as a lightweight Node.js process.
-                      It communicates with STEa's secure API endpoints over HTTPS. The actual Firestore operations happen
-                      server-side—your machine never touches the database directly.
+                      <strong>Endpoint:</strong> <code className="rounded bg-neutral-100 px-1.5 py-0.5">/api/stea/import-backlog</code>
                     </p>
-                    <p className="mt-2">
-                      This architecture means you don't need Firebase credentials, and STEa maintains full control over
-                      data access and security rules.
+                    <p>
+                      <strong>Method:</strong> POST
+                    </p>
+                    <p>
+                      <strong>Headers:</strong>
+                    </p>
+                    <pre className="rounded bg-neutral-900 p-2 text-xs text-neutral-100">
+Authorization: Bearer {'<workspace-jwt-token>'}
+Content-Type: application/json
+                    </pre>
+                    <p>
+                      <strong>Body:</strong> JSON with <code className="text-xs">workspaceId</code>, <code className="text-xs">projectId</code>,
+                      and arrays of <code className="text-xs">epics</code>, <code className="text-xs">features</code>, <code className="text-xs">cards</code>
+                    </p>
+                    <p className="mt-3 text-blue-800">
+                      The server validates your token, checks active subscription, and writes atomically using Firestore batch operations.
                     </p>
                   </div>
                 ),
