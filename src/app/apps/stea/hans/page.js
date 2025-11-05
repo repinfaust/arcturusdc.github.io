@@ -26,7 +26,7 @@ const PRIORITY_COLORS = {
 
 export default function HansTestingSuite() {
   const router = useRouter();
-  const { currentTenant, loading: tenantLoading } = useTenant();
+  const { currentTenant, loading: tenantLoading, isSuperAdmin } = useTenant();
   const searchParams = useSearchParams();
   const caseIdParam = searchParams?.get('case');
 
@@ -207,38 +207,40 @@ export default function HansTestingSuite() {
         </div>
       </section>
 
-      {/* App Testing Portals */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-neutral-700 mb-4 px-2">Legacy Testing Portals</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Tou.me Portal */}
-          <Link
-            href="/apps/stea/hans/toume"
-            className="group card p-6 hover:shadow-lg transition-all hover:-translate-y-1"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/img/tou.me_logo.jpeg"
-                  width={48}
-                  height={48}
-                  alt="Tou.me"
-                  className="rounded-xl border border-black/10"
-                />
-                <div>
-                  <h3 className="font-bold text-neutral-900">Tou.me Testing Portal</h3>
-                  <p className="text-sm text-neutral-600 mt-1">
-                    MVP 1.3 hardcoded test cases
-                  </p>
+      {/* App Testing Portals - Only for Super Admins */}
+      {isSuperAdmin && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold text-neutral-700 mb-4 px-2">Legacy Testing Portals</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Tou.me Portal */}
+            <Link
+              href="/apps/stea/hans/toume"
+              className="group card p-6 hover:shadow-lg transition-all hover:-translate-y-1"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/img/tou.me_logo.jpeg"
+                    width={48}
+                    height={48}
+                    alt="Tou.me"
+                    className="rounded-xl border border-black/10"
+                  />
+                  <div>
+                    <h3 className="font-bold text-neutral-900">Tou.me Testing Portal</h3>
+                    <p className="text-sm text-neutral-600 mt-1">
+                      MVP 1.3 hardcoded test cases
+                    </p>
+                  </div>
                 </div>
+                <span className="text-neutral-400 group-hover:text-neutral-700 transition-colors">
+                  →
+                </span>
               </div>
-              <span className="text-neutral-400 group-hover:text-neutral-700 transition-colors">
-                →
-              </span>
-            </div>
-          </Link>
-        </div>
-      </section>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Filters and Test Cases */}
       <section className="mt-8">

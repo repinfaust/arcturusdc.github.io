@@ -22,7 +22,7 @@ const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
 export default function AdminPage() {
   const router = useRouter();
-  const { isSuperAdmin, isWorkspaceAdmin, availableTenants, currentTenant, refreshTenants } = useTenant();
+  const { isSuperAdmin, isWorkspaceAdmin, availableTenants, currentTenant, refreshTenants, loading: tenantLoading } = useTenant();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [tenants, setTenants] = useState([]);
@@ -50,14 +50,21 @@ export default function AdminPage() {
 
       if (!firebaseUser) {
         router.replace('/apps/stea');
-      } else if (!isSuperAdmin && !isWorkspaceAdmin) {
-        // Redirect if not admin (check happens after context loads)
-        router.replace('/apps/stea');
       }
     });
 
     return () => unsubscribe();
-  }, [router, isSuperAdmin, isWorkspaceAdmin]);
+  }, [router]);
+
+  // Check admin access after tenant context loads
+  useEffect(() => {
+    if (authReady && user && !tenantLoading) {
+      // Only redirect if we're sure they're not an admin
+      if (!isSuperAdmin && !isWorkspaceAdmin) {
+        router.replace('/apps/stea');
+      }
+    }
+  }, [authReady, user, tenantLoading, isSuperAdmin, isWorkspaceAdmin, router]);
 
   // Load tenants (super admins only)
   useEffect(() => {
@@ -233,8 +240,21 @@ export default function AdminPage() {
     );
   }
 
-  if (!user || !isSuperAdmin) {
-    return null; // Will redirect
+  // Show loading while checking admin status
+  if (!authReady || tenantLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-pink-600 mx-auto" />
+          <p className="text-sm text-neutral-600">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show to admins
+  if (!user || (!isSuperAdmin && !isWorkspaceAdmin)) {
+    return null; // Will redirect via useEffect
   }
 
   return (
