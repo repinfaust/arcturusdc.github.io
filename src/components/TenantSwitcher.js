@@ -143,7 +143,6 @@ export default function TenantSwitcher({ className = '' }) {
             </>
           )}
         </div>
-      </div>
   );
 
   return (
