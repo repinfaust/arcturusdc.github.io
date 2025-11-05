@@ -45,31 +45,36 @@ export default function AutoProductPage() {
           <h2 className="mb-4 text-2xl font-semibold text-neutral-900">What is Auto Product?</h2>
           <div className="prose prose-neutral max-w-none">
             <p className="text-neutral-700">
-              Auto Product connects <strong>Claude Code</strong> (or other LLMs) to Filo through an{' '}
-              <strong>MCP (Model Context Protocol) server</strong>. With a single prompt, you can generate a complete,
-              structured backlog—turning product specs or ideas into <strong>Epics → Features → Cards</strong> with
-              user stories, acceptance criteria, and user flows.
+              Auto Product connects any LLM to Filo, letting you generate complete backlogs from product specs. With a
+              single prompt, you get <strong>Epics → Features → Cards</strong> with user stories, acceptance criteria,
+              and user flows—instantly in your workspace.
             </p>
             <div className="mt-6 rounded-lg bg-gradient-to-br from-pink-50 to-purple-50 p-6 border border-pink-200">
-              <p className="text-sm font-semibold text-pink-900 mb-2">The Magic:</p>
-              <p className="text-sm text-pink-800">
-                <strong>One prompt → Full backlog in Filo</strong>. No manual card creation. No copy-paste. Just structured,
-                AI-generated work items ready for your team.
-              </p>
+              <p className="text-sm font-semibold text-pink-900 mb-2">Two Modes:</p>
+              <ul className="text-sm text-pink-800 space-y-2 mt-3 list-none pl-0">
+                <li>
+                  <strong>🌐 Hosted (Default):</strong> Use our infrastructure. You get a workspace token, POST JSON
+                  from any LLM, and we handle the rest. No setup, no Firebase, no servers.
+                </li>
+                <li>
+                  <strong>🏠 Self-Hosted (£30):</strong> Run your own Firebase. Get our MCP config pack with prompts
+                  and setup files. Full control, your data, your infrastructure.
+                </li>
+              </ul>
             </div>
           </div>
         </section>
 
-        {/* How it Works */}
+        {/* How it Works - Hosted Mode */}
         <section className="mb-12 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-2xl font-semibold text-neutral-900">How It Works</h2>
+          <h2 className="mb-6 text-2xl font-semibold text-neutral-900">How It Works (Hosted Mode)</h2>
 
           <div className="mb-6 rounded-lg border-l-4 border-blue-500 bg-blue-50 p-4">
-            <h3 className="mb-2 font-semibold text-blue-900">Security Note</h3>
+            <h3 className="mb-2 font-semibold text-blue-900">Using Our Infrastructure</h3>
             <p className="text-sm text-blue-800">
-              Auto Product uses a <strong>secure API relay architecture</strong>. Your MCP client never touches Firebase
-              directly—instead, it calls authenticated API endpoints that handle data operations server-side. This means
-              customers never need your Firebase credentials.
+              In hosted mode, you're using <strong>our Firestore instance</strong>. You never need Firebase credentials
+              or API keys—just a workspace JWT token that proves you're a paying customer. We handle all the infrastructure,
+              security, and data operations server-side.
             </p>
           </div>
 
@@ -150,9 +155,9 @@ export default function AutoProductPage() {
 
         {/* Architecture Diagram */}
         <section className="mb-12 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-          <h2 className="mb-4 text-2xl font-semibold text-neutral-900">Secure API Relay Architecture</h2>
+          <h2 className="mb-4 text-2xl font-semibold text-neutral-900">Hosted Mode Architecture</h2>
           <p className="mb-4 text-sm text-neutral-600">
-            The relay architecture keeps your Firebase credentials secure while allowing AI-powered backlog generation:
+            You use our infrastructure. We handle all the heavy lifting:
           </p>
           <div className="rounded-lg border border-neutral-300 bg-neutral-50 p-6">
             <pre className="text-xs text-neutral-800 font-mono overflow-x-auto">
@@ -173,27 +178,87 @@ export default function AutoProductPage() {
                                      │                 │
                                      │ /workspaces/    │
                                      │   {id}/projects │
-                                     └─────────────────┘`}
+                                     └─────────────────┘
+                                              │
+                                              ▼
+                                        OUR FIRESTORE
+                                     (You never touch it)`}
             </pre>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-green-900">✓ Your Side</h3>
+              <h3 className="mb-2 text-sm font-semibold text-green-900">✓ You Provide</h3>
               <ul className="space-y-1 text-xs text-green-800">
-                <li>• Only workspace JWT token (30min TTL)</li>
-                <li>• No Firebase credentials needed</li>
-                <li>• Works with any LLM/MCP tool</li>
-                <li>• Subscription validated server-side</li>
+                <li>• Workspace JWT token (30min TTL)</li>
+                <li>• LLM-generated JSON backlog</li>
+                <li>• Active subscription</li>
+                <li>• That's it!</li>
               </ul>
             </div>
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-blue-900">✓ STEa Server</h3>
+              <h3 className="mb-2 text-sm font-semibold text-blue-900">✓ We Handle</h3>
               <ul className="space-y-1 text-xs text-blue-800">
-                <li>• JWT signature verification</li>
-                <li>• Active subscription check</li>
-                <li>• JSON schema validation (Zod)</li>
-                <li>• Atomic Firestore batch writes</li>
+                <li>• Firebase infrastructure</li>
+                <li>• Security & validation</li>
+                <li>• Database operations</li>
+                <li>• Backups & scaling</li>
               </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Self-Hosted Option */}
+        <section className="mb-12 rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white p-8 shadow-sm">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-purple-100 text-2xl">
+              🏠
+            </div>
+            <div>
+              <h2 className="text-2xl font-semibold text-neutral-900">Self-Hosted Mode (£30)</h2>
+              <p className="mt-2 text-neutral-600">
+                Want to run your own infrastructure? Get our MCP Config Pack.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <h3 className="font-semibold text-neutral-900">What You Get:</h3>
+            <ul className="space-y-2 text-sm text-neutral-700">
+              <li className="flex items-start gap-3">
+                <span className="text-purple-600">✓</span>
+                <span><strong>Prompt Templates:</strong> Pre-configured prompts for generating properly structured backlogs</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-purple-600">✓</span>
+                <span><strong>mcp.config.json:</strong> Ready-to-use MCP server configuration for Claude Code or other tools</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-purple-600">✓</span>
+                <span><strong>Setup Guide:</strong> Step-by-step instructions for connecting to your Firebase instance</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-purple-600">✓</span>
+                <span><strong>Firestore Rules:</strong> Security rules template for your database</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-lg border border-purple-200 bg-white p-4 mb-6">
+            <h3 className="font-semibold text-neutral-900 mb-3">How Self-Hosted Works:</h3>
+            <ol className="space-y-2 text-sm text-neutral-700 list-decimal pl-5">
+              <li>Purchase the £30 config pack from your workspace settings</li>
+              <li>Set up your own Firebase project (or use another database)</li>
+              <li>Configure the MCP server with your service account credentials</li>
+              <li>Run the MCP server locally—we're completely out of the loop</li>
+              <li>Your data stays on your infrastructure forever</li>
+            </ol>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
+            <span className="text-amber-600 text-xl">💡</span>
+            <div className="text-amber-800">
+              <strong>Perfect for:</strong> Agencies, enterprises, or makers who need full data control, want to avoid
+              recurring costs, or have compliance requirements that prevent using third-party infrastructure.
             </div>
           </div>
         </section>
@@ -390,22 +455,56 @@ Content-Type: application/json
                 answer: (
                   <div className="text-sm text-neutral-700">
                     <p>
-                      Absolutely! Auto Product is <strong>optional</strong>. You can continue using Filo the traditional
-                      way—manually creating Epics, Features, and Cards through the UI. The MCP integration is just
-                      there to accelerate backlog creation when you want AI assistance.
+                      Absolutely! Auto Product is <strong>completely optional</strong>. You can continue using Filo the
+                      traditional way—manually creating Epics, Features, and Cards through the UI. Auto Product just
+                      accelerates backlog creation when you want AI assistance.
                     </p>
                   </div>
                 ),
               },
               {
+                id: 'modes',
+                question: 'When should I use self-hosted vs hosted mode?',
+                answer: (
+                  <div className="text-sm text-neutral-700 space-y-2">
+                    <p>
+                      <strong>Use Hosted Mode if:</strong>
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>You want zero setup—just a workspace token and you're ready</li>
+                      <li>You're okay with data on our secure infrastructure</li>
+                      <li>You want us to handle backups, scaling, and maintenance</li>
+                    </ul>
+                    <p className="mt-3">
+                      <strong>Use Self-Hosted Mode if:</strong>
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>You need full data control for compliance/security reasons</li>
+                      <li>You want to avoid ongoing subscription costs</li>
+                      <li>You're an agency managing multiple client projects</li>
+                      <li>You already have Firebase/database infrastructure</li>
+                    </ul>
+                  </div>
+                ),
+              },
+              {
                 id: 'other-llms',
-                question: 'Can I use other LLMs besides Claude?',
+                question: 'Can I use any LLM?',
                 answer: (
                   <div className="text-sm text-neutral-700">
                     <p>
-                      Yes! MCP is an open protocol. As long as your LLM tooling supports MCP servers, you can connect
-                      them to the STEa server. The implementation guide includes examples for both Claude Code and
-                      Codex-style setups.
+                      <strong>Yes!</strong> Both modes work with any LLM that can generate JSON:
+                    </p>
+                    <ul className="list-disc pl-5 mt-2 space-y-1">
+                      <li>Claude (Anthropic)</li>
+                      <li>GPT-4 / GPT-4o (OpenAI)</li>
+                      <li>Gemini (Google)</li>
+                      <li>Local models via Ollama</li>
+                      <li>Custom scripts/automation</li>
+                    </ul>
+                    <p className="mt-3">
+                      As long as it can output properly structured JSON, it will work. Use our prompt template to ensure
+                      the right format.
                     </p>
                   </div>
                 ),
