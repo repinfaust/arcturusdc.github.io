@@ -72,20 +72,23 @@ service cloud.firestore {
        Multi-tenant collections management
        ========================================================== */
     match /tenants/{tenantId} {
-      // Super admins can manage all tenants
-      allow read, create, update, delete: if isSuperAdmin();
+      // Super admins can manage all tenants (read includes get+list)
+      allow read, write: if isSuperAdmin();
 
       // Members can read their own tenants
-      allow read: if inTenant(tenantId);
+      allow get: if inTenant(tenantId);
     }
 
     match /tenant_members/{membershipId} {
-      // Super admins can manage all memberships
-      allow read, create, update, delete: if isSuperAdmin();
+      // Super admins can manage all memberships (read includes get+list)
+      allow read, write: if isSuperAdmin();
 
       // Users can read their own memberships
-      allow read: if authed() &&
+      allow get: if authed() &&
         resource.data.userEmail == request.auth.token.email;
+
+      // Allow users to list their own memberships (for querying by email)
+      allow list: if authed();
 
       // Tenant admins can manage members in their tenant
       allow create, update, delete: if authed() &&
