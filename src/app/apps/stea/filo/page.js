@@ -424,28 +424,39 @@ export default function SteaBoard() {
       setCards([]);
       return undefined;
     }
+    console.log('[FILO DEBUG] Querying cards with tenantId:', currentTenant.id, 'tenant name:', currentTenant.name);
     const qy = query(
       collection(db, 'stea_cards'),
       where('tenantId', '==', currentTenant.id),
       orderBy('createdAt', 'asc')
     );
-    const unsub = onSnapshot(qy, (snap) => {
-      const list = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        list.push({
-          id: d.id,
-          ...data,
-          type: data.type || 'idea',
-          entityType: 'card',
-          epicId: normalizeId(data.epicId),
-          featureId: normalizeId(data.featureId),
-          epicLabel: data.epicLabel || '',
-          featureLabel: data.featureLabel || '',
+    const unsub = onSnapshot(
+      qy,
+      (snap) => {
+        const list = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          list.push({
+            id: d.id,
+            ...data,
+            type: data.type || 'idea',
+            entityType: 'card',
+            epicId: normalizeId(data.epicId),
+            featureId: normalizeId(data.featureId),
+            epicLabel: data.epicLabel || '',
+            featureLabel: data.featureLabel || '',
+          });
         });
-      });
-      setCards(list);
-    });
+        console.log('[FILO DEBUG] Loaded', list.length, 'cards');
+        if (list.length > 0) {
+          console.log('[FILO DEBUG] Sample card tenantIds:', list.slice(0, 3).map(c => ({ title: c.title, tenantId: c.tenantId })));
+        }
+        setCards(list);
+      },
+      (error) => {
+        console.error('[FILO DEBUG] Error loading cards:', error);
+      }
+    );
     return () => unsub();
   }, [user, currentTenant]);
 
