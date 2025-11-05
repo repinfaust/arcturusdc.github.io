@@ -63,18 +63,26 @@ export default function AutoProductPage() {
         {/* How it Works */}
         <section className="mb-12 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
           <h2 className="mb-6 text-2xl font-semibold text-neutral-900">How It Works</h2>
+
+          <div className="mb-6 rounded-lg border-l-4 border-blue-500 bg-blue-50 p-4">
+            <h3 className="mb-2 font-semibold text-blue-900">Security Note</h3>
+            <p className="text-sm text-blue-800">
+              Auto Product uses a <strong>secure API relay architecture</strong>. Your MCP client never touches Firebase
+              directly—instead, it calls authenticated API endpoints that handle data operations server-side. This means
+              customers never need your Firebase credentials.
+            </p>
+          </div>
+
           <div className="space-y-6">
             <div className="flex gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-100 text-lg font-bold text-pink-600">
                 1
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">Set Up MCP Server</h3>
+                <h3 className="font-semibold text-neutral-900">Get Your API Token</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Install and configure the STEa MCP server locally. It connects to your Firebase project with
-                  admin credentials and exposes tools like <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs">createEpic</code>,{' '}
-                  <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs">createFeature</code>, and{' '}
-                  <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs">createCard</code>.
+                  Sign in to STEa and generate a personal API token from your workspace settings. This token is
+                  scoped to your workspace and can be revoked anytime.
                 </p>
               </div>
             </div>
@@ -84,11 +92,14 @@ export default function AutoProductPage() {
                 2
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">Register with Claude Code</h3>
+                <h3 className="font-semibold text-neutral-900">Install STEa MCP Client</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Add the MCP server to your Claude Desktop config. Claude Code will then have access to the
-                  backlog-generation tools whenever you need them.
+                  Install the lightweight MCP client package via npm. Configure it with your API token and
+                  workspace ID. The client connects to STEa's secure API relay—no Firebase credentials needed.
                 </p>
+                <pre className="mt-2 rounded bg-neutral-900 p-2 text-xs text-neutral-100">
+                  npm install -g @arcturusdc/stea-mcp-client
+                </pre>
               </div>
             </div>
 
@@ -97,10 +108,10 @@ export default function AutoProductPage() {
                 3
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">Write Your Prompt</h3>
+                <h3 className="font-semibold text-neutral-900">Register with Claude Code</h3>
                 <p className="mt-1 text-sm text-neutral-600">
-                  Give Claude a product brief or feature idea. Ask it to generate Epics, Features, and Cards
-                  with testing details. The MCP server handles the Firestore writes automatically.
+                  Add the MCP client to your Claude Desktop config. Set your API token and workspace ID as
+                  environment variables. Claude Code will then have access to backlog-generation tools.
                 </p>
               </div>
             </div>
@@ -110,12 +121,69 @@ export default function AutoProductPage() {
                 4
               </div>
               <div>
+                <h3 className="font-semibold text-neutral-900">Write Your Prompt</h3>
+                <p className="mt-1 text-sm text-neutral-600">
+                  Give Claude a product brief or feature idea. Ask it to generate Epics, Features, and Cards
+                  with testing details. The MCP client calls STEa's API, which handles Firestore operations securely.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-100 text-lg font-bold text-pink-600">
+                5
+              </div>
+              <div>
                 <h3 className="font-semibold text-neutral-900">Review in Filo</h3>
                 <p className="mt-1 text-sm text-neutral-600">
                   Open Filo and see your AI-generated backlog. Refine, assign, prioritize—then send cards
                   directly to Hans for testing.
                 </p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Architecture Diagram */}
+        <section className="mb-12 rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+          <h2 className="mb-4 text-2xl font-semibold text-neutral-900">Secure API Relay Architecture</h2>
+          <p className="mb-4 text-sm text-neutral-600">
+            The relay architecture keeps your Firebase credentials secure while allowing AI-powered backlog generation:
+          </p>
+          <div className="rounded-lg border border-neutral-300 bg-neutral-50 p-6">
+            <pre className="text-xs text-neutral-800 font-mono overflow-x-auto">
+{`┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
+│  Claude Code    │  HTTPS  │   STEa API       │  Admin  │   Firebase      │
+│  (Your Machine) │────────▶│   (Relay Server) │────────▶│   Firestore     │
+│                 │  Token  │                  │  SDK    │                 │
+└─────────────────┘         └──────────────────┘         └─────────────────┘
+         │                           │
+         │                           │
+         ▼                           ▼
+  Environment Vars:          Server Credentials:
+  - STEA_API_TOKEN           - FIREBASE_ADMIN_KEY
+  - STEA_WORKSPACE_ID        - PROJECT_ID
+                             - SERVICE_ACCOUNT`}
+            </pre>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+              <h3 className="mb-2 text-sm font-semibold text-green-900">✓ Customer Side</h3>
+              <ul className="space-y-1 text-xs text-green-800">
+                <li>• Only has API token (revocable)</li>
+                <li>• No Firebase credentials</li>
+                <li>• Workspace-scoped access</li>
+                <li>• Rate-limited requests</li>
+              </ul>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <h3 className="mb-2 text-sm font-semibold text-blue-900">✓ STEa Server</h3>
+              <ul className="space-y-1 text-xs text-blue-800">
+                <li>• Validates all requests</li>
+                <li>• Enforces security rules</li>
+                <li>• Handles Firebase operations</li>
+                <li>• Maintains audit logs</li>
+              </ul>
             </div>
           </div>
         </section>
@@ -141,7 +209,7 @@ Out of scope: Diet tracking, coaching, in-app purchases
 Quality bar: 60fps animations, <3s load time, WCAG AA
 Output size: ~2 Epics, ~5 Features, ~15-20 Cards
 
-Use the STEa MCP server tools to create this backlog in Filo.
+Use the STEa MCP tools to create this backlog in Filo.
 For each Card, include:
 - User Story
 - Acceptance Criteria (3-5 items)
@@ -160,55 +228,68 @@ For each Card, include:
                 question: 'What config files do I need?',
                 answer: (
                   <div className="space-y-3 text-sm text-neutral-700">
-                    <p>You'll need two main configuration files:</p>
-                    <ol className="list-decimal pl-5 space-y-2">
-                      <li>
-                        <strong>Claude Desktop config</strong> (macOS):{' '}
-                        <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs">
-                          ~/Library/Application Support/Claude/claude_desktop_config.json
-                        </code>
-                        <br />
-                        This registers your MCP server with Claude.
-                      </li>
-                      <li>
-                        <strong>Environment variables</strong> for the MCP server:
-                        <ul className="mt-2 list-disc pl-5 space-y-1">
-                          <li><code className="text-xs">FIREBASE_PROJECT_ID</code></li>
-                          <li><code className="text-xs">FIREBASE_CLIENT_EMAIL</code></li>
-                          <li><code className="text-xs">FIREBASE_PRIVATE_KEY</code></li>
-                          <li><code className="text-xs">DEFAULT_APP</code> (e.g., "Tou.me")</li>
-                          <li><code className="text-xs">DEFAULT_COLUMN</code> (e.g., "Idea")</li>
-                          <li><code className="text-xs">CREATED_BY</code> (e.g., "mcp:stea")</li>
-                        </ul>
-                      </li>
-                    </ol>
+                    <p>You'll need to configure your Claude Desktop config file:</p>
+                    <div className="rounded bg-neutral-900 p-3 mt-2">
+                      <code className="text-xs text-neutral-100">
+                        ~/Library/Application Support/Claude/claude_desktop_config.json
+                      </code>
+                    </div>
+                    <p className="mt-3">Example configuration:</p>
+                    <pre className="rounded bg-neutral-900 p-3 text-xs text-neutral-100 overflow-x-auto">
+{`{
+  "mcpServers": {
+    "stea": {
+      "command": "npx",
+      "args": ["-y", "@arcturusdc/stea-mcp-client"],
+      "env": {
+        "STEA_API_TOKEN": "your-api-token-here",
+        "STEA_WORKSPACE_ID": "your-workspace-id"
+      }
+    }
+  }
+}`}
+                    </pre>
+                    <p className="mt-3 text-amber-800">
+                      <strong>Important:</strong> Never commit your API token. Use environment variables or a secure
+                      credential manager.
+                    </p>
                   </div>
                 ),
               },
               {
-                id: 'firebase',
-                question: 'How do I get Firebase credentials?',
+                id: 'token',
+                question: 'How do I get my API token?',
                 answer: (
                   <div className="space-y-2 text-sm text-neutral-700">
-                    <p>Generate a Firebase service account key:</p>
+                    <p>Generate an API token from your STEa workspace:</p>
                     <ol className="list-decimal pl-5 space-y-1">
-                      <li>Go to Firebase Console → Project Settings → Service Accounts</li>
-                      <li>Click "Generate New Private Key"</li>
-                      <li>Download the JSON file and extract the values for your env config</li>
-                      <li><strong>Never commit this file to git</strong></li>
+                      <li>Sign in to STEa and navigate to your workspace settings</li>
+                      <li>Go to "API Access" or "Integrations"</li>
+                      <li>Click "Generate New Token"</li>
+                      <li>Give it a descriptive name (e.g., "Claude MCP Client")</li>
+                      <li>Copy the token immediately—it won't be shown again</li>
+                      <li>Store it securely in your Claude config</li>
                     </ol>
+                    <p className="mt-3 text-amber-800">
+                      <strong>Security:</strong> Tokens are scoped to your workspace and can be revoked anytime. Never
+                      share tokens or commit them to version control.
+                    </p>
                   </div>
                 ),
               },
               {
                 id: 'where',
-                question: 'Where does the MCP server run?',
+                question: 'Where does the MCP client run?',
                 answer: (
                   <div className="text-sm text-neutral-700">
                     <p>
-                      The MCP server runs <strong>locally on your dev machine</strong>. It's not deployed to Vercel or
-                      any cloud environment. Claude Code communicates with it through stdio when you invoke the tools
-                      in your prompts.
+                      The MCP client runs <strong>locally on your dev machine</strong> as a lightweight Node.js process.
+                      It communicates with STEa's secure API endpoints over HTTPS. The actual Firestore operations happen
+                      server-side—your machine never touches the database directly.
+                    </p>
+                    <p className="mt-2">
+                      This architecture means you don't need Firebase credentials, and STEa maintains full control over
+                      data access and security rules.
                     </p>
                   </div>
                 ),
@@ -217,12 +298,33 @@ For each Card, include:
                 id: 'security',
                 question: 'Is this secure?',
                 answer: (
-                  <div className="text-sm text-neutral-700">
+                  <div className="text-sm text-neutral-700 space-y-3">
                     <p>
-                      Yes, when configured correctly. The MCP server uses Firebase Admin SDK with service account
-                      credentials that only exist locally. Your Next.js app remains protected by Google Auth and
-                      session cookies. The MCP server bypasses client-side Firestore rules using admin privileges,
-                      but only you (the developer) can invoke it through Claude Code on your machine.
+                      <strong>Yes.</strong> Auto Product uses a secure relay architecture with multiple layers of protection:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-2">
+                      <li>
+                        <strong>API Tokens:</strong> Scoped to specific workspaces, can be revoked instantly, and expire
+                        after a set period
+                      </li>
+                      <li>
+                        <strong>Server-side validation:</strong> All operations are validated against your workspace
+                        permissions before execution
+                      </li>
+                      <li>
+                        <strong>Rate limiting:</strong> API calls are rate-limited to prevent abuse
+                      </li>
+                      <li>
+                        <strong>Audit trail:</strong> All MCP operations are logged for security review
+                      </li>
+                      <li>
+                        <strong>No credential sharing:</strong> Customers never receive Firebase credentials—they only
+                        get workspace-scoped API tokens
+                      </li>
+                    </ul>
+                    <p className="mt-3">
+                      The STEa server acts as a secure gateway, enforcing all Firebase security rules and tenant isolation
+                      on the backend. Your credentials stay with you.
                     </p>
                   </div>
                 ),
