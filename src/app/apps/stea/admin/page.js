@@ -77,6 +77,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (authReady && user && isWorkspaceAdmin && !isSuperAdmin && currentTenant) {
       setSelectedTenant(currentTenant);
+      setLoading(false); // Workspace admins don't need to load all tenants
     }
   }, [authReady, user, isWorkspaceAdmin, isSuperAdmin, currentTenant]);
 
