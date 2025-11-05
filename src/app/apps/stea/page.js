@@ -16,7 +16,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Interactive showcase of the complete STEa tech stack and closed-loop workflow.',
   },
   {
-    label: 'STEa Board',
+    label: 'Filo',
     href: '/apps/stea/filo',
     note: 'Also available at /stea/filo',
     description: 'Plan, prioritise, and track the STEa backlog.',
@@ -32,7 +32,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Test case management and user testing coordination across all apps.',
   },
   {
-    label: 'Filo',
+    label: 'Harls',
     href: '/apps/stea/harls',
     description: 'Felix Product Lab collaborative whiteboard environment.',
   },

@@ -17,6 +17,8 @@ import {
  * Create a new tenant/workspace
  */
 export async function createTenant({ name, plan = 'team', ownerEmail }) {
+  const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
+
   const tenantData = {
     name,
     plan, // 'solo', 'team', 'agency'
@@ -30,13 +32,15 @@ export async function createTenant({ name, plan = 'team', ownerEmail }) {
 
   const tenantRef = await addDoc(collection(db, 'tenants'), tenantData);
 
-  // Add owner as first member
-  await addTenantMember({
-    tenantId: tenantRef.id,
-    userEmail: ownerEmail,
-    role: 'admin',
-    invitedBy: ownerEmail,
-  });
+  // Don't add super admins as members - they manage but don't access customer data
+  if (!SUPER_ADMINS.includes(ownerEmail)) {
+    await addTenantMember({
+      tenantId: tenantRef.id,
+      userEmail: ownerEmail,
+      role: 'admin',
+      invitedBy: ownerEmail,
+    });
+  }
 
   return { id: tenantRef.id, ...tenantData };
 }

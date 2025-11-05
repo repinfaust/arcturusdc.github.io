@@ -80,7 +80,7 @@ export default function TenantSwitcher({ className = '' }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-neutral-200 bg-white shadow-xl">
+        <div className="absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-neutral-200 bg-white shadow-xl">
           <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
             Your Workspaces
           </div>
