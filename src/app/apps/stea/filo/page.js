@@ -369,6 +369,7 @@ export default function SteaBoard() {
   // per-card board expand state (non-persistent)
   const [expandedCards, setExpandedCards] = useState({});
   const [peekLevels, setPeekLevels] = useState({}); // Track peek state per card
+  const [collapsedEpics, setCollapsedEpics] = useState({}); // Track collapsed state per epic
   const [collapsedFeatures, setCollapsedFeatures] = useState({}); // Track collapsed state per feature
   const [hoveredLayer, setHoveredLayer] = useState(null); // Track which epic/feature is being hovered
   const [peeking, setPeeking] = useState(null); // Track which epic/feature is being peeked (click+hold on title)
@@ -510,6 +511,31 @@ export default function SteaBoard() {
       unsubscribeFeatures();
     };
   }, [user, currentTenant]);
+
+  // Initialize all epics and features as collapsed by default
+  useEffect(() => {
+    const newCollapsedEpics = {};
+    epics.forEach(epic => {
+      if (!(epic.id in collapsedEpics)) {
+        newCollapsedEpics[epic.id] = true; // Collapsed by default
+      }
+    });
+    if (Object.keys(newCollapsedEpics).length > 0) {
+      setCollapsedEpics(prev => ({ ...prev, ...newCollapsedEpics }));
+    }
+  }, [epics]); // Only depend on epics, not collapsedEpics to avoid infinite loop
+
+  useEffect(() => {
+    const newCollapsedFeatures = {};
+    features.forEach(feature => {
+      if (!(feature.id in collapsedFeatures)) {
+        newCollapsedFeatures[feature.id] = true; // Collapsed by default
+      }
+    });
+    if (Object.keys(newCollapsedFeatures).length > 0) {
+      setCollapsedFeatures(prev => ({ ...prev, ...newCollapsedFeatures }));
+    }
+  }, [features]); // Only depend on features, not collapsedFeatures to avoid infinite loop
 
   const epicMap = useMemo(() => {
     const map = {};
@@ -1234,6 +1260,15 @@ export default function SteaBoard() {
     const hasChildren = children && (Array.isArray(children) ? children.filter(Boolean).length > 0 : true);
     const isHovered = hoveredLayer === `epic-${epic.id}`;
     const isPeeking = peeking === `epic-${epic.id}`;
+    const isCollapsed = collapsedEpics[epic.id];
+
+    const toggleCollapse = (e) => {
+      e.stopPropagation();
+      setCollapsedEpics(prev => ({
+        ...prev,
+        [epic.id]: !prev[epic.id]
+      }));
+    };
 
     const handleTitleMouseDown = (e) => {
       e.stopPropagation();
@@ -1305,13 +1340,31 @@ export default function SteaBoard() {
                 </div>
                 {/* Label at top */}
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-red-700 text-[10px] font-bold uppercase tracking-wide">Epic</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-red-700 text-[10px] font-bold uppercase tracking-wide">Epic</div>
+                    {hasChildren && (
+                      <button
+                        onClick={toggleCollapse}
+                        className="px-1.5 py-0.5 text-[10px] rounded border border-red-200 bg-white text-red-700 hover:bg-red-50"
+                        title={isCollapsed ? 'Expand' : 'Collapse'}
+                      >
+                        {isCollapsed ? '▶' : '▼'}
+                      </button>
+                    )}
+                  </div>
                   <button onClick={(e) => { e.stopPropagation(); openEntityEditor('epic', epic); }} className="px-1.5 py-0.5 text-[10px] rounded bg-red-700 text-white hover:bg-red-800">Edit</button>
                 </div>
-                {/* Nested children */}
-                <div className="space-y-3">
-                  {children}
-                </div>
+                {/* Nested children - only show if not collapsed */}
+                {!isCollapsed && (
+                  <div className="space-y-3">
+                    {children}
+                  </div>
+                )}
+                {isCollapsed && (
+                  <div className="text-xs text-red-600 italic">
+                    {Array.isArray(children) ? children.filter(Boolean).length : 0} items hidden
+                  </div>
+                )}
               </>
             )}
             <div className="mt-3 flex items-center justify-end gap-2">
