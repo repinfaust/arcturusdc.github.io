@@ -218,6 +218,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   const suppressSaveRef = useRef(false);
   const saveTimer = useRef(null);
   const [loaded, setLoaded] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
 
   const clientIdRef = useRef(null);
   if (!clientIdRef.current) {
@@ -230,6 +231,27 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   useEffect(() => {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, []);
+
+  // Detect orientation changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkOrientation = () => {
+      // Check if on mobile (width < 768px) and in portrait orientation
+      const isMobile = window.innerWidth < 768;
+      const isPortraitMode = window.innerHeight > window.innerWidth;
+      setIsPortrait(isMobile && isPortraitMode);
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
     };
   }, []);
 
@@ -411,12 +433,25 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
       </div>
 
       <div className="relative h-[520px] w-full overflow-hidden rounded-xl border bg-neutral-50">
-        {/* Floating upgrade button */}
-        <UpgradeButton />
+        {/* Portrait mode message */}
+        {isPortrait ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 p-8">
+            <div className="text-center max-w-sm">
+              <div className="text-6xl mb-4 animate-bounce">📱 → 📲</div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-3">Rotate to Landscape</h3>
+              <p className="text-sm text-neutral-600 leading-relaxed">
+                The whiteboard works best in landscape mode. Please rotate your device for the optimal experience.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Floating upgrade button */}
+            <UpgradeButton />
 
-        {/* tldraw canvas */}
-        {loaded && (
-          <Tldraw
+            {/* tldraw canvas */}
+            {loaded && (
+              <Tldraw
             onMount={(editor) => {
               editorRef.current = editor;
 
@@ -473,6 +508,8 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
               editorRef.current = null;
             }}
           />
+        )}
+          </>
         )}
       </div>
     </div>

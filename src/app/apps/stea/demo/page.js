@@ -161,15 +161,15 @@ export default function SteaDemoPage() {
             </p>
 
             {/* Circular Loop Diagram */}
-            <div className="relative w-full max-w-2xl mx-auto my-16" style={{ height: '500px' }}>
+            <div className="relative w-full max-w-2xl mx-auto my-8 sm:my-16 aspect-square max-h-[600px]">
               {/* Rotating circle background */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-96 h-96 rounded-full border-4 border-dashed border-neutral-300 animate-spin-very-slow"></div>
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <div className="w-full h-full max-w-96 max-h-96 rounded-full border-2 sm:border-4 border-dashed border-neutral-300 animate-spin-very-slow"></div>
               </div>
 
               {/* Animated flowing dots */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-96 h-96 relative">
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <div className="w-full h-full max-w-96 max-h-96 relative">
                   <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-amber-500 animate-orbit-1 shadow-lg"></div>
                   <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-violet-500 animate-orbit-2 shadow-lg"></div>
                   <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-emerald-500 animate-orbit-3 shadow-lg"></div>
@@ -178,60 +178,60 @@ export default function SteaDemoPage() {
               </div>
 
               {/* Top - Discovery */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2">
-                <div className="card p-4 border-2 border-amber-300 bg-amber-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
-                  <h4 className="font-bold text-amber-700 mb-1">Discovery</h4>
-                  <p className="text-xs text-neutral-600">Brief → Prompts</p>
+              <div className="absolute top-2 sm:top-0 left-1/2 -translate-x-1/2 sm:-translate-y-2">
+                <div className="card p-2 sm:p-4 border border-amber-300 sm:border-2 bg-amber-50/90 min-w-[120px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-amber-700 mb-0 sm:mb-1 text-xs sm:text-base">Discovery</h4>
+                  <p className="text-[10px] sm:text-xs text-neutral-600 hidden sm:block">Brief → Prompts</p>
                 </div>
                 {/* Arrow pointing right */}
-                <div className="absolute top-1/2 left-full ml-2 -translate-y-1/2 text-3xl text-amber-500 animate-pulse-slow">
+                <div className="absolute top-1/2 left-full ml-1 sm:ml-2 -translate-y-1/2 text-xl sm:text-3xl text-amber-500 animate-pulse-slow hidden sm:block">
                   →
                 </div>
               </div>
 
               {/* Right - Backlog */}
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-2">
-                <div className="card p-4 border-2 border-violet-300 bg-violet-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
-                  <h4 className="font-bold text-violet-700 mb-1">Backlog</h4>
-                  <p className="text-xs text-neutral-600">Epics → Features → Cards</p>
+              <div className="absolute top-1/2 right-2 sm:right-0 -translate-y-1/2 sm:translate-x-2">
+                <div className="card p-2 sm:p-4 border border-violet-300 sm:border-2 bg-violet-50/90 min-w-[120px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-violet-700 mb-0 sm:mb-1 text-xs sm:text-base">Backlog</h4>
+                  <p className="text-[10px] sm:text-xs text-neutral-600 hidden sm:block">Epics → Features → Cards</p>
                 </div>
                 {/* Arrow pointing down */}
-                <div className="absolute top-full mt-2 right-1/2 translate-x-1/2 text-3xl text-violet-500 animate-pulse-slow animation-delay-300">
+                <div className="absolute top-full mt-1 sm:mt-2 right-1/2 translate-x-1/2 text-xl sm:text-3xl text-violet-500 animate-pulse-slow animation-delay-300 hidden sm:block">
                   ↓
                 </div>
               </div>
 
               {/* Bottom - Testing */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2">
-                <div className="card p-4 border-2 border-emerald-300 bg-emerald-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
-                  <h4 className="font-bold text-emerald-700 mb-1">Testing</h4>
-                  <p className="text-xs text-neutral-600">Test Cases → Evidence</p>
+              <div className="absolute bottom-2 sm:bottom-0 left-1/2 -translate-x-1/2 sm:translate-y-2">
+                <div className="card p-2 sm:p-4 border border-emerald-300 sm:border-2 bg-emerald-50/90 min-w-[120px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-emerald-700 mb-0 sm:mb-1 text-xs sm:text-base">Testing</h4>
+                  <p className="text-[10px] sm:text-xs text-neutral-600 hidden sm:block">Test Cases → Evidence</p>
                 </div>
                 {/* Arrow pointing left */}
-                <div className="absolute top-1/2 right-full mr-2 -translate-y-1/2 text-3xl text-emerald-500 animate-pulse-slow animation-delay-600">
+                <div className="absolute top-1/2 right-full mr-1 sm:mr-2 -translate-y-1/2 text-xl sm:text-3xl text-emerald-500 animate-pulse-slow animation-delay-600 hidden sm:block">
                   ←
                 </div>
               </div>
 
               {/* Left - Feedback */}
-              <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-2">
-                <div className="card p-4 border-2 border-orange-300 bg-orange-50/90 min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
-                  <h4 className="font-bold text-orange-700 mb-1">Feedback</h4>
-                  <p className="text-xs text-neutral-600">Bugs → Fixes → Retest</p>
+              <div className="absolute top-1/2 left-2 sm:left-0 -translate-y-1/2 sm:-translate-x-2">
+                <div className="card p-2 sm:p-4 border border-orange-300 sm:border-2 bg-orange-50/90 min-w-[120px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-orange-700 mb-0 sm:mb-1 text-xs sm:text-base">Feedback</h4>
+                  <p className="text-[10px] sm:text-xs text-neutral-600 hidden sm:block">Bugs → Fixes → Retest</p>
                 </div>
                 {/* Arrow pointing up to complete the loop */}
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 text-3xl text-orange-500 animate-pulse-slow animation-delay-900">
+                <div className="absolute bottom-full mb-1 sm:mb-2 left-1/2 -translate-x-1/2 text-xl sm:text-3xl text-orange-500 animate-pulse-slow animation-delay-900 hidden sm:block">
                   ↑
                 </div>
               </div>
 
               {/* Center Text */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <div className="p-6 bg-white rounded-2xl border-2 border-neutral-200 shadow-xl">
-                  <h3 className="text-lg font-extrabold bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent mb-2 whitespace-nowrap">
+                <div className="p-3 sm:p-6 bg-white rounded-xl sm:rounded-2xl border border-neutral-200 sm:border-2 shadow-xl">
+                  <h3 className="text-sm sm:text-lg font-extrabold bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent mb-1 sm:mb-2 whitespace-nowrap">
                     Continuous Flow
                   </h3>
-                  <p className="text-xs text-neutral-600 whitespace-nowrap">No context switching<br/>Full traceability</p>
+                  <p className="text-[10px] sm:text-xs text-neutral-600 whitespace-nowrap hidden sm:block">No context switching<br/>Full traceability</p>
                 </div>
               </div>
             </div>

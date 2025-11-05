@@ -132,7 +132,7 @@ export default function AutoProductPage() {
                   your workspace token in the Authorization header. The server validates your subscription and writes
                   to Firestore using the Admin SDK.
                 </p>
-                <pre className="mt-2 rounded bg-neutral-900 p-2 text-xs text-neutral-100">
+                <pre className="mt-2 rounded bg-neutral-900 p-2 text-xs text-neutral-100 overflow-x-auto">
                   Authorization: Bearer {'{WORKSPACE_TOKEN}'}
                 </pre>
               </div>
@@ -400,7 +400,7 @@ export WORKSPACE_TOKEN="eyJhbGc..."
                     <p>
                       <strong>Headers:</strong>
                     </p>
-                    <pre className="rounded bg-neutral-900 p-2 text-xs text-neutral-100">
+                    <pre className="rounded bg-neutral-900 p-2 text-xs text-neutral-100 overflow-x-auto">
 Authorization: Bearer {'<workspace-jwt-token>'}
 Content-Type: application/json
                     </pre>

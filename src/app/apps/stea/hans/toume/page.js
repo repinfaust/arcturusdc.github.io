@@ -1710,16 +1710,16 @@ export default function TouMeTestersOnly() {
 
             return (
               <div key={test.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-mono text-sm font-medium">{test.id}</span>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                      <span className="font-mono text-xs sm:text-sm font-medium">{test.id}</span>
                       <span className={`px-2 py-1 text-xs font-medium rounded border ${priorityColors[test.priority]}`}>
                         {test.priority}
                       </span>
-                      <span className="text-sm text-gray-500">{test.time}</span>
+                      <span className="text-xs sm:text-sm text-gray-500">{test.time}</span>
                     </div>
-                    <h3 className="font-semibold text-lg">{test.name}</h3>
+                    <h3 className="font-semibold text-base sm:text-lg">{test.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">{test.description}</p>
 
                     {/* Expand/Collapse button */}
@@ -1733,7 +1733,7 @@ export default function TouMeTestersOnly() {
                     )}
                   </div>
 
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex gap-2 sm:ml-4 flex-shrink-0">
                     <button
                       onClick={() => updateTestResult(test.id, 'pass', result?.notes || '')}
                       className={`px-3 py-1 text-sm rounded transition-colors ${

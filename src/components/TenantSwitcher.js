@@ -17,8 +17,8 @@ export default function TenantSwitcher({ className = '' }) {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.right + window.scrollX - 256, // 256px = w-64
+        top: rect.bottom + 8,
+        left: rect.right - 256, // 256px = w-64
         width: 256,
       });
     }

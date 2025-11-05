@@ -1796,18 +1796,18 @@ export default function SteaBoard() {
               </select>
             </label>
 
-            <div className="ml-auto flex items-center gap-3">
+            <div className="w-full sm:w-auto sm:ml-auto flex items-center gap-3">
               {user && <span className="text-sm text-gray-600">{user.email}</span>}
               {user && (
                 <Link
                   href="/apps/stea"
-                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 text-sm"
+                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 text-sm whitespace-nowrap"
                 >
                   STEa Home
                 </Link>
               )}
               {user && (
-                <button onClick={() => signOut(auth)} className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">Sign out</button>
+                <button onClick={() => signOut(auth)} className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap">Sign out</button>
               )}
             </div>
           </div>
@@ -1997,8 +1997,8 @@ export default function SteaBoard() {
       {editing && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={() => { setEditing(null); setCreating(false); }} />
-          <div className="relative z-10 flex min-h-full items-center justify-center p-4">
-            <div role="dialog" aria-modal="true" className="w-full max-w-2xl rounded-xl bg-white shadow-lg max-h-[85vh] flex flex-col overscroll-contain">
+          <div className="relative z-10 flex min-h-full items-center justify-center p-2 sm:p-4">
+            <div role="dialog" aria-modal="true" className="w-full max-w-[95vw] sm:max-w-2xl rounded-xl bg-white shadow-lg max-h-[85vh] flex flex-col overscroll-contain">
               <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
                 <div className="font-bold">
                   {creating ? `New ${ENTITY_LABEL[editing.entityType || 'card'] || 'Item'}` : `Edit ${ENTITY_LABEL[editing.entityType || 'card'] || 'Item'}`}
