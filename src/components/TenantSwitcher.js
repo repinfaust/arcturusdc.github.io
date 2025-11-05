@@ -75,28 +75,15 @@ export default function TenantSwitcher({ className = '' }) {
     );
   }
 
-  return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white/80 px-3 py-2 text-sm transition hover:border-neutral-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
-      >
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-semibold text-white">
-          {currentTenant?.name?.[0]?.toUpperCase() || 'W'}
-        </div>
-        <span className="font-medium text-neutral-900">{currentTenant?.name || 'Select workspace'}</span>
-        <svg
-          className={`h-4 w-4 text-neutral-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full z-[9999] mt-2 w-64 rounded-xl border border-neutral-200 bg-white shadow-xl">
+  const dropdownContent = isOpen && typeof window !== 'undefined' && (
+    <div
+      ref={dropdownRef}
+      className="fixed z-[9999] w-64 rounded-xl border border-neutral-200 bg-white shadow-2xl"
+      style={{
+        top: `${dropdownPosition.top}px`,
+        left: `${dropdownPosition.left}px`,
+      }}
+    >
           <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
             Your Workspaces
           </div>
