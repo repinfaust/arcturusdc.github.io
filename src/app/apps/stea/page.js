@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth, googleProvider } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { useTenant } from '@/contexts/TenantContext';
+import TenantSwitcher from '@/components/TenantSwitcher';
 
 const IN_SESSION_DESTINATIONS = [
   {
@@ -51,6 +53,7 @@ export default function SteaAccessPage() {
   const nextParam = searchParams?.get('next') || '';
 
   const destination = useMemo(() => sanitizeNext(nextParam), [nextParam]);
+  const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
 
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -232,14 +235,33 @@ export default function SteaAccessPage() {
             <p className="mt-2 max-w-xl text-sm text-neutral-600">
               Choose where you&apos;d like to work today. Your Google session is active and server access has been granted.
             </p>
+            {currentTenant && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-neutral-600">
+                <span>Current workspace:</span>
+                <span className="font-semibold text-neutral-900">{currentTenant.name}</span>
+                {currentTenant.plan && (
+                  <span className="rounded-full bg-pink-100 px-2 py-0.5 text-xs font-medium capitalize text-pink-700">
+                    {currentTenant.plan}
+                  </span>
+                )}
+              </div>
+            )}
+            {!tenantLoading && availableTenants.length === 0 && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                ⚠️ No workspace access. Contact your administrator.
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {signingOut ? 'Signing out…' : 'Sign out'}
-          </button>
+          <div className="flex items-center gap-3">
+            {availableTenants.length > 0 && <TenantSwitcher />}
+            <button
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          </div>
         </div>
 
         {(sessionSyncing || signingOut) && (
