@@ -1,7 +1,8 @@
 // Force HTTPS and 'www' canonical host, skip API routes
 import { NextResponse } from 'next/server';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
-export function middleware(req) {
+export async function middleware(req) {
   const url = req.nextUrl;
   const host = url.host;
 
@@ -33,12 +34,18 @@ export function middleware(req) {
   /* ---------------- Protected Routes ---------------- */
   // Add any page or subtree that requires Google/Firebase auth (include /apps and vanity /stea paths)
   const protectedPaths = [
+    '/apps/stea/admin',
     '/apps/stea/automatedtestsdashboard',
+    '/apps/stea/autoproduct',
     '/apps/stea/filo',
+    '/apps/stea/hans',
     '/apps/stea/harls',
     '/apps/stea/toume',
+    '/stea/admin',
     '/stea/automatedtestsdashboard',
+    '/stea/autoproduct',
     '/stea/filo',
+    '/stea/hans',
     '/stea/harls',
     '/stea/toume',
   ];
@@ -48,14 +55,33 @@ export function middleware(req) {
     (path) => url.pathname === path || url.pathname.startsWith(`${path}/`)
   );
 
-  // Check for Firebase session cookie (__session)
-  const sessionCookie = req.cookies.get('__session')?.value || '';
+  // Check for Firebase session cookie (__session) and verify it
+  if (isProtected) {
+    const sessionCookie = req.cookies.get('__session')?.value || '';
 
-  if (isProtected && !sessionCookie) {
-    // Redirect unauthenticated users to /apps/stea (login)
-    const redirectUrl = new URL('/apps/stea', req.url);
-    redirectUrl.searchParams.set('next', url.pathname + url.search);
-    return NextResponse.redirect(redirectUrl);
+    if (!sessionCookie) {
+      // No session cookie - redirect to login
+      const redirectUrl = new URL('/apps/stea', req.url);
+      redirectUrl.searchParams.set('next', url.pathname + url.search);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Verify the session cookie with Firebase Admin
+    try {
+      const { auth } = getFirebaseAdmin();
+      await auth.verifySessionCookie(sessionCookie, true); // checkRevoked = true
+      // Session is valid, continue
+    } catch (error) {
+      // Invalid or expired session - redirect to login
+      console.error('[Middleware] Session verification failed:', error.code || error.message);
+      const redirectUrl = new URL('/apps/stea', req.url);
+      redirectUrl.searchParams.set('next', url.pathname + url.search);
+
+      // Clear the invalid session cookie
+      const response = NextResponse.redirect(redirectUrl);
+      response.cookies.delete('__session');
+      return response;
+    }
   }
 
   /* ---------------- Default ---------------- */

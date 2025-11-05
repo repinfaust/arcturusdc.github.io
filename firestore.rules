@@ -83,12 +83,10 @@ service cloud.firestore {
       // Super admins can manage all memberships (read includes get+list)
       allow read, write: if isSuperAdmin();
 
-      // Users can read their own memberships
-      allow get: if authed() &&
+      // Users can read/list their own memberships only
+      // The list operation inherits this check, so users can only see their own membership docs
+      allow get, list: if authed() &&
         resource.data.userEmail == request.auth.token.email;
-
-      // Allow users to list their own memberships (for querying by email)
-      allow list: if authed();
 
       // Tenant admins can manage members in their tenant
       allow create, update, delete: if authed() &&
