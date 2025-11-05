@@ -20,7 +20,7 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 
 /* ===== Constants ===== */
 // Workspaces allowed to access Tou.me testing portal
-const ALLOWED_TENANT_NAMES = ['Arcturus Internal', 'Arcturus', 'Arcturus Digital Consulting'];
+const ALLOWED_TENANT_NAMES = ['ArcturusDC'];
 const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
 /* ===== Constants ===== */
@@ -1572,7 +1572,7 @@ export default function TouMeTestersOnly() {
           </div>
           <h2 className="mb-2 text-lg font-semibold text-red-900">Access Restricted</h2>
           <p className="mb-1 text-red-700">
-            The Tou.me Testing Portal is only available to Arcturus workspace members.
+            The Tou.me Testing Portal is only available to the ArcturusDC workspace.
           </p>
           <p className="mb-6 text-sm text-red-600">
             Your current workspace: <strong>{currentTenant?.name}</strong>
