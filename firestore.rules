@@ -8,6 +8,27 @@ service cloud.firestore {
     function isNullOrStr(x) { return x == null || x is string; }
     function inArray(v, arr) { return arr.hasAll([v]); }
 
+    // Super admin helper
+    function isSuperAdmin() {
+      return authed() && (
+        request.auth.token.email == 'repinfaust@gmail.com' ||
+        request.auth.token.email == 'daryn.shaxted@gmail.com'
+      );
+    }
+
+    // Check if user belongs to a tenant (workspace)
+    function inTenant(tenantId) {
+      let membershipId = request.auth.token.email + '_' + tenantId;
+      let membership = /databases/$(database)/documents/tenant_members/$(membershipId);
+      return authed() && exists(membership) &&
+        get(membership).data.status == 'active';
+    }
+
+    // Check if user can access resource's tenant
+    function canAccessTenant(tenantId) {
+      return isSuperAdmin() || inTenant(tenantId);
+    }
+
     // Membership helper: require auth, project exists, and user is owner or in members
     function inProject(projectId) {
       let p = /databases/$(database)/documents/projects/$(projectId);
@@ -48,78 +69,132 @@ service cloud.firestore {
     }
 
     /* ==========================================================
-       STEa board
+       Multi-tenant collections management
+       ========================================================== */
+    match /tenants/{tenantId} {
+      // Super admins can manage all tenants
+      allow read, create, update, delete: if isSuperAdmin();
+
+      // Members can read their own tenants
+      allow read: if inTenant(tenantId);
+    }
+
+    match /tenant_members/{membershipId} {
+      // Super admins can manage all memberships
+      allow read, create, update, delete: if isSuperAdmin();
+
+      // Users can read their own memberships
+      allow read: if authed() &&
+        resource.data.userEmail == request.auth.token.email;
+
+      // Tenant admins can manage members in their tenant
+      allow create, update, delete: if authed() &&
+        exists(/databases/$(database)/documents/tenant_members/$(request.auth.token.email + '_' + resource.data.tenantId)) &&
+        get(/databases/$(database)/documents/tenant_members/$(request.auth.token.email + '_' + resource.data.tenantId)).data.role == 'admin';
+    }
+
+    /* ==========================================================
+       STEa board (with tenant isolation)
        ========================================================== */
     match /stea_epics/{epicId} {
-      allow read, create, update, delete: if authed();
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
+      allow update, delete: if authed() && canAccessTenant(resource.data.tenantId);
+
       match /comments/{cid} {
-        allow read, create, delete: if authed();
+        allow read, create, delete: if authed() &&
+          canAccessTenant(get(/databases/$(database)/documents/stea_epics/$(epicId)).data.tenantId);
       }
     }
 
     match /stea_features/{featureId} {
-      allow read, create, update, delete: if authed();
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
+      allow update, delete: if authed() && canAccessTenant(resource.data.tenantId);
+
       match /comments/{cid} {
-        allow read, create, delete: if authed();
+        allow read, create, delete: if authed() &&
+          canAccessTenant(get(/databases/$(database)/documents/stea_features/$(featureId)).data.tenantId);
       }
     }
 
     match /stea_cards/{doc} {
-      allow read, create, update, delete: if authed();
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
+      allow update, delete: if authed() && canAccessTenant(resource.data.tenantId);
+
       match /comments/{cid} {
-        allow read, create, delete: if authed();
+        allow read, create, delete: if authed() &&
+          canAccessTenant(get(/databases/$(database)/documents/stea_cards/$(doc)).data.tenantId);
       }
     }
 
     /* ==========================================================
-       Automated testing + CI
+       Automated testing + CI (with tenant isolation)
        ========================================================== */
     match /automated_test_runs/{doc} {
-      allow read, create, update: if authed();
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
+      allow update: if authed() && canAccessTenant(resource.data.tenantId);
     }
     match /automated_test_issues/{doc} {
-      allow read, create, update: if authed();
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
+      allow update: if authed() && canAccessTenant(resource.data.tenantId);
     }
 
     match /testRuns/{runId} {
-      allow read: if authed();   // dashboard watch
+      allow read: if authed();   // dashboard watch (consider adding tenant isolation)
       allow write: if false;     // CI writes via Admin SDK only
     }
 
-    /* Tou.me testing collections */
+    /* Tou.me testing collections (with tenant isolation) */
     match /toume_test_results/{doc} {
-      allow read, create: if authed() && isValidResult();
-      allow update, delete: if authed();
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && isValidResult() &&
+        canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
+      allow update, delete: if authed() && canAccessTenant(resource.data.tenantId);
     }
     match /toume_test_sessions/{doc} {
-      allow read, create: if authed() && isValidSession();
-      allow update, delete: if authed();
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && isValidSession() &&
+        canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
+      allow update, delete: if authed() && canAccessTenant(resource.data.tenantId);
     }
 
     /* ==========================================================
-       Hans Testing Suite
+       Hans Testing Suite (with tenant isolation)
        ========================================================== */
     match /hans_cases/{caseId} {
-      // Authenticated users can do everything (internal testing team)
-      allow read, update, delete: if authed();
+      // Authenticated users in the tenant can do everything
+      allow read, update, delete: if authed() &&
+        canAccessTenant(resource.data.tenantId);
 
-      // Creation only via API (to ensure proper token generation)
-      allow create: if false;
-
-      // Public read access via token for /t/[token] page
-      // Note: This is handled by Admin SDK in the API route for security
+      // Creation requires tenant access
+      allow create: if authed() &&
+        canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.keys().hasAll(['tenantId']);
 
       // Subcollection: submissions from testers
       match /submissions/{submissionId} {
-        // Authenticated users can read all submissions
-        allow read: if authed();
+        // Authenticated users in the tenant can read submissions
+        allow read: if authed() &&
+          canAccessTenant(get(/databases/$(database)/documents/hans_cases/$(caseId)).data.tenantId);
 
         // Public can create submissions (testers don't need auth)
         // Validation happens in the API
         allow create: if true;
 
-        // Only authenticated users can update/delete
-        allow update, delete: if authed();
+        // Only authenticated users in the tenant can update/delete
+        allow update, delete: if authed() &&
+          canAccessTenant(get(/databases/$(database)/documents/hans_cases/$(caseId)).data.tenantId);
       }
     }
 
