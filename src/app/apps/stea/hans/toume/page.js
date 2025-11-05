@@ -19,6 +19,11 @@ import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
 
 /* ===== Constants ===== */
+// Workspaces allowed to access Tou.me testing portal
+const ALLOWED_TENANT_NAMES = ['Arcturus Internal', 'Arcturus', 'Arcturus Digital Consulting'];
+const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
+
+/* ===== Constants ===== */
 const BOARD_LS_KEY = 'stea-board-v1';
 const STEA_COLUMNS = ['Idea', 'Planning', 'Design', 'Build'];
 const TYPE_OPTIONS = [
@@ -1534,6 +1539,49 @@ export default function TouMeTestersOnly() {
             className="inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700"
           >
             Back to STEa
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // Check if user has access to Tou.me testing portal
+  const isSuperAdmin = SUPER_ADMINS.includes(user?.email || '');
+  const hasAccess = isSuperAdmin || ALLOWED_TENANT_NAMES.includes(currentTenant?.name || '');
+
+  if (!hasAccess) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <div className="mb-4 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <svg
+                className="h-8 w-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+          </div>
+          <h2 className="mb-2 text-lg font-semibold text-red-900">Access Restricted</h2>
+          <p className="mb-1 text-red-700">
+            The Tou.me Testing Portal is only available to Arcturus workspace members.
+          </p>
+          <p className="mb-6 text-sm text-red-600">
+            Your current workspace: <strong>{currentTenant?.name}</strong>
+          </p>
+          <Link
+            href="/apps/stea/hans"
+            className="inline-block rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+          >
+            Return to Hans Dashboard
           </Link>
         </div>
       </main>
