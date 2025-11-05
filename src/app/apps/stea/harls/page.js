@@ -426,7 +426,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   };
 
   return (
-    <div className="relative flex-1 rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
+    <div className="relative w-full lg:flex-1 rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
       <div className="flex items-center justify-between pb-2">
         <h2 className="text-lg font-semibold">Whiteboard</h2>
         <span className="text-xs text-neutral-500">Powered by tldraw</span>

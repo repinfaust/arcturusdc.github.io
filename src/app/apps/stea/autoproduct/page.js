@@ -125,10 +125,10 @@ export default function AutoProductPage() {
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-100 text-lg font-bold text-pink-600">
                 4
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="font-semibold text-neutral-900">POST to Import Endpoint</h3>
-                <p className="mt-1 text-sm text-neutral-600">
-                  Send the LLM output to <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs">/api/stea/import-backlog</code> with
+                <p className="mt-1 text-sm text-neutral-600 break-words">
+                  Send the LLM output to <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs break-all">/api/stea/import-backlog</code> with
                   your workspace token in the Authorization header. The server validates your subscription and writes
                   to Firestore using the Admin SDK.
                 </p>

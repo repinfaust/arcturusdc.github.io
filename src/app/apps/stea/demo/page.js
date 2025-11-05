@@ -190,9 +190,9 @@ export default function SteaDemoPage() {
               </div>
 
               {/* Right - Backlog */}
-              <div className="absolute top-1/2 right-2 sm:right-0 -translate-y-1/2 sm:translate-x-2">
-                <div className="card p-2 sm:p-4 border border-violet-300 sm:border-2 bg-violet-50/90 min-w-[120px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
-                  <h4 className="font-bold text-violet-700 mb-0 sm:mb-1 text-xs sm:text-base">Backlog</h4>
+              <div className="absolute top-1/2 right-0 sm:right-0 -translate-y-1/2 translate-x-8 sm:translate-x-2">
+                <div className="card p-2 sm:p-4 border border-violet-300 sm:border-2 bg-violet-50/90 min-w-[100px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-violet-700 mb-0 sm:mb-1 text-[10px] sm:text-base">Backlog</h4>
                   <p className="text-[10px] sm:text-xs text-neutral-600 hidden sm:block">Epics → Features → Cards</p>
                 </div>
                 {/* Arrow pointing down */}
@@ -214,9 +214,9 @@ export default function SteaDemoPage() {
               </div>
 
               {/* Left - Feedback */}
-              <div className="absolute top-1/2 left-2 sm:left-0 -translate-y-1/2 sm:-translate-x-2">
-                <div className="card p-2 sm:p-4 border border-orange-300 sm:border-2 bg-orange-50/90 min-w-[120px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
-                  <h4 className="font-bold text-orange-700 mb-0 sm:mb-1 text-xs sm:text-base">Feedback</h4>
+              <div className="absolute top-1/2 left-0 sm:left-0 -translate-y-1/2 -translate-x-8 sm:-translate-x-2">
+                <div className="card p-2 sm:p-4 border border-orange-300 sm:border-2 bg-orange-50/90 min-w-[100px] sm:min-w-[160px] text-center hover:shadow-xl transition-all backdrop-blur-sm">
+                  <h4 className="font-bold text-orange-700 mb-0 sm:mb-1 text-[10px] sm:text-base">Feedback</h4>
                   <p className="text-[10px] sm:text-xs text-neutral-600 hidden sm:block">Bugs → Fixes → Retest</p>
                 </div>
                 {/* Arrow pointing up to complete the loop */}
@@ -226,9 +226,9 @@ export default function SteaDemoPage() {
               </div>
 
               {/* Center Text */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <div className="p-3 sm:p-6 bg-white rounded-xl sm:rounded-2xl border border-neutral-200 sm:border-2 shadow-xl">
-                  <h3 className="text-sm sm:text-lg font-extrabold bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent mb-1 sm:mb-2 whitespace-nowrap">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                <div className="p-2 sm:p-6 bg-white rounded-lg sm:rounded-2xl border border-neutral-200 sm:border-2 shadow-xl">
+                  <h3 className="text-xs sm:text-lg font-extrabold bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent mb-0 sm:mb-2 whitespace-nowrap">
                     Continuous Flow
                   </h3>
                   <p className="text-[10px] sm:text-xs text-neutral-600 whitespace-nowrap hidden sm:block">No context switching<br/>Full traceability</p>
@@ -403,10 +403,10 @@ export default function SteaDemoPage() {
 
         @keyframes orbit {
           0% {
-            transform: rotate(0deg) translateX(192px) rotate(0deg);
+            transform: rotate(0deg) translateX(min(192px, calc(50vw - 80px))) rotate(0deg);
           }
           100% {
-            transform: rotate(360deg) translateX(192px) rotate(-360deg);
+            transform: rotate(360deg) translateX(min(192px, calc(50vw - 80px))) rotate(-360deg);
           }
         }
 
