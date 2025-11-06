@@ -1,11 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTenant } from '@/contexts/TenantContext';
 
 export default function SteaDemoPage() {
+  const router = useRouter();
+  const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
   const [modalImage, setModalImage] = useState(null);
+
+  // Authorization check: require tenant membership
+  useEffect(() => {
+    if (!tenantLoading && availableTenants.length === 0) {
+      router.replace('/apps/stea?error=no_workspace');
+    }
+  }, [availableTenants, tenantLoading, router]);
+
+  // Show loading while checking tenant access
+  if (tenantLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-neutral-600">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render if no tenant access
+  if (availableTenants.length === 0) {
+    return null; // Will redirect via useEffect
+  }
 
   const productImages = [
     {

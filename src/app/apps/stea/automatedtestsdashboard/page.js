@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { auth, db, googleProvider } from '@/lib/firebase';
@@ -15,6 +16,7 @@ import {
   doc,
 } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { useTenant } from '@/contexts/TenantContext';
 
 /* ===== Constants ===== */
 const TEST_CONFIGS = {
@@ -276,6 +278,8 @@ const getSizeFromSeverity = (severity) => {
 
 /* ===== Main Component ===== */
 export default function AutomatedTestsDashboard() {
+  const router = useRouter();
+  const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -287,6 +291,13 @@ export default function AutomatedTestsDashboard() {
   const [creatingCards, setCreatingCards] = useState(new Set());
   const [isStoppingRun, setIsStoppingRun] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
+
+  // Authorization check: require tenant membership
+  useEffect(() => {
+    if (!tenantLoading && authReady && user && availableTenants.length === 0) {
+      router.replace('/apps/stea?error=no_workspace');
+    }
+  }, [user, authReady, availableTenants, tenantLoading, router]);
 
   const ensureSessionCookie = useCallback(async (firebaseUser) => {
     if (!firebaseUser) return;
@@ -891,6 +902,20 @@ export default function AutomatedTestsDashboard() {
         </div>
       </main>
     );
+  }
+
+  // Show loading while checking tenant access
+  if (tenantLoading || !authReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-neutral-600">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render if no tenant access
+  if (user && availableTenants.length === 0) {
+    return null; // Will redirect via useEffect
   }
 
   return (

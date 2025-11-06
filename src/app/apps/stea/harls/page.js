@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import {
   addDoc, arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query,
@@ -9,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { setLogLevel } from 'firebase/firestore';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { useTenant } from '@/contexts/TenantContext';
 
 /** ✅ tldraw */
 import { Tldraw, getSnapshot as getTlSnapshot, loadSnapshot as loadTlSnapshot } from '@tldraw/tldraw';
@@ -792,9 +794,18 @@ function BadgeStrip({ user }) {
    PAGE SHELL
    ========================= */
 export default function ProductLabPage() {
+  const router = useRouter();
   const { user, login, logout } = useAuth();
+  const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
   const [project, setProject] = useState(null);
   const [diagOpen, setDiagOpen] = useState(false); // flip to true to debug quickly
+
+  // Authorization check: require tenant membership
+  useEffect(() => {
+    if (!tenantLoading && user && availableTenants.length === 0) {
+      router.replace('/apps/stea?error=no_workspace');
+    }
+  }, [user, availableTenants, tenantLoading, router]);
 
   useEffect(() => {
     (async () => {
@@ -803,6 +814,20 @@ export default function ProductLabPage() {
       setProject(ids);
     })();
   }, [user]);
+
+  // Show loading while checking tenant access
+  if (tenantLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-neutral-600">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render if no tenant access
+  if (user && availableTenants.length === 0) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <main className="mx-auto max-w-6xl p-4">
