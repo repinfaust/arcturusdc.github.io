@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rateLimit';
 
 /**
  * GET /api/hans/getByToken?token=xxx
@@ -9,6 +10,31 @@ import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
  */
 export async function GET(request) {
   try {
+    // 1. Rate limiting
+    const clientId = getClientIdentifier(request);
+    const { allowed, remaining, resetAt } = checkRateLimit(
+      `hans-get-${clientId}`,
+      RATE_LIMITS.publicTestAccess.maxRequests,
+      RATE_LIMITS.publicTestAccess.windowMs
+    );
+
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many requests. Please try again later.',
+          resetAt: new Date(resetAt).toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(RATE_LIMITS.publicTestAccess.maxRequests),
+            'X-RateLimit-Remaining': String(remaining),
+            'X-RateLimit-Reset': String(Math.floor(resetAt / 1000)),
+          },
+        }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
 
@@ -39,6 +65,22 @@ export async function GET(request) {
       id: doc.id,
       ...doc.data(),
     };
+
+    // 2. Check if token has expired
+    if (testCase.publicTokenExpiry) {
+      const expiryDate = new Date(testCase.publicTokenExpiry);
+      const now = new Date();
+
+      if (now > expiryDate) {
+        return NextResponse.json(
+          {
+            error: 'This test link has expired',
+            expiredAt: testCase.publicTokenExpiry,
+          },
+          { status: 410 } // 410 Gone
+        );
+      }
+    }
 
     // Return test case (without sensitive fields)
     return NextResponse.json(

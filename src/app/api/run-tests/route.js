@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -55,6 +56,31 @@ export async function POST(request) {
       return json(
         { error: authResult.error || 'Authentication required' },
         401
+      );
+    }
+
+    // 2. Rate limiting (per user)
+    const { allowed, remaining, resetAt } = checkRateLimit(
+      `run-tests-${authResult.email}`,
+      RATE_LIMITS.authenticatedAction.maxRequests,
+      RATE_LIMITS.authenticatedAction.windowMs
+    );
+
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'Too many test runs. Please wait before triggering another.',
+          resetAt: new Date(resetAt).toISOString(),
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-RateLimit-Limit': String(RATE_LIMITS.authenticatedAction.maxRequests),
+            'X-RateLimit-Remaining': String(remaining),
+            'X-RateLimit-Reset': String(Math.floor(resetAt / 1000)),
+          },
+        }
       );
     }
 

@@ -134,6 +134,10 @@ export async function POST(request) {
     // 5. Generate public token for sharing
     const publicToken = generatePublicToken();
 
+    // Calculate expiry (12 hours from now)
+    const now = new Date();
+    const expiryDate = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours
+
     // 6. Create test case document
     const testCase = {
       // Content from card
@@ -156,6 +160,7 @@ export async function POST(request) {
       // Testing metadata
       status: 'open', // open | in_progress | passed | failed
       publicToken: publicToken,
+      publicTokenExpiry: expiryDate.toISOString(),
 
       // SECURITY: Store tenant ID for isolation
       tenantId: tenantId,
@@ -190,8 +195,10 @@ export async function POST(request) {
         success: true,
         testCaseId,
         publicToken,
+        publicTokenExpiry: expiryDate.toISOString(),
         publicUrl: `/t/${publicToken}`,
         hansUrl: `/apps/stea/hans?case=${testCaseId}`,
+        message: 'Test case created. Public link expires in 12 hours.',
       },
       { status: 201 }
     );

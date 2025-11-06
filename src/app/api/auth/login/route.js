@@ -4,7 +4,7 @@ import crypto from 'crypto';
 
 const SESSION_COOKIE_NAME = '__session';
 const CSRF_COOKIE_NAME = '__csrf';
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12; // 12 hours
 
 // Generate a cryptographically secure CSRF token
 const generateCSRFToken = () => {

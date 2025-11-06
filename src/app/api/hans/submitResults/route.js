@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/lib/rateLimit';
 
 /**
  * POST /api/hans/submitResults
@@ -9,6 +10,31 @@ import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
  */
 export async function POST(request) {
   try {
+    // 1. Rate limiting
+    const clientId = getClientIdentifier(request);
+    const { allowed, remaining, resetAt } = checkRateLimit(
+      `hans-submit-${clientId}`,
+      RATE_LIMITS.publicTestSubmit.maxRequests,
+      RATE_LIMITS.publicTestSubmit.windowMs
+    );
+
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many submissions. Please try again later.',
+          resetAt: new Date(resetAt).toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(RATE_LIMITS.publicTestSubmit.maxRequests),
+            'X-RateLimit-Remaining': String(remaining),
+            'X-RateLimit-Reset': String(Math.floor(resetAt / 1000)),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const {
       token,
