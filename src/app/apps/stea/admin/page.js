@@ -20,6 +20,25 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 
 const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
+// Input validation helpers
+const validateTenantName = (name) => {
+  const trimmed = name.trim();
+  if (trimmed.length === 0) throw new Error('Workspace name is required');
+  if (trimmed.length > 100) throw new Error('Workspace name is too long (max 100 characters)');
+  if (!/^[a-zA-Z0-9\s\-_&.]+$/.test(trimmed)) {
+    throw new Error('Workspace name contains invalid characters. Use only letters, numbers, spaces, and basic punctuation');
+  }
+  return trimmed;
+};
+
+const validateEmail = (email) => {
+  const trimmed = email.toLowerCase().trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(trimmed)) throw new Error('Invalid email format');
+  if (trimmed.length > 254) throw new Error('Email address is too long');
+  return trimmed;
+};
+
 export default function AdminPage() {
   const router = useRouter();
   const { isSuperAdmin, isWorkspaceAdmin, availableTenants, currentTenant, refreshTenants, loading: tenantLoading } = useTenant();
@@ -118,20 +137,22 @@ export default function AdminPage() {
     setActionLoading(true);
 
     try {
+      // Validate inputs
+      const validatedName = validateTenantName(newTenantName);
+
       await createTenant({
-        name: newTenantName,
+        name: validatedName,
         plan: newTenantPlan,
         ownerEmail: user.email,
       });
 
-      setSuccess(`Workspace "${newTenantName}" created successfully!`);
+      setSuccess(`Workspace "${validatedName}" created successfully!`);
       setNewTenantName('');
       setNewTenantPlan('team');
       setShowCreateTenant(false);
       await loadTenants();
       refreshTenants();
     } catch (err) {
-      console.error('Failed to create tenant:', err);
       setError(err.message || 'Failed to create workspace');
     } finally {
       setActionLoading(false);
@@ -147,20 +168,22 @@ export default function AdminPage() {
     setActionLoading(true);
 
     try {
+      // Validate inputs
+      const validatedEmail = validateEmail(newMemberEmail);
+
       await addTenantMember({
         tenantId: selectedTenant.id,
-        userEmail: newMemberEmail.toLowerCase(),
+        userEmail: validatedEmail,
         role: newMemberRole,
         invitedBy: user.email,
       });
 
-      setSuccess(`Added ${newMemberEmail} to ${selectedTenant.name}`);
+      setSuccess(`Added ${validatedEmail} to ${selectedTenant.name}`);
       setNewMemberEmail('');
       setNewMemberRole('member');
       setShowAddMember(false);
       await loadMembers(selectedTenant.id);
     } catch (err) {
-      console.error('Failed to add member:', err);
       setError(err.message || 'Failed to add member');
     } finally {
       setActionLoading(false);
@@ -354,6 +377,7 @@ export default function AdminPage() {
                       onChange={(e) => setNewTenantName(e.target.value)}
                       placeholder="e.g., Acme Corp"
                       required
+                      maxLength={100}
                       className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
                     />
                   </div>
@@ -457,6 +481,7 @@ export default function AdminPage() {
                           onChange={(e) => setNewMemberEmail(e.target.value)}
                           placeholder="user@example.com"
                           required
+                          maxLength={254}
                           className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
                         />
                       </div>
