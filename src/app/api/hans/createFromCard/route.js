@@ -70,6 +70,7 @@ export async function POST(request) {
       featureId,
       epicLabel,
       featureLabel,
+      tenantId, // SECURITY: Must be provided by client
     } = body;
 
     // 3. Validate required fields
@@ -87,8 +88,32 @@ export async function POST(request) {
       );
     }
 
-    // 4. Check if test case already exists for this card
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Missing required field: tenantId' },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Verify the card exists and belongs to the specified tenant
     const { db } = getFirebaseAdmin();
+    const cardDoc = await db.collection('stea_cards').doc(cardId).get();
+
+    if (!cardDoc.exists()) {
+      return NextResponse.json(
+        { error: 'Card not found' },
+        { status: 404 }
+      );
+    }
+
+    if (cardDoc.data().tenantId !== tenantId) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Card does not belong to your workspace' },
+        { status: 403 }
+      );
+    }
+
+    // 4. Check if test case already exists for this card
     const existingCases = await db
       .collection('hans_cases')
       .where('linkedCardId', '==', cardId)
@@ -131,6 +156,9 @@ export async function POST(request) {
       // Testing metadata
       status: 'open', // open | in_progress | passed | failed
       publicToken: publicToken,
+
+      // SECURITY: Store tenant ID for isolation
+      tenantId: tenantId,
 
       // Audit fields
       createdAt: new Date().toISOString(),

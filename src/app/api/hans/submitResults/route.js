@@ -83,13 +83,17 @@ export async function POST(request) {
     }
 
     // Optionally update linked card in stea_cards
+    // SECURITY: Verify the test case has a tenantId before updating the card
     const linkedCardId = testCaseDoc.data().linkedCardId;
-    if (linkedCardId) {
+    const testCaseTenantId = testCaseDoc.data().tenantId;
+
+    if (linkedCardId && testCaseTenantId) {
       try {
         const cardRef = db.collection('stea_cards').doc(linkedCardId);
         const cardDoc = await cardRef.get();
 
-        if (cardDoc.exists()) {
+        // SECURITY: Only update card if it belongs to the same tenant as the test case
+        if (cardDoc.exists() && cardDoc.data().tenantId === testCaseTenantId) {
           // Get all submissions to calculate stats
           const allSubmissions = await db
             .collection('hans_cases')
@@ -112,6 +116,8 @@ export async function POST(request) {
             'testing.passRate': passRate,
             updatedAt: new Date().toISOString(),
           });
+        } else {
+          console.warn('Card tenant mismatch or card not found - skipping update');
         }
       } catch (cardUpdateError) {
         console.error('Failed to update linked card:', cardUpdateError);

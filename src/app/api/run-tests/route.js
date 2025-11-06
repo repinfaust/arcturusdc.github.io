@@ -4,6 +4,8 @@ import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+const SESSION_COOKIE_NAME = '__session';
+
 function json(body, init = 200) {
   return new Response(JSON.stringify(body), {
     status: typeof init === 'number' ? init : init.status ?? 200,
@@ -19,8 +21,43 @@ async function readBody(request) {
   }
 }
 
+/**
+ * Verify user authentication via session cookie
+ */
+async function verifyAuth(request) {
+  try {
+    const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    if (!sessionCookie) {
+      return { authenticated: false, error: 'No session cookie found' };
+    }
+
+    const { auth } = getFirebaseAdmin();
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+
+    return {
+      authenticated: true,
+      uid: decodedClaims.uid,
+      email: decodedClaims.email,
+    };
+  } catch (error) {
+    return {
+      authenticated: false,
+      error: 'Invalid or expired session',
+    };
+  }
+}
+
 export async function POST(request) {
   try {
+    // 1. Verify authentication
+    const authResult = await verifyAuth(request);
+    if (!authResult.authenticated) {
+      return json(
+        { error: authResult.error || 'Authentication required' },
+        401
+      );
+    }
+
     const body = await readBody(request);
     const configType =
       typeof body?.configType === 'string' && body.configType.trim().length > 0
