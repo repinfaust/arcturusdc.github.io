@@ -512,7 +512,47 @@ export default function SteaBoard() {
     };
   }, [user, currentTenant]);
 
-  // Initialize all epics and features as collapsed by default
+  // Load collapsed states from localStorage on mount/tenant change
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+
+    try {
+      const savedEpicsState = localStorage.getItem(`filo_collapsed_epics_${currentTenant.id}`);
+      const savedFeaturesState = localStorage.getItem(`filo_collapsed_features_${currentTenant.id}`);
+
+      if (savedEpicsState) {
+        setCollapsedEpics(JSON.parse(savedEpicsState));
+      }
+      if (savedFeaturesState) {
+        setCollapsedFeatures(JSON.parse(savedFeaturesState));
+      }
+    } catch (err) {
+      console.error('[Filo] Failed to load collapsed states from localStorage:', err);
+    }
+  }, [currentTenant?.id]);
+
+  // Save collapsed states to localStorage whenever they change
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+
+    try {
+      localStorage.setItem(`filo_collapsed_epics_${currentTenant.id}`, JSON.stringify(collapsedEpics));
+    } catch (err) {
+      console.error('[Filo] Failed to save epic collapsed state to localStorage:', err);
+    }
+  }, [collapsedEpics, currentTenant?.id]);
+
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+
+    try {
+      localStorage.setItem(`filo_collapsed_features_${currentTenant.id}`, JSON.stringify(collapsedFeatures));
+    } catch (err) {
+      console.error('[Filo] Failed to save feature collapsed state to localStorage:', err);
+    }
+  }, [collapsedFeatures, currentTenant?.id]);
+
+  // Initialize all epics and features as collapsed by default (only for new items)
   useEffect(() => {
     const newCollapsedEpics = {};
     epics.forEach(epic => {
@@ -1293,7 +1333,12 @@ export default function SteaBoard() {
         onDragStart={(e) => { setDraggingId(epic.id); e.dataTransfer.setData('text/stea-epic-id', epic.id); e.dataTransfer.effectAllowed = 'move'; }}
         onDragEnd={() => { setDraggingId(null); setDragOverCol(null); }}
         onDragOver={handleEpicDragOver}
-        onDragLeave={() => setDragOverEpic('')}
+        onDragLeave={(e) => {
+          // Only clear if actually leaving the epic (not entering a child)
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            setDragOverEpic('');
+          }
+        }}
         onDrop={handleEpicDrop}
         onDoubleClick={() => openEntityEditor('epic', epic)}
         onPointerDown={onEntityPointerDown(epic.id, epic, 'epic')}
