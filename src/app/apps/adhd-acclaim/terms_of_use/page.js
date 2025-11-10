@@ -30,8 +30,8 @@ export default function TermsOfUsePage() {
 
       <h2>Subscriptions and Billing</h2>
       <p>
-        ADHD Acclaim offers a <strong>7-day free trial</strong>, then auto-renews at{" "}
-        <strong>£5.99/month</strong> or <strong>£49.99/year</strong>. Subscriptions are
+        ADHD Acclaim offers a <strong>14-day free trial</strong>, then auto-renews at{" "}
+        <strong>£6.99/month</strong>. Subscriptions are
         managed through your <strong>Apple App Store</strong> or{" "}
         <strong>Google Play</strong> account. You may cancel at any time before renewal
         through your platform account settings.
