@@ -34,7 +34,8 @@ export default function TermsOfUsePage() {
         <strong>£6.99/month</strong>. Subscriptions are
         managed through your <strong>Apple App Store</strong> or{" "}
         <strong>Google Play</strong> account. You may cancel at any time before renewal
-        through your platform account settings.
+        through your platform account settings. ADHD Acclaim Premium unlocks unlimited rewards, 
+        advanced planning tools, and additional customisations for the duration of your subscription.
       </p>
 
       <h2>Refunds</h2>
