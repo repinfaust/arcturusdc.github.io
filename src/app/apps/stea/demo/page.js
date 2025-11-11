@@ -65,10 +65,10 @@ export default function SteaDemoPage() {
     },
     {
       src: '/img/ruby.png',
-      alt: 'Ruby - Documentation',
+      alt: 'Ruby - Product Intelligence',
       title: 'Ruby',
-      category: 'Documentation',
-      description: 'Rich documentation repository with spaces for organizing notes, architecture designs, and technical docs. Link directly to epics, features, and cards.',
+      category: 'Product Intelligence',
+      description: 'The memory of STEa. Capture context from Harls, Filo, and Hans into living documentation. Generate PRDs, build specs, and release notes with AI. Every idea remembered, every spec connected.',
       gradient: 'from-rose-50 to-pink-50',
       accentColor: 'text-rose-600',
       borderColor: 'border-rose-200',
@@ -124,6 +124,30 @@ export default function SteaDemoPage() {
       description: 'When bugs are fixed, linked test cases are automatically marked for retest to verify the fix.',
       gradient: 'from-violet-500 to-purple-500',
     },
+    {
+      icon: '🧠',
+      title: 'AI Documentation',
+      description: 'Generate PRDs, build specs, and release notes from Harls/Filo context with a single prompt.',
+      gradient: 'from-rose-500 to-pink-500',
+    },
+    {
+      icon: '🔍',
+      title: 'Reviewer Mode',
+      description: 'AI-assisted compliance checks for accessibility, GDPR, design parity, and test coverage before launch.',
+      gradient: 'from-rose-500 to-pink-500',
+    },
+    {
+      icon: '🧩',
+      title: 'Knowledge Graph',
+      description: 'Visualize relationships across discovery, delivery, testing, and release. See how epics link to code and tests.',
+      gradient: 'from-rose-500 to-pink-500',
+    },
+    {
+      icon: '📋',
+      title: 'Release Automation',
+      description: 'Pull commits, PRs, and Hans test outcomes into clean changelogs automatically when tests pass.',
+      gradient: 'from-rose-500 to-pink-500',
+    },
   ];
 
   return (
@@ -136,10 +160,10 @@ export default function SteaDemoPage() {
               STEa
             </h1>
             <p className="text-xl font-semibold text-neutral-700 mb-4">
-              Plan • Build • Test
+              Plan • Build • Test • Document
             </p>
             <p className="text-base text-neutral-600 max-w-3xl mx-auto">
-              A closed-loop product system that keeps strategy, delivery, and QA in perfect sync
+              A closed-loop product system that keeps strategy, delivery, testing, and product intelligence in perfect sync
             </p>
           </div>
         </div>
@@ -147,7 +171,7 @@ export default function SteaDemoPage() {
         {/* Products Section */}
         <section className="mt-8">
           <h2 className="text-2xl font-extrabold text-neutral-900 mb-6 px-2">
-            Meet the <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">System</span>
+            Meet the <span className="bg-gradient-to-r from-amber-600 via-violet-600 via-emerald-600 to-rose-600 bg-clip-text text-transparent">System</span>
           </h2>
           <p className="text-neutral-600 mb-6 px-2">
             Four connected tools that eliminate context switching and maintain full traceability
@@ -189,7 +213,7 @@ export default function SteaDemoPage() {
         <section className="mt-12">
           <div className="card p-8">
             <h2 className="text-2xl font-extrabold text-neutral-900 mb-4 text-center">
-              The <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">Closed Loop</span>
+              The <span className="bg-gradient-to-r from-amber-600 via-violet-600 via-emerald-600 to-rose-600 bg-clip-text text-transparent">Closed Loop</span>
             </h2>
             <p className="text-neutral-600 mb-8 text-center max-w-2xl mx-auto">
               Information flows seamlessly through the entire product lifecycle
@@ -208,7 +232,8 @@ export default function SteaDemoPage() {
                   <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-amber-500 animate-orbit-1 shadow-lg"></div>
                   <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-violet-500 animate-orbit-2 shadow-lg"></div>
                   <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-emerald-500 animate-orbit-3 shadow-lg"></div>
-                  <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-orange-500 animate-orbit-4 shadow-lg"></div>
+                  <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-rose-500 animate-orbit-4 shadow-lg"></div>
+                  <div className="absolute top-1/2 left-1/2 -ml-1.5 -mt-1.5 w-3 h-3 rounded-full bg-orange-500 animate-orbit-1 shadow-lg"></div>
                 </div>
               </div>
 
@@ -262,11 +287,11 @@ export default function SteaDemoPage() {
 
               {/* Center Text */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                <div className="p-2 sm:p-6 bg-white rounded-lg sm:rounded-2xl border border-neutral-200 sm:border-2 shadow-xl">
-                  <h3 className="text-xs sm:text-lg font-extrabold bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent mb-0 sm:mb-2 whitespace-nowrap">
-                    Continuous Flow
+                <div className="p-2 sm:p-6 bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg sm:rounded-2xl border border-rose-200 sm:border-2 shadow-xl">
+                  <h3 className="text-xs sm:text-lg font-extrabold text-rose-600 mb-0 sm:mb-2 whitespace-nowrap">
+                    Ruby
                   </h3>
-                  <p className="text-[10px] sm:text-xs text-neutral-600 whitespace-nowrap hidden sm:block">No context switching<br/>Full traceability</p>
+                  <p className="text-[10px] sm:text-xs text-neutral-600 whitespace-nowrap hidden sm:block">Product Intelligence<br/>Knowledge Backbone</p>
                 </div>
               </div>
             </div>
@@ -332,9 +357,15 @@ export default function SteaDemoPage() {
                 },
                 {
                   number: 4,
+                  color: 'bg-gradient-to-br from-rose-100 to-pink-100 text-rose-700 border-2 border-rose-300',
+                  title: 'Document in Ruby',
+                  description: 'Generate PRDs, build specs, and release notes automatically. Ruby captures context from discovery, delivery, and testing to create living documentation linked to every epic, feature, and test.',
+                },
+                {
+                  number: 5,
                   color: 'bg-gradient-to-br from-orange-100 to-amber-100 text-orange-700 border-2 border-orange-300',
                   title: 'Close the Loop',
-                  description: 'Failures auto-create bug cards in Filo. Fix the bugs, and Hans automatically re-runs tests to verify.',
+                  description: 'Failures auto-create bug cards in Filo. Fix the bugs, and Hans automatically re-runs tests to verify. Ruby updates release notes with fixes.',
                 },
               ].map((step) => (
                 <div key={step.number} className="flex items-start gap-4">
@@ -355,12 +386,12 @@ export default function SteaDemoPage() {
         <section className="mt-12">
           <div className="card p-8 text-center bg-gradient-to-br from-neutral-50 via-white to-neutral-50 border-2 border-neutral-200">
             <h2 className="text-3xl font-extrabold mb-4">
-              <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-amber-600 via-violet-600 via-emerald-600 to-rose-600 bg-clip-text text-transparent">
                 Ready to Close the Loop?
               </span>
             </h2>
             <p className="text-neutral-600 mb-6 max-w-2xl mx-auto">
-              Try the demo: Draft a brief → Generate backlog → Send to testing → Watch the magic happen
+              Try the demo: Draft a brief → Generate backlog → Send to testing → Generate docs → Close the loop
             </p>
             <Link
               href="/apps/stea"
