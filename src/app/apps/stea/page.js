@@ -42,7 +42,7 @@ const IN_SESSION_DESTINATIONS = [
   {
     label: 'Ruby',
     href: '/apps/stea/ruby',
-    description: 'Documentation repository for notes, architecture designs, and technical docs across all apps.',
+    description: 'Product Intelligence documentation repository for notes, architecture designs, and technical docs across all apps.',
     gradient: 'from-rose-50/80 to-pink-50/30',
     borderColor: 'border-rose-200',
   },
