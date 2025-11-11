@@ -63,6 +63,16 @@ export default function SteaDemoPage() {
       accentColor: 'text-emerald-600',
       borderColor: 'border-emerald-200',
     },
+    {
+      src: '/img/ruby.png',
+      alt: 'Ruby - Documentation',
+      title: 'Ruby',
+      category: 'Documentation',
+      description: 'Rich documentation repository with spaces for organizing notes, architecture designs, and technical docs. Link directly to epics, features, and cards.',
+      gradient: 'from-rose-50 to-pink-50',
+      accentColor: 'text-rose-600',
+      borderColor: 'border-rose-200',
+    },
   ];
 
   const features = [
@@ -140,10 +150,10 @@ export default function SteaDemoPage() {
             Meet the <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">System</span>
           </h2>
           <p className="text-neutral-600 mb-6 px-2">
-            Three connected tools that eliminate context switching and maintain full traceability
+            Four connected tools that eliminate context switching and maintain full traceability
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {productImages.map((product, idx) => (
               <div key={idx} className={`card p-6 border-l-4 ${product.borderColor} hover:shadow-xl transition-all duration-300`}>
                 <div className="mb-4">

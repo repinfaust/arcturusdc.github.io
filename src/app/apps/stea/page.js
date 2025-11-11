@@ -32,6 +32,11 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Test case management and user testing coordination across all apps.',
   },
   {
+    label: 'Ruby',
+    href: '/apps/stea/ruby',
+    description: 'Documentation repository for notes, architecture designs, and technical docs across all apps.',
+  },
+  {
     label: 'Automated Tests',
     href: '/apps/stea/automatedtestsdashboard',
     description: 'Trigger Jest suites and review the latest run results.',
