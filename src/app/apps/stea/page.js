@@ -14,37 +14,51 @@ const IN_SESSION_DESTINATIONS = [
     label: 'Harls',
     href: '/apps/stea/harls',
     description: 'Felix Product Lab collaborative whiteboard environment.',
+    gradient: 'from-amber-50/80 to-orange-50/30',
+    borderColor: 'border-amber-200',
   },
   {
     label: 'Auto Product',
     href: '/apps/stea/autoproduct',
     description: 'AI-powered backlog generation via MCP. Turn product specs into structured Epics, Features, and Cards.',
+    gradient: 'from-indigo-50/80 to-blue-50/30',
+    borderColor: 'border-indigo-200',
   },
   {
     label: 'Filo',
     href: '/apps/stea/filo',
     note: 'Also available at /stea/filo',
     description: 'Plan, prioritise, and track the STEa backlog.',
+    gradient: 'from-violet-50/80 to-purple-50/30',
+    borderColor: 'border-violet-200',
   },
   {
     label: 'Hans Testing Suite',
     href: '/apps/stea/hans',
     description: 'Test case management and user testing coordination across all apps.',
+    gradient: 'from-emerald-50/80 to-green-50/30',
+    borderColor: 'border-emerald-200',
   },
   {
     label: 'Ruby',
     href: '/apps/stea/ruby',
     description: 'Documentation repository for notes, architecture designs, and technical docs across all apps.',
+    gradient: 'from-rose-50/80 to-pink-50/30',
+    borderColor: 'border-rose-200',
   },
   {
     label: 'Automated Tests',
     href: '/apps/stea/automatedtestsdashboard',
     description: 'Trigger Jest suites and review the latest run results.',
+    gradient: 'from-slate-50/80 to-gray-50/30',
+    borderColor: 'border-slate-200',
   },
   {
     label: 'STEa Demo',
     href: '/apps/stea/demo',
     description: 'Interactive showcase of the complete STEa tech stack and closed-loop workflow.',
+    gradient: 'from-pink-50/80 to-fuchsia-50/30',
+    borderColor: 'border-pink-200',
   },
 ];
 
@@ -292,7 +306,7 @@ export default function SteaAccessPage() {
           <Link
             key={dest.href}
             href={dest.href}
-            className="group relative flex flex-col gap-3 rounded-3xl border border-neutral-200 bg-white/80 p-6 shadow-sm shadow-neutral-800/5 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-neutral-800/10 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 focus:ring-offset-white"
+            className={`group relative flex flex-col gap-3 rounded-3xl border ${dest.borderColor || 'border-neutral-200'} bg-gradient-to-b ${dest.gradient || 'from-white/80 to-white/80'} p-6 shadow-sm shadow-neutral-800/5 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-neutral-800/10 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 focus:ring-offset-white overflow-hidden`}
           >
             <div className="flex items-center justify-between gap-4">
               <div>

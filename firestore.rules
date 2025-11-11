@@ -150,6 +150,48 @@ service cloud.firestore {
     }
 
     /* ==========================================================
+       Ruby Documentation (migration-friendly)
+       ========================================================== */
+    match /stea_doc_spaces/{spaceId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    match /stea_docs/{docId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    match /stea_doc_versions/{versionId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    /* ==========================================================
        Automated testing + CI (migration-friendly)
        ========================================================== */
     match /automated_test_runs/{doc} {
