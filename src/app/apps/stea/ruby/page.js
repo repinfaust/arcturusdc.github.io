@@ -90,21 +90,30 @@ export default function RubyPage() {
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const loadedSpaces = [];
-      snapshot.forEach((doc) => {
-        loadedSpaces.push({ id: doc.id, ...doc.data() });
-      });
-      setSpaces(loadedSpaces);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const loadedSpaces = [];
+        snapshot.forEach((doc) => {
+          loadedSpaces.push({ id: doc.id, ...doc.data() });
+        });
+        setSpaces(loadedSpaces);
 
-      // Auto-select first space if none selected
-      if (!selectedSpace && loadedSpaces.length > 0) {
-        setSelectedSpace(loadedSpaces[0]);
+        // Auto-select first space if none selected
+        setSelectedSpace((current) => {
+          if (!current && loadedSpaces.length > 0) {
+            return loadedSpaces[0];
+          }
+          return current;
+        });
+      },
+      (error) => {
+        console.error('[Ruby] Error loading spaces:', error);
       }
-    });
+    );
 
     return () => unsubscribe();
-  }, [currentTenant, selectedSpace]);
+  }, [currentTenant]);
 
   // Load documents
   useEffect(() => {
@@ -128,13 +137,20 @@ export default function RubyPage() {
       );
     }
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const loadedDocs = [];
-      snapshot.forEach((doc) => {
-        loadedDocs.push({ id: doc.id, ...doc.data() });
-      });
-      setDocuments(loadedDocs);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const loadedDocs = [];
+        snapshot.forEach((doc) => {
+          loadedDocs.push({ id: doc.id, ...doc.data() });
+        });
+        setDocuments(loadedDocs);
+      },
+      (error) => {
+        console.error('[Ruby] Error loading documents:', error);
+        // Don't clear documents on error, keep showing what we have
+      }
+    );
 
     return () => unsubscribe();
   }, [currentTenant, selectedSpace]);
