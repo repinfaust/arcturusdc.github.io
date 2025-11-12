@@ -99,7 +99,7 @@ export async function POST(request) {
     const { db } = getFirebaseAdmin();
     const cardDoc = await db.collection('stea_cards').doc(cardId).get();
 
-    if (!cardDoc.exists()) {
+    if (!cardDoc.exists) {
       return NextResponse.json(
         { error: 'Card not found' },
         { status: 404 }
