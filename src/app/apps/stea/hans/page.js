@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, onSnapshot, orderBy, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
 
@@ -39,6 +39,12 @@ export default function HansTestingSuite() {
   const [appFilter, setAppFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedCase, setExpandedCase] = useState(caseIdParam || null);
+
+  // Card creation modal
+  const [cardModalOpen, setCardModalOpen] = useState(false);
+  const [cardForm, setCardForm] = useState({});
+  const [cardSeed, setCardSeed] = useState(null);
+  const [creatingCard, setCreatingCard] = useState(false);
 
   // Auth
   useEffect(() => {
@@ -107,6 +113,99 @@ export default function HansTestingSuite() {
 
     return { total, passed, failed, inProgress, passRate };
   }, [testCases]);
+
+  // Card creation handlers - close the loop back to Filo
+  const openCardFromFail = (testCase) => {
+    const urgencyMap = {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'critical',
+    };
+    const urgency = urgencyMap[testCase.priority] || 'medium';
+
+    const preset = {
+      type: 'bug',
+      urgency,
+      priority: testCase.priority || 'medium',
+      app: testCase.app || 'New App',
+      title: `${testCase.app}: ${testCase.title} - Failed Test`,
+      description: `Test Case: ${testCase.title}\nPriority: ${testCase.priority}\nStatus: Failed\n\nTest Description:\n${testCase.description || 'N/A'}\n\nUser Story:\n${testCase.userStory || 'N/A'}\n\nNotes:\n${testCase.testNotes || '(none)'}\n`,
+      epicId: testCase.linkedEpicId || null,
+      featureId: testCase.linkedFeatureId || null,
+      epicLabel: testCase.linkedEpicLabel || '',
+      featureLabel: testCase.linkedFeatureLabel || '',
+    };
+
+    setCardSeed({ from: 'fail', testCase, preset });
+    setCardForm(preset);
+    setCardModalOpen(true);
+  };
+
+  const openCardFromFeedback = (testCase) => {
+    const urgencyMap = {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'critical',
+    };
+    const urgency = urgencyMap[testCase.priority] || 'medium';
+
+    const preset = {
+      type: 'observation',
+      urgency,
+      priority: testCase.priority || 'medium',
+      app: testCase.app || 'New App',
+      title: `${testCase.app}: Feedback on ${testCase.title}`,
+      description: `Feedback on Test Case: ${testCase.title}\nPriority: ${testCase.priority}\n\nTest Description:\n${testCase.description || 'N/A'}\n\nFeedback:\n${testCase.testNotes || '(add details here)'}\n`,
+      epicId: testCase.linkedEpicId || null,
+      featureId: testCase.linkedFeatureId || null,
+      epicLabel: testCase.linkedEpicLabel || '',
+      featureLabel: testCase.linkedFeatureLabel || '',
+    };
+
+    setCardSeed({ from: 'feedback', testCase, preset });
+    setCardForm(preset);
+    setCardModalOpen(true);
+  };
+
+  const handleCreateCard = async () => {
+    if (!cardForm.title || !currentTenant?.id) {
+      alert('Title and workspace are required');
+      return;
+    }
+
+    setCreatingCard(true);
+    try {
+      const newCard = {
+        ...cardForm,
+        tenantId: currentTenant.id,
+        statusColumn: 'Idea',
+        entityType: 'card',
+        type: cardForm.type || 'observation',
+        archived: false,
+        createdAt: serverTimestamp(),
+        createdBy: user?.email || user?.uid || 'unknown',
+        updatedAt: serverTimestamp(),
+        source: 'hans_test_suite',
+        linkedTestCaseId: cardSeed?.testCase?.id || null,
+      };
+
+      await addDoc(collection(db, 'stea_cards'), newCard);
+
+      // Close modal and reset form
+      setCardModalOpen(false);
+      setCardForm({});
+      setCardSeed(null);
+
+      alert('Card created successfully! View it in Filo.');
+    } catch (error) {
+      console.error('Error creating card:', error);
+      alert('Failed to create card. Please try again.');
+    } finally {
+      setCreatingCard(false);
+    }
+  };
 
   if (!authReady) {
     return (
@@ -313,6 +412,8 @@ export default function HansTestingSuite() {
                 testCase={testCase}
                 expanded={expandedCase === testCase.id}
                 onToggleExpand={() => setExpandedCase(expandedCase === testCase.id ? null : testCase.id)}
+                onCreateFailCard={openCardFromFail}
+                onCreateFeedbackCard={openCardFromFeedback}
               />
             ))}
           </div>
@@ -328,14 +429,123 @@ export default function HansTestingSuite() {
           </Link>
         </p>
       </div>
+
+      {/* Card Creation Modal */}
+      {cardModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-neutral-900">
+                Create STEa Card {cardSeed?.from === 'fail' ? '(Failed Test)' : '(Feedback)'}
+              </h2>
+              <button
+                onClick={() => {
+                  setCardModalOpen(false);
+                  setCardForm({});
+                  setCardSeed(null);
+                }}
+                className="text-neutral-500 hover:text-neutral-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Type */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Type
+                </label>
+                <select
+                  value={cardForm.type || 'observation'}
+                  onChange={(e) => setCardForm({ ...cardForm, type: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                >
+                  <option value="bug">Bug</option>
+                  <option value="feature">Feature</option>
+                  <option value="observation">Observation</option>
+                  <option value="feedback">Feedback</option>
+                </select>
+              </div>
+
+              {/* Priority */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Priority
+                </label>
+                <select
+                  value={cardForm.priority || 'medium'}
+                  onChange={(e) => setCardForm({ ...cardForm, priority: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={cardForm.title || ''}
+                  onChange={(e) => setCardForm({ ...cardForm, title: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="Enter card title..."
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={cardForm.description || ''}
+                  onChange={(e) => setCardForm({ ...cardForm, description: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  rows={8}
+                  placeholder="Enter card description..."
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between gap-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    setCardModalOpen(false);
+                    setCardForm({});
+                    setCardSeed(null);
+                  }}
+                  className="px-4 py-2 border rounded-lg hover:bg-neutral-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateCard}
+                  disabled={creatingCard || !cardForm.title}
+                  className="px-6 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creatingCard ? 'Creating...' : 'Create Card in Filo'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
 
 /* ========== Test Case Card Component ========== */
-function TestCaseCard({ testCase, expanded, onToggleExpand }) {
+function TestCaseCard({ testCase, expanded, onToggleExpand, onCreateFailCard, onCreateFeedbackCard }) {
   const [updating, setUpdating] = useState(false);
   const [criteriaStatus, setCriteriaStatus] = useState({});
+  const [testNotes, setTestNotes] = useState(testCase.testNotes || '');
 
   const statusOption = STATUS_OPTIONS.find(s => s.value === testCase.status) || STATUS_OPTIONS[0];
 
@@ -346,11 +556,30 @@ function TestCaseCard({ testCase, expanded, onToggleExpand }) {
     try {
       await updateDoc(doc(db, 'hans_cases', testCase.id), {
         status: newStatus,
+        testNotes: testNotes,
         updatedAt: new Date().toISOString(),
       });
     } catch (error) {
       console.error('Error updating status:', error);
       alert('Failed to update status. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    if (updating) return;
+    setUpdating(true);
+
+    try {
+      await updateDoc(doc(db, 'hans_cases', testCase.id), {
+        testNotes: testNotes,
+        updatedAt: new Date().toISOString(),
+      });
+      alert('Notes saved successfully!');
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      alert('Failed to save notes. Please try again.');
     } finally {
       setUpdating(false);
     }
@@ -431,38 +660,62 @@ function TestCaseCard({ testCase, expanded, onToggleExpand }) {
 
       {/* Expanded Content */}
       {expanded && (
-        <div className="border-t pt-4 space-y-4">
-          {/* User Story */}
+        <div className="border-t pt-4 space-y-6">
+          {/* Preconditions */}
           {testCase.userStory && (
             <div>
-              <h4 className="text-sm font-semibold text-neutral-700 mb-2">User Story</h4>
-              <p className="text-sm text-neutral-600 bg-blue-50 border border-blue-200 rounded p-3">
-                {testCase.userStory}
-              </p>
+              <h4 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                <span className="text-blue-600">📋</span>
+                Preconditions
+              </h4>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-neutral-700 whitespace-pre-wrap">
+                  {testCase.userStory}
+                </p>
+              </div>
             </div>
           )}
 
-          {/* Acceptance Criteria */}
+          {/* Test Steps */}
+          {testCase.userFlow && testCase.userFlow.length > 0 && (
+            <div>
+              <h4 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                <span className="text-purple-600">🔢</span>
+                Test Steps
+              </h4>
+              <div className="space-y-2">
+                {testCase.userFlow.map((step, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                    <span className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-purple-600 text-white text-xs font-bold">
+                      {idx + 1}
+                    </span>
+                    <span className="flex-1 text-sm text-neutral-700 pt-0.5">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Expected Results */}
           {testCase.acceptanceCriteria && testCase.acceptanceCriteria.length > 0 && (
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-semibold text-neutral-700">
-                  Acceptance Criteria ({passedCount}/{totalCriteria} passed)
-                </h4>
-              </div>
+              <h4 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+                <span className="text-green-600">✅</span>
+                Expected Results ({passedCount}/{totalCriteria} validated)
+              </h4>
               <div className="space-y-2">
                 {testCase.acceptanceCriteria.map((criterion, idx) => (
                   <label
                     key={idx}
-                    className="flex items-start gap-3 p-3 border rounded-lg hover:bg-neutral-50 cursor-pointer transition-colors"
+                    className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={!!criteriaStatus[idx]}
                       onChange={() => toggleCriteria(idx)}
-                      className="mt-0.5 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
+                      className="mt-0.5 h-5 w-5 rounded border-green-300 text-green-600 focus:ring-2 focus:ring-green-500"
                     />
-                    <span className={`flex-1 text-sm ${criteriaStatus[idx] ? 'text-neutral-400 line-through' : 'text-neutral-700'}`}>
+                    <span className={`flex-1 text-sm ${criteriaStatus[idx] ? 'text-green-400 line-through' : 'text-neutral-700'}`}>
                       {criterion}
                     </span>
                   </label>
@@ -471,22 +724,29 @@ function TestCaseCard({ testCase, expanded, onToggleExpand }) {
             </div>
           )}
 
-          {/* User Flow */}
-          {testCase.userFlow && testCase.userFlow.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-neutral-700 mb-2">User Flow</h4>
-              <div className="space-y-2">
-                {testCase.userFlow.map((step, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
-                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
-                      {idx + 1}
-                    </span>
-                    <span className="flex-1 text-sm text-neutral-700">{step}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Test Notes */}
+          <div>
+            <h4 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-2">
+              <span className="text-amber-600">📝</span>
+              Test Notes
+            </h4>
+            <textarea
+              value={testNotes}
+              onChange={(e) => setTestNotes(e.target.value)}
+              placeholder="Add notes about test execution, observations, issues encountered..."
+              className="w-full px-3 py-2 border border-amber-200 rounded-lg bg-amber-50 text-sm text-neutral-700 focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+              rows={4}
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={handleSaveNotes}
+                disabled={updating}
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                {updating ? 'Saving...' : 'Save Notes'}
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Status Update */}
           <div className="border-t pt-4">
@@ -507,6 +767,34 @@ function TestCaseCard({ testCase, expanded, onToggleExpand }) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Create STEa Cards - Close the Loop */}
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold text-neutral-700 mb-3">Close the Loop in STEa</h4>
+            <div className="flex flex-wrap gap-3">
+              {/* Create Card (Fail) */}
+              <button
+                onClick={() => onCreateFailCard({ ...testCase, testNotes })}
+                disabled={testCase.status !== 'failed'}
+                className="flex-1 min-w-[200px] px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
+                title={testCase.status !== 'failed' ? 'Only available when test status is Failed' : 'Create a bug card in Filo for this failed test'}
+              >
+                ➕ Create STEa Card (Fail)
+              </button>
+
+              {/* Create Card (Feedback) */}
+              <button
+                onClick={() => onCreateFeedbackCard({ ...testCase, testNotes })}
+                className="flex-1 min-w-[200px] px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                title="Create a feedback/observation card in Filo for this test"
+              >
+                📝 Create STEa Card (Feedback)
+              </button>
+            </div>
+            <p className="text-xs text-neutral-500 mt-2">
+              Create cards in Filo to report bugs or share feedback from testing
+            </p>
           </div>
 
           {/* Public Link */}
@@ -531,6 +819,9 @@ function TestCaseCard({ testCase, expanded, onToggleExpand }) {
                   Copy Link
                 </button>
               </div>
+              <p className="text-xs text-neutral-500 mt-2">
+                Token expires: {testCase.publicTokenExpiry ? new Date(testCase.publicTokenExpiry).toLocaleString() : 'Unknown'}
+              </p>
             </div>
           )}
         </div>
