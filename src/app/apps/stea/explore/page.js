@@ -142,9 +142,18 @@ export default function SteaDemoPage() {
         {/* Header */}
         <div className="card p-8 mt-2">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-900 mb-3">
-              STEa
-            </h1>
+            <div className="flex items-center justify-center gap-4 mb-3">
+              <Image
+                src="/img/acturusdc_stea_logo.png"
+                alt="STEa Logo"
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+              <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-900">
+                STEa
+              </h1>
+            </div>
             <p className="text-xl font-semibold text-neutral-700 mb-4">
               Plan • Build • Test • Document
             </p>

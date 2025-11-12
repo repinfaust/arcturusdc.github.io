@@ -1921,7 +1921,7 @@ export default function SteaBoard() {
     <main className="pb-10 max-w-[1400px] mx-auto px-4">
       {/* Header */}
       <div className="card p-4 flex items-start gap-3 mt-2">
-        <Image className="rounded-2xl border border-black/10" src="/img/logo-mark.png" width={64} height={64} alt="Arcturus mark" priority />
+        <Image className="rounded-2xl border border-black/10" src="/img/acturusdc_stea_logo.png" width={64} height={64} alt="STEa Logo" priority />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-4">
             <div>

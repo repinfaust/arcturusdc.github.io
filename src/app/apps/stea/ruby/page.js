@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import {
   collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc,
@@ -260,6 +261,13 @@ export default function RubyPage() {
       <header className="border-b border-neutral-200 bg-white/90 backdrop-blur-sm">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
+            <Image
+              src="/img/acturusdc_stea_logo.png"
+              alt="STEa Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
             <Link href="/apps/stea" className="text-2xl font-bold text-rose-600">
               Ruby
             </Link>

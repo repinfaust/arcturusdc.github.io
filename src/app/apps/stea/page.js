@@ -192,7 +192,13 @@ export default function SteaAccessPage() {
         <div className="absolute inset-x-0 top-16 -z-10 mx-auto h-[360px] w-[360px] rounded-full bg-pink-200/40 blur-3xl sm:w-[480px]" />
         <div className="flex flex-col items-center gap-4">
           <div className="flex items-center gap-3 text-sm text-neutral-500">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white">STEa</span>
+            <Image
+              src="/img/acturusdc_stea_logo.png"
+              alt="STEa Logo"
+              width={28}
+              height={28}
+              className="object-contain"
+            />
             Internal studio tooling
           </div>
           <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
@@ -254,7 +260,16 @@ export default function SteaAccessPage() {
       <div className="flex flex-col items-start gap-4 rounded-3xl border border-neutral-200 bg-white/80 p-8 shadow-sm shadow-neutral-800/10 backdrop-blur overflow-visible">
         <div className="flex w-full flex-wrap items-center justify-between gap-4 relative">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">STEa workspace</p>
+            <div className="flex items-center gap-2 mb-2">
+              <Image
+                src="/img/acturusdc_stea_logo.png"
+                alt="STEa Logo"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+              <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">STEa workspace</p>
+            </div>
             <h1 className="mt-1 text-3xl font-semibold text-neutral-900">Welcome back, {user.displayName || user.email || 'teammate'}.</h1>
             <p className="mt-2 max-w-xl text-sm text-neutral-600">
               Choose where you&apos;d like to work today. Your Google session is active and server access has been granted.
