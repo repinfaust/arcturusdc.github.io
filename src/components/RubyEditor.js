@@ -14,7 +14,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Highlight from '@tiptap/extension-highlight';
-import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { common, createLowlight } from 'lowlight';
 import { Callout } from '@/lib/tiptap-extensions/Callout';
@@ -62,7 +62,11 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     if (!document?.id) return;
 
     const assetsRef = collection(db, 'stea_doc_assets');
-    const q = query(assetsRef, where('docId', '==', document.id));
+    const q = query(
+      assetsRef,
+      where('docId', '==', document.id),
+      orderBy('createdAt', 'desc')
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loadedAssets = [];
