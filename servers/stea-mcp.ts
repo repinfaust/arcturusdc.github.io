@@ -45,6 +45,31 @@ initializeFirebaseAdmin();
 const DEF_APP = process.env.DEFAULT_APP || 'Tou.me';
 const DEF_COL = process.env.DEFAULT_COLUMN || 'Idea';
 const CREATED_BY = process.env.CREATED_BY || 'mcp:stea';
+const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID || 'TGpicbMaoJMAAb62hqui'; // Tou.me tenant
+
+// Helper: Generate search tokens for search functionality
+function generateSearchTokens(text: string): string[] {
+  if (!text) return [];
+  const normalized = text.toLowerCase().trim();
+  const words = normalized.split(/\s+/);
+  const tokens = new Set<string>();
+
+  // Add full text
+  tokens.add(normalized);
+
+  // Add individual words
+  words.forEach(word => {
+    if (word.length > 2) {
+      tokens.add(word);
+      // Add prefixes for autocomplete
+      for (let i = 3; i <= word.length; i++) {
+        tokens.add(word.substring(0, i));
+      }
+    }
+  });
+
+  return Array.from(tokens);
+}
 
 // ---------- Zod Schemas ----------
 const priorityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH']);
@@ -150,15 +175,39 @@ const deleteFeatureSchema = z.object({
   featureId: z.string(),
 });
 
+const createRubyDocSchema = z.object({
+  spaceId: z.string(),
+  title: z.string(),
+  content: z.string(), // Markdown or JSON
+  type: z.enum(['documentation', 'note', 'architecture', 'meeting']).default('documentation'),
+  app: z.string().optional(),
+});
+
+const listRubySpacesSchema = z.object({
+  limit: z.number().optional(),
+});
+
+const createRubySpaceSchema = z.object({
+  name: z.string(),
+  icon: z.string().default('📚'),
+});
+
 // ---------- Tool Handlers ----------
 
 async function handleCreateEpic(args: z.infer<typeof createEpicSchema>) {
   const { column, name, ...rest } = args;
   const payload = {
     ...rest,
-    title: name, // Filo uses 'title' field
-    name, // Keep name for compatibility
-    statusColumn: column, // Filo uses 'statusColumn' not 'column'
+    title: name,
+    name,
+    label: name,
+    epicLabel: name,
+    statusColumn: column,
+    entityType: 'epic',
+    type: 'epic',
+    archived: false,
+    tenantId: DEFAULT_TENANT_ID,
+    searchTokens: generateSearchTokens(`${name} ${rest.description || ''} ${rest.app || ''}`),
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
   };
@@ -187,9 +236,15 @@ async function handleCreateFeature(
   const { column, name, ...rest } = args;
   const payload = {
     ...rest,
-    title: name, // Filo uses 'title' field
-    name, // Keep name for compatibility
-    statusColumn: column, // Filo uses 'statusColumn' not 'column'
+    title: name,
+    name,
+    label: name,
+    statusColumn: column,
+    entityType: 'feature',
+    type: 'feature',
+    archived: false,
+    tenantId: DEFAULT_TENANT_ID,
+    searchTokens: generateSearchTokens(`${name} ${rest.description || ''} ${rest.app || ''}`),
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
   };
@@ -228,7 +283,13 @@ async function handleCreateCard(args: z.infer<typeof createCardSchema>) {
     ...(testing?.userStory && { userStory: testing.userStory }),
     ...(testing?.acceptanceCriteria && { acceptanceCriteria: testing.acceptanceCriteria }),
     ...(testing?.userFlow && { userFlow: testing.userFlow }),
-    statusColumn: column, // Filo uses 'statusColumn' not 'column'
+    label: rest.title,
+    statusColumn: column,
+    entityType: 'card',
+    type: 'card',
+    archived: false,
+    tenantId: DEFAULT_TENANT_ID,
+    searchTokens: generateSearchTokens(`${rest.title} ${rest.description || ''} ${rest.app || ''}`),
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
   };
@@ -461,6 +522,97 @@ async function handleDeleteFeature(args: z.infer<typeof deleteFeatureSchema>) {
       {
         type: 'text' as const,
         text: JSON.stringify({ featureId: args.featureId, deleted: true }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleListRubySpaces(args: z.infer<typeof listRubySpacesSchema>) {
+  let query: FirebaseFirestore.Query = db.collection('stea_doc_spaces')
+    .where('tenantId', '==', DEFAULT_TENANT_ID);
+
+  if (args.limit) {
+    query = query.limit(args.limit);
+  }
+
+  const snap = await query.get();
+  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify(rows, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleCreateRubySpace(args: z.infer<typeof createRubySpaceSchema>) {
+  const payload = {
+    name: args.name,
+    icon: args.icon,
+    tenantId: DEFAULT_TENANT_ID,
+    createdAt: FieldValue.serverTimestamp(),
+    createdBy: CREATED_BY,
+  };
+
+  const ref = await db.collection('stea_doc_spaces').add(payload);
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ spaceId: ref.id, ...payload }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleCreateRubyDoc(args: z.infer<typeof createRubyDocSchema>) {
+  // Verify space exists
+  const spaceRef = db.collection('stea_doc_spaces').doc(args.spaceId);
+  const space = await spaceRef.get();
+
+  if (!space.exists) {
+    throw new Error(`Ruby space not found: ${args.spaceId}`);
+  }
+
+  // Convert markdown content to TipTap JSON format (simplified)
+  const contentJson = {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text: args.content,
+          },
+        ],
+      },
+    ],
+  };
+
+  const payload = {
+    title: args.title,
+    content: contentJson,
+    type: args.type,
+    spaceId: args.spaceId,
+    tenantId: DEFAULT_TENANT_ID,
+    ...(args.app && { app: args.app }),
+    createdAt: FieldValue.serverTimestamp(),
+    createdBy: CREATED_BY,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  const ref = await db.collection('stea_documents').add(payload);
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({ documentId: ref.id, ...payload }, null, 2),
       },
     ],
   };
@@ -738,6 +890,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['featureId'],
         },
       },
+      {
+        name: 'stea.listRubySpaces',
+        description: 'List Ruby documentation spaces',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', description: 'Max number of results' },
+          },
+        },
+      },
+      {
+        name: 'stea.createRubySpace',
+        description: 'Create a new Ruby documentation space',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Space name' },
+            icon: { type: 'string', description: 'Space icon (emoji, default: 📚)' },
+          },
+          required: ['name'],
+        },
+      },
+      {
+        name: 'stea.createRubyDoc',
+        description: 'Create a Ruby documentation document in a space',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            spaceId: { type: 'string', description: 'Parent space ID' },
+            title: { type: 'string', description: 'Document title' },
+            content: { type: 'string', description: 'Document content (markdown or plain text)' },
+            type: {
+              type: 'string',
+              enum: ['documentation', 'note', 'architecture', 'meeting'],
+              description: 'Document type (default: documentation)',
+            },
+            app: { type: 'string', description: 'Associated app name (optional)' },
+          },
+          required: ['spaceId', 'title', 'content'],
+        },
+      },
     ],
   };
 });
@@ -788,6 +981,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'stea.deleteFeature':
         return await handleDeleteFeature(deleteFeatureSchema.parse(args || {}));
+
+      case 'stea.listRubySpaces':
+        return await handleListRubySpaces(listRubySpacesSchema.parse(args || {}));
+
+      case 'stea.createRubySpace':
+        return await handleCreateRubySpace(createRubySpaceSchema.parse(args || {}));
+
+      case 'stea.createRubyDoc':
+        return await handleCreateRubyDoc(createRubyDocSchema.parse(args || {}));
 
       default:
         throw new Error(`Unknown tool: ${name}`);
