@@ -833,7 +833,7 @@ export default function ProductLabPage() {
     <main className="mx-auto max-w-6xl p-4">
       <header className="mb-4 flex items-center justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold">Felix Product Lab</h1>
+          <h1 className="text-2xl font-extrabold">Harls Product Lab</h1>
           <p className="text-sm text-neutral-600">
             Whiteboard → Upgrade to Story → Plan in Now/Next/Later — with badges & XP.
           </p>
