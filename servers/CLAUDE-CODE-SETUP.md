@@ -8,7 +8,7 @@ The stea-mcp server is now configured and ready to use in Claude Code (CLI).
 
 **Global Config**: `/Users/davidloake/.claude.json`
 - The server is configured under `projects["/Users/davidloake"].mcpServers["stea-mcp"]`
-- This makes it available in any Claude Code session started from your home directory
+- This makes it available in any Claude Code session started from your home directory or subdirectories
 
 ## Available Tools
 
@@ -55,24 +55,22 @@ When the MCP server is running, you'll have access to these tools (prefixed with
 - **Default App**: Tou.me
 - **Default Board**: STEa
 - **Default Column**: Idea
-- **Credentials**: stea-775cd-1adc69763f06.json
+- **Server Path**: `/Users/davidloake/arcturusdc.github.io/servers/stea-mcp.ts`
+- **Credentials**: `/Users/davidloake/stea-775cd-1adc69763f06.json`
 
 ## To Add to Other Projects
 
-Run this from any project directory:
-```bash
-/Volumes/wd/Projects/acturusdc\ site\ local/arcturusdc.github.io/servers/add-to-claude-code.sh
-```
+The MCP server is configured globally under `/Users/davidloake` and will work from any subdirectory.
 
-This will show you the JSON configuration to manually add to `.claude.json` for that specific project.
+If you need project-specific configuration, manually edit `.claude.json` to add the `stea-mcp` server configuration.
 
 ## Troubleshooting
 
 ### Server not showing in /mcp list
-1. Make sure you're running Claude Code from your home directory or a configured project directory
+1. Make sure you're running Claude Code from `/Users/davidloake` or any subdirectory
 2. Check that the server path exists:
    ```bash
-   ls -la "/Volumes/wd/Projects/acturusdc site local/arcturusdc.github.io/servers/stea-mcp.ts"
+   ls -la "/Users/davidloake/arcturusdc.github.io/servers/stea-mcp.ts"
    ```
 
 ### "Could not connect to MCP server" error
@@ -82,13 +80,13 @@ This will show you the JSON configuration to manually add to `.claude.json` for 
    ```
 2. Check Firebase credentials file exists:
    ```bash
-   ls -la "/Volumes/wd/Projects/acturusdc site local/arcturusdc.github.io/stea-775cd-1adc69763f06.json"
+   ls -la "/Users/davidloake/stea-775cd-1adc69763f06.json"
    ```
 
 ### Test server manually
 ```bash
-cd "/Volumes/wd/Projects/acturusdc site local/arcturusdc.github.io"
-GOOGLE_APPLICATION_CREDENTIALS="stea-775cd-1adc69763f06.json" \
+cd "/Users/davidloake/arcturusdc.github.io"
+GOOGLE_APPLICATION_CREDENTIALS="/Users/davidloake/stea-775cd-1adc69763f06.json" \
 DEFAULT_APP="Tou.me" \
 DEFAULT_BOARD="STEa" \
 DEFAULT_COLUMN="Idea" \

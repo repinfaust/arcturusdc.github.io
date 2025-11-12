@@ -11,9 +11,14 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Placeholder from '@tiptap/extension-placeholder';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Highlight from '@tiptap/extension-highlight';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { common, createLowlight } from 'lowlight';
+import { Callout } from '@/lib/tiptap-extensions/Callout';
+import { SlashCommand } from '@/lib/tiptap-extensions/SlashCommand';
 
 const lowlight = createLowlight(common);
 
@@ -23,6 +28,7 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
   const [lastSaved, setLastSaved] = useState(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [showCalloutMenu, setShowCalloutMenu] = useState(false);
 
   // Load document data
   useEffect(() => {
@@ -59,6 +65,8 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
         },
       }),
       Image.configure({
+        inline: true,
+        allowBase64: true,
         HTMLAttributes: {
           class: 'max-w-full h-auto rounded-lg',
         },
@@ -87,13 +95,77 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
         },
       }),
       Placeholder.configure({
-        placeholder: 'Start writing...',
+        placeholder: 'Start writing... (Type "/" for commands)',
       }),
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'task-list',
+        },
+      }),
+      TaskItem.configure({
+        nested: true,
+        HTMLAttributes: {
+          class: 'task-item',
+        },
+      }),
+      Highlight.configure({
+        HTMLAttributes: {
+          class: 'bg-yellow-200',
+        },
+      }),
+      Callout,
+      SlashCommand,
     ],
     content: docData?.content || { type: 'doc', content: [] },
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none focus:outline-none min-h-[500px] px-8 py-6',
+      },
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0];
+
+          // Only handle images for now
+          if (file.type.startsWith('image/')) {
+            event.preventDefault();
+
+            const reader = new FileReader();
+            reader.onload = (readerEvent) => {
+              const node = view.state.schema.nodes.image.create({
+                src: readerEvent.target.result,
+              });
+              const transaction = view.state.tr.insert(view.state.selection.from, node);
+              view.dispatch(transaction);
+            };
+            reader.readAsDataURL(file);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            event.preventDefault();
+            const file = item.getAsFile();
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (readerEvent) => {
+                const node = view.state.schema.nodes.image.create({
+                  src: readerEvent.target.result,
+                });
+                const transaction = view.state.tr.replaceSelectionWith(node);
+                view.dispatch(transaction);
+              };
+              reader.readAsDataURL(file);
+              return true;
+            }
+          }
+        }
+        return false;
       },
     },
     onUpdate: ({ editor }) => {
@@ -272,6 +344,17 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
             >
               <s>S</s>
             </button>
+            <button
+              onClick={() => editor.chain().focus().toggleHighlight().run()}
+              className={`rounded p-2 text-sm transition ${
+                editor.isActive('highlight')
+                  ? 'bg-neutral-200 text-neutral-900'
+                  : 'text-neutral-600 hover:bg-neutral-100'
+              }`}
+              title="Highlight"
+            >
+              <span className="bg-yellow-200 px-1">H</span>
+            </button>
 
             <div className="mx-2 h-6 w-px bg-neutral-300" />
 
@@ -339,6 +422,17 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </button>
+            <button
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              className={`rounded p-2 text-sm transition ${
+                editor.isActive('taskList')
+                  ? 'bg-neutral-200 text-neutral-900'
+                  : 'text-neutral-600 hover:bg-neutral-100'
+              }`}
+              title="Task List"
+            >
+              ☑
+            </button>
 
             <div className="mx-2 h-6 w-px bg-neutral-300" />
 
@@ -382,6 +476,75 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
               </svg>
             </button>
+
+            {/* Callout Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowCalloutMenu(!showCalloutMenu)}
+                className={`rounded p-2 text-sm transition ${
+                  editor.isActive('callout')
+                    ? 'bg-neutral-200 text-neutral-900'
+                    : 'text-neutral-600 hover:bg-neutral-100'
+                }`}
+                title="Callout"
+              >
+                💡
+              </button>
+              {showCalloutMenu && (
+                <div className="absolute left-0 top-full z-10 mt-1 w-48 rounded-lg border border-neutral-200 bg-white shadow-lg">
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().setCallout({ type: 'info' }).run();
+                      setShowCalloutMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-blue-50"
+                  >
+                    <span>ℹ️</span>
+                    <span>Info</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().setCallout({ type: 'warning' }).run();
+                      setShowCalloutMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-yellow-50"
+                  >
+                    <span>⚠️</span>
+                    <span>Warning</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().setCallout({ type: 'success' }).run();
+                      setShowCalloutMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-green-50"
+                  >
+                    <span>✅</span>
+                    <span>Success</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().setCallout({ type: 'error' }).run();
+                      setShowCalloutMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-red-50"
+                  >
+                    <span>❌</span>
+                    <span>Error</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().setCallout({ type: 'tip' }).run();
+                      setShowCalloutMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-purple-50"
+                  >
+                    <span>💡</span>
+                    <span>Tip</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="mx-2 h-6 w-px bg-neutral-300" />
 
@@ -551,6 +714,169 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
 
         .ProseMirror table .selectedCell {
           background-color: #fef2f2;
+        }
+
+        /* Task Lists */
+        .ProseMirror ul[data-type='taskList'] {
+          list-style: none;
+          padding: 0;
+        }
+
+        .ProseMirror ul[data-type='taskList'] li {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+
+        .ProseMirror ul[data-type='taskList'] li > label {
+          flex: 0 0 auto;
+          margin-right: 0.5rem;
+          user-select: none;
+        }
+
+        .ProseMirror ul[data-type='taskList'] li > div {
+          flex: 1 1 auto;
+        }
+
+        .ProseMirror ul[data-type='taskList'] input[type='checkbox'] {
+          cursor: pointer;
+        }
+
+        /* Callouts */
+        .ProseMirror .callout {
+          display: flex;
+          gap: 0.75rem;
+          padding: 1rem;
+          margin: 1rem 0;
+          border-left: 4px solid;
+          border-radius: 0.5rem;
+        }
+
+        .ProseMirror .callout .callout-icon {
+          font-size: 1.5rem;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+
+        .ProseMirror .callout .callout-content {
+          flex: 1;
+        }
+
+        .ProseMirror .callout.bg-blue-50 {
+          background-color: #eff6ff;
+        }
+
+        .ProseMirror .callout.border-blue-500 {
+          border-color: #3b82f6;
+        }
+
+        .ProseMirror .callout.text-blue-900 {
+          color: #1e3a8a;
+        }
+
+        .ProseMirror .callout.bg-yellow-50 {
+          background-color: #fefce8;
+        }
+
+        .ProseMirror .callout.border-yellow-500 {
+          border-color: #eab308;
+        }
+
+        .ProseMirror .callout.text-yellow-900 {
+          color: #713f12;
+        }
+
+        .ProseMirror .callout.bg-green-50 {
+          background-color: #f0fdf4;
+        }
+
+        .ProseMirror .callout.border-green-500 {
+          border-color: #22c55e;
+        }
+
+        .ProseMirror .callout.text-green-900 {
+          color: #14532d;
+        }
+
+        .ProseMirror .callout.bg-red-50 {
+          background-color: #fef2f2;
+        }
+
+        .ProseMirror .callout.border-red-500 {
+          border-color: #ef4444;
+        }
+
+        .ProseMirror .callout.text-red-900 {
+          color: #7f1d1d;
+        }
+
+        .ProseMirror .callout.bg-purple-50 {
+          background-color: #faf5ff;
+        }
+
+        .ProseMirror .callout.border-purple-500 {
+          border-color: #a855f7;
+        }
+
+        .ProseMirror .callout.text-purple-900 {
+          color: #581c87;
+        }
+
+        /* Slash Command Menu */
+        .slash-command-menu {
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.5rem;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          padding: 0.5rem;
+          max-height: 20rem;
+          overflow-y: auto;
+          min-width: 16rem;
+        }
+
+        .slash-command-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.5rem;
+          border-radius: 0.375rem;
+          width: 100%;
+          text-align: left;
+          transition: background-color 0.15s;
+          border: none;
+          background: none;
+          cursor: pointer;
+        }
+
+        .slash-command-item:hover,
+        .slash-command-item.is-selected {
+          background-color: #f3f4f6;
+        }
+
+        .slash-command-icon {
+          font-size: 1.25rem;
+          flex-shrink: 0;
+        }
+
+        .slash-command-content {
+          flex: 1;
+        }
+
+        .slash-command-title {
+          font-weight: 500;
+          color: #111827;
+        }
+
+        .slash-command-description {
+          font-size: 0.75rem;
+          color: #6b7280;
+        }
+
+        .slash-command-empty {
+          padding: 0.5rem;
+          text-align: center;
+          color: #6b7280;
+          font-size: 0.875rem;
         }
       `}</style>
     </div>
