@@ -55,8 +55,13 @@ When the MCP server is running, you'll have access to these tools (prefixed with
 - **Default App**: Tou.me
 - **Default Board**: STEa
 - **Default Column**: Idea
+- **Tenant ID**: TGpicbMaoJMAAb62hqui (Tou.me workspace) - **REQUIRED for multi-tenant security**
 - **Server Path**: `/Users/davidloake/arcturusdc.github.io/servers/stea-mcp.ts`
 - **Credentials**: `/Users/davidloake/stea-775cd-1adc69763f06.json`
+
+## Security Note
+
+The `TENANT_ID` environment variable is **required** as of the latest update. This ensures users can only access their own tenant's data and prevents cross-tenant data leakage. Each user must have their own tenant ID configured in their MCP settings.
 
 ## To Add to Other Projects
 
