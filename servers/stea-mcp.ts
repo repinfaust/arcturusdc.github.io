@@ -45,7 +45,16 @@ initializeFirebaseAdmin();
 const DEF_APP = process.env.DEFAULT_APP || 'Tou.me';
 const DEF_COL = process.env.DEFAULT_COLUMN || 'Idea';
 const CREATED_BY = process.env.CREATED_BY || 'mcp:stea';
-const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID || 'TGpicbMaoJMAAb62hqui'; // Tou.me tenant
+
+// SECURITY: Tenant ID MUST be provided via environment variable
+// This ensures users can only access their own tenant's data
+if (!process.env.TENANT_ID) {
+  throw new Error(
+    'TENANT_ID environment variable is required for multi-tenant security. ' +
+    'Each user must have their own tenant ID configured in their MCP settings.'
+  );
+}
+const TENANT_ID = process.env.TENANT_ID;
 
 // Helper: Generate search tokens for search functionality
 function generateSearchTokens(text: string): string[] {
@@ -206,7 +215,7 @@ async function handleCreateEpic(args: z.infer<typeof createEpicSchema>) {
     entityType: 'epic',
     type: 'epic',
     archived: false,
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: TENANT_ID,
     searchTokens: generateSearchTokens(`${name} ${rest.description || ''} ${rest.app || ''}`),
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
@@ -243,7 +252,7 @@ async function handleCreateFeature(
     entityType: 'feature',
     type: 'feature',
     archived: false,
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: TENANT_ID,
     searchTokens: generateSearchTokens(`${name} ${rest.description || ''} ${rest.app || ''}`),
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
@@ -288,7 +297,7 @@ async function handleCreateCard(args: z.infer<typeof createCardSchema>) {
     entityType: 'card',
     type: 'card',
     archived: false,
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: TENANT_ID,
     searchTokens: generateSearchTokens(`${rest.title} ${rest.description || ''} ${rest.app || ''}`),
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
@@ -529,7 +538,7 @@ async function handleDeleteFeature(args: z.infer<typeof deleteFeatureSchema>) {
 
 async function handleListRubySpaces(args: z.infer<typeof listRubySpacesSchema>) {
   let query: FirebaseFirestore.Query = db.collection('stea_doc_spaces')
-    .where('tenantId', '==', DEFAULT_TENANT_ID);
+    .where('tenantId', '==', TENANT_ID);
 
   if (args.limit) {
     query = query.limit(args.limit);
@@ -552,7 +561,7 @@ async function handleCreateRubySpace(args: z.infer<typeof createRubySpaceSchema>
   const payload = {
     name: args.name,
     icon: args.icon,
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: TENANT_ID,
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
   };
@@ -599,7 +608,7 @@ async function handleCreateRubyDoc(args: z.infer<typeof createRubyDocSchema>) {
     content: contentJson,
     type: args.type,
     spaceId: args.spaceId,
-    tenantId: DEFAULT_TENANT_ID,
+    tenantId: TENANT_ID,
     ...(args.app && { app: args.app }),
     createdAt: FieldValue.serverTimestamp(),
     createdBy: CREATED_BY,
