@@ -9,6 +9,7 @@ const LINKS = [
   { label: "Home", href: "/" },
   { label: "Apps", href: "/apps" },
   { label: "Capabilities", href: "/capabilities" },
+  { label: "STEa", href: "/apps/stea/explore" },
   { label: "Contact", href: "/contact" },
 ];
 

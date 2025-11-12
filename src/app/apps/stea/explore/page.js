@@ -1,37 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useTenant } from '@/contexts/TenantContext';
 
 export default function SteaDemoPage() {
-  const router = useRouter();
-  const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
   const [modalImage, setModalImage] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-
-  // Authorization check: require tenant membership
-  useEffect(() => {
-    if (!tenantLoading && availableTenants.length === 0) {
-      router.replace('/apps/stea?error=no_workspace');
-    }
-  }, [availableTenants, tenantLoading, router]);
-
-  // Show loading while checking tenant access
-  if (tenantLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-neutral-600">Loading...</div>
-      </div>
-    );
-  }
-
-  // Don't render if no tenant access
-  if (availableTenants.length === 0) {
-    return null; // Will redirect via useEffect
-  }
 
   const productImages = [
     {
@@ -154,6 +129,16 @@ export default function SteaDemoPage() {
   return (
     <main className="min-h-screen bg-starburst">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Login Button - Top Right */}
+        <div className="flex justify-end mb-4">
+          <Link
+            href="/apps/stea"
+            className="px-6 py-2 bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white rounded-lg hover:shadow-xl hover:-translate-y-0.5 transition-all font-semibold"
+          >
+            Login
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="card p-8 mt-2">
           <div className="text-center">
@@ -421,12 +406,15 @@ export default function SteaDemoPage() {
             <p className="text-neutral-600 mb-6 max-w-2xl mx-auto">
               Try the demo: Draft a brief → Generate backlog → Send to testing → Generate docs → Close the loop
             </p>
-            <Link
-              href="/apps/stea"
+            <button
+              onClick={() => {
+                setActiveTab('pricing');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="inline-block px-8 py-3 bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-1 transition-all font-semibold"
             >
-              Get Started
-            </Link>
+              View Pricing
+            </button>
           </div>
         </section>
 
@@ -588,12 +576,15 @@ export default function SteaDemoPage() {
         )}
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-neutral-500">
-          <p>
-            STEa is part of the Arcturus Studio toolkit.{' '}
-            <Link href="/apps/stea" className="text-neutral-700 hover:underline">
-              Back to STEa Home
-            </Link>
+        <div className="mt-8 text-center">
+          <Link
+            href="/apps/stea"
+            className="inline-block px-8 py-3 mb-4 bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-1 transition-all font-semibold"
+          >
+            Login to STEa
+          </Link>
+          <p className="text-sm text-neutral-500">
+            STEa is part of the Arcturus Studio toolkit.
           </p>
         </div>
       </div>
