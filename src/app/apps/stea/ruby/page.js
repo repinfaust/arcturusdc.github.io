@@ -12,6 +12,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import RubyEditor from '@/components/RubyEditor';
+import { getAllTemplates, templateToTipTapJSON } from '@/lib/templates';
 
 const DOC_TYPES = [
   { value: 'documentation', label: 'Documentation', emoji: '📄', color: 'blue' },
@@ -46,6 +47,8 @@ export default function RubyPage() {
   // New doc form
   const [newDocTitle, setNewDocTitle] = useState('');
   const [newDocType, setNewDocType] = useState('documentation');
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(true);
 
   // Auth check
   useEffect(() => {
@@ -156,11 +159,18 @@ export default function RubyPage() {
 
     try {
       const docsRef = collection(db, 'stea_docs');
+
+      // Generate content from template
+      const templateContent = selectedTemplate
+        ? templateToTipTapJSON(selectedTemplate)
+        : { type: 'doc', content: [] };
+
       const newDoc = await addDoc(docsRef, {
         tenantId: currentTenant.id,
         title: newDocTitle.trim(),
-        type: newDocType,
-        content: { type: 'doc', content: [] }, // Empty TipTap document
+        type: selectedTemplate?.docType || newDocType,
+        templateId: selectedTemplate?.id || null,
+        content: templateContent,
         spaceId: selectedSpace?.id || null,
         parentDocId: null,
         linkedEntities: [],
@@ -174,8 +184,11 @@ export default function RubyPage() {
         collaborators: [user.email],
       });
 
+      // Reset form
       setNewDocTitle('');
       setNewDocType('documentation');
+      setSelectedTemplate(null);
+      setShowTemplateSelector(true);
       setShowNewDocModal(false);
 
       // Open the new document in editor
@@ -487,64 +500,132 @@ export default function RubyPage() {
       {/* New Document Modal */}
       {showNewDocModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-semibold text-neutral-900">Create New Document</h3>
+          <div className="w-full max-w-3xl rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            {showTemplateSelector ? (
+              <>
+                <h3 className="mb-2 text-lg font-semibold text-neutral-900">Choose a Template</h3>
+                <p className="mb-6 text-sm text-neutral-600">
+                  Select a template to start with, or create a blank document
+                </p>
 
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-neutral-700">
-                Document Title
-              </label>
-              <input
-                type="text"
-                value={newDocTitle}
-                onChange={(e) => setNewDocTitle(e.target.value)}
-                placeholder="e.g., Architecture Overview"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/20"
-                autoFocus
-              />
-            </div>
+                <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {getAllTemplates().map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => {
+                        setSelectedTemplate(template);
+                        setShowTemplateSelector(false);
+                      }}
+                      className="group rounded-lg border border-neutral-200 p-4 text-left transition hover:border-rose-400 hover:bg-rose-50"
+                    >
+                      <div className="mb-2 text-3xl">{template.emoji}</div>
+                      <h4 className="mb-1 font-semibold text-neutral-900 group-hover:text-rose-900">
+                        {template.name}
+                      </h4>
+                      <p className="text-xs text-neutral-600">{template.description}</p>
+                    </button>
+                  ))}
+                </div>
 
-            <div className="mb-6">
-              <label className="mb-1 block text-sm font-medium text-neutral-700">
-                Document Type
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {DOC_TYPES.map((type) => (
+                <div className="flex justify-end">
                   <button
-                    key={type.value}
-                    onClick={() => setNewDocType(type.value)}
-                    className={`rounded-lg border p-3 text-left text-sm transition ${
-                      newDocType === type.value
-                        ? 'border-rose-400 bg-rose-50 text-rose-900'
-                        : 'border-neutral-200 text-neutral-700 hover:bg-neutral-50'
-                    }`}
+                    onClick={() => {
+                      setShowNewDocModal(false);
+                      setShowTemplateSelector(true);
+                      setSelectedTemplate(null);
+                      setNewDocTitle('');
+                      setNewDocType('documentation');
+                    }}
+                    className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
                   >
-                    <div className="mb-1 text-xl">{type.emoji}</div>
-                    <div className="font-medium">{type.label}</div>
+                    Cancel
                   </button>
-                ))}
-              </div>
-            </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-4 flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setShowTemplateSelector(true);
+                      setSelectedTemplate(null);
+                    }}
+                    className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100"
+                    title="Back to templates"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{selectedTemplate?.emoji}</span>
+                    <div>
+                      <h3 className="text-lg font-semibold text-neutral-900">
+                        {selectedTemplate?.name}
+                      </h3>
+                      <p className="text-sm text-neutral-600">{selectedTemplate?.description}</p>
+                    </div>
+                  </div>
+                </div>
 
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowNewDocModal(false);
-                  setNewDocTitle('');
-                  setNewDocType('documentation');
-                }}
-                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateDocument}
-                disabled={!newDocTitle.trim()}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
-              >
-                Create Document
-              </button>
-            </div>
+                <div className="mb-6">
+                  <label className="mb-1 block text-sm font-medium text-neutral-700">
+                    Document Title
+                  </label>
+                  <input
+                    type="text"
+                    value={newDocTitle}
+                    onChange={(e) => setNewDocTitle(e.target.value)}
+                    placeholder={`e.g., ${selectedTemplate?.name} for Feature X`}
+                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/20"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newDocTitle.trim()) {
+                        handleCreateDocument();
+                      }
+                    }}
+                  />
+                </div>
+
+                {selectedTemplate?.sections && selectedTemplate.sections.length > 0 && (
+                  <div className="mb-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                    <h4 className="mb-2 text-sm font-semibold text-neutral-900">
+                      Template Sections
+                    </h4>
+                    <ul className="space-y-1 text-sm text-neutral-600">
+                      {selectedTemplate.sections.map((section, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-rose-600">•</span>
+                          <span>{section.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setShowNewDocModal(false);
+                      setShowTemplateSelector(true);
+                      setSelectedTemplate(null);
+                      setNewDocTitle('');
+                      setNewDocType('documentation');
+                    }}
+                    className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateDocument}
+                    disabled={!newDocTitle.trim()}
+                    className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
+                  >
+                    Create Document
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
