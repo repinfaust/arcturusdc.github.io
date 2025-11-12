@@ -10,6 +10,7 @@ export default function SteaDemoPage() {
   const router = useRouter();
   const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
   const [modalImage, setModalImage] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Authorization check: require tenant membership
   useEffect(() => {
@@ -166,8 +167,35 @@ export default function SteaDemoPage() {
               A closed-loop product system that keeps strategy, delivery, testing, and product intelligence in perfect sync
             </p>
           </div>
+
+          {/* Tab Navigation */}
+          <div className="flex justify-center gap-2 mt-6 border-t border-neutral-200 pt-6">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                activeTab === 'overview'
+                  ? 'bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white shadow-lg'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('pricing')}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+                activeTab === 'pricing'
+                  ? 'bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white shadow-lg'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+              }`}
+            >
+              Pricing
+            </button>
+          </div>
         </div>
 
+        {/* Overview Tab Content */}
+        {activeTab === 'overview' && (
+          <>
         {/* Products Section */}
         <section className="mt-8">
           <h2 className="text-2xl font-extrabold text-neutral-900 mb-6 px-2">
@@ -401,6 +429,163 @@ export default function SteaDemoPage() {
             </Link>
           </div>
         </section>
+
+          </>
+        )}
+
+        {/* Pricing Tab Content */}
+        {activeTab === 'pricing' && (
+          <section className="mt-8">
+            <div className="card p-8">
+              <h2 className="text-3xl font-extrabold text-neutral-900 mb-4 flex items-center gap-2">
+                <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">💸 STEa Pricing</span>
+              </h2>
+              <p className="text-neutral-600 mb-8 text-lg">
+                Choose a plan that fits how you build. Every plan includes access to <strong>Harls</strong>, <strong>Filo</strong>, <strong>Hans</strong>, and hosted <strong>AutoProduct</strong> automation.
+              </p>
+
+              <hr className="my-8 border-neutral-200" />
+
+              {/* Core Plans */}
+              <h3 className="text-2xl font-bold text-neutral-900 mb-6">🔹 Core Plans</h3>
+
+              <div className="overflow-x-auto mb-12">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-amber-50 via-violet-50 to-emerald-50">
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Plan</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Monthly</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Yearly (Save 15%)</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Designed For</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Key Features</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">Solo</td>
+                      <td className="border border-neutral-300 px-4 py-3">£9 / month</td>
+                      <td className="border border-neutral-300 px-4 py-3">£92 / year</td>
+                      <td className="border border-neutral-300 px-4 py-3 text-sm">Independent makers or solo PMs</td>
+                      <td className="border border-neutral-300 px-4 py-3 text-sm">
+                        • 1 active App (archive old projects, create new)<br />
+                        • Personal workspace (Google Auth required)<br />
+                        • Hosted AutoProduct included<br />
+                        • Full access to Harls, Filo & Hans boards
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">Team</td>
+                      <td className="border border-neutral-300 px-4 py-3">£25 / seat / month</td>
+                      <td className="border border-neutral-300 px-4 py-3">£255 / seat / year</td>
+                      <td className="border border-neutral-300 px-4 py-3 text-sm">Small product teams</td>
+                      <td className="border border-neutral-300 px-4 py-3 text-sm">
+                        • Up to <strong>10 active Apps</strong> at once (archive + reuse)<br />
+                        • Shared workspaces with role-based access<br />
+                        • Collaborative board + testing views<br />
+                        • Hosted AutoProduct automation
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">Agency / Partner</td>
+                      <td className="border border-neutral-300 px-4 py-3">£49 / seat / month</td>
+                      <td className="border border-neutral-300 px-4 py-3">£499 / seat / year</td>
+                      <td className="border border-neutral-300 px-4 py-3 text-sm">Agencies or consultants managing multiple clients</td>
+                      <td className="border border-neutral-300 px-4 py-3 text-sm">
+                        • Multiple client workspaces with scalable capacity<br />
+                        • Custom branding & export templates<br />
+                        • Everything in Team plan<br />
+                        • White-label ready
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="text-sm text-neutral-600 italic mb-12">
+                *Need higher capacity? Contact us for enterprise workspace options.
+              </p>
+
+              <hr className="my-8 border-neutral-200" />
+
+              {/* Optional Add-On */}
+              <h3 className="text-2xl font-bold text-neutral-900 mb-6">🧩 Optional Add-On</h3>
+
+              <div className="overflow-x-auto mb-12">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-amber-50 via-violet-50 to-emerald-50">
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Add-On</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Price</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-neutral-50">
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">MCP Config Pack<br />(Self-Hosted AutoProduct)</td>
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-amber-600">£30 one-off</td>
+                      <td className="border border-neutral-300 px-4 py-3 text-sm">
+                        Run AutoProduct on your own infrastructure. Includes:<br />
+                        • Prompt templates<br />
+                        • Example MCP config files<br />
+                        • Setup README for Firebase + STEa integration<br /><br />
+                        Requires an active STEa subscription.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <hr className="my-8 border-neutral-200" />
+
+              {/* All Plans Include */}
+              <h3 className="text-2xl font-bold text-neutral-900 mb-6">🧱 All Plans Include</h3>
+              <ul className="space-y-2 mb-12 text-neutral-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-lg">🔐</span>
+                  <span><strong>Google Sign-In</strong> for every workspace</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-lg">☁️</span>
+                  <span><strong>Firestore Sync</strong> for real-time persistence</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-lg">🧠</span>
+                  <span><strong>Hosted AutoProduct Relay</strong> for backlog generation</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-lg">💾</span>
+                  <span><strong>Workspace Isolation</strong> for security</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-lg">📦</span>
+                  <span><strong>Archiving</strong> to keep old builds read-only</span>
+                </li>
+              </ul>
+
+              <hr className="my-8 border-neutral-200" />
+
+              {/* App Lifecycle */}
+              <h3 className="text-2xl font-bold text-neutral-900 mb-4">⚙️ App Lifecycle</h3>
+              <p className="text-neutral-600 mb-8">
+                Build → Complete → Archive (read-only) → Create next App.<br />
+                Solo: 1 active App. Team: up to 10. Agency: scalable.
+              </p>
+
+              <hr className="my-8 border-neutral-200" />
+
+              {/* CTA */}
+              <div className="text-center">
+                <p className="text-xl font-bold text-neutral-900 mb-4">Ready to start?</p>
+                <Link
+                  href="/apps/stea"
+                  className="inline-block px-8 py-3 bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-1 transition-all font-semibold"
+                >
+                  Get Started with STEa
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-neutral-500">

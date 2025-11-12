@@ -54,9 +54,9 @@ const IN_SESSION_DESTINATIONS = [
     borderColor: 'border-slate-200',
   },
   {
-    label: 'STEa Demo',
-    href: '/apps/stea/demo',
-    description: 'Interactive showcase of the complete STEa tech stack and closed-loop workflow.',
+    label: 'Explore STEa',
+    href: '/apps/stea/explore',
+    description: 'Interactive showcase of the complete STEa tech stack, closed-loop workflow, and pricing.',
     gradient: 'from-pink-50/80 to-fuchsia-50/30',
     borderColor: 'border-pink-200',
   },

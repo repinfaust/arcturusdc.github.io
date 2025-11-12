@@ -1811,7 +1811,7 @@ export default function SteaBoard() {
         </div>
 
         {/* Ruby Documentation Links */}
-        {currentTenant?.id && (
+        {currentTenant?.id ? (
           <div className="mt-3 flex items-center gap-2 flex-wrap">
             <div className="text-xs text-gray-600 font-medium">Create Docs:</div>
             <CreateDocButton
@@ -1835,6 +1835,10 @@ export default function SteaBoard() {
               label="Test Plan"
               tenantId={currentTenant.id}
             />
+          </div>
+        ) : (
+          <div className="mt-3 text-xs text-gray-500">
+            [Debug: No tenant ID - currentTenant={JSON.stringify(currentTenant)}]
           </div>
         )}
 
