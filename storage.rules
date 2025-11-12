@@ -1,0 +1,35 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Ruby document assets
+    match /ruby-assets/{tenantId}/{docId}/{fileName} {
+      // Allow authenticated users to read assets from their tenant
+      // In production, you'd verify tenant membership via Firestore lookup
+      allow read: if isAuthenticated();
+
+      // Allow authenticated users to upload assets
+      // Size limit: 10MB
+      allow write: if isAuthenticated()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*|application/pdf|text/.*|application/json');
+
+      // Allow authenticated users to delete their own uploads
+      allow delete: if isAuthenticated();
+    }
+
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

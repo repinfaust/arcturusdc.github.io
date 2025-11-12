@@ -2,6 +2,7 @@
 import { initializeApp, getApps, deleteApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, initializeFirestore, terminate } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -21,6 +22,7 @@ if (!globalForFirebase._firebaseInitialized) {
   globalForFirebase._firebaseApp = null;
   globalForFirebase._firebaseDb = null;
   globalForFirebase._firebaseAuth = null;
+  globalForFirebase._firebaseStorage = null;
   globalForFirebase._firebaseInitialized = false;
 }
 
@@ -31,12 +33,13 @@ function initializeFirebaseApp() {
       app: globalForFirebase._firebaseApp,
       db: globalForFirebase._firebaseDb,
       auth: globalForFirebase._firebaseAuth,
+      storage: globalForFirebase._firebaseStorage,
     };
   }
 
   // Only initialize in browser
   if (typeof window === 'undefined') {
-    return { app: null, db: null, auth: null };
+    return { app: null, db: null, auth: null, storage: null };
   }
 
   try {
@@ -68,11 +71,13 @@ function initializeFirebaseApp() {
     }
 
     const auth = getAuth(app);
+    const storage = getStorage(app);
 
     // Store in global to survive hot reloads
     globalForFirebase._firebaseApp = app;
     globalForFirebase._firebaseDb = db;
     globalForFirebase._firebaseAuth = auth;
+    globalForFirebase._firebaseStorage = storage;
     globalForFirebase._firebaseInitialized = true;
 
     // Cleanup on hot module replacement
@@ -88,7 +93,7 @@ function initializeFirebaseApp() {
       });
     }
 
-    return { app, db, auth };
+    return { app, db, auth, storage };
   } catch (error) {
     console.error('Firebase initialization error:', error);
     throw error;
@@ -96,7 +101,7 @@ function initializeFirebaseApp() {
 }
 
 // Initialize once
-const { app, db, auth } = initializeFirebaseApp();
+const { app, db, auth, storage } = initializeFirebaseApp();
 
-export { auth, db };
+export { auth, db, storage };
 export const googleProvider = new GoogleAuthProvider();

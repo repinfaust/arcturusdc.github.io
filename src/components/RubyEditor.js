@@ -14,11 +14,12 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Highlight from '@tiptap/extension-highlight';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { common, createLowlight } from 'lowlight';
 import { Callout } from '@/lib/tiptap-extensions/Callout';
 import { SlashCommand } from '@/lib/tiptap-extensions/SlashCommand';
+import { uploadAsset, deleteAsset, getFileIcon, formatFileSize } from '@/lib/storage';
 
 const lowlight = createLowlight(common);
 
@@ -29,6 +30,10 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [showCalloutMenu, setShowCalloutMenu] = useState(false);
+  const [showAssetPanel, setShowAssetPanel] = useState(false);
+  const [assets, setAssets] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(null);
 
   // Load document data
   useEffect(() => {
@@ -50,6 +55,24 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     };
 
     loadDocument();
+  }, [document?.id]);
+
+  // Load assets for this document
+  useEffect(() => {
+    if (!document?.id) return;
+
+    const assetsRef = collection(db, 'stea_doc_assets');
+    const q = query(assetsRef, where('docId', '==', document.id));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedAssets = [];
+      snapshot.forEach((doc) => {
+        loadedAssets.push({ id: doc.id, ...doc.data() });
+      });
+      setAssets(loadedAssets);
+    });
+
+    return () => unsubscribe();
   }, [document?.id]);
 
   // Initialize TipTap editor
@@ -129,15 +152,19 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
           if (file.type.startsWith('image/')) {
             event.preventDefault();
 
-            const reader = new FileReader();
-            reader.onload = (readerEvent) => {
-              const node = view.state.schema.nodes.image.create({
-                src: readerEvent.target.result,
-              });
-              const transaction = view.state.tr.insert(view.state.selection.from, node);
-              view.dispatch(transaction);
-            };
-            reader.readAsDataURL(file);
+            // Upload to Cloud Storage
+            handleFileUpload(file).then((asset) => {
+              if (asset && asset.url) {
+                const node = view.state.schema.nodes.image.create({
+                  src: asset.url,
+                  alt: asset.name,
+                  title: asset.name,
+                });
+                const transaction = view.state.tr.insert(view.state.selection.from, node);
+                view.dispatch(transaction);
+              }
+            });
+
             return true;
           }
         }
@@ -152,15 +179,18 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
             event.preventDefault();
             const file = item.getAsFile();
             if (file) {
-              const reader = new FileReader();
-              reader.onload = (readerEvent) => {
-                const node = view.state.schema.nodes.image.create({
-                  src: readerEvent.target.result,
-                });
-                const transaction = view.state.tr.replaceSelectionWith(node);
-                view.dispatch(transaction);
-              };
-              reader.readAsDataURL(file);
+              // Upload to Cloud Storage
+              handleFileUpload(file).then((asset) => {
+                if (asset && asset.url) {
+                  const node = view.state.schema.nodes.image.create({
+                    src: asset.url,
+                    alt: asset.name,
+                    title: asset.name,
+                  });
+                  const transaction = view.state.tr.replaceSelectionWith(node);
+                  view.dispatch(transaction);
+                }
+              });
               return true;
             }
           }
@@ -248,6 +278,49 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     setShowLinkModal(false);
   }, [editor, linkUrl]);
 
+  // Handle file upload
+  const handleFileUpload = useCallback(async (file) => {
+    if (!file || !document?.id || !tenantId || !userEmail) return null;
+
+    try {
+      setUploadingFile(file.name);
+      setUploadProgress(0);
+
+      const asset = await uploadAsset(
+        file,
+        document.id,
+        tenantId,
+        userEmail,
+        (progress) => {
+          setUploadProgress(progress);
+        }
+      );
+
+      setUploadingFile(null);
+      setUploadProgress(null);
+
+      return asset;
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(`Upload failed: ${error.message}`);
+      setUploadingFile(null);
+      setUploadProgress(null);
+      return null;
+    }
+  }, [document?.id, tenantId, userEmail]);
+
+  // Delete asset
+  const handleDeleteAsset = useCallback(async (assetId, storagePath) => {
+    if (!confirm('Are you sure you want to delete this asset?')) return;
+
+    try {
+      await deleteAsset(assetId, storagePath);
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(`Failed to delete asset: ${error.message}`);
+    }
+  }, []);
+
   if (!editor || !docData) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -282,6 +355,16 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAssetPanel(!showAssetPanel)}
+              className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+              title="Assets"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Assets ({assets.length})
+            </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
@@ -586,9 +669,143 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
         </div>
       </div>
 
-      {/* Editor Content */}
-      <div className="flex-1 overflow-y-auto bg-white">
-        <EditorContent editor={editor} />
+      {/* Upload Progress */}
+      {uploadingFile && (
+        <div className="border-b border-neutral-200 bg-blue-50 px-6 py-3">
+          <div className="flex items-center gap-3">
+            <svg className="h-5 w-5 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <div className="flex-1">
+              <div className="text-sm font-medium text-blue-900">Uploading {uploadingFile}...</div>
+              <div className="mt-1 h-2 w-full rounded-full bg-blue-200">
+                <div
+                  className="h-2 rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${uploadProgress || 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Editor Content */}
+        <div className="flex-1 overflow-y-auto bg-white">
+          <EditorContent editor={editor} />
+        </div>
+
+        {/* Asset Panel */}
+        {showAssetPanel && (
+          <aside className="w-80 border-l border-neutral-200 bg-neutral-50 overflow-y-auto">
+            <div className="p-4">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-semibold text-neutral-900">Assets</h3>
+                <button
+                  onClick={() => setShowAssetPanel(false)}
+                  className="rounded p-1 text-neutral-600 hover:bg-neutral-100"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Upload Button */}
+              <label className="mb-4 block cursor-pointer rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 text-center transition hover:border-rose-400 hover:bg-rose-50">
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*,application/pdf,text/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleFileUpload(file);
+                      e.target.value = ''; // Reset input
+                    }
+                  }}
+                />
+                <svg className="mx-auto h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p className="mt-2 text-sm font-medium text-neutral-700">Upload File</p>
+                <p className="text-xs text-neutral-500">Click or drag files here</p>
+              </label>
+
+              {/* Asset List */}
+              {assets.length === 0 ? (
+                <div className="rounded-lg bg-white p-6 text-center">
+                  <p className="text-sm text-neutral-600">No assets yet</p>
+                  <p className="mt-1 text-xs text-neutral-500">Upload images or files to get started</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {assets.map((asset) => (
+                    <div
+                      key={asset.id}
+                      className="group rounded-lg bg-white p-3 shadow-sm transition hover:shadow-md"
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Thumbnail or Icon */}
+                        <div className="flex-shrink-0">
+                          {asset.mime.startsWith('image/') && asset.thumbnailUrl ? (
+                            <img
+                              src={asset.thumbnailUrl}
+                              alt={asset.name}
+                              className="h-12 w-12 rounded object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded bg-neutral-100 text-2xl">
+                              {getFileIcon(asset.mime)}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Details */}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-neutral-900" title={asset.name}>
+                            {asset.name}
+                          </p>
+                          <p className="text-xs text-neutral-500">{formatFileSize(asset.size)}</p>
+
+                          {/* Actions */}
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              onClick={() => {
+                                if (asset.mime.startsWith('image/') && editor) {
+                                  editor.chain().focus().setImage({ src: asset.url }).run();
+                                }
+                              }}
+                              disabled={!asset.mime.startsWith('image/')}
+                              className="text-xs text-rose-600 hover:text-rose-700 disabled:text-neutral-400 disabled:cursor-not-allowed"
+                            >
+                              Insert
+                            </button>
+                            <a
+                              href={asset.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-neutral-600 hover:text-neutral-900"
+                            >
+                              View
+                            </a>
+                            <button
+                              onClick={() => handleDeleteAsset(asset.id, asset.storagePath)}
+                              className="text-xs text-red-600 hover:text-red-700"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </aside>
+        )}
       </div>
 
       {/* Link Modal */}
