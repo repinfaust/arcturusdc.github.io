@@ -2217,6 +2217,7 @@ export default function SteaBoard() {
                 features={features}
                 epicMap={epicMap}
                 featureMap={featureMap}
+                currentTenant={currentTenant}
               />
             </div>
           </div>
@@ -2382,7 +2383,7 @@ function SendToHansButton({ card }) {
 function ModalBody({
   editing, setEditing, creating, saveEntity, deleteEntity,
   addFiles, deleteFile, uploading, user, appsList, onAddApp,
-  epics, features, epicMap, featureMap,
+  epics, features, epicMap, featureMap, currentTenant,
 }) {
   const [descExpanded, setDescExpanded] = useState(false);
   const selectedEpicId = normalizeId(editing?.epicId);
@@ -2711,6 +2712,58 @@ function ModalBody({
           <button onClick={() => saveEntity(editing)} className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
         </div>
       </div>
+
+      {/* Ruby Documentation Links */}
+      {!creating && editing?.id && currentTenant?.id && (
+        <div className="md:col-span-2 border-t pt-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">Create Documentation in Ruby</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            {entityType === 'epic' && (
+              <CreateDocButton
+                sourceType="epic"
+                sourceId={editing.id}
+                templateId="prs"
+                label="PRS"
+                tenantId={currentTenant.id}
+              />
+            )}
+            {entityType === 'feature' && (
+              <CreateDocButton
+                sourceType="feature"
+                sourceId={editing.id}
+                templateId="buildSpec"
+                label="Build Spec"
+                tenantId={currentTenant.id}
+              />
+            )}
+            {entityType === 'card' && (
+              <>
+                <CreateDocButton
+                  sourceType="card"
+                  sourceId={editing.id}
+                  templateId="prs"
+                  label="PRS"
+                  tenantId={currentTenant.id}
+                />
+                <CreateDocButton
+                  sourceType="card"
+                  sourceId={editing.id}
+                  templateId="buildSpec"
+                  label="Build Spec"
+                  tenantId={currentTenant.id}
+                />
+                <CreateDocButton
+                  sourceType="card"
+                  sourceId={editing.id}
+                  templateId="testPlan"
+                  label="Test Plan"
+                  tenantId={currentTenant.id}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Attachments */}
       <div className="md:col-span-2">
