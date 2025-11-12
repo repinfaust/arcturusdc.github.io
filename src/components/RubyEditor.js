@@ -80,6 +80,7 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     extensions: [
       StarterKit.configure({
         codeBlock: false, // Disable default code block (using lowlight version)
+        link: false, // Disable default link (using custom configured version)
       }),
       Link.configure({
         openOnClick: false,
