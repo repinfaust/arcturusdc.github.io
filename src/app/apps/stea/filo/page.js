@@ -2268,6 +2268,7 @@ function SendToHansButton({ card }) {
           featureId: card.featureId || null,
           epicLabel: card.epicLabel || '',
           featureLabel: card.featureLabel || '',
+          tenantId: card.tenantId, // Required for multi-tenant security
         }),
       });
 
