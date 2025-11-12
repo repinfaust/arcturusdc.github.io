@@ -1368,6 +1368,19 @@ export default function SteaBoard() {
                   <span>Reporter: {epic.reporter || '—'}</span>
                   {epic.assignee ? <span>Assigned: {epic.assignee}</span> : null}
                 </div>
+                {/* Ruby Documentation Links */}
+                {currentTenant?.id && (
+                  <div className="mt-3 flex items-center gap-2 flex-wrap">
+                    <div className="text-xs text-gray-600 font-medium">Create Docs:</div>
+                    <CreateDocButton
+                      sourceType="epic"
+                      sourceId={epic.id}
+                      templateId="prs"
+                      label="PRS"
+                      tenantId={currentTenant.id}
+                    />
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -1413,6 +1426,19 @@ export default function SteaBoard() {
                 )}
               </>
             )}
+            {/* Ruby Documentation Links (only show in peek mode when has children) */}
+            {currentTenant?.id && isPeeking && hasChildren && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="text-xs text-gray-600 font-medium">Create Docs:</div>
+                <CreateDocButton
+                  sourceType="epic"
+                  sourceId={epic.id}
+                  templateId="prs"
+                  label="PRS"
+                  tenantId={currentTenant.id}
+                />
+              </div>
+            )}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic', app: epic.app }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
             </div>
@@ -1437,6 +1463,18 @@ export default function SteaBoard() {
               <span>Reporter: {epic.reporter || '—'}</span>
               {epic.assignee ? <span>Assigned: {epic.assignee}</span> : null}
             </div>
+            {currentTenant?.id && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="text-xs text-gray-600 font-medium">Create Docs:</div>
+                <CreateDocButton
+                  sourceType="epic"
+                  sourceId={epic.id}
+                  templateId="prs"
+                  label="PRS"
+                  tenantId={currentTenant.id}
+                />
+              </div>
+            )}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button onClick={(e) => { e.stopPropagation(); startNewEntity('feature', { epicId: epic.id, epicLabel: epic.title || 'Epic', app: epic.app }); }} className="px-2 py-1 text-xs rounded border border-red-200 bg-white text-red-700 hover:bg-red-50">+ Feature</button>
               <button onClick={(e) => { e.stopPropagation(); moveTo({ id: epic.id, statusColumn: epic.statusColumn }, prev); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
