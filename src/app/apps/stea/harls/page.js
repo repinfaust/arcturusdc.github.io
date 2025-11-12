@@ -22,7 +22,7 @@ setLogLevel('error');
    CONFIG & CONSTANTS
    ========================= */
 const LANE_OPTIONS = [null, 'now', 'next', 'later']; // null = backlog
-const DEFAULT_PROJECT_NAME = 'Felix Product Lab';
+const DEFAULT_PROJECT_NAME = 'Harls Product Lab';
 const DEFAULT_BOARD_NAME = 'Main Whiteboard';
 
 const BADGES = {
