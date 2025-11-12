@@ -13,6 +13,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import CreateDocButton from '@/components/CreateDocButton';
 
 /* -------------------- CONFIG -------------------- */
 const COLUMNS = ['Idea', 'Planning', 'Design', 'Build', 'Done', "Won't Do"];
@@ -1639,6 +1640,19 @@ export default function SteaBoard() {
                 )}
               </>
             )}
+            {/* Ruby Documentation Links */}
+            {currentTenant?.id && isPeeking && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="text-xs text-gray-600 font-medium">Create Docs:</div>
+                <CreateDocButton
+                  sourceType="feature"
+                  sourceId={feature.id}
+                  templateId="buildSpec"
+                  label="Build Spec"
+                  tenantId={currentTenant.id}
+                />
+              </div>
+            )}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel, app: featureApp }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
             </div>
@@ -1668,6 +1682,19 @@ export default function SteaBoard() {
               <span>Reporter: {feature.reporter || '—'}</span>
               {feature.assignee ? <span>Assigned: {feature.assignee}</span> : null}
             </div>
+            {/* Ruby Documentation Links */}
+            {currentTenant?.id && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="text-xs text-gray-600 font-medium">Create Docs:</div>
+                <CreateDocButton
+                  sourceType="feature"
+                  sourceId={feature.id}
+                  templateId="buildSpec"
+                  label="Build Spec"
+                  tenantId={currentTenant.id}
+                />
+              </div>
+            )}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button onClick={(e) => { e.stopPropagation(); startNewEntity('card', { featureId: feature.id, epicId: feature.epicId, featureLabel: feature.title || 'Feature', epicLabel, app: featureApp }); }} className="px-2 py-1 text-xs rounded border border-orange-200 bg-white text-orange-700 hover:bg-orange-50">+ Card</button>
               <button onClick={(e) => { e.stopPropagation(); moveTo({ id: feature.id, statusColumn: feature.statusColumn }, prev); }} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
@@ -1744,6 +1771,34 @@ export default function SteaBoard() {
             {card.assignee ? ` • Assigned: ${card.assignee}` : ''}
           </div>
         </div>
+
+        {/* Ruby Documentation Links */}
+        {currentTenant?.id && (
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            <div className="text-xs text-gray-600 font-medium">Create Docs:</div>
+            <CreateDocButton
+              sourceType="card"
+              sourceId={card.id}
+              templateId="prs"
+              label="PRS"
+              tenantId={currentTenant.id}
+            />
+            <CreateDocButton
+              sourceType="card"
+              sourceId={card.id}
+              templateId="buildSpec"
+              label="Build Spec"
+              tenantId={currentTenant.id}
+            />
+            <CreateDocButton
+              sourceType="card"
+              sourceId={card.id}
+              templateId="testPlan"
+              label="Test Plan"
+              tenantId={currentTenant.id}
+            />
+          </div>
+        )}
 
         <div className="mt-3 flex items-center justify-end gap-2">
           <button onClick={() => moveTo(card, prev)} className="px-2 py-1 text-xs rounded border hover:bg-gray-50" title={`Move to ${prev}`}>←</button>
