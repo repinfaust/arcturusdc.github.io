@@ -55,7 +55,7 @@ When the MCP server is running, you'll have access to these tools (prefixed with
 - **Default App**: Tou.me
 - **Default Board**: STEa
 - **Default Column**: Idea
-- **Tenant ID**: TGpicbMaoJMAAb62hqui (Tou.me workspace) - **REQUIRED for multi-tenant security**
+- **Tenant ID**: FqhckqMaorJMAQ6B29mP (Your workspace) - **REQUIRED for multi-tenant security**
 - **Server Path**: `/Users/davidloake/arcturusdc.github.io/servers/stea-mcp.ts`
 - **Credentials**: `/Users/davidloake/stea-775cd-1adc69763f06.json`
 
