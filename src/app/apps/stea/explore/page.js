@@ -199,6 +199,20 @@ export default function SteaDemoPage() {
             Four connected tools that eliminate context switching and maintain full traceability
           </p>
 
+          {/* Video Section */}
+          <div className="mb-8 px-2">
+            <div className="w-full overflow-hidden rounded-2xl border-2 border-neutral-200 bg-neutral-900 shadow-xl">
+              <video
+                controls
+                className="w-full"
+                preload="metadata"
+              >
+                <source src="/vid/stea_overview_video_1.5x.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {productImages.map((product, idx) => (
               <div key={idx} className={`card p-6 border-l-4 ${product.borderColor} hover:shadow-xl transition-all duration-300`}>

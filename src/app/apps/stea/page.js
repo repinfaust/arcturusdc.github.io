@@ -316,21 +316,6 @@ export default function SteaAccessPage() {
         )}
       </div>
 
-      {/* Meet the system video section */}
-      <div className="flex flex-col gap-4">
-        <h2 className="text-2xl font-semibold text-neutral-900">Meet the system</h2>
-        <div className="w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-900 shadow-lg">
-          <video
-            controls
-            className="w-full"
-            preload="metadata"
-          >
-            <source src="/vid/stea_overview_video_1.5x.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-2">
         {IN_SESSION_DESTINATIONS.map((dest) => (
           <Link
