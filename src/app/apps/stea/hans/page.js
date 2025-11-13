@@ -177,13 +177,35 @@ export default function HansTestingSuite() {
 
     setCreatingCard(true);
     try {
+      // Generate search tokens for discoverability
+      const generateSearchTokens = (text) => {
+        if (!text) return [];
+        const normalized = text.toLowerCase().trim();
+        const words = normalized.split(/\s+/);
+        const tokens = new Set();
+        tokens.add(normalized);
+        words.forEach(word => {
+          if (word.length > 2) {
+            tokens.add(word);
+            for (let i = 3; i <= word.length; i++) {
+              tokens.add(word.substring(0, i));
+            }
+          }
+        });
+        return Array.from(tokens);
+      };
+
       const newCard = {
         ...cardForm,
+        label: cardForm.title, // Required for Filo display
         tenantId: currentTenant.id,
         statusColumn: 'Idea',
         entityType: 'card',
         type: cardForm.type || 'observation',
         archived: false,
+        searchTokens: generateSearchTokens(
+          `${cardForm.title} ${cardForm.description || ''} ${cardForm.app || ''}`
+        ),
         createdAt: serverTimestamp(),
         createdBy: user?.email || user?.uid || 'unknown',
         updatedAt: serverTimestamp(),
