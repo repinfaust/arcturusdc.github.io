@@ -29,11 +29,14 @@ service firebase.storage {
 
     // TLDraw whiteboard snapshots for Harls
     match /tldraw/{projectId}/{boardId}/{fileName} {
-      // Allow authenticated users to read/write TLDraw snapshots
+      // Allow authenticated users to read TLDraw snapshots
       // Access control is enforced at the Firestore project level
-      allow read, write: if isAuthenticated()
-                         && request.resource.contentType == 'application/json'
-                         && request.resource.size < 50 * 1024 * 1024; // 50MB limit for large whiteboards
+      allow read: if isAuthenticated();
+
+      // Allow authenticated users to write TLDraw snapshots with size/type validation
+      allow write: if isAuthenticated()
+                   && request.resource.contentType == 'application/json'
+                   && request.resource.size < 50 * 1024 * 1024; // 50MB limit for large whiteboards
     }
 
     // Deny all other access
