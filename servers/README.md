@@ -69,8 +69,12 @@ After restarting Claude Desktop, open a new chat and you should see the followin
 - `stea.listRubySpaces` - List Ruby documentation spaces
 - `stea.createRubySpace` - Create a new documentation space
 - `stea.createRubyDoc` - Create a Ruby document with raw content
-- `stea.generateDoc` - **Generate a doc from template (PRS, BuildSpec, ReleaseNotes) with context from source artifact**
+- `stea.generateDoc` - **Generate a doc from template (PRS, BuildSpec, ReleaseNotes) with context from source artifact (R4)**
 - `stea.generateReleaseNotes` - **Automatically generate release notes from Filo Done cards, Hans test results, and GitHub PRs (R6)**
+- `stea.reviewDoc` - **Start a review for a document using predefined checklists (Accessibility, Security, GDPR, Design Parity, Performance) (R5)**
+- `stea.updateReview` - **Update review checklist items with pass/fail status and notes (R5)**
+- `stea.completeReview` - **Complete a review with final approval status and signature (R5)**
+- `stea.listReviews` - **List all reviews for a document (R5)**
 
 ## Usage Examples
 
@@ -213,6 +217,76 @@ When GitHub integration is enabled, it will also include:
 - Commit history
 - Contributors list
 
+### Review a Document (R5: Reviewer Mode)
+
+**Step 1: Start a review for a document**
+```
+Use stea.reviewDoc with:
+- docId: <Ruby document ID>
+- checklistType: "accessibility" | "security" | "gdpr" | "design-parity" | "performance"
+- reviewerId: <user ID> (optional)
+- reviewerName: "John Doe" (optional)
+```
+
+This will:
+- Load the appropriate checklist template (10-15 items)
+- Create a review document in Firestore
+- Initialize all checklist items with "pending" status
+- Return review ID and item count
+
+**Available Checklists**:
+- **accessibility**: WCAG 2.1 Level AA compliance checks (contrast, keyboard nav, alt text, etc.)
+- **security**: Security considerations (input validation, auth, encryption, XSS/CSRF prevention)
+- **gdpr**: Data privacy and GDPR compliance (consent, right to access/delete, DPAs, etc.)
+- **design-parity**: Design system consistency (tokens, typography, spacing, responsive)
+- **performance**: Performance optimization (Core Web Vitals, bundle size, caching, images)
+
+**Step 2: Update review items**
+```
+Use stea.updateReview with:
+- reviewId: <review ID from step 1>
+- itemId: "a11y-001" (checklist item ID)
+- status: "pass" | "fail" | "n/a"
+- notes: "Contrast ratio is 4.8:1" (optional)
+- suggestedFix: "Increase button text color to #2C3E50" (optional)
+- owner: "Frontend team" (optional)
+```
+
+Repeat for each checklist item. The system tracks progress automatically.
+
+**Step 3: Complete the review**
+```
+Use stea.completeReview with:
+- reviewId: <review ID>
+- status: "approved" | "changes-requested"
+- reviewerSignature: "John Doe"
+- summary: "Document meets accessibility standards with minor recommendations" (optional)
+```
+
+This will:
+- Verify all items are reviewed (no pending items)
+- Mark the review as complete with timestamp
+- Calculate final stats (passed, failed, critical failures)
+- Lock the review from further edits
+
+**Step 4: List all reviews for a document**
+```
+Use stea.listReviews with:
+- docId: <Ruby document ID>
+- checklistType: "all" | "accessibility" | "security" | etc. (optional filter)
+```
+
+Returns all reviews with progress stats, completion status, and timestamps.
+
+**Example Workflow**:
+1. Product manager creates PRS document using `generateDoc`
+2. Tech lead starts security review: `reviewDoc(docId, "security")`
+3. Reviews each security item, marks pass/fail with notes
+4. Completes review with "changes-requested" status
+5. Developer addresses issues and requests re-review
+6. Design lead starts design-parity review in parallel
+7. Both reviews approved → document ready for implementation
+
 ## Firestore Collections
 
 The MCP server creates documents in these collections:
@@ -228,6 +302,7 @@ The MCP server creates documents in these collections:
 - **stea_doc_links** - Bi-directional links between docs and artifacts
 - **stea_doc_assets** - Uploaded files (PDFs, images, etc.)
 - **stea_doc_versions** - Document version history
+- **stea_reviews** - Document reviews with checklist items and status (R5)
 
 ### Data Schema
 
@@ -324,6 +399,36 @@ The MCP server creates documents in these collections:
 }
 ```
 
+#### Review (R5)
+```typescript
+{
+  docId: string
+  docTitle: string
+  checklistType: "accessibility" | "security" | "gdpr" | "design-parity" | "performance"
+  checklistName: string
+  items: [{
+    id: string
+    question: string
+    category: string
+    severity: "Critical" | "Major" | "Minor"
+    guidance: string
+    status: "pending" | "pass" | "fail" | "n/a"
+    notes: string
+    suggestedFix: string
+    owner: string
+  }]
+  status: "in-review" | "approved" | "changes-requested"
+  reviewerId: string
+  reviewerName: string
+  reviewerSignature?: string
+  summary?: string
+  tenantId: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+  completedAt?: Timestamp
+}
+```
+
 ## Templates
 
 The MCP server includes three YAML-based document templates:
@@ -342,6 +447,35 @@ Sections: Overview, User Story Context, Acceptance Criteria, Architecture (Compo
 Sections: New Features, Improvements, Bug Fixes, Breaking Changes, Known Issues, Test Results, Deployment, Documentation, Links & Evidence, Contributors, Approval
 
 **Use for**: Epics representing releases or standalone release documentation
+
+## Review Checklists (R5)
+
+The MCP server includes five YAML-based review checklists:
+
+### Accessibility (WCAG 2.1 Level AA)
+**10 items**: Alt text, color contrast, keyboard navigation, form labels, heading hierarchy, ARIA attributes, focus indication, table structure, text resizing, reduced motion
+
+**Use for**: Ensuring documents and implementations meet accessibility standards
+
+### Security
+**14 items**: Input validation, authentication, authorization, encryption (transit/rest), SQL injection prevention, XSS prevention, CSRF protection, secrets management, rate limiting, error message sanitization, file upload security, security headers, logging
+
+**Use for**: Security review of technical designs and implementations
+
+### GDPR Compliance
+**15 items**: Legal basis, privacy notice, consent management, data subject rights (access/rectification/erasure/portability), data minimization, retention periods, security measures, third-party processors, international transfers, DPIA requirements, breach notification
+
+**Use for**: Ensuring features comply with data privacy regulations
+
+### Design Parity
+**12 items**: Figma design match, design tokens usage, spacing/layout grid, typography accuracy, interactive states, animations/transitions, component variants, responsive breakpoints, icons/illustrations, loading/empty states, dark mode, micro-interactions
+
+**Use for**: Verifying implementation matches design specifications
+
+### Performance
+**14 items**: Core Web Vitals (LCP/FID/CLS), image optimization, JavaScript bundles, fonts, CSS optimization, API calls, database queries, third-party scripts, caching strategy, render-blocking resources, server response time (TTFB), list rendering, memory usage, animations (60fps)
+
+**Use for**: Performance optimization review
 
 ## Firestore Composite Indexes
 

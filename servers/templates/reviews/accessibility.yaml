@@ -1,0 +1,63 @@
+name: Accessibility Review (WCAG Quick Check)
+description: Essential accessibility checks based on WCAG 2.1 Level AA guidelines
+category: accessibility
+items:
+  - id: a11y-001
+    question: Are all images provided with appropriate alt text?
+    category: Perceivable
+    severity: Critical
+    guidance: Every image must have alt text that describes its content or purpose. Decorative images should have empty alt attributes.
+
+  - id: a11y-002
+    question: Is sufficient color contrast maintained (4.5:1 for normal text, 3:1 for large text)?
+    category: Perceivable
+    severity: Critical
+    guidance: Use a contrast checker tool to verify text meets minimum contrast ratios against backgrounds.
+
+  - id: a11y-003
+    question: Can all functionality be accessed via keyboard alone?
+    category: Operable
+    severity: Critical
+    guidance: Test that all interactive elements (buttons, links, forms) can be reached and activated using only keyboard navigation.
+
+  - id: a11y-004
+    question: Are form inputs labeled clearly and associated with their labels?
+    category: Understandable
+    severity: Critical
+    guidance: Every form field must have a visible label element properly associated using for/id attributes or aria-label.
+
+  - id: a11y-005
+    question: Is proper heading hierarchy maintained (H1, H2, H3 in order)?
+    category: Perceivable
+    severity: Major
+    guidance: Pages should have one H1 and follow logical heading order without skipping levels.
+
+  - id: a11y-006
+    question: Are ARIA attributes used correctly where applicable?
+    category: Robust
+    severity: Major
+    guidance: ARIA labels, roles, and states should enhance accessibility without conflicting with native HTML semantics.
+
+  - id: a11y-007
+    question: Is focus indication clearly visible for interactive elements?
+    category: Operable
+    severity: Major
+    guidance: Focused elements must have a visible focus indicator (outline, border, or background change).
+
+  - id: a11y-008
+    question: Are tables structured with proper headers (th) and scope attributes?
+    category: Understandable
+    severity: Major
+    guidance: Data tables should use th elements with scope attributes to indicate column/row headers.
+
+  - id: a11y-009
+    question: Is text resizable up to 200% without loss of functionality?
+    category: Perceivable
+    severity: Minor
+    guidance: Users should be able to zoom text to 200% without horizontal scrolling or content overlap.
+
+  - id: a11y-010
+    question: Are animations and motion effects respecting prefers-reduced-motion?
+    category: Operable
+    severity: Minor
+    guidance: Provide reduced motion alternatives for users who have enabled this system preference.

@@ -1,0 +1,75 @@
+name: Design Parity Review
+description: Verify implementation matches design specifications and maintains design system consistency
+category: design
+items:
+  - id: design-001
+    question: Does the implementation match the approved Figma designs?
+    category: Visual Accuracy
+    severity: Major
+    guidance: Compare implementation against Figma frames for layout, spacing, sizing, and overall visual appearance.
+
+  - id: design-002
+    question: Are design tokens used correctly (colors, typography, spacing)?
+    category: Design System
+    severity: Major
+    guidance: Verify that implementation uses design tokens from the design system rather than hardcoded values.
+
+  - id: design-003
+    question: Are spacing and layout consistent with the design grid?
+    category: Layout
+    severity: Major
+    guidance: Check that margins, padding, and grid alignment match the design specifications.
+
+  - id: design-004
+    question: Are typography styles (font family, size, weight, line height) accurate?
+    category: Typography
+    severity: Major
+    guidance: Ensure text uses correct font family, sizes, weights, and line heights as specified in design.
+
+  - id: design-005
+    question: Are interactive states defined and implemented (hover, active, focus, disabled)?
+    category: Interaction Design
+    severity: Major
+    guidance: All interactive elements should have hover, active, focus, and disabled states matching design specs.
+
+  - id: design-006
+    question: Are animations and transitions matching design specifications?
+    category: Motion Design
+    severity: Minor
+    guidance: Verify that timing, easing, and animation choreography match the design intent.
+
+  - id: design-007
+    question: Are component variants used correctly from the design system?
+    category: Design System
+    severity: Major
+    guidance: Use approved component variants (button sizes, input types, etc.) from the design system library.
+
+  - id: design-008
+    question: Is the implementation responsive across breakpoints as designed?
+    category: Responsive Design
+    severity: Major
+    guidance: Test that layout adapts correctly at mobile, tablet, and desktop breakpoints per design specs.
+
+  - id: design-009
+    question: Are icons and illustrations from the approved design library?
+    category: Visual Assets
+    severity: Minor
+    guidance: Verify that all icons and illustrations are from the approved design system library.
+
+  - id: design-010
+    question: Are loading and empty states designed and implemented?
+    category: Edge Cases
+    severity: Major
+    guidance: Ensure loading states, empty states, and error states are designed and match specifications.
+
+  - id: design-011
+    question: Is dark mode support implemented consistently (if applicable)?
+    category: Theming
+    severity: Minor
+    guidance: If dark mode is specified, verify all elements adapt correctly using theme tokens.
+
+  - id: design-012
+    question: Are micro-interactions and feedback mechanisms implemented?
+    category: Interaction Design
+    severity: Minor
+    guidance: Small interactions (button press feedback, success indicators, etc.) should match design intent.

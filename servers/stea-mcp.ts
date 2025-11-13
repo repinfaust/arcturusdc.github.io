@@ -112,6 +112,43 @@ function loadTemplates() {
 // Load templates on startup
 loadTemplates();
 
+// ---------- Review Checklist System ----------
+interface ReviewChecklistItem {
+  id: string;
+  question: string;
+  category: string;
+  severity: 'Critical' | 'Major' | 'Minor';
+  guidance: string;
+}
+
+interface ReviewChecklist {
+  name: string;
+  description: string;
+  category: string;
+  items: ReviewChecklistItem[];
+}
+
+const reviewChecklists = new Map<string, ReviewChecklist>();
+
+function loadReviewChecklists() {
+  const reviewsDir = resolve(__dirname, 'templates', 'reviews');
+  const checklistTypes = ['accessibility', 'security', 'gdpr', 'design-parity', 'performance'];
+
+  for (const type of checklistTypes) {
+    try {
+      const filePath = resolve(reviewsDir, `${type}.yaml`);
+      const content = readFileSync(filePath, 'utf8');
+      const parsed = yaml.load(content) as ReviewChecklist;
+      reviewChecklists.set(type, parsed);
+    } catch (error) {
+      console.error(`Failed to load review checklist ${type}:`, error);
+    }
+  }
+}
+
+// Load review checklists on startup
+loadReviewChecklists();
+
 // Simple variable substitution in templates
 function applyTemplate(templateStr: string, variables: Record<string, any>): string {
   let result = templateStr;
@@ -424,6 +461,34 @@ const generateReleaseNotesSchema = z.object({
   includeGithub: z.boolean().default(true),
   includeFilo: z.boolean().default(true),
   includeHans: z.boolean().default(true),
+});
+
+const reviewDocSchema = z.object({
+  docId: z.string(),
+  checklistType: z.enum(['accessibility', 'security', 'gdpr', 'design-parity', 'performance']),
+  reviewerId: z.string().optional(),
+  reviewerName: z.string().optional(),
+});
+
+const updateReviewSchema = z.object({
+  reviewId: z.string(),
+  itemId: z.string(),
+  status: z.enum(['pass', 'fail', 'n/a']),
+  notes: z.string().optional(),
+  suggestedFix: z.string().optional(),
+  owner: z.string().optional(),
+});
+
+const completeReviewSchema = z.object({
+  reviewId: z.string(),
+  status: z.enum(['approved', 'changes-requested']),
+  reviewerSignature: z.string(),
+  summary: z.string().optional(),
+});
+
+const listReviewsSchema = z.object({
+  docId: z.string(),
+  checklistType: z.enum(['accessibility', 'security', 'gdpr', 'design-parity', 'performance', 'all']).default('all'),
 });
 
 // ---------- Tool Handlers ----------
@@ -1172,6 +1237,271 @@ async function handleGenerateReleaseNotes(args: z.infer<typeof generateReleaseNo
   };
 }
 
+// ---------- Review Handlers ----------
+
+async function handleReviewDoc(args: z.infer<typeof reviewDocSchema>) {
+  const startTime = Date.now();
+
+  // Verify document exists
+  const docRef = db.collection('stea_docs').doc(args.docId);
+  const doc = await docRef.get();
+  if (!doc.exists) {
+    throw new Error(`Document not found: ${args.docId}`);
+  }
+  const docData = doc.data();
+
+  // Verify tenant access
+  if (docData?.tenantId !== TENANT_ID) {
+    throw new Error('Access denied: Document belongs to a different tenant');
+  }
+
+  // Load checklist
+  const checklist = reviewChecklists.get(args.checklistType);
+  if (!checklist) {
+    throw new Error(`Checklist not found: ${args.checklistType}`);
+  }
+
+  // Initialize review items from checklist
+  const items = checklist.items.map(item => ({
+    id: item.id,
+    question: item.question,
+    category: item.category,
+    severity: item.severity,
+    guidance: item.guidance,
+    status: 'pending' as const,
+    notes: '',
+    suggestedFix: '',
+    owner: '',
+  }));
+
+  // Create review document
+  const payload = {
+    docId: args.docId,
+    docTitle: docData?.title || 'Untitled',
+    checklistType: args.checklistType,
+    checklistName: checklist.name,
+    items: items,
+    status: 'in-review' as const,
+    reviewerId: args.reviewerId || CREATED_BY,
+    reviewerName: args.reviewerName || 'Unknown',
+    tenantId: TENANT_ID,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  const ref = await db.collection('stea_reviews').add(payload);
+  const elapsed = Date.now() - startTime;
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          reviewId: ref.id,
+          docId: args.docId,
+          checklistType: args.checklistType,
+          checklistName: checklist.name,
+          totalItems: items.length,
+          status: 'in-review',
+          creationTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleUpdateReview(args: z.infer<typeof updateReviewSchema>) {
+  const startTime = Date.now();
+
+  // Fetch review
+  const reviewRef = db.collection('stea_reviews').doc(args.reviewId);
+  const review = await reviewRef.get();
+  if (!review.exists) {
+    throw new Error(`Review not found: ${args.reviewId}`);
+  }
+  const reviewData = review.data();
+
+  // Verify tenant access
+  if (reviewData?.tenantId !== TENANT_ID) {
+    throw new Error('Access denied: Review belongs to a different tenant');
+  }
+
+  // Find and update the item
+  const items = reviewData?.items || [];
+  const itemIndex = items.findIndex((item: any) => item.id === args.itemId);
+  if (itemIndex === -1) {
+    throw new Error(`Review item not found: ${args.itemId}`);
+  }
+
+  items[itemIndex] = {
+    ...items[itemIndex],
+    status: args.status,
+    notes: args.notes || items[itemIndex].notes,
+    suggestedFix: args.suggestedFix || items[itemIndex].suggestedFix,
+    owner: args.owner || items[itemIndex].owner,
+  };
+
+  // Update review
+  await reviewRef.update({
+    items: items,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const elapsed = Date.now() - startTime;
+
+  // Calculate progress
+  const pending = items.filter((i: any) => i.status === 'pending').length;
+  const passed = items.filter((i: any) => i.status === 'pass').length;
+  const failed = items.filter((i: any) => i.status === 'fail').length;
+  const na = items.filter((i: any) => i.status === 'n/a').length;
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          reviewId: args.reviewId,
+          itemId: args.itemId,
+          itemStatus: args.status,
+          progress: {
+            pending,
+            passed,
+            failed,
+            na,
+            total: items.length,
+          },
+          updateTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleCompleteReview(args: z.infer<typeof completeReviewSchema>) {
+  const startTime = Date.now();
+
+  // Fetch review
+  const reviewRef = db.collection('stea_reviews').doc(args.reviewId);
+  const review = await reviewRef.get();
+  if (!review.exists) {
+    throw new Error(`Review not found: ${args.reviewId}`);
+  }
+  const reviewData = review.data();
+
+  // Verify tenant access
+  if (reviewData?.tenantId !== TENANT_ID) {
+    throw new Error('Access denied: Review belongs to a different tenant');
+  }
+
+  // Check if all items are reviewed
+  const items = reviewData?.items || [];
+  const pendingItems = items.filter((i: any) => i.status === 'pending').length;
+  if (pendingItems > 0) {
+    throw new Error(`Cannot complete review: ${pendingItems} items are still pending`);
+  }
+
+  // Update review with completion status
+  await reviewRef.update({
+    status: args.status,
+    reviewerSignature: args.reviewerSignature,
+    summary: args.summary || '',
+    completedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  // Calculate final stats
+  const passed = items.filter((i: any) => i.status === 'pass').length;
+  const failed = items.filter((i: any) => i.status === 'fail').length;
+  const na = items.filter((i: any) => i.status === 'n/a').length;
+  const critical = items.filter((i: any) => i.severity === 'Critical' && i.status === 'fail').length;
+
+  const elapsed = Date.now() - startTime;
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          reviewId: args.reviewId,
+          status: args.status,
+          summary: args.summary || 'No summary provided',
+          stats: {
+            total: items.length,
+            passed,
+            failed,
+            na,
+            criticalFailures: critical,
+          },
+          completionTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleListReviews(args: z.infer<typeof listReviewsSchema>) {
+  const startTime = Date.now();
+
+  // Build query
+  let query = db.collection('stea_reviews')
+    .where('tenantId', '==', TENANT_ID)
+    .where('docId', '==', args.docId);
+
+  // Filter by checklist type if specified
+  if (args.checklistType !== 'all') {
+    query = query.where('checklistType', '==', args.checklistType);
+  }
+
+  const snapshot = await query.orderBy('createdAt', 'desc').get();
+  const elapsed = Date.now() - startTime;
+
+  const reviews = snapshot.docs.map(doc => {
+    const data = doc.data();
+    const items = data.items || [];
+    const pending = items.filter((i: any) => i.status === 'pending').length;
+    const passed = items.filter((i: any) => i.status === 'pass').length;
+    const failed = items.filter((i: any) => i.status === 'fail').length;
+    const na = items.filter((i: any) => i.status === 'n/a').length;
+
+    return {
+      reviewId: doc.id,
+      docId: data.docId,
+      docTitle: data.docTitle,
+      checklistType: data.checklistType,
+      checklistName: data.checklistName,
+      status: data.status,
+      reviewerId: data.reviewerId,
+      reviewerName: data.reviewerName,
+      reviewerSignature: data.reviewerSignature,
+      summary: data.summary,
+      progress: {
+        total: items.length,
+        pending,
+        passed,
+        failed,
+        na,
+      },
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+      completedAt: data.completedAt?.toDate?.()?.toISOString() || null,
+    };
+  });
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          docId: args.docId,
+          checklistType: args.checklistType,
+          count: reviews.length,
+          reviews,
+          queryTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
 // ---------- MCP Server Setup ----------
 const server = new Server(
   {
@@ -1531,6 +1861,78 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['spaceId', 'version'],
         },
       },
+      {
+        name: 'stea.reviewDoc',
+        description: 'Start a review for a Ruby document using a predefined checklist',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            docId: { type: 'string', description: 'Ruby document ID to review' },
+            checklistType: {
+              type: 'string',
+              enum: ['accessibility', 'security', 'gdpr', 'design-parity', 'performance'],
+              description: 'Type of review checklist to use',
+            },
+            reviewerId: { type: 'string', description: 'Reviewer user ID (optional)' },
+            reviewerName: { type: 'string', description: 'Reviewer name (optional)' },
+          },
+          required: ['docId', 'checklistType'],
+        },
+      },
+      {
+        name: 'stea.updateReview',
+        description: 'Update a review checklist item with status and notes',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            reviewId: { type: 'string', description: 'Review ID' },
+            itemId: { type: 'string', description: 'Checklist item ID to update' },
+            status: {
+              type: 'string',
+              enum: ['pass', 'fail', 'n/a'],
+              description: 'Review item status',
+            },
+            notes: { type: 'string', description: 'Reviewer notes (optional)' },
+            suggestedFix: { type: 'string', description: 'Suggested fix for failed items (optional)' },
+            owner: { type: 'string', description: 'Person assigned to fix (optional)' },
+          },
+          required: ['reviewId', 'itemId', 'status'],
+        },
+      },
+      {
+        name: 'stea.completeReview',
+        description: 'Complete a review with final status and signature',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            reviewId: { type: 'string', description: 'Review ID' },
+            status: {
+              type: 'string',
+              enum: ['approved', 'changes-requested'],
+              description: 'Final review status',
+            },
+            reviewerSignature: { type: 'string', description: 'Reviewer signature/name' },
+            summary: { type: 'string', description: 'Review summary (optional)' },
+          },
+          required: ['reviewId', 'status', 'reviewerSignature'],
+        },
+      },
+      {
+        name: 'stea.listReviews',
+        description: 'List all reviews for a Ruby document',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            docId: { type: 'string', description: 'Ruby document ID' },
+            checklistType: {
+              type: 'string',
+              enum: ['accessibility', 'security', 'gdpr', 'design-parity', 'performance', 'all'],
+              description: 'Filter by checklist type (default: all)',
+            },
+          },
+          required: ['docId'],
+        },
+      },
     ],
   };
 });
@@ -1596,6 +1998,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'stea.generateReleaseNotes':
         return await handleGenerateReleaseNotes(generateReleaseNotesSchema.parse(args || {}));
+
+      case 'stea.reviewDoc':
+        return await handleReviewDoc(reviewDocSchema.parse(args || {}));
+
+      case 'stea.updateReview':
+        return await handleUpdateReview(updateReviewSchema.parse(args || {}));
+
+      case 'stea.completeReview':
+        return await handleCompleteReview(completeReviewSchema.parse(args || {}));
+
+      case 'stea.listReviews':
+        return await handleListReviews(listReviewsSchema.parse(args || {}));
 
       default:
         throw new Error(`Unknown tool: ${name}`);

@@ -28,12 +28,16 @@ When the MCP server is running, you'll have access to these tools (prefixed with
 - `mcp__stea-mcp__stea_deleteEpic` - Delete an epic
 - `mcp__stea-mcp__stea_deleteFeature` - Delete a feature
 
-**Ruby (Documentation)** - *NEW in R3/R4/R6*:
+**Ruby (Documentation)** - *NEW in R3/R4/R5/R6*:
 - `mcp__stea-mcp__stea_listRubySpaces` - List documentation spaces
 - `mcp__stea-mcp__stea_createRubySpace` - Create a new documentation space
 - `mcp__stea-mcp__stea_createRubyDoc` - Create a Ruby document with raw content
-- `mcp__stea-mcp__stea_generateDoc` - **Generate doc from template (PRS/BuildSpec/ReleaseNotes) with context from source artifact**
+- `mcp__stea-mcp__stea_generateDoc` - **Generate doc from template (PRS/BuildSpec/ReleaseNotes) with context from source artifact (R4)**
 - `mcp__stea-mcp__stea_generateReleaseNotes` - **Automatically generate release notes from Filo + Hans (R6)**
+- `mcp__stea-mcp__stea_reviewDoc` - **Start review for a document using predefined checklists (R5)**
+- `mcp__stea-mcp__stea_updateReview` - **Update review checklist items with pass/fail status (R5)**
+- `mcp__stea-mcp__stea_completeReview` - **Complete review with approval status and signature (R5)**
+- `mcp__stea-mcp__stea_listReviews` - **List all reviews for a document (R5)**
 
 ## Usage in Claude Code
 
@@ -127,13 +131,18 @@ Try asking:
 - "List all cards under [feature-id]"
 - "Update the card [card-id] to move it to the 'Done' column"
 
-**Ruby (Documentation - R3/R4/R6)**:
+**Ruby (Documentation - R3/R4/R5/R6)**:
 - "List all my Ruby documentation spaces"
 - "Create a new Ruby space called 'API Documentation'"
 - "Generate a Build Spec from card [card-id] in space [space-id]"
 - "Generate a PRS for epic [epic-id] in space [space-id]"
 - "Generate release notes for version v1.2.0 in space [space-id] from January 1 to January 31"
 - "Create release notes for v2.0.0 including all Done cards and Hans test results"
+- "Start an accessibility review for document [doc-id]"
+- "Review document [doc-id] for security compliance"
+- "Update review [review-id] item a11y-001 to pass with notes"
+- "Complete review [review-id] with approved status"
+- "List all reviews for document [doc-id]"
 
 The `generateDoc` tool will automatically:
 - Fetch the source artifact (epic/feature/card) context
@@ -149,3 +158,10 @@ The `generateReleaseNotes` tool will automatically:
 - Generate formatted markdown with clickable links to source cards
 - Create a published Ruby document with complete release notes
 - Return statistics about the release
+
+The `reviewDoc` tool will automatically:
+- Load the specified checklist template (accessibility, security, GDPR, design-parity, or performance)
+- Create a review document with 10-15 predefined checklist items
+- Initialize all items with "pending" status and guidance text
+- Track progress as items are reviewed
+- Enforce completion requirements before allowing final approval

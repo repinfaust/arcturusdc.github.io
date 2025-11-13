@@ -1,0 +1,87 @@
+name: Performance Review
+description: Performance considerations and optimization checks for features
+category: performance
+items:
+  - id: perf-001
+    question: Are Core Web Vitals targets met (LCP < 2.5s, FID < 100ms, CLS < 0.1)?
+    category: Web Vitals
+    severity: Major
+    guidance: Measure Largest Contentful Paint, First Input Delay, and Cumulative Layout Shift using Lighthouse or real user monitoring.
+
+  - id: perf-002
+    question: Are images optimized (compressed, properly sized, lazy loaded)?
+    category: Assets
+    severity: Major
+    guidance: Use modern formats (WebP, AVIF), compress images, provide responsive sizes, and lazy load below-the-fold images.
+
+  - id: perf-003
+    question: Are JavaScript bundles optimized (code splitting, tree shaking)?
+    category: JavaScript
+    severity: Major
+    guidance: Implement code splitting, remove unused dependencies, and use dynamic imports for large components.
+
+  - id: perf-004
+    question: Are fonts optimized (subset, preload, font-display)?
+    category: Fonts
+    severity: Major
+    guidance: Subset fonts to needed characters, preload critical fonts, use font-display: swap.
+
+  - id: perf-005
+    question: Is CSS optimized (critical CSS inlined, unused CSS removed)?
+    category: CSS
+    severity: Minor
+    guidance: Inline critical above-the-fold CSS, defer non-critical CSS, remove unused styles.
+
+  - id: perf-006
+    question: Are API calls optimized (batching, caching, pagination)?
+    category: Network
+    severity: Major
+    guidance: Batch related requests, implement caching strategies, paginate large datasets.
+
+  - id: perf-007
+    question: Is database query performance acceptable (indexed, optimized)?
+    category: Database
+    severity: Major
+    guidance: Ensure queries use appropriate indexes, avoid N+1 problems, optimize complex joins.
+
+  - id: perf-008
+    question: Are third-party scripts loaded asynchronously or deferred?
+    category: Third-Party
+    severity: Major
+    guidance: Load analytics, tracking, and other third-party scripts asynchronously to avoid blocking rendering.
+
+  - id: perf-009
+    question: Is caching strategy implemented (browser cache, CDN, service workers)?
+    category: Caching
+    severity: Major
+    guidance: Configure appropriate cache headers, use CDN for static assets, consider service worker for offline support.
+
+  - id: perf-010
+    question: Are render-blocking resources minimized?
+    category: Rendering
+    severity: Major
+    guidance: Minimize synchronous scripts and stylesheets in the critical rendering path.
+
+  - id: perf-011
+    question: Is server response time acceptable (TTFB < 600ms)?
+    category: Server
+    severity: Major
+    guidance: Measure Time to First Byte. Optimize server processing, database queries, and API response times.
+
+  - id: perf-012
+    question: Are list rendering and scrolling performance acceptable?
+    category: Rendering
+    severity: Minor
+    guidance: Use virtualization for long lists, optimize re-renders with memoization, avoid expensive operations in render paths.
+
+  - id: perf-013
+    question: Is memory usage monitored and optimized (no leaks)?
+    category: Memory
+    severity: Minor
+    guidance: Profile memory usage, fix memory leaks, clean up event listeners and subscriptions.
+
+  - id: perf-014
+    question: Are animations and transitions performant (60fps)?
+    category: Animation
+    severity: Minor
+    guidance: Use CSS transforms and opacity for animations, avoid animating expensive properties, use requestAnimationFrame.

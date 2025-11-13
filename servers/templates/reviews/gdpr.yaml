@@ -1,0 +1,93 @@
+name: GDPR Compliance Review
+description: Data privacy and GDPR compliance checks for features handling personal data
+category: gdpr
+items:
+  - id: gdpr-001
+    question: Is a legal basis established for processing personal data?
+    category: Lawful Processing
+    severity: Critical
+    guidance: Identify the legal basis (consent, contract, legitimate interest, etc.) for collecting and processing personal data.
+
+  - id: gdpr-002
+    question: Are users informed about data collection via privacy notice?
+    category: Transparency
+    severity: Critical
+    guidance: Provide clear privacy notice explaining what data is collected, why, how long it's kept, and who it's shared with.
+
+  - id: gdpr-003
+    question: Is explicit consent obtained where required?
+    category: Consent
+    severity: Critical
+    guidance: For consent-based processing, obtain clear, specific, informed consent with an affirmative action (not pre-checked boxes).
+
+  - id: gdpr-004
+    question: Can users withdraw consent easily?
+    category: Consent
+    severity: Critical
+    guidance: Provide a mechanism for users to withdraw consent as easily as it was given.
+
+  - id: gdpr-005
+    question: Can users access their personal data (Right to Access)?
+    category: Data Subject Rights
+    severity: Critical
+    guidance: Implement functionality for users to request and receive copies of their personal data.
+
+  - id: gdpr-006
+    question: Can users correct inaccurate data (Right to Rectification)?
+    category: Data Subject Rights
+    severity: Critical
+    guidance: Allow users to update and correct their personal information.
+
+  - id: gdpr-007
+    question: Can users delete their data (Right to Erasure)?
+    category: Data Subject Rights
+    severity: Critical
+    guidance: Implement data deletion functionality. Consider retention requirements and backup procedures.
+
+  - id: gdpr-008
+    question: Can users export their data in a portable format (Right to Data Portability)?
+    category: Data Subject Rights
+    severity: Major
+    guidance: Provide data export in common formats (JSON, CSV, PDF) for users to transfer to other services.
+
+  - id: gdpr-009
+    question: Is data minimization practiced (only collect what's necessary)?
+    category: Data Minimization
+    severity: Major
+    guidance: Only collect personal data that is necessary and relevant for the specified purpose.
+
+  - id: gdpr-010
+    question: Are data retention periods defined and enforced?
+    category: Storage Limitation
+    severity: Major
+    guidance: Define how long personal data is kept and implement automated deletion when retention period expires.
+
+  - id: gdpr-011
+    question: Is personal data protected with appropriate security measures?
+    category: Security
+    severity: Critical
+    guidance: Implement technical and organizational measures to protect personal data (encryption, access controls, etc.).
+
+  - id: gdpr-012
+    question: Are third-party processors GDPR compliant (DPAs in place)?
+    category: Third-Party Processing
+    severity: Major
+    guidance: Ensure Data Processing Agreements are in place with all third-party services processing personal data.
+
+  - id: gdpr-013
+    question: Is international data transfer compliant (adequacy decisions or safeguards)?
+    category: International Transfers
+    severity: Critical
+    guidance: If transferring data outside EU/EEA, use approved transfer mechanisms (Standard Contractual Clauses, etc.).
+
+  - id: gdpr-014
+    question: Is a Data Protection Impact Assessment (DPIA) required?
+    category: Impact Assessment
+    severity: Major
+    guidance: Conduct DPIA for high-risk processing (large scale, sensitive data, profiling, automated decisions).
+
+  - id: gdpr-015
+    question: Is there a process for breach notification (72-hour requirement)?
+    category: Breach Management
+    severity: Critical
+    guidance: Have procedures to detect, report, and investigate data breaches within GDPR timelines.
