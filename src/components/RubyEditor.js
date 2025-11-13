@@ -14,7 +14,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Highlight from '@tiptap/extension-highlight';
-import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { doc, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { common, createLowlight } from 'lowlight';
 import { Callout } from '@/lib/tiptap-extensions/Callout';
@@ -30,10 +30,19 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [showCalloutMenu, setShowCalloutMenu] = useState(false);
-  const [showAssetPanel, setShowAssetPanel] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState('assets'); // 'assets' or 'links'
   const [assets, setAssets] = useState([]);
+  const [links, setLinks] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(null);
+  const [showCreateLinkModal, setShowCreateLinkModal] = useState(false);
+  const [linkForm, setLinkForm] = useState({
+    toType: 'epic', // epic, feature, card, test
+    toId: '',
+    relation: '',
+  });
+  const [searchResults, setSearchResults] = useState([]);
 
   // Load document data
   useEffect(() => {
@@ -77,6 +86,50 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     });
 
     return () => unsubscribe();
+  }, [document?.id]);
+
+  // Load links for this document (both outgoing and incoming)
+  useEffect(() => {
+    if (!document?.id) return;
+
+    const linksRef = collection(db, 'stea_doc_links');
+
+    // Query for outgoing links (this doc links to others)
+    const outgoingQuery = query(
+      linksRef,
+      where('fromType', '==', 'document'),
+      where('fromId', '==', document.id)
+    );
+
+    // Query for incoming links (others link to this doc)
+    const incomingQuery = query(
+      linksRef,
+      where('toType', '==', 'document'),
+      where('toId', '==', document.id)
+    );
+
+    const loadedLinks = { outgoing: [], incoming: [] };
+
+    const unsubscribeOutgoing = onSnapshot(outgoingQuery, (snapshot) => {
+      loadedLinks.outgoing = [];
+      snapshot.forEach((doc) => {
+        loadedLinks.outgoing.push({ id: doc.id, direction: 'outgoing', ...doc.data() });
+      });
+      setLinks([...loadedLinks.outgoing, ...loadedLinks.incoming]);
+    });
+
+    const unsubscribeIncoming = onSnapshot(incomingQuery, (snapshot) => {
+      loadedLinks.incoming = [];
+      snapshot.forEach((doc) => {
+        loadedLinks.incoming.push({ id: doc.id, direction: 'incoming', ...doc.data() });
+      });
+      setLinks([...loadedLinks.outgoing, ...loadedLinks.incoming]);
+    });
+
+    return () => {
+      unsubscribeOutgoing();
+      unsubscribeIncoming();
+    };
   }, [document?.id]);
 
   // Initialize TipTap editor
@@ -326,6 +379,96 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     }
   }, []);
 
+  // Search for artifacts to link to
+  const searchArtifacts = useCallback(async (searchTerm) => {
+    if (!searchTerm || !tenantId) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      const collectionMap = {
+        epic: 'stea_epics',
+        feature: 'stea_features',
+        card: 'stea_cards',
+        test: 'hans_cases',
+      };
+
+      const collectionName = collectionMap[linkForm.toType];
+      const artifactsRef = collection(db, collectionName);
+      const q = query(
+        artifactsRef,
+        where('tenantId', '==', tenantId)
+      );
+
+      const snapshot = await getDocs(q);
+      const results = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const searchLower = searchTerm.toLowerCase();
+        const titleField = linkForm.toType === 'test' ? 'title' : 'name';
+        const title = data[titleField] || '';
+
+        if (title.toLowerCase().includes(searchLower)) {
+          results.push({
+            id: doc.id,
+            title: title,
+            type: linkForm.toType,
+          });
+        }
+      });
+
+      setSearchResults(results.slice(0, 10)); // Limit to 10 results
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    }
+  }, [linkForm.toType, tenantId]);
+
+  // Create a new link
+  const handleCreateLink = useCallback(async () => {
+    if (!document?.id || !linkForm.toId || !tenantId || !userEmail) return;
+
+    try {
+      const linksRef = collection(db, 'stea_doc_links');
+      await addDoc(linksRef, {
+        fromType: 'document',
+        fromId: document.id,
+        toType: linkForm.toType,
+        toId: linkForm.toId,
+        relation: linkForm.relation || null,
+        tenantId: tenantId,
+        createdBy: userEmail,
+        createdAt: serverTimestamp(),
+      });
+
+      // Reset form
+      setLinkForm({
+        toType: 'epic',
+        toId: '',
+        relation: '',
+      });
+      setSearchResults([]);
+      setShowCreateLinkModal(false);
+    } catch (error) {
+      console.error('Error creating link:', error);
+      alert('Failed to create link. Please try again.');
+    }
+  }, [document?.id, linkForm, tenantId, userEmail]);
+
+  // Delete a link
+  const handleDeleteLink = useCallback(async (linkId) => {
+    if (!confirm('Delete this link?')) return;
+
+    try {
+      const linkRef = doc(db, 'stea_doc_links', linkId);
+      await deleteDoc(linkRef);
+    } catch (error) {
+      console.error('Error deleting link:', error);
+      alert('Failed to delete link. Please try again.');
+    }
+  }, []);
+
   if (!editor || !docData) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -360,16 +503,43 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowAssetPanel(!showAssetPanel)}
-              className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-              title="Assets"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Assets ({assets.length})
-            </button>
+            {/* Sidebar Tabs */}
+            <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-white p-1">
+              <button
+                onClick={() => {
+                  setSidebarTab('assets');
+                  setShowSidebar(true);
+                }}
+                className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  showSidebar && sidebarTab === 'assets'
+                    ? 'bg-rose-100 text-rose-700'
+                    : 'text-neutral-700 hover:bg-neutral-50'
+                }`}
+                title="Assets"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Assets ({assets.length})
+              </button>
+              <button
+                onClick={() => {
+                  setSidebarTab('links');
+                  setShowSidebar(true);
+                }}
+                className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  showSidebar && sidebarTab === 'links'
+                    ? 'bg-rose-100 text-rose-700'
+                    : 'text-neutral-700 hover:bg-neutral-50'
+                }`}
+                title="Links"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                Links ({links.length})
+              </button>
+            </div>
             <button
               onClick={handleSave}
               disabled={isSaving}
@@ -701,14 +871,16 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
           <EditorContent editor={editor} />
         </div>
 
-        {/* Asset Panel */}
-        {showAssetPanel && (
+        {/* Sidebar Panel */}
+        {showSidebar && (
           <aside className="w-80 border-l border-neutral-200 bg-neutral-50 overflow-y-auto">
             <div className="p-4">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold text-neutral-900">Assets</h3>
+                <h3 className="font-semibold text-neutral-900">
+                  {sidebarTab === 'assets' ? 'Assets' : 'Links'}
+                </h3>
                 <button
-                  onClick={() => setShowAssetPanel(false)}
+                  onClick={() => setShowSidebar(false)}
                   className="rounded p-1 text-neutral-600 hover:bg-neutral-100"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -717,8 +889,11 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
                 </button>
               </div>
 
-              {/* Upload Button */}
-              <label className="mb-4 block cursor-pointer rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 text-center transition hover:border-rose-400 hover:bg-rose-50">
+              {/* Assets Tab Content */}
+              {sidebarTab === 'assets' && (
+                <>
+                  {/* Upload Button */}
+                  <label className="mb-4 block cursor-pointer rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 text-center transition hover:border-rose-400 hover:bg-rose-50">
                 <input
                   type="file"
                   className="hidden"
@@ -808,6 +983,125 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
                   ))}
                 </div>
               )}
+                </>
+              )}
+
+              {/* Links Tab Content */}
+              {sidebarTab === 'links' && (
+                <>
+                  {/* Create Link Button */}
+                  <button
+                    onClick={() => setShowCreateLinkModal(true)}
+                    className="mb-4 w-full rounded-lg border-2 border-dashed border-neutral-300 bg-white p-4 text-center transition hover:border-rose-400 hover:bg-rose-50"
+                  >
+                    <svg className="mx-auto h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <p className="mt-2 text-sm font-medium text-neutral-700">Create Link</p>
+                    <p className="text-xs text-neutral-500">Link to Epic, Feature, Card, or Test</p>
+                  </button>
+
+                  {/* Links List */}
+                  {links.length === 0 ? (
+                    <div className="rounded-lg bg-white p-6 text-center">
+                      <p className="text-sm text-neutral-600">No links yet</p>
+                      <p className="mt-1 text-xs text-neutral-500">Create links to track traceability</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Outgoing Links */}
+                      {links.filter(link => link.direction === 'outgoing').length > 0 && (
+                        <div>
+                          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                            Links From This Doc
+                          </h4>
+                          <div className="space-y-2">
+                            {links
+                              .filter(link => link.direction === 'outgoing')
+                              .map((link) => (
+                                <div
+                                  key={link.id}
+                                  className="group rounded-lg bg-white p-3 shadow-sm transition hover:shadow-md"
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">
+                                          {link.toType}
+                                        </span>
+                                        {link.relation && (
+                                          <span className="text-xs text-neutral-500">
+                                            {link.relation}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="mt-1 text-sm font-medium text-neutral-900">
+                                        {link.toId}
+                                      </p>
+                                      {link.createdAt && (
+                                        <p className="mt-1 text-xs text-neutral-500">
+                                          Created {new Date(link.createdAt?.toDate()).toLocaleDateString()}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => handleDeleteLink(link.id)}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-red-600 hover:text-red-700"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Incoming Links */}
+                      {links.filter(link => link.direction === 'incoming').length > 0 && (
+                        <div>
+                          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                            Links To This Doc
+                          </h4>
+                          <div className="space-y-2">
+                            {links
+                              .filter(link => link.direction === 'incoming')
+                              .map((link) => (
+                                <div
+                                  key={link.id}
+                                  className="rounded-lg bg-white p-3 shadow-sm"
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="rounded bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                                          {link.fromType}
+                                        </span>
+                                        {link.relation && (
+                                          <span className="text-xs text-neutral-500">
+                                            {link.relation}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="mt-1 text-sm font-medium text-neutral-900">
+                                        {link.fromId}
+                                      </p>
+                                      {link.createdAt && (
+                                        <p className="mt-1 text-xs text-neutral-500">
+                                          Created {new Date(link.createdAt?.toDate()).toLocaleDateString()}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </aside>
         )}
@@ -854,6 +1148,128 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
                 className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
               >
                 Add Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Link Modal */}
+      {showCreateLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-semibold text-neutral-900">Create DocLink</h3>
+
+            {/* Artifact Type Selection */}
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-neutral-700">
+                Link to
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { value: 'epic', label: 'Epic', icon: '🎯' },
+                  { value: 'feature', label: 'Feature', icon: '✨' },
+                  { value: 'card', label: 'Card', icon: '📋' },
+                  { value: 'test', label: 'Test', icon: '🧪' },
+                ].map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => {
+                      setLinkForm({ ...linkForm, toType: type.value, toId: '' });
+                      setSearchResults([]);
+                    }}
+                    className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-center transition ${
+                      linkForm.toType === type.value
+                        ? 'border-rose-400 bg-rose-50 text-rose-700'
+                        : 'border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50'
+                    }`}
+                  >
+                    <span className="text-2xl">{type.icon}</span>
+                    <span className="text-xs font-medium">{type.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Search for Artifact */}
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-neutral-700">
+                Search {linkForm.toType}
+              </label>
+              <input
+                type="text"
+                placeholder={`Search for a ${linkForm.toType}...`}
+                onChange={(e) => searchArtifacts(e.target.value)}
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/20"
+              />
+
+              {/* Search Results */}
+              {searchResults.length > 0 && (
+                <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-neutral-200 bg-white p-2">
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.id}
+                      onClick={() => {
+                        setLinkForm({ ...linkForm, toId: result.id });
+                        setSearchResults([]);
+                      }}
+                      className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${
+                        linkForm.toId === result.id
+                          ? 'bg-rose-100 text-rose-900'
+                          : 'hover:bg-neutral-50 text-neutral-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
+                          {result.type}
+                        </span>
+                        <span className="truncate">{result.title}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected Item */}
+              {linkForm.toId && (
+                <div className="mt-2 rounded-lg bg-rose-50 px-3 py-2">
+                  <p className="text-xs font-medium text-rose-700">Selected:</p>
+                  <p className="text-sm text-rose-900">{linkForm.toId}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Relation (Optional) */}
+            <div className="mb-6">
+              <label className="mb-2 block text-sm font-medium text-neutral-700">
+                Relation <span className="text-neutral-400">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={linkForm.relation}
+                onChange={(e) => setLinkForm({ ...linkForm, relation: e.target.value })}
+                placeholder="e.g., implements, tests, references"
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/20"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowCreateLinkModal(false);
+                  setLinkForm({ toType: 'epic', toId: '', relation: '' });
+                  setSearchResults([]);
+                }}
+                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateLink}
+                disabled={!linkForm.toId}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                Create Link
               </button>
             </div>
           </div>
