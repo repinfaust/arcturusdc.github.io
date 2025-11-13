@@ -9,6 +9,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, onSnapshot, orderBy, where, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Open', color: 'bg-gray-100 text-gray-700 border-gray-200' },
@@ -294,13 +295,8 @@ export default function HansTestingSuite() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <SteaAppsDropdown />
           <TenantSwitcher />
-          <Link
-            href="/apps/stea/filo"
-            className="px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
-          >
-            Open Filo Board
-          </Link>
         </div>
       </div>
 
@@ -446,12 +442,7 @@ export default function HansTestingSuite() {
 
       {/* Footer */}
       <div className="mt-8 text-center text-xs text-neutral-500">
-        <p>
-          Hans is part of the STEa Studio toolkit.{' '}
-          <Link href="/apps/stea" className="text-neutral-700 hover:underline">
-            Back to STEa Home
-          </Link>
-        </p>
+        <p>Hans is part of the STEa Studio toolkit</p>
       </div>
 
       {/* Card Creation Modal */}

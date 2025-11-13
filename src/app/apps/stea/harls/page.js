@@ -11,6 +11,7 @@ import {
 import { setLogLevel } from 'firebase/firestore';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
+import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 
 /** ✅ tldraw */
 import { Tldraw, getSnapshot as getTlSnapshot, loadSnapshot as loadTlSnapshot } from '@tldraw/tldraw';
@@ -842,9 +843,7 @@ export default function ProductLabPage() {
           {user ? (
             <>
               <span className="hidden sm:block text-sm text-neutral-600">Hi, {user.displayName || 'there'} 👋</span>
-              <Link href="/apps/stea" className="rounded-xl border px-3 py-1 text-sm hover:bg-neutral-100">
-                STEa Home
-              </Link>
+              <SteaAppsDropdown />
               <button onClick={logout} className="rounded-xl border px-3 py-1 text-sm hover:bg-neutral-100">Sign out</button>
             </>
           ) : (

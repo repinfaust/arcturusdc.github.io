@@ -14,6 +14,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'fire
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import CreateDocButton from '@/components/CreateDocButton';
+import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 
 /* -------------------- CONFIG -------------------- */
 const COLUMNS = ['Idea', 'Planning', 'Design', 'Build', 'Done', "Won't Do"];
@@ -1993,14 +1994,7 @@ export default function SteaBoard() {
 
             <div className="w-full sm:w-auto sm:ml-auto flex items-center gap-3">
               {user && <span className="text-sm text-gray-600">{user.email}</span>}
-              {user && (
-                <Link
-                  href="/apps/stea"
-                  className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-100 text-sm whitespace-nowrap"
-                >
-                  STEa Home
-                </Link>
-              )}
+              {user && <SteaAppsDropdown />}
               {user && (
                 <button onClick={() => signOut(auth)} className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap">Sign out</button>
               )}
