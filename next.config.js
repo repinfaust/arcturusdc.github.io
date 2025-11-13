@@ -21,6 +21,12 @@ const nextConfig = {
   // Ensure API routes are not statically optimized
   experimental: {
     serverComponentsExternalPackages: ['stripe'],
+  },
+  
+  // Ensure stripe is properly resolved
+  webpack: (config) => {
+    // Don't externalize stripe - let webpack bundle it
+    return config;
   }
 };
 
