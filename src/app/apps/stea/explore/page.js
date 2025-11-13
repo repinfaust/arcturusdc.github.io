@@ -1,12 +1,79 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 
 export default function SteaDemoPage() {
+  const searchParams = useSearchParams();
   const [modalImage, setModalImage] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [checkoutLoading, setCheckoutLoading] = useState(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showCancelMessage, setShowCancelMessage] = useState(false);
+
+  // Stripe Price IDs
+  const priceIds = {
+    solo_monthly: 'price_1ST5paCtbV5UkklC3qY1EcxC',
+    solo_yearly: 'price_1ST5pbCtbV5UkklCMtwkY2Rl',
+    team_monthly: 'price_1ST5pcCtbV5UkklCU0wTnhyM',
+    team_yearly: 'price_1ST5pdCtbV5UkklCmzRVHRWc',
+    agency_monthly: 'price_1ST5pfCtbV5UkklC8d44VTfC',
+    agency_yearly: 'price_1ST5pgCtbV5UkklCsj4MuhYh',
+    mcp_addon: 'price_1ST5phCtbV5UkklC7fcJL3Ar',
+  };
+
+  // Check for success/cancel URL parameters
+  useEffect(() => {
+    if (searchParams.get('success')) {
+      setShowSuccessMessage(true);
+      setActiveTab('pricing');
+      setTimeout(() => setShowSuccessMessage(false), 10000);
+    }
+    if (searchParams.get('canceled')) {
+      setShowCancelMessage(true);
+      setActiveTab('pricing');
+      setTimeout(() => setShowCancelMessage(false), 5000);
+    }
+  }, [searchParams]);
+
+  // Handle Stripe checkout
+  const handleCheckout = async (priceId, planName) => {
+    setCheckoutLoading(planName);
+
+    try {
+      // Determine if this is a one-time payment (MCP addon) or subscription
+      const isOneTime = priceId === priceIds.mcp_addon;
+      
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          priceId,
+          mode: isOneTime ? 'payment' : 'subscription'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      alert(`Failed to create checkout session: ${error.message}. Please try again.`);
+      setCheckoutLoading(null);
+    }
+  };
 
   const productImages = [
     {
@@ -448,11 +515,48 @@ export default function SteaDemoPage() {
         {activeTab === 'pricing' && (
           <section className="mt-8">
             <div className="card p-8">
+              {/* Success Message */}
+              {showSuccessMessage && (
+                <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-800 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <h3 className="font-bold text-lg">Payment Successful!</h3>
+                      <p className="text-sm">Thank you for subscribing to STEa. Check your email for your receipt and next steps.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cancel Message */}
+              {showCancelMessage && (
+                <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <h3 className="font-bold">Checkout Canceled</h3>
+                      <p className="text-sm">No worries! You can subscribe whenever you're ready.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <h2 className="text-3xl font-extrabold text-neutral-900 mb-4 flex items-center gap-2">
                 <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">💸 STEa Pricing</span>
               </h2>
               <p className="text-neutral-600 mb-8 text-lg">
                 Choose a plan that fits how you build. Every plan includes access to <strong>Harls</strong>, <strong>Filo</strong>, <strong>Hans</strong>, and hosted <strong>AutoProduct</strong> automation.
+              </p>
+              <p className="text-sm text-neutral-500 mb-8">
+                By subscribing or making a purchase, you agree to our{' '}
+                <Link href="/apps/stea/terms" className="text-amber-600 hover:underline font-medium">
+                  Terms & Conditions
+                </Link>
+                .
               </p>
 
               <hr className="my-8 border-neutral-200" />
@@ -469,13 +573,35 @@ export default function SteaDemoPage() {
                       <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Yearly (Save 15%)</th>
                       <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Designed For</th>
                       <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Key Features</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-center font-bold text-neutral-900">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr className="hover:bg-neutral-50">
-                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">Solo</td>
-                      <td className="border border-neutral-300 px-4 py-3">£9 / month</td>
-                      <td className="border border-neutral-300 px-4 py-3">£92 / year</td>
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">
+                        <button
+                          onClick={() => handleCheckout(priceIds.solo_monthly, 'Solo Monthly')}
+                          className="text-amber-600 hover:text-amber-700 hover:underline cursor-pointer"
+                        >
+                          Solo
+                        </button>
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3">
+                        <button
+                          onClick={() => handleCheckout(priceIds.solo_monthly, 'Solo Monthly')}
+                          className="text-neutral-900 hover:text-amber-600 hover:underline cursor-pointer font-medium"
+                        >
+                          £9 / month
+                        </button>
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3">
+                        <button
+                          onClick={() => handleCheckout(priceIds.solo_yearly, 'Solo Yearly')}
+                          className="text-neutral-900 hover:text-amber-600 hover:underline cursor-pointer font-medium"
+                        >
+                          £92 / year
+                        </button>
+                      </td>
                       <td className="border border-neutral-300 px-4 py-3 text-sm">Independent makers or solo PMs</td>
                       <td className="border border-neutral-300 px-4 py-3 text-sm">
                         • 1 active App (archive old projects, create new)<br />
@@ -483,11 +609,50 @@ export default function SteaDemoPage() {
                         • Hosted AutoProduct included<br />
                         • Full access to Harls, Filo & Hans boards
                       </td>
+                      <td className="border border-neutral-300 px-4 py-3 text-center">
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => handleCheckout(priceIds.solo_monthly, 'Solo Monthly')}
+                            disabled={checkoutLoading === 'Solo Monthly'}
+                            className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {checkoutLoading === 'Solo Monthly' ? 'Loading...' : 'Monthly'}
+                          </button>
+                          <button
+                            onClick={() => handleCheckout(priceIds.solo_yearly, 'Solo Yearly')}
+                            disabled={checkoutLoading === 'Solo Yearly'}
+                            className="px-4 py-2 bg-gradient-to-r from-amber-700 to-orange-700 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {checkoutLoading === 'Solo Yearly' ? 'Loading...' : 'Yearly (Save 15%)'}
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                     <tr className="hover:bg-neutral-50">
-                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">Team</td>
-                      <td className="border border-neutral-300 px-4 py-3">£25 / seat / month</td>
-                      <td className="border border-neutral-300 px-4 py-3">£255 / seat / year</td>
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">
+                        <button
+                          onClick={() => handleCheckout(priceIds.team_monthly, 'Team Monthly')}
+                          className="text-violet-600 hover:text-violet-700 hover:underline cursor-pointer"
+                        >
+                          Team
+                        </button>
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3">
+                        <button
+                          onClick={() => handleCheckout(priceIds.team_monthly, 'Team Monthly')}
+                          className="text-neutral-900 hover:text-violet-600 hover:underline cursor-pointer font-medium"
+                        >
+                          £25 / seat / month
+                        </button>
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3">
+                        <button
+                          onClick={() => handleCheckout(priceIds.team_yearly, 'Team Yearly')}
+                          className="text-neutral-900 hover:text-violet-600 hover:underline cursor-pointer font-medium"
+                        >
+                          £255 / seat / year
+                        </button>
+                      </td>
                       <td className="border border-neutral-300 px-4 py-3 text-sm">Small product teams</td>
                       <td className="border border-neutral-300 px-4 py-3 text-sm">
                         • Up to <strong>10 active Apps</strong> at once (archive + reuse)<br />
@@ -495,17 +660,74 @@ export default function SteaDemoPage() {
                         • Collaborative board + testing views<br />
                         • Hosted AutoProduct automation
                       </td>
+                      <td className="border border-neutral-300 px-4 py-3 text-center">
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => handleCheckout(priceIds.team_monthly, 'Team Monthly')}
+                            disabled={checkoutLoading === 'Team Monthly'}
+                            className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {checkoutLoading === 'Team Monthly' ? 'Loading...' : 'Monthly'}
+                          </button>
+                          <button
+                            onClick={() => handleCheckout(priceIds.team_yearly, 'Team Yearly')}
+                            disabled={checkoutLoading === 'Team Yearly'}
+                            className="px-4 py-2 bg-gradient-to-r from-violet-700 to-purple-700 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {checkoutLoading === 'Team Yearly' ? 'Loading...' : 'Yearly (Save 15%)'}
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                     <tr className="hover:bg-neutral-50">
-                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">Agency / Partner</td>
-                      <td className="border border-neutral-300 px-4 py-3">£49 / seat / month</td>
-                      <td className="border border-neutral-300 px-4 py-3">£499 / seat / year</td>
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">
+                        <button
+                          onClick={() => handleCheckout(priceIds.agency_monthly, 'Agency Monthly')}
+                          className="text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                        >
+                          Agency / Partner
+                        </button>
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3">
+                        <button
+                          onClick={() => handleCheckout(priceIds.agency_monthly, 'Agency Monthly')}
+                          className="text-neutral-900 hover:text-emerald-600 hover:underline cursor-pointer font-medium"
+                        >
+                          £49 / seat / month
+                        </button>
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3">
+                        <button
+                          onClick={() => handleCheckout(priceIds.agency_yearly, 'Agency Yearly')}
+                          className="text-neutral-900 hover:text-emerald-600 hover:underline cursor-pointer font-medium"
+                        >
+                          £499 / seat / year
+                        </button>
+                      </td>
                       <td className="border border-neutral-300 px-4 py-3 text-sm">Agencies or consultants managing multiple clients</td>
                       <td className="border border-neutral-300 px-4 py-3 text-sm">
                         • Multiple client workspaces with scalable capacity<br />
                         • Custom branding & export templates<br />
                         • Everything in Team plan<br />
                         • White-label ready
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3 text-center">
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => handleCheckout(priceIds.agency_monthly, 'Agency Monthly')}
+                            disabled={checkoutLoading === 'Agency Monthly'}
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {checkoutLoading === 'Agency Monthly' ? 'Loading...' : 'Monthly'}
+                          </button>
+                          <button
+                            onClick={() => handleCheckout(priceIds.agency_yearly, 'Agency Yearly')}
+                            disabled={checkoutLoading === 'Agency Yearly'}
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-700 to-green-700 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {checkoutLoading === 'Agency Yearly' ? 'Loading...' : 'Yearly (Save 15%)'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   </tbody>
@@ -528,18 +750,42 @@ export default function SteaDemoPage() {
                       <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Add-On</th>
                       <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Price</th>
                       <th className="border border-neutral-300 px-4 py-3 text-left font-bold text-neutral-900">Description</th>
+                      <th className="border border-neutral-300 px-4 py-3 text-center font-bold text-neutral-900">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr className="hover:bg-neutral-50">
-                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">MCP Config Pack<br />(Self-Hosted AutoProduct)</td>
-                      <td className="border border-neutral-300 px-4 py-3 font-bold text-amber-600">£30 one-off</td>
+                      <td className="border border-neutral-300 px-4 py-3 font-bold text-neutral-900">
+                        <button
+                          onClick={() => handleCheckout(priceIds.mcp_addon, 'MCP Config Pack')}
+                          className="text-rose-600 hover:text-rose-700 hover:underline cursor-pointer text-left"
+                        >
+                          MCP Config Pack<br />(Self-Hosted AutoProduct)
+                        </button>
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3">
+                        <button
+                          onClick={() => handleCheckout(priceIds.mcp_addon, 'MCP Config Pack')}
+                          className="font-bold text-amber-600 hover:text-rose-600 hover:underline cursor-pointer"
+                        >
+                          £30 one-off
+                        </button>
+                      </td>
                       <td className="border border-neutral-300 px-4 py-3 text-sm">
                         Run AutoProduct on your own infrastructure. Includes:<br />
                         • Prompt templates<br />
                         • Example MCP config files<br />
                         • Setup README for Firebase + STEa integration<br /><br />
                         Requires an active STEa subscription.
+                      </td>
+                      <td className="border border-neutral-300 px-4 py-3 text-center">
+                        <button
+                          onClick={() => handleCheckout(priceIds.mcp_addon, 'MCP Config Pack')}
+                          disabled={checkoutLoading === 'MCP Config Pack'}
+                          className="px-4 py-2 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {checkoutLoading === 'MCP Config Pack' ? 'Loading...' : 'Purchase'}
+                        </button>
                       </td>
                     </tr>
                   </tbody>
@@ -585,14 +831,52 @@ export default function SteaDemoPage() {
               <hr className="my-8 border-neutral-200" />
 
               {/* CTA */}
-              <div className="text-center">
-                <p className="text-xl font-bold text-neutral-900 mb-4">Ready to start?</p>
-                <Link
-                  href="/apps/stea"
-                  className="inline-block px-8 py-3 bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white rounded-xl hover:shadow-xl hover:-translate-y-1 transition-all font-semibold"
-                >
-                  Get Started with STEa
-                </Link>
+              <div id="signup" className="text-center scroll-mt-8 bg-gradient-to-br from-amber-50 via-violet-50 to-emerald-50 p-8 rounded-2xl border-2 border-amber-200">
+                <h3 className="text-3xl font-extrabold text-neutral-900 mb-3">
+                  Start Building Better Products Today
+                </h3>
+                <p className="text-lg text-neutral-700 mb-2 max-w-2xl mx-auto font-semibold">
+                  Join product teams using STEa to ship faster with higher quality
+                </p>
+                <p className="text-base text-neutral-600 mb-8 max-w-2xl mx-auto">
+                  Get instant access to Harls, Filo, Hans, and Ruby. Start your subscription today—cancel anytime.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+                  <button
+                    onClick={() => handleCheckout(priceIds.solo_monthly, 'Solo Monthly')}
+                    disabled={checkoutLoading === 'Solo Monthly'}
+                    className="inline-block px-10 py-4 bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white rounded-xl hover:shadow-2xl hover:-translate-y-1 transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {checkoutLoading === 'Solo Monthly' ? 'Loading...' : '🚀 Start Free Trial — £9/month'}
+                  </button>
+                  <Link
+                    href="/apps/stea"
+                    className="inline-block px-8 py-4 bg-white border-2 border-neutral-300 text-neutral-900 rounded-xl hover:shadow-lg hover:border-amber-600 hover:-translate-y-1 transition-all font-semibold"
+                  >
+                    Explore Demo First
+                  </Link>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-neutral-600 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>14-day money-back guarantee</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>Cancel anytime</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>No setup fees</span>
+                  </div>
+                </div>
+                <p className="text-sm text-neutral-500 mt-4">
+                  Questions? Contact us at <a href="mailto:support@arcturusdc.com" className="text-amber-600 hover:underline">support@arcturusdc.com</a>
+                  {' '}•{' '}
+                  <Link href="/apps/stea/terms" className="text-amber-600 hover:underline">
+                    View Terms & Conditions
+                  </Link>
+                </p>
               </div>
             </div>
           </section>
