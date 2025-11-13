@@ -14,18 +14,25 @@ The stea-mcp server is now configured and ready to use in Claude Code (CLI).
 
 When the MCP server is running, you'll have access to these tools (prefixed with `mcp__stea-mcp__`):
 
-- `mcp__stea-mcp__stea.createEpic` - Create top-level epics
-- `mcp__stea-mcp__stea.createFeature` - Create features under epics
-- `mcp__stea-mcp__stea.createCard` - Create detailed task cards under features
-- `mcp__stea-mcp__stea.listEpics` - List all epics
-- `mcp__stea-mcp__stea.listFeatures` - List features for an epic
-- `mcp__stea-mcp__stea.listCardsByFeature` - List cards for a feature
-- `mcp__stea-mcp__stea.updateCard` - Update a card
-- `mcp__stea-mcp__stea.updateEpic` - Update an epic
-- `mcp__stea-mcp__stea.updateFeature` - Update a feature
-- `mcp__stea-mcp__stea.deleteCard` - Delete a card
-- `mcp__stea-mcp__stea.deleteEpic` - Delete an epic
-- `mcp__stea-mcp__stea.deleteFeature` - Delete a feature
+**Filo (Product Backlog)**:
+- `mcp__stea-mcp__stea_createEpic` - Create top-level epics
+- `mcp__stea-mcp__stea_createFeature` - Create features under epics
+- `mcp__stea-mcp__stea_createCard` - Create detailed task cards under features
+- `mcp__stea-mcp__stea_listEpics` - List all epics
+- `mcp__stea-mcp__stea_listFeatures` - List features for an epic
+- `mcp__stea-mcp__stea_listCardsByFeature` - List cards for a feature
+- `mcp__stea-mcp__stea_updateCard` - Update a card
+- `mcp__stea-mcp__stea_updateEpic` - Update an epic
+- `mcp__stea-mcp__stea_updateFeature` - Update a feature
+- `mcp__stea-mcp__stea_deleteCard` - Delete a card
+- `mcp__stea-mcp__stea_deleteEpic` - Delete an epic
+- `mcp__stea-mcp__stea_deleteFeature` - Delete a feature
+
+**Ruby (Documentation)** - *NEW in R3/R4*:
+- `mcp__stea-mcp__stea_listRubySpaces` - List documentation spaces
+- `mcp__stea-mcp__stea_createRubySpace` - Create a new documentation space
+- `mcp__stea-mcp__stea_createRubyDoc` - Create a Ruby document with raw content
+- `mcp__stea-mcp__stea_generateDoc` - **Generate doc from template (PRS/BuildSpec/ReleaseNotes) with context from source artifact**
 
 ## Usage in Claude Code
 
@@ -112,6 +119,22 @@ You should see: "STEa MCP server running on stdio"
 You can now use Claude Code to manage your project board directly from the terminal!
 
 Try asking:
+
+**Filo (Backlog Management)**:
 - "Show me all epics for the Tou.me app"
 - "Create a new feature for [epic-id] called 'User Profile'"
 - "List all cards under [feature-id]"
+- "Update the card [card-id] to move it to the 'Done' column"
+
+**Ruby (Documentation - R3/R4)**:
+- "List all my Ruby documentation spaces"
+- "Create a new Ruby space called 'API Documentation'"
+- "Generate a Build Spec from card [card-id] in space [space-id]"
+- "Generate a PRS for epic [epic-id] in space [space-id]"
+
+The `generateDoc` tool will automatically:
+- Fetch the source artifact (epic/feature/card) context
+- Apply the appropriate template (PRS/BuildSpec/ReleaseNotes)
+- Create a properly formatted Ruby document with headings, lists, and task items
+- Auto-create a DocLink from the source to the document
+- Mark it as draft for review

@@ -52,12 +52,25 @@ Add this configuration (replace with your actual Firebase credentials):
 
 After restarting Claude Desktop, open a new chat and you should see the following tools available:
 
+**Filo (Product Backlog)**:
 - `stea.createEpic` - Create an Epic (top-level work item)
 - `stea.createFeature` - Create a Feature nested under an Epic
 - `stea.createCard` - Create a Card nested under a Feature
 - `stea.listEpics` - List all epics (optionally filter by app)
 - `stea.listFeatures` - List features under an epic
 - `stea.listCardsByFeature` - List cards under a feature
+- `stea.updateEpic` - Update an existing epic
+- `stea.updateFeature` - Update an existing feature
+- `stea.updateCard` - Update an existing card
+- `stea.deleteEpic` - Delete an epic
+- `stea.deleteFeature` - Delete a feature
+- `stea.deleteCard` - Delete a card
+
+**Ruby (Documentation)**:
+- `stea.listRubySpaces` - List Ruby documentation spaces
+- `stea.createRubySpace` - Create a new documentation space
+- `stea.createRubyDoc` - Create a Ruby document with raw content
+- `stea.generateDoc` - **Generate a doc from template (PRS, BuildSpec, ReleaseNotes) with context from source artifact**
 
 ## Usage Examples
 
@@ -100,13 +113,68 @@ Use stea.createCard with:
       - "Redirected to app dashboard"
 ```
 
+### Generate Documentation from a Card (R4: Prompt→Doc)
+
+**Step 1: List your Ruby spaces**
+```
+Use stea.listRubySpaces to see available documentation spaces
+```
+
+**Step 2: Generate a Build Spec from a Filo card**
+```
+Use stea.generateDoc with:
+- templateType: "buildspec"
+- spaceId: <space ID from step 1>
+- sourceType: "card"
+- sourceId: <card ID>
+```
+
+This will:
+- Fetch the card's title, description, user story, acceptance criteria, constraints
+- Apply the Build Spec template with those values
+- Create a new Ruby document marked as "draft"
+- Auto-create a DocLink from the card to the document
+- Return the document ID and generation time
+
+**Available Templates**:
+- `"prs"` - Product Requirements Spec (use with epics/features/cards)
+- `"buildspec"` - Build Specification (use with features/cards)
+- `"releasenotes"` - Release Notes (use standalone or with epics)
+
+**Step 3: View the generated document**
+The document will be in Ruby with proper formatting (headings, lists, task lists, code blocks).
+
+### Create a Ruby Space
+```
+Use stea.createRubySpace with:
+- name: "Product Specs"
+- icon: "📋" (optional, defaults to 📚)
+```
+
+### Create a Custom Ruby Document
+```
+Use stea.createRubyDoc with:
+- spaceId: <space ID>
+- title: "API Design Guidelines"
+- content: "# API Design\n\nOur REST API follows these principles..."
+- type: "documentation" (or "note", "architecture", "meeting")
+```
+
 ## Firestore Collections
 
 The MCP server creates documents in these collections:
 
+**Filo (Product Backlog)**:
 - **stea_epics** - Top-level work items
 - **stea_features** - Mid-level items nested under epics
 - **stea_cards** - Detailed task cards nested under features
+
+**Ruby (Documentation)**:
+- **stea_doc_spaces** - Documentation spaces (collections/folders)
+- **stea_docs** - Documentation documents with TipTap content
+- **stea_doc_links** - Bi-directional links between docs and artifacts
+- **stea_doc_assets** - Uploaded files (PDFs, images, etc.)
+- **stea_doc_versions** - Document version history
 
 ### Data Schema
 
@@ -159,6 +227,68 @@ The MCP server creates documents in these collections:
   createdAt: Timestamp
 }
 ```
+
+#### Ruby Space
+```typescript
+{
+  name: string
+  icon: string  // emoji
+  tenantId: string
+  createdBy: string
+  createdAt: Timestamp
+}
+```
+
+#### Ruby Document
+```typescript
+{
+  title: string
+  content: object  // TipTap JSON format
+  type: "documentation" | "note" | "architecture" | "meeting"
+  spaceId: string
+  tenantId: string
+  draft?: boolean  // true for generated docs
+  templateType?: "prs" | "buildspec" | "releasenotes"
+  templateVersion?: string
+  createdBy: string
+  createdAt: Timestamp
+  updatedBy: string
+  updatedAt: Timestamp
+}
+```
+
+#### DocLink
+```typescript
+{
+  fromType: "epic" | "feature" | "card" | "document" | "note" | "test"
+  fromId: string
+  toType: "epic" | "feature" | "card" | "document" | "note" | "test"
+  toId: string
+  relation?: string  // e.g., "generated_from", "implements", "tests"
+  tenantId: string
+  createdBy: string
+  createdAt: Timestamp
+}
+```
+
+## Templates
+
+The MCP server includes three YAML-based document templates:
+
+### PRS (Product Requirements Spec)
+Sections: Overview, Problem Statement, Target Audience, Goals & Success Metrics, User Stories, Acceptance Criteria, Technical Constraints, Assumptions, Risks & Mitigations, Dependencies, Out of Scope, Open Questions, Approval
+
+**Use for**: Epics, Features, or Cards that need comprehensive product documentation
+
+### BuildSpec (Build Specification)
+Sections: Overview, User Story Context, Acceptance Criteria, Architecture (Components, Diagram), Data Model, API Specification, UI/UX Requirements, Technical Constraints, Dependencies, Error Handling, Testing Strategy, Security Considerations, Performance Requirements, Rollout Plan, Open Questions, Sign-off
+
+**Use for**: Features or Cards that need technical implementation details
+
+### ReleaseNotes
+Sections: New Features, Improvements, Bug Fixes, Breaking Changes, Known Issues, Test Results, Deployment, Documentation, Links & Evidence, Contributors, Approval
+
+**Use for**: Epics representing releases or standalone release documentation
 
 ## Firestore Composite Indexes
 
