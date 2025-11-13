@@ -11,7 +11,14 @@ async function getStripe() {
     throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
   }
   
-  const Stripe = (await import('stripe')).default;
+  let Stripe;
+  try {
+    Stripe = (await import('stripe')).default;
+  } catch (error) {
+    console.error('Failed to import stripe:', error);
+    throw new Error('Stripe module not available');
+  }
+  
   return new Stripe(stripeSecretKey, {
     apiVersion: '2024-11-20.acacia',
   });

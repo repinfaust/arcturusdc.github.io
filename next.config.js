@@ -18,13 +18,18 @@ const nextConfig = {
     ];
   },
   
-  webpack: (config, { isServer }) => {
-    // Ensure stripe is properly resolved
+  webpack: (config, { isServer, webpack }) => {
     if (isServer) {
+      // Mark stripe as external so webpack doesn't try to bundle it
       config.externals = config.externals || [];
-      // Don't externalize stripe for server-side
+      config.externals.push('stripe');
     }
     return config;
+  },
+  
+  // Ensure API routes are not statically optimized
+  experimental: {
+    serverComponentsExternalPackages: ['stripe'],
   }
 };
 
