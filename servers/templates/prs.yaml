@@ -1,0 +1,84 @@
+name: Product Requirements Spec (PRS)
+description: Comprehensive product requirements document template
+type: documentation
+variables:
+  - name: title
+    description: Product/feature title
+    required: true
+  - name: overview
+    description: High-level product overview
+    required: true
+  - name: problem
+    description: Problem statement
+    required: false
+  - name: audience
+    description: Target audience/users
+    required: false
+  - name: goals
+    description: Product goals
+    required: false
+  - name: userStories
+    description: User stories
+    required: false
+  - name: acceptanceCriteria
+    description: Acceptance criteria
+    required: false
+  - name: constraints
+    description: Technical/business constraints
+    required: false
+  - name: assumptions
+    description: Key assumptions
+    required: false
+  - name: risks
+    description: Known risks
+    required: false
+  - name: dependencies
+    description: External dependencies
+    required: false
+  - name: outOfScope
+    description: What's explicitly not included
+    required: false
+
+template: |
+  # {{title}}
+
+  ## Overview
+  {{overview}}
+
+  ## Problem Statement
+  {{problem || "To be defined"}}
+
+  ## Target Audience
+  {{audience || "To be defined"}}
+
+  ## Goals & Success Metrics
+  {{goals || "To be defined"}}
+
+  ## User Stories
+  {{userStories || "To be defined"}}
+
+  ## Acceptance Criteria
+  {{acceptanceCriteria || "To be defined"}}
+
+  ## Technical Constraints
+  {{constraints || "None identified"}}
+
+  ## Assumptions
+  {{assumptions || "None listed"}}
+
+  ## Risks & Mitigations
+  {{risks || "To be assessed"}}
+
+  ## Dependencies
+  {{dependencies || "None identified"}}
+
+  ## Out of Scope
+  {{outOfScope || "To be defined"}}
+
+  ## Open Questions
+  - [ ] To be filled during discovery
+
+  ## Approval
+  - **Product Owner**: _Pending_
+  - **Engineering Lead**: _Pending_
+  - **Design Lead**: _Pending_

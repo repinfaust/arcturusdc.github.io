@@ -10,6 +10,8 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { resolve } from 'path';
+import { readFileSync } from 'fs';
+import * as yaml from 'js-yaml';
 
 // ---------- Firebase Admin Initialization ----------
 let db: FirebaseFirestore.Firestore;
@@ -78,6 +80,208 @@ function generateSearchTokens(text: string): string[] {
   });
 
   return Array.from(tokens);
+}
+
+// ---------- Template System ----------
+interface DocTemplate {
+  name: string;
+  description: string;
+  type: string;
+  variables: Array<{ name: string; description: string; required: boolean }>;
+  template: string;
+}
+
+const templates = new Map<string, DocTemplate>();
+
+function loadTemplates() {
+  const templateDir = resolve(__dirname, 'templates');
+  const templateTypes = ['prs', 'buildspec', 'releasenotes'];
+
+  for (const type of templateTypes) {
+    try {
+      const filePath = resolve(templateDir, `${type}.yaml`);
+      const content = readFileSync(filePath, 'utf8');
+      const parsed = yaml.load(content) as DocTemplate;
+      templates.set(type, parsed);
+    } catch (error) {
+      console.error(`Failed to load template ${type}:`, error);
+    }
+  }
+}
+
+// Load templates on startup
+loadTemplates();
+
+// Simple variable substitution in templates
+function applyTemplate(templateStr: string, variables: Record<string, any>): string {
+  let result = templateStr;
+
+  // Replace {{variable}} or {{variable || "default"}}
+  result = result.replace(/\{\{(\w+)\s*\|\|\s*"([^"]*)"\}\}/g, (match, varName, defaultValue) => {
+    return variables[varName] || defaultValue;
+  });
+
+  // Replace simple {{variable}}
+  result = result.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
+    return variables[varName] || '';
+  });
+
+  return result;
+}
+
+// Convert markdown to TipTap JSON format
+function markdownToTipTap(markdown: string): any {
+  const lines = markdown.split('\n');
+  const content: any[] = [];
+  let currentList: any = null;
+  let codeBlockContent: string[] = [];
+  let inCodeBlock = false;
+  let codeLanguage = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Code blocks
+    if (line.startsWith('```')) {
+      if (!inCodeBlock) {
+        inCodeBlock = true;
+        codeLanguage = line.slice(3).trim() || 'plaintext';
+        codeBlockContent = [];
+      } else {
+        content.push({
+          type: 'codeBlock',
+          attrs: { language: codeLanguage },
+          content: [{
+            type: 'text',
+            text: codeBlockContent.join('\n'),
+          }],
+        });
+        inCodeBlock = false;
+        codeBlockContent = [];
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeBlockContent.push(line);
+      continue;
+    }
+
+    // Headings
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
+    if (headingMatch) {
+      if (currentList) {
+        content.push(currentList);
+        currentList = null;
+      }
+      content.push({
+        type: 'heading',
+        attrs: { level: headingMatch[1].length },
+        content: [{ type: 'text', text: headingMatch[2] }],
+      });
+      continue;
+    }
+
+    // Task list items
+    const taskMatch = line.match(/^(\s*)- \[([ x])\] (.+)/);
+    if (taskMatch) {
+      if (!currentList || currentList.type !== 'taskList') {
+        if (currentList) content.push(currentList);
+        currentList = { type: 'taskList', content: [] };
+      }
+      currentList.content.push({
+        type: 'taskItem',
+        attrs: { checked: taskMatch[2] === 'x' },
+        content: [{
+          type: 'paragraph',
+          content: [{ type: 'text', text: taskMatch[3] }],
+        }],
+      });
+      continue;
+    }
+
+    // Bullet list items
+    const bulletMatch = line.match(/^(\s*)[-*]\s+(.+)/);
+    if (bulletMatch) {
+      if (!currentList || currentList.type !== 'bulletList') {
+        if (currentList) content.push(currentList);
+        currentList = { type: 'bulletList', content: [] };
+      }
+      currentList.content.push({
+        type: 'listItem',
+        content: [{
+          type: 'paragraph',
+          content: [{ type: 'text', text: bulletMatch[2] }],
+        }],
+      });
+      continue;
+    }
+
+    // Horizontal rule
+    if (line.match(/^---+$/)) {
+      if (currentList) {
+        content.push(currentList);
+        currentList = null;
+      }
+      content.push({ type: 'horizontalRule' });
+      continue;
+    }
+
+    // Empty lines
+    if (line.trim() === '') {
+      if (currentList) {
+        content.push(currentList);
+        currentList = null;
+      }
+      continue;
+    }
+
+    // Regular paragraphs with inline formatting
+    if (currentList) {
+      content.push(currentList);
+      currentList = null;
+    }
+
+    const paragraphContent = parseInlineFormatting(line);
+    content.push({
+      type: 'paragraph',
+      content: paragraphContent,
+    });
+  }
+
+  // Push any remaining list
+  if (currentList) {
+    content.push(currentList);
+  }
+
+  return {
+    type: 'doc',
+    content: content.length > 0 ? content : [{ type: 'paragraph', content: [] }],
+  };
+}
+
+// Parse inline formatting (bold, italic, code, links)
+function parseInlineFormatting(text: string): any[] {
+  const result: any[] = [];
+  let remaining = text;
+
+  // Simple regex-based parsing (could be enhanced with a proper parser)
+  const patterns = [
+    { regex: /\*\*(.+?)\*\*/g, mark: 'bold' },
+    { regex: /\*(.+?)\*/g, mark: 'italic' },
+    { regex: /__(.+?)__/g, mark: 'bold' },
+    { regex: /_(.+?)_/g, mark: 'italic' },
+    { regex: /`(.+?)`/g, mark: 'code' },
+    { regex: /\[(.+?)\]\((.+?)\)/g, mark: 'link' },
+  ];
+
+  // For simplicity, just return plain text for now
+  // A full implementation would properly parse and apply marks
+  if (remaining.trim()) {
+    result.push({ type: 'text', text: remaining });
+  }
+
+  return result.length > 0 ? result : [{ type: 'text', text: '' }];
 }
 
 // ---------- Zod Schemas ----------
@@ -199,6 +403,14 @@ const listRubySpacesSchema = z.object({
 const createRubySpaceSchema = z.object({
   name: z.string(),
   icon: z.string().default('📚'),
+});
+
+const generateDocSchema = z.object({
+  templateType: z.enum(['prs', 'buildspec', 'releasenotes']),
+  spaceId: z.string(),
+  sourceType: z.enum(['epic', 'feature', 'card', 'note']).optional(),
+  sourceId: z.string().optional(),
+  variables: z.record(z.any()).optional(),
 });
 
 // ---------- Tool Handlers ----------
@@ -615,13 +827,134 @@ async function handleCreateRubyDoc(args: z.infer<typeof createRubyDocSchema>) {
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  const ref = await db.collection('stea_documents').add(payload);
+  const ref = await db.collection('stea_docs').add(payload);
 
   return {
     content: [
       {
         type: 'text' as const,
         text: JSON.stringify({ documentId: ref.id, ...payload }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleGenerateDoc(args: z.infer<typeof generateDocSchema>) {
+  const startTime = Date.now();
+
+  // Load template
+  const template = templates.get(args.templateType);
+  if (!template) {
+    throw new Error(`Template not found: ${args.templateType}`);
+  }
+
+  // Verify space exists
+  const spaceRef = db.collection('stea_doc_spaces').doc(args.spaceId);
+  const space = await spaceRef.get();
+  if (!space.exists) {
+    throw new Error(`Ruby space not found: ${args.spaceId}`);
+  }
+
+  // Extract context from source artifact if provided
+  let contextVariables: Record<string, any> = args.variables || {};
+  let sourceArtifact: any = null;
+
+  if (args.sourceId && args.sourceType) {
+    const collectionMap: Record<string, string> = {
+      epic: 'stea_epics',
+      feature: 'stea_features',
+      card: 'stea_cards',
+      note: 'projects', // Harls notes
+    };
+
+    const collection = collectionMap[args.sourceType];
+    if (collection) {
+      const artifactRef = db.collection(collection).doc(args.sourceId);
+      const artifact = await artifactRef.get();
+
+      if (artifact.exists) {
+        sourceArtifact = { id: artifact.id, ...artifact.data() };
+
+        // Extract context based on type
+        if (args.sourceType === 'epic' || args.sourceType === 'feature') {
+          contextVariables.title = contextVariables.title || sourceArtifact.name || sourceArtifact.title;
+          contextVariables.overview = contextVariables.overview || sourceArtifact.description || '';
+          contextVariables.constraints = contextVariables.constraints || sourceArtifact.constraints;
+          contextVariables.dependencies = contextVariables.dependencies || sourceArtifact.dependencies;
+        } else if (args.sourceType === 'card') {
+          contextVariables.title = contextVariables.title || sourceArtifact.title;
+          contextVariables.overview = contextVariables.overview || sourceArtifact.description || '';
+          contextVariables.userStory = contextVariables.userStory || sourceArtifact.userStory;
+          contextVariables.acceptanceCriteria = contextVariables.acceptanceCriteria ||
+            (sourceArtifact.acceptanceCriteria ? sourceArtifact.acceptanceCriteria.map((ac: string) => `- ${ac}`).join('\n') : '');
+          contextVariables.constraints = contextVariables.constraints || sourceArtifact.constraints;
+          contextVariables.dependencies = contextVariables.dependencies || sourceArtifact.dependencies;
+        }
+      }
+    }
+  }
+
+  // Apply template with variables
+  const markdown = applyTemplate(template.template, contextVariables);
+
+  // Convert to TipTap JSON
+  const contentJson = markdownToTipTap(markdown);
+
+  // Create document
+  const docTitle = contextVariables.title || template.name;
+  const payload = {
+    title: docTitle,
+    content: contentJson,
+    type: template.type,
+    spaceId: args.spaceId,
+    tenantId: TENANT_ID,
+    draft: true, // Mark as draft
+    templateType: args.templateType,
+    templateVersion: '1.0', // Could be tracked in template YAML
+    createdAt: FieldValue.serverTimestamp(),
+    createdBy: CREATED_BY,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: CREATED_BY,
+  };
+
+  const ref = await db.collection('stea_docs').add(payload);
+  const docId = ref.id;
+
+  // Auto-create DocLink if source provided
+  if (args.sourceId && args.sourceType) {
+    try {
+      await db.collection('stea_doc_links').add({
+        fromType: args.sourceType,
+        fromId: args.sourceId,
+        toType: 'document',
+        toId: docId,
+        relation: 'generated_from',
+        tenantId: TENANT_ID,
+        createdBy: CREATED_BY,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    } catch (linkError) {
+      console.error('Failed to create DocLink:', linkError);
+      // Don't fail the whole operation if link creation fails
+    }
+  }
+
+  const elapsed = Date.now() - startTime;
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          documentId: docId,
+          title: docTitle,
+          draft: true,
+          templateType: args.templateType,
+          sourceId: args.sourceId,
+          sourceType: args.sourceType,
+          linkCreated: !!args.sourceId,
+          generationTime: `${elapsed}ms`,
+        }, null, 2),
       },
     ],
   };
@@ -940,6 +1273,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['spaceId', 'title', 'content'],
         },
       },
+      {
+        name: 'stea.generateDoc',
+        description: 'Generate a Ruby doc from a template (PRS, BuildSpec, or ReleaseNotes) with context from a source artifact',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateType: {
+              type: 'string',
+              enum: ['prs', 'buildspec', 'releasenotes'],
+              description: 'Template type to use',
+            },
+            spaceId: { type: 'string', description: 'Target Ruby space ID' },
+            sourceType: {
+              type: 'string',
+              enum: ['epic', 'feature', 'card', 'note'],
+              description: 'Type of source artifact (optional)',
+            },
+            sourceId: { type: 'string', description: 'ID of source artifact (optional)' },
+            variables: {
+              type: 'object',
+              description: 'Additional template variables (optional)',
+            },
+          },
+          required: ['templateType', 'spaceId'],
+        },
+      },
     ],
   };
 });
@@ -999,6 +1358,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'stea.createRubyDoc':
         return await handleCreateRubyDoc(createRubyDocSchema.parse(args || {}));
+
+      case 'stea.generateDoc':
+        return await handleGenerateDoc(generateDocSchema.parse(args || {}));
 
       default:
         throw new Error(`Unknown tool: ${name}`);

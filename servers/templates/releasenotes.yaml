@@ -1,0 +1,74 @@
+name: Release Notes
+description: Product release notes for end users and stakeholders
+type: documentation
+variables:
+  - name: version
+    description: Release version number
+    required: true
+  - name: releaseDate
+    description: Release date
+    required: true
+  - name: features
+    description: New features in this release
+    required: false
+  - name: improvements
+    description: Improvements and enhancements
+    required: false
+  - name: fixes
+    description: Bug fixes
+    required: false
+  - name: knownIssues
+    description: Known issues
+    required: false
+  - name: breaking
+    description: Breaking changes
+    required: false
+
+template: |
+  # Release Notes - {{version}}
+
+  **Release Date**: {{releaseDate}}
+
+  ## 🎉 New Features
+  {{features || "No new features in this release"}}
+
+  ## ✨ Improvements
+  {{improvements || "No improvements in this release"}}
+
+  ## 🐛 Bug Fixes
+  {{fixes || "No bug fixes in this release"}}
+
+  ## ⚠️ Breaking Changes
+  {{breaking || "No breaking changes in this release"}}
+
+  ## 🔍 Known Issues
+  {{knownIssues || "No known issues at this time"}}
+
+  ## 📊 Test Results
+  - **Unit Tests**: _Pass rate_
+  - **Integration Tests**: _Pass rate_
+  - **E2E Tests**: _Pass rate_
+  - **Manual Testing**: _See Hans test session_
+
+  ## 📦 Deployment
+  - **Environment**: _Production/Staging_
+  - **Deployment Method**: _Rolling/Blue-Green_
+  - **Rollback Plan**: _Available_
+
+  ## 📚 Documentation
+  - Updated user guides: _Links_
+  - API changes: _Links_
+  - Migration guides: _If applicable_
+
+  ## 🔗 Links & Evidence
+  - **Filo Epic**: _Link to epic_
+  - **GitHub Milestone**: _Link to milestone_
+  - **Hans Test Session**: _Link to test results_
+  - **Design Files**: _Figma links_
+
+  ## 👥 Contributors
+  _Team members who contributed to this release_
+
+  ---
+
+  **Approval**: _Product Owner / Release Manager signature_
