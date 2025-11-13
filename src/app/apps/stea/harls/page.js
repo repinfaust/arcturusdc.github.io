@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import {
   addDoc, arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query,
   runTransaction, serverTimestamp, setDoc, updateDoc
 } from 'firebase/firestore';
 import { setLogLevel } from 'firebase/firestore';
+import { ref as storageRef, uploadString, getDownloadURL, getBlob } from 'firebase/storage';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
@@ -329,7 +330,7 @@ function TLDrawWhiteboard({ projectId, boardId, user, tenantId }) {
     setTimeout(() => whenStoreReady(editor, fn, tries - 1), 50);
   };
 
-  // Load initial snapshot (if any) from board doc
+  // Load initial snapshot from Cloud Storage
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -338,9 +339,31 @@ function TLDrawWhiteboard({ projectId, boardId, user, tenantId }) {
         const snap = await getDoc(boardDocRef);
         if (cancelled) return;
         const data = snap.exists() ? snap.data() : null;
-        console.log('[TLDraw] Board doc exists:', snap.exists(), 'Has snapshot:', !!data?.tldrawSnapshot);
-        initialSnapshotRef.current = data?.tldrawSnapshot || null;
-        lastWriteTokenRef.current = data?.tldrawWriteToken || null;
+
+        // Try to load from Cloud Storage first
+        if (data?.tldrawStoragePath) {
+          console.log('[TLDraw] Loading from Cloud Storage:', data.tldrawStoragePath);
+          try {
+            const snapshotRef = storageRef(storage, data.tldrawStoragePath);
+            const blob = await getBlob(snapshotRef);
+            const text = await blob.text();
+            const snapshot = JSON.parse(text);
+            initialSnapshotRef.current = snapshot;
+            lastWriteTokenRef.current = data?.tldrawWriteToken || null;
+            console.log('[TLDraw] Loaded snapshot from Cloud Storage');
+          } catch (storageError) {
+            console.error('[TLDraw] Error loading from Cloud Storage:', storageError);
+            // Fall back to Firestore if storage fails
+            initialSnapshotRef.current = data?.tldrawSnapshot || null;
+            lastWriteTokenRef.current = data?.tldrawWriteToken || null;
+          }
+        } else {
+          // Legacy: load from Firestore document field
+          console.log('[TLDraw] Loading from Firestore (legacy)');
+          initialSnapshotRef.current = data?.tldrawSnapshot || null;
+          lastWriteTokenRef.current = data?.tldrawWriteToken || null;
+        }
+
         setLoaded(true);
         if (editorRef.current && initialSnapshotRef.current) {
           applySnapshot(initialSnapshotRef.current);
@@ -361,13 +384,11 @@ function TLDrawWhiteboard({ projectId, boardId, user, tenantId }) {
   useEffect(() => {
     const unsub = onSnapshot(
       boardDocRef,
-      (snap) => {
+      async (snap) => {
         if (!editorRef.current || !snap.exists()) return;
         const remote = snap.data();
-        if (!remote?.tldrawSnapshot) return;
 
         // IMPORTANT: Only apply remote updates if they're from a different client
-        // This prevents overwriting our own pending changes
         if (remote?.tldrawWriteToken) {
           const remoteClientId = remote.tldrawWriteToken.split(':')[0];
           const myClientId = clientIdRef.current;
@@ -387,10 +408,32 @@ function TLDrawWhiteboard({ projectId, boardId, user, tenantId }) {
         }
 
         try {
+          let snapshot = null;
+
+          // Try Cloud Storage first
+          if (remote?.tldrawStoragePath) {
+            try {
+              const snapshotRef = storageRef(storage, remote.tldrawStoragePath);
+              const blob = await getBlob(snapshotRef);
+              const text = await blob.text();
+              snapshot = JSON.parse(text);
+              console.log('[TLDraw] Loaded remote update from Cloud Storage');
+            } catch (storageError) {
+              console.error('[TLDraw] Error loading remote from Cloud Storage:', storageError);
+              // Fall back to Firestore
+              snapshot = remote.tldrawSnapshot;
+            }
+          } else if (remote?.tldrawSnapshot) {
+            // Legacy: load from Firestore field
+            snapshot = remote.tldrawSnapshot;
+          }
+
+          if (!snapshot) return;
+
           // Update tracking refs BEFORE applying to prevent save loop
           lastWriteTokenRef.current = remote?.tldrawWriteToken || null;
-          initialSnapshotRef.current = remote.tldrawSnapshot;
-          applySnapshot(remote.tldrawSnapshot);
+          initialSnapshotRef.current = snapshot;
+          applySnapshot(snapshot);
         } catch (e) {
           console.error('[TLDraw onSnapshot apply]', e);
         }
@@ -537,11 +580,24 @@ function TLDrawWhiteboard({ projectId, boardId, user, tenantId }) {
                     initialSnapshotRef.current = snapshot;
                     debounceSave(async () => {
                       try {
-                        console.log('[TLDraw] Attempting save to:', boardDocRef.path);
+                        console.log('[TLDraw] Attempting save to Cloud Storage');
+
+                        // Save to Cloud Storage
+                        const storagePath = `tldraw/${projectId}/${boardId}/snapshot.json`;
+                        const snapshotRef = storageRef(storage, storagePath);
+                        const snapshotJson = JSON.stringify(snapshot);
+
+                        await uploadString(snapshotRef, snapshotJson, 'raw', {
+                          contentType: 'application/json',
+                        });
+
+                        console.log('[TLDraw] Uploaded to Cloud Storage:', storagePath);
+
+                        // Update Firestore with storage reference (not the snapshot itself)
                         await setDoc(
                           boardDocRef,
                           {
-                            tldrawSnapshot: snapshot,
+                            tldrawStoragePath: storagePath,
                             tldrawUpdatedAt: serverTimestamp(),
                             tldrawUpdatedBy: user?.uid || null,
                             tldrawWriteToken: writeToken,

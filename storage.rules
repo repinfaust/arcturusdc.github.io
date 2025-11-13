@@ -27,6 +27,15 @@ service firebase.storage {
       allow delete: if isAuthenticated();
     }
 
+    // TLDraw whiteboard snapshots for Harls
+    match /tldraw/{projectId}/{boardId}/{fileName} {
+      // Allow authenticated users to read/write TLDraw snapshots
+      // Access control is enforced at the Firestore project level
+      allow read, write: if isAuthenticated()
+                         && request.resource.contentType == 'application/json'
+                         && request.resource.size < 50 * 1024 * 1024; // 50MB limit for large whiteboards
+    }
+
     // Deny all other access
     match /{allPaths=**} {
       allow read, write: if false;
