@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { adminDb } from '@/lib/firebase-admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
-function getStripe() {
+async function getStripe() {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   
   if (!stripeSecretKey) {
     throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
   }
   
+  // Dynamic import to avoid build-time resolution issues
+  const Stripe = (await import('stripe')).default;
   return new Stripe(stripeSecretKey, {
     apiVersion: '2024-11-20.acacia',
   });
@@ -19,7 +21,7 @@ function getStripe() {
 
 export async function POST(request) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
     const body = await request.text();
