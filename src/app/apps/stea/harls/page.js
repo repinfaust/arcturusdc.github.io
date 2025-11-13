@@ -264,8 +264,8 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
     [projectId, boardId]
   );
 
-  // Debounce helper
-  const debounceSave = (fn, ms = 750) => {
+  // Debounce helper - increased delay to reduce write frequency and race conditions
+  const debounceSave = (fn, ms = 1500) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(fn, ms);
   };
@@ -337,13 +337,32 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
         if (!editorRef.current || !snap.exists()) return;
         const remote = snap.data();
         if (!remote?.tldrawSnapshot) return;
-        if (remote?.tldrawWriteToken && remote.tldrawWriteToken === lastWriteTokenRef.current) {
-          return;
+
+        // IMPORTANT: Only apply remote updates if they're from a different client
+        // This prevents overwriting our own pending changes
+        if (remote?.tldrawWriteToken) {
+          const remoteClientId = remote.tldrawWriteToken.split(':')[0];
+          const myClientId = clientIdRef.current;
+
+          // Skip if this update came from us
+          if (remoteClientId === myClientId) {
+            console.log('[TLDraw] Skipping own update');
+            return;
+          }
+
+          // Skip if we've already seen this exact writeToken
+          if (remote.tldrawWriteToken === lastWriteTokenRef.current) {
+            return;
+          }
+
+          console.log('[TLDraw] Applying remote update from:', remoteClientId);
         }
+
         try {
-          applySnapshot(remote.tldrawSnapshot);
-          initialSnapshotRef.current = remote.tldrawSnapshot;
+          // Update tracking refs BEFORE applying to prevent save loop
           lastWriteTokenRef.current = remote?.tldrawWriteToken || null;
+          initialSnapshotRef.current = remote.tldrawSnapshot;
+          applySnapshot(remote.tldrawSnapshot);
         } catch (e) {
           console.error('[TLDraw onSnapshot apply]', e);
         }
