@@ -18,6 +18,8 @@ import {
 } from '@/lib/tenantUtils';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
+import TenantAppsManager from '@/components/admin/TenantAppsManager';
+import DashboardAggregationPanel from '@/components/admin/DashboardAggregationPanel';
 
 const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
@@ -345,6 +347,16 @@ export default function AdminPage() {
           >
             Members {selectedTenant && `(${members.length})`}
           </button>
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-4 py-2 text-sm font-medium transition ${
+              activeTab === 'dashboard'
+                ? 'border-b-2 border-pink-600 text-pink-600'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+          >
+            Dashboard Setup
+          </button>
         </div>
 
         {/* Tenants Tab */}
@@ -582,6 +594,17 @@ export default function AdminPage() {
                 <p className="text-neutral-600">Select a workspace from the Workspaces tab to manage its members.</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Dashboard Setup Tab */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8">
+            {/* Apps Manager */}
+            <TenantAppsManager />
+
+            {/* Dashboard Aggregation */}
+            <DashboardAggregationPanel />
           </div>
         )}
       </div>

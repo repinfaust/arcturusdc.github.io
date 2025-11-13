@@ -1,7 +1,7 @@
 export function TileContainer({ children, gradient, borderColor, hoverable }) {
   const baseClasses = `
-    block p-4 h-40 rounded-2xl border-2 bg-gradient-to-br
-    transition-all duration-200
+    block p-4 min-h-[10rem] rounded-2xl border-2 bg-gradient-to-br
+    transition-all duration-200 overflow-hidden
     ${gradient} ${borderColor}
   `;
 

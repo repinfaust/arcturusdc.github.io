@@ -26,9 +26,11 @@ export default function BuildProgressTile({ data }) {
         <TileHeader icon="📊" title="Build Progress" />
 
         <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between gap-2">
             <span className="text-2xl font-bold text-neutral-900">{app.progress}%</span>
-            <span className="text-xs text-neutral-600">{app.name}</span>
+            <span className="text-xs text-neutral-600 truncate flex-shrink-0 max-w-[6rem]" title={app.name}>
+              {app.name}
+            </span>
           </div>
 
           <div className="space-y-1 text-xs text-neutral-600">
@@ -52,7 +54,7 @@ export default function BuildProgressTile({ data }) {
             )}
           </div>
 
-          <div className="text-xs text-neutral-500 pt-1 border-t border-neutral-200">
+          <div className="text-xs text-neutral-500 pt-1 border-t border-neutral-200 whitespace-nowrap overflow-hidden text-ellipsis">
             Last activity: {formatRelativeTime(app.lastActivity)}
           </div>
         </div>
