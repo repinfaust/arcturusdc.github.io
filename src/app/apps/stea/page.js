@@ -8,6 +8,7 @@ import { auth, googleProvider } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import WorkspacePulse from '@/components/workspace/WorkspacePulse';
 
 const IN_SESSION_DESTINATIONS = [
   {
@@ -338,6 +339,9 @@ export default function SteaAccessPage() {
           </Link>
         ))}
       </div>
+
+      {/* Workspace Pulse Dashboard */}
+      <WorkspacePulse />
     </div>
   );
 }
