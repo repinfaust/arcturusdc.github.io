@@ -356,6 +356,11 @@ service cloud.firestore {
         allow read, write: if inProject(projectId);
       }
 
+      // Subcollection: discovery (product requirements)
+      match /discovery/{docId} {
+        allow read, write: if inProject(projectId);
+      }
+
       // Subcollection: specs (optional)
       match /specs/{specId} {
         allow read, write: if inProject(projectId);
