@@ -1,26 +1,21 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-
-if (!stripeSecretKey) {
-  console.error('STRIPE_SECRET_KEY is not set in environment variables');
+function getStripe() {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+  }
+  
+  return new Stripe(stripeSecretKey, {
+    apiVersion: '2024-11-20.acacia',
+  });
 }
-
-const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey, {
-      apiVersion: '2024-11-20.acacia',
-    })
-  : null;
 
 export async function POST(request) {
   try {
-    if (!stripe) {
-      return NextResponse.json(
-        { error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.' },
-        { status: 500 }
-      );
-    }
+    const stripe = getStripe();
 
     const body = await request.json();
     const { priceId, mode = 'subscription' } = body;

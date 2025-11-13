@@ -2,14 +2,23 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { adminDb } from '@/lib/firebase-admin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-11-20.acacia',
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+function getStripe() {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+  }
+  
+  return new Stripe(stripeSecretKey, {
+    apiVersion: '2024-11-20.acacia',
+  });
+}
 
 export async function POST(request) {
   try {
+    const stripe = getStripe();
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
 
