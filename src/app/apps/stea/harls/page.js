@@ -153,88 +153,335 @@ async function incMetric(uid, field, incBy = 1) {
 }
 
 /* =========================
-   JTBD / QUESTIONS
+   DISCOVERY FIELDS & EXPORT
    ========================= */
-function JobsSidebar({ projectId, boardId, tenantId }) {
-  if (!projectId || !boardId) return null; // guard
-  const [tab, setTab] = useState('jtbd');
-  const [items, setItems] = useState([]);
-  const [text, setText] = useState('');
-  const collPath = `projects/${projectId}/whiteboards/${boardId}/jobs`;
+function DiscoverySidebar({ projectId, tenantId, user }) {
+  if (!projectId) return null;
 
+  const [discovery, setDiscovery] = useState({
+    projectName: '',
+    owner: '',
+    problem: '',
+    audience: [],
+    jtbd: [],
+    goals: [],
+    constraints: [],
+    inScope: [],
+    outOfScope: [],
+    assumptions: [],
+    risks: [],
+    dependencies: [],
+    seedStory: '',
+    ac: [],
+    flows: [],
+  });
+
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportContent, setExportContent] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const discoveryRef = useMemo(
+    () => doc(db, `projects/${projectId}/discovery`, 'main'),
+    [projectId]
+  );
+
+  // Load discovery data
   useEffect(() => {
-    const qy = query(collection(db, collPath), orderBy('createdAt', 'asc'));
-    const unsub = onSnapshot(qy, (s) => {
-      const arr = [];
-      s.forEach((d) => arr.push({ id: d.id, ...d.data() }));
-      setItems(arr);
-    }, (e) => {
-      console.error('[JobsSidebar onSnapshot]', collPath, e);
+    const unsub = onSnapshot(discoveryRef, (snap) => {
+      if (snap.exists()) {
+        setDiscovery(snap.data());
+      }
     });
     return () => unsub();
-  }, [projectId, boardId]);
+  }, [discoveryRef]);
 
-  const addItem = async () => {
-    if (!text.trim()) return;
-    await addDoc(collection(db, collPath), {
-      type: tab === 'jtbd' ? 'jtbd' : 'question',
-      text: text.trim(),
-      done: false,
-      tenantId: tenantId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    setText('');
+  // Auto-save discovery data (debounced)
+  const saveDiscovery = useCallback(async (data) => {
+    setSaving(true);
+    try {
+      await setDoc(discoveryRef, {
+        ...data,
+        tenantId,
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid || null,
+      }, { merge: true });
+    } catch (err) {
+      console.error('[Discovery save error]', err);
+    } finally {
+      setSaving(false);
+    }
+  }, [discoveryRef, tenantId, user]);
+
+  const updateField = (field, value) => {
+    const updated = { ...discovery, [field]: value };
+    setDiscovery(updated);
+    saveDiscovery(updated);
   };
 
-  const toggleDone = async (id, done) => {
-    await updateDoc(doc(db, collPath, id), { done: !done, updatedAt: serverTimestamp() });
+  const addListItem = (field) => {
+    const value = prompt(`Add to ${field}:`);
+    if (value?.trim()) {
+      updateField(field, [...(discovery[field] || []), value.trim()]);
+    }
   };
 
-  const shown = items.filter((i) => i.type === (tab === 'jtbd' ? 'jtbd' : 'question'));
+  const removeListItem = (field, index) => {
+    updateField(field, discovery[field].filter((_, i) => i !== index));
+  };
 
-  return (
-    <aside className="w-full rounded-2xl border bg-white/70 p-3">
-      <div className="mb-2 flex gap-2">
+  const buildMarkdown = () => {
+    const pad = (arr) => (arr && arr.length ? arr.map(x => `- ${x}`).join('\n') : '-');
+    const today = new Date().toISOString().slice(0,10);
+
+    return [
+      `# Project`,
+      `Name: ${discovery.projectName || '<Project Name>'}`,
+      `Owner: ${discovery.owner || '<Owner>'}`,
+      `Date: ${today}`,
+      ``,
+      `## Problem to Solve`,
+      discovery.problem || '<One clear paragraph…>',
+      ``,
+      `## Audience / Users`,
+      pad(discovery.audience),
+      ``,
+      `## Jobs To Be Done`,
+      pad(discovery.jtbd),
+      ``,
+      `## Goals / Success Metrics`,
+      pad(discovery.goals),
+      ``,
+      `## Scope & Constraints`,
+      `- In scope: ${discovery.inScope?.join(', ') || '<…>'}`,
+      `- Out of scope: ${discovery.outOfScope?.join(', ') || '<…>'}`,
+      `- Constraints: ${discovery.constraints?.join(', ') || '<…>'}`,
+      ``,
+      `## Assumptions, Risks, Dependencies`,
+      `- Assumptions:\n${pad(discovery.assumptions)}`,
+      `- Risks/Unknowns:\n${pad(discovery.risks)}`,
+      `- Dependencies:\n${pad(discovery.dependencies)}`,
+      ``,
+      `## Seed Stories / Acceptance Criteria / Flows`,
+      `### Example User Story`,
+      discovery.seedStory || 'As a <user>, I want <capability>, so that <outcome>.',
+      ``,
+      `### Acceptance Criteria (seed)`,
+      (discovery.ac?.length ? discovery.ac.map((a,i)=>`${i+1}. ${a}`).join('\n') : '1. <Given/When/Then…>'),
+      ``,
+      `### User Flows (seed)`,
+      pad(discovery.flows),
+      ``,
+      `---`,
+      ``,
+      `## What I want from the LLM (follow exactly)`,
+      `1) Produce a **concise build spec (Markdown)** with these sections in order:`,
+      `   - Overview, Architecture (ASCII diagram OK), Data model, API contracts (req/resp),`,
+      `     Feature breakdown (Epic → Feature → Story), Non-functionals, Test strategy,`,
+      `     Release plan (flags/migrations).`,
+      ``,
+      `2) Produce a **Backlog JSON** using this schema:`,
+      `\`\`\`json`,
+      `{`,
+      `  "epics": [{ "title": "", "intent": "", "successMetrics": [] }],`,
+      `  "features": [{ "epicIndex": 0, "title": "", "scope": "", "dependencies": [] }],`,
+      `  "cards": [{`,
+      `    "featureIndex": 0,`,
+      `    "title": "",`,
+      `    "userStory": "",`,
+      `    "acceptanceCriteria": ["", ""],`,
+      `    "userFlows": ["", ""],`,
+      `    "size": "XS|S|M|L|XL",`,
+      `    "priority": "Now|Next|Later"`,
+      `  }]`,
+      `}`,
+      `\`\`\``,
+      ``,
+      `3) Return **only** two payloads, clearly delimited:`,
+      `\`\`\``,
+      `===build-spec.md===`,
+      `# <Title>`,
+      `...`,
+      `===backlog.json===`,
+      `{ ...exact JSON... }`,
+      `\`\`\``,
+      ``,
+      `## Guardrails`,
+      `- Stay within MVP + one follow-up release.`,
+      `- Do not invent integrations not listed under Dependencies.`,
+    ].join('\n');
+  };
+
+  const handleGeneratePrompt = () => {
+    const markdown = buildMarkdown();
+    setExportContent(markdown);
+    setExportModalOpen(true);
+  };
+
+  const downloadMarkdown = () => {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `harls-prompt-${timestamp}.md`;
+    const blob = new Blob([exportContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const ListField = ({ label, field }) => (
+    <div className="mb-3">
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-xs font-semibold text-neutral-700">{label}</label>
         <button
-          onClick={() => setTab('jtbd')}
-          className={`flex-1 rounded-lg px-2 py-1 text-sm ${tab==='jtbd'?'bg-neutral-900 text-white':'bg-neutral-200 hover:bg-neutral-300'}`}
+          onClick={() => addListItem(field)}
+          className="text-xs text-blue-600 hover:text-blue-800"
         >
-          Jobs to be done
-        </button>
-        <button
-          onClick={() => setTab('q')}
-          className={`flex-1 rounded-lg px-2 py-1 text-sm ${tab==='q'?'bg-neutral-900 text-white':'bg-neutral-200 hover:bg-neutral-300'}`}
-        >
-          Questions
+          + Add
         </button>
       </div>
-
-      <form onSubmit={(e)=>{e.preventDefault(); addItem();}} className="mb-2 flex items-center gap-2">
-        <input
-          value={text}
-          onChange={(e)=>setText(e.target.value)}
-          placeholder={tab==='jtbd' ? 'Add a job…' : 'Add a question…'}
-          className="flex-1 min-w-0 rounded-md border px-2 py-1 text-sm"
-        />
-        <button className="shrink-0 rounded-md bg-emerald-200 px-3 py-1 text-xs hover:bg-emerald-300">Add</button>
-      </form>
-
-      <ul className="space-y-2">
-        {shown.map((i)=>(
-          <li key={i.id} className="flex items-start gap-2 rounded-lg border bg-neutral-50 p-2">
-            <input type="checkbox" checked={!!i.done} onChange={()=>toggleDone(i.id, !!i.done)} className="mt-0.5" />
-            <span
-              className={`block min-w-0 max-w-full text-[13px] leading-snug whitespace-pre-wrap break-all ${i.done?'line-through text-neutral-400':''}`}
-              style={{ overflowWrap: 'anywhere' }}
+      <ul className="space-y-1">
+        {(discovery[field] || []).map((item, idx) => (
+          <li key={idx} className="flex items-start gap-2 text-sm bg-neutral-50 rounded px-2 py-1">
+            <span className="flex-1">{item}</span>
+            <button
+              onClick={() => removeListItem(field, idx)}
+              className="text-red-500 hover:text-red-700 text-xs"
             >
-              {i.text}
-            </span>
+              ×
+            </button>
           </li>
         ))}
-        {shown.length===0 && <li className="text-xs text-neutral-500">Nothing here yet.</li>}
+        {(!discovery[field] || discovery[field].length === 0) && (
+          <li className="text-xs text-neutral-400 italic">No items yet</li>
+        )}
       </ul>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      <aside className="w-full rounded-2xl border bg-white/70 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold">Discovery</h3>
+          {saving && <span className="text-xs text-neutral-500">Saving...</span>}
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-neutral-700">Project Name</label>
+            <input
+              type="text"
+              value={discovery.projectName}
+              onChange={(e) => updateField('projectName', e.target.value)}
+              className="w-full rounded-md border px-2 py-1 text-sm"
+              placeholder="My Project"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-neutral-700">Owner</label>
+            <input
+              type="text"
+              value={discovery.owner}
+              onChange={(e) => updateField('owner', e.target.value)}
+              className="w-full rounded-md border px-2 py-1 text-sm"
+              placeholder="Team / Your Name"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-neutral-700">Problem to Solve</label>
+            <textarea
+              value={discovery.problem}
+              onChange={(e) => updateField('problem', e.target.value)}
+              className="w-full rounded-md border px-2 py-2 text-sm"
+              rows={3}
+              placeholder="Describe the problem..."
+            />
+          </div>
+
+          <ListField label="Audience / Users" field="audience" />
+          <ListField label="Jobs To Be Done" field="jtbd" />
+          <ListField label="Goals / Success Metrics" field="goals" />
+          <ListField label="In Scope" field="inScope" />
+          <ListField label="Out of Scope" field="outOfScope" />
+          <ListField label="Constraints" field="constraints" />
+          <ListField label="Assumptions" field="assumptions" />
+          <ListField label="Risks/Unknowns" field="risks" />
+          <ListField label="Dependencies" field="dependencies" />
+
+          <div>
+            <label className="text-xs font-semibold text-neutral-700">Seed User Story</label>
+            <textarea
+              value={discovery.seedStory}
+              onChange={(e) => updateField('seedStory', e.target.value)}
+              className="w-full rounded-md border px-2 py-2 text-sm"
+              rows={2}
+              placeholder="As a <user>, I want <capability>, so that <outcome>."
+            />
+          </div>
+
+          <ListField label="Acceptance Criteria (seed)" field="ac" />
+          <ListField label="User Flows (seed)" field="flows" />
+        </div>
+
+        <button
+          onClick={handleGeneratePrompt}
+          className="mt-4 w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Generate Prompt (Export .md)
+        </button>
+      </aside>
+
+      {/* Export Modal */}
+      {exportModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-neutral-900">Generated Prompt</h2>
+              <button
+                onClick={() => setExportModalOpen(false)}
+                className="text-neutral-500 hover:text-neutral-700 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <textarea
+              value={exportContent}
+              onChange={(e) => setExportContent(e.target.value)}
+              className="flex-1 w-full rounded-lg border px-3 py-2 text-sm font-mono overflow-auto"
+              placeholder="Generated markdown will appear here..."
+            />
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={downloadMarkdown}
+                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              >
+                Download .md
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(exportContent);
+                  alert('Copied to clipboard!');
+                }}
+                className="flex-1 px-6 py-3 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors text-sm font-medium"
+              >
+                Copy to Clipboard
+              </button>
+              <button
+                onClick={() => setExportModalOpen(false)}
+                className="px-6 py-3 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors text-sm font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -964,7 +1211,7 @@ export default function ProductLabPage() {
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold">Harls Product Lab</h1>
           <p className="text-sm text-neutral-600">
-            Whiteboard → Upgrade to Story → Plan in Now/Next/Later — with badges & XP.
+            Discovery → Whiteboard → Export Prompt → Stories → Now/Next/Later
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -1002,7 +1249,7 @@ export default function ProductLabPage() {
           )}
           <div className="flex flex-col gap-4">
             <TLDrawWhiteboard projectId={project.projectId} boardId={project.boardId} user={user} tenantId={currentTenant.id} />
-            <JobsSidebar projectId={project.projectId} boardId={project.boardId} tenantId={currentTenant.id} />
+            <DiscoverySidebar projectId={project.projectId} tenantId={currentTenant.id} user={user} />
           </div>
 
           <StoriesKanban projectId={project.projectId} user={user} tenantId={currentTenant.id} />
@@ -1074,13 +1321,14 @@ function QuickDiag({ user, projectId, boardId, onClose }) {
 function FooterTips() {
   return (
     <div className="mt-6 rounded-2xl border bg-white/70 p-4 text-sm text-neutral-700">
-      <div className="font-semibold">Teaching tips</div>
+      <div className="font-semibold">How to use Harls</div>
       <ul className="ml-5 list-disc space-y-1">
-        <li>Select a note/text on the whiteboard and press <span className="font-medium">Upgrade → Story</span>.</li>
+        <li>Fill out <span className="font-medium">Discovery fields</span> (problem, JTBD, goals, constraints, etc.).</li>
+        <li>Click <span className="font-medium">Generate Prompt</span> to export a structured .md file for any LLM.</li>
+        <li>Use the whiteboard to sketch ideas, then <span className="font-medium">Upgrade → Story</span>.</li>
         <li>Drag stories between Backlog / Now / Next / Later to plan your MVP.</li>
         <li>Add 3+ acceptance criteria to earn <span className="font-medium">🎯 Precision Master</span>.</li>
-        <li>Move 3 stories into “Now” to earn <span className="font-medium">🧩 MVP Architect</span>.</li>
-        <li>Create 5 notes to earn <span className="font-medium">🧠 Brainstormer</span>.</li>
+        <li>Move 3 stories into "Now" to earn <span className="font-medium">🧩 MVP Architect</span>.</li>
       </ul>
     </div>
   );

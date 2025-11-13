@@ -13,7 +13,7 @@ const IN_SESSION_DESTINATIONS = [
   {
     label: 'Harls',
     href: '/apps/stea/harls',
-    description: 'Felix Product Lab collaborative whiteboard environment.',
+    description: 'Product discovery lab: capture requirements, sketch on whiteboard, export structured prompts for LLMs.',
     gradient: 'from-amber-50/80 to-orange-50/30',
     borderColor: 'border-amber-200',
   },
