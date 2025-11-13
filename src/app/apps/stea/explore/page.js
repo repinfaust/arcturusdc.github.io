@@ -847,13 +847,13 @@ export default function SteaDemoPage() {
                     disabled={checkoutLoading === 'Solo Monthly'}
                     className="inline-block px-10 py-4 bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 text-white rounded-xl hover:shadow-2xl hover:-translate-y-1 transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {checkoutLoading === 'Solo Monthly' ? 'Loading...' : '🚀 Start Free Trial — £9/month'}
+                    {checkoutLoading === 'Solo Monthly' ? 'Loading...' : '🚀 Get Started — £9/month'}
                   </button>
                   <Link
                     href="/apps/stea"
                     className="inline-block px-8 py-4 bg-white border-2 border-neutral-300 text-neutral-900 rounded-xl hover:shadow-lg hover:border-amber-600 hover:-translate-y-1 transition-all font-semibold"
                   >
-                    Explore Demo First
+                    Login to STEa
                   </Link>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-neutral-600 mb-4">
