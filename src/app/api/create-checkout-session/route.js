@@ -1,21 +1,14 @@
 import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function getStripe() {
+function getStripe() {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   
   if (!stripeSecretKey) {
     throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
-  }
-  
-  let Stripe;
-  try {
-    Stripe = (await import('stripe')).default;
-  } catch (error) {
-    console.error('Failed to import stripe:', error);
-    throw new Error('Stripe module not available');
   }
   
   return new Stripe(stripeSecretKey, {
@@ -25,7 +18,7 @@ async function getStripe() {
 
 export async function POST(request) {
   try {
-    const stripe = await getStripe();
+    const stripe = getStripe();
 
     const body = await request.json();
     const { priceId, mode = 'subscription' } = body;
