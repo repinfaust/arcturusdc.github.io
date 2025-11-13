@@ -1,18 +1,5 @@
 {
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "arcturusdc.com"
-        }
-      ],
-      "destination": "https://www.arcturusdc.com",
-      "permanent": true
-    }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
