@@ -16,6 +16,15 @@ const nextConfig = {
         ]
       }
     ];
+  },
+  
+  webpack: (config, { isServer }) => {
+    // Ensure stripe is properly resolved
+    if (isServer) {
+      config.externals = config.externals || [];
+      // Don't externalize stripe for server-side
+    }
+    return config;
   }
 };
 
