@@ -165,7 +165,7 @@ function JobsSidebar({ projectId, boardId }) {
   const shown = items.filter((i) => i.type === (tab === 'jtbd' ? 'jtbd' : 'question'));
 
   return (
-    <aside className="w-full lg:w-72 shrink-0 rounded-2xl border bg-white/70 p-3 min-w-0">
+    <aside className="w-full rounded-2xl border bg-white/70 p-3">
       <div className="mb-2 flex gap-2">
         <button
           onClick={() => setTab('jtbd')}
@@ -429,13 +429,13 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
   };
 
   return (
-    <div className="relative w-full lg:flex-1 rounded-2xl border bg-white/70 p-4 shadow-sm min-w-0">
+    <div className="relative w-full rounded-2xl border bg-white/70 p-4 shadow-sm">
       <div className="flex items-center justify-between pb-2">
         <h2 className="text-lg font-semibold">Whiteboard</h2>
         <span className="text-xs text-neutral-500">Powered by tldraw</span>
       </div>
 
-      <div className="relative h-[520px] w-full overflow-hidden rounded-xl border bg-neutral-50">
+      <div className="relative h-[calc(100vh-280px)] min-h-[600px] w-full overflow-hidden rounded-xl border bg-neutral-50">
         {/* Portrait mode message */}
         {isPortrait ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 p-8">
@@ -831,7 +831,7 @@ export default function ProductLabPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl p-4">
+    <main className="mx-auto p-4">
       <header className="mb-4 flex items-center justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold">Harls Product Lab</h1>
@@ -872,9 +872,9 @@ export default function ProductLabPage() {
               onClose={() => setDiagOpen(false)}
             />
           )}
-          <div className="flex flex-col lg:flex-row gap-4 items-start">
-            <JobsSidebar projectId={project.projectId} boardId={project.boardId} />
+          <div className="flex flex-col gap-4">
             <TLDrawWhiteboard projectId={project.projectId} boardId={project.boardId} user={user} />
+            <JobsSidebar projectId={project.projectId} boardId={project.boardId} />
           </div>
 
           <StoriesKanban projectId={project.projectId} user={user} />
