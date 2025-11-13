@@ -100,8 +100,8 @@ If you need project-specific configuration, manually edit `.claude.json` to add 
 ```bash
 cd "/Users/davidloake/arcturusdc.github.io"
 GOOGLE_APPLICATION_CREDENTIALS="/Users/davidloake/stea-775cd-1adc69763f06.json" \
+TENANT_ID="FqhckqMaorJMAQ6B29mP" \
 DEFAULT_APP="Tou.me" \
-DEFAULT_BOARD="STEa" \
 DEFAULT_COLUMN="Idea" \
 CREATED_BY="mcp:stea" \
 npx tsx servers/stea-mcp.ts
