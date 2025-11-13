@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 import BuildProgressTile from './tiles/BuildProgressTile';
 import TestingSnapshotTile from './tiles/TestingSnapshotTile';
 import BacklogHealthTile from './tiles/BacklogHealthTile';
@@ -18,10 +20,6 @@ export default function WorkspacePulse() {
       setLoading(false);
       return;
     }
-
-    // Import Firestore functions
-    const { db } = require('@/lib/firebase');
-    const { doc, onSnapshot } = require('firebase/firestore');
 
     // Set up real-time listener for dashboard metrics
     const dashboardRef = doc(db, 'tenants', currentTenant.id, 'dashboard', 'metrics');
