@@ -4,7 +4,7 @@
  */
 
 import { adminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import admin from 'firebase-admin';
 
 /**
  * Create a new tenant/workspace (server-side)
@@ -16,7 +16,7 @@ export async function createTenantAdmin({ name, plan = 'team', ownerEmail }) {
     const tenantData = {
       name,
       plan, // 'solo-monthly', 'solo-yearly', 'team-monthly', etc.
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       ownerEmail: ownerEmail.toLowerCase(),
       settings: {
         customBranding: {},
@@ -55,7 +55,7 @@ export async function addTenantMemberAdmin({ tenantId, userEmail, role = 'member
       userEmail: userEmail.toLowerCase(),
       uid: null, // Will be set on first login
       role, // 'admin' | 'member' | 'tester'
-      invitedAt: FieldValue.serverTimestamp(),
+      invitedAt: admin.firestore.FieldValue.serverTimestamp(),
       invitedBy: invitedBy.toLowerCase(),
       status: 'active',
     };
