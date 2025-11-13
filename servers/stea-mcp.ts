@@ -413,6 +413,19 @@ const generateDocSchema = z.object({
   variables: z.record(z.any()).optional(),
 });
 
+const generateReleaseNotesSchema = z.object({
+  spaceId: z.string(),
+  version: z.string(),
+  githubRepo: z.string().optional(), // e.g., "owner/repo"
+  fromTag: z.string().optional(), // e.g., "v1.0.0"
+  toTag: z.string().optional(), // e.g., "v1.1.0" or "HEAD"
+  startDate: z.string().optional(), // ISO date for Filo/Hans query
+  endDate: z.string().optional(), // ISO date
+  includeGithub: z.boolean().default(true),
+  includeFilo: z.boolean().default(true),
+  includeHans: z.boolean().default(true),
+});
+
 // ---------- Tool Handlers ----------
 
 async function handleCreateEpic(args: z.infer<typeof createEpicSchema>) {
@@ -960,6 +973,205 @@ async function handleGenerateDoc(args: z.infer<typeof generateDocSchema>) {
   };
 }
 
+async function handleGenerateReleaseNotes(args: z.infer<typeof generateReleaseNotesSchema>) {
+  const startTime = Date.now();
+
+  // Verify space exists
+  const spaceRef = db.collection('stea_doc_spaces').doc(args.spaceId);
+  const space = await spaceRef.get();
+  if (!space.exists) {
+    throw new Error(`Ruby space not found: ${args.spaceId}`);
+  }
+
+  // Determine date range
+  let startDate: Date | null = null;
+  let endDate: Date | null = null;
+
+  if (args.startDate) {
+    startDate = new Date(args.startDate);
+  }
+  if (args.endDate) {
+    endDate = new Date(args.endDate);
+  } else {
+    endDate = new Date(); // Default to now
+  }
+
+  const sections = {
+    features: [] as string[],
+    improvements: [] as string[],
+    fixes: [] as string[],
+    tests: [] as string[],
+    knownIssues: [] as string[],
+  };
+
+  // Query Filo for Done cards
+  if (args.includeFilo) {
+    try {
+      let filoQuery = db.collection('stea_cards')
+        .where('tenantId', '==', TENANT_ID)
+        .where('statusColumn', '==', 'Done');
+
+      // Note: Firestore doesn't support range queries on dates easily without composite indexes
+      // For now, we'll fetch all Done cards and filter client-side
+      const filoSnap = await filoQuery.get();
+
+      filoSnap.forEach((doc) => {
+        const data = doc.data();
+        const updatedAt = data.updatedAt?.toDate?.() || data.createdAt?.toDate?.();
+
+        // Filter by date if provided
+        if (startDate && updatedAt && updatedAt < startDate) return;
+        if (endDate && updatedAt && updatedAt > endDate) return;
+
+        const title = data.title || 'Untitled';
+        const cardType = data.type || 'feature';
+        const epicId = data.epicId || '';
+        const featureId = data.featureId || '';
+
+        // Build link
+        const link = `[${title}](https://www.arcturusdc.com/apps/stea/filo?card=${doc.id})`;
+
+        // Categorize by type
+        if (cardType === 'bug') {
+          sections.fixes.push(`- ${link}`);
+        } else if (cardType === 'feature') {
+          sections.features.push(`- ${link}`);
+        } else {
+          sections.improvements.push(`- ${link}`);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching Filo cards:', error);
+    }
+  }
+
+  // Query Hans for test results
+  if (args.includeHans) {
+    try {
+      let hansQuery = db.collection('toume_test_sessions')
+        .where('tenantId', '==', TENANT_ID)
+        .orderBy('timestamp', 'desc')
+        .limit(10); // Get recent test sessions
+
+      const hansSnap = await hansQuery.get();
+
+      let totalTests = 0;
+      let passedTests = 0;
+      let failedTests = 0;
+
+      hansSnap.forEach((doc) => {
+        const data = doc.data();
+        const timestamp = data.timestamp?.toDate?.();
+
+        // Filter by date
+        if (startDate && timestamp && timestamp < startDate) return;
+        if (endDate && timestamp && timestamp > endDate) return;
+
+        const summary = data.summary || {};
+        totalTests += summary.total || 0;
+        passedTests += summary.passed || 0;
+        failedTests += summary.failed || 0;
+      });
+
+      if (totalTests > 0) {
+        const passRate = ((passedTests / totalTests) * 100).toFixed(1);
+        sections.tests.push(`- Total tests run: ${totalTests}`);
+        sections.tests.push(`- Passed: ${passedTests} (${passRate}%)`);
+        sections.tests.push(`- Failed: ${failedTests}`);
+      }
+    } catch (error) {
+      console.error('Error fetching Hans test results:', error);
+    }
+  }
+
+  // TODO: GitHub integration (requires GITHUB_TOKEN env var)
+  // For now, this is optional and can be added later
+  if (args.includeGithub && args.githubRepo && args.fromTag && args.toTag) {
+    sections.improvements.push(`- GitHub PR integration coming soon (${args.fromTag}...${args.toTag})`);
+  }
+
+  // Build markdown using template variables
+  const releaseDate = endDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0];
+
+  const variables = {
+    version: args.version,
+    releaseDate: releaseDate,
+    features: sections.features.length > 0 ? sections.features.join('\n') : 'No new features in this release',
+    improvements: sections.improvements.length > 0 ? sections.improvements.join('\n') : 'No improvements in this release',
+    fixes: sections.fixes.length > 0 ? sections.fixes.join('\n') : 'No bug fixes in this release',
+    breaking: '', // Could be extracted from card labels/tags
+    knownIssues: sections.knownIssues.length > 0 ? sections.knownIssues.join('\n') : 'No known issues at this time',
+  };
+
+  // Load and apply release notes template
+  const template = templates.get('releasenotes');
+  if (!template) {
+    throw new Error('Release notes template not found');
+  }
+
+  const markdown = applyTemplate(template.template, variables);
+
+  // Add test results section manually (not in template variables)
+  let enhancedMarkdown = markdown;
+  if (sections.tests.length > 0) {
+    const testSection = `\n## 📊 Test Results\n${sections.tests.join('\n')}\n`;
+    // Insert after Known Issues section
+    enhancedMarkdown = markdown.replace('## 🔗 Links & Evidence', `${testSection}\n## 🔗 Links & Evidence`);
+  }
+
+  // Convert to TipTap JSON
+  const contentJson = markdownToTipTap(enhancedMarkdown);
+
+  // Create document
+  const docTitle = `Release Notes - ${args.version}`;
+  const payload = {
+    title: docTitle,
+    content: contentJson,
+    type: 'documentation',
+    spaceId: args.spaceId,
+    tenantId: TENANT_ID,
+    draft: false, // Release notes are published
+    templateType: 'releasenotes',
+    templateVersion: '1.0',
+    metadata: {
+      version: args.version,
+      releaseDate: releaseDate,
+      generatedFrom: {
+        filo: args.includeFilo,
+        hans: args.includeHans,
+        github: args.includeGithub,
+      },
+    },
+    createdAt: FieldValue.serverTimestamp(),
+    createdBy: CREATED_BY,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: CREATED_BY,
+  };
+
+  const ref = await db.collection('stea_docs').add(payload);
+  const elapsed = Date.now() - startTime;
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          documentId: ref.id,
+          title: docTitle,
+          version: args.version,
+          stats: {
+            features: sections.features.length,
+            improvements: sections.improvements.length,
+            fixes: sections.fixes.length,
+            testsRun: sections.tests.length > 0,
+          },
+          generationTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
 // ---------- MCP Server Setup ----------
 const server = new Server(
   {
@@ -1299,6 +1511,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['templateType', 'spaceId'],
         },
       },
+      {
+        name: 'stea.generateReleaseNotes',
+        description: 'Generate comprehensive release notes from Filo Done cards, Hans test results, and optionally GitHub PRs',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            spaceId: { type: 'string', description: 'Target Ruby space ID' },
+            version: { type: 'string', description: 'Release version (e.g., "v1.2.0")' },
+            githubRepo: { type: 'string', description: 'GitHub repo (e.g., "owner/repo") - optional' },
+            fromTag: { type: 'string', description: 'Start tag for GitHub PRs (e.g., "v1.1.0") - optional' },
+            toTag: { type: 'string', description: 'End tag for GitHub PRs (e.g., "v1.2.0" or "HEAD") - optional' },
+            startDate: { type: 'string', description: 'Start date for Filo/Hans query (ISO format) - optional' },
+            endDate: { type: 'string', description: 'End date for Filo/Hans query (ISO format, defaults to now) - optional' },
+            includeGithub: { type: 'boolean', description: 'Include GitHub PRs (default: true)' },
+            includeFilo: { type: 'boolean', description: 'Include Filo Done cards (default: true)' },
+            includeHans: { type: 'boolean', description: 'Include Hans test results (default: true)' },
+          },
+          required: ['spaceId', 'version'],
+        },
+      },
     ],
   };
 });
@@ -1361,6 +1593,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'stea.generateDoc':
         return await handleGenerateDoc(generateDocSchema.parse(args || {}));
+
+      case 'stea.generateReleaseNotes':
+        return await handleGenerateReleaseNotes(generateReleaseNotesSchema.parse(args || {}));
 
       default:
         throw new Error(`Unknown tool: ${name}`);
