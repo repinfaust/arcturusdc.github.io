@@ -12,6 +12,10 @@ import { z } from 'zod';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import * as yaml from 'js-yaml';
+import SwaggerParser from '@apidevtools/swagger-parser';
+import { getStorage } from 'firebase-admin/storage';
+import { createHash } from 'crypto';
+import axios from 'axios';
 
 // ---------- Firebase Admin Initialization ----------
 let db: FirebaseFirestore.Firestore;
@@ -489,6 +493,98 @@ const completeReviewSchema = z.object({
 const listReviewsSchema = z.object({
   docId: z.string(),
   checklistType: z.enum(['accessibility', 'security', 'gdpr', 'design-parity', 'performance', 'all']).default('all'),
+});
+
+// ---------- R7: API & Component Docs Schemas ----------
+
+const importOpenAPISchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  specUrl: z.string().optional(), // URL to fetch spec from
+  specContent: z.string().optional(), // Or direct spec content (JSON/YAML)
+  projectId: z.string().optional(),
+  docId: z.string().optional(),
+  webhookUrl: z.string().optional(),
+  webhookSecret: z.string().optional(),
+  sourceRepo: z.string().optional(), // e.g., "org/repo"
+  sourceBranch: z.string().optional(),
+  sourcePath: z.string().optional(),
+});
+
+const syncFigmaComponentsSchema = z.object({
+  figmaFileId: z.string(), // Figma file ID
+  figmaAccessToken: z.string(), // User's Figma personal access token
+  name: z.string(),
+  projectId: z.string().optional(),
+  docId: z.string().optional(),
+});
+
+const listAPIEndpointsSchema = z.object({
+  specId: z.string(),
+  method: z.string().optional(), // Filter by HTTP method
+  tags: z.array(z.string()).optional(), // Filter by tags
+  limit: z.number().default(50),
+});
+
+const listFigmaComponentsSchema = z.object({
+  fileId: z.string(),
+  type: z.enum(['COMPONENT', 'COMPONENT_SET', 'all']).default('all'),
+  limit: z.number().default(50),
+});
+
+const listAPISpecsSchema = z.object({
+  projectId: z.string().optional(),
+  limit: z.number().default(20),
+});
+
+const listFigmaFilesSchema = z.object({
+  projectId: z.string().optional(),
+  limit: z.number().default(20),
+});
+
+// R8: Template Management
+const listTemplatesSchema = z.object({
+  category: z.string().optional(),
+  includeBuiltIn: z.boolean().default(true),
+  limit: z.number().default(50),
+});
+
+const getTemplateSchema = z.object({
+  templateId: z.string(),
+});
+
+const createTemplateSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  category: z.string(),
+  type: z.string().default('documentation'),
+  variables: z.array(z.object({
+    name: z.string(),
+    description: z.string(),
+    required: z.boolean().default(false),
+  })),
+  template: z.string(),
+});
+
+const updateTemplateSchema = z.object({
+  templateId: z.string(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  variables: z.array(z.object({
+    name: z.string(),
+    description: z.string(),
+    required: z.boolean().default(false),
+  })).optional(),
+  template: z.string().optional(),
+});
+
+const deleteTemplateSchema = z.object({
+  templateId: z.string(),
+});
+
+const syncBuiltInTemplatesSchema = z.object({
+  force: z.boolean().default(false),
 });
 
 // ---------- Tool Handlers ----------
@@ -1502,6 +1598,878 @@ async function handleListReviews(args: z.infer<typeof listReviewsSchema>) {
   };
 }
 
+// ---------- R7: API & Component Docs Handlers ----------
+
+// Helper: Generate SHA256 hash
+function generateSHA256(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+// Helper: Generate code samples for API endpoint
+function generateCodeSamples(path: string, method: string, parameters: any[], requestBody: any, security: any[]): any {
+  const hasPathParams = parameters.some(p => p.in === 'path');
+  const queryParams = parameters.filter(p => p.in === 'query');
+  const headerParams = parameters.filter(p => p.in === 'header');
+
+  // Build example path with path parameters replaced
+  let examplePath = path;
+  parameters.filter(p => p.in === 'path').forEach(p => {
+    examplePath = examplePath.replace(`{${p.name}}`, `<${p.name}>`);
+  });
+
+  // Build query string
+  let queryString = '';
+  if (queryParams.length > 0) {
+    queryString = '?' + queryParams.map(p => `${p.name}=<${p.name}>`).join('&');
+  }
+
+  // cURL sample
+  let curlSample = `curl -X ${method.toUpperCase()} "https://api.example.com${examplePath}${queryString}"`;
+
+  // Add headers
+  if (security && security.length > 0) {
+    const authType = security[0].type;
+    if (authType === 'bearer' || authType === 'http') {
+      curlSample += ` \\\n  -H "Authorization: Bearer <token>"`;
+    } else if (authType === 'apiKey') {
+      curlSample += ` \\\n  -H "${security[0].name}: <api-key>"`;
+    }
+  }
+
+  headerParams.forEach(p => {
+    curlSample += ` \\\n  -H "${p.name}: <${p.name}>"`;
+  });
+
+  // Add request body if applicable
+  if (requestBody && requestBody.required) {
+    curlSample += ` \\\n  -H "Content-Type: ${requestBody.contentType || 'application/json'}"`;
+    curlSample += ` \\\n  -d '${JSON.stringify(requestBody.examples || {}, null, 2)}'`;
+  }
+
+  // JavaScript/Fetch sample
+  let jsSample = `fetch('https://api.example.com${examplePath}${queryString}', {\n  method: '${method.toUpperCase()}'`;
+
+  if (security || headerParams.length > 0 || requestBody) {
+    jsSample += `,\n  headers: {`;
+    if (security && security.length > 0) {
+      jsSample += `\n    'Authorization': 'Bearer <token>',`;
+    }
+    headerParams.forEach(p => {
+      jsSample += `\n    '${p.name}': '<${p.name}>',`;
+    });
+    if (requestBody) {
+      jsSample += `\n    'Content-Type': '${requestBody.contentType || 'application/json'}'`;
+    }
+    jsSample += `\n  }`;
+  }
+
+  if (requestBody && requestBody.required) {
+    jsSample += `,\n  body: JSON.stringify(${JSON.stringify(requestBody.examples || {}, null, 2)})`;
+  }
+
+  jsSample += `\n})\n  .then(res => res.json())\n  .then(data => console.log(data));`;
+
+  // TypeScript sample (similar to JS but with types)
+  let tsSample = jsSample.replace('fetch(', 'const response = await fetch(');
+  tsSample = tsSample.replace('.then(res => res.json())\n  .then(data => console.log(data));', '');
+  tsSample += `\nconst data = await response.json();`;
+
+  return {
+    curl: curlSample,
+    javascript: jsSample,
+    typescript: tsSample,
+  };
+}
+
+// Helper: Generate anchor for endpoint
+function generateEndpointAnchor(method: string, path: string): string {
+  return `${method.toLowerCase()}-${path.replace(/\//g, '-').replace(/[{}]/g, '')}`;
+}
+
+async function handleImportOpenAPI(args: z.infer<typeof importOpenAPISchema>) {
+  const startTime = Date.now();
+
+  try {
+    // Validate inputs
+    if (!args.specUrl && !args.specContent) {
+      throw new Error('Either specUrl or specContent must be provided');
+    }
+
+    // Fetch or use provided spec content
+    let specContent: string;
+    if (args.specUrl) {
+      const response = await axios.get(args.specUrl);
+      specContent = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+    } else {
+      specContent = args.specContent!;
+    }
+
+    // Generate SHA256 hash
+    const sha256 = generateSHA256(specContent);
+
+    // Parse OpenAPI spec
+    let parsedSpec: any;
+    try {
+      parsedSpec = await SwaggerParser.validate(JSON.parse(specContent));
+    } catch (jsonError) {
+      // Try YAML
+      try {
+        parsedSpec = await SwaggerParser.validate(yaml.load(specContent) as any);
+      } catch (yamlError) {
+        throw new Error('Invalid OpenAPI spec format. Must be valid JSON or YAML.');
+      }
+    }
+
+    const openApiVersion = parsedSpec.openapi || parsedSpec.swagger || '3.0.0';
+    const specVersion = parsedSpec.info?.version || '1.0.0';
+
+    // Upload spec to Cloud Storage
+    const storage = getStorage();
+    const bucket = storage.bucket();
+    const storagePath = `ruby/r7/api-specs/${TENANT_ID}/${Date.now()}/spec.json`;
+    const file = bucket.file(storagePath);
+
+    await file.save(JSON.stringify(parsedSpec, null, 2), {
+      metadata: {
+        contentType: 'application/json',
+        metadata: {
+          tenantId: TENANT_ID,
+          version: specVersion,
+        },
+      },
+    });
+
+    const storageUrl = `gs://${bucket.name}/${storagePath}`;
+
+    // Create stea_api_specs document
+    const specPayload = {
+      tenantId: TENANT_ID,
+      projectId: args.projectId || null,
+      docId: args.docId || null,
+      name: args.name,
+      description: args.description || parsedSpec.info?.description || null,
+      version: specVersion,
+      openApiVersion,
+      storageUrl,
+      storageBucket: bucket.name,
+      storagePath,
+      fileSize: Buffer.byteLength(specContent),
+      sha256,
+      parseStatus: 'parsing' as const,
+      parseError: null,
+      parsedAt: null,
+      webhookUrl: args.webhookUrl || null,
+      webhookSecret: args.webhookSecret || null,
+      sourceRepo: args.sourceRepo || null,
+      sourceBranch: args.sourceBranch || null,
+      sourcePath: args.sourcePath || null,
+      endpointCount: 0,
+      brokenLinkCount: 0,
+      lastValidated: null,
+      createdBy: CREATED_BY,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedBy: CREATED_BY,
+      updatedAt: FieldValue.serverTimestamp(),
+      searchTokens: generateSearchTokens(args.name),
+    };
+
+    const specRef = await db.collection('stea_api_specs').add(specPayload);
+    const specId = specRef.id;
+
+    // Parse endpoints asynchronously
+    const endpoints: any[] = [];
+    const paths = parsedSpec.paths || {};
+
+    for (const [path, pathItem] of Object.entries(paths)) {
+      for (const [method, operation] of Object.entries(pathItem as any)) {
+        if (['get', 'post', 'put', 'delete', 'patch', 'options', 'head'].includes(method)) {
+          const op = operation as any;
+
+          const parameters = (op.parameters || []).map((p: any) => ({
+            name: p.name,
+            in: p.in,
+            required: p.required || false,
+            schema: p.schema || {},
+            description: p.description || null,
+          }));
+
+          const requestBody = op.requestBody ? {
+            required: op.requestBody.required || false,
+            contentType: Object.keys(op.requestBody.content || {})[0] || 'application/json',
+            schema: op.requestBody.content?.[Object.keys(op.requestBody.content)[0]]?.schema || {},
+            examples: op.requestBody.content?.[Object.keys(op.requestBody.content)[0]]?.examples || null,
+          } : null;
+
+          const responses = Object.entries(op.responses || {}).map(([statusCode, resp]: [string, any]) => ({
+            statusCode,
+            description: resp.description || '',
+            contentType: Object.keys(resp.content || {})[0] || null,
+            schema: resp.content?.[Object.keys(resp.content || {})[0]]?.schema || null,
+            examples: resp.content?.[Object.keys(resp.content || {})[0]]?.examples || null,
+          }));
+
+          const security = (op.security || parsedSpec.security || []).flatMap((sec: any) =>
+            Object.keys(sec).map(key => {
+              const scheme = parsedSpec.components?.securitySchemes?.[key];
+              return scheme ? {
+                type: scheme.type,
+                name: scheme.name || key,
+                in: scheme.in,
+              } : null;
+            }).filter(Boolean)
+          );
+
+          const codeSamples = generateCodeSamples(path, method, parameters, requestBody, security);
+          const anchor = generateEndpointAnchor(method, path);
+
+          const endpointPayload = {
+            specId,
+            tenantId: TENANT_ID,
+            path,
+            method: method.toUpperCase(),
+            operationId: op.operationId || null,
+            summary: op.summary || '',
+            description: op.description || null,
+            tags: op.tags || [],
+            parameters,
+            requestBody,
+            responses,
+            security,
+            codeSamples,
+            anchor,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+
+          await db.collection('stea_api_endpoints').add(endpointPayload);
+          endpoints.push(endpointPayload);
+        }
+      }
+    }
+
+    // Update spec with endpoint count and parse status
+    await specRef.update({
+      endpointCount: endpoints.length,
+      parseStatus: 'success',
+      parsedAt: FieldValue.serverTimestamp(),
+    });
+
+    const elapsed = Date.now() - startTime;
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify({
+            success: true,
+            specId,
+            name: args.name,
+            version: specVersion,
+            openApiVersion,
+            endpointCount: endpoints.length,
+            storageUrl,
+            parseTime: `${elapsed}ms`,
+          }, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    const elapsed = Date.now() - startTime;
+    throw new Error(`Failed to import OpenAPI spec: ${error instanceof Error ? error.message : 'Unknown error'} (${elapsed}ms)`);
+  }
+}
+
+async function handleSyncFigmaComponents(args: z.infer<typeof syncFigmaComponentsSchema>) {
+  const startTime = Date.now();
+
+  try {
+    const { figmaFileId, figmaAccessToken, name, projectId, docId } = args;
+
+    // Fetch Figma file metadata
+    const fileResponse = await axios.get(`https://api.figma.com/v1/files/${figmaFileId}`, {
+      headers: { 'X-Figma-Token': figmaAccessToken },
+    });
+
+    const fileData = fileResponse.data;
+    const fileName = fileData.name;
+    const fileVersion = fileData.version;
+    const fileLastModified = new Date(fileData.lastModified);
+
+    // Create or update stea_figma_files document
+    const filePayload = {
+      id: figmaFileId,
+      tenantId: TENANT_ID,
+      projectId: projectId || null,
+      docId: docId || null,
+      name: name || fileName,
+      key: figmaFileId,
+      url: `https://www.figma.com/file/${figmaFileId}`,
+      version: fileVersion,
+      lastModified: fileLastModified,
+      accessToken: figmaAccessToken, // TODO: Encrypt this
+      webhookId: null,
+      syncStatus: 'syncing' as const,
+      syncError: null,
+      lastSyncedAt: null,
+      nextSyncAt: null,
+      componentCount: 0,
+      styleCount: 0,
+      createdBy: CREATED_BY,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedBy: CREATED_BY,
+      updatedAt: FieldValue.serverTimestamp(),
+      searchTokens: generateSearchTokens(name || fileName),
+    };
+
+    await db.collection('stea_figma_files').doc(figmaFileId).set(filePayload, { merge: true });
+
+    // Extract components from file
+    const components: any[] = [];
+    const extractComponents = (node: any) => {
+      if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET') {
+        components.push(node);
+      }
+      if (node.children) {
+        node.children.forEach(extractComponents);
+      }
+    };
+
+    fileData.document.children.forEach(extractComponents);
+
+    // Fetch component details including thumbnails
+    const componentIds = components.map(c => c.id).join(',');
+    let thumbnailUrls: any = {};
+
+    if (componentIds) {
+      try {
+        const imageResponse = await axios.get(
+          `https://api.figma.com/v1/images/${figmaFileId}?ids=${componentIds}&format=png&scale=2`,
+          { headers: { 'X-Figma-Token': figmaAccessToken } }
+        );
+        thumbnailUrls = imageResponse.data.images || {};
+      } catch (err) {
+        console.error('Failed to fetch component thumbnails:', err);
+      }
+    }
+
+    // Save components to Firestore
+    for (const component of components) {
+      const variants = component.type === 'COMPONENT_SET' ?
+        (component.children || []).map((child: any) => ({
+          name: child.name,
+          values: [], // Would need more parsing
+        })) : undefined;
+
+      // Extract design tokens (simplified - would need more sophisticated parsing)
+      const tokens = {
+        colors: [],
+        typography: [],
+        spacing: [],
+      };
+
+      const componentPayload = {
+        fileId: figmaFileId,
+        tenantId: TENANT_ID,
+        nodeId: component.id,
+        name: component.name,
+        description: component.description || null,
+        type: component.type,
+        variants,
+        tokens,
+        thumbnailUrl: thumbnailUrls[component.id] || null,
+        thumbnailStoragePath: null,
+        previewUrl: thumbnailUrls[component.id] || null,
+        figmaUrl: `https://www.figma.com/file/${figmaFileId}?node-id=${component.id}`,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+
+      await db.collection('stea_figma_components').add(componentPayload);
+    }
+
+    // Update file sync status
+    await db.collection('stea_figma_files').doc(figmaFileId).update({
+      syncStatus: 'success',
+      lastSyncedAt: FieldValue.serverTimestamp(),
+      componentCount: components.length,
+    });
+
+    const elapsed = Date.now() - startTime;
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify({
+            success: true,
+            fileId: figmaFileId,
+            fileName,
+            version: fileVersion,
+            componentCount: components.length,
+            syncTime: `${elapsed}ms`,
+          }, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    const elapsed = Date.now() - startTime;
+    throw new Error(`Failed to sync Figma components: ${error instanceof Error ? error.message : 'Unknown error'} (${elapsed}ms)`);
+  }
+}
+
+async function handleListAPIEndpoints(args: z.infer<typeof listAPIEndpointsSchema>) {
+  const startTime = Date.now();
+
+  let query = db.collection('stea_api_endpoints')
+    .where('tenantId', '==', TENANT_ID)
+    .where('specId', '==', args.specId);
+
+  if (args.method) {
+    query = query.where('method', '==', args.method.toUpperCase());
+  }
+
+  if (args.tags && args.tags.length > 0) {
+    query = query.where('tags', 'array-contains-any', args.tags);
+  }
+
+  const snapshot = await query.limit(args.limit).get();
+  const elapsed = Date.now() - startTime;
+
+  const endpoints = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      path: data.path,
+      method: data.method,
+      operationId: data.operationId,
+      summary: data.summary,
+      description: data.description,
+      tags: data.tags,
+      anchor: data.anchor,
+      parametersCount: (data.parameters || []).length,
+      hasRequestBody: !!data.requestBody,
+      responsesCount: (data.responses || []).length,
+    };
+  });
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          specId: args.specId,
+          count: endpoints.length,
+          endpoints,
+          queryTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleListFigmaComponents(args: z.infer<typeof listFigmaComponentsSchema>) {
+  const startTime = Date.now();
+
+  let query = db.collection('stea_figma_components')
+    .where('tenantId', '==', TENANT_ID)
+    .where('fileId', '==', args.fileId);
+
+  if (args.type !== 'all') {
+    query = query.where('type', '==', args.type);
+  }
+
+  const snapshot = await query.limit(args.limit).get();
+  const elapsed = Date.now() - startTime;
+
+  const components = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      nodeId: data.nodeId,
+      name: data.name,
+      description: data.description,
+      type: data.type,
+      variantsCount: (data.variants || []).length,
+      thumbnailUrl: data.thumbnailUrl,
+      figmaUrl: data.figmaUrl,
+    };
+  });
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          fileId: args.fileId,
+          count: components.length,
+          components,
+          queryTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleListAPISpecs(args: z.infer<typeof listAPISpecsSchema>) {
+  const startTime = Date.now();
+
+  let query = db.collection('stea_api_specs')
+    .where('tenantId', '==', TENANT_ID);
+
+  if (args.projectId) {
+    query = query.where('projectId', '==', args.projectId);
+  }
+
+  const snapshot = await query.limit(args.limit).orderBy('createdAt', 'desc').get();
+  const elapsed = Date.now() - startTime;
+
+  const specs = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      name: data.name,
+      version: data.version,
+      openApiVersion: data.openApiVersion,
+      endpointCount: data.endpointCount,
+      parseStatus: data.parseStatus,
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+    };
+  });
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          count: specs.length,
+          specs,
+          queryTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleListFigmaFiles(args: z.infer<typeof listFigmaFilesSchema>) {
+  const startTime = Date.now();
+
+  let query = db.collection('stea_figma_files')
+    .where('tenantId', '==', TENANT_ID);
+
+  if (args.projectId) {
+    query = query.where('projectId', '==', args.projectId);
+  }
+
+  const snapshot = await query.limit(args.limit).orderBy('createdAt', 'desc').get();
+  const elapsed = Date.now() - startTime;
+
+  const files = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      name: data.name,
+      url: data.url,
+      version: data.version,
+      componentCount: data.componentCount,
+      syncStatus: data.syncStatus,
+      lastSyncedAt: data.lastSyncedAt?.toDate?.()?.toISOString() || null,
+    };
+  });
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          count: files.length,
+          files,
+          queryTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+// ---------- R8: Template Management Handlers ----------
+
+async function handleListTemplates(args: z.infer<typeof listTemplatesSchema>) {
+  const startTime = Date.now();
+
+  let query = db.collection('stea_doc_templates')
+    .where('tenantId', '==', TENANT_ID);
+
+  // Optionally filter by category
+  if (args.category) {
+    query = query.where('category', '==', args.category);
+  }
+
+  const tenantSnapshot = await query.limit(args.limit).orderBy('createdAt', 'desc').get();
+
+  // Also get built-in templates if requested
+  let builtInTemplates: any[] = [];
+  if (args.includeBuiltIn) {
+    let builtInQuery = db.collection('stea_doc_templates')
+      .where('tenantId', '==', null)
+      .where('isBuiltIn', '==', true);
+
+    if (args.category) {
+      builtInQuery = builtInQuery.where('category', '==', args.category);
+    }
+
+    const builtInSnapshot = await builtInQuery.orderBy('name', 'asc').get();
+    builtInTemplates = builtInSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      source: 'built-in',
+    }));
+  }
+
+  const customTemplates = tenantSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    source: 'custom',
+  }));
+
+  const allTemplates = [...builtInTemplates, ...customTemplates];
+  const elapsed = Date.now() - startTime;
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          count: allTemplates.length,
+          builtInCount: builtInTemplates.length,
+          customCount: customTemplates.length,
+          templates: allTemplates.map(t => ({
+            id: t.id,
+            name: t.name,
+            description: t.description,
+            category: t.category,
+            type: t.type,
+            isBuiltIn: t.isBuiltIn || false,
+            source: t.source,
+            variableCount: t.variables?.length || 0,
+          })),
+          queryTime: `${elapsed}ms`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleGetTemplate(args: z.infer<typeof getTemplateSchema>) {
+  const doc = await db.collection('stea_doc_templates').doc(args.templateId).get();
+
+  if (!doc.exists) {
+    throw new Error(`Template not found: ${args.templateId}`);
+  }
+
+  const data = doc.data()!;
+
+  // Check access: user can access built-in templates or their own tenant's templates
+  if (data.tenantId !== null && data.tenantId !== TENANT_ID) {
+    throw new Error('Access denied: Template belongs to a different tenant');
+  }
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          id: doc.id,
+          ...data,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleCreateTemplate(args: z.infer<typeof createTemplateSchema>) {
+  const template = {
+    tenantId: TENANT_ID,
+    name: args.name,
+    description: args.description,
+    category: args.category,
+    type: args.type,
+    variables: args.variables,
+    template: args.template,
+    isBuiltIn: false,
+    version: 1,
+    createdBy: CREATED_BY,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  const docRef = await db.collection('stea_doc_templates').add(template);
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          templateId: docRef.id,
+          message: `Template "${args.name}" created successfully`,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleUpdateTemplate(args: z.infer<typeof updateTemplateSchema>) {
+  const docRef = db.collection('stea_doc_templates').doc(args.templateId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    throw new Error(`Template not found: ${args.templateId}`);
+  }
+
+  const data = doc.data()!;
+
+  // Can't update built-in templates
+  if (data.isBuiltIn) {
+    throw new Error('Cannot update built-in templates');
+  }
+
+  // Can only update templates in your tenant
+  if (data.tenantId !== TENANT_ID) {
+    throw new Error('Access denied: Template belongs to a different tenant');
+  }
+
+  const updates: any = {
+    updatedAt: FieldValue.serverTimestamp(),
+    version: FieldValue.increment(1),
+  };
+
+  if (args.name) updates.name = args.name;
+  if (args.description) updates.description = args.description;
+  if (args.category) updates.category = args.category;
+  if (args.variables) updates.variables = args.variables;
+  if (args.template) updates.template = args.template;
+
+  await docRef.update(updates);
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          templateId: args.templateId,
+          message: 'Template updated successfully',
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleDeleteTemplate(args: z.infer<typeof deleteTemplateSchema>) {
+  const docRef = db.collection('stea_doc_templates').doc(args.templateId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    throw new Error(`Template not found: ${args.templateId}`);
+  }
+
+  const data = doc.data()!;
+
+  // Can't delete built-in templates
+  if (data.isBuiltIn) {
+    throw new Error('Cannot delete built-in templates');
+  }
+
+  // Can only delete templates in your tenant
+  if (data.tenantId !== TENANT_ID) {
+    throw new Error('Access denied: Template belongs to a different tenant');
+  }
+
+  await docRef.delete();
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          templateId: args.templateId,
+          message: 'Template deleted successfully',
+        }, null, 2),
+      },
+    ],
+  };
+}
+
+async function handleSyncBuiltInTemplates(args: z.infer<typeof syncBuiltInTemplatesSchema>) {
+  const fs = await import('fs/promises');
+  const path = await import('path');
+  const yaml = await import('js-yaml');
+
+  const templatesDir = path.join(__dirname, '../servers/templates');
+  const files = await fs.readdir(templatesDir);
+  const yamlFiles = files.filter(f => f.endsWith('.yaml'));
+
+  const results = [];
+
+  for (const file of yamlFiles) {
+    const filePath = path.join(templatesDir, file);
+    const content = await fs.readFile(filePath, 'utf8');
+    const templateData: any = yaml.load(content);
+
+    const category = file.replace('.yaml', '');
+    const templateId = `built-in-${category}`;
+
+    // Check if template already exists
+    const existingDoc = await db.collection('stea_doc_templates').doc(templateId).get();
+
+    if (existingDoc.exists && !args.force) {
+      results.push({
+        file,
+        status: 'skipped',
+        message: 'Already exists (use force=true to overwrite)',
+      });
+      continue;
+    }
+
+    const template = {
+      tenantId: null,
+      name: templateData.name,
+      description: templateData.description,
+      category,
+      type: templateData.type || 'documentation',
+      variables: templateData.variables || [],
+      template: templateData.template,
+      isBuiltIn: true,
+      version: 1,
+      createdBy: 'system',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    await db.collection('stea_doc_templates').doc(templateId).set(template);
+
+    results.push({
+      file,
+      status: 'synced',
+      templateId,
+      name: templateData.name,
+    });
+  }
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          success: true,
+          templatesProcessed: results.length,
+          results,
+        }, null, 2),
+      },
+    ],
+  };
+}
+
 // ---------- MCP Server Setup ----------
 const server = new Server(
   {
@@ -1933,6 +2901,189 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['docId'],
         },
       },
+      {
+        name: 'stea.importOpenAPI',
+        description: 'Import an OpenAPI spec file (JSON/YAML) and parse it into navigable API documentation (R7)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Name for this API spec' },
+            description: { type: 'string', description: 'Description (optional)' },
+            specUrl: { type: 'string', description: 'URL to fetch OpenAPI spec from (optional)' },
+            specContent: { type: 'string', description: 'Direct OpenAPI spec content as JSON or YAML string (optional)' },
+            projectId: { type: 'string', description: 'Associated project ID (optional)' },
+            docId: { type: 'string', description: 'Linked Ruby document ID (optional)' },
+            webhookUrl: { type: 'string', description: 'Webhook URL for automatic updates (optional)' },
+            webhookSecret: { type: 'string', description: 'Webhook secret for verification (optional)' },
+            sourceRepo: { type: 'string', description: 'Source repository (e.g., "org/repo") (optional)' },
+            sourceBranch: { type: 'string', description: 'Source branch (e.g., "main") (optional)' },
+            sourcePath: { type: 'string', description: 'Path to spec in repository (optional)' },
+          },
+          required: ['name'],
+        },
+      },
+      {
+        name: 'stea.syncFigmaComponents',
+        description: 'Sync components from a Figma file, extracting component names, variants, design tokens, and thumbnails (R7)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            figmaFileId: { type: 'string', description: 'Figma file ID (from file URL)' },
+            figmaAccessToken: { type: 'string', description: 'Figma personal access token' },
+            name: { type: 'string', description: 'Name for this Figma file sync' },
+            projectId: { type: 'string', description: 'Associated project ID (optional)' },
+            docId: { type: 'string', description: 'Linked Ruby document ID (optional)' },
+          },
+          required: ['figmaFileId', 'figmaAccessToken', 'name'],
+        },
+      },
+      {
+        name: 'stea.listAPIEndpoints',
+        description: 'List parsed API endpoints from an imported OpenAPI spec (R7)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            specId: { type: 'string', description: 'API spec ID' },
+            method: { type: 'string', description: 'Filter by HTTP method (GET, POST, etc.) (optional)' },
+            tags: { type: 'array', items: { type: 'string' }, description: 'Filter by OpenAPI tags (optional)' },
+            limit: { type: 'number', description: 'Max results (default: 50)' },
+          },
+          required: ['specId'],
+        },
+      },
+      {
+        name: 'stea.listFigmaComponents',
+        description: 'List synced Figma components from a file (R7)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            fileId: { type: 'string', description: 'Figma file ID' },
+            type: { type: 'string', enum: ['COMPONENT', 'COMPONENT_SET', 'all'], description: 'Filter by component type (default: all)' },
+            limit: { type: 'number', description: 'Max results (default: 50)' },
+          },
+          required: ['fileId'],
+        },
+      },
+      {
+        name: 'stea.listAPISpecs',
+        description: 'List all imported OpenAPI specs (R7)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectId: { type: 'string', description: 'Filter by project ID (optional)' },
+            limit: { type: 'number', description: 'Max results (default: 20)' },
+          },
+        },
+      },
+      {
+        name: 'stea.listFigmaFiles',
+        description: 'List all synced Figma files (R7)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectId: { type: 'string', description: 'Filter by project ID (optional)' },
+            limit: { type: 'number', description: 'Max results (default: 20)' },
+          },
+        },
+      },
+      {
+        name: 'stea.listTemplates',
+        description: 'List available document templates (built-in and custom) (R8)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            category: { type: 'string', description: 'Filter by template category (prs, buildspec, releasenotes, etc.) (optional)' },
+            includeBuiltIn: { type: 'boolean', description: 'Include built-in templates (default: true)' },
+            limit: { type: 'number', description: 'Max results (default: 50)' },
+          },
+        },
+      },
+      {
+        name: 'stea.getTemplate',
+        description: 'Get a specific template by ID with full details (R8)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateId: { type: 'string', description: 'Template ID' },
+          },
+          required: ['templateId'],
+        },
+      },
+      {
+        name: 'stea.createTemplate',
+        description: 'Create a custom document template (R8)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Template name' },
+            description: { type: 'string', description: 'Template description' },
+            category: { type: 'string', description: 'Template category (e.g., "techdesign", "adr", "testplan")' },
+            type: { type: 'string', description: 'Template type (default: "documentation")' },
+            variables: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  required: { type: 'boolean' },
+                },
+              },
+              description: 'Template variable definitions',
+            },
+            template: { type: 'string', description: 'Markdown template content with {{variable}} placeholders' },
+          },
+          required: ['name', 'description', 'category', 'variables', 'template'],
+        },
+      },
+      {
+        name: 'stea.updateTemplate',
+        description: 'Update a custom template (cannot update built-in templates) (R8)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateId: { type: 'string', description: 'Template ID to update' },
+            name: { type: 'string', description: 'New name (optional)' },
+            description: { type: 'string', description: 'New description (optional)' },
+            category: { type: 'string', description: 'New category (optional)' },
+            variables: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  required: { type: 'boolean' },
+                },
+              },
+              description: 'Updated variable definitions (optional)',
+            },
+            template: { type: 'string', description: 'Updated template content (optional)' },
+          },
+          required: ['templateId'],
+        },
+      },
+      {
+        name: 'stea.deleteTemplate',
+        description: 'Delete a custom template (cannot delete built-in templates) (R8)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateId: { type: 'string', description: 'Template ID to delete' },
+          },
+          required: ['templateId'],
+        },
+      },
+      {
+        name: 'stea.syncBuiltInTemplates',
+        description: 'Sync built-in templates from YAML files to Firestore (R8)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            force: { type: 'boolean', description: 'Force overwrite existing templates (default: false)' },
+          },
+        },
+      },
     ],
   };
 });
@@ -2010,6 +3161,42 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'stea.listReviews':
         return await handleListReviews(listReviewsSchema.parse(args || {}));
+
+      case 'stea.importOpenAPI':
+        return await handleImportOpenAPI(importOpenAPISchema.parse(args || {}));
+
+      case 'stea.syncFigmaComponents':
+        return await handleSyncFigmaComponents(syncFigmaComponentsSchema.parse(args || {}));
+
+      case 'stea.listAPIEndpoints':
+        return await handleListAPIEndpoints(listAPIEndpointsSchema.parse(args || {}));
+
+      case 'stea.listFigmaComponents':
+        return await handleListFigmaComponents(listFigmaComponentsSchema.parse(args || {}));
+
+      case 'stea.listAPISpecs':
+        return await handleListAPISpecs(listAPISpecsSchema.parse(args || {}));
+
+      case 'stea.listFigmaFiles':
+        return await handleListFigmaFiles(listFigmaFilesSchema.parse(args || {}));
+
+      case 'stea.listTemplates':
+        return await handleListTemplates(listTemplatesSchema.parse(args || {}));
+
+      case 'stea.getTemplate':
+        return await handleGetTemplate(getTemplateSchema.parse(args || {}));
+
+      case 'stea.createTemplate':
+        return await handleCreateTemplate(createTemplateSchema.parse(args || {}));
+
+      case 'stea.updateTemplate':
+        return await handleUpdateTemplate(updateTemplateSchema.parse(args || {}));
+
+      case 'stea.deleteTemplate':
+        return await handleDeleteTemplate(deleteTemplateSchema.parse(args || {}));
+
+      case 'stea.syncBuiltInTemplates':
+        return await handleSyncBuiltInTemplates(syncBuiltInTemplatesSchema.parse(args || {}));
 
       default:
         throw new Error(`Unknown tool: ${name}`);

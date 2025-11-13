@@ -1,0 +1,313 @@
+name: Launch Plan
+description: Comprehensive launch and go-to-market plan for features and products
+type: documentation
+variables:
+  - name: title
+    description: Feature/product title
+    required: true
+  - name: overview
+    description: Launch overview
+    required: true
+  - name: launchDate
+    description: Target launch date
+    required: false
+  - name: targetAudience
+    description: Who is this launch targeting
+    required: false
+  - name: goals
+    description: Launch goals and success metrics
+    required: false
+  - name: risks
+    description: Launch risks
+    required: false
+
+template: |
+  # Launch Plan: {{title}}
+
+  **Target Launch Date**: {{launchDate || "To be determined"}}
+  **Launch Lead**: _Name_
+  **Status**: 🟡 Planning / 🟢 Ready / 🔴 Delayed
+
+  ---
+
+  ## Executive Summary
+  {{overview}}
+
+  ## Launch Objectives
+  {{goals || "To be defined"}}
+
+  **Success Metrics**:
+  - _Metric 1_: _Target value_
+  - _Metric 2_: _Target value_
+  - _Metric 3_: _Target value_
+
+  ## Target Audience
+  {{targetAudience || "To be defined"}}
+
+  ### Personas
+  - **Persona 1**: _Description and characteristics_
+  - **Persona 2**: _Description and characteristics_
+  - **Persona 3**: _Description and characteristics_
+
+  ### Market Segments
+  - **Segment 1**: _Description_
+  - **Segment 2**: _Description_
+
+  ## Value Proposition
+  **Elevator Pitch**: _One sentence description_
+
+  **Key Benefits**:
+  1. _Benefit 1_
+  2. _Benefit 2_
+  3. _Benefit 3_
+
+  **Competitive Advantage**:
+  - _Advantage 1_
+  - _Advantage 2_
+
+  ## Launch Strategy
+
+  ### Launch Type
+  - [ ] **Soft Launch**: Limited rollout to selected users
+  - [ ] **Phased Launch**: Gradual rollout by region/segment
+  - [ ] **Full Launch**: Complete availability to all users
+  - [ ] **Beta Launch**: Early access with feedback collection
+
+  ### Rollout Plan
+  | Phase | Date | Audience | Percentage | Success Criteria |
+  |-------|------|----------|------------|------------------|
+  | Beta | _YYYY-MM-DD_ | _Early adopters_ | 5% | _Criteria_ |
+  | Phase 1 | _YYYY-MM-DD_ | _Segment 1_ | 25% | _Criteria_ |
+  | Phase 2 | _YYYY-MM-DD_ | _Segment 2_ | 50% | _Criteria_ |
+  | Full Launch | _YYYY-MM-DD_ | _All users_ | 100% | _Criteria_ |
+
+  ### Feature Flags
+  - **Flag 1**: _Description and purpose_
+  - **Flag 2**: _Description and purpose_
+  - **Kill Switch**: _Emergency rollback mechanism_
+
+  ## Pre-Launch Checklist
+
+  ### Technical Readiness
+  - [ ] All features complete and tested
+  - [ ] Performance benchmarks met
+  - [ ] Security audit passed
+  - [ ] Infrastructure scaled for expected load
+  - [ ] Monitoring and alerts configured
+  - [ ] Rollback plan tested
+  - [ ] Documentation complete
+  - [ ] API endpoints stable
+  - [ ] Third-party integrations verified
+  - [ ] Data migration complete (if applicable)
+
+  ### Product Readiness
+  - [ ] Product requirements validated
+  - [ ] User acceptance testing complete
+  - [ ] Accessibility compliance verified
+  - [ ] Internationalization/localization ready
+  - [ ] Legal/compliance review complete
+  - [ ] Privacy policy updated
+  - [ ] Terms of service updated
+  - [ ] Pricing finalized
+
+  ### Marketing Readiness
+  - [ ] Marketing materials created
+  - [ ] Landing page live
+  - [ ] Email campaigns scheduled
+  - [ ] Social media content prepared
+  - [ ] Blog post drafted
+  - [ ] Press release ready
+  - [ ] Demo videos produced
+  - [ ] Sales enablement materials ready
+  - [ ] Customer support trained
+  - [ ] FAQ/knowledge base articles written
+
+  ### Stakeholder Alignment
+  - [ ] Executive team briefed
+  - [ ] Sales team trained
+  - [ ] Customer success prepared
+  - [ ] Support team ready
+  - [ ] Partners notified
+  - [ ] Key customers informed
+
+  ## Go-to-Market Strategy
+
+  ### Channels
+  - **Email**: _Campaign details_
+  - **Social Media**: _Platforms and content plan_
+  - **Paid Advertising**: _Budget and platforms_
+  - **Content Marketing**: _Blog, videos, webinars_
+  - **PR**: _Media outreach plan_
+  - **In-App Messaging**: _User notifications_
+  - **Partner Channels**: _Co-marketing opportunities_
+
+  ### Messaging
+  **Primary Message**: _Main talking point_
+
+  **Key Messages by Audience**:
+  - **Existing Users**: _How this benefits them_
+  - **New Users**: _Why they should adopt_
+  - **Enterprise**: _Business value proposition_
+  - **Developers**: _Technical benefits_
+
+  ### Content Calendar
+
+  | Date | Channel | Content Type | Owner | Status |
+  |------|---------|--------------|-------|--------|
+  | _YYYY-MM-DD_ | Blog | Announcement Post | _Name_ | ⏳ |
+  | _YYYY-MM-DD_ | Email | Launch Email | _Name_ | ⏳ |
+  | _YYYY-MM-DD_ | Social | Twitter Thread | _Name_ | ⏳ |
+  | _YYYY-MM-DD_ | Webinar | Product Demo | _Name_ | ⏳ |
+
+  ## Launch Day Activities
+
+  ### Timeline
+  - **T-7 days**: _Activity_
+  - **T-3 days**: _Activity_
+  - **T-1 day**: _Final checks_
+  - **T-0 (Launch Day)**: _Deployment and announcement_
+  - **T+1 day**: _Monitor metrics_
+  - **T+7 days**: _First retrospective_
+
+  ### Launch Day Responsibilities
+  | Role | Responsibility | Contact |
+  |------|----------------|---------|
+  | Launch Lead | Overall coordination | _Name/Email_ |
+  | Engineering Lead | Technical deployment | _Name/Email_ |
+  | Product Manager | Product sign-off | _Name/Email_ |
+  | Marketing Lead | Campaign execution | _Name/Email_ |
+  | Support Lead | Customer inquiries | _Name/Email_ |
+
+  ### War Room
+  - **Location**: _Physical or virtual location_
+  - **Hours**: _Coverage hours_
+  - **Communication**: _Slack channel, etc._
+
+  ## Monitoring & Success Metrics
+
+  ### Key Metrics to Track
+  - **Adoption Rate**: _Target: XX% within 30 days_
+  - **Active Users**: _Target: XXX daily active users_
+  - **Engagement**: _Target: XX% feature usage_
+  - **Performance**: _Target: <XXms response time_
+  - **Error Rate**: _Target: <X% error rate_
+  - **Customer Satisfaction**: _Target: NPS score > XX_
+
+  ### Dashboards
+  - **Real-time Monitoring**: _Link to dashboard_
+  - **User Analytics**: _Link to dashboard_
+  - **Business Metrics**: _Link to dashboard_
+
+  ### Alert Thresholds
+  - **Critical**: _Trigger immediate response_
+  - **Warning**: _Monitor closely_
+  - **Info**: _For awareness_
+
+  ## Customer Support
+
+  ### Support Readiness
+  - [ ] Support documentation complete
+  - [ ] FAQ updated
+  - [ ] Known issues documented
+  - [ ] Escalation path defined
+  - [ ] Support team trained
+  - [ ] Extra support coverage scheduled
+
+  ### Common Questions
+  1. **Q**: _Question 1_
+     **A**: _Answer 1_
+
+  2. **Q**: _Question 2_
+     **A**: _Answer 2_
+
+  ## Risks & Contingency Plans
+  {{risks || "To be assessed"}}
+
+  | Risk | Impact | Probability | Mitigation | Contingency |
+  |------|--------|-------------|------------|-------------|
+  | _Risk 1_ | High | Medium | _Prevention_ | _Backup plan_ |
+  | _Risk 2_ | Medium | Low | _Prevention_ | _Backup plan_ |
+
+  ## Rollback Plan
+
+  ### Rollback Triggers
+  - Critical bugs affecting >10% of users
+  - Performance degradation >50%
+  - Data integrity issues
+  - Security vulnerabilities discovered
+
+  ### Rollback Procedure
+  1. _Step 1: Disable feature flag_
+  2. _Step 2: Communicate to stakeholders_
+  3. _Step 3: Notify affected users_
+  4. _Step 4: Revert deployment_
+  5. _Step 5: Post-mortem analysis_
+
+  ### Communication Plan
+  - **Internal**: _How to notify team_
+  - **External**: _How to notify users_
+  - **Partners**: _How to notify partners_
+
+  ## Post-Launch Activities
+
+  ### Week 1
+  - [ ] Daily metric reviews
+  - [ ] Bug triage and fixes
+  - [ ] Customer feedback collection
+  - [ ] Social listening
+
+  ### Week 2-4
+  - [ ] Weekly retrospectives
+  - [ ] Iterate based on feedback
+  - [ ] Expansion to additional segments
+  - [ ] Success story collection
+
+  ### 30-Day Review
+  - [ ] Comprehensive metrics analysis
+  - [ ] User interviews
+  - [ ] Roadmap adjustments
+  - [ ] Launch retrospective
+  - [ ] Success celebration
+
+  ## Budget
+
+  | Category | Estimated Cost | Actual Cost | Notes |
+  |----------|----------------|-------------|-------|
+  | Marketing | $XX,XXX | _TBD_ | _Details_ |
+  | Infrastructure | $XX,XXX | _TBD_ | _Details_ |
+  | Events/Webinars | $XX,XXX | _TBD_ | _Details_ |
+  | Contractors | $XX,XXX | _TBD_ | _Details_ |
+  | **Total** | **$XXX,XXX** | _TBD_ | |
+
+  ## Team & Responsibilities
+
+  | Name | Role | Responsibilities |
+  |------|------|------------------|
+  | _Name_ | Launch Lead | Overall coordination |
+  | _Name_ | Product Manager | Product decisions |
+  | _Name_ | Engineering Lead | Technical execution |
+  | _Name_ | Marketing Lead | GTM execution |
+  | _Name_ | Design Lead | UX/UI sign-off |
+  | _Name_ | Support Lead | Customer success |
+
+  ## References
+  - **Product Requirements**: _Link_
+  - **Technical Design**: _Link_
+  - **Test Plan**: _Link_
+  - **Marketing Brief**: _Link_
+  - **Sales Playbook**: _Link_
+
+  ## Sign-off
+
+  | Role | Name | Signature | Date |
+  |------|------|-----------|------|
+  | Launch Lead | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+  | Product Owner | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+  | Engineering Lead | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+  | Marketing Lead | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+  | Executive Sponsor | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+
+  ---
+
+  **Document Version**: 1.0
+  **Last Updated**: _YYYY-MM-DD_

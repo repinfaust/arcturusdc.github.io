@@ -217,6 +217,91 @@ service cloud.firestore {
       );
     }
 
+    /* R8: Doc Templates Library */
+    match /stea_doc_templates/{templateId} {
+      // Users can read built-in templates (tenantId == null) OR templates in their tenant
+      allow read: if authed() && (
+        resource.data.tenantId == null || canAccessTenant(resource.data.tenantId)
+      );
+      // Users can create custom templates in their tenant
+      allow create: if authed() &&
+        request.resource.data.tenantId != null &&
+        canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.isBuiltIn == false;
+      // Users can update custom templates they own (not built-in)
+      allow update: if authed() &&
+        resource.data.isBuiltIn == false &&
+        canAccessTenant(resource.data.tenantId);
+      // Users can delete custom templates they own (not built-in)
+      allow delete: if authed() &&
+        resource.data.isBuiltIn == false &&
+        canAccessTenant(resource.data.tenantId);
+    }
+
+    /* R5: Reviewer Mode */
+    match /stea_reviews/{reviewId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    /* ==========================================================
+       R7: API & Component Docs
+       ========================================================== */
+    match /stea_api_specs/{specId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId);
+      allow update: if authed() && canAccessTenant(resource.data.tenantId);
+      allow delete: if authed() && canAccessTenant(resource.data.tenantId);
+    }
+
+    match /stea_api_endpoints/{endpointId} {
+      allow read: if authed();
+      // Only server/MCP can write endpoints
+      allow write: if false;
+    }
+
+    match /stea_figma_files/{fileId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId);
+      allow update: if authed() && canAccessTenant(resource.data.tenantId);
+      allow delete: if authed() && canAccessTenant(resource.data.tenantId);
+    }
+
+    match /stea_figma_components/{componentId} {
+      allow read: if authed();
+      // Only server/MCP can write components
+      allow write: if false;
+    }
+
+    match /stea_api_webhooks/{webhookId} {
+      // Only server can manage webhooks
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /stea_figma_webhooks/{webhookId} {
+      // Only server can manage webhooks
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /stea_broken_links/{linkId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      // Users can update status to mark as fixed/ignored
+      allow update: if authed() && canAccessTenant(resource.data.tenantId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolvedBy']);
+      // Only server can create/delete
+      allow create, delete: if false;
+    }
+
     /* ==========================================================
        Automated testing + CI (migration-friendly)
        ========================================================== */

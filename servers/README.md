@@ -75,6 +75,12 @@ After restarting Claude Desktop, open a new chat and you should see the followin
 - `stea.updateReview` - **Update review checklist items with pass/fail status and notes (R5)**
 - `stea.completeReview` - **Complete a review with final approval status and signature (R5)**
 - `stea.listReviews` - **List all reviews for a document (R5)**
+- `stea.importOpenAPI` - **Import and parse OpenAPI spec (JSON/YAML) into navigable API documentation with code samples (R7)**
+- `stea.syncFigmaComponents` - **Sync Figma file to extract components, variants, design tokens, and thumbnails (R7)**
+- `stea.listAPIEndpoints` - **List parsed API endpoints from an imported OpenAPI spec (R7)**
+- `stea.listFigmaComponents` - **List synced Figma components from a file (R7)**
+- `stea.listAPISpecs` - **List all imported OpenAPI specs (R7)**
+- `stea.listFigmaFiles` - **List all synced Figma files (R7)**
 
 ## Usage Examples
 
@@ -287,6 +293,116 @@ Returns all reviews with progress stats, completion status, and timestamps.
 6. Design lead starts design-parity review in parallel
 7. Both reviews approved → document ready for implementation
 
+### Import OpenAPI Spec (R7: API Docs)
+
+**Step 1: Import an OpenAPI spec from URL**
+```
+Use stea.importOpenAPI with:
+- name: "Payment API v2"
+- description: "Payment processing API documentation"
+- specUrl: "https://api.example.com/openapi.json"
+- projectId: <project ID> (optional)
+```
+
+This will:
+- Fetch the OpenAPI spec from the URL
+- Validate and parse the spec (supports OpenAPI 2.0, 3.0, 3.1)
+- Upload spec to Cloud Storage
+- Parse all endpoints with parameters, request/response schemas
+- Generate code samples (curl, JavaScript, TypeScript) for each endpoint
+- Create anchor links for deep linking
+- Return specId and endpoint count
+
+**Step 2: Import OpenAPI spec from content**
+```
+Use stea.importOpenAPI with:
+- name: "Users API"
+- specContent: "<paste your OpenAPI JSON or YAML here>"
+```
+
+**Step 3: List all imported specs**
+```
+Use stea.listAPISpecs with:
+- projectId: <project ID> (optional filter)
+- limit: 20 (default)
+```
+
+**Step 4: List endpoints from a spec**
+```
+Use stea.listAPIEndpoints with:
+- specId: <spec ID from step 1>
+- method: "GET" (optional filter)
+- tags: ["users", "auth"] (optional filter)
+- limit: 50 (default)
+```
+
+Returns endpoints with:
+- Path, method, operation ID
+- Summary and description
+- Parameter count, request body, response count
+- Anchor link for navigation
+- Pre-generated code samples
+
+### Sync Figma Components (R7: Component Docs)
+
+**Step 1: Sync a Figma file**
+```
+Use stea.syncFigmaComponents with:
+- figmaFileId: "abc123xyz" (from Figma file URL)
+- figmaAccessToken: "<your Figma personal access token>"
+- name: "Design System Components"
+- projectId: <project ID> (optional)
+```
+
+To get your Figma file ID:
+1. Open your Figma file
+2. Look at the URL: `https://www.figma.com/file/ABC123XYZ/...`
+3. The file ID is `ABC123XYZ`
+
+To get a Figma access token:
+1. Go to Figma → Account Settings → Personal Access Tokens
+2. Click "Create new token"
+3. Copy the token (keep it secure!)
+
+This will:
+- Fetch Figma file metadata (name, version, last modified)
+- Extract all components and component sets
+- Fetch component thumbnails (PNG, 2x scale)
+- Parse variants (for component sets)
+- Extract design tokens (colors, typography, spacing - basic extraction)
+- Generate direct links to components in Figma
+- Return file ID, component count, and sync time
+
+**Step 2: List all synced Figma files**
+```
+Use stea.listFigmaFiles with:
+- projectId: <project ID> (optional filter)
+- limit: 20 (default)
+```
+
+**Step 3: List components from a file**
+```
+Use stea.listFigmaComponents with:
+- fileId: <Figma file ID>
+- type: "COMPONENT" | "COMPONENT_SET" | "all" (default: all)
+- limit: 50 (default)
+```
+
+Returns components with:
+- Node ID, name, description
+- Component type (single or set)
+- Variant count (for component sets)
+- Thumbnail URL
+- Direct Figma link
+
+**Example Workflow**:
+1. Import OpenAPI spec for your API: `importOpenAPI`
+2. List endpoints: `listAPIEndpoints` → review code samples
+3. Sync Figma design system: `syncFigmaComponents`
+4. List components: `listFigmaComponents` → verify design tokens
+5. Create Ruby doc linking both: `createRubyDoc` with references
+6. Document publishes as unified API + Component reference
+
 ## Firestore Collections
 
 The MCP server creates documents in these collections:
@@ -303,6 +419,13 @@ The MCP server creates documents in these collections:
 - **stea_doc_assets** - Uploaded files (PDFs, images, etc.)
 - **stea_doc_versions** - Document version history
 - **stea_reviews** - Document reviews with checklist items and status (R5)
+- **stea_api_specs** - Imported OpenAPI specifications metadata (R7)
+- **stea_api_endpoints** - Parsed API endpoints with code samples (R7)
+- **stea_figma_files** - Synced Figma file metadata (R7)
+- **stea_figma_components** - Extracted Figma components with design tokens (R7)
+- **stea_api_webhooks** - GitHub/GitLab webhook events for API spec updates (R7)
+- **stea_figma_webhooks** - Figma webhook events for component updates (R7)
+- **stea_broken_links** - Detected broken links in API specs and Figma URLs (R7)
 
 ### Data Schema
 

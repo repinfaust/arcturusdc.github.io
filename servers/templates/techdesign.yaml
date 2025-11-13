@@ -1,0 +1,174 @@
+name: Technical Design Document
+description: Comprehensive technical design for system architecture and implementation
+type: documentation
+variables:
+  - name: title
+    description: Feature/system title
+    required: true
+  - name: overview
+    description: Technical overview
+    required: true
+  - name: problemStatement
+    description: Problem being solved
+    required: false
+  - name: goals
+    description: Technical goals
+    required: false
+  - name: nonGoals
+    description: Explicit non-goals
+    required: false
+  - name: stakeholders
+    description: Key stakeholders
+    required: false
+  - name: constraints
+    description: Technical constraints
+    required: false
+  - name: assumptions
+    description: Key assumptions
+    required: false
+
+template: |
+  # Technical Design: {{title}}
+
+  ## Overview
+  {{overview}}
+
+  ## Problem Statement
+  {{problemStatement || "To be defined"}}
+
+  ## Goals & Non-Goals
+
+  ### Goals
+  {{goals || "To be defined"}}
+
+  ### Non-Goals
+  {{nonGoals || "To be defined"}}
+
+  ## Stakeholders
+  {{stakeholders || "To be defined"}}
+
+  ## System Architecture
+
+  ### High-Level Architecture
+  _To be added: System diagram showing major components and their interactions_
+
+  ### Component Breakdown
+  - **Component A**: _Description_
+  - **Component B**: _Description_
+  - **Component C**: _Description_
+
+  ### Data Flow
+  _To be added: Sequence diagrams showing key user flows_
+
+  ## Data Model
+
+  ### Entities
+  ```
+  // Example entity schema
+  Entity {
+    id: string
+    field1: type
+    field2: type
+  }
+  ```
+
+  ### Database Schema
+  - **Tables/Collections**: _List and describe_
+  - **Relationships**: _Explain key relationships_
+  - **Indexes**: _Performance-critical indexes_
+
+  ## API Design
+
+  ### Endpoints
+  ```
+  GET /api/resource
+  POST /api/resource
+  PUT /api/resource/:id
+  DELETE /api/resource/:id
+  ```
+
+  ### Request/Response Formats
+  ```json
+  // Example request
+  {
+    "field": "value"
+  }
+
+  // Example response
+  {
+    "id": "123",
+    "status": "success"
+  }
+  ```
+
+  ## Technical Constraints
+  {{constraints || "None identified"}}
+
+  ## Assumptions
+  {{assumptions || "None listed"}}
+
+  ## Security Considerations
+  - **Authentication**: _Method and approach_
+  - **Authorization**: _Role-based access control_
+  - **Data Protection**: _Encryption, PII handling_
+  - **Input Validation**: _Validation strategy_
+  - **Rate Limiting**: _API protection_
+
+  ## Performance Requirements
+  - **Response Time**: _Target in ms_
+  - **Throughput**: _Requests per second_
+  - **Scalability**: _Horizontal/vertical scaling approach_
+  - **Caching Strategy**: _Where and how_
+
+  ## Error Handling
+  - **Error Codes**: _Standard error code structure_
+  - **Logging**: _What to log, log levels_
+  - **Monitoring**: _Metrics and alerts_
+  - **Graceful Degradation**: _Fallback behavior_
+
+  ## Testing Strategy
+  - [ ] **Unit Tests**: _Components to test, coverage target_
+  - [ ] **Integration Tests**: _Service integration points_
+  - [ ] **E2E Tests**: _Critical user journeys_
+  - [ ] **Performance Tests**: _Load testing approach_
+  - [ ] **Security Tests**: _Penetration testing_
+
+  ## Deployment Strategy
+  - **Environment Progression**: _Dev → Staging → Production_
+  - **Rollout Plan**: _Phased rollout, feature flags_
+  - **Rollback Plan**: _How to revert if issues arise_
+  - **Monitoring**: _Key metrics to watch_
+
+  ## Dependencies
+  - **Internal**: _Other services/systems_
+  - **External**: _Third-party services/APIs_
+  - **Libraries**: _New dependencies to add_
+
+  ## Risks & Mitigations
+  | Risk | Impact | Probability | Mitigation |
+  |------|--------|-------------|------------|
+  | _Risk 1_ | High/Medium/Low | High/Medium/Low | _Strategy_ |
+
+  ## Open Questions
+  - [ ] To be resolved during implementation
+
+  ## Alternatives Considered
+  ### Alternative 1: _Name_
+  - **Pros**: _Benefits_
+  - **Cons**: _Drawbacks_
+  - **Decision**: _Why not chosen_
+
+  ## Future Enhancements
+  - _Enhancement 1_
+  - _Enhancement 2_
+
+  ## References
+  - **Related Docs**: _Links to PRs, Build Specs, etc._
+  - **External References**: _Articles, documentation_
+  - **Design Files**: _Figma links_
+
+  ## Approval
+  - **Tech Lead**: _Pending_
+  - **Architecture Review**: _Pending_
+  - **Security Review**: _Pending_
+  - **Date**: _YYYY-MM-DD_

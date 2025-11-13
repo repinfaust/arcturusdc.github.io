@@ -39,6 +39,38 @@ service firebase.storage {
                    && request.resource.size < 50 * 1024 * 1024; // 50MB limit for large whiteboards
     }
 
+    // R7: API Specs - OpenAPI specification files
+    match /ruby/r7/api-specs/{tenantId}/{specId}/{fileName} {
+      // Allow authenticated users to read API specs from any tenant
+      // Tenant membership is enforced at the Firestore level
+      allow read: if isAuthenticated();
+
+      // Allow authenticated users to upload OpenAPI specs
+      // Size limit: 10MB for spec files
+      allow write: if isAuthenticated()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && (request.resource.contentType == 'application/json'
+                       || request.resource.contentType == 'application/yaml'
+                       || request.resource.contentType == 'text/yaml');
+
+      // Allow deletion by authenticated users
+      // Server-side enforcement checks tenant membership
+      allow delete: if isAuthenticated();
+    }
+
+    // R7: Figma Assets - Component thumbnails and previews
+    match /ruby/r7/figma/{tenantId}/{fileId}/{allPaths=**} {
+      // Allow authenticated users to read Figma assets
+      allow read: if isAuthenticated();
+
+      // Only server/MCP can write Figma assets (synced from Figma API)
+      // Users cannot upload directly to Figma paths
+      allow write: if false;
+
+      // Only server can delete
+      allow delete: if false;
+    }
+
     // Deny all other access
     match /{allPaths=**} {
       allow read, write: if false;

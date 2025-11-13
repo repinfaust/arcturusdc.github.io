@@ -545,8 +545,15 @@ export default function SteaDemoPage() {
                 </div>
               )}
 
-              <h2 className="text-3xl font-extrabold text-neutral-900 mb-4 flex items-center gap-2">
-                <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">💸 STEa Pricing</span>
+              <h2 className="text-3xl font-extrabold text-neutral-900 mb-4 flex items-center gap-3">
+                <Image
+                  src="/img/acturusdc_stea_logo.png"
+                  alt="STEa Logo"
+                  width={48}
+                  height={48}
+                  className="object-contain"
+                />
+                <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">STEa Pricing</span>
               </h2>
               <p className="text-neutral-600 mb-8 text-lg">
                 Choose a plan that fits how you build. Every plan includes access to <strong>Harls</strong>, <strong>Filo</strong>, <strong>Hans</strong>, and hosted <strong>AutoProduct</strong> automation.
