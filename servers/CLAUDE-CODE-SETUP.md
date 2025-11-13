@@ -28,11 +28,12 @@ When the MCP server is running, you'll have access to these tools (prefixed with
 - `mcp__stea-mcp__stea_deleteEpic` - Delete an epic
 - `mcp__stea-mcp__stea_deleteFeature` - Delete a feature
 
-**Ruby (Documentation)** - *NEW in R3/R4*:
+**Ruby (Documentation)** - *NEW in R3/R4/R6*:
 - `mcp__stea-mcp__stea_listRubySpaces` - List documentation spaces
 - `mcp__stea-mcp__stea_createRubySpace` - Create a new documentation space
 - `mcp__stea-mcp__stea_createRubyDoc` - Create a Ruby document with raw content
 - `mcp__stea-mcp__stea_generateDoc` - **Generate doc from template (PRS/BuildSpec/ReleaseNotes) with context from source artifact**
+- `mcp__stea-mcp__stea_generateReleaseNotes` - **Automatically generate release notes from Filo + Hans (R6)**
 
 ## Usage in Claude Code
 
@@ -126,11 +127,13 @@ Try asking:
 - "List all cards under [feature-id]"
 - "Update the card [card-id] to move it to the 'Done' column"
 
-**Ruby (Documentation - R3/R4)**:
+**Ruby (Documentation - R3/R4/R6)**:
 - "List all my Ruby documentation spaces"
 - "Create a new Ruby space called 'API Documentation'"
 - "Generate a Build Spec from card [card-id] in space [space-id]"
 - "Generate a PRS for epic [epic-id] in space [space-id]"
+- "Generate release notes for version v1.2.0 in space [space-id] from January 1 to January 31"
+- "Create release notes for v2.0.0 including all Done cards and Hans test results"
 
 The `generateDoc` tool will automatically:
 - Fetch the source artifact (epic/feature/card) context
@@ -138,3 +141,11 @@ The `generateDoc` tool will automatically:
 - Create a properly formatted Ruby document with headings, lists, and task items
 - Auto-create a DocLink from the source to the document
 - Mark it as draft for review
+
+The `generateReleaseNotes` tool will automatically:
+- Query Filo for all Done cards within the date range
+- Query Hans for test sessions and calculate pass rates
+- Categorize cards: bugs → Fixes, features → Features, others → Improvements
+- Generate formatted markdown with clickable links to source cards
+- Create a published Ruby document with complete release notes
+- Return statistics about the release

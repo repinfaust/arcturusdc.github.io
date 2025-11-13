@@ -71,6 +71,7 @@ After restarting Claude Desktop, open a new chat and you should see the followin
 - `stea.createRubySpace` - Create a new documentation space
 - `stea.createRubyDoc` - Create a Ruby document with raw content
 - `stea.generateDoc` - **Generate a doc from template (PRS, BuildSpec, ReleaseNotes) with context from source artifact**
+- `stea.generateReleaseNotes` - **Automatically generate release notes from Filo Done cards, Hans test results, and GitHub PRs (R6)**
 
 ## Usage Examples
 
@@ -159,6 +160,59 @@ Use stea.createRubyDoc with:
 - content: "# API Design\n\nOur REST API follows these principles..."
 - type: "documentation" (or "note", "architecture", "meeting")
 ```
+
+### Generate Release Notes (R6: Automation)
+
+**Step 1: Prepare for a release**
+Make sure you have:
+- Moved completed cards to "Done" column in Filo
+- Run Hans test sessions for this release cycle
+
+**Step 2: Generate release notes automatically**
+```
+Use stea.generateReleaseNotes with:
+- spaceId: <Ruby space ID>
+- version: "v1.2.0"
+- startDate: "2024-01-01" (optional, filters Filo/Hans by date)
+- endDate: "2024-01-31" (optional, defaults to now)
+- includeFilo: true (default)
+- includeHans: true (default)
+- includeGithub: false (optional, requires GitHub integration)
+```
+
+This will:
+- **Query Filo** for all cards in "Done" column within the date range
+- **Categorize** them: bugs → Fixes, features → Features, others → Improvements
+- **Query Hans** for test sessions and calculate pass rate
+- **Generate markdown** with links back to each Filo card
+- **Create Ruby doc** with all sections populated (Features, Fixes, Improvements, Test Results)
+- Return stats: number of features, fixes, improvements, test results
+
+**Output example**:
+```
+Release Notes - v1.2.0
+
+🎉 New Features
+- [User authentication](https://arcturusdc.com/apps/stea/filo?card=abc123)
+- [Dark mode support](https://arcturusdc.com/apps/stea/filo?card=def456)
+
+✨ Improvements
+- [Performance optimization](https://arcturusdc.com/apps/stea/filo?card=ghi789)
+
+🐛 Bug Fixes
+- [Login redirect issue](https://arcturusdc.com/apps/stea/filo?card=jkl012)
+
+📊 Test Results
+- Total tests run: 245
+- Passed: 242 (98.8%)
+- Failed: 3
+```
+
+**Future: GitHub Integration**
+When GitHub integration is enabled, it will also include:
+- PRs merged between tags (fromTag → toTag)
+- Commit history
+- Contributors list
 
 ## Firestore Collections
 
