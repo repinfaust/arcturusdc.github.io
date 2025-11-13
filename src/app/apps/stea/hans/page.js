@@ -45,6 +45,8 @@ export default function HansTestingSuite() {
   const [cardForm, setCardForm] = useState({});
   const [cardSeed, setCardSeed] = useState(null);
   const [creatingCard, setCreatingCard] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [createdCardId, setCreatedCardId] = useState(null);
 
   // Auth
   useEffect(() => {
@@ -213,14 +215,14 @@ export default function HansTestingSuite() {
         linkedTestCaseId: cardSeed?.testCase?.id || null,
       };
 
-      await addDoc(collection(db, 'stea_cards'), newCard);
+      const docRef = await addDoc(collection(db, 'stea_cards'), newCard);
 
-      // Close modal and reset form
+      // Close creation modal and show success modal
       setCardModalOpen(false);
       setCardForm({});
       setCardSeed(null);
-
-      alert('Card created successfully! View it in Filo.');
+      setCreatedCardId(docRef.id);
+      setSuccessModalOpen(true);
     } catch (error) {
       console.error('Error creating card:', error);
       alert('Failed to create card. Please try again.');
@@ -555,6 +557,51 @@ export default function HansTestingSuite() {
                   {creatingCard ? 'Creating...' : 'Create Card in Filo'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <span className="text-3xl">✓</span>
+              </div>
+            </div>
+
+            <h2 className="text-center text-xl font-bold text-neutral-900 mb-2">
+              Card Created Successfully!
+            </h2>
+
+            <p className="text-center text-sm text-neutral-600 mb-6">
+              Your {cardSeed?.from === 'fail' ? 'bug report' : 'feedback'} card has been created in Filo.
+              {createdCardId && (
+                <span className="block mt-2 text-xs text-neutral-500 font-mono">
+                  Card ID: {createdCardId}
+                </span>
+              )}
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setSuccessModalOpen(false);
+                  router.push('/apps/stea/filo');
+                }}
+                className="w-full px-6 py-3 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
+              >
+                Open Filo Board →
+              </button>
+
+              <button
+                onClick={() => setSuccessModalOpen(false)}
+                className="w-full px-6 py-3 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors text-sm font-medium"
+              >
+                Stay in Hans
+              </button>
             </div>
           </div>
         </div>
