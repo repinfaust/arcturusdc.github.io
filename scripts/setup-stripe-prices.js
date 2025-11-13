@@ -79,6 +79,9 @@ const pricesConfig = [
   },
 ];
 
+// Logo URL for STEa products
+const STEa_LOGO_URL = 'https://www.arcturusdc.com/img/acturusdc_stea_logo.png';
+
 async function findOrCreateProduct(name, description) {
   // Search for existing product
   const products = await stripe.products.search({
@@ -86,14 +89,25 @@ async function findOrCreateProduct(name, description) {
   });
 
   if (products.data.length > 0) {
-    console.log(`  ✓ Found existing product: ${name} (${products.data[0].id})`);
-    return products.data[0];
+    const product = products.data[0];
+    console.log(`  ✓ Found existing product: ${name} (${product.id})`);
+    
+    // Update logo if not already set
+    if (!product.images || !product.images.includes(STEa_LOGO_URL)) {
+      await stripe.products.update(product.id, {
+        images: [STEa_LOGO_URL],
+      });
+      console.log(`    ✓ Updated logo for ${name}`);
+    }
+    
+    return product;
   }
 
-  // Create new product
+  // Create new product with logo
   const product = await stripe.products.create({
     name,
     description,
+    images: [STEa_LOGO_URL],
   });
   console.log(`  ✓ Created new product: ${name} (${product.id})`);
   return product;
