@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { sendClaimEmail } from '@/lib/email';
+import { randomBytes } from 'crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,6 +61,15 @@ export async function POST(request) {
         const session = event.data.object;
         console.log('Checkout session completed:', session.id);
 
+        // Get custom field values
+        const customFields = session.custom_fields || [];
+        const workspaceNameField = customFields.find(f => f.key === 'workspace_name');
+        const googleEmailField = customFields.find(f => f.key === 'google_email');
+        
+        const workspaceName = workspaceNameField?.text?.value;
+        const googleEmail = googleEmailField?.text?.value?.toLowerCase().trim();
+        const plan = session.metadata?.plan || 'solo-monthly';
+
         // Handle one-time payments (like MCP addon) vs subscriptions
         if (session.mode === 'payment') {
           // One-time payment - log to purchases collection
@@ -73,7 +84,43 @@ export async function POST(request) {
             updatedAt: new Date(),
           });
         } else {
-          // Subscription - log to subscriptions collection
+          // Subscription - create pending workspace if we have the required fields
+          if (workspaceName && googleEmail && session.mode === 'subscription') {
+            // Generate claim token
+            const claimToken = randomBytes(32).toString('hex');
+            
+            // Create pending workspace
+            const pendingWorkspaceRef = adminDb.collection('pendingWorkspaces').doc(claimToken);
+            await pendingWorkspaceRef.set({
+              workspaceName,
+              googleEmail,
+              stripeCustomerId: session.customer,
+              stripeSessionId: session.id,
+              plan,
+              status: 'pending_claim',
+              createdAt: new Date(),
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+            });
+
+            // Send claim email
+            const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.arcturusdc.com';
+            const claimUrl = `${origin}/apps/stea/claim?token=${claimToken}`;
+            
+            try {
+              await sendClaimEmail({
+                to: session.customer_email,
+                workspaceName,
+                claimToken,
+                claimUrl,
+              });
+              console.log(`Claim email sent to ${session.customer_email}`);
+            } catch (emailError) {
+              console.error('Failed to send claim email:', emailError);
+              // Don't fail the webhook if email fails - we can resend later
+            }
+          }
+
+          // Log to subscriptions collection
           await adminDb.collection('stea_subscriptions').add({
             customerId: session.customer,
             sessionId: session.id,
@@ -82,6 +129,9 @@ export async function POST(request) {
             mode: session.mode,
             amount: session.amount_total,
             currency: session.currency,
+            plan,
+            workspaceName,
+            googleEmail,
             createdAt: new Date(),
             updatedAt: new Date(),
           });
