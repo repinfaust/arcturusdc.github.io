@@ -36,11 +36,11 @@ export default function SteaAppsDropdown() {
         <>
           {/* Backdrop to close dropdown */}
           <div
-            className="fixed inset-0 z-[100]"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setShowAppsMenu(false)}
           />
-          {/* Dropdown menu with high z-index */}
-          <div className="absolute left-0 top-full z-[110] mt-2 w-64 rounded-lg border border-neutral-200 bg-white shadow-xl">
+          {/* Dropdown menu with very high z-index to appear above TLDraw */}
+          <div className="absolute left-0 top-full z-[9999] mt-2 w-64 rounded-lg border border-neutral-200 bg-white shadow-xl">
             <div className="p-2">
               {STEA_APPS.map((app) => (
                 <Link
