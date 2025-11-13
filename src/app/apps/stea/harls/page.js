@@ -48,38 +48,65 @@ function useAuth() {
 /* =========================
    PROJECT INIT
    ========================= */
-async function ensureProjectAndBoard(uid) {
-  const projectId = uid.slice(0, 6) + '_felix_lab';
+async function ensureProjectAndBoard(uid, tenantId) {
+  // Multi-tenant project: one shared project per tenant for Harls collaboration
+  const projectId = `${tenantId}_harls_lab`;
   const projectRef = doc(db, 'projects', projectId);
   const snap = await getDoc(projectRef);
+
   if (!snap.exists()) {
+    // Create new tenant-scoped project
     await setDoc(projectRef, {
-      ownerUid: uid, name: DEFAULT_PROJECT_NAME, members: [uid], createdAt: serverTimestamp(),
+      ownerUid: uid,
+      name: `${DEFAULT_PROJECT_NAME}`,
+      members: [uid],
+      tenantId: tenantId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
+    console.log('[Harls] Created new tenant project:', projectId);
   } else {
+    // Add user to existing tenant project if not already a member
     const data = snap.data();
-    if (!data?.members?.includes(uid)) await updateDoc(projectRef, { members: arrayUnion(uid) });
+    if (!data?.members?.includes(uid)) {
+      await updateDoc(projectRef, {
+        members: arrayUnion(uid),
+        updatedAt: serverTimestamp(),
+      });
+      console.log('[Harls] Added user to tenant project:', uid);
+    }
   }
 
   const boardId = 'main';
   const boardRef = doc(db, `projects/${projectId}/whiteboards`, boardId);
   if (!(await getDoc(boardRef)).exists()) {
-    await setDoc(boardRef, { name: DEFAULT_BOARD_NAME, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    await setDoc(boardRef, {
+      name: DEFAULT_BOARD_NAME,
+      tenantId: tenantId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
   }
 
   const userRef = doc(db, 'users', uid);
   if (!(await getDoc(userRef)).exists()) {
     await setDoc(userRef, {
       displayName: auth.currentUser?.displayName || 'User',
-      totalXP: 0, level: 1, badgesEarned: 0, createdAt: serverTimestamp(),
+      totalXP: 0,
+      level: 1,
+      badgesEarned: 0,
+      createdAt: serverTimestamp(),
     });
   }
 
   const metricsRef = doc(db, `users/${uid}/metrics`, 'main');
   if (!(await getDoc(metricsRef)).exists()) {
     await setDoc(metricsRef, {
-      notesCreated: 0, storiesCreated: 0, movedToNowCount: 0,
-      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+      notesCreated: 0,
+      storiesCreated: 0,
+      movedToNowCount: 0,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
   }
 
@@ -127,7 +154,7 @@ async function incMetric(uid, field, incBy = 1) {
 /* =========================
    JTBD / QUESTIONS
    ========================= */
-function JobsSidebar({ projectId, boardId }) {
+function JobsSidebar({ projectId, boardId, tenantId }) {
   if (!projectId || !boardId) return null; // guard
   const [tab, setTab] = useState('jtbd');
   const [items, setItems] = useState([]);
@@ -152,6 +179,7 @@ function JobsSidebar({ projectId, boardId }) {
       type: tab === 'jtbd' ? 'jtbd' : 'question',
       text: text.trim(),
       done: false,
+      tenantId: tenantId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -212,7 +240,7 @@ function JobsSidebar({ projectId, boardId }) {
 /* =========================
    TLDraw Whiteboard with Firestore persistence
    ========================= */
-function TLDrawWhiteboard({ projectId, boardId, user }) {
+function TLDrawWhiteboard({ projectId, boardId, user, tenantId }) {
   if (!projectId || !boardId) return null; // guard
 
   const editorRef = useRef(null);
@@ -420,6 +448,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
         tags: [],
         assignees: [user.uid],
         xp: 0,
+        tenantId: tenantId,
         createdBy: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -549,23 +578,33 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
 /* =========================
    STORIES KANBAN
    ========================= */
-function StoriesKanban({ projectId, user }) {
+function StoriesKanban({ projectId, user, tenantId }) {
   const [stories, setStories] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: '', description: '' });
   const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
-    const qAll = query(collection(db, `projects/${projectId}/stories`), orderBy('updatedAt', 'desc'));
+    if (!tenantId) return;
+    const qAll = query(
+      collection(db, `projects/${projectId}/stories`),
+      orderBy('updatedAt', 'desc')
+    );
     const unsub = onSnapshot(qAll, (snap) => {
       const arr = [];
-      snap.forEach((d) => arr.push({ id: d.id, ...d.data() }));
+      snap.forEach((d) => {
+        const data = d.data();
+        // Filter by tenantId (support legacy docs without tenantId)
+        if (!data.tenantId || data.tenantId === tenantId) {
+          arr.push({ id: d.id, ...data });
+        }
+      });
       setStories(arr);
     }, (e) => {
       console.error('[StoriesKanban onSnapshot]', `projects/${projectId}/stories`, e);
     });
     return () => unsub();
-  }, [projectId]);
+  }, [projectId, tenantId]);
 
   const moveToLane = async (story, lane) => {
     await updateDoc(doc(db, `projects/${projectId}/stories`, story.id), { lane, updatedAt: serverTimestamp() });
@@ -837,17 +876,17 @@ export default function ProductLabPage() {
 
   useEffect(() => {
     (async () => {
-      if (!user) return setProject(null);
+      if (!user || !currentTenant?.id) return setProject(null);
       try {
-        console.log('[Harls] Creating/loading project for user:', user.uid);
-        const ids = await ensureProjectAndBoard(user.uid);
+        console.log('[Harls] Creating/loading project for user:', user.uid, 'tenant:', currentTenant.id);
+        const ids = await ensureProjectAndBoard(user.uid, currentTenant.id);
         console.log('[Harls] Project setup complete:', ids);
         setProject(ids);
       } catch (err) {
         console.error('[Harls] Project setup failed:', err);
       }
     })();
-  }, [user]);
+  }, [user, currentTenant]);
 
   // Show loading while checking tenant access
   if (tenantLoading) {
@@ -906,11 +945,11 @@ export default function ProductLabPage() {
             />
           )}
           <div className="flex flex-col gap-4">
-            <TLDrawWhiteboard projectId={project.projectId} boardId={project.boardId} user={user} />
-            <JobsSidebar projectId={project.projectId} boardId={project.boardId} />
+            <TLDrawWhiteboard projectId={project.projectId} boardId={project.boardId} user={user} tenantId={currentTenant.id} />
+            <JobsSidebar projectId={project.projectId} boardId={project.boardId} tenantId={currentTenant.id} />
           </div>
 
-          <StoriesKanban projectId={project.projectId} user={user} />
+          <StoriesKanban projectId={project.projectId} user={user} tenantId={currentTenant.id} />
           <BadgeStrip user={user} />
           <FooterTips />
         </>

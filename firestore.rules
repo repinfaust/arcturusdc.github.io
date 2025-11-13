@@ -306,19 +306,35 @@ service cloud.firestore {
     }
 
     /* ==========================================================
-       Product Lab (Felix)
+       Product Lab (Harls) - Multi-tenant support
        ========================================================== */
     match /projects/{projectId} {
-      // Create: owner = self and self included in members
+      // Create: require tenant access, owner = self, and self included in members
       allow create: if authed()
         && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.members.hasAny([request.auth.uid]);
+        && request.resource.data.members.hasAny([request.auth.uid])
+        && (
+          !request.resource.data.keys().hasAny(['tenantId']) ||
+          canAccessTenant(request.resource.data.tenantId)
+        );
 
-      // Allow bootstrap GET if doc doesn't exist; otherwise require membership
-      allow get: if !exists(/databases/$(database)/documents/projects/$(projectId)) || inProject(projectId);
+      // Read: Allow if no tenant (legacy) OR user has tenant access AND is project member
+      allow get: if authed() && (
+        !exists(/databases/$(database)/documents/projects/$(projectId)) ||
+        (
+          inProject(projectId) &&
+          (
+            !('tenantId' in resource.data) ||
+            canAccessTenant(resource.data.tenantId)
+          )
+        )
+      );
 
-      // Update / delete only for members/owner
-      allow update, delete: if inProject(projectId);
+      // Update / delete: require tenant access AND project membership
+      allow update, delete: if authed() && inProject(projectId) && (
+        !('tenantId' in resource.data) ||
+        canAccessTenant(resource.data.tenantId)
+      );
 
       // Subcollection: whiteboards (board doc holds tldrawSnapshot field)
       match /whiteboards/{boardId} {
