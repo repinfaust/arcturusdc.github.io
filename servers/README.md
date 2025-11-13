@@ -18,7 +18,7 @@ Edit your Claude Desktop config file:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-Add this configuration (replace with your actual Firebase credentials):
+Add this configuration (replace with your actual paths and tenant ID):
 
 ```json
 {
@@ -30,11 +30,9 @@ Add this configuration (replace with your actual Firebase credentials):
         "/FULL/PATH/TO/arcturusdc.github.io/servers/stea-mcp.ts"
       ],
       "env": {
-        "FIREBASE_PROJECT_ID": "your-project-id",
-        "FIREBASE_CLIENT_EMAIL": "your-service-account@project.iam.gserviceaccount.com",
-        "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n",
+        "GOOGLE_APPLICATION_CREDENTIALS": "/FULL/PATH/TO/your-firebase-service-account.json",
+        "TENANT_ID": "your-tenant-id",
         "DEFAULT_APP": "Tou.me",
-        "DEFAULT_BOARD": "STEa",
         "DEFAULT_COLUMN": "Idea",
         "CREATED_BY": "mcp:stea"
       }
@@ -44,8 +42,9 @@ Add this configuration (replace with your actual Firebase credentials):
 ```
 
 **Important**:
-- Replace `/FULL/PATH/TO/` with the actual absolute path to your project
-- The private key must have `\\n` for newlines in JSON (not actual newlines)
+- Replace `/FULL/PATH/TO/` with actual absolute paths
+- `GOOGLE_APPLICATION_CREDENTIALS` must point to your Firebase service account JSON file (download from Firebase Console → Project Settings → Service Accounts)
+- **`TENANT_ID` is REQUIRED** for multi-tenant security - get this from your tenant document in Firestore (`tenants` collection)
 - Restart Claude Desktop after editing the config
 
 ### 3. Verify Installation
@@ -365,9 +364,15 @@ Go to: Firebase Console → Firestore Database → Indexes → Create Index
 - Verify the path in `claude_desktop_config.json` is absolute and correct
 - Make sure you restarted Claude Desktop after config changes
 
+### "TENANT_ID environment variable is required" error
+- Add `TENANT_ID` to your MCP server `env` configuration
+- Get your tenant ID from Firestore → `tenants` collection → your workspace document ID
+- This is required for multi-tenant security to prevent cross-tenant data access
+
 ### "Permission denied" errors
 - Ensure your Firebase service account has Firestore read/write permissions
-- Check that the private key is properly formatted in the config
+- Check that `GOOGLE_APPLICATION_CREDENTIALS` points to a valid service account JSON file
+- Verify the `TENANT_ID` matches a tenant you have access to
 
 ### "Epic not found" when creating Feature
 - Use `stea.listEpics` to verify the Epic ID exists
