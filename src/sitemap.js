@@ -7,6 +7,7 @@ export default function sitemap() {
   const paths = [
     '',                // /
     '/apps',
+    '/apps/stea/explore',  // STEa pricing and overview page
     '/capabilities',   // (if you still want this)
     '/privacy',
     '/terms',
@@ -16,7 +17,7 @@ export default function sitemap() {
   return paths.map(p => ({
     url: base + p,
     lastModified: now,
-    changefreq: (p === '/privacy' || p === '/terms') ? 'yearly' : 'weekly',
-    priority: p === '' ? 1.0 : 0.7,
+    changefreq: (p === '/privacy' || p === '/terms') ? 'yearly' : p === '/apps/stea/explore' ? 'weekly' : 'weekly',
+    priority: p === '' ? 1.0 : p === '/apps/stea/explore' ? 0.9 : 0.7,
   }));
 }

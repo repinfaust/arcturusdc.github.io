@@ -194,7 +194,7 @@ export default function SteaDemoPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-starburst">
+    <main className="min-h-screen bg-starburst" itemScope itemType="https://schema.org/SoftwareApplication">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Login Button - Top Right */}
         <div className="flex justify-end mb-4">
@@ -216,15 +216,16 @@ export default function SteaDemoPage() {
                 width={64}
                 height={64}
                 className="object-contain"
+                itemProp="image"
               />
-              <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-900">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-neutral-900" itemProp="name">
                 STEa
               </h1>
             </div>
-            <p className="text-xl font-semibold text-neutral-700 mb-4">
+            <p className="text-xl font-semibold text-neutral-700 mb-4" itemProp="slogan">
               Plan • Build • Test • Document
             </p>
-            <p className="text-base text-neutral-600 max-w-3xl mx-auto">
+            <p className="text-base text-neutral-600 max-w-3xl mx-auto" itemProp="description">
               A closed-loop product system that keeps strategy, delivery, testing, and product intelligence in perfect sync
             </p>
           </div>
@@ -555,6 +556,70 @@ export default function SteaDemoPage() {
                 />
                 <span className="bg-gradient-to-r from-amber-600 via-violet-600 to-emerald-600 bg-clip-text text-transparent">STEa Pricing</span>
               </h2>
+              {/* Structured Data for SEO */}
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                  __html: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'SoftwareApplication',
+                    name: 'STEa',
+                    applicationCategory: 'BusinessApplication',
+                    operatingSystem: 'Web',
+                    offers: [
+                      {
+                        '@type': 'Offer',
+                        name: 'Solo Monthly',
+                        price: '9.00',
+                        priceCurrency: 'GBP',
+                        billingDuration: 'P1M',
+                      },
+                      {
+                        '@type': 'Offer',
+                        name: 'Solo Yearly',
+                        price: '92.00',
+                        priceCurrency: 'GBP',
+                        billingDuration: 'P1Y',
+                      },
+                      {
+                        '@type': 'Offer',
+                        name: 'Team Monthly',
+                        price: '25.00',
+                        priceCurrency: 'GBP',
+                        billingDuration: 'P1M',
+                      },
+                      {
+                        '@type': 'Offer',
+                        name: 'Team Yearly',
+                        price: '255.00',
+                        priceCurrency: 'GBP',
+                        billingDuration: 'P1Y',
+                      },
+                      {
+                        '@type': 'Offer',
+                        name: 'Agency Monthly',
+                        price: '49.00',
+                        priceCurrency: 'GBP',
+                        billingDuration: 'P1M',
+                      },
+                      {
+                        '@type': 'Offer',
+                        name: 'Agency Yearly',
+                        price: '499.00',
+                        priceCurrency: 'GBP',
+                        billingDuration: 'P1Y',
+                      },
+                    ],
+                    description: 'A closed-loop product system that keeps strategy, delivery, testing, and product intelligence in perfect sync',
+                    url: 'https://www.arcturusdc.com/apps/stea/explore',
+                    publisher: {
+                      '@type': 'Organization',
+                      name: 'Arcturus Digital Consulting',
+                      url: 'https://www.arcturusdc.com',
+                    },
+                  }),
+                }}
+              />
               <p className="text-neutral-600 mb-8 text-lg">
                 Choose a plan that fits how you build. Every plan includes access to <strong>Harls</strong>, <strong>Filo</strong>, <strong>Hans</strong>, and hosted <strong>AutoProduct</strong> automation.
               </p>
