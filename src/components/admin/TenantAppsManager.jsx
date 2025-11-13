@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+
+const DEFAULT_APPS = ['Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me'];
 
 /**
  * Admin component for managing which apps belong to a tenant
@@ -15,60 +17,98 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
  */
 export default function TenantAppsManager() {
   const { currentTenant, isSuperAdmin } = useTenant();
-  const [apps, setApps] = useState([]);
-  const [newAppName, setNewAppName] = useState('');
+  const [selectedApps, setSelectedApps] = useState([]);
+  const [availableApps, setAvailableApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Load current apps for tenant
+  // Discover all apps from workspace data
   useEffect(() => {
-    async function loadApps() {
+    async function discoverApps() {
       if (!currentTenant?.id) {
         setLoading(false);
         return;
       }
 
       try {
+        const discovered = new Set(DEFAULT_APPS);
+
+        // Query cards for app names
+        const cardsQuery = query(
+          collection(db, 'stea_cards'),
+          where('tenantId', '==', currentTenant.id)
+        );
+        const cardsSnapshot = await getDocs(cardsQuery);
+        cardsSnapshot.docs.forEach(doc => {
+          const app = doc.data().app;
+          if (app) discovered.add(app);
+        });
+
+        // Query epics for app names
+        const epicsQuery = query(
+          collection(db, 'stea_epics'),
+          where('tenantId', '==', currentTenant.id)
+        );
+        const epicsSnapshot = await getDocs(epicsQuery);
+        epicsSnapshot.docs.forEach(doc => {
+          const app = doc.data().app;
+          if (app) discovered.add(app);
+        });
+
+        // Query features for app names
+        const featuresQuery = query(
+          collection(db, 'stea_features'),
+          where('tenantId', '==', currentTenant.id)
+        );
+        const featuresSnapshot = await getDocs(featuresQuery);
+        featuresSnapshot.docs.forEach(doc => {
+          const app = doc.data().app;
+          if (app) discovered.add(app);
+        });
+
+        // Sort alphabetically
+        const sortedApps = Array.from(discovered).sort();
+        setAvailableApps(sortedApps);
+
+        // Load currently selected apps from tenant doc
         const tenantRef = doc(db, 'tenants', currentTenant.id);
         const tenantSnap = await getDoc(tenantRef);
 
         if (tenantSnap.exists()) {
           const data = tenantSnap.data();
-          setApps(data.apps || []);
+          setSelectedApps(data.apps || []);
         }
       } catch (error) {
-        console.error('Error loading apps:', error);
-        setMessage({ type: 'error', text: 'Failed to load apps configuration' });
+        console.error('Error discovering apps:', error);
+        setMessage({ type: 'error', text: 'Failed to load apps' });
       } finally {
         setLoading(false);
       }
     }
 
-    loadApps();
+    discoverApps();
   }, [currentTenant?.id]);
 
-  const handleAddApp = () => {
-    const trimmedName = newAppName.trim();
-
-    if (!trimmedName) {
-      setMessage({ type: 'error', text: 'App name cannot be empty' });
-      return;
-    }
-
-    if (apps.includes(trimmedName)) {
-      setMessage({ type: 'error', text: 'App already exists' });
-      return;
-    }
-
-    setApps([...apps, trimmedName]);
-    setNewAppName('');
-    setMessage({ type: 'success', text: `Added "${trimmedName}" to the list` });
+  const handleToggleApp = (appName) => {
+    setSelectedApps(prev => {
+      if (prev.includes(appName)) {
+        return prev.filter(name => name !== appName);
+      } else {
+        return [...prev, appName];
+      }
+    });
+    setMessage({ type: '', text: '' }); // Clear message when making changes
   };
 
-  const handleRemoveApp = (appName) => {
-    setApps(apps.filter(name => name !== appName));
-    setMessage({ type: 'success', text: `Removed "${appName}" from the list` });
+  const handleSelectAll = () => {
+    setSelectedApps([...availableApps]);
+    setMessage({ type: 'success', text: 'Selected all apps' });
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedApps([]);
+    setMessage({ type: 'success', text: 'Deselected all apps' });
   };
 
   const handleSave = async () => {
@@ -82,11 +122,11 @@ export default function TenantAppsManager() {
 
     try {
       const tenantRef = doc(db, 'tenants', currentTenant.id);
-      await updateDoc(tenantRef, { apps });
+      await updateDoc(tenantRef, { apps: selectedApps });
 
       setMessage({
         type: 'success',
-        text: `Successfully saved ${apps.length} app(s). Dashboard will update on next aggregation.`,
+        text: `Successfully saved ${selectedApps.length} app(s). Dashboard will update on next aggregation (within 15 minutes).`,
       });
     } catch (error) {
       console.error('Error saving apps:', error);
@@ -116,7 +156,7 @@ export default function TenantAppsManager() {
 
       {loading ? (
         <div className="py-8 text-center text-sm text-neutral-500">
-          Loading apps configuration...
+          Discovering apps from your workspace...
         </div>
       ) : (
         <div className="space-y-6">
@@ -128,81 +168,78 @@ export default function TenantAppsManager() {
             <div className="mt-1 text-sm font-semibold text-neutral-900">
               {currentTenant?.name || 'No tenant selected'}
             </div>
-            {currentTenant?.id && (
-              <div className="mt-1 text-xs text-neutral-500">
-                ID: {currentTenant.id}
-              </div>
-            )}
+            <div className="mt-2 text-xs text-neutral-600">
+              {selectedApps.length} of {availableApps.length} apps selected for tracking
+            </div>
           </div>
 
-          {/* Current Apps List */}
+          {/* Apps Selection */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700">
-              Current Apps ({apps.length})
-            </label>
-            <div className="mt-2 space-y-2">
-              {apps.length === 0 ? (
-                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-center text-sm text-neutral-500">
-                  No apps configured yet. Add your first app below.
-                </div>
-              ) : (
-                apps.map((appName) => (
-                  <div
+            <div className="mb-3 flex items-center justify-between">
+              <label className="block text-sm font-medium text-neutral-700">
+                Select Apps to Track
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSelectAll}
+                  className="text-xs text-pink-600 hover:text-pink-700 hover:underline focus:outline-none"
+                >
+                  Select All
+                </button>
+                <span className="text-xs text-neutral-400">|</span>
+                <button
+                  onClick={handleDeselectAll}
+                  className="text-xs text-pink-600 hover:text-pink-700 hover:underline focus:outline-none"
+                >
+                  Deselect All
+                </button>
+              </div>
+            </div>
+
+            {availableApps.length === 0 ? (
+              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-8 text-center">
+                <p className="text-sm text-neutral-600">
+                  No apps found in your workspace yet.
+                </p>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Create some epics, features, or cards with app names in Filo first.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {availableApps.map((appName) => (
+                  <label
                     key={appName}
-                    className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3"
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition ${
+                      selectedApps.includes(appName)
+                        ? 'border-pink-300 bg-pink-50'
+                        : 'border-neutral-200 bg-white hover:border-neutral-300'
+                    }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">📱</span>
+                    <input
+                      type="checkbox"
+                      checked={selectedApps.includes(appName)}
+                      onChange={() => handleToggleApp(appName)}
+                      className="h-5 w-5 rounded border-neutral-300 text-pink-600 focus:ring-2 focus:ring-pink-500/20 focus:ring-offset-0"
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">📱</span>
                       <span className="font-medium text-neutral-900">{appName}</span>
                     </div>
-                    <button
-                      onClick={() => handleRemoveApp(appName)}
-                      className="rounded-lg bg-red-50 px-3 py-1 text-sm font-medium text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Add New App */}
-          <div>
-            <label htmlFor="new-app" className="block text-sm font-medium text-neutral-700">
-              Add New App
-            </label>
-            <div className="mt-2 flex gap-2">
-              <input
-                type="text"
-                id="new-app"
-                value={newAppName}
-                onChange={(e) => setNewAppName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddApp()}
-                placeholder="e.g., SyncFit, Toume, Mandrake"
-                className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
-              />
-              <button
-                onClick={handleAddApp}
-                disabled={!newAppName.trim()}
-                className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Add
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-neutral-500">
-              Enter the exact name of your app as it appears in your project data.
-            </p>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Save Button */}
           <div className="flex items-center justify-between border-t border-neutral-200 pt-6">
             <div className="text-xs text-neutral-500">
-              Changes are saved to Firestore immediately
+              Changes saved to Firestore • Dashboard updates every 15 minutes
             </div>
             <button
               onClick={handleSave}
-              disabled={saving || apps.length === 0}
+              disabled={saving || selectedApps.length === 0}
               className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Configuration'}
@@ -228,14 +265,12 @@ export default function TenantAppsManager() {
               How This Works
             </h3>
             <ul className="mt-2 space-y-1 text-xs text-blue-800">
-              <li>• Apps configured here appear in the dashboard dropdown</li>
-              <li>• Cloud Functions use this list to aggregate metrics per app</li>
-              <li>• Dashboard updates automatically every 15 minutes</li>
+              <li>• Apps are automatically discovered from your epics, features, and cards</li>
+              <li>• Check the apps you want to track in the dashboard</li>
+              <li>• Selected apps appear in the dashboard's app filter dropdown</li>
+              <li>• Cloud Functions aggregate metrics every 15 minutes</li>
               <li>• You can manually trigger aggregation from the panel below</li>
             </ul>
-            <p className="mt-3 text-xs text-blue-700">
-              <strong>Examples:</strong> SyncFit, Toume, Mandrake, ADHD Acclaim
-            </p>
           </div>
         </div>
       )}
