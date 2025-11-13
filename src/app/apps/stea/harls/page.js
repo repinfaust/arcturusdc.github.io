@@ -306,9 +306,11 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
     let cancelled = false;
     (async () => {
       try {
+        console.log('[TLDraw] Loading initial snapshot from:', boardDocRef.path);
         const snap = await getDoc(boardDocRef);
         if (cancelled) return;
         const data = snap.exists() ? snap.data() : null;
+        console.log('[TLDraw] Board doc exists:', snap.exists(), 'Has snapshot:', !!data?.tldrawSnapshot);
         initialSnapshotRef.current = data?.tldrawSnapshot || null;
         lastWriteTokenRef.current = data?.tldrawWriteToken || null;
         setLoaded(true);
@@ -318,6 +320,8 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
       } catch (e) {
         if (!cancelled) {
           console.error('[TLDraw load boardDocRef]', `projects/${projectId}/whiteboards/${boardId}`, e);
+          console.error('[TLDraw load error code]', e.code);
+          console.error('[TLDraw load error message]', e.message);
           setLoaded(true);
         }
       }
@@ -485,6 +489,7 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
                     initialSnapshotRef.current = snapshot;
                     debounceSave(async () => {
                       try {
+                        console.log('[TLDraw] Attempting save to:', boardDocRef.path);
                         await setDoc(
                           boardDocRef,
                           {
@@ -495,8 +500,11 @@ function TLDrawWhiteboard({ projectId, boardId, user }) {
                           },
                           { merge: true }
                         );
+                        console.log('[TLDraw] Save successful');
                       } catch (err) {
                         console.error('[TLDraw persist error]', err);
+                        console.error('[TLDraw persist error code]', err.code);
+                        console.error('[TLDraw persist error message]', err.message);
                       }
                     });
                   },
@@ -811,8 +819,14 @@ export default function ProductLabPage() {
   useEffect(() => {
     (async () => {
       if (!user) return setProject(null);
-      const ids = await ensureProjectAndBoard(user.uid);
-      setProject(ids);
+      try {
+        console.log('[Harls] Creating/loading project for user:', user.uid);
+        const ids = await ensureProjectAndBoard(user.uid);
+        console.log('[Harls] Project setup complete:', ids);
+        setProject(ids);
+      } catch (err) {
+        console.error('[Harls] Project setup failed:', err);
+      }
     })();
   }, [user]);
 
