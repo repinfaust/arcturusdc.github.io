@@ -281,6 +281,16 @@ export default function RubyPage() {
             </Link>
             <span className="text-sm text-neutral-500">Documentation</span>
 
+            {/* Navigation Links */}
+            <div className="flex items-center gap-2">
+              <Link
+                href="/apps/stea/ruby/graph"
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100"
+              >
+                Knowledge Graph
+              </Link>
+            </div>
+
             {/* STEa Apps Dropdown */}
             <SteaAppsDropdown />
           </div>
