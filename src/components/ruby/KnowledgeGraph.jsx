@@ -224,112 +224,124 @@ export default function KnowledgeGraph({ tenantId, projectId, initialDocId = nul
 
   // Initialize vis-network
   useEffect(() => {
-    if (!containerRef.current || nodes.length === 0 || !Network) return;
+    if (!containerRef.current || nodes.length === 0) return;
+    if (typeof window === 'undefined') return; // Skip SSR
 
-    const data = {
-      nodes: nodes.filter(node => filterTypes[node.type]),
-      edges: edges.filter(edge => {
+    let network = null;
+
+    // Dynamically import vis-network
+    import('vis-network').then((visNetworkModule) => {
+      const { Network: VisNetwork } = visNetworkModule;
+      
+      const filteredNodes = nodes.filter(node => filterTypes[node.type]);
+      const filteredEdges = edges.filter(edge => {
         const fromNode = nodes.find(n => n.id === edge.from);
         const toNode = nodes.find(n => n.id === edge.to);
         return fromNode && toNode && filterTypes[fromNode.type] && filterTypes[toNode.type];
-      }),
-    };
-
-    const options = {
-      nodes: {
-        borderWidth: 2,
-        shadow: true,
-        font: {
-          size: 14,
-          face: 'system-ui',
-        },
-      },
-      edges: {
-        width: 2,
-        smooth: {
-          type: 'continuous',
-        },
-        font: {
-          size: 12,
-          align: 'middle',
-        },
-      },
-      physics: {
-        enabled: true,
-        stabilization: {
-          iterations: 200,
-        },
-        barnesHut: {
-          gravitationalConstant: -2000,
-          centralGravity: 0.3,
-          springLength: 95,
-          springConstant: 0.04,
-          damping: 0.09,
-        },
-      },
-      interaction: {
-        hover: true,
-        tooltipDelay: 200,
-        zoomView: true,
-        dragView: true,
-      },
-    };
-
-    const network = new Network(containerRef.current, data, options);
-
-    // Event handlers
-    network.on('click', (params) => {
-      if (params.nodes.length > 0) {
-        const nodeId = params.nodes[0];
-        const node = nodes.find(n => n.id === nodeId);
-        if (node) {
-          setSelectedNode(node);
-          
-          // Navigate to artifact
-          handleNodeClick(node);
-        }
-      } else {
-        setSelectedNode(null);
-      }
-    });
-
-    network.on('hoverNode', (params) => {
-      // Highlight connected nodes
-      const nodeId = params.node;
-      const connectedNodeIds = new Set();
-      
-      edges.forEach(edge => {
-        if (edge.from === nodeId) connectedNodeIds.add(edge.to);
-        if (edge.to === nodeId) connectedNodeIds.add(edge.from);
       });
 
-      // Update node colors
-      const updatedNodes = nodes.map(node => {
-        if (node.id === nodeId) {
-          return { ...node, color: { ...node.color, border: '#000', borderWidth: 3 } };
+      const data = {
+        nodes: filteredNodes,
+        edges: filteredEdges,
+      };
+
+      const options = {
+        nodes: {
+          borderWidth: 2,
+          shadow: true,
+          font: {
+            size: 14,
+            face: 'system-ui',
+          },
+        },
+        edges: {
+          width: 2,
+          smooth: {
+            type: 'continuous',
+          },
+          font: {
+            size: 12,
+            align: 'middle',
+          },
+        },
+        physics: {
+          enabled: true,
+          stabilization: {
+            iterations: 200,
+          },
+          barnesHut: {
+            gravitationalConstant: -2000,
+            centralGravity: 0.3,
+            springLength: 95,
+            springConstant: 0.04,
+            damping: 0.09,
+          },
+        },
+        interaction: {
+          hover: true,
+          tooltipDelay: 200,
+          zoomView: true,
+          dragView: true,
+        },
+      };
+
+      network = new VisNetwork(containerRef.current, data, options);
+
+      // Event handlers
+      network.on('click', (params) => {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const node = nodes.find(n => n.id === nodeId);
+          if (node) {
+            setSelectedNode(node);
+            
+            // Navigate to artifact
+            handleNodeClick(node);
+          }
+        } else {
+          setSelectedNode(null);
         }
-        if (connectedNodeIds.has(node.id)) {
-          return { ...node, color: { ...node.color, border: '#3b82f6', borderWidth: 2 } };
-        }
-        return node;
       });
 
-      network.setData({ nodes: updatedNodes, edges: data.edges });
-    });
+      network.on('hoverNode', (params) => {
+        // Highlight connected nodes
+        const nodeId = params.node;
+        const connectedNodeIds = new Set();
+        
+        edges.forEach(edge => {
+          if (edge.from === nodeId) connectedNodeIds.add(edge.to);
+          if (edge.to === nodeId) connectedNodeIds.add(edge.from);
+        });
 
-    network.on('blurNode', () => {
-      // Reset colors
-      network.setData({ nodes: data.nodes, edges: data.edges });
-    });
+        // Update node colors
+        const updatedNodes = filteredNodes.map(node => {
+          if (node.id === nodeId) {
+            return { ...node, color: { background: node.color, border: '#000', borderWidth: 3 } };
+          }
+          if (connectedNodeIds.has(node.id)) {
+            return { ...node, color: { background: node.color, border: '#3b82f6', borderWidth: 2 } };
+          }
+          return node;
+        });
 
-    networkRef.current = network;
+        network.setData({ nodes: updatedNodes, edges: filteredEdges });
+      });
+
+      network.on('blurNode', () => {
+        // Reset colors
+        network.setData({ nodes: filteredNodes, edges: filteredEdges });
+      });
+
+      networkRef.current = network;
+    });
 
     return () => {
-      if (network) {
-        network.destroy();
+      if (networkRef.current) {
+        networkRef.current.destroy();
+        networkRef.current = null;
       }
     };
-  }, [nodes, edges, filterTypes]);
+  }, [nodes, edges, filterTypes, handleNodeClick]);
 
   const handleNodeClick = (node) => {
     const { type, artifactId } = node;
