@@ -85,6 +85,7 @@ export async function POST(request) {
           });
         } else {
           // Subscription - create pending workspace if we have the required fields
+          // Note: This works even with 100% discount codes (amount_total will be 0)
           if (workspaceName && googleEmail && session.mode === 'subscription') {
             // Generate claim token
             const claimToken = randomBytes(32).toString('hex');
