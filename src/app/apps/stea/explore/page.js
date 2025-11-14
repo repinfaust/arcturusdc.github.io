@@ -36,6 +36,11 @@ export default function SteaDemoPage() {
       setActiveTab('pricing');
       setTimeout(() => setShowCancelMessage(false), 5000);
     }
+    // Check for tab parameter to switch tabs directly
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'pricing') {
+      setActiveTab('pricing');
+    }
   }, [searchParams]);
 
   // Handle Stripe checkout
@@ -287,7 +292,7 @@ export default function SteaDemoPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {productImages.map((product, idx) => (
-              <div key={idx} className={`card p-6 border-l-4 ${product.borderColor} hover:shadow-xl transition-all duration-300`}>
+              <div key={idx} className={`card p-6 border-l-4 ${product.borderColor} hover:shadow-xl transition-all duration-300 flex flex-col`}>
                 <div className="mb-4">
                   <div className="text-xs uppercase tracking-wide text-neutral-500 mb-2">
                     {product.category}
@@ -309,14 +314,14 @@ export default function SteaDemoPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
 
-                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4 flex-grow">
                   {product.description}
                 </p>
 
                 {/* Learn More Link */}
                 <Link
                   href={product.link}
-                  className={`inline-flex items-center gap-2 text-sm font-semibold ${product.accentColor} hover:underline transition-all`}
+                  className={`inline-flex items-center gap-2 text-sm font-semibold ${product.accentColor} hover:underline transition-all mt-auto`}
                 >
                   Explore Features
                   <span className="text-xs">→</span>

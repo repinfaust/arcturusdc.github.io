@@ -134,7 +134,7 @@ export default function ExploreHans() {
             Join teams using Hans for seamless development-to-testing workflows.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link href="/apps/stea/explore" className="px-8 py-4 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-bold text-lg">
+            <Link href="/apps/stea/explore?tab=pricing" className="px-8 py-4 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-bold text-lg">
               Pricing
             </Link>
             <Link href="/apps/stea/explore" className="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-bold text-lg">

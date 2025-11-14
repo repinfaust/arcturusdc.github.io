@@ -423,7 +423,7 @@ export default function ExploreHarls() {
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link
-              href="/apps/stea/explore"
+              href="/apps/stea/explore?tab=pricing"
               className="px-8 py-4 bg-white text-amber-600 rounded-lg hover:bg-amber-50 transition-colors font-bold text-lg"
             >
               Pricing

@@ -149,7 +149,7 @@ export default function ExploreRuby() {
             Join teams using Ruby to maintain living documentation connected to the entire product lifecycle.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link href="/apps/stea/explore" className="px-8 py-4 bg-white text-rose-600 rounded-lg hover:bg-rose-50 transition-colors font-bold text-lg">
+            <Link href="/apps/stea/explore?tab=pricing" className="px-8 py-4 bg-white text-rose-600 rounded-lg hover:bg-rose-50 transition-colors font-bold text-lg">
               Pricing
             </Link>
             <Link href="/apps/stea/explore" className="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-bold text-lg">
