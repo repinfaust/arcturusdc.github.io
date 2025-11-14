@@ -20,6 +20,19 @@ export async function createTenant({ name, plan = 'team', ownerEmail }) {
   try {
     const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
+    // Check for duplicate workspace name for this owner
+    const tenantsRef = collection(db, 'tenants');
+    const duplicateQuery = query(
+      tenantsRef,
+      where('ownerEmail', '==', ownerEmail),
+      where('name', '==', name)
+    );
+    const duplicateSnapshot = await getDocs(duplicateQuery);
+
+    if (!duplicateSnapshot.empty) {
+      throw new Error(`You already have a workspace named "${name}". Please choose a different name.`);
+    }
+
     const tenantData = {
       name,
       plan, // 'solo', 'team', 'agency'
