@@ -15,6 +15,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Highlight from '@tiptap/extension-highlight';
 import { doc, getDoc, getDocs, updateDoc, addDoc, deleteDoc, serverTimestamp, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import DiffViewer from '@/components/ruby/DiffViewer';
 import { db } from '@/lib/firebase';
 import { common, createLowlight } from 'lowlight';
 import { Callout } from '@/lib/tiptap-extensions/Callout';
@@ -48,6 +49,7 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
   const [showShareLinkModal, setShowShareLinkModal] = useState(false);
   const [shareLink, setShareLink] = useState(null);
   const [creatingShareLink, setCreatingShareLink] = useState(false);
+  const [showDiffViewer, setShowDiffViewer] = useState(false);
 
   // Load document data
   useEffect(() => {
@@ -282,11 +284,45 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
       const content = editor.getJSON();
       const docRef = doc(db, 'stea_docs', document.id);
 
+      // Get current document to compare
+      const currentDocSnap = await getDoc(docRef);
+      const currentContent = currentDocSnap.exists() ? currentDocSnap.data().content : null;
+
+      // Update document
       await updateDoc(docRef, {
         content,
         updatedBy: userEmail,
         updatedAt: serverTimestamp(),
       });
+
+      // Create version snapshot if content changed
+      if (currentContent && JSON.stringify(currentContent) !== JSON.stringify(content)) {
+        try {
+          // Get version count
+          const versionsRef = collection(db, 'stea_doc_versions');
+          const versionsQuery = query(
+            versionsRef,
+            where('docId', '==', document.id),
+            where('tenantId', '==', tenantId)
+          );
+          const versionsSnapshot = await getDocs(versionsQuery);
+          const versionNumber = versionsSnapshot.size + 1;
+
+          // Create version
+          await addDoc(collection(db, 'stea_doc_versions'), {
+            docId: document.id,
+            tenantId,
+            title: docData?.title || 'Untitled',
+            content: currentContent, // Save old content as version
+            version: versionNumber,
+            createdBy: currentDocSnap.data().updatedBy || currentDocSnap.data().createdBy,
+            createdAt: currentDocSnap.data().updatedAt || currentDocSnap.data().createdAt || serverTimestamp(),
+          });
+        } catch (versionError) {
+          console.error('Error creating version:', versionError);
+          // Don't fail save if version creation fails
+        }
+      }
 
       setLastSaved(new Date());
     } catch (error) {
@@ -295,7 +331,7 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     } finally {
       setIsSaving(false);
     }
-  }, [editor, document?.id, tenantId, userEmail]);
+  }, [editor, document?.id, tenantId, userEmail, docData]);
 
   // Auto-save every 30 seconds if there are changes
   useEffect(() => {
@@ -1706,6 +1742,17 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Diff Viewer Modal */}
+      {showDiffViewer && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white">
+          <DiffViewer
+            docId={document?.id}
+            tenantId={tenantId}
+            onClose={() => setShowDiffViewer(false)}
+          />
         </div>
       )}
     </div>
