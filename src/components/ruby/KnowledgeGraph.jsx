@@ -222,128 +222,7 @@ export default function KnowledgeGraph({ tenantId, projectId, initialDocId = nul
     return sizes[type] || 12;
   };
 
-  // Initialize vis-network
-  useEffect(() => {
-    if (!containerRef.current || nodes.length === 0) return;
-    if (typeof window === 'undefined') return; // Skip SSR
-
-    let network = null;
-
-    // Dynamically import vis-network
-    import('vis-network').then((visNetworkModule) => {
-      const { Network: VisNetwork } = visNetworkModule;
-      
-      const filteredNodes = nodes.filter(node => filterTypes[node.type]);
-      const filteredEdges = edges.filter(edge => {
-        const fromNode = nodes.find(n => n.id === edge.from);
-        const toNode = nodes.find(n => n.id === edge.to);
-        return fromNode && toNode && filterTypes[fromNode.type] && filterTypes[toNode.type];
-      });
-
-      const data = {
-        nodes: filteredNodes,
-        edges: filteredEdges,
-      };
-
-      const options = {
-        nodes: {
-          borderWidth: 2,
-          shadow: true,
-          font: {
-            size: 14,
-            face: 'system-ui',
-          },
-        },
-        edges: {
-          width: 2,
-          smooth: {
-            type: 'continuous',
-          },
-          font: {
-            size: 12,
-            align: 'middle',
-          },
-        },
-        physics: {
-          enabled: true,
-          stabilization: {
-            iterations: 200,
-          },
-          barnesHut: {
-            gravitationalConstant: -2000,
-            centralGravity: 0.3,
-            springLength: 95,
-            springConstant: 0.04,
-            damping: 0.09,
-          },
-        },
-        interaction: {
-          hover: true,
-          tooltipDelay: 200,
-          zoomView: true,
-          dragView: true,
-        },
-      };
-
-      network = new VisNetwork(containerRef.current, data, options);
-
-      // Event handlers
-      network.on('click', (params) => {
-        if (params.nodes.length > 0) {
-          const nodeId = params.nodes[0];
-          const node = nodes.find(n => n.id === nodeId);
-          if (node) {
-            setSelectedNode(node);
-            
-            // Navigate to artifact
-            handleNodeClick(node);
-          }
-        } else {
-          setSelectedNode(null);
-        }
-      });
-
-      network.on('hoverNode', (params) => {
-        // Highlight connected nodes
-        const nodeId = params.node;
-        const connectedNodeIds = new Set();
-        
-        edges.forEach(edge => {
-          if (edge.from === nodeId) connectedNodeIds.add(edge.to);
-          if (edge.to === nodeId) connectedNodeIds.add(edge.from);
-        });
-
-        // Update node colors
-        const updatedNodes = filteredNodes.map(node => {
-          if (node.id === nodeId) {
-            return { ...node, color: { background: node.color, border: '#000', borderWidth: 3 } };
-          }
-          if (connectedNodeIds.has(node.id)) {
-            return { ...node, color: { background: node.color, border: '#3b82f6', borderWidth: 2 } };
-          }
-          return node;
-        });
-
-        network.setData({ nodes: updatedNodes, edges: filteredEdges });
-      });
-
-      network.on('blurNode', () => {
-        // Reset colors
-        network.setData({ nodes: filteredNodes, edges: filteredEdges });
-      });
-
-      networkRef.current = network;
-    });
-
-    return () => {
-      if (networkRef.current) {
-        networkRef.current.destroy();
-        networkRef.current = null;
-      }
-    };
-  }, [nodes, edges, filterTypes, handleNodeClick]);
-
-  const handleNodeClick = (node) => {
+  const handleNodeClick = useCallback((node) => {
     const { type, artifactId } = node;
     
     switch (type) {
@@ -363,7 +242,132 @@ export default function KnowledgeGraph({ tenantId, projectId, initialDocId = nul
         // For other types, could open in new tab or show details
         console.log(`Navigate to ${type}:${artifactId}`);
     }
-  };
+  }, [router]);
+
+  // Initialize vis-network
+  useEffect(() => {
+    if (!containerRef.current || nodes.length === 0) return;
+    if (typeof window === 'undefined') return; // Skip SSR
+
+    // Dynamically import vis-network
+    let networkInstance = null;
+    const loadNetwork = async () => {
+      try {
+        const visNetworkModule = await import('vis-network');
+        const { Network: VisNetwork } = visNetworkModule;
+        
+        const filteredNodes = nodes.filter(node => filterTypes[node.type]);
+        const filteredEdges = edges.filter(edge => {
+          const fromNode = nodes.find(n => n.id === edge.from);
+          const toNode = nodes.find(n => n.id === edge.to);
+          return fromNode && toNode && filterTypes[fromNode.type] && filterTypes[toNode.type];
+        });
+
+        const data = {
+          nodes: filteredNodes,
+          edges: filteredEdges,
+        };
+
+        const options = {
+          nodes: {
+            borderWidth: 2,
+            shadow: true,
+            font: {
+              size: 14,
+              face: 'system-ui',
+            },
+          },
+          edges: {
+            width: 2,
+            smooth: {
+              type: 'continuous',
+            },
+            font: {
+              size: 12,
+              align: 'middle',
+            },
+          },
+          physics: {
+            enabled: true,
+            stabilization: {
+              iterations: 200,
+            },
+            barnesHut: {
+              gravitationalConstant: -2000,
+              centralGravity: 0.3,
+              springLength: 95,
+              springConstant: 0.04,
+              damping: 0.09,
+            },
+          },
+          interaction: {
+            hover: true,
+            tooltipDelay: 200,
+            zoomView: true,
+            dragView: true,
+          },
+        };
+
+        networkInstance = new VisNetwork(containerRef.current, data, options);
+
+        // Event handlers
+        networkInstance.on('click', (params) => {
+          if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            const node = nodes.find(n => n.id === nodeId);
+            if (node) {
+              setSelectedNode(node);
+              handleNodeClick(node);
+            }
+          } else {
+            setSelectedNode(null);
+          }
+        });
+
+        networkInstance.on('hoverNode', (params) => {
+          // Highlight connected nodes
+          const nodeId = params.node;
+          const connectedNodeIds = new Set();
+          
+          edges.forEach(edge => {
+            if (edge.from === nodeId) connectedNodeIds.add(edge.to);
+            if (edge.to === nodeId) connectedNodeIds.add(edge.from);
+          });
+
+          // Update node colors
+          const updatedNodes = filteredNodes.map(node => {
+            if (node.id === nodeId) {
+              return { ...node, color: { background: node.color, border: '#000', borderWidth: 3 } };
+            }
+            if (connectedNodeIds.has(node.id)) {
+              return { ...node, color: { background: node.color, border: '#3b82f6', borderWidth: 2 } };
+            }
+            return node;
+          });
+
+          networkInstance.setData({ nodes: updatedNodes, edges: filteredEdges });
+        });
+
+        networkInstance.on('blurNode', () => {
+          // Reset colors
+          networkInstance.setData({ nodes: filteredNodes, edges: filteredEdges });
+        });
+
+        networkRef.current = networkInstance;
+      } catch (error) {
+        console.error('Error loading vis-network:', error);
+      }
+    };
+
+    loadNetwork();
+
+    return () => {
+      if (networkRef.current) {
+        networkRef.current.destroy();
+        networkRef.current = null;
+      }
+    };
+  }, [nodes, edges, filterTypes, handleNodeClick]);
 
   const filteredNodes = nodes.filter(node => {
     if (!filterTypes[node.type]) return false;
