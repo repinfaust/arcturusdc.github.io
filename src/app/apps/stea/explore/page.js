@@ -85,6 +85,7 @@ export default function SteaDemoPage() {
       gradient: 'from-amber-50 to-orange-50',
       accentColor: 'text-amber-600',
       borderColor: 'border-amber-200',
+      link: '/apps/stea/explore/explore-harls',
     },
     {
       src: '/img/filo.png',
@@ -95,6 +96,7 @@ export default function SteaDemoPage() {
       gradient: 'from-violet-50 to-purple-50',
       accentColor: 'text-violet-600',
       borderColor: 'border-violet-200',
+      link: '/apps/stea/explore/explore-filo',
     },
     {
       src: '/img/hans.png',
@@ -105,6 +107,7 @@ export default function SteaDemoPage() {
       gradient: 'from-emerald-50 to-green-50',
       accentColor: 'text-emerald-600',
       borderColor: 'border-emerald-200',
+      link: '/apps/stea/explore/explore-hans',
     },
     {
       src: '/img/ruby.png',
@@ -115,6 +118,7 @@ export default function SteaDemoPage() {
       gradient: 'from-rose-50 to-pink-50',
       accentColor: 'text-rose-600',
       borderColor: 'border-rose-200',
+      link: '/apps/stea/explore/explore-ruby',
     },
   ];
 
@@ -305,9 +309,18 @@ export default function SteaDemoPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
 
-                <p className="text-sm text-neutral-600 leading-relaxed">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
                   {product.description}
                 </p>
+
+                {/* Learn More Link */}
+                <Link
+                  href={product.link}
+                  className={`inline-flex items-center gap-2 text-sm font-semibold ${product.accentColor} hover:underline transition-all`}
+                >
+                  Explore Features
+                  <span className="text-xs">→</span>
+                </Link>
               </div>
             ))}
           </div>
