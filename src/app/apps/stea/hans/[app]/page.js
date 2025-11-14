@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, onSnapshot, orderBy, where, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -25,11 +24,15 @@ const PRIORITY_COLORS = {
   critical: 'bg-red-100 text-red-700 border-red-200',
 };
 
-export default function HansTestingSuite() {
+export default function AppSpecificHansPage() {
   const router = useRouter();
-  const { currentTenant, loading: tenantLoading, isSuperAdmin } = useTenant();
+  const params = useParams();
+  const { currentTenant, loading: tenantLoading } = useTenant();
   const searchParams = useSearchParams();
   const caseIdParam = searchParams?.get('case');
+
+  // Decode app name from URL
+  const appName = params?.app ? decodeURIComponent(params.app) : null;
 
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -37,7 +40,6 @@ export default function HansTestingSuite() {
   const [loading, setLoading] = useState(true);
 
   // Filters
-  const [appFilter, setAppFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedCase, setExpandedCase] = useState(caseIdParam || null);
 
@@ -55,16 +57,16 @@ export default function HansTestingSuite() {
       setUser(firebaseUser);
       setAuthReady(true);
       if (!firebaseUser) {
-        const next = encodeURIComponent('/apps/stea/hans');
+        const next = encodeURIComponent(`/apps/stea/hans/${params?.app || ''}`);
         router.replace(`/apps/stea?next=${next}`);
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [router, params?.app]);
 
-  // Load test cases from Firestore
+  // Load test cases from Firestore filtered by app
   useEffect(() => {
-    if (!user || !currentTenant?.id) {
+    if (!user || !currentTenant?.id || !appName) {
       setTestCases([]);
       setLoading(false);
       return;
@@ -73,6 +75,7 @@ export default function HansTestingSuite() {
     const q = query(
       collection(db, 'hans_cases'),
       where('tenantId', '==', currentTenant.id),
+      where('app', '==', appName),
       orderBy('createdAt', 'desc')
     );
 
@@ -89,22 +92,15 @@ export default function HansTestingSuite() {
     });
 
     return () => unsubscribe();
-  }, [user, currentTenant]);
+  }, [user, currentTenant, appName]);
 
-  // Get unique apps for filter
-  const availableApps = useMemo(() => {
-    const apps = new Set(testCases.map(tc => tc.app).filter(Boolean));
-    return Array.from(apps).sort();
-  }, [testCases]);
-
-  // Filter test cases
+  // Filter test cases by status only (app is already filtered by query)
   const filteredCases = useMemo(() => {
     return testCases.filter(tc => {
-      if (appFilter && tc.app !== appFilter) return false;
       if (statusFilter && tc.status !== statusFilter) return false;
       return true;
     });
-  }, [testCases, appFilter, statusFilter]);
+  }, [testCases, statusFilter]);
 
   // Stats
   const stats = useMemo(() => {
@@ -117,7 +113,7 @@ export default function HansTestingSuite() {
     return { total, passed, failed, inProgress, passRate };
   }, [testCases]);
 
-  // Card creation handlers - close the loop back to Filo
+  // Card creation handlers
   const openCardFromFail = (testCase) => {
     const urgencyMap = {
       low: 'low',
@@ -131,7 +127,7 @@ export default function HansTestingSuite() {
       type: 'bug',
       urgency,
       priority: testCase.priority || 'medium',
-      app: testCase.app || 'New App',
+      app: testCase.app || appName,
       title: `${testCase.app}: ${testCase.title} - Failed Test`,
       description: `Test Case: ${testCase.title}\nPriority: ${testCase.priority}\nStatus: Failed\n\nTest Description:\n${testCase.description || 'N/A'}\n\nUser Story:\n${testCase.userStory || 'N/A'}\n\nNotes:\n${testCase.testNotes || '(none)'}\n`,
       epicId: testCase.linkedEpicId || null,
@@ -158,7 +154,7 @@ export default function HansTestingSuite() {
       type: 'observation',
       urgency,
       priority: testCase.priority || 'medium',
-      app: testCase.app || 'New App',
+      app: testCase.app || appName,
       title: `${testCase.app}: Feedback on ${testCase.title}`,
       description: `Feedback on Test Case: ${testCase.title}\nPriority: ${testCase.priority}\n\nTest Description:\n${testCase.description || 'N/A'}\n\nFeedback:\n${testCase.testNotes || '(add details here)'}\n`,
       epicId: testCase.linkedEpicId || null,
@@ -180,7 +176,6 @@ export default function HansTestingSuite() {
 
     setCreatingCard(true);
     try {
-      // Generate search tokens for discoverability
       const generateSearchTokens = (text) => {
         if (!text) return [];
         const normalized = text.toLowerCase().trim();
@@ -200,7 +195,7 @@ export default function HansTestingSuite() {
 
       const newCard = {
         ...cardForm,
-        label: cardForm.title, // Required for Filo display
+        label: cardForm.title,
         tenantId: currentTenant.id,
         statusColumn: 'Idea',
         entityType: 'card',
@@ -218,7 +213,6 @@ export default function HansTestingSuite() {
 
       const docRef = await addDoc(collection(db, 'stea_cards'), newCard);
 
-      // Close creation modal and show success modal
       setCardModalOpen(false);
       setCardForm({});
       setCardSeed(null);
@@ -281,6 +275,25 @@ export default function HansTestingSuite() {
     );
   }
 
+  if (!appName) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <h2 className="mb-2 text-lg font-semibold text-red-900">Invalid App</h2>
+          <p className="mb-4 text-sm text-red-700">
+            No app specified in URL.
+          </p>
+          <Link
+            href="/apps/stea/hans"
+            className="inline-block rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+          >
+            Back to Hans
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="pb-10 max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
@@ -289,9 +302,19 @@ export default function HansTestingSuite() {
           <span className="text-3xl">🧪</span>
         </div>
         <div className="flex-1">
-          <h1 className="text-2xl font-extrabold text-neutral-900">Hans Testing Suite</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <Link
+              href="/apps/stea/hans"
+              className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              ← Hans Testing Suite
+            </Link>
+          </div>
+          <h1 className="text-2xl font-extrabold text-neutral-900">
+            {appName} Test Cases
+          </h1>
           <p className="text-sm text-neutral-600 mt-1">
-            Manage test cases, coordinate user testing sessions, and track quality across all apps
+            Test cases, testing sessions, and quality tracking for {appName}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -326,122 +349,15 @@ export default function HansTestingSuite() {
         </div>
       </section>
 
-      {/* App-Specific Testing Pages */}
-      {availableApps.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold text-neutral-700 mb-4 px-2">Your Apps</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            {availableApps.map((appName) => {
-              const appCases = testCases.filter(tc => tc.app === appName);
-              const appPassed = appCases.filter(tc => tc.status === 'passed').length;
-              const appFailed = appCases.filter(tc => tc.status === 'failed').length;
-              const appInProgress = appCases.filter(tc => tc.status === 'in_progress').length;
-              const appPassRate = appCases.length > 0 ? Math.round((appPassed / appCases.length) * 100) : 0;
-
-              return (
-                <Link
-                  key={appName}
-                  href={`/apps/stea/hans/${encodeURIComponent(appName)}`}
-                  className="group card p-4 hover:shadow-lg transition-all hover:-translate-y-1"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-neutral-900 truncate">{appName}</h3>
-                      <div className="mt-2 flex items-center gap-3 text-xs text-neutral-600">
-                        <span className="flex items-center gap-1">
-                          <span className="font-medium">{appCases.length}</span>
-                          <span>cases</span>
-                        </span>
-                        <span className="text-neutral-300">•</span>
-                        <span className="flex items-center gap-1">
-                          <span className={`font-medium ${appPassRate >= 80 ? 'text-green-600' : appPassRate >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
-                            {appPassRate}%
-                          </span>
-                          <span>pass</span>
-                        </span>
-                      </div>
-                      <div className="mt-2 flex gap-2">
-                        {appPassed > 0 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-700 border border-green-200">
-                            {appPassed} ✓
-                          </span>
-                        )}
-                        {appFailed > 0 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 border border-red-200">
-                            {appFailed} ✗
-                          </span>
-                        )}
-                        {appInProgress > 0 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700 border border-blue-200">
-                            {appInProgress} ⋯
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-neutral-400 group-hover:text-neutral-700 transition-colors flex-shrink-0">
-                      →
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* App Testing Portals - Only for Super Admins */}
-      {isSuperAdmin && (
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold text-neutral-700 mb-4 px-2">Legacy Testing Portals</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Tou.me Portal */}
-            <Link
-              href="/apps/stea/hans/toume"
-              className="group card p-6 hover:shadow-lg transition-all hover:-translate-y-1"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/img/tou.me_logo.jpeg"
-                    width={48}
-                    height={48}
-                    alt="Tou.me"
-                    className="rounded-xl border border-black/10"
-                  />
-                  <div>
-                    <h3 className="font-bold text-neutral-900">Tou.me Testing Portal</h3>
-                    <p className="text-sm text-neutral-600 mt-1">
-                      MVP 1.3 hardcoded test cases
-                    </p>
-                  </div>
-                </div>
-                <span className="text-neutral-400 group-hover:text-neutral-700 transition-colors">
-                  →
-                </span>
-              </div>
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* Filters and Test Cases */}
+      {/* Test Cases */}
       <section className="mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-700 px-2">Test Cases from Filo</h2>
+          <h2 className="text-lg font-semibold text-neutral-700 px-2">
+            Test Cases for {appName}
+          </h2>
 
-          {/* Filters */}
+          {/* Status Filter */}
           <div className="flex items-center gap-3">
-            <select
-              value={appFilter}
-              onChange={(e) => setAppFilter(e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm bg-white"
-            >
-              <option value="">All Apps</option>
-              {availableApps.map(app => (
-                <option key={app} value={app}>{app}</option>
-              ))}
-            </select>
-
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -471,19 +387,19 @@ export default function HansTestingSuite() {
               <span className="text-3xl">📋</span>
             </div>
             <h3 className="font-semibold text-neutral-900 mb-2">
-              {testCases.length === 0 ? 'No Test Cases Yet' : 'No Matching Test Cases'}
+              {testCases.length === 0 ? `No Test Cases for ${appName} Yet` : 'No Matching Test Cases'}
             </h3>
             <p className="text-sm text-neutral-600 max-w-md mx-auto mb-4">
               {testCases.length === 0
-                ? 'Test cases sent from the Filo board will appear here. Use the "Send to Hans" button on any card to create structured test cases.'
-                : 'Try adjusting your filters to see more test cases.'}
+                ? `Create test cases for ${appName} from the Filo board using the "Send to Hans" button on any card.`
+                : 'Try adjusting your status filter to see more test cases.'}
             </p>
             {testCases.length === 0 && (
               <Link
-                href="/apps/stea/filo"
+                href={`/apps/stea/filo?app=${encodeURIComponent(appName)}`}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
               >
-                Open Filo Board →
+                Open {appName} in Filo →
               </Link>
             )}
           </div>
@@ -643,11 +559,11 @@ export default function HansTestingSuite() {
               <button
                 onClick={() => {
                   setSuccessModalOpen(false);
-                  router.push('/apps/stea/filo');
+                  router.push(`/apps/stea/filo?app=${encodeURIComponent(appName)}`);
                 }}
                 className="w-full px-6 py-3 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors text-sm font-medium"
               >
-                Open Filo Board →
+                Open {appName} in Filo →
               </button>
 
               <button
@@ -724,14 +640,10 @@ function TestCaseCard({ testCase, expanded, onToggleExpand, onCreateFailCard, on
       <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            {/* App Badge - Clickable to app-specific page */}
-            <Link
-              href={`/apps/stea/hans/${encodeURIComponent(testCase.app)}`}
-              className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200 hover:bg-indigo-200 transition-colors"
-              title={`View all ${testCase.app} test cases`}
-            >
+            {/* App Badge */}
+            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
               {testCase.app}
-            </Link>
+            </span>
 
             {/* Priority Badge */}
             <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium border ${PRIORITY_COLORS[testCase.priority] || PRIORITY_COLORS.medium}`}>
@@ -776,7 +688,7 @@ function TestCaseCard({ testCase, expanded, onToggleExpand, onCreateFailCard, on
           </button>
 
           <Link
-            href={`/apps/stea/filo`}
+            href={`/apps/stea/filo?app=${encodeURIComponent(testCase.app)}`}
             className="px-3 py-2 text-sm border rounded-lg hover:bg-neutral-50 transition-colors"
             title="View source card in Filo"
           >
@@ -785,7 +697,7 @@ function TestCaseCard({ testCase, expanded, onToggleExpand, onCreateFailCard, on
         </div>
       </div>
 
-      {/* Expanded Content */}
+      {/* Expanded Content - Same as main Hans page */}
       {expanded && (
         <div className="border-t pt-4 space-y-6">
           {/* Preconditions */}
@@ -896,11 +808,10 @@ function TestCaseCard({ testCase, expanded, onToggleExpand, onCreateFailCard, on
             </div>
           </div>
 
-          {/* Create STEa Cards - Close the Loop */}
+          {/* Create STEa Cards */}
           <div className="border-t pt-4">
             <h4 className="text-sm font-semibold text-neutral-700 mb-3">Close the Loop in STEa</h4>
             <div className="flex flex-wrap gap-3">
-              {/* Create Card (Fail) */}
               <button
                 onClick={() => onCreateFailCard({ ...testCase, testNotes })}
                 disabled={testCase.status !== 'failed'}
@@ -910,7 +821,6 @@ function TestCaseCard({ testCase, expanded, onToggleExpand, onCreateFailCard, on
                 ➕ Create STEa Card (Fail)
               </button>
 
-              {/* Create Card (Feedback) */}
               <button
                 onClick={() => onCreateFeedbackCard({ ...testCase, testNotes })}
                 className="flex-1 min-w-[200px] px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
