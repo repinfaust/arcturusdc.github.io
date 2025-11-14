@@ -20,6 +20,7 @@ import { common, createLowlight } from 'lowlight';
 import { Callout } from '@/lib/tiptap-extensions/Callout';
 import { SlashCommand } from '@/lib/tiptap-extensions/SlashCommand';
 import { uploadAsset, deleteAsset, getFileIcon, formatFileSize } from '@/lib/storage';
+import { exportAsHTML, exportAsMarkdown, exportAsPDF } from '@/lib/ruby-exports';
 
 const lowlight = createLowlight(common);
 
@@ -43,6 +44,10 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     relation: '',
   });
   const [searchResults, setSearchResults] = useState([]);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showShareLinkModal, setShowShareLinkModal] = useState(false);
+  const [shareLink, setShareLink] = useState(null);
+  const [creatingShareLink, setCreatingShareLink] = useState(false);
 
   // Load document data
   useEffect(() => {
@@ -469,6 +474,72 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     }
   }, []);
 
+  // Export functions
+  const handleExportHTML = useCallback(() => {
+    if (!editor) return;
+    const content = editor.getJSON();
+    const filename = `${docData.title || 'document'}.html`;
+    exportAsHTML(content, filename);
+    setShowExportMenu(false);
+  }, [editor, docData]);
+
+  const handleExportMarkdown = useCallback(() => {
+    if (!editor) return;
+    const content = editor.getJSON();
+    const filename = `${docData.title || 'document'}.md`;
+    exportAsMarkdown(content, filename);
+    setShowExportMenu(false);
+  }, [editor, docData]);
+
+  const handleExportPDF = useCallback(() => {
+    if (!editor) return;
+    const content = editor.getJSON();
+    const filename = `${docData.title || 'document'}.pdf`;
+    exportAsPDF(content, filename);
+    setShowExportMenu(false);
+  }, [editor, docData]);
+
+  const handleExportPDFWithWatermark = useCallback(() => {
+    if (!editor) return;
+    const content = editor.getJSON();
+    const filename = `${docData.title || 'document'}.pdf`;
+    exportAsPDF(content, filename, { includeWatermark: true, watermarkText: 'CONFIDENTIAL' });
+    setShowExportMenu(false);
+  }, [editor, docData]);
+
+  // Create share link
+  const handleCreateShareLink = useCallback(async () => {
+    if (!document?.id) return;
+
+    setCreatingShareLink(true);
+    try {
+      const response = await fetch('/api/ruby/share-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          docId: document.id,
+          expiresInDays: 30,
+          requireAuth: false,
+          watermark: false,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create share link');
+      }
+
+      setShareLink(data);
+      setShowShareLinkModal(true);
+    } catch (error) {
+      console.error('Error creating share link:', error);
+      alert(`Failed to create share link: ${error.message}`);
+    } finally {
+      setCreatingShareLink(false);
+    }
+  }, [document?.id]);
+
   if (!editor || !docData) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -540,6 +611,82 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
                 Links ({links.length})
               </button>
             </div>
+            {/* Export Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showExportMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowExportMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-lg border border-neutral-200 bg-white shadow-lg">
+                    <div className="py-1">
+                      <button
+                        onClick={handleExportHTML}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        Export as HTML
+                      </button>
+                      <button
+                        onClick={handleExportMarkdown}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export as Markdown
+                      </button>
+                      <button
+                        onClick={handleExportPDF}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Export as PDF
+                      </button>
+                      <button
+                        onClick={handleExportPDFWithWatermark}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Export PDF (Watermarked)
+                      </button>
+                      <div className="my-1 border-t border-neutral-200" />
+                      <button
+                        onClick={handleCreateShareLink}
+                        disabled={creatingShareLink}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                        {creatingShareLink ? 'Creating...' : 'Create Share Link'}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             <button
               onClick={handleSave}
               disabled={isSaving}
@@ -1517,6 +1664,50 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
           font-size: 0.875rem;
         }
       `}</style>
+
+      {/* Share Link Modal */}
+      {showShareLinkModal && shareLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-xl font-semibold text-neutral-900">Share Link Created</h2>
+            <p className="mb-4 text-sm text-neutral-600">
+              Share this link with others to give them access to this document:
+            </p>
+            <div className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+              <input
+                type="text"
+                value={shareLink.shareUrl}
+                readOnly
+                className="w-full bg-transparent text-sm text-neutral-900"
+                onClick={(e) => e.target.select()}
+              />
+            </div>
+            <div className="mb-4 text-xs text-neutral-500">
+              Expires: {new Date(shareLink.expiresAt).toLocaleDateString()}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(shareLink.shareUrl);
+                  alert('Link copied to clipboard!');
+                }}
+                className="flex-1 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-700"
+              >
+                Copy Link
+              </button>
+              <button
+                onClick={() => {
+                  setShowShareLinkModal(false);
+                  setShareLink(null);
+                }}
+                className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

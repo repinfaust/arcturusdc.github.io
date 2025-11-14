@@ -312,6 +312,13 @@ service cloud.firestore {
       allow create, delete: if false;
     }
 
+    /* R12: Share Links for Document Export */
+    match /stea_share_links/{linkId} {
+      // Share links are accessed via API route, not directly from client
+      // API route handles authentication and expiration checks
+      allow read, write: if false;
+    }
+
     /* ==========================================================
        Automated testing + CI (migration-friendly)
        ========================================================== */
