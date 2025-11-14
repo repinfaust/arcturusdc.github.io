@@ -101,6 +101,28 @@ export default function ExploreFilo() {
           </p>
         </div>
 
+        {/* STEa Integration Card */}
+        <div className="max-w-3xl mx-auto mb-16">
+          <div className="bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-violet-200 rounded-2xl p-8 text-center">
+            <div className="text-4xl mb-4">🔗</div>
+            <h3 className="text-2xl font-bold text-neutral-900 mb-3">
+              Part of the STEa Closed-Loop System
+            </h3>
+            <p className="text-neutral-700 leading-relaxed mb-4">
+              Filo is the <strong>Board & Delivery Management</strong> module within STEa. Import backlogs from <strong>Harls</strong> (discovery), send cards to <strong>Hans</strong> (testing) with one click, and generate documentation in <strong>Ruby</strong>. Complete traceability from epic to release.
+            </p>
+            <div className="flex items-center justify-center gap-3 text-sm text-neutral-600">
+              <span className="font-semibold text-amber-700">Harls</span>
+              <span>→</span>
+              <span className="font-semibold text-violet-700">Filo</span>
+              <span>→</span>
+              <span className="font-semibold text-blue-700">Hans</span>
+              <span>→</span>
+              <span className="font-semibold text-rose-700">Ruby</span>
+            </div>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6">
           {features.map((feature, idx) => (
             <div key={idx} className="p-6 rounded-2xl border-2 border-neutral-200 bg-white hover:border-violet-300 transition-all">
@@ -126,9 +148,14 @@ export default function ExploreFilo() {
           <p className="text-xl text-violet-100 mb-8 max-w-2xl mx-auto">
             Join teams using Filo to maintain complete context from epic to release.
           </p>
-          <Link href="/apps/stea/filo" className="inline-block px-8 py-4 bg-white text-violet-600 rounded-lg hover:bg-violet-50 transition-colors font-bold text-lg">
-            Open Filo Board
-          </Link>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/apps/stea/explore" className="px-8 py-4 bg-white text-violet-600 rounded-lg hover:bg-violet-50 transition-colors font-bold text-lg">
+              Pricing
+            </Link>
+            <Link href="/apps/stea/explore" className="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-bold text-lg">
+              Explore Other Modules
+            </Link>
+          </div>
         </div>
       </section>
     </main>

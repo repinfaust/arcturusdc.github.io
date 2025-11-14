@@ -101,6 +101,28 @@ export default function ExploreRuby() {
           </p>
         </div>
 
+        {/* STEa Integration Card */}
+        <div className="max-w-3xl mx-auto mb-16">
+          <div className="bg-gradient-to-br from-rose-50 to-pink-50 border-2 border-rose-200 rounded-2xl p-8 text-center">
+            <div className="text-4xl mb-4">🔗</div>
+            <h3 className="text-2xl font-bold text-neutral-900 mb-3">
+              Part of the STEa Closed-Loop System
+            </h3>
+            <p className="text-neutral-700 leading-relaxed mb-4">
+              Ruby is the <strong>Documentation & Knowledge Management</strong> module within STEa. Generate PRDs and build specs from <strong>Harls</strong> discoveries, link documents to <strong>Filo</strong> epics and cards, reference <strong>Hans</strong> test outcomes. The complete knowledge graph connecting every artifact in your product lifecycle.
+            </p>
+            <div className="flex items-center justify-center gap-3 text-sm text-neutral-600">
+              <span className="font-semibold text-amber-700">Harls</span>
+              <span>→</span>
+              <span className="font-semibold text-violet-700">Filo</span>
+              <span>→</span>
+              <span className="font-semibold text-blue-700">Hans</span>
+              <span>→</span>
+              <span className="font-semibold text-rose-700">Ruby</span>
+            </div>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6">
           {features.map((feature, idx) => (
             <div key={idx} className="p-6 rounded-2xl border-2 border-neutral-200 bg-white hover:border-rose-300 transition-all">
@@ -126,9 +148,14 @@ export default function ExploreRuby() {
           <p className="text-xl text-rose-100 mb-8 max-w-2xl mx-auto">
             Join teams using Ruby to maintain living documentation connected to the entire product lifecycle.
           </p>
-          <Link href="/apps/stea/ruby" className="inline-block px-8 py-4 bg-white text-rose-600 rounded-lg hover:bg-rose-50 transition-colors font-bold text-lg">
-            Open Ruby Docs
-          </Link>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/apps/stea/explore" className="px-8 py-4 bg-white text-rose-600 rounded-lg hover:bg-rose-50 transition-colors font-bold text-lg">
+              Pricing
+            </Link>
+            <Link href="/apps/stea/explore" className="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-bold text-lg">
+              Explore Other Modules
+            </Link>
+          </div>
         </div>
       </section>
     </main>

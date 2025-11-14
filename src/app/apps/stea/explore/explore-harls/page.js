@@ -269,21 +269,27 @@ export default function ExploreHarls() {
         </div>
       </section>
 
-      {/* Key Stats */}
+      {/* STEa Integration Card */}
       <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            { stat: '8', label: 'Core Features', icon: '⚡' },
-            { stat: '5', label: 'Achievement Badges', icon: '🏆' },
-            { stat: '40%', label: 'Faster Discovery', icon: '⏱️' },
-            { stat: '100%', label: 'Data Portability', icon: '📤' },
-          ].map((item, idx) => (
-            <div key={idx} className="text-center p-6 rounded-2xl bg-white border-2 border-neutral-200">
-              <div className="text-3xl mb-2">{item.icon}</div>
-              <div className="text-4xl font-bold text-neutral-900 mb-1">{item.stat}</div>
-              <div className="text-sm text-neutral-600">{item.label}</div>
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-8 text-center">
+            <div className="text-4xl mb-4">🔗</div>
+            <h3 className="text-2xl font-bold text-neutral-900 mb-3">
+              Part of the STEa Closed-Loop System
+            </h3>
+            <p className="text-neutral-700 leading-relaxed mb-4">
+              Harls is the <strong>Discovery & Planning</strong> module within STEa. Your discovery work flows directly into <strong>Filo</strong> (delivery management), which sends cards to <strong>Hans</strong> (testing), with all insights captured in <strong>Ruby</strong> (documentation). The complete product lifecycle in one integrated platform.
+            </p>
+            <div className="flex items-center justify-center gap-3 text-sm text-neutral-600">
+              <span className="font-semibold text-amber-700">Harls</span>
+              <span>→</span>
+              <span className="font-semibold text-violet-700">Filo</span>
+              <span>→</span>
+              <span className="font-semibold text-blue-700">Hans</span>
+              <span>→</span>
+              <span className="font-semibold text-rose-700">Ruby</span>
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
@@ -417,10 +423,10 @@ export default function ExploreHarls() {
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link
-              href="/apps/stea/harls"
+              href="/apps/stea/explore"
               className="px-8 py-4 bg-white text-amber-600 rounded-lg hover:bg-amber-50 transition-colors font-bold text-lg"
             >
-              Start Using Harls
+              Pricing
             </Link>
             <Link
               href="/apps/stea/explore"
