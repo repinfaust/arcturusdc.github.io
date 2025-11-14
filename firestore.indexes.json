@@ -136,6 +136,24 @@
       ]
     },
     {
+      "collectionGroup": "hans_cases",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "app",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "stea_api_specs",
       "queryScope": "COLLECTION",
       "fields": [
