@@ -39,18 +39,26 @@ async function createDiscountCoupon() {
         limit: 10,
       });
 
+      // Check if RTP726 already exists
+      const rtp726Code = promoCodes.data.find(pc => pc.code === 'RTP726');
+      
+      if (rtp726Code) {
+        console.log(`\n📝 Promotion Code RTP726 already exists (Active: ${rtp726Code.active})`);
+      } else {
+        console.log(`\n📝 Creating promotion code RTP726...`);
+        const promoCode = await stripe.promotionCodes.create({
+          coupon: existingCoupon.id,
+          code: 'RTP726',
+        });
+        console.log(`   ✅ Created promotion code: ${promoCode.code}`);
+      }
+      
+      // List all promotion codes
       if (promoCodes.data.length > 0) {
-        console.log(`\n📝 Promotion Codes:`);
+        console.log(`\n📝 All Promotion Codes:`);
         promoCodes.data.forEach(pc => {
           console.log(`   Code: ${pc.code} (Active: ${pc.active})`);
         });
-      } else {
-        console.log(`\n📝 No promotion codes found. Creating one...`);
-        const promoCode = await stripe.promotionCodes.create({
-          coupon: existingCoupon.id,
-          code: 'FREETRIAL',
-        });
-        console.log(`   ✅ Created promotion code: ${promoCode.code}`);
       }
 
       return existingCoupon;
@@ -74,7 +82,7 @@ async function createDiscountCoupon() {
     // Create promotion code
     const promoCode = await stripe.promotionCodes.create({
       coupon: coupon.id,
-      code: 'FREETRIAL',
+      code: 'RTP726',
       // active: true, // Default is true
     });
 
