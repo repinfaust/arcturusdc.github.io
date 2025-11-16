@@ -17,6 +17,19 @@ function generateCredentials() {
 
 export async function POST(request) {
   try {
+    // Check Firebase Admin initialization
+    const { adminDb } = await import('@/lib/firebase-admin');
+    if (!adminDb) {
+      return NextResponse.json(
+        { 
+          error: 'Firebase Admin not initialized',
+          message: 'FIREBASE_SERVICE_ACCOUNT environment variable is required. Please configure Firebase Admin credentials in your deployment environment.',
+          hint: 'Set FIREBASE_SERVICE_ACCOUNT to your service account JSON (stringified)'
+        },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const { orgId, displayName, scopes } = body;
 
@@ -59,7 +72,14 @@ export async function POST(request) {
     console.error('Error creating/updating org:', error);
     console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to create/update organisation', details: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined },
+      { 
+        error: 'Failed to create/update organisation', 
+        details: error.message,
+        message: error.message === 'Firebase Admin DB not initialized' 
+          ? 'Firebase Admin credentials not configured. Please set FIREBASE_SERVICE_ACCOUNT environment variable.'
+          : error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+      },
       { status: 500 }
     );
   }
@@ -67,6 +87,19 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
+    // Check Firebase Admin initialization
+    const { adminDb } = await import('@/lib/firebase-admin');
+    if (!adminDb) {
+      return NextResponse.json(
+        { 
+          error: 'Firebase Admin not initialized',
+          message: 'FIREBASE_SERVICE_ACCOUNT environment variable is required. Please configure Firebase Admin credentials in your deployment environment.',
+          hint: 'Set FIREBASE_SERVICE_ACCOUNT to your service account JSON (stringified)'
+        },
+        { status: 503 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const orgId = searchParams.get('orgId');
 
@@ -91,7 +124,14 @@ export async function GET(request) {
     console.error('Error fetching orgs:', error);
     console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to fetch organisations', details: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined },
+      { 
+        error: 'Failed to fetch organisations', 
+        details: error.message,
+        message: error.message === 'Firebase Admin DB not initialized' 
+          ? 'Firebase Admin credentials not configured. Please set FIREBASE_SERVICE_ACCOUNT environment variable.'
+          : error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+      },
       { status: 500 }
     );
   }
