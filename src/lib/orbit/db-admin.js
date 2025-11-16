@@ -6,6 +6,11 @@
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
+// Ensure adminDb is available
+if (!adminDb) {
+  console.error('Firebase Admin DB not initialized. Check FIREBASE_SERVICE_ACCOUNT environment variable.');
+}
+
 // Collection names
 export const COLLECTIONS = {
   ORGS: 'orbit_orgs',
@@ -21,6 +26,9 @@ export const COLLECTIONS = {
  * Create or update an organisation
  */
 export async function upsertOrg(orgData) {
+  if (!adminDb) {
+    throw new Error('Firebase Admin DB not initialized');
+  }
   const orgsRef = adminDb.collection(COLLECTIONS.ORGS);
   const snapshot = await orgsRef.where('orgId', '==', orgData.orgId).get();
 
@@ -47,6 +55,9 @@ export async function upsertOrg(orgData) {
  * Get organisation by orgId
  */
 export async function getOrg(orgId) {
+  if (!adminDb) {
+    throw new Error('Firebase Admin DB not initialized');
+  }
   const orgsRef = adminDb.collection(COLLECTIONS.ORGS);
   const snapshot = await orgsRef.where('orgId', '==', orgId).get();
   
@@ -61,6 +72,9 @@ export async function getOrg(orgId) {
  * Get all organisations
  */
 export async function getAllOrgs() {
+  if (!adminDb) {
+    throw new Error('Firebase Admin DB not initialized');
+  }
   const orgsRef = adminDb.collection(COLLECTIONS.ORGS);
   const snapshot = await orgsRef.get();
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

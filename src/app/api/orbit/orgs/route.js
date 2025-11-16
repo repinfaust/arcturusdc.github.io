@@ -57,8 +57,9 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Error creating/updating org:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to create/update organisation', details: error.message },
+      { error: 'Failed to create/update organisation', details: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined },
       { status: 500 }
     );
   }
@@ -88,8 +89,9 @@ export async function GET(request) {
     return NextResponse.json({ orgs: safeOrgs });
   } catch (error) {
     console.error('Error fetching orgs:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to fetch organisations' },
+      { error: 'Failed to fetch organisations', details: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined },
       { status: 500 }
     );
   }
