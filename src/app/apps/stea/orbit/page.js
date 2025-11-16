@@ -509,11 +509,17 @@ export default function OrbitPage() {
         <div className="text-center">
           <div className="inline-block px-8 py-4 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
             <p className="text-lg font-semibold text-neutral-900 mb-2">
-              Orbit PoC is currently in development
+              Orbit PoC is Live!
             </p>
-            <p className="text-sm text-neutral-600">
-              This page will be updated with sub-pages for architecture details and live POC demonstrations
+            <p className="text-sm text-neutral-600 mb-4">
+              Try the interactive POC dashboard with demo data and event simulation
             </p>
+            <Link
+              href="/apps/stea/orbit/poc"
+              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Open POC Dashboard →
+            </Link>
           </div>
         </div>
       </section>
