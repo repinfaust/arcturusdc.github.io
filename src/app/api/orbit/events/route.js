@@ -72,28 +72,44 @@ export async function POST(request) {
     event.signature = signEvent(event, org.signingSecret);
 
     // Get previous event for hash chain linking
-    const previousEvent = await getLatestEvent(body.userId, body.orgId);
-    if (previousEvent) {
-      event.previousEventHash = previousEvent.eventHash;
-      event.blockIndex = (previousEvent.blockIndex || 0) + 1;
-    } else {
+    try {
+      const previousEvent = await getLatestEvent(body.userId, body.orgId);
+      if (previousEvent) {
+        event.previousEventHash = previousEvent.eventHash;
+        event.blockIndex = (previousEvent.blockIndex || 0) + 1;
+      } else {
+        event.blockIndex = 1;
+      }
+    } catch (error) {
+      console.error('Error getting latest event for hash chain:', error);
+      // Continue without hash chain if it fails
       event.blockIndex = 1;
     }
 
     // Compute event hash (for hash chain)
-    event.eventHash = hashEvent(event);
+    try {
+      event.eventHash = hashEvent(event);
+    } catch (error) {
+      console.error('Error computing event hash:', error);
+      // Continue without hash if it fails
+    }
 
     // Add to ledger
     const docId = await addLedgerEvent(event);
 
     // Update consent state if consent event
     if (body.eventType === 'CONSENT_GRANTED' || body.eventType === 'CONSENT_REVOKED') {
-      await updateConsentState(
-        body.userId,
-        body.orgId,
-        body.consentScope,
-        body.consentStatus
-      );
+      try {
+        await updateConsentState(
+          body.userId,
+          body.orgId,
+          body.consentScope,
+          body.consentStatus || (body.eventType === 'CONSENT_GRANTED' ? 'GRANTED' : 'REVOKED')
+        );
+      } catch (error) {
+        console.error('Error updating consent state:', error);
+        // Don't fail the event creation if consent state update fails
+      }
     }
 
     // Run policy engine (async, don't block response)
@@ -111,8 +127,13 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Error creating event:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to create event' },
+      { 
+        error: 'Failed to create event',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
