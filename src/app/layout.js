@@ -14,6 +14,11 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-C49YV15ZT6";
 export const metadata = {
   title: "Arcturus Digital Consulting",
   description: "Pragmatic product and app development that actually ships.",
+  icons: {
+    icon: '/img/logo-mark.png',
+    shortcut: '/img/logo-mark.png',
+    apple: '/img/logo-mark.png',
+  },
 };
 
 export default function RootLayout({ children }) {
