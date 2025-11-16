@@ -11,10 +11,23 @@ import crypto from 'crypto';
  */
 function canonicalizeEvent(event) {
   // Remove signature and signingKeyId for signing
-  const { signature, signingKeyId, ...payload } = event;
+  const { signature, signingKeyId, timestamp, ...payload } = event;
+  
+  // Clean up any non-serializable values (like Firestore Timestamps)
+  const cleanPayload = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+    // Skip Firestore Timestamp objects and other non-serializable types
+    if (typeof value === 'object' && value.constructor && value.constructor.name === 'Timestamp') {
+      continue;
+    }
+    cleanPayload[key] = value;
+  }
   
   // Sort keys and stringify deterministically
-  return JSON.stringify(payload, Object.keys(payload).sort());
+  return JSON.stringify(cleanPayload, Object.keys(cleanPayload).sort());
 }
 
 /**

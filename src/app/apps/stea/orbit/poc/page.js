@@ -374,7 +374,7 @@ export default function OrbitPocPage() {
                   ) : (
                     <div className="space-y-4">
                       {events.map(event => (
-                        <EventVerificationCard key={event.id} event={event} orgs={orgs} onLog={addLog} />
+                        <EventVerificationCard key={event.id} event={event} orgs={orgs} onLog={addLog} eventTypeColors={eventTypeColors} />
                       ))}
                     </div>
                   )}
@@ -628,7 +628,7 @@ export default function OrbitPocPage() {
 }
 
 // Event Verification Card Component
-function EventVerificationCard({ event, orgs, onLog }) {
+function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationResults, setVerificationResults] = useState(null);
   const [verifying, setVerifying] = useState(false);
@@ -992,6 +992,39 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [selectedScopes, setSelectedScopes] = useState([]);
+  const [selectedPurpose, setSelectedPurpose] = useState('');
+
+  // Preset purposes by organization type
+  const orgPurposes = {
+    healthcare_provider: [
+      'patient_registration',
+      'treatment_planning',
+      'medication_prescription',
+      'lab_test_ordering',
+      'insurance_verification',
+    ],
+    experian: [
+      'credit_check',
+      'identity_verification',
+      'fraud_prevention',
+      'loan_application',
+      'background_check',
+    ],
+    challenger_bank: [
+      'account_opening',
+      'loan_application',
+      'transaction_processing',
+      'kyc_verification',
+      'fraud_detection',
+    ],
+    broker_app: [
+      'portfolio_analysis',
+      'trade_execution',
+      'risk_assessment',
+      'tax_reporting',
+      'investment_advice',
+    ],
+  };
 
   // Preset data types by organization type
   const orgScopes = {
@@ -1053,6 +1086,15 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
     return Object.keys(org.scopes || {});
   };
 
+  // Get available purposes for selected org
+  const getAvailablePurposes = () => {
+    if (!selectedOrg) return [];
+    const org = orgs.find(o => o.orgId === selectedOrg);
+    if (!org) return [];
+    
+    return orgPurposes[org.orgId] || [];
+  };
+
   // Handle scope toggle
   const toggleScope = (scope) => {
     setSelectedScopes(prev => {
@@ -1075,10 +1117,18 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
     }
   }, [selectedScopes, action]);
 
-  // Reset selected scopes when org or action changes
+  // Reset selected scopes and purpose when org or action changes
   useEffect(() => {
     setSelectedScopes([]);
+    setSelectedPurpose('');
   }, [selectedOrg, action]);
+
+  // Update formData when selectedPurpose changes
+  useEffect(() => {
+    if (selectedPurpose) {
+      setFormData(prev => ({ ...prev, purpose: selectedPurpose }));
+    }
+  }, [selectedPurpose]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1159,7 +1209,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
           userId: 'user_12345',
           orgId: org.orgId,
           scopes: selectedScopes, // Use selected scopes
-          purpose: formData.purpose || 'account_opening',
+          purpose: selectedPurpose || formData.purpose || 'account_opening',
         };
         onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
         response = await fetch('/api/orbit/events', {
@@ -1174,7 +1224,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
         requestBody = {
           userId: 'user_12345',
           claimId: formData.claimId || 'verified_address',
-          purpose: formData.purpose || 'account_opening',
+          purpose: selectedPurpose || formData.purpose || 'account_opening',
         };
         onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
         response = await fetch('/api/orbit/verification/request', {
@@ -1344,13 +1394,25 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Purpose</label>
-              <input
-                type="text"
-                value={formData.purpose || ''}
-                onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                placeholder="account_opening"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2"
-              />
+              <div className="flex flex-wrap gap-2">
+                {getAvailablePurposes().map(purpose => (
+                  <button
+                    key={purpose}
+                    type="button"
+                    onClick={() => setSelectedPurpose(purpose)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedPurpose === purpose
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {purpose}
+                  </button>
+                ))}
+              </div>
+              {selectedPurpose === '' && (
+                <p className="text-xs text-neutral-500 mt-2">Select a purpose above</p>
+              )}
             </div>
           </>
         )}
@@ -1369,13 +1431,25 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Purpose</label>
-              <input
-                type="text"
-                value={formData.purpose || ''}
-                onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                placeholder="account_opening"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2"
-              />
+              <div className="flex flex-wrap gap-2">
+                {getAvailablePurposes().map(purpose => (
+                  <button
+                    key={purpose}
+                    type="button"
+                    onClick={() => setSelectedPurpose(purpose)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedPurpose === purpose
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {purpose}
+                  </button>
+                ))}
+              </div>
+              {selectedPurpose === '' && (
+                <p className="text-xs text-neutral-500 mt-2">Select a purpose above</p>
+              )}
             </div>
           </>
         )}
