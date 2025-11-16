@@ -73,7 +73,9 @@ export default function OrbitPocPage() {
     try {
       // Load orgs
       addLog('request', 'GET /api/orbit/orgs');
-      const orgsRes = await fetch('/api/orbit/orgs');
+      const orgsRes = await fetch('/api/orbit/orgs', {
+        credentials: 'include',
+      });
       const orgsData = await orgsRes.json();
       if (orgsRes.ok) {
         addLog('success', `Loaded ${orgsData.orgs?.length || 0} organisations`, orgsData);
@@ -84,7 +86,9 @@ export default function OrbitPocPage() {
 
       // Load events
       addLog('request', `GET /api/orbit/events?userId=${DEMO_USER_ID}`);
-      const eventsRes = await fetch(`/api/orbit/events?userId=${DEMO_USER_ID}`);
+      const eventsRes = await fetch(`/api/orbit/events?userId=${DEMO_USER_ID}`, {
+        credentials: 'include',
+      });
       const eventsData = await eventsRes.json();
       if (eventsRes.ok) {
         addLog('success', `Loaded ${eventsData.events?.length || 0} events`, eventsData);
@@ -95,7 +99,9 @@ export default function OrbitPocPage() {
 
       // Load alerts
       addLog('request', `GET /api/orbit/alerts?userId=${DEMO_USER_ID}`);
-      const alertsRes = await fetch(`/api/orbit/alerts?userId=${DEMO_USER_ID}`);
+      const alertsRes = await fetch(`/api/orbit/alerts?userId=${DEMO_USER_ID}`, {
+        credentials: 'include',
+      });
       if (alertsRes.ok) {
         const alertsData = await alertsRes.json();
         addLog('success', `Loaded ${alertsData.alerts?.length || 0} alerts`, alertsData);
@@ -106,7 +112,9 @@ export default function OrbitPocPage() {
 
       // Load consent state
       addLog('request', `GET /api/orbit/consent?userId=${DEMO_USER_ID}`);
-      const consentRes = await fetch(`/api/orbit/consent?userId=${DEMO_USER_ID}`);
+      const consentRes = await fetch(`/api/orbit/consent?userId=${DEMO_USER_ID}`, {
+        credentials: 'include',
+      });
       if (consentRes.ok) {
         const consentData = await consentRes.json();
         addLog('success', `Loaded ${consentData.consent?.length || 0} consent records`, consentData);
@@ -139,6 +147,7 @@ export default function OrbitPocPage() {
         const res = await fetch('/api/orbit/orgs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(org),
         });
         const data = await res.json();
@@ -543,6 +552,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
         response = await fetch('/api/orbit/snapshots', {
           method: 'POST',
           headers,
+          credentials: 'include',
           body: JSON.stringify(requestBody),
         });
       } else if (action === 'consent') {
@@ -559,6 +569,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
         response = await fetch('/api/orbit/events', {
           method: 'POST',
           headers,
+          credentials: 'include',
           body: JSON.stringify(requestBody),
         });
       } else if (action === 'data-used') {
@@ -575,6 +586,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
         response = await fetch('/api/orbit/events', {
           method: 'POST',
           headers,
+          credentials: 'include',
           body: JSON.stringify(requestBody),
         });
       } else if (action === 'verification') {
@@ -589,6 +601,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
         response = await fetch('/api/orbit/verification/request', {
           method: 'POST',
           headers,
+          credentials: 'include',
           body: JSON.stringify(requestBody),
         });
       }
