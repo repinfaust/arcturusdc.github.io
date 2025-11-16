@@ -191,9 +191,7 @@ export default function OrbitPocPage() {
 
   // Reset sandbox (clear all demo data)
   async function resetSandbox() {
-    if (!confirm('Are you sure you want to reset the sandbox? This will delete all organizations, events, alerts, and consent records.')) {
-      return;
-    }
+    // For now, just reset without confirmation (can add a modal later if needed)
 
     addLog('info', 'Resetting sandbox...');
     try {
@@ -549,6 +547,82 @@ export default function OrbitPocPage() {
           <span className="text-xs font-mono">Console</span>
         </button>
       )}
+
+      {/* Notifications */}
+      <div className="fixed top-20 right-6 z-50 space-y-2">
+        {notifications.map(notification => (
+          <div
+            key={notification.id}
+            className={`min-w-[320px] max-w-md rounded-lg shadow-lg p-4 flex items-start gap-3 animate-in slide-in-from-right-5 duration-300 ${
+              notification.type === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : notification.type === 'error'
+                ? 'bg-red-50 border border-red-200'
+                : notification.type === 'warning'
+                ? 'bg-amber-50 border border-amber-200'
+                : 'bg-blue-50 border border-blue-200'
+            }`}
+          >
+            <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+              notification.type === 'success'
+                ? 'bg-green-500'
+                : notification.type === 'error'
+                ? 'bg-red-500'
+                : notification.type === 'warning'
+                ? 'bg-amber-500'
+                : 'bg-blue-500'
+            }`}>
+              {notification.type === 'success' && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {notification.type === 'error' && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              {notification.type === 'warning' && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              )}
+              {notification.type === 'info' && (
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${
+                notification.type === 'success'
+                  ? 'text-green-900'
+                  : notification.type === 'error'
+                  ? 'text-red-900'
+                  : notification.type === 'warning'
+                  ? 'text-amber-900'
+                  : 'text-blue-900'
+              }`}>
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => removeNotification(notification.id)}
+              className={`flex-shrink-0 text-sm hover:opacity-70 transition-opacity ${
+                notification.type === 'success'
+                  ? 'text-green-600'
+                  : notification.type === 'error'
+                  ? 'text-red-600'
+                  : notification.type === 'warning'
+                  ? 'text-amber-600'
+                  : 'text-blue-600'
+              }`}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
@@ -1115,17 +1189,24 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
       if (response.ok) {
         onLog('success', `${endpoint} - Success`, responseData);
         onLog('event', `Event created: ${requestBody.eventType || 'PROFILE_REGISTERED'}`, responseData);
-        alert('Action completed successfully!');
+        if (onNotification) {
+          onNotification('Action completed successfully!', 'success');
+        }
         setFormData({});
+        setSelectedScopes([]);
         onEventCreated();
       } else {
         onLog('error', `${endpoint} - Failed: ${responseData.error}`, responseData);
-        alert(`Error: ${responseData.error}`);
+        if (onNotification) {
+          onNotification(`Error: ${responseData.error}`, 'error');
+        }
       }
     } catch (error) {
       onLog('error', `Error performing action: ${error.message}`, error);
       console.error('Error:', error);
-      alert('Error performing action');
+      if (onNotification) {
+        onNotification('Error performing action', 'error');
+      }
     } finally {
       setLoading(false);
     }
