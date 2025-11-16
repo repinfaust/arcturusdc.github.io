@@ -1202,14 +1202,14 @@ function HowOrbitWorks() {
             <div className="font-semibold text-neutral-900 mb-2">🔐 Cryptographic Signatures</div>
             <p className="text-xs text-neutral-700">
               Every event is signed with HMAC-SHA256 using the organization's secret key. 
-              This ensures events cannot be tampered with after creation.
+              This ensures events cannot be tampered with after creation. <strong>Signatures expire after 90 days</strong>—organizations must re-key to maintain validity.
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 border border-blue-100">
-            <div className="font-semibold text-neutral-900 mb-2">📋 Immutable Ledger</div>
+            <div className="font-semibold text-neutral-900 mb-2">🔗 Hash Chain (Linked List)</div>
             <p className="text-xs text-neutral-700">
-              Events are append-only. Once written, they cannot be modified or deleted, 
-              creating a permanent audit trail.
+              Events are linked cryptographically: each event's hash includes the previous event's hash, 
+              creating an immutable linked list. Visualized as: <strong>Previous Event Hash → This Event Hash</strong>.
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 border border-blue-100">
@@ -1223,7 +1223,21 @@ function HowOrbitWorks() {
             <div className="font-semibold text-neutral-900 mb-2">🔍 Verifiable</div>
             <p className="text-xs text-neutral-700">
               Anyone can verify the integrity of the ledger by checking signatures 
-              and hash chains, ensuring transparency and trust.
+              and hash chains. <strong>External verifiers</strong> can independently verify events and return proof tokens.
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-blue-100">
+            <div className="font-semibold text-neutral-900 mb-2">📥 Audit Proof Bundle</div>
+            <p className="text-xs text-neutral-700">
+              Download a complete JSON audit proof bundle containing all events, signatures, hashes, 
+              and integrity checks. Perfect for <strong>AI Act compliance</strong> and regulatory reporting.
+            </p>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-blue-100">
+            <div className="font-semibold text-neutral-900 mb-2">🏛️ Regulator View</div>
+            <p className="text-xs text-neutral-700">
+              Aggregate compliance dashboard showing alerts, usage patterns, and integrity checks 
+              across all organizations. Designed for regulatory oversight and compliance monitoring.
             </p>
           </div>
         </div>
@@ -1240,8 +1254,12 @@ function HowOrbitWorks() {
           <ul className="text-sm text-neutral-700 space-y-1 ml-4 list-disc">
             <li>Start by clicking "Seed Demo Data" to create demo organizations</li>
             <li>Go to "Org Sandbox" to simulate actions (grant consent, use data, etc.)</li>
-            <li>Check "Timeline" to see all events in chronological order</li>
+            <li>Check "Timeline" to see all events with <strong>hash chain visualization</strong> and verification</li>
+            <li>Click "Verify Event Integrity" to see cryptographic verification (signature, hash chain, snapshot)</li>
+            <li>Try "Request External Verification" to see proof loops in action</li>
             <li>View "Alerts" to see any policy violations detected</li>
+            <li>Explore "Regulator View" for aggregate compliance data and download <strong>audit proof bundles</strong></li>
+            <li>Notice signature expiration warnings—keys must be rotated every 90 days</li>
           </ul>
         </div>
       </div>
