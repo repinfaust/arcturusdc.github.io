@@ -1368,6 +1368,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
   const [loading, setLoading] = useState(false);
   const [selectedScopes, setSelectedScopes] = useState([]);
   const [selectedPurpose, setSelectedPurpose] = useState('');
+  const [selectedClaimId, setSelectedClaimId] = useState('');
 
   // Preset purposes by organization type
   const orgPurposes = {
@@ -1492,10 +1493,18 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
     }
   }, [selectedScopes, action]);
 
-  // Reset selected scopes and purpose when org or action changes
+  // Available claim IDs for verification
+  const availableClaimIds = [
+    'verified_address',
+    'verified_kyc',
+    'verified_identity',
+  ];
+
+  // Reset selected scopes, purpose, and claim ID when org or action changes
   useEffect(() => {
     setSelectedScopes([]);
     setSelectedPurpose('');
+    setSelectedClaimId('');
   }, [selectedOrg, action]);
 
   // Update formData when selectedPurpose changes
@@ -1504,6 +1513,13 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
       setFormData(prev => ({ ...prev, purpose: selectedPurpose }));
     }
   }, [selectedPurpose]);
+
+  // Update formData when selectedClaimId changes
+  useEffect(() => {
+    if (selectedClaimId) {
+      setFormData(prev => ({ ...prev, claimId: selectedClaimId }));
+    }
+  }, [selectedClaimId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1598,7 +1614,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
         endpoint = 'POST /api/orbit/verification/request';
         requestBody = {
           userId: 'user_12345',
-          claimId: formData.claimId || 'verified_address',
+          claimId: selectedClaimId || formData.claimId || 'verified_address',
           purpose: selectedPurpose || formData.purpose || 'account_opening',
         };
         onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
@@ -1811,12 +1827,36 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
           <>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Claim ID</label>
+              <p className="text-xs text-neutral-500 mb-2">Select the type of verification claim to request</p>
+              <div className="flex flex-wrap gap-2">
+                {availableClaimIds.map(claimId => (
+                  <button
+                    key={claimId}
+                    type="button"
+                    onClick={() => setSelectedClaimId(claimId)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedClaimId === claimId
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {claimId}
+                  </button>
+                ))}
+              </div>
+              {selectedClaimId === '' && (
+                <p className="text-xs text-neutral-500 mt-2">Select a claim ID above</p>
+              )}
+              {/* Allow manual entry as fallback */}
               <input
                 type="text"
-                value={formData.claimId || ''}
-                onChange={(e) => setFormData({ ...formData, claimId: e.target.value })}
-                placeholder="verified_address"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2"
+                value={formData.claimId || selectedClaimId || ''}
+                onChange={(e) => {
+                  setFormData({ ...formData, claimId: e.target.value });
+                  if (e.target.value) setSelectedClaimId('');
+                }}
+                placeholder="Or type a custom claim ID"
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 mt-2"
               />
             </div>
             <div>
