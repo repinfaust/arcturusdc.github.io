@@ -23,6 +23,25 @@ export default function OrbitPocPage() {
   const [consoleVisible, setConsoleVisible] = useState(true);
   const [consoleLogs, setConsoleLogs] = useState([]);
   const consoleEndRef = useRef(null);
+  const [notifications, setNotifications] = useState([]);
+
+  // Add notification
+  const addNotification = (message, type = 'info') => {
+    const id = Date.now() + Math.random();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+    
+    return id;
+  };
+
+  // Remove notification
+  const removeNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   const ORBIT_POC_TENANT_ID = 'l5nH79ZIiknHuqPT8YW7';
 
@@ -162,11 +181,11 @@ export default function OrbitPocPage() {
       addLog('info', 'Reloading dashboard data...');
       await loadData();
       addLog('success', 'Demo data seeded successfully!');
-      alert('Demo data seeded! Check the Overview tab.');
+      addNotification('Demo data seeded! Check the Overview tab.', 'success');
     } catch (error) {
       addLog('error', `Error seeding data: ${error.message}`, error);
       console.error('Error seeding data:', error);
-      alert('Error seeding data. Check console.');
+      addNotification('Error seeding data. Check console.', 'error');
     }
   }
 
@@ -185,11 +204,11 @@ export default function OrbitPocPage() {
       setConsentState([]);
       
       addLog('success', 'Sandbox reset complete. Click "Seed Demo Data" to start fresh.');
-      alert('Sandbox reset! Click "Seed Demo Data" to create new demo data.');
+      addNotification('Sandbox reset! Click "Seed Demo Data" to create new demo data.', 'success');
     } catch (error) {
       addLog('error', `Error resetting sandbox: ${error.message}`, error);
       console.error('Error resetting sandbox:', error);
-      alert('Error resetting sandbox. Check console.');
+      addNotification('Error resetting sandbox. Check console.', 'error');
     }
   }
 
@@ -438,7 +457,7 @@ export default function OrbitPocPage() {
             {/* Sandbox Tab */}
             {activeTab === 'sandbox' && (
               <div className="space-y-6">
-                <OrgSandbox orgs={orgs} onEventCreated={loadData} onLog={addLog} />
+                <OrgSandbox orgs={orgs} onEventCreated={loadData} onLog={addLog} onNotification={addNotification} />
                 <HowOrbitWorks />
               </div>
             )}
@@ -893,7 +912,7 @@ function HowOrbitWorks() {
 }
 
 // Org Sandbox Component
-function OrgSandbox({ orgs, onEventCreated, onLog }) {
+function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [action, setAction] = useState('profile');
   const [formData, setFormData] = useState({});
@@ -998,7 +1017,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
     try {
       const org = orgs.find(o => o.orgId === selectedOrg);
       if (!org) {
-        alert('Organisation not found');
+        onLog('error', 'Organisation not found');
         return;
       }
 
@@ -1014,7 +1033,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
       if (action === 'profile') {
         // Create/update profile
         if (selectedScopes.length === 0) {
-          alert('Please select at least one scope');
+          onLog('error', 'Please select at least one scope');
           setLoading(false);
           return;
         }
@@ -1034,7 +1053,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
       } else if (action === 'consent') {
         // Grant/revoke consent
         if (selectedScopes.length === 0) {
-          alert('Please select a scope');
+          onLog('error', 'Please select a scope');
           setLoading(false);
           return;
         }
@@ -1056,7 +1075,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
       } else if (action === 'data-used') {
         // Declare data usage
         if (selectedScopes.length === 0) {
-          alert('Please select at least one scope');
+          onLog('error', 'Please select at least one scope');
           setLoading(false);
           return;
         }
