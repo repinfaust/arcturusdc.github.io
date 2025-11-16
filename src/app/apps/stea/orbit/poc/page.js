@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -13,6 +13,22 @@ export default function OrbitPocPage() {
   const [alerts, setAlerts] = useState([]);
   const [consentState, setConsentState] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [consoleVisible, setConsoleVisible] = useState(true);
+  const [consoleLogs, setConsoleLogs] = useState([]);
+  const consoleEndRef = useRef(null);
+
+  // Auto-scroll console to bottom
+  useEffect(() => {
+    if (consoleEndRef.current) {
+      consoleEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [consoleLogs]);
+
+  // Add log helper
+  const addLog = (type, message, data = null) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setConsoleLogs(prev => [...prev, { type, message, data, timestamp }]);
+  };
 
   // Load data
   useEffect(() => {
@@ -21,39 +37,63 @@ export default function OrbitPocPage() {
 
   async function loadData() {
     setLoading(true);
+    addLog('info', 'Loading dashboard data...');
     try {
       // Load orgs
+      addLog('request', 'GET /api/orbit/orgs');
       const orgsRes = await fetch('/api/orbit/orgs');
       const orgsData = await orgsRes.json();
-      setOrgs(orgsData.orgs || []);
+      if (orgsRes.ok) {
+        addLog('success', `Loaded ${orgsData.orgs?.length || 0} organisations`, orgsData);
+        setOrgs(orgsData.orgs || []);
+      } else {
+        addLog('error', `Failed to load orgs: ${orgsData.error}`, orgsData);
+      }
 
       // Load events
+      addLog('request', `GET /api/orbit/events?userId=${DEMO_USER_ID}`);
       const eventsRes = await fetch(`/api/orbit/events?userId=${DEMO_USER_ID}`);
       const eventsData = await eventsRes.json();
-      setEvents(eventsData.events || []);
+      if (eventsRes.ok) {
+        addLog('success', `Loaded ${eventsData.events?.length || 0} events`, eventsData);
+        setEvents(eventsData.events || []);
+      } else {
+        addLog('error', `Failed to load events: ${eventsData.error}`, eventsData);
+      }
 
       // Load alerts
+      addLog('request', `GET /api/orbit/alerts?userId=${DEMO_USER_ID}`);
       const alertsRes = await fetch(`/api/orbit/alerts?userId=${DEMO_USER_ID}`);
       if (alertsRes.ok) {
         const alertsData = await alertsRes.json();
+        addLog('success', `Loaded ${alertsData.alerts?.length || 0} alerts`, alertsData);
         setAlerts(alertsData.alerts || []);
+      } else {
+        addLog('error', 'Failed to load alerts', await alertsRes.json());
       }
 
       // Load consent state
+      addLog('request', `GET /api/orbit/consent?userId=${DEMO_USER_ID}`);
       const consentRes = await fetch(`/api/orbit/consent?userId=${DEMO_USER_ID}`);
       if (consentRes.ok) {
         const consentData = await consentRes.json();
+        addLog('success', `Loaded ${consentData.consent?.length || 0} consent records`, consentData);
         setConsentState(consentData.consent || []);
+      } else {
+        addLog('error', 'Failed to load consent state', await consentRes.json());
       }
     } catch (error) {
+      addLog('error', `Error loading data: ${error.message}`, error);
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+      addLog('info', 'Dashboard data loading complete');
     }
   }
 
   // Seed demo data
   async function seedDemoData() {
+    addLog('info', 'Starting demo data seed...');
     try {
       // Create demo orgs
       const demoOrgs = [
@@ -63,16 +103,26 @@ export default function OrbitPocPage() {
       ];
 
       for (const org of demoOrgs) {
-        await fetch('/api/orbit/orgs', {
+        addLog('request', `POST /api/orbit/orgs - Creating ${org.orgId}`, org);
+        const res = await fetch('/api/orbit/orgs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(org),
         });
+        const data = await res.json();
+        if (res.ok) {
+          addLog('success', `Created organisation: ${org.orgId}`, data);
+        } else {
+          addLog('error', `Failed to create ${org.orgId}: ${data.error}`, data);
+        }
       }
 
+      addLog('info', 'Reloading dashboard data...');
       await loadData();
+      addLog('success', 'Demo data seeded successfully!');
       alert('Demo data seeded! Check the Overview tab.');
     } catch (error) {
+      addLog('error', `Error seeding data: ${error.message}`, error);
       console.error('Error seeding data:', error);
       alert('Error seeding data. Check console.');
     }
@@ -90,7 +140,8 @@ export default function OrbitPocPage() {
   };
 
   return (
-    <main className="min-h-screen bg-starburst">
+    <main className="min-h-screen bg-starburst flex">
+      <div className={`flex-1 transition-all duration-300 ${consoleVisible ? 'mr-96' : ''}`}>
       {/* Header */}
       <div className="border-b border-neutral-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -307,17 +358,102 @@ export default function OrbitPocPage() {
 
             {/* Sandbox Tab */}
             {activeTab === 'sandbox' && (
-              <OrgSandbox orgs={orgs} onEventCreated={loadData} />
+              <OrgSandbox orgs={orgs} onEventCreated={loadData} onLog={addLog} />
             )}
           </>
         )}
       </div>
+      </div>
+
+      {/* Console Panel */}
+      <div className={`fixed right-0 top-0 h-full bg-neutral-900 border-l border-neutral-700 transition-transform duration-300 z-40 ${
+        consoleVisible ? 'translate-x-0' : 'translate-x-full'
+      }`} style={{ width: '384px' }}>
+        <div className="flex flex-col h-full">
+          {/* Console Header */}
+          <div className="flex items-center justify-between p-4 border-b border-neutral-700 bg-neutral-800">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span className="ml-3 text-sm font-mono font-semibold text-neutral-300">Console</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setConsoleLogs([])}
+                className="px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 rounded"
+                title="Clear console"
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => setConsoleVisible(false)}
+                className="px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 rounded"
+                title="Hide console"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Console Content */}
+          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs">
+            {consoleLogs.length === 0 ? (
+              <div className="text-neutral-500 text-center mt-8">
+                Console ready. Actions will appear here.
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {consoleLogs.map((log, idx) => (
+                  <div key={idx} className="pb-2 border-b border-neutral-800 last:border-0">
+                    <div className="flex items-start gap-2">
+                      <span className="text-neutral-500 flex-shrink-0">{log.timestamp}</span>
+                      <span className={`flex-shrink-0 font-semibold ${
+                        log.type === 'error' ? 'text-red-400' :
+                        log.type === 'success' ? 'text-green-400' :
+                        log.type === 'request' ? 'text-blue-400' :
+                        'text-neutral-300'
+                      }`}>
+                        [{log.type.toUpperCase()}]
+                      </span>
+                      <span className="text-neutral-300 flex-1 break-words">{log.message}</span>
+                    </div>
+                    {log.data && (
+                      <details className="mt-1 ml-20">
+                        <summary className="text-neutral-500 cursor-pointer hover:text-neutral-400">
+                          View data
+                        </summary>
+                        <pre className="mt-2 p-2 bg-neutral-800 rounded text-neutral-300 overflow-x-auto text-xs">
+                          {JSON.stringify(log.data, null, 2)}
+                        </pre>
+                      </details>
+                    )}
+                  </div>
+                ))}
+                <div ref={consoleEndRef} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Console Toggle Button (when hidden) */}
+      {!consoleVisible && (
+        <button
+          onClick={() => setConsoleVisible(true)}
+          className="fixed right-4 bottom-4 bg-neutral-900 text-neutral-300 px-4 py-2 rounded-lg shadow-lg hover:bg-neutral-800 transition-colors z-30 flex items-center gap-2"
+          title="Show console"
+        >
+          <span className="text-sm">📟</span>
+          <span className="text-xs font-mono">Console</span>
+        </button>
+      )}
     </main>
   );
 }
 
 // Org Sandbox Component
-function OrgSandbox({ orgs, onEventCreated }) {
+function OrgSandbox({ orgs, onEventCreated, onLog }) {
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [action, setAction] = useState('profile');
   const [formData, setFormData] = useState({});
@@ -339,6 +475,8 @@ function OrgSandbox({ orgs, onEventCreated }) {
       }
 
       let response;
+      let requestBody;
+      let endpoint;
       const headers = {
         'Content-Type': 'application/json',
         'X-Orbit-Org-Id': org.orgId,
@@ -347,63 +485,79 @@ function OrgSandbox({ orgs, onEventCreated }) {
 
       if (action === 'profile') {
         // Create/update profile
+        endpoint = 'POST /api/orbit/snapshots';
+        requestBody = {
+          userId: 'user_12345',
+          data: formData.data || { name: 'David', dob: '1983-05-01', creditScore: 712 },
+          scopes: formData.scopes || ['basic_identity'],
+        };
+        onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
         response = await fetch('/api/orbit/snapshots', {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            userId: 'user_12345',
-            data: formData.data || { name: 'David', dob: '1983-05-01', creditScore: 712 },
-            scopes: formData.scopes || ['basic_identity'],
-          }),
+          body: JSON.stringify(requestBody),
         });
       } else if (action === 'consent') {
         // Grant/revoke consent
+        endpoint = 'POST /api/orbit/events';
+        requestBody = {
+          eventType: formData.status === 'GRANTED' ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED',
+          userId: 'user_12345',
+          orgId: org.orgId,
+          consentScope: formData.scope || 'basic_identity',
+          consentStatus: formData.status || 'GRANTED',
+        };
+        onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
         response = await fetch('/api/orbit/events', {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            eventType: formData.status === 'GRANTED' ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED',
-            userId: 'user_12345',
-            orgId: org.orgId,
-            consentScope: formData.scope || 'basic_identity',
-            consentStatus: formData.status || 'GRANTED',
-          }),
+          body: JSON.stringify(requestBody),
         });
       } else if (action === 'data-used') {
         // Declare data usage
+        endpoint = 'POST /api/orbit/events';
+        requestBody = {
+          eventType: 'DATA_USED',
+          userId: 'user_12345',
+          orgId: org.orgId,
+          scopes: formData.scopes || ['basic_identity'],
+          purpose: formData.purpose || 'account_opening',
+        };
+        onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
         response = await fetch('/api/orbit/events', {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            eventType: 'DATA_USED',
-            userId: 'user_12345',
-            orgId: org.orgId,
-            scopes: formData.scopes || ['basic_identity'],
-            purpose: formData.purpose || 'account_opening',
-          }),
+          body: JSON.stringify(requestBody),
         });
       } else if (action === 'verification') {
         // Request verification
+        endpoint = 'POST /api/orbit/verification/request';
+        requestBody = {
+          userId: 'user_12345',
+          claimId: formData.claimId || 'verified_address',
+          purpose: formData.purpose || 'account_opening',
+        };
+        onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
         response = await fetch('/api/orbit/verification/request', {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            userId: 'user_12345',
-            claimId: formData.claimId || 'verified_address',
-            purpose: formData.purpose || 'account_opening',
-          }),
+          body: JSON.stringify(requestBody),
         });
       }
 
+      const responseData = await response.json();
       if (response.ok) {
+        onLog('success', `${endpoint} - Success`, responseData);
+        onLog('event', `Event created: ${requestBody.eventType || 'PROFILE_REGISTERED'}`, responseData);
         alert('Action completed successfully!');
         setFormData({});
         onEventCreated();
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
+        onLog('error', `${endpoint} - Failed: ${responseData.error}`, responseData);
+        alert(`Error: ${responseData.error}`);
       }
     } catch (error) {
+      onLog('error', `Error performing action: ${error.message}`, error);
       console.error('Error:', error);
       alert('Error performing action');
     } finally {
