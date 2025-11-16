@@ -153,6 +153,44 @@ export async function addLedgerEvent(event) {
 }
 
 /**
+ * Get latest event for a user/org (for hash chain linking)
+ */
+export async function getLatestEvent(userId, orgId) {
+  const adminDb = getAdminDb();
+  const eventsRef = adminDb.collection(COLLECTIONS.LEDGER_EVENTS);
+  
+  try {
+    const snapshot = await eventsRef
+      .where('userId', '==', userId)
+      .where('orgId', '==', orgId)
+      .orderBy('blockIndex', 'desc')
+      .limit(1)
+      .get();
+    
+    if (snapshot.empty) {
+      return null;
+    }
+    
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+  } catch (error) {
+    // If orderBy fails, fetch all and sort in memory
+    console.warn('OrderBy failed for getLatestEvent, sorting in memory:', error.message);
+    const snapshot = await eventsRef
+      .where('userId', '==', userId)
+      .where('orgId', '==', orgId)
+      .get();
+    
+    if (snapshot.empty) {
+      return null;
+    }
+    
+    const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const sorted = events.sort((a, b) => (b.blockIndex || 0) - (a.blockIndex || 0));
+    return sorted[0];
+  }
+}
+
+/**
  * Get ledger events for a user
  */
 export async function getUserEvents(userId, filters = {}) {

@@ -5,9 +5,9 @@
  */
 
 import { NextResponse } from 'next/server';
-import { addLedgerEvent, getUserEvents, getOrg, updateConsentState } from '@/lib/orbit/db-admin';
+import { addLedgerEvent, getUserEvents, getOrg, updateConsentState, getLatestEvent } from '@/lib/orbit/db-admin';
 import { validateEvent, generateEventId } from '@/lib/orbit/eventTypes';
-import { signEvent } from '@/lib/orbit/signatures';
+import { signEvent, hashEvent } from '@/lib/orbit/signatures';
 import { verifySession } from '@/lib/orbit/auth';
 
 // Authenticate org request
@@ -70,6 +70,18 @@ export async function POST(request) {
 
     // Sign the event
     event.signature = signEvent(event, org.signingSecret);
+
+    // Get previous event for hash chain linking
+    const previousEvent = await getLatestEvent(body.userId, body.orgId);
+    if (previousEvent) {
+      event.previousEventHash = previousEvent.eventHash;
+      event.blockIndex = (previousEvent.blockIndex || 0) + 1;
+    } else {
+      event.blockIndex = 1;
+    }
+
+    // Compute event hash (for hash chain)
+    event.eventHash = hashEvent(event);
 
     // Add to ledger
     const docId = await addLedgerEvent(event);

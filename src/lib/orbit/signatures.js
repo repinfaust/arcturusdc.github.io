@@ -72,3 +72,15 @@ export function verifySnapshotHash(snapshotData, expectedHash) {
   );
 }
 
+/**
+ * Compute SHA-256 hash of an event (for hash chain linking)
+ * @param {Object} event - Event object
+ * @returns {string} Hex-encoded hash
+ */
+export function hashEvent(event) {
+  // Hash the canonical representation including signature
+  const canonical = canonicalizeEvent(event);
+  const withSignature = canonical + (event.signature || '');
+  return crypto.createHash('sha256').update(withSignature).digest('hex');
+}
+

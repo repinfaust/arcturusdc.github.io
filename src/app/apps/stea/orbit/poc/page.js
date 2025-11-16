@@ -328,27 +328,7 @@ export default function OrbitPocPage() {
                   ) : (
                     <div className="space-y-4">
                       {events.map(event => (
-                        <div key={event.id} className="border border-neutral-200 rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <span className={`px-2 py-1 rounded text-xs font-mono font-semibold ${eventTypeColors[event.eventType] || 'bg-gray-100 text-gray-800'}`}>
-                                {event.eventType}
-                              </span>
-                              <span className="ml-3 text-sm text-neutral-600">by {event.orgId}</span>
-                            </div>
-                            <div className="text-xs text-neutral-500">
-                              {event.timestamp?.toDate?.()?.toLocaleString() || 'Recently'}
-                            </div>
-                          </div>
-                          <div className="text-sm text-neutral-700 space-y-1">
-                            {event.scopes && (
-                              <div>Scopes: {Array.isArray(event.scopes) ? event.scopes.join(', ') : event.scopes}</div>
-                            )}
-                            {event.purpose && <div>Purpose: {event.purpose}</div>}
-                            {event.verificationClaim && <div>Claim: {event.verificationClaim}</div>}
-                            {event.verificationResult && <div>Result: {event.verificationResult}</div>}
-                          </div>
-                        </div>
+                        <EventVerificationCard key={event.id} event={event} orgs={orgs} onLog={addLog} />
                       ))}
                     </div>
                   )}
@@ -522,6 +502,188 @@ export default function OrbitPocPage() {
         </button>
       )}
     </main>
+  );
+}
+
+// Event Verification Card Component
+function EventVerificationCard({ event, orgs, onLog }) {
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationResults, setVerificationResults] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+  const [simulateTampering, setSimulateTampering] = useState(false);
+
+  const handleVerify = async () => {
+    setVerifying(true);
+    onLog('request', `POST /api/orbit/verify - Verifying event ${event.eventId}`, { eventId: event.eventId, simulateTampering });
+    
+    try {
+      const res = await fetch('/api/orbit/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          event: event,
+          simulateTampering: simulateTampering,
+        }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        onLog('success', `Verification complete for event ${event.eventId}`, data);
+        setVerificationResults(data.results);
+      } else {
+        onLog('error', `Verification failed: ${data.error}`, data);
+        setVerificationResults(null);
+      }
+    } catch (error) {
+      onLog('error', `Verification error: ${error.message}`, error);
+      setVerificationResults(null);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const formatHash = (hash) => {
+    if (!hash) return 'N/A';
+    return hash.length > 16 ? `${hash.substring(0, 8)}...${hash.substring(hash.length - 8)}` : hash;
+  };
+
+  return (
+    <div className="border border-neutral-200 rounded-lg p-4">
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <span className={`px-2 py-1 rounded text-xs font-mono font-semibold ${eventTypeColors[event.eventType] || 'bg-gray-100 text-gray-800'}`}>
+            {event.eventType}
+          </span>
+          <span className="ml-3 text-sm text-neutral-600">by {event.orgId}</span>
+          {event.blockIndex && (
+            <span className="ml-2 text-xs text-neutral-500">Block #{event.blockIndex}</span>
+          )}
+        </div>
+        <div className="text-xs text-neutral-500">
+          {event.timestamp?.toDate?.()?.toLocaleString() || 'Recently'}
+        </div>
+      </div>
+      <div className="text-sm text-neutral-700 space-y-1 mb-3">
+        {event.scopes && (
+          <div>Scopes: {Array.isArray(event.scopes) ? event.scopes.join(', ') : event.scopes}</div>
+        )}
+        {event.purpose && <div>Purpose: {event.purpose}</div>}
+        {event.verificationClaim && <div>Claim: {event.verificationClaim}</div>}
+        {event.verificationResult && <div>Result: {event.verificationResult}</div>}
+      </div>
+
+      {/* Verification Section */}
+      <div className="mt-4 pt-4 border-t border-neutral-200">
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={() => setShowVerification(!showVerification)}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-2"
+          >
+            {showVerification ? '▼' : '▶'} Verify Event Integrity
+          </button>
+          {showVerification && (
+            <label className="flex items-center gap-2 text-xs text-neutral-600">
+              <input
+                type="checkbox"
+                checked={simulateTampering}
+                onChange={(e) => setSimulateTampering(e.target.checked)}
+                className="rounded"
+              />
+              Simulate tampering (demo)
+            </label>
+          )}
+        </div>
+
+        {showVerification && (
+          <div className="bg-neutral-50 rounded-lg p-4 space-y-4">
+            {/* Event Signature */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-semibold text-neutral-900">1. Event Signature (HMAC-SHA256)</div>
+                {verificationResults?.eventSignature && (
+                  <span className={`text-xs font-semibold ${verificationResults.eventSignature.verified ? 'text-green-600' : 'text-red-600'}`}>
+                    {verificationResults.eventSignature.verified ? '✓ Valid' : '✗ Invalid'}
+                  </span>
+                )}
+              </div>
+              <div className="text-xs font-mono text-neutral-600 bg-white rounded p-2 mb-2">
+                signature: {formatHash(event.signature)}
+              </div>
+              {verificationResults?.eventSignature && (
+                <div className="text-xs text-neutral-600">
+                  verified: {verificationResults.eventSignature.verified ? '✓ Valid (HMAC-SHA256)' : '✗ Invalid - Signature mismatch'}
+                </div>
+              )}
+            </div>
+
+            {/* Hash Chain */}
+            {event.previousEventHash && event.eventHash && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-semibold text-neutral-900">2. Hash Chain Linking</div>
+                  {verificationResults?.hashChain && (
+                    <span className={`text-xs font-semibold ${verificationResults.hashChain.verified ? 'text-green-600' : 'text-red-600'}`}>
+                      {verificationResults.hashChain.verified ? '✓ Verified' : '✗ Broken'}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs font-mono text-neutral-600 bg-white rounded p-2 space-y-1 mb-2">
+                  <div>previousEventHash: {formatHash(event.previousEventHash)}</div>
+                  <div>thisEventHash: {formatHash(event.eventHash)}</div>
+                  {event.blockIndex && <div>blockIndex: {event.blockIndex}</div>}
+                </div>
+                {verificationResults?.hashChain && (
+                  <div className="text-xs text-neutral-600">
+                    verified: {verificationResults.hashChain.verified ? '✓ Hash chain intact' : '✗ Hash chain broken'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Snapshot Hash (if applicable) */}
+            {event.snapshotPointer && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-semibold text-neutral-900">3. Snapshot Hash Check</div>
+                  {verificationResults?.snapshotHash && (
+                    <span className={`text-xs font-semibold ${verificationResults.snapshotHash.verified ? 'text-green-600' : 'text-red-600'}`}>
+                      {verificationResults.snapshotHash.verified ? '✓ Verified' : '✗ Tampered'}
+                    </span>
+                  )}
+                </div>
+                {verificationResults?.snapshotHash && (
+                  <div className="text-xs font-mono text-neutral-600 bg-white rounded p-2 space-y-1 mb-2">
+                    <div>snapshotHash: {formatHash(verificationResults.snapshotHash.snapshotHash)}</div>
+                    <div>recomputedHash: {formatHash(verificationResults.snapshotHash.recomputedHash)}</div>
+                  </div>
+                )}
+                {verificationResults?.snapshotHash && (
+                  <div className="text-xs text-neutral-600">
+                    verified: {verificationResults.snapshotHash.verified ? '✓ Snapshot integrity unchanged' : '✗ Snapshot has been tampered with'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Verify Button */}
+            <button
+              onClick={handleVerify}
+              disabled={verifying}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              {verifying ? 'Verifying...' : 'Verify Integrity'}
+            </button>
+
+            {simulateTampering && (
+              <div className="text-xs text-amber-600 bg-amber-50 rounded p-2">
+                ⚠️ Tampering simulation enabled - verification will fail to demonstrate tamper detection
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
