@@ -1015,6 +1015,44 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
 
         {showVerification && (
           <div className="bg-neutral-50 rounded-lg p-4 space-y-4">
+            {/* Overall Verification Status */}
+            {verificationResults && (
+              <div className={`rounded-lg p-3 mb-4 border-2 ${
+                verificationResults.eventSignature?.verified !== false && 
+                verificationResults.hashChain?.verified !== false && 
+                verificationResults.snapshotHash?.verified !== false
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-red-50 border-red-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-sm">
+                    {verificationResults.eventSignature?.verified !== false && 
+                     verificationResults.hashChain?.verified !== false && 
+                     verificationResults.snapshotHash?.verified !== false
+                      ? '✓ All Verifications Passed'
+                      : '✗ Verification Failed'}
+                  </div>
+                  <div className="text-xs space-y-1">
+                    {verificationResults.eventSignature && (
+                      <div className={verificationResults.eventSignature.verified ? 'text-green-700' : 'text-red-700'}>
+                        Signature: {verificationResults.eventSignature.verified ? '✓' : '✗'}
+                      </div>
+                    )}
+                    {verificationResults.hashChain && (
+                      <div className={verificationResults.hashChain.verified ? 'text-green-700' : 'text-red-700'}>
+                        Hash Chain: {verificationResults.hashChain.verified ? '✓' : '✗'}
+                      </div>
+                    )}
+                    {verificationResults.snapshotHash && (
+                      <div className={verificationResults.snapshotHash.verified ? 'text-green-700' : 'text-red-700'}>
+                        Snapshot: {verificationResults.snapshotHash.verified ? '✓' : '✗'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Event Signature */}
             <div>
               <div className="flex items-center justify-between mb-2">
