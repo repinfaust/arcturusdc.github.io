@@ -639,12 +639,24 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
     onLog('request', `POST /api/orbit/verify - Verifying event ${event.eventId}`, { eventId: event.eventId, simulateTampering });
     
     try {
+      // Clean the event before sending - convert Firestore Timestamps to serializable format
+      const eventToSend = { ...event };
+      // Remove Firestore-specific fields that shouldn't affect signature verification
+      if (eventToSend.timestamp && typeof eventToSend.timestamp.toMillis === 'function') {
+        // Keep timestamp but don't send the Firestore object
+        delete eventToSend.timestamp;
+      }
+      // Remove the id field (Firestore document ID, not part of event data)
+      if (eventToSend.id) {
+        delete eventToSend.id;
+      }
+      
       const res = await fetch('/api/orbit/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          event: event,
+          event: eventToSend,
           simulateTampering: simulateTampering,
         }),
       });

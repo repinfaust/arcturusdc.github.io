@@ -6,12 +6,11 @@
 import crypto from 'crypto';
 
 /**
- * Create a canonical JSON representation of an event payload
- * (sorted keys, deterministic serialization)
+ * Clean an event object by removing non-serializable fields
+ * (Firestore Timestamps, etc.) that shouldn't be part of signature verification
  */
-function canonicalizeEvent(event) {
-  // Remove signature and signingKeyId for signing
-  const { signature, signingKeyId, timestamp, ...payload } = event;
+function cleanEventForSigning(event) {
+  const { signature, signingKeyId, timestamp, id, ...payload } = event;
   
   // Clean up any non-serializable values (like Firestore Timestamps)
   const cleanPayload = {};
@@ -19,13 +18,44 @@ function canonicalizeEvent(event) {
     if (value === null || value === undefined) {
       continue;
     }
-    // Skip Firestore Timestamp objects and other non-serializable types
+    // Skip Firestore Timestamp objects (both native and serialized)
     if (typeof value === 'object' && value.constructor && value.constructor.name === 'Timestamp') {
+      continue;
+    }
+    // Skip serialized Timestamp objects (from JSON.stringify of Firestore Timestamps)
+    if (typeof value === 'object' && value._seconds !== undefined && value._nanoseconds !== undefined) {
+      continue;
+    }
+    // Skip arrays that might contain Timestamps
+    if (Array.isArray(value)) {
+      const cleanedArray = value.filter(item => {
+        if (typeof item === 'object' && item !== null) {
+          if (item.constructor && item.constructor.name === 'Timestamp') {
+            return false;
+          }
+          if (item._seconds !== undefined && item._nanoseconds !== undefined) {
+            return false;
+          }
+        }
+        return true;
+      });
+      if (cleanedArray.length > 0) {
+        cleanPayload[key] = cleanedArray;
+      }
       continue;
     }
     cleanPayload[key] = value;
   }
   
+  return cleanPayload;
+}
+
+/**
+ * Create a canonical JSON representation of an event payload
+ * (sorted keys, deterministic serialization)
+ */
+function canonicalizeEvent(event) {
+  const cleanPayload = cleanEventForSigning(event);
   // Sort keys and stringify deterministically
   return JSON.stringify(cleanPayload, Object.keys(cleanPayload).sort());
 }

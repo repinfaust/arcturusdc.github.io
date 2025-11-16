@@ -57,6 +57,8 @@ export async function POST(request) {
 
     // 1. Verify event signature
     if (eventToVerify.signature) {
+      // Create a clean copy of the event for verification
+      // This ensures we're verifying against the same data that was signed
       let eventForVerification = { ...eventToVerify };
       
       // Simulate tampering if requested (for demo)
@@ -64,6 +66,7 @@ export async function POST(request) {
         eventForVerification.eventType = 'TAMPERED_' + eventForVerification.eventType;
       }
 
+      // Verify the signature
       const isValid = verifyEventSignature(eventForVerification, org.signingSecret);
       results.eventSignature = {
         signature: eventToVerify.signature,
