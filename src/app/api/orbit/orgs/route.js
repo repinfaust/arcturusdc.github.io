@@ -11,7 +11,36 @@ import { Timestamp } from 'firebase-admin/firestore';
 import crypto from 'crypto';
 
 // Generate API key and signing secret
-function generateCredentials() {
+// For demo/PoC: Use deterministic secrets for consistency (same orgId = same secret)
+// In production, these would be truly random and stored securely
+function generateCredentials(orgId) {
+  // For PoC: Use deterministic secrets based on orgId for consistency
+  // This ensures that resetting and re-seeding doesn't break signature verification
+  const demoSecrets = {
+    'experian': {
+      apiKey: 'org_demo_experian_12345',
+      signingSecret: 'demo_secret_experian_' + 'a'.repeat(32), // 32 chars for HMAC-SHA256
+    },
+    'challenger_bank': {
+      apiKey: 'org_demo_challenger_12345',
+      signingSecret: 'demo_secret_challenger_' + 'b'.repeat(32),
+    },
+    'broker_app': {
+      apiKey: 'org_demo_broker_12345',
+      signingSecret: 'demo_secret_broker_' + 'c'.repeat(32),
+    },
+    'healthcare_provider': {
+      apiKey: 'org_demo_healthcare_12345',
+      signingSecret: 'demo_secret_healthcare_' + 'd'.repeat(32),
+    },
+  };
+
+  // Use deterministic secrets for demo orgs, random for others
+  if (demoSecrets[orgId]) {
+    return demoSecrets[orgId];
+  }
+
+  // For non-demo orgs, use random secrets
   const apiKey = `org_${crypto.randomBytes(16).toString('hex')}`;
   const signingSecret = crypto.randomBytes(32).toString('hex');
   return { apiKey, signingSecret };
@@ -42,7 +71,7 @@ export async function POST(request) {
     const existing = await getOrg(orgId);
     const credentials = existing 
       ? { apiKey: existing.apiKey, signingSecret: existing.signingSecret }
-      : generateCredentials();
+      : generateCredentials(orgId);
 
     // Set key expiration to 90 days from now (signatures expire unless re-keyed)
     const keyExpiresAt = new Date();

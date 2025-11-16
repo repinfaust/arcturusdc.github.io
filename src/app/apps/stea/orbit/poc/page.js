@@ -275,13 +275,14 @@ export default function OrbitPocPage() {
     
     try {
       // Call API to delete all data from Firestore
+      // Note: We delete orgs too to ensure signing secrets are reset, preventing signature verification issues
       const response = await fetch('/api/orbit/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           userId: DEMO_USER_ID,
-          deleteOrgs: false, // Keep orgs, just delete events/alerts/consents
+          deleteOrgs: true, // Delete orgs too to reset signing secrets and prevent signature mismatches
         }),
       });
 
