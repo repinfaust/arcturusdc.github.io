@@ -309,6 +309,178 @@ export default function OrbitPocPage() {
                     <div className="text-sm text-neutral-600">Active Consents</div>
                   </div>
                 </div>
+
+                {/* Explainer Section */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-8 mt-8">
+                  <h2 className="text-2xl font-bold text-neutral-900 mb-4">How Orbit Works</h2>
+                  <p className="text-neutral-700 mb-6">
+                    Orbit is a cryptographically-verifiable event ledger that creates an immutable audit trail 
+                    of how organizations use your data. Here's how it works:
+                  </p>
+
+                  <div className="space-y-6">
+                    {/* Step 1 */}
+                    <div className="bg-white rounded-lg p-5 border border-blue-100">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                          1
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-neutral-900 mb-2">Organizations Register</h3>
+                          <p className="text-sm text-neutral-700 mb-3">
+                            Organizations (like banks, credit agencies, apps) register with Orbit and declare 
+                            what data scopes they need (e.g., "basic_identity", "credit_profile"). Each org 
+                            gets an API key and signing secret.
+                          </p>
+                          <div className="bg-neutral-50 rounded p-3 text-xs font-mono text-neutral-600">
+                            <div className="font-semibold mb-1">API Call:</div>
+                            <div>POST /api/orbit/orgs</div>
+                            <div className="mt-2 text-neutral-500">→ Creates organization record in Firestore</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step 2 */}
+                    <div className="bg-white rounded-lg p-5 border border-blue-100">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                          2
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-neutral-900 mb-2">User Grants Consent</h3>
+                          <p className="text-sm text-neutral-700 mb-3">
+                            When a user grants consent to an organization, Orbit records a <strong>CONSENT_GRANTED</strong> 
+                            event in the ledger. This event is cryptographically signed and cannot be tampered with.
+                          </p>
+                          <div className="bg-neutral-50 rounded p-3 text-xs font-mono text-neutral-600">
+                            <div className="font-semibold mb-1">API Call:</div>
+                            <div>POST /api/orbit/events</div>
+                            <div className="mt-2 text-neutral-500">→ Creates signed ledger event → Updates consent state</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step 3 */}
+                    <div className="bg-white rounded-lg p-5 border border-blue-100">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                          3
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-neutral-900 mb-2">Organization Uses Data</h3>
+                          <p className="text-sm text-neutral-700 mb-3">
+                            When an organization uses your data (e.g., for account opening, credit check), they 
+                            must declare it by creating a <strong>DATA_USED</strong> event. Orbit's policy engine 
+                            checks if consent exists and if the usage matches the granted scopes.
+                          </p>
+                          <div className="bg-neutral-50 rounded p-3 text-xs font-mono text-neutral-600">
+                            <div className="font-semibold mb-1">API Call:</div>
+                            <div>POST /api/orbit/events (eventType: DATA_USED)</div>
+                            <div className="mt-2 text-neutral-500">→ Creates signed ledger event → Policy engine checks consent → May trigger alert</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step 4 */}
+                    <div className="bg-white rounded-lg p-5 border border-blue-100">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                          4
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-neutral-900 mb-2">Snapshots & Verification</h3>
+                          <p className="text-sm text-neutral-700 mb-3">
+                            Organizations can create <strong>snapshots</strong> (point-in-time views of user data) 
+                            and request <strong>verifications</strong> (cryptographic proofs of claims). Each snapshot 
+                            is hashed and linked to the ledger, creating an immutable chain.
+                          </p>
+                          <div className="bg-neutral-50 rounded p-3 text-xs font-mono text-neutral-600">
+                            <div className="font-semibold mb-1">API Calls:</div>
+                            <div>POST /api/orbit/snapshots → Creates hashed snapshot</div>
+                            <div>POST /api/orbit/verification/request → Routes verification request</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step 5 */}
+                    <div className="bg-white rounded-lg p-5 border border-blue-100">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                          5
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-neutral-900 mb-2">Policy Engine & Alerts</h3>
+                          <p className="text-sm text-neutral-700 mb-3">
+                            Orbit's policy engine continuously monitors events. If it detects violations (e.g., 
+                            data used without consent, hash mismatches, undeclared events), it creates <strong>alerts</strong> 
+                            that users can see in real-time.
+                          </p>
+                          <div className="bg-neutral-50 rounded p-3 text-xs font-mono text-neutral-600">
+                            <div className="font-semibold mb-1">Automatic:</div>
+                            <div>Policy engine runs on every event → Creates alerts for violations</div>
+                            <div className="mt-2 text-neutral-500">GET /api/orbit/alerts → User views their alerts</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Concepts */}
+                  <div className="mt-8 pt-6 border-t border-blue-200">
+                    <h3 className="font-bold text-neutral-900 mb-4">Key Concepts</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-4 border border-blue-100">
+                        <div className="font-semibold text-neutral-900 mb-2">🔐 Cryptographic Signatures</div>
+                        <p className="text-xs text-neutral-700">
+                          Every event is signed with HMAC-SHA256 using the organization's secret key. 
+                          This ensures events cannot be tampered with after creation.
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-blue-100">
+                        <div className="font-semibold text-neutral-900 mb-2">📋 Immutable Ledger</div>
+                        <p className="text-xs text-neutral-700">
+                          Events are append-only. Once written, they cannot be modified or deleted, 
+                          creating a permanent audit trail.
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-blue-100">
+                        <div className="font-semibold text-neutral-900 mb-2">👤 User-Centric</div>
+                        <p className="text-xs text-neutral-700">
+                          Users can view all events, consent states, and alerts for their data. 
+                          No PII is stored—only hashes and event metadata.
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-blue-100">
+                        <div className="font-semibold text-neutral-900 mb-2">🔍 Verifiable</div>
+                        <p className="text-xs text-neutral-700">
+                          Anyone can verify the integrity of the ledger by checking signatures 
+                          and hash chains, ensuring transparency and trust.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Try It Out */}
+                  <div className="mt-6 pt-6 border-t border-blue-200">
+                    <div className="bg-blue-100 rounded-lg p-4">
+                      <div className="font-semibold text-neutral-900 mb-2">🚀 Try It Out</div>
+                      <p className="text-sm text-neutral-700 mb-3">
+                        Use the <strong>Org Sandbox</strong> tab to simulate organization actions. Watch the 
+                        <strong> Console</strong> panel (right side) to see all API calls, events, and responses in real-time.
+                      </p>
+                      <ul className="text-sm text-neutral-700 space-y-1 ml-4 list-disc">
+                        <li>Start by clicking "Seed Demo Data" to create demo organizations</li>
+                        <li>Go to "Org Sandbox" to simulate actions (grant consent, use data, etc.)</li>
+                        <li>Check "Timeline" to see all events in chronological order</li>
+                        <li>View "Alerts" to see any policy violations detected</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
