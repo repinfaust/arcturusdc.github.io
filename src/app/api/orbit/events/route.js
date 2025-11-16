@@ -98,16 +98,8 @@ export async function POST(request) {
       // Continue without hash if it fails
     }
 
-    // Clean event object: remove undefined values (Firestore doesn't allow undefined)
-    const cleanEvent = {};
-    for (const [key, value] of Object.entries(event)) {
-      if (value !== undefined) {
-        cleanEvent[key] = value;
-      }
-    }
-
-    // Add to ledger
-    const docId = await addLedgerEvent(cleanEvent);
+    // Add to ledger (addLedgerEvent will clean undefined values)
+    const docId = await addLedgerEvent(event);
 
     // Update consent state if consent event
     if (body.eventType === 'CONSENT_GRANTED' || body.eventType === 'CONSENT_REVOKED') {

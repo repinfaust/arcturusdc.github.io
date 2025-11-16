@@ -21,6 +21,19 @@ function getFieldValue() {
   return FieldValue;
 }
 
+/**
+ * Remove undefined values from an object (Firestore doesn't allow undefined)
+ */
+function removeUndefined(obj) {
+  const cleaned = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
 // Collection names
 export const COLLECTIONS = {
   ORGS: 'orbit_orgs',
@@ -43,8 +56,9 @@ export async function upsertOrg(orgData) {
 
   if (snapshot.empty) {
     // Create new org
+    const cleanedData = removeUndefined(orgData);
     const docRef = await orgsRef.add({
-      ...orgData,
+      ...cleanedData,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -52,8 +66,9 @@ export async function upsertOrg(orgData) {
   } else {
     // Update existing org
     const docRef = snapshot.docs[0].ref;
+    const cleanedData = removeUndefined(orgData);
     await docRef.update({
-      ...orgData,
+      ...cleanedData,
       updatedAt: FieldValue.serverTimestamp(),
     });
     return docRef.id;
@@ -92,8 +107,9 @@ export async function createSnapshot(snapshotData) {
   const adminDb = getAdminDb();
   const FieldValue = getFieldValue();
   const snapshotsRef = adminDb.collection(COLLECTIONS.SNAPSHOTS);
+  const cleanedData = removeUndefined(snapshotData);
   const docRef = await snapshotsRef.add({
-    ...snapshotData,
+    ...cleanedData,
     createdAt: FieldValue.serverTimestamp(),
   });
   return docRef.id;
@@ -145,8 +161,9 @@ export async function addLedgerEvent(event) {
   const adminDb = getAdminDb();
   const FieldValue = getFieldValue();
   const eventsRef = adminDb.collection(COLLECTIONS.LEDGER_EVENTS);
+  const cleanedEvent = removeUndefined(event);
   const docRef = await eventsRef.add({
-    ...event,
+    ...cleanedEvent,
     timestamp: FieldValue.serverTimestamp(),
   });
   return docRef.id;
@@ -264,17 +281,16 @@ export async function updateConsentState(userId, orgId, scope, status) {
 
   if (snapshot.empty) {
     // Create new consent state
+    const consentData = removeUndefined({ userId, orgId, scope, status });
     await consentRef.add({
-      userId,
-      orgId,
-      scope,
-      status,
+      ...consentData,
       updatedAt: FieldValue.serverTimestamp(),
     });
   } else {
     // Update existing
+    const updateData = removeUndefined({ status });
     await snapshot.docs[0].ref.update({
-      status,
+      ...updateData,
       updatedAt: FieldValue.serverTimestamp(),
     });
   }
@@ -303,8 +319,9 @@ export async function createAlert(alertData) {
   const adminDb = getAdminDb();
   const FieldValue = getFieldValue();
   const alertsRef = adminDb.collection(COLLECTIONS.ALERTS);
+  const cleanedData = removeUndefined(alertData);
   const docRef = await alertsRef.add({
-    ...alertData,
+    ...cleanedData,
     createdAt: FieldValue.serverTimestamp(),
   });
   return docRef.id;
