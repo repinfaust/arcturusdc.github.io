@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getOrg, getSnapshot } from '@/lib/orbit/db-admin';
-import { verifyEventSignature, verifySnapshotHash, hashEvent } from '@/lib/orbit/signatures';
+import { verifyEventSignature, verifySnapshotHash, hashEvent, hashSnapshot } from '@/lib/orbit/signatures';
 import { verifySession } from '@/lib/orbit/auth';
 
 export async function POST(request) {
@@ -83,10 +83,11 @@ export async function POST(request) {
           snapshotData = { ...snapshotData, tampered: true };
         }
 
+        const recomputedHash = hashSnapshot(snapshotData);
         const isValid = verifySnapshotHash(snapshotData, snapshot.snapshotHash);
         results.snapshotHash = {
           snapshotHash: snapshot.snapshotHash,
-          recomputedHash: snapshot.snapshotHash, // In real implementation, recompute
+          recomputedHash: recomputedHash,
           verified: isValid,
         };
       }
