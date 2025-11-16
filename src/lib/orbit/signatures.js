@@ -12,7 +12,9 @@ import crypto from 'crypto';
 function cleanEventForSigning(event) {
   // Exclude fields that shouldn't be part of the hash/signature
   // Note: eventHash is excluded because it's computed FROM the event, not part of it
-  const { signature, signingKeyId, timestamp, id, eventHash, ...payload } = event;
+  // Note: previousEventHash and blockIndex are excluded because they're added AFTER signing
+  //       (they're part of the hash chain, not the event payload being signed)
+  const { signature, signingKeyId, timestamp, id, eventHash, previousEventHash, blockIndex, ...payload } = event;
   
   // Clean up any non-serializable values (like Firestore Timestamps)
   const cleanPayload = {};
