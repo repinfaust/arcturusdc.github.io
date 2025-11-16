@@ -1013,11 +1013,16 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
 
       if (action === 'profile') {
         // Create/update profile
+        if (selectedScopes.length === 0) {
+          alert('Please select at least one scope');
+          setLoading(false);
+          return;
+        }
         endpoint = 'POST /api/orbit/snapshots';
         requestBody = {
           userId: 'user_12345',
           data: formData.data || { name: 'David', dob: '1983-05-01', creditScore: 712 },
-          scopes: formData.scopes || ['basic_identity'],
+          scopes: selectedScopes, // Use selected scopes
         };
         onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
         response = await fetch('/api/orbit/snapshots', {
@@ -1028,12 +1033,17 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
         });
       } else if (action === 'consent') {
         // Grant/revoke consent
+        if (selectedScopes.length === 0) {
+          alert('Please select a scope');
+          setLoading(false);
+          return;
+        }
         endpoint = 'POST /api/orbit/events';
         requestBody = {
           eventType: formData.status === 'GRANTED' ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED',
           userId: 'user_12345',
           orgId: org.orgId,
-          consentScope: formData.scope || 'basic_identity',
+          consentScope: selectedScopes[0], // Use first selected scope
           consentStatus: formData.status || 'GRANTED',
         };
         onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
@@ -1045,12 +1055,17 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
         });
       } else if (action === 'data-used') {
         // Declare data usage
+        if (selectedScopes.length === 0) {
+          alert('Please select at least one scope');
+          setLoading(false);
+          return;
+        }
         endpoint = 'POST /api/orbit/events';
         requestBody = {
           eventType: 'DATA_USED',
           userId: 'user_12345',
           orgId: org.orgId,
-          scopes: formData.scopes || ['basic_identity'],
+          scopes: selectedScopes, // Use selected scopes
           purpose: formData.purpose || 'account_opening',
         };
         onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
