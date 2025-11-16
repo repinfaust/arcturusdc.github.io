@@ -898,6 +898,94 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
   const [action, setAction] = useState('profile');
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [selectedScopes, setSelectedScopes] = useState([]);
+
+  // Preset data types by organization type
+  const orgScopes = {
+    healthcare_provider: [
+      'basic_identity',
+      'health_records',
+      'insurance_info',
+      'appointment_history',
+      'prescription_data',
+      'lab_results',
+      'vital_signs',
+      'allergy_info',
+    ],
+    experian: [
+      'basic_identity',
+      'credit_profile',
+      'credit_score',
+      'payment_history',
+      'debt_summary',
+      'employment_info',
+      'address_history',
+      'financial_accounts',
+    ],
+    challenger_bank: [
+      'basic_identity',
+      'account_info',
+      'transaction_history',
+      'balance_info',
+      'payment_methods',
+      'credit_limit',
+      'loan_history',
+      'kyc_status',
+    ],
+    broker_app: [
+      'basic_identity',
+      'investment_profile',
+      'portfolio_value',
+      'trade_history',
+      'risk_tolerance',
+      'investment_goals',
+      'tax_info',
+      'account_balance',
+    ],
+  };
+
+  // Get available scopes for selected org
+  const getAvailableScopes = () => {
+    if (!selectedOrg) return [];
+    const org = orgs.find(o => o.orgId === selectedOrg);
+    if (!org) return [];
+    
+    // Use preset scopes if available, otherwise fall back to org's declared scopes
+    const presetScopes = orgScopes[org.orgId] || [];
+    if (presetScopes.length > 0) {
+      return presetScopes;
+    }
+    
+    // Fallback to org's declared scopes
+    return Object.keys(org.scopes || {});
+  };
+
+  // Handle scope toggle
+  const toggleScope = (scope) => {
+    setSelectedScopes(prev => {
+      if (prev.includes(scope)) {
+        return prev.filter(s => s !== scope);
+      } else {
+        return [...prev, scope];
+      }
+    });
+  };
+
+  // Update formData when selectedScopes changes
+  useEffect(() => {
+    if (action === 'consent') {
+      setFormData(prev => ({ ...prev, scope: selectedScopes[0] || '' }));
+    } else if (action === 'data-used') {
+      setFormData(prev => ({ ...prev, scopes: selectedScopes }));
+    } else if (action === 'profile') {
+      setFormData(prev => ({ ...prev, scopes: selectedScopes }));
+    }
+  }, [selectedScopes, action]);
+
+  // Reset selected scopes when org or action changes
+  useEffect(() => {
+    setSelectedScopes([]);
+  }, [selectedOrg, action]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1050,17 +1138,56 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
           </select>
         </div>
 
+        {action === 'profile' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Scopes</label>
+              <div className="flex flex-wrap gap-2">
+                {getAvailableScopes().map(scope => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => toggleScope(scope)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedScopes.includes(scope)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {scope}
+                  </button>
+                ))}
+              </div>
+              {selectedScopes.length === 0 && (
+                <p className="text-xs text-neutral-500 mt-2">Select one or more scopes above</p>
+              )}
+            </div>
+          </>
+        )}
+
         {action === 'consent' && (
           <>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Scope</label>
-              <input
-                type="text"
-                value={formData.scope || ''}
-                onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
-                placeholder="basic_identity"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2"
-              />
+              <div className="flex flex-wrap gap-2">
+                {getAvailableScopes().map(scope => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => toggleScope(scope)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedScopes.includes(scope)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {scope}
+                  </button>
+                ))}
+              </div>
+              {selectedScopes.length === 0 && (
+                <p className="text-xs text-neutral-500 mt-2">Select a scope above</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Status</label>
@@ -1079,14 +1206,26 @@ function OrgSandbox({ orgs, onEventCreated, onLog }) {
         {action === 'data-used' && (
           <>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Scopes (comma-separated)</label>
-              <input
-                type="text"
-                value={formData.scopes || ''}
-                onChange={(e) => setFormData({ ...formData, scopes: e.target.value.split(',').map(s => s.trim()) })}
-                placeholder="basic_identity, credit_profile"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2"
-              />
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Scopes</label>
+              <div className="flex flex-wrap gap-2">
+                {getAvailableScopes().map(scope => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => toggleScope(scope)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedScopes.includes(scope)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {scope}
+                  </button>
+                ))}
+              </div>
+              {selectedScopes.length === 0 && (
+                <p className="text-xs text-neutral-500 mt-2">Select one or more scopes above</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Purpose</label>
