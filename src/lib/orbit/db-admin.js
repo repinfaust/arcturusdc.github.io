@@ -160,6 +160,7 @@ export async function getLatestEvent(userId, orgId) {
   const eventsRef = adminDb.collection(COLLECTIONS.LEDGER_EVENTS);
   
   try {
+    // Try to order by blockIndex first (for events with hash chain)
     const snapshot = await eventsRef
       .where('userId', '==', userId)
       .where('orgId', '==', orgId)
@@ -167,14 +168,29 @@ export async function getLatestEvent(userId, orgId) {
       .limit(1)
       .get();
     
-    if (snapshot.empty) {
-      return null;
+    if (!snapshot.empty) {
+      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
     }
-    
-    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
   } catch (error) {
-    // If orderBy fails, fetch all and sort in memory
-    console.warn('OrderBy failed for getLatestEvent, sorting in memory:', error.message);
+    // If orderBy fails (no index or no blockIndex field), fall back to timestamp
+    console.warn('OrderBy blockIndex failed, trying timestamp:', error.message);
+  }
+  
+  // Fallback: order by timestamp
+  try {
+    const snapshot = await eventsRef
+      .where('userId', '==', userId)
+      .where('orgId', '==', orgId)
+      .orderBy('timestamp', 'desc')
+      .limit(1)
+      .get();
+    
+    if (!snapshot.empty) {
+      return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+    }
+  } catch (error) {
+    // If that also fails, fetch all and sort in memory
+    console.warn('OrderBy timestamp failed, sorting in memory:', error.message);
     const snapshot = await eventsRef
       .where('userId', '==', userId)
       .where('orgId', '==', orgId)
@@ -185,9 +201,19 @@ export async function getLatestEvent(userId, orgId) {
     }
     
     const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const sorted = events.sort((a, b) => (b.blockIndex || 0) - (a.blockIndex || 0));
+    // Sort by blockIndex if available, otherwise by timestamp
+    const sorted = events.sort((a, b) => {
+      if (a.blockIndex && b.blockIndex) {
+        return b.blockIndex - a.blockIndex;
+      }
+      const aTime = a.timestamp?.toMillis?.() || a.timestamp || 0;
+      const bTime = b.timestamp?.toMillis?.() || b.timestamp || 0;
+      return bTime - aTime;
+    });
     return sorted[0];
   }
+  
+  return null;
 }
 
 /**
