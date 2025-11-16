@@ -67,12 +67,17 @@ export async function POST(request) {
       }
 
       // Verify the signature
+      // Note: verifyEventSignature will clean the event the same way signEvent does
       const isValid = verifyEventSignature(eventForVerification, org.signingSecret);
       results.eventSignature = {
         signature: eventToVerify.signature,
         verified: isValid,
         method: 'HMAC-SHA256',
       };
+      
+      if (!isValid && process.env.NODE_ENV === 'development') {
+        console.log('[Verify] Event data for signature verification:', JSON.stringify(eventForVerification, null, 2));
+      }
     }
 
     // 2. Verify snapshot hash (if snapshotPointer provided)
@@ -100,11 +105,19 @@ export async function POST(request) {
     if (eventToVerify.previousEventHash && eventToVerify.eventHash) {
       // Recompute the hash using the same method as when the event was created
       // The hash should match the stored eventHash
+      // Note: hashEvent will clean the event the same way it was cleaned during creation
       const computedHash = hashEvent(eventToVerify);
       const isValid = computedHash === eventToVerify.eventHash;
       
       // Also verify that the previousEventHash matches the previous event's eventHash
       // (This would require fetching the previous event, but for now we just check the current hash)
+      
+      if (!isValid && process.env.NODE_ENV === 'development') {
+        console.log('[Verify] Hash chain verification failed:');
+        console.log('[Verify] Expected hash:', eventToVerify.eventHash);
+        console.log('[Verify] Computed hash:', computedHash);
+        console.log('[Verify] Event data:', JSON.stringify(eventToVerify, null, 2));
+      }
       
       results.hashChain = {
         previousEventHash: eventToVerify.previousEventHash,
