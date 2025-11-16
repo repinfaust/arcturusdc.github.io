@@ -78,8 +78,11 @@ export function verifySnapshotHash(snapshotData, expectedHash) {
  * @returns {string} Hex-encoded hash
  */
 export function hashEvent(event) {
+  // Create a clean copy for hashing (exclude Firestore-specific fields)
+  const { timestamp, ...eventForHashing } = event;
+  
   // Hash the canonical representation including signature
-  const canonical = canonicalizeEvent(event);
+  const canonical = canonicalizeEvent(eventForHashing);
   const withSignature = canonical + (event.signature || '');
   return crypto.createHash('sha256').update(withSignature).digest('hex');
 }
