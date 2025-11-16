@@ -5,9 +5,19 @@
 
 import { NextResponse } from 'next/server';
 import { getUserAlerts } from '@/lib/orbit/db-admin';
+import { verifySession } from '@/lib/orbit/auth';
 
 export async function GET(request) {
   try {
+    // Verify session
+    const session = await verifySession(request);
+    if (!session.authenticated) {
+      return NextResponse.json(
+        { error: session.error || 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 

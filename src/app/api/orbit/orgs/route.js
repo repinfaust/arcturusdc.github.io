@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { upsertOrg, getAllOrgs, getOrg } from '@/lib/orbit/db-admin';
+import { verifySession } from '@/lib/orbit/auth';
 import crypto from 'crypto';
 
 // Generate API key and signing secret
@@ -17,16 +18,12 @@ function generateCredentials() {
 
 export async function POST(request) {
   try {
-    // Check Firebase Admin initialization
-    const { adminDb } = await import('@/lib/firebase-admin');
-    if (!adminDb) {
+    // Verify session
+    const session = await verifySession(request);
+    if (!session.authenticated) {
       return NextResponse.json(
-        { 
-          error: 'Firebase Admin not initialized',
-          message: 'FIREBASE_SERVICE_ACCOUNT environment variable is required. Please configure Firebase Admin credentials in your deployment environment.',
-          hint: 'Set FIREBASE_SERVICE_ACCOUNT to your service account JSON (stringified)'
-        },
-        { status: 503 }
+        { error: session.error || 'Authentication required' },
+        { status: 401 }
       );
     }
 
@@ -87,16 +84,12 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
-    // Check Firebase Admin initialization
-    const { adminDb } = await import('@/lib/firebase-admin');
-    if (!adminDb) {
+    // Verify session
+    const session = await verifySession(request);
+    if (!session.authenticated) {
       return NextResponse.json(
-        { 
-          error: 'Firebase Admin not initialized',
-          message: 'FIREBASE_SERVICE_ACCOUNT environment variable is required. Please configure Firebase Admin credentials in your deployment environment.',
-          hint: 'Set FIREBASE_SERVICE_ACCOUNT to your service account JSON (stringified)'
-        },
-        { status: 503 }
+        { error: session.error || 'Authentication required' },
+        { status: 401 }
       );
     }
 

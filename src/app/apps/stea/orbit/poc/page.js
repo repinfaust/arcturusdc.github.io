@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useTenant } from '@/contexts/TenantContext';
 
 const DEMO_USER_ID = 'user_12345';
 
 export default function OrbitPocPage() {
+  const router = useRouter();
+  const { availableTenants, loading: tenantLoading } = useTenant();
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [orgs, setOrgs] = useState([]);
   const [events, setEvents] = useState([]);
@@ -16,6 +23,24 @@ export default function OrbitPocPage() {
   const [consoleVisible, setConsoleVisible] = useState(true);
   const [consoleLogs, setConsoleLogs] = useState([]);
   const consoleEndRef = useRef(null);
+
+  // Auth check
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setAuthLoading(false);
+      if (!firebaseUser) {
+        router.replace('/apps/stea?next=/apps/stea/orbit/poc');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  // Authorization check
+  useEffect(() => {
+    if (!tenantLoading && !authLoading && availableTenants.length === 0) {
+      router.replace('/apps/stea?error=no_workspace');
+    }
+  }, [availableTenants, tenantLoading, authLoading, router]);
 
   // Auto-scroll console to bottom
   useEffect(() => {
@@ -200,7 +225,15 @@ export default function OrbitPocPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {loading ? (
+        {authLoading || tenantLoading ? (
+          <div className="text-center py-16">
+            <div className="text-neutral-600">Checking authentication...</div>
+          </div>
+        ) : availableTenants.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-neutral-600">No workspace access. Contact your administrator.</div>
+          </div>
+        ) : loading ? (
           <div className="text-center py-16">
             <div className="text-neutral-600">Loading...</div>
           </div>

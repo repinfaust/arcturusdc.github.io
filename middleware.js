@@ -40,6 +40,7 @@ export async function middleware(req) {
     '/apps/stea/filo',
     '/apps/stea/hans',
     '/apps/stea/harls',
+    '/apps/stea/orbit',
     '/apps/stea/toume',
     '/stea/admin',
     '/stea/automatedtestsdashboard',
@@ -47,6 +48,7 @@ export async function middleware(req) {
     '/stea/filo',
     '/stea/hans',
     '/stea/harls',
+    '/stea/orbit',
     '/stea/toume',
   ];
 

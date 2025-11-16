@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { addLedgerEvent, getOrg } from '@/lib/orbit/db-admin';
 import { signEvent } from '@/lib/orbit/signatures';
 import { generateEventId } from '@/lib/orbit/eventTypes';
+import { verifySession } from '@/lib/orbit/auth';
 
 // Authenticate org request
 async function authenticateOrg(request) {
@@ -42,7 +43,16 @@ async function mockVerifier(claimId, userId) {
 
 export async function POST(request) {
   try {
-    // Authenticate
+    // Verify user session first
+    const session = await verifySession(request);
+    if (!session.authenticated) {
+      return NextResponse.json(
+        { error: session.error || 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Authenticate org
     const auth = await authenticateOrg(request);
     if (!auth.authenticated) {
       return NextResponse.json({ error: auth.error }, { status: 401 });

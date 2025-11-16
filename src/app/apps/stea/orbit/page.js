@@ -1,9 +1,50 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useTenant } from '@/contexts/TenantContext';
 
 export default function OrbitPage() {
+  const router = useRouter();
+  const { availableTenants, loading: tenantLoading } = useTenant();
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Auth check
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setAuthLoading(false);
+      if (!firebaseUser) {
+        router.replace('/apps/stea?next=/apps/stea/orbit');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  // Authorization check
+  useEffect(() => {
+    if (!tenantLoading && !authLoading && availableTenants.length === 0) {
+      router.replace('/apps/stea?error=no_workspace');
+    }
+  }, [availableTenants, tenantLoading, authLoading, router]);
+
+  // Loading state
+  if (authLoading || tenantLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-neutral-600">Loading Orbit...</div>
+      </div>
+    );
+  }
+
+  // No tenant access
+  if (availableTenants.length === 0) {
+    return null;
+  }
+
   const problems = [
     {
       icon: '🔍',

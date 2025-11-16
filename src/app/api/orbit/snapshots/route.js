@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { createSnapshot, getSnapshot, getLatestSnapshot, addLedgerEvent, getOrg } from '@/lib/orbit/db-admin';
 import { hashSnapshot, signEvent } from '@/lib/orbit/signatures';
 import { generateEventId } from '@/lib/orbit/eventTypes';
+import { verifySession } from '@/lib/orbit/auth';
 
 // Authenticate org request
 async function authenticateOrg(request) {
@@ -28,7 +29,16 @@ async function authenticateOrg(request) {
 
 export async function POST(request) {
   try {
-    // Authenticate
+    // Verify user session first
+    const session = await verifySession(request);
+    if (!session.authenticated) {
+      return NextResponse.json(
+        { error: session.error || 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Authenticate org
     const auth = await authenticateOrg(request);
     if (!auth.authenticated) {
       return NextResponse.json({ error: auth.error }, { status: 401 });
@@ -102,6 +112,15 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
+    // Verify session
+    const session = await verifySession(request);
+    if (!session.authenticated) {
+      return NextResponse.json(
+        { error: session.error || 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const snapshotPointer = searchParams.get('snapshotPointer');
     const userId = searchParams.get('userId');
