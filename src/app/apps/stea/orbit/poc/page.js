@@ -1596,7 +1596,21 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
         });
       }
 
-      const responseData = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      let responseData;
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        const text = await response.text();
+        onLog('error', `${endpoint} - Non-JSON response (${response.status})`, { status: response.status, text: text.substring(0, 200) });
+        if (onNotification) {
+          onNotification(`Error: Server returned non-JSON response (${response.status})`, 'error');
+        }
+        setLoading(false);
+        return;
+      }
+
       if (response.ok) {
         onLog('success', `${endpoint} - Success`, responseData);
         onLog('event', `Event created: ${requestBody.eventType || 'PROFILE_REGISTERED'}`, responseData);
@@ -1605,18 +1619,19 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
         }
         setFormData({});
         setSelectedScopes([]);
+        setSelectedPurpose('');
         onEventCreated();
       } else {
-        onLog('error', `${endpoint} - Failed: ${responseData.error}`, responseData);
+        onLog('error', `${endpoint} - Failed: ${responseData.error || responseData.message || 'Unknown error'}`, responseData);
         if (onNotification) {
-          onNotification(`Error: ${responseData.error}`, 'error');
+          onNotification(`Error: ${responseData.error || responseData.message || 'Unknown error'}`, 'error');
         }
       }
     } catch (error) {
       onLog('error', `Error performing action: ${error.message}`, error);
       console.error('Error:', error);
       if (onNotification) {
-        onNotification('Error performing action', 'error');
+        onNotification(`Error: ${error.message}`, 'error');
       }
     } finally {
       setLoading(false);

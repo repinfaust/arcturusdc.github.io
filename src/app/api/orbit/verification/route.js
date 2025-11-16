@@ -110,6 +110,27 @@ export async function POST(request) {
     };
 
     responseEvent.signature = signEvent(responseEvent, verifierOrg.signingSecret);
+    
+    // Get previous event for hash chain
+    try {
+      const { getLatestEvent } = await import('@/lib/orbit/db-admin');
+      const { hashEvent } = await import('@/lib/orbit/signatures');
+      const previousEvent = await getLatestEvent(userId, verifierOrgId);
+      if (previousEvent && previousEvent.eventHash) {
+        responseEvent.previousEventHash = previousEvent.eventHash;
+        responseEvent.blockIndex = (previousEvent.blockIndex || 0) + 1;
+      } else {
+        responseEvent.blockIndex = 1;
+      }
+      const computedHash = hashEvent(responseEvent);
+      if (computedHash) {
+        responseEvent.eventHash = computedHash;
+      }
+    } catch (error) {
+      console.error('Error setting up hash chain for verification response:', error);
+      responseEvent.blockIndex = 1;
+    }
+    
     await addLedgerEvent(responseEvent);
 
     return NextResponse.json({
@@ -120,8 +141,13 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Error processing verification:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { error: 'Failed to process verification' },
+      { 
+        error: 'Failed to process verification',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
