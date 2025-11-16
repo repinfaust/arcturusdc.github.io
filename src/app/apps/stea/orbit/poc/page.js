@@ -24,6 +24,8 @@ export default function OrbitPocPage() {
   const [consoleLogs, setConsoleLogs] = useState([]);
   const consoleEndRef = useRef(null);
 
+  const ORBIT_POC_TENANT_ID = 'l5nH79ZIiknHuqPT8YW7';
+
   // Auth check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -35,10 +37,15 @@ export default function OrbitPocPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // Authorization check
+  // Authorization check - must be member of Orbit POC workspace
   useEffect(() => {
-    if (!tenantLoading && !authLoading && availableTenants.length === 0) {
-      router.replace('/apps/stea?error=no_workspace');
+    if (!tenantLoading && !authLoading) {
+      const hasOrbitPocAccess = availableTenants.some(
+        tenant => tenant.id === ORBIT_POC_TENANT_ID
+      );
+      if (!hasOrbitPocAccess) {
+        router.replace('/apps/stea?error=no_orbit_poc_access');
+      }
     }
   }, [availableTenants, tenantLoading, authLoading, router]);
 
@@ -229,9 +236,17 @@ export default function OrbitPocPage() {
           <div className="text-center py-16">
             <div className="text-neutral-600">Checking authentication...</div>
           </div>
-        ) : availableTenants.length === 0 ? (
+        ) : !availableTenants.some(t => t.id === ORBIT_POC_TENANT_ID) ? (
           <div className="text-center py-16">
-            <div className="text-neutral-600">No workspace access. Contact your administrator.</div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-red-900 mb-2">Access Restricted</h3>
+              <p className="text-sm text-red-700 mb-4">
+                You need to be a member of the Orbit POC workspace to access this page.
+              </p>
+              <p className="text-xs text-red-600">
+                Contact your administrator to request access to the Orbit POC workspace.
+              </p>
+            </div>
           </div>
         ) : loading ? (
           <div className="text-center py-16">
