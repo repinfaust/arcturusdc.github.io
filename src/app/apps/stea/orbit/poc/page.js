@@ -221,7 +221,7 @@ export default function OrbitPocPage() {
       setConsentState([]);
       
       // Reload orgs (they should still exist)
-      await loadDashboardData();
+      await loadData();
       
       addNotification(`Sandbox reset! Deleted ${data.deleted} documents. Click "Seed Demo Data" to create new demo data.`, 'success');
     } catch (error) {
