@@ -170,6 +170,29 @@ export default function OrbitPocPage() {
     }
   }
 
+  // Reset sandbox (clear all demo data)
+  async function resetSandbox() {
+    if (!confirm('Are you sure you want to reset the sandbox? This will delete all organizations, events, alerts, and consent records.')) {
+      return;
+    }
+
+    addLog('info', 'Resetting sandbox...');
+    try {
+      // Clear all data by setting state to empty arrays
+      setOrgs([]);
+      setEvents([]);
+      setAlerts([]);
+      setConsentState([]);
+      
+      addLog('success', 'Sandbox reset complete. Click "Seed Demo Data" to start fresh.');
+      alert('Sandbox reset! Click "Seed Demo Data" to create new demo data.');
+    } catch (error) {
+      addLog('error', `Error resetting sandbox: ${error.message}`, error);
+      console.error('Error resetting sandbox:', error);
+      alert('Error resetting sandbox. Check console.');
+    }
+  }
+
   const eventTypeColors = {
     PROFILE_REGISTERED: 'bg-blue-100 text-blue-800',
     PROFILE_UPDATED: 'bg-indigo-100 text-indigo-800',
@@ -207,6 +230,12 @@ export default function OrbitPocPage() {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
               >
                 Seed Demo Data
+              </button>
+              <button
+                onClick={resetSandbox}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+              >
+                Reset Sandbox
               </button>
             </div>
           </div>
