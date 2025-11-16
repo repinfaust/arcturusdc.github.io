@@ -189,6 +189,85 @@ export default function OrbitPocPage() {
     }
   }
 
+  // Download audit proof bundle
+  function downloadAuditProof() {
+    const auditProof = {
+      metadata: {
+        userId: DEMO_USER_ID,
+        generatedAt: new Date().toISOString(),
+        version: '1.0',
+        purpose: 'AI Act Compliance - Audit Trail Export',
+      },
+      summary: {
+        totalEvents: events.length,
+        totalAlerts: alerts.length,
+        totalOrganizations: orgs.length,
+        activeConsents: consentState.filter(c => c.status === 'GRANTED').length,
+        hashChainLength: events.filter(e => e.previousEventHash).length,
+      },
+      organizations: orgs.map(org => ({
+        orgId: org.orgId,
+        name: org.name,
+        registeredAt: org.createdAt?.toDate?.()?.toISOString() || null,
+        signingKeyId: org.signingKeyId || null,
+        keyExpiresAt: org.keyExpiresAt?.toDate?.()?.toISOString() || null, // Signature expiration
+      })),
+      events: events.map(event => ({
+        eventId: event.eventId,
+        eventType: event.eventType,
+        orgId: event.orgId,
+        timestamp: event.timestamp?.toDate?.()?.toISOString() || null,
+        signature: event.signature,
+        signingKeyId: event.signingKeyId,
+        previousEventHash: event.previousEventHash,
+        eventHash: event.eventHash,
+        blockIndex: event.blockIndex,
+        scopes: event.scopes,
+        purpose: event.purpose,
+      })),
+      consentState: consentState.map(consent => ({
+        orgId: consent.orgId,
+        scope: consent.scope,
+        status: consent.status,
+        updatedAt: consent.updatedAt?.toDate?.()?.toISOString() || null,
+      })),
+      alerts: alerts.map(alert => ({
+        alertType: alert.alertType,
+        orgId: alert.orgId,
+        message: alert.message,
+        eventId: alert.eventId,
+        createdAt: alert.createdAt?.toDate?.()?.toISOString() || null,
+      })),
+      integrity: {
+        allEventsSigned: events.every(e => e.signature),
+        hashChainIntact: events.every((e, idx) => {
+          if (idx === 0) return true;
+          const prevEvent = events[idx - 1];
+          return e.previousEventHash === prevEvent.eventHash;
+        }),
+        signatureExpirationWarning: orgs.some(org => {
+          if (!org.keyExpiresAt) return false;
+          const expiresAt = org.keyExpiresAt.toDate ? org.keyExpiresAt.toDate() : new Date(org.keyExpiresAt);
+          const daysUntilExpiry = (expiresAt - new Date()) / (1000 * 60 * 60 * 24);
+          return daysUntilExpiry < 30;
+        }),
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(auditProof, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orbit-audit-proof-${DEMO_USER_ID}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    addNotification('Audit proof bundle downloaded', 'success');
+    addLog('info', 'Downloaded audit proof bundle', auditProof);
+  }
+
   // Reset sandbox (clear all demo data)
   async function resetSandbox() {
     addLog('info', 'Resetting sandbox...');
