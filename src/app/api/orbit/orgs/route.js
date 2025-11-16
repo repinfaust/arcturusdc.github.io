@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server';
 import { upsertOrg, getAllOrgs, getOrg } from '@/lib/orbit/db-admin';
 import { verifySession } from '@/lib/orbit/auth';
-import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import admin from 'firebase-admin';
 import crypto from 'crypto';
 
 // Generate API key and signing secret
@@ -49,8 +49,7 @@ export async function POST(request) {
     keyExpiresAt.setDate(keyExpiresAt.getDate() + 90);
     
     // Convert to Firestore Timestamp
-    const { Timestamp } = getFirebaseAdmin();
-    const keyExpiresAtTimestamp = Timestamp.fromDate(keyExpiresAt);
+    const keyExpiresAtTimestamp = admin.firestore.Timestamp.fromDate(keyExpiresAt);
 
     const orgData = {
       orgId,
