@@ -1605,27 +1605,57 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
           body: JSON.stringify(requestBody),
         });
       } else if (action === 'consent') {
-        // Grant/revoke consent
+        // Grant/revoke consent - create one event per selected scope
         if (selectedScopes.length === 0) {
-          onLog('error', 'Please select a scope');
+          onNotification('Please select at least one scope', 'error');
           setLoading(false);
           return;
         }
+        
+        const eventType = formData.status === 'GRANTED' ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED';
         endpoint = 'POST /api/orbit/events';
-        requestBody = {
-          eventType: formData.status === 'GRANTED' ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED',
-          userId: 'user_12345',
-          orgId: org.orgId,
-          consentScope: selectedScopes[0], // Use first selected scope
-          consentStatus: formData.status || 'GRANTED',
-        };
-        onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
-        response = await fetch('/api/orbit/events', {
-          method: 'POST',
-          headers,
-          credentials: 'include',
-          body: JSON.stringify(requestBody),
+        
+        // Create one event per selected scope
+        const eventPromises = selectedScopes.map(async (scope) => {
+          requestBody = {
+            eventType: eventType,
+            userId: 'user_12345',
+            orgId: org.orgId,
+            consentScope: scope,
+            consentStatus: formData.status || 'GRANTED',
+          };
+          onLog('request', endpoint, { headers: { 'X-Orbit-Org-Id': org.orgId }, body: requestBody });
+          return fetch('/api/orbit/events', {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            body: JSON.stringify(requestBody),
+          });
         });
+        
+        // Wait for all events to be created
+        const responses = await Promise.all(eventPromises);
+        
+        // Check all responses
+        const allOk = responses.every(r => r.ok);
+        if (allOk) {
+          // Parse all successful responses
+          const responseDataArray = await Promise.all(responses.map(r => r.json()));
+          onNotification(`Consent ${formData.status === 'GRANTED' ? 'granted' : 'revoked'} for ${selectedScopes.length} scope(s)`, 'success');
+          onLog('success', `${endpoint} - Success (${selectedScopes.length} events)`, responseDataArray);
+          onLog('event', `Event created: ${eventType} (${selectedScopes.length} scope(s))`);
+          setFormData({});
+          setSelectedScopes([]);
+          setSelectedPurpose('');
+          onEventCreated();
+          setLoading(false);
+          return; // Exit early since we've handled the response
+        } else {
+          // Handle errors - find first failed response
+          const failedIndex = responses.findIndex(r => !r.ok);
+          response = responses[failedIndex];
+          // Continue to error handling below
+        }
       } else if (action === 'data-used') {
         // Declare data usage
         if (selectedScopes.length === 0) {
