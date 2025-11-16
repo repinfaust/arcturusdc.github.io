@@ -191,18 +191,39 @@ export default function OrbitPocPage() {
 
   // Reset sandbox (clear all demo data)
   async function resetSandbox() {
-    // For now, just reset without confirmation (can add a modal later if needed)
-
     addLog('info', 'Resetting sandbox...');
+    addLog('request', 'POST /api/orbit/reset - Deleting all demo data', { userId: DEMO_USER_ID });
+    
     try {
-      // Clear all data by setting state to empty arrays
+      // Call API to delete all data from Firestore
+      const response = await fetch('/api/orbit/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId: DEMO_USER_ID,
+          deleteOrgs: false, // Keep orgs, just delete events/alerts/consents
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reset sandbox');
+      }
+
+      addLog('success', `Sandbox reset complete. Deleted ${data.deleted} documents.`, data);
+      
+      // Clear local state
       setOrgs([]);
       setEvents([]);
       setAlerts([]);
       setConsentState([]);
       
-      addLog('success', 'Sandbox reset complete. Click "Seed Demo Data" to start fresh.');
-      addNotification('Sandbox reset! Click "Seed Demo Data" to create new demo data.', 'success');
+      // Reload orgs (they should still exist)
+      await loadDashboardData();
+      
+      addNotification(`Sandbox reset! Deleted ${data.deleted} documents. Click "Seed Demo Data" to create new demo data.`, 'success');
     } catch (error) {
       addLog('error', `Error resetting sandbox: ${error.message}`, error);
       console.error('Error resetting sandbox:', error);
