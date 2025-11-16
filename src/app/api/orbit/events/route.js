@@ -74,11 +74,12 @@ export async function POST(request) {
     // Get previous event for hash chain linking
     try {
       const previousEvent = await getLatestEvent(body.userId, body.orgId);
-      if (previousEvent) {
+      if (previousEvent && previousEvent.eventHash) {
         event.previousEventHash = previousEvent.eventHash;
         event.blockIndex = (previousEvent.blockIndex || 0) + 1;
       } else {
         event.blockIndex = 1;
+        // Don't set previousEventHash if there's no previous event
       }
     } catch (error) {
       console.error('Error getting latest event for hash chain:', error);
@@ -88,14 +89,25 @@ export async function POST(request) {
 
     // Compute event hash (for hash chain)
     try {
-      event.eventHash = hashEvent(event);
+      const computedHash = hashEvent(event);
+      if (computedHash) {
+        event.eventHash = computedHash;
+      }
     } catch (error) {
       console.error('Error computing event hash:', error);
       // Continue without hash if it fails
     }
 
+    // Clean event object: remove undefined values (Firestore doesn't allow undefined)
+    const cleanEvent = {};
+    for (const [key, value] of Object.entries(event)) {
+      if (value !== undefined) {
+        cleanEvent[key] = value;
+      }
+    }
+
     // Add to ledger
-    const docId = await addLedgerEvent(event);
+    const docId = await addLedgerEvent(cleanEvent);
 
     // Update consent state if consent event
     if (body.eventType === 'CONSENT_GRANTED' || body.eventType === 'CONSENT_REVOKED') {
