@@ -92,6 +92,27 @@ export async function POST(request) {
     };
 
     requestEvent.signature = signEvent(requestEvent, org.signingSecret);
+    
+    // Get previous event for hash chain
+    try {
+      const { getLatestEvent } = await import('@/lib/orbit/db-admin');
+      const { hashEvent } = await import('@/lib/orbit/signatures');
+      const previousEvent = await getLatestEvent(userId, org.orgId);
+      if (previousEvent && previousEvent.eventHash) {
+        requestEvent.previousEventHash = previousEvent.eventHash;
+        requestEvent.blockIndex = (previousEvent.blockIndex || 0) + 1;
+      } else {
+        requestEvent.blockIndex = 1;
+      }
+      const computedHash = hashEvent(requestEvent);
+      if (computedHash) {
+        requestEvent.eventHash = computedHash;
+      }
+    } catch (error) {
+      console.error('Error setting up hash chain for verification request:', error);
+      requestEvent.blockIndex = 1;
+    }
+    
     await addLedgerEvent(requestEvent);
 
     // Call verifier (mock for PoC)
