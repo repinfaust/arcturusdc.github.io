@@ -218,10 +218,10 @@ export default function OrbitPocPage() {
           <div className="flex gap-2">
             {[
               { id: 'overview', label: 'Overview' },
+              { id: 'sandbox', label: 'Org Sandbox' },
               { id: 'timeline', label: 'Timeline' },
               { id: 'consent', label: 'Consent' },
               { id: 'alerts', label: 'Alerts' },
-              { id: 'sandbox', label: 'Org Sandbox' },
             ].map(tab => (
               <button
                 key={tab.id}
