@@ -33,56 +33,60 @@ export async function POST(request) {
     const userId = body.userId || DEMO_USER_ID;
     const deleteOrgs = body.deleteOrgs || false; // Option to delete orgs too
 
-    const batch = db.batch();
     let deleteCount = 0;
+    const BATCH_SIZE = 500; // Firestore batch limit
+
+    // Helper function to delete documents in batches
+    async function deleteInBatches(query, collectionName) {
+      const snapshot = await query.get();
+      const docs = snapshot.docs;
+      let count = 0;
+
+      // Process in batches of 500
+      for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const batchDocs = docs.slice(i, i + BATCH_SIZE);
+        
+        batchDocs.forEach(doc => {
+          batch.delete(doc.ref);
+          count++;
+        });
+
+        await batch.commit();
+      }
+
+      return count;
+    }
 
     // Delete all events for this user
     const eventsRef = db.collection(COLLECTIONS.LEDGER_EVENTS);
-    const eventsSnapshot = await eventsRef.where('userId', '==', userId).get();
-    eventsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-      deleteCount++;
-    });
+    const eventsQuery = eventsRef.where('userId', '==', userId);
+    deleteCount += await deleteInBatches(eventsQuery, COLLECTIONS.LEDGER_EVENTS);
 
     // Delete all alerts for this user
     const alertsRef = db.collection(COLLECTIONS.ALERTS);
-    const alertsSnapshot = await alertsRef.where('userId', '==', userId).get();
-    alertsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-      deleteCount++;
-    });
+    const alertsQuery = alertsRef.where('userId', '==', userId);
+    deleteCount += await deleteInBatches(alertsQuery, COLLECTIONS.ALERTS);
 
     // Delete all consent state for this user
     const consentRef = db.collection(COLLECTIONS.CONSENT_STATE);
-    const consentSnapshot = await consentRef.where('userId', '==', userId).get();
-    consentSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-      deleteCount++;
-    });
+    const consentQuery = consentRef.where('userId', '==', userId);
+    deleteCount += await deleteInBatches(consentQuery, COLLECTIONS.CONSENT_STATE);
 
     // Delete all snapshots for this user
     const snapshotsRef = db.collection(COLLECTIONS.SNAPSHOTS);
-    const snapshotsSnapshot = await snapshotsRef.where('userId', '==', userId).get();
-    snapshotsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
-      deleteCount++;
-    });
+    const snapshotsQuery = snapshotsRef.where('userId', '==', userId);
+    deleteCount += await deleteInBatches(snapshotsQuery, COLLECTIONS.SNAPSHOTS);
 
     // Optionally delete demo orgs
     if (deleteOrgs) {
       const orgsRef = db.collection(COLLECTIONS.ORGS);
       const demoOrgIds = ['experian', 'challenger_bank', 'broker_app', 'healthcare_provider'];
       for (const orgId of demoOrgIds) {
-        const orgSnapshot = await orgsRef.where('orgId', '==', orgId).get();
-        orgSnapshot.docs.forEach(doc => {
-          batch.delete(doc.ref);
-          deleteCount++;
-        });
+        const orgQuery = orgsRef.where('orgId', '==', orgId);
+        deleteCount += await deleteInBatches(orgQuery, COLLECTIONS.ORGS);
       }
     }
-
-    // Commit the batch delete
-    await batch.commit();
 
     return NextResponse.json({
       success: true,
