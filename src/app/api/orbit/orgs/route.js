@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server';
 import { upsertOrg, getAllOrgs, getOrg } from '@/lib/orbit/db-admin';
 import { verifySession } from '@/lib/orbit/auth';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import crypto from 'crypto';
 
 // Generate API key and signing secret
@@ -46,6 +47,10 @@ export async function POST(request) {
     // Set key expiration to 90 days from now (signatures expire unless re-keyed)
     const keyExpiresAt = new Date();
     keyExpiresAt.setDate(keyExpiresAt.getDate() + 90);
+    
+    // Convert to Firestore Timestamp
+    const { Timestamp } = getFirebaseAdmin();
+    const keyExpiresAtTimestamp = Timestamp.fromDate(keyExpiresAt);
 
     const orgData = {
       orgId,
@@ -54,7 +59,7 @@ export async function POST(request) {
       signingSecret: credentials.signingSecret,
       scopes: scopes || {},
       isSandbox: body.isSandbox !== false, // Default to sandbox for PoC
-      keyExpiresAt: keyExpiresAt.toISOString(), // Signature expiration date
+      keyExpiresAt: keyExpiresAtTimestamp, // Signature expiration date (Firestore Timestamp)
       signingKeyId: `org-${orgId}-key-1`, // Key version identifier
     };
 
