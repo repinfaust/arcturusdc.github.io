@@ -140,6 +140,7 @@ export default function OrbitPocPage() {
         { orgId: 'experian', displayName: 'Experian (Demo)', scopes: { basic_identity: ['name', 'dob', 'address'], credit_profile: ['creditScore', 'salaryBand'] } },
         { orgId: 'challenger_bank', displayName: 'Challenger Bank (Demo)', scopes: { basic_identity: ['name', 'dob'], account_info: ['accountNumber', 'balance'] } },
         { orgId: 'broker_app', displayName: 'Broker App (Demo)', scopes: { basic_identity: ['name', 'dob'], investment_profile: ['riskTolerance', 'portfolioValue'] } },
+        { orgId: 'healthcare_provider', displayName: 'City Health Network (Demo)', scopes: { basic_identity: ['name', 'dob', 'address'], health_records: ['medicalHistory', 'diagnoses', 'medications'], insurance_info: ['policyNumber', 'coverageType'], appointment_history: ['visitDates', 'providerNames'] } },
       ];
 
       for (const org of demoOrgs) {
