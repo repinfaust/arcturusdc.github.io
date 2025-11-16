@@ -492,5 +492,38 @@ service cloud.firestore {
         allow delete: if false;
       }
     }
+
+    /* ==========================================================
+       Orbit POC Collections
+       Server-side only (via Admin SDK) - no client access
+       ========================================================== */
+    match /orbit_orgs/{orgId} {
+      // Only server (Admin SDK) can access
+      allow read, write: if false;
+    }
+
+    match /orbit_users/{userId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_snapshots/{snapshotId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_ledger_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_consent_state/{consentId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_verification_routes/{routeId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_alerts/{alertId} {
+      allow read, write: if false;
+    }
   }
 }

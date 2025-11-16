@@ -3,12 +3,22 @@
  * Uses Firebase Admin SDK for API routes
  */
 
-import { adminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
-// Ensure adminDb is available
-if (!adminDb) {
-  console.error('Firebase Admin DB not initialized. Check FIREBASE_SERVICE_ACCOUNT environment variable.');
+// Get Firebase Admin instances
+function getAdminDb() {
+  try {
+    const { db } = getFirebaseAdmin();
+    return db;
+  } catch (error) {
+    console.error('[Orbit DB] Firebase Admin not initialized:', error.message);
+    throw new Error('Firebase Admin DB not initialized');
+  }
+}
+
+function getFieldValue() {
+  const { FieldValue } = getFirebaseAdmin();
+  return FieldValue;
 }
 
 // Collection names
@@ -26,9 +36,8 @@ export const COLLECTIONS = {
  * Create or update an organisation
  */
 export async function upsertOrg(orgData) {
-  if (!adminDb) {
-    throw new Error('Firebase Admin DB not initialized');
-  }
+  const adminDb = getAdminDb();
+  const FieldValue = getFieldValue();
   const orgsRef = adminDb.collection(COLLECTIONS.ORGS);
   const snapshot = await orgsRef.where('orgId', '==', orgData.orgId).get();
 
@@ -55,9 +64,7 @@ export async function upsertOrg(orgData) {
  * Get organisation by orgId
  */
 export async function getOrg(orgId) {
-  if (!adminDb) {
-    throw new Error('Firebase Admin DB not initialized');
-  }
+  const adminDb = getAdminDb();
   const orgsRef = adminDb.collection(COLLECTIONS.ORGS);
   const snapshot = await orgsRef.where('orgId', '==', orgId).get();
   
@@ -72,9 +79,7 @@ export async function getOrg(orgId) {
  * Get all organisations
  */
 export async function getAllOrgs() {
-  if (!adminDb) {
-    throw new Error('Firebase Admin DB not initialized');
-  }
+  const adminDb = getAdminDb();
   const orgsRef = adminDb.collection(COLLECTIONS.ORGS);
   const snapshot = await orgsRef.get();
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -84,6 +89,8 @@ export async function getAllOrgs() {
  * Create a snapshot
  */
 export async function createSnapshot(snapshotData) {
+  const adminDb = getAdminDb();
+  const FieldValue = getFieldValue();
   const snapshotsRef = adminDb.collection(COLLECTIONS.SNAPSHOTS);
   const docRef = await snapshotsRef.add({
     ...snapshotData,
@@ -96,6 +103,7 @@ export async function createSnapshot(snapshotData) {
  * Get snapshot by pointer
  */
 export async function getSnapshot(snapshotPointer) {
+  const adminDb = getAdminDb();
   const snapshotsRef = adminDb.collection(COLLECTIONS.SNAPSHOTS);
   const snapshot = await snapshotsRef.where('snapshotId', '==', snapshotPointer).get();
   
@@ -110,6 +118,7 @@ export async function getSnapshot(snapshotPointer) {
  * Get latest snapshot for user/org
  */
 export async function getLatestSnapshot(userId, orgId) {
+  const adminDb = getAdminDb();
   const snapshotsRef = adminDb.collection(COLLECTIONS.SNAPSHOTS);
   // Fetch all matching snapshots and sort in memory to avoid index requirement
   const snapshot = await snapshotsRef
@@ -133,6 +142,8 @@ export async function getLatestSnapshot(userId, orgId) {
  * Add ledger event
  */
 export async function addLedgerEvent(event) {
+  const adminDb = getAdminDb();
+  const FieldValue = getFieldValue();
   const eventsRef = adminDb.collection(COLLECTIONS.LEDGER_EVENTS);
   const docRef = await eventsRef.add({
     ...event,
@@ -145,6 +156,7 @@ export async function addLedgerEvent(event) {
  * Get ledger events for a user
  */
 export async function getUserEvents(userId, filters = {}) {
+  const adminDb = getAdminDb();
   let query = adminDb.collection(COLLECTIONS.LEDGER_EVENTS)
     .where('userId', '==', userId);
 
@@ -177,6 +189,8 @@ export async function getUserEvents(userId, filters = {}) {
  * Update consent state
  */
 export async function updateConsentState(userId, orgId, scope, status) {
+  const adminDb = getAdminDb();
+  const FieldValue = getFieldValue();
   const consentRef = adminDb.collection(COLLECTIONS.CONSENT_STATE);
   const snapshot = await consentRef
     .where('userId', '==', userId)
@@ -206,6 +220,7 @@ export async function updateConsentState(userId, orgId, scope, status) {
  * Get consent state for user/org
  */
 export async function getConsentState(userId, orgId) {
+  const adminDb = getAdminDb();
   let query = adminDb.collection(COLLECTIONS.CONSENT_STATE)
     .where('userId', '==', userId);
   
@@ -221,6 +236,8 @@ export async function getConsentState(userId, orgId) {
  * Create alert
  */
 export async function createAlert(alertData) {
+  const adminDb = getAdminDb();
+  const FieldValue = getFieldValue();
   const alertsRef = adminDb.collection(COLLECTIONS.ALERTS);
   const docRef = await alertsRef.add({
     ...alertData,
@@ -233,6 +250,7 @@ export async function createAlert(alertData) {
  * Get alerts for a user
  */
 export async function getUserAlerts(userId) {
+  const adminDb = getAdminDb();
   const alertsRef = adminDb.collection(COLLECTIONS.ALERTS);
   try {
     const snapshot = await alertsRef
