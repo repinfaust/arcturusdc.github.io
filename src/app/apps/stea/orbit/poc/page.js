@@ -189,6 +189,13 @@ export default function OrbitPocPage() {
     }
   }
 
+  // Helper function to truncate signatures/hashes (first 6 + last 6 chars)
+  function truncateHash(hash) {
+    if (!hash || typeof hash !== 'string') return hash;
+    if (hash.length <= 12) return hash; // If already short, return as-is
+    return `${hash.substring(0, 6)}...${hash.substring(hash.length - 6)}`;
+  }
+
   // Download audit proof bundle
   function downloadAuditProof() {
     const auditProof = {
@@ -197,6 +204,7 @@ export default function OrbitPocPage() {
         generatedAt: new Date().toISOString(),
         version: '1.0',
         purpose: 'AI Act Compliance - Audit Trail Export',
+        note: 'Signatures and hashes are truncated (first 6 + last 6 characters) for readability',
       },
       summary: {
         totalEvents: events.length,
@@ -217,10 +225,10 @@ export default function OrbitPocPage() {
         eventType: event.eventType,
         orgId: event.orgId,
         timestamp: event.timestamp?.toDate?.()?.toISOString() || null,
-        signature: event.signature,
+        signature: truncateHash(event.signature),
         signingKeyId: event.signingKeyId,
-        previousEventHash: event.previousEventHash,
-        eventHash: event.eventHash,
+        previousEventHash: truncateHash(event.previousEventHash),
+        eventHash: truncateHash(event.eventHash),
         blockIndex: event.blockIndex,
         scopes: event.scopes,
         purpose: event.purpose,
