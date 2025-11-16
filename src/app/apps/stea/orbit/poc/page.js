@@ -893,10 +893,24 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
       
       const data = await res.json();
       if (res.ok) {
-        onLog('success', `Verification complete for event ${event.eventId}`, data);
+        // Check actual verification results
+        const allVerified = data.results?.eventSignature?.verified !== false && 
+                           data.results?.hashChain?.verified !== false && 
+                           data.results?.snapshotHash?.verified !== false;
+        
+        if (allVerified) {
+          onLog('success', `Verification complete for event ${event.eventId} - All checks passed ✓`, data);
+        } else {
+          // Verification API call succeeded but verification failed
+          const failedChecks = [];
+          if (data.results?.eventSignature?.verified === false) failedChecks.push('Signature');
+          if (data.results?.hashChain?.verified === false) failedChecks.push('Hash Chain');
+          if (data.results?.snapshotHash?.verified === false) failedChecks.push('Snapshot Hash');
+          onLog('error', `Verification failed for event ${event.eventId} - ${failedChecks.join(', ')} invalid ✗`, data);
+        }
         setVerificationResults(data.results);
       } else {
-        onLog('error', `Verification failed: ${data.error}`, data);
+        onLog('error', `Verification API error: ${data.error}`, data);
         setVerificationResults(null);
       }
     } catch (error) {
