@@ -3,7 +3,7 @@
  * Detects undeclared events and policy violations
  */
 
-import { getUserEvents, getConsentState, getOrg, getSnapshot, createAlert } from './db';
+import { getUserEvents, getConsentState, getOrg, getSnapshot, createAlert } from './db-admin';
 import { verifySnapshotHash } from './signatures';
 
 /**

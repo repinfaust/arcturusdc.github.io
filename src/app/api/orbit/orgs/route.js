@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { upsertOrg, getAllOrgs, getOrg } from '@/lib/orbit/db';
+import { upsertOrg, getAllOrgs, getOrg } from '@/lib/orbit/db-admin';
 import crypto from 'crypto';
 
 // Generate API key and signing secret
@@ -58,7 +58,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating/updating org:', error);
     return NextResponse.json(
-      { error: 'Failed to create/update organisation' },
+      { error: 'Failed to create/update organisation', details: error.message },
       { status: 500 }
     );
   }

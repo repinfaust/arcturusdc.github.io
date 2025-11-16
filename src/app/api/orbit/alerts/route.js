@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getUserAlerts } from '@/lib/orbit/db';
+import { getUserAlerts } from '@/lib/orbit/db-admin';
 
 export async function GET(request) {
   try {

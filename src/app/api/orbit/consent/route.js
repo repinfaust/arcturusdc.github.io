@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getConsentState } from '@/lib/orbit/db';
+import { getConsentState } from '@/lib/orbit/db-admin';
 
 export async function GET(request) {
   try {

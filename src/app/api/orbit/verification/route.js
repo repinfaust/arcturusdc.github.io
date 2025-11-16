@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { addLedgerEvent, getOrg } from '@/lib/orbit/db';
+import { addLedgerEvent, getOrg } from '@/lib/orbit/db-admin';
 import { signEvent } from '@/lib/orbit/signatures';
 import { generateEventId } from '@/lib/orbit/eventTypes';
 

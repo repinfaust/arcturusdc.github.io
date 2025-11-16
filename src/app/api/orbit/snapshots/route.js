@@ -5,9 +5,8 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createSnapshot, getSnapshot, getLatestSnapshot } from '@/lib/orbit/db';
+import { createSnapshot, getSnapshot, getLatestSnapshot, addLedgerEvent, getOrg } from '@/lib/orbit/db-admin';
 import { hashSnapshot, signEvent } from '@/lib/orbit/signatures';
-import { addLedgerEvent, getOrg } from '@/lib/orbit/db';
 import { generateEventId } from '@/lib/orbit/eventTypes';
 
 // Authenticate org request

@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { addLedgerEvent, getUserEvents, getOrg } from '@/lib/orbit/db';
+import { addLedgerEvent, getUserEvents, getOrg, updateConsentState } from '@/lib/orbit/db-admin';
 import { validateEvent, generateEventId } from '@/lib/orbit/eventTypes';
 import { signEvent } from '@/lib/orbit/signatures';
 
@@ -66,7 +66,6 @@ export async function POST(request) {
 
     // Update consent state if consent event
     if (body.eventType === 'CONSENT_GRANTED' || body.eventType === 'CONSENT_REVOKED') {
-      const { updateConsentState } = await import('@/lib/orbit/db');
       await updateConsentState(
         body.userId,
         body.orgId,
