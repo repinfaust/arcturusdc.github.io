@@ -43,6 +43,10 @@ export async function POST(request) {
       ? { apiKey: existing.apiKey, signingSecret: existing.signingSecret }
       : generateCredentials();
 
+    // Set key expiration to 90 days from now (signatures expire unless re-keyed)
+    const keyExpiresAt = new Date();
+    keyExpiresAt.setDate(keyExpiresAt.getDate() + 90);
+
     const orgData = {
       orgId,
       displayName,
@@ -50,6 +54,8 @@ export async function POST(request) {
       signingSecret: credentials.signingSecret,
       scopes: scopes || {},
       isSandbox: body.isSandbox !== false, // Default to sandbox for PoC
+      keyExpiresAt: keyExpiresAt.toISOString(), // Signature expiration date
+      signingKeyId: `org-${orgId}-key-1`, // Key version identifier
     };
 
     const docId = await upsertOrg(orgData);

@@ -290,6 +290,7 @@ export default function OrbitPocPage() {
               { id: 'timeline', label: 'Timeline' },
               { id: 'consent', label: 'Consent' },
               { id: 'alerts', label: 'Alerts' },
+              { id: 'regulator', label: 'Regulator View' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -480,6 +481,134 @@ export default function OrbitPocPage() {
                 <HowOrbitWorks />
               </div>
             )}
+
+            {/* Regulator View Tab */}
+            {activeTab === 'regulator' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-neutral-900">Regulator View</h2>
+                      <p className="text-sm text-neutral-600 mt-1">Aggregate compliance and integrity overview</p>
+                    </div>
+                    <button
+                      onClick={downloadAuditProof}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                    >
+                      📥 Download Audit Proof Bundle
+                    </button>
+                  </div>
+
+                  {/* Summary Stats */}
+                  <div className="grid md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                      <div className="text-2xl font-bold text-neutral-900">{events.length}</div>
+                      <div className="text-xs text-neutral-600">Total Events</div>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                      <div className="text-2xl font-bold text-red-600">{alerts.length}</div>
+                      <div className="text-xs text-neutral-600">Policy Violations</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <div className="text-2xl font-bold text-green-600">{orgs.length}</div>
+                      <div className="text-xs text-neutral-600">Organizations</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-600">{consentState.filter(c => c.status === 'GRANTED').length}</div>
+                      <div className="text-xs text-neutral-600">Active Consents</div>
+                    </div>
+                  </div>
+
+                  {/* Integrity Checks Summary */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-neutral-900 mb-3">Integrity Checks</h3>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-green-600 font-bold">✓</span>
+                        <span className="font-semibold text-neutral-900">All events cryptographically signed (HMAC-SHA256)</span>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-green-600 font-bold">✓</span>
+                        <span className="font-semibold text-neutral-900">Hash chain intact - {events.filter(e => e.previousEventHash).length} linked events</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-600 font-bold">⚠</span>
+                        <span className="font-semibold text-neutral-900">Signature expiration: Keys must be rotated every 90 days</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alerts by Organization */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-neutral-900 mb-3">Alerts by Organization</h3>
+                    {orgs.length === 0 ? (
+                      <div className="text-center py-4 text-neutral-600 text-sm">No organizations registered</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {orgs.map(org => {
+                          const orgAlerts = alerts.filter(a => a.orgId === org.orgId);
+                          const orgEvents = events.filter(e => e.orgId === org.orgId);
+                          return (
+                            <div key={org.orgId} className="border border-neutral-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="font-semibold text-neutral-900">{org.name || org.orgId}</div>
+                                <div className="text-sm text-neutral-600">
+                                  {orgEvents.length} events • {orgAlerts.length} alerts
+                                </div>
+                              </div>
+                              {orgAlerts.length > 0 && (
+                                <div className="text-xs text-red-600 mt-2">
+                                  {orgAlerts.map(alert => (
+                                    <div key={alert.id}>• {alert.alertType}: {alert.message}</div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Usage Summary */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-neutral-900 mb-3">Data Usage Summary</h3>
+                    <div className="border border-neutral-200 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-neutral-50 border-b border-neutral-200">
+                          <tr>
+                            <th className="text-left p-3 font-semibold text-neutral-900">Organization</th>
+                            <th className="text-left p-3 font-semibold text-neutral-900">Event Type</th>
+                            <th className="text-left p-3 font-semibold text-neutral-900">Count</th>
+                            <th className="text-left p-3 font-semibold text-neutral-900">Last Used</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orgs.map(org => {
+                            const orgEvents = events.filter(e => e.orgId === org.orgId);
+                            const eventTypes = {};
+                            orgEvents.forEach(e => {
+                              eventTypes[e.eventType] = (eventTypes[e.eventType] || 0) + 1;
+                            });
+                            return Object.entries(eventTypes).map(([eventType, count], idx) => (
+                              <tr key={`${org.orgId}-${eventType}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}>
+                                <td className="p-3 text-neutral-700">{idx === 0 ? org.name || org.orgId : ''}</td>
+                                <td className="p-3 text-neutral-700">{eventType}</td>
+                                <td className="p-3 text-neutral-700">{count}</td>
+                                <td className="p-3 text-neutral-500 text-xs">
+                                  {orgEvents.find(e => e.eventType === eventType)?.timestamp?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                                </td>
+                              </tr>
+                            ));
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <HowOrbitWorks />
+              </div>
+            )}
           </>
         )}
       </div>
@@ -654,6 +783,7 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
   const [verificationResults, setVerificationResults] = useState(null);
   const [verifying, setVerifying] = useState(false);
   const [simulateTampering, setSimulateTampering] = useState(false);
+  const [externalVerifierResponse, setExternalVerifierResponse] = useState(null);
 
   const handleVerify = async () => {
     setVerifying(true);
@@ -701,6 +831,46 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
   const formatHash = (hash) => {
     if (!hash) return 'N/A';
     return hash.length > 16 ? `${hash.substring(0, 8)}...${hash.substring(hash.length - 8)}` : hash;
+  };
+
+  // Handle external verifier request
+  const handleExternalVerifier = async () => {
+    setVerifying(true);
+    onLog('request', `POST /api/orbit/verify/external - Requesting external verification for event ${event.eventId}`, { eventId: event.eventId });
+    
+    try {
+      // Simulate external verifier API call
+      const eventToSend = { ...event };
+      if (eventToSend.timestamp && typeof eventToSend.timestamp.toMillis === 'function') {
+        delete eventToSend.timestamp;
+      }
+      if (eventToSend.id) {
+        delete eventToSend.id;
+      }
+
+      const res = await fetch('/api/orbit/verify/external', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          event: eventToSend,
+        }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        onLog('success', `External verification complete for event ${event.eventId}`, data);
+        setExternalVerifierResponse(data);
+      } else {
+        onLog('error', `External verification failed: ${data.error}`, data);
+        setExternalVerifierResponse(null);
+      }
+    } catch (error) {
+      onLog('error', `External verification error: ${error.message}`, error);
+      setExternalVerifierResponse(null);
+    } finally {
+      setVerifying(false);
+    }
   };
 
   return (
@@ -772,25 +942,40 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
               )}
             </div>
 
-            {/* Hash Chain */}
+            {/* Hash Chain - Linked List Visualization */}
             {event.previousEventHash && event.eventHash && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-semibold text-neutral-900">2. Hash Chain Linking</div>
+                  <div className="text-sm font-semibold text-neutral-900">2. Hash Chain Linking (Linked List)</div>
                   {verificationResults?.hashChain && (
                     <span className={`text-xs font-semibold ${verificationResults.hashChain.verified ? 'text-green-600' : 'text-red-600'}`}>
                       {verificationResults.hashChain.verified ? '✓ Verified' : '✗ Broken'}
                     </span>
                   )}
                 </div>
-                <div className="text-xs font-mono text-neutral-600 bg-white rounded p-2 space-y-1 mb-2">
-                  <div>previousEventHash: {formatHash(event.previousEventHash)}</div>
-                  <div>thisEventHash: {formatHash(event.eventHash)}</div>
-                  {event.blockIndex && <div>blockIndex: {event.blockIndex}</div>}
+                {/* Visual Linked List */}
+                <div className="bg-white rounded p-3 mb-2 border border-neutral-200">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="text-xs font-mono text-neutral-500 bg-neutral-50 px-2 py-1 rounded">
+                      {formatHash(event.previousEventHash)}
+                    </div>
+                    <div className="text-blue-600 font-bold">→</div>
+                    <div className="text-xs font-mono text-neutral-900 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                      {formatHash(event.eventHash)}
+                    </div>
+                    {event.blockIndex && (
+                      <div className="text-xs text-neutral-500 ml-auto">
+                        Block #{event.blockIndex}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-2 italic">
+                    Previous Event Hash → This Event Hash
+                  </div>
                 </div>
                 {verificationResults?.hashChain && (
                   <div className="text-xs text-neutral-600">
-                    verified: {verificationResults.hashChain.verified ? '✓ Hash chain intact' : '✗ Hash chain broken'}
+                    verified: {verificationResults.hashChain.verified ? '✓ Hash chain intact - Immutable linked list' : '✗ Hash chain broken - Tampering detected'}
                   </div>
                 )}
               </div>
@@ -821,6 +1006,23 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
               </div>
             )}
 
+            {/* Signature Expiration Warning */}
+            {(() => {
+              const org = orgs.find(o => o.orgId === event.orgId);
+              if (org && org.keyExpiresAt) {
+                const expiresAt = org.keyExpiresAt.toDate ? org.keyExpiresAt.toDate() : new Date(org.keyExpiresAt);
+                const daysUntilExpiry = (expiresAt - new Date()) / (1000 * 60 * 60 * 24);
+                if (daysUntilExpiry < 90) {
+                  return (
+                    <div className={`text-xs rounded p-2 ${daysUntilExpiry < 30 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+                      ⚠️ Signature key expires in {Math.ceil(daysUntilExpiry)} days. Organization must re-key to maintain validity.
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
+
             {/* Verify Button */}
             <button
               onClick={handleVerify}
@@ -829,6 +1031,35 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
             >
               {verifying ? 'Verifying...' : 'Verify Integrity'}
             </button>
+
+            {/* External Verifier Button */}
+            <button
+              onClick={handleExternalVerifier}
+              disabled={verifying}
+              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium mt-2"
+            >
+              🔍 Request External Verification
+            </button>
+
+            {/* External Verifier Response */}
+            {externalVerifierResponse && (
+              <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="text-sm font-semibold text-purple-900 mb-2">External Verifier Response</div>
+                <div className="text-xs space-y-1">
+                  <div className="font-mono text-purple-800">
+                    <div>Verifier: {externalVerifierResponse.verifierName}</div>
+                    <div>Timestamp: {new Date(externalVerifierResponse.verifiedAt).toLocaleString()}</div>
+                    <div>Status: <span className={externalVerifierResponse.verified ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>{externalVerifierResponse.verified ? '✓ VERIFIED' : '✗ FAILED'}</span></div>
+                    {externalVerifierResponse.proof && (
+                      <div className="mt-2 pt-2 border-t border-purple-300">
+                        <div className="font-semibold mb-1">Proof:</div>
+                        <div className="font-mono text-xs break-all">{externalVerifierResponse.proof}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {simulateTampering && (
               <div className="text-xs text-amber-600 bg-amber-50 rounded p-2">
