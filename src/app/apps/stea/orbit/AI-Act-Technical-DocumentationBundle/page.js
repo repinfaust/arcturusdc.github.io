@@ -3162,32 +3162,33 @@ function WhyKYCNeedsOrbitExplainer() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-amber-200 p-4">
-          <div className="font-semibold text-neutral-900 mb-2">High-Risk AI Systems</div>
-          <div className="text-sm text-neutral-700">
-            KYC systems are classified as high-risk under the AI Act because they make decisions affecting fundamental rights, 
-            including access to financial services and identity verification.
+          <div className="bg-white rounded-lg border border-amber-200 p-4">
+            <div className="font-semibold text-neutral-900 mb-2">High-Risk AI Systems</div>
+            <div className="text-sm text-neutral-700">
+              KYC systems are classified as high-risk under the AI Act because they make decisions affecting fundamental rights, 
+              including access to financial services and identity verification.
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-lg border border-amber-200 p-4">
-          <div className="font-semibold text-neutral-900 mb-2">Regulatory Requirements</div>
-          <div className="text-sm text-neutral-700">
-            KYC providers must demonstrate compliance with Annex IV technical documentation requirements, including 
-            complete audit trails of all AI decisions, model versions, and human oversight.
+          <div className="bg-white rounded-lg border border-amber-200 p-4">
+            <div className="font-semibold text-neutral-900 mb-2">Regulatory Requirements</div>
+            <div className="text-sm text-neutral-700">
+              KYC providers must demonstrate compliance with Annex IV technical documentation requirements, including 
+              complete audit trails of all AI decisions, model versions, and human oversight.
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-lg border border-amber-200 p-4">
-          <div className="font-semibold text-neutral-900 mb-2">Customer Demands</div>
-          <div className="text-sm text-neutral-700">
-            Financial institutions and regulated entities require proof of AI Act compliance from their KYC vendors. 
-            Without proper logging, you cannot generate the required documentation.
+          <div className="bg-white rounded-lg border border-amber-200 p-4">
+            <div className="font-semibold text-neutral-900 mb-2">Customer Demands</div>
+            <div className="text-sm text-neutral-700">
+              Financial institutions and regulated entities require proof of AI Act compliance from their KYC vendors. 
+              Without proper logging, you cannot generate the required documentation.
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-lg border border-amber-200 p-4">
-          <div className="font-semibold text-neutral-900 mb-2">Competitive Advantage</div>
-          <div className="text-sm text-neutral-700">
-            Orbit enables KYC providers to differentiate by offering regulator-ready compliance documentation, 
-            reducing customer onboarding friction and audit burden.
+          <div className="bg-white rounded-lg border border-amber-200 p-4">
+            <div className="font-semibold text-neutral-900 mb-2">Competitive Advantage</div>
+            <div className="text-sm text-neutral-700">
+              Orbit enables KYC providers to differentiate by offering regulator-ready compliance documentation, 
+              reducing customer onboarding friction and audit burden.
+            </div>
           </div>
         </div>
       </div>
