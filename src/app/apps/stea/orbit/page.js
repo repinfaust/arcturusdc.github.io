@@ -506,19 +506,37 @@ export default function OrbitPage() {
 
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="text-center">
-          <div className="inline-block px-8 py-4 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
-            <p className="text-lg font-semibold text-neutral-900 mb-2">
-              Orbit PoC is Live!
-            </p>
-            <p className="text-sm text-neutral-600 mb-4">
-              Try the interactive POC dashboard with demo data and event simulation
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-neutral-900 mb-4">Try Orbit PoCs</h2>
+          <p className="text-neutral-600 mb-8">
+            Explore our proof-of-concept implementations
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+            <div className="text-3xl mb-3">👤</div>
+            <h3 className="text-lg font-bold text-blue-900 mb-2">User Consent & Data Usage</h3>
+            <p className="text-sm text-neutral-700 mb-4">
+              Interactive POC dashboard with demo data, consent management, and event simulation
             </p>
             <Link
               href="/apps/stea/orbit/poc"
-              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
             >
-              Open POC Dashboard →
+              Open Consent POC →
+            </Link>
+          </div>
+          <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-6">
+            <div className="text-3xl mb-3">📋</div>
+            <h3 className="text-lg font-bold text-purple-900 mb-2">AI Act Technical Documentation</h3>
+            <p className="text-sm text-neutral-700 mb-4">
+              Automated compliance documentation from logs → lineage → regulator-ready proofs
+            </p>
+            <Link
+              href="/apps/stea/orbit/AI-Act-Technical-DocumentationBundle"
+              className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+            >
+              Open AI Act POC →
             </Link>
           </div>
         </div>
