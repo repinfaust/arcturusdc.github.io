@@ -928,7 +928,7 @@ function BundlesExplainer() {
 }
 
 // Lineage Visualization Component
-function LineageVisualization({ lineage, onReconstructLineage, loading }) {
+function LineageVisualization({ lineage, onReconstructLineage, loading, onExport, addNotification }) {
   // Default placeholder lineage if none exists
   const displayLineage = lineage || {
     nodes: [
