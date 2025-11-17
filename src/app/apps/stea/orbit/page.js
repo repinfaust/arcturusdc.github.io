@@ -143,17 +143,18 @@ export default function OrbitPage() {
         <div className="text-center max-w-4xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-800 text-sm font-medium mb-6">
             <span>🔐</span>
-            <span>Cryptographically-Verifiable Audit-Log-as-a-Service</span>
+            <span>AI System Audit Trail Infrastructure</span>
           </div>
           <h2 className="text-5xl font-extrabold text-neutral-900 mb-6 leading-tight">
-            Compliance documentation as a service for<br />
+            Observability, traceability, lineage, integrity, monitoring, documentation<br />
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              companies that sell high-risk AI systems.
+              with AI Act compliance as the first killer use case.
             </span>
           </h2>
           <p className="text-xl text-neutral-600 leading-relaxed mb-8">
-            Orbit provides the logging standard, integrity service, and compliance workflows that AI providers need 
-            to generate Annex IV, VIII, and XI technical documentation for customers and regulators.
+            Orbit is AI System Audit Trail Infrastructure. We provide the logging standard, integrity service, 
+            and compliance workflows that enable observability, traceability, and regulatory documentation. 
+            AI Act compliance is the first killer use case, not the only value.
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <div className="px-4 py-2 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm font-medium">
@@ -170,15 +171,15 @@ export default function OrbitPage() {
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
             <div className="text-4xl mb-4">🎯</div>
             <h3 className="text-2xl font-bold text-neutral-900 mb-3">
-              Not crisis-response tooling
+              Not just compliance documentation
             </h3>
             <p className="text-2xl font-bold text-blue-600 mb-4">
-              → Readiness infrastructure for AI providers
+              → AI System Audit Trail Infrastructure
             </p>
             <p className="text-neutral-700 leading-relaxed">
-              Orbit is built for AI vendors and KYC/identity providers who must generate Annex IV documentation. 
-              We provide the logging SDK, integrity service, and compliance workflows to turn existing operations 
-              into regulator-ready technical documentation.
+              Orbit provides observability, traceability, lineage, integrity, monitoring, and documentation 
+              for AI systems. AI Act compliance is the first killer use case, enabling vendors to sell to banks faster. 
+              But the value extends beyond compliance to operational excellence and risk management.
             </p>
           </div>
         </div>

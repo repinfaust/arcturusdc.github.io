@@ -389,6 +389,7 @@ export default function AIActTechnicalDocumentationPage() {
               { id: 'lineage', label: 'Lineage Visualisation' },
               { id: 'bundles', label: 'Documentation Bundles' },
               { id: 'model-risk', label: 'Model Risk Team View' },
+              { id: 'security', label: 'Security & Architecture' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -482,6 +483,14 @@ export default function AIActTechnicalDocumentationPage() {
           <div className="space-y-6">
             <ModelRiskTeamViewExplainer />
             <ModelRiskTeamView dashboardData={dashboardData} documentationBundle={documentationBundle} />
+          </div>
+        )}
+
+        {/* Security & Architecture Tab */}
+        {activeTab === 'security' && (
+          <div className="space-y-6">
+            <SecurityArchitectureExplainer />
+            <SecurityArchitecture />
           </div>
         )}
       </div>
