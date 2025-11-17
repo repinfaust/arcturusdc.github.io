@@ -3114,6 +3114,195 @@ function ModelRiskTeamView({ dashboardData, documentationBundle }) {
 
 // Compliance Workflow Component
 
+// Why KYC Needs Orbit Explainer
+function WhyKYCNeedsOrbitExplainer() {
+  return (
+    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-8">
+      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Why KYC Needs Orbit</h2>
+      <p className="text-neutral-700 mb-6">
+        KYC (Know Your Customer) and Identity Verification providers operate high-risk AI systems that are subject to 
+        the EU AI Act. These systems make critical decisions about customer identity, fraud risk, and compliance status. 
+        Orbit provides the audit trail infrastructure needed for AI Act compliance.
+      </p>
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-lg border border-amber-200 p-4">
+          <div className="font-semibold text-neutral-900 mb-2">High-Risk AI Systems</div>
+          <div className="text-sm text-neutral-700">
+            KYC systems are classified as high-risk under the AI Act because they make decisions affecting fundamental rights, 
+            including access to financial services and identity verification.
+          </div>
+        </div>
+        <div className="bg-white rounded-lg border border-amber-200 p-4">
+          <div className="font-semibold text-neutral-900 mb-2">Regulatory Requirements</div>
+          <div className="text-sm text-neutral-700">
+            KYC providers must demonstrate compliance with Annex IV technical documentation requirements, including 
+            complete audit trails of all AI decisions, model versions, and human oversight.
+          </div>
+        </div>
+        <div className="bg-white rounded-lg border border-amber-200 p-4">
+          <div className="font-semibold text-neutral-900 mb-2">Customer Demands</div>
+          <div className="text-sm text-neutral-700">
+            Financial institutions and regulated entities require proof of AI Act compliance from their KYC vendors. 
+            Without proper logging, you cannot generate the required documentation.
+          </div>
+        </div>
+        <div className="bg-white rounded-lg border border-amber-200 p-4">
+          <div className="font-semibold text-neutral-900 mb-2">Competitive Advantage</div>
+          <div className="text-sm text-neutral-700">
+            Orbit enables KYC providers to differentiate by offering regulator-ready compliance documentation, 
+            reducing customer onboarding friction and audit burden.
+          </div>
+        </div>
+      </div>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="font-semibold text-blue-900 mb-2">The Problem</div>
+        <div className="text-sm text-blue-800">
+          Most KYC providers don't have the logging infrastructure needed for AI Act compliance. They log basic events 
+          but lack the structured, Annex IV-ready audit trail that Orbit provides. Without Orbit, generating compliance 
+          documentation requires manual work and may be incomplete.
+        </div>
+      </div>
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-6">
+        <h3 className="text-xl font-bold text-neutral-900 mb-4">Call to Action</h3>
+        <p className="text-neutral-800 mb-4 font-medium">
+          If you are a KYC or identity verification vendor, Orbit unlocks two things immediately:
+        </p>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
+            <div>
+              <div className="font-semibold text-neutral-900">You become AI Act compliant without changing your ML stack.</div>
+              <div className="text-sm text-neutral-700 mt-1">
+                Orbit integrates with your existing infrastructure. Add Orbit logging to your models without modifying 
+                your ML pipeline or retraining models.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
+            <div>
+              <div className="font-semibold text-neutral-900">You gain a competitive edge in enterprise RFPs today — long before enforcement hits.</div>
+              <div className="text-sm text-neutral-700 mt-1">
+                Stand out in enterprise sales cycles by offering regulator-ready compliance documentation. Win deals 
+                by demonstrating AI Act readiness while competitors are still scrambling.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Annex IV Requirements Mapping Component
+function AnnexIVRequirementsMapping() {
+  const annexIVRequirements = [
+    {
+      requirement: '1. General description of the AI system',
+      orbitLogs: ['ModelCard.json', 'SystemArchitecture.md'],
+      description: 'Model card and system architecture documentation generated from Orbit logs',
+      example: 'orbit.log_model_card() generates complete system description'
+    },
+    {
+      requirement: '2. Detailed description of the elements of the AI system',
+      orbitLogs: ['ModelExecutionTrace.md', 'InputFeatures.json', 'OutputDecisions.json'],
+      description: 'Complete trace of model execution with inputs, outputs, and intermediate steps',
+      example: 'orbit.log_inference() captures all required elements'
+    },
+    {
+      requirement: '3. Description of the data used for training',
+      orbitLogs: ['TrainingDataSummary.pdf', 'DataLineage.json'],
+      description: 'Training data summary including size, period, sources, and preprocessing',
+      example: 'orbit.log_training() documents training data requirements'
+    },
+    {
+      requirement: '4. Description of the data used for validation and testing',
+      orbitLogs: ['ValidationDataSummary.pdf', 'TestResults.json'],
+      description: 'Validation and testing data documentation with performance metrics',
+      example: 'orbit.log_validation() captures validation dataset details'
+    },
+    {
+      requirement: '5. Description of the AI system architecture',
+      orbitLogs: ['ModelArchitecture.md', 'ModelVersion.json'],
+      description: 'Model architecture and version information from deployment logs',
+      example: 'orbit.log_deployment() records architecture and version details'
+    },
+    {
+      requirement: '6. Description of the development process',
+      orbitLogs: ['DevelopmentLogs.json', 'VersionHistory.json'],
+      description: 'Complete development history including model iterations and changes',
+      example: 'orbit.log_version_change() tracks development process'
+    },
+    {
+      requirement: '7. Description of the validation and testing procedures',
+      orbitLogs: ['TestPlan.pdf', 'ValidationResults.json', 'PerformanceMetrics.json'],
+      description: 'Testing procedures and results documented in Orbit logs',
+      example: 'orbit.log_test() records validation procedures'
+    },
+    {
+      requirement: '8. Description of the human oversight measures',
+      orbitLogs: ['HumanOversightEvents.json', 'ReviewActions.json', 'EscalationLogs.json'],
+      description: 'All human oversight events including reviews, escalations, and interventions',
+      example: 'orbit.log_oversight() captures human oversight chain'
+    },
+    {
+      requirement: '9. Description of the risk management measures',
+      orbitLogs: ['RiskAssessments.json', 'MitigationActions.json', 'ErrorLogs.json'],
+      description: 'Risk management measures and mitigation actions from Orbit logs',
+      example: 'orbit.log_risk() documents risk management'
+    },
+    {
+      requirement: '10. Description of the monitoring and post-market surveillance',
+      orbitLogs: ['PostMarketMonitoring.json', 'DriftDetection.json', 'PerformanceMonitoring.json'],
+      description: 'Post-market monitoring and surveillance data from continuous logging',
+      example: 'orbit.log_monitoring() enables Annex VIII compliance'
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Annex IV Requirements Mapped to Orbit Logs</h2>
+      <p className="text-sm text-neutral-600 mb-6">
+        Every Annex IV requirement is automatically satisfied by Orbit's structured logging. Below is the complete mapping 
+        of Annex IV requirements to actual Orbit log types and generated documentation.
+      </p>
+      <div className="space-y-4">
+        {annexIVRequirements.map((req, idx) => (
+          <div key={idx} className="border border-neutral-200 rounded-lg p-4 bg-neutral-50 hover:bg-neutral-100 transition-colors">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {idx + 1}
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-neutral-900 mb-2">{req.requirement}</div>
+                <div className="text-sm text-neutral-700 mb-3">{req.description}</div>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {req.orbitLogs.map((log, logIdx) => (
+                    <span key={logIdx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">
+                      {log}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-xs text-neutral-600 bg-white rounded p-2 border border-neutral-200">
+                  <strong>Example:</strong> {req.example}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="font-semibold text-green-900 mb-2">Complete Coverage</div>
+        <div className="text-sm text-green-800">
+          Orbit's logging schema covers all 10 Annex IV requirements. When you generate a documentation bundle, 
+          Orbit automatically assembles all required documentation from your ingested logs, ensuring complete compliance 
+          without manual documentation work.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Security & Architecture Explainer
 function SecurityArchitectureExplainer() {
   return (
