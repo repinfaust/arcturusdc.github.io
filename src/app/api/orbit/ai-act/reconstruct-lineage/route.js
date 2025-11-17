@@ -229,10 +229,40 @@ export async function POST(request) {
     }
 
     if (logs.length === 0) {
-      return NextResponse.json(
-        { error: 'No logs found. Please upload logs first.' },
-        { status: 400 }
-      );
+      // Return a more helpful response - allow reconstruction with placeholder data
+      // This enables the demo to work even without uploaded logs
+      const placeholderLineage = {
+        nodes: [
+          { id: 'user', label: 'User', type: 'user', version: null, timestamp: new Date().toISOString() },
+          { id: 'kyc', label: 'KYC Check', type: 'process', version: null, timestamp: new Date().toISOString() },
+          { id: 'profile', label: 'Profile Snapshot', type: 'data', version: 'v3', timestamp: new Date().toISOString() },
+          { id: 'model', label: 'Risk Model', type: 'model', version: 'v2', timestamp: new Date().toISOString() },
+          { id: 'decision', label: 'Decision: APPROVED', type: 'decision', version: null, timestamp: new Date().toISOString() },
+        ],
+        edges: [
+          { from: 'user', to: 'kyc', type: 'triggers' },
+          { from: 'kyc', to: 'profile', type: 'creates' },
+          { from: 'profile', to: 'model', type: 'feeds' },
+          { from: 'model', to: 'decision', type: 'produces' },
+        ],
+        reconstructedAt: new Date().toISOString(),
+        sourceLogs: [],
+        note: 'No logs found. Using placeholder lineage for demonstration.',
+      };
+
+      // Store placeholder lineage
+      const lineageRef = db.collection(COLLECTIONS.AI_ACT_LINEAGE);
+      await lineageRef.add({
+        userId: session.user.uid,
+        lineage: placeholderLineage,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        lineage: placeholderLineage,
+        warning: 'No logs found. Using placeholder lineage for demonstration.',
+      });
     }
 
     // Reconstruct lineage
