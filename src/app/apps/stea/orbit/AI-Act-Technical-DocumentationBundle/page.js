@@ -313,7 +313,7 @@ export default function AIActTechnicalDocumentationPage() {
         {/* Lineage Tab */}
         {activeTab === 'lineage' && (
           <div className="space-y-6">
-            <LineageVisualizationExplainer />
+            <LineageVisualisationExplainer />
             <LineageVisualization lineage={lineage} onReconstructLineage={reconstructLineage} loading={loading} />
           </div>
         )}
@@ -814,7 +814,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading }) {
   return (
     <div className="bg-white rounded-2xl border border-neutral-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900">Data Lineage Visualization</h2>
+        <h2 className="text-2xl font-bold text-neutral-900">Data Lineage Visualisation</h2>
         {!lineage && (
           <button
             onClick={onReconstructLineage}
@@ -850,6 +850,13 @@ function LineageVisualization({ lineage, onReconstructLineage, loading }) {
             const x2 = 150 + toIdx * 200;
             const y2 = 200;
 
+            // Convert US to UK spelling
+            const edgeLabel = edge.type === 'triggers' ? 'triggers' :
+                            edge.type === 'creates' ? 'creates' :
+                            edge.type === 'feeds' ? 'feeds' :
+                            edge.type === 'produces' ? 'produces' :
+                            edge.type;
+
             return (
               <g key={idx}>
                 <line
@@ -863,12 +870,14 @@ function LineageVisualization({ lineage, onReconstructLineage, loading }) {
                 />
                 <text
                   x={(x1 + x2) / 2}
-                  y={y1 - 10}
+                  y={y1 - 15}
                   textAnchor="middle"
-                  className="text-xs fill-neutral-600"
-                  fontSize="10"
+                  fill="#6b7280"
+                  fontSize="11"
+                  fontWeight="500"
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
                 >
-                  {edge.type}
+                  {edgeLabel}
                 </text>
               </g>
             );
@@ -998,12 +1007,12 @@ function LineageVisualization({ lineage, onReconstructLineage, loading }) {
 }
 
 // Lineage Visualization Explainer
-function LineageVisualizationExplainer() {
+function LineageVisualisationExplainer() {
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-8">
-      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Data Lineage Visualization</h2>
+      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Data Lineage Visualisation</h2>
       <p className="text-neutral-700 mb-6">
-        Orbit reconstructs and visualizes complete data lineage from ingested logs, showing the flow from input to decision. 
+        Orbit reconstructs and visualises complete data lineage from ingested logs, showing the flow from input to decision. 
         This is your Datadog flame graph for AI Act compliance — the "wow moment" that demonstrates full traceability.
       </p>
     </div>
