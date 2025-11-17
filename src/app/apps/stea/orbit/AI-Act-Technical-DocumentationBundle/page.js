@@ -1065,6 +1065,9 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                             edge.type === 'produces' ? 'produces' :
                             edge.type;
 
+            // Position label above the arrow, well clear of the nodes
+            const labelY = y1 - 35; // Move further up to avoid node overlap
+
             return (
               <g key={idx}>
                 <line
@@ -1076,9 +1079,20 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                   strokeWidth="3"
                   markerEnd="url(#arrowhead)"
                 />
+                {/* Background rectangle for text to ensure visibility */}
+                <rect
+                  x={(x1 + x2) / 2 - 35}
+                  y={labelY - 8}
+                  width="70"
+                  height="16"
+                  fill="white"
+                  fillOpacity="0.9"
+                  stroke="none"
+                  rx="4"
+                />
                 <text
                   x={(x1 + x2) / 2}
-                  y={y1 - 15}
+                  y={labelY}
                   textAnchor="middle"
                   fill="#6b7280"
                   fontSize="11"
