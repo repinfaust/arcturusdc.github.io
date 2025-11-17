@@ -146,14 +146,14 @@ export default function OrbitPage() {
             <span>Cryptographically-Verifiable Audit-Log-as-a-Service</span>
           </div>
           <h2 className="text-5xl font-extrabold text-neutral-900 mb-6 leading-tight">
-            The declaration layer for a world where<br />
+            Compliance documentation as a service for<br />
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              AI, data, and identity must be auditable.
+              companies that sell high-risk AI systems.
             </span>
           </h2>
           <p className="text-xl text-neutral-600 leading-relaxed mb-8">
-            Orbit is not a data vault and never stores PII. It is a cryptographically-verifiable event ledger 
-            that sits around existing systems—the audit infrastructure layer that AI Act compliance will require.
+            Orbit provides the logging standard, integrity service, and compliance workflows that AI providers need 
+            to generate Annex IV, VIII, and XI technical documentation for customers and regulators.
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <div className="px-4 py-2 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm font-medium">
@@ -170,15 +170,15 @@ export default function OrbitPage() {
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
             <div className="text-4xl mb-4">🎯</div>
             <h3 className="text-2xl font-bold text-neutral-900 mb-3">
-              Not a source of truth for data values
+              Not crisis-response tooling
             </h3>
             <p className="text-2xl font-bold text-blue-600 mb-4">
-              → Proof of truth for data actions
+              → Readiness infrastructure for AI providers
             </p>
             <p className="text-neutral-700 leading-relaxed">
-              Orbit becomes the neutral audit surface between organisations and users. 
-              A portable, tamper-evident audit trail showing all organisations that hold or use data 
-              and what they declared they did with it.
+              Orbit is built for AI vendors and KYC/identity providers who must generate Annex IV documentation. 
+              We provide the logging SDK, integrity service, and compliance workflows to turn existing operations 
+              into regulator-ready technical documentation.
             </p>
           </div>
         </div>
