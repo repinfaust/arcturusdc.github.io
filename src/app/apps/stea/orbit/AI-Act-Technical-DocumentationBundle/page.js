@@ -1186,6 +1186,62 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
               </g>
             );
           })}
+
+          {/* Draw edge labels LAST so they appear on top of everything */}
+          {displayLineage.edges?.map((edge, idx) => {
+            const fromNode = displayLineage.nodes.find(n => n.id === edge.from);
+            const toNode = displayLineage.nodes.find(n => n.id === edge.to);
+            if (!fromNode || !toNode) return null;
+            
+            const fromIdx = displayLineage.nodes.indexOf(fromNode);
+            const toIdx = displayLineage.nodes.indexOf(toNode);
+            
+            // Center the diagram - calculate center offset
+            const totalWidth = (displayLineage.nodes.length - 1) * 200 + 100;
+            const centerOffset = (1000 - totalWidth) / 2;
+            
+            const x1 = centerOffset + fromIdx * 200;
+            const y1 = 280;
+            const x2 = centerOffset + toIdx * 200;
+
+            // Convert US to UK spelling
+            const edgeLabel = edge.type === 'triggers' ? 'triggers' :
+                            edge.type === 'creates' ? 'creates' :
+                            edge.type === 'feeds' ? 'feeds' :
+                            edge.type === 'produces' ? 'produces' :
+                            edge.type;
+
+            // Position label well above the nodes
+            const labelY = y1 - 90;
+
+            return (
+              <g key={`label-${idx}`}>
+                {/* Background rectangle for text to ensure visibility */}
+                <rect
+                  x={(x1 + x2) / 2 - 50}
+                  y={labelY - 12}
+                  width="100"
+                  height="24"
+                  fill="white"
+                  fillOpacity="1"
+                  stroke="#d1d5db"
+                  strokeWidth="1.5"
+                  rx="6"
+                />
+                <text
+                  x={(x1 + x2) / 2}
+                  y={labelY + 4}
+                  textAnchor="middle"
+                  fill="#1f2937"
+                  fontSize="13"
+                  fontWeight="700"
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
+                >
+                  {edgeLabel}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </div>
 
