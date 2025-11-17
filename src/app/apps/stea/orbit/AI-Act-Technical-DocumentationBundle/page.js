@@ -385,6 +385,7 @@ export default function AIActTechnicalDocumentationPage() {
               { id: 'dashboard', label: 'Compliance Dashboard' },
               { id: 'lineage', label: 'Lineage Visualisation' },
               { id: 'bundles', label: 'Documentation Bundles' },
+              { id: 'model-risk', label: 'Model Risk Team View' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -469,6 +470,15 @@ export default function AIActTechnicalDocumentationPage() {
               truncateHash={truncateHash}
             />
             <AnnexIVBundlePreview documentationBundle={documentationBundle} />
+            <AnnexIVBundleExample />
+          </div>
+        )}
+
+        {/* Model Risk Team View Tab */}
+        {activeTab === 'model-risk' && (
+          <div className="space-y-6">
+            <ModelRiskTeamViewExplainer />
+            <ModelRiskTeamView dashboardData={dashboardData} documentationBundle={documentationBundle} />
           </div>
         )}
       </div>
@@ -966,7 +976,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
               </button>
               <button
                 onClick={() => {
-                  if (addNotification) addNotification('PDF export functionality coming soon', 'info');
+                  exportLineageToPDF(displayLineage, addNotification);
                 }}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
               >
