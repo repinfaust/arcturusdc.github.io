@@ -260,7 +260,7 @@ export default function AIActTechnicalDocumentationPage() {
             {[
               { id: 'ingestion', label: 'Data Ingestion' },
               { id: 'dashboard', label: 'Compliance Dashboard' },
-              { id: 'lineage', label: 'Lineage Visualization' },
+              { id: 'lineage', label: 'Lineage Visualisation' },
               { id: 'bundles', label: 'Documentation Bundles' },
             ].map(tab => (
               <button
