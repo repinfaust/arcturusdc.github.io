@@ -13,7 +13,7 @@ export default function AIActTechnicalDocumentationPage() {
   const router = useRouter();
   const { availableTenants, loading: tenantLoading } = useTenant();
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('ingestion');
+  const [activeTab, setActiveTab] = useState('sdk');
   const [uploadedLogs, setUploadedLogs] = useState([]);
   const [lineage, setLineage] = useState(null);
   const [documentationBundle, setDocumentationBundle] = useState(null);
@@ -409,6 +409,14 @@ export default function AIActTechnicalDocumentationPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Orbit Logging SDK Tab */}
+        {activeTab === 'sdk' && (
+          <div className="space-y-6">
+            <LoggingSDKExplainer />
+            <LoggingSDKExamples />
+          </div>
+        )}
+
         {/* Ingestion Tab */}
         {activeTab === 'ingestion' && (
           <div className="space-y-6">
@@ -443,6 +451,18 @@ export default function AIActTechnicalDocumentationPage() {
             />
             <SourceLogsUsed dashboardData={dashboardData} />
             <RegulatoryVersionTracking regulatoryVersions={regulatoryVersions} />
+          </div>
+        )}
+
+        {/* Compliance Workflow Tab */}
+        {activeTab === 'workflow' && (
+          <div className="space-y-6">
+            <ComplianceWorkflowExplainer />
+            <ComplianceWorkflow 
+              dashboardData={dashboardData}
+              policyDeviations={policyDeviations}
+              documentationBundle={documentationBundle}
+            />
           </div>
         )}
 
