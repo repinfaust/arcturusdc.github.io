@@ -19,6 +19,17 @@
 * { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
+/* -------- Utilities -------- */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
+
 /* -------- Component layer -------- */
 @layer components {
   /* Cards */

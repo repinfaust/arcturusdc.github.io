@@ -380,7 +380,7 @@ export default function AIActTechnicalDocumentationPage() {
       {/* Tabs */}
       <div className="bg-white border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
+          <nav className="flex space-x-4 md:space-x-8 overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             {[
               { id: 'sdk', label: 'Orbit Logging SDK' },
               { id: 'kyc', label: 'Why KYC Needs Orbit' },
@@ -395,7 +395,7 @@ export default function AIActTechnicalDocumentationPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-4 px-2 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
@@ -409,7 +409,7 @@ export default function AIActTechnicalDocumentationPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
         {/* Orbit Logging SDK Tab */}
         {activeTab === 'sdk' && (
           <div className="space-y-6">
@@ -3117,19 +3117,19 @@ function ModelRiskTeamView({ dashboardData, documentationBundle }) {
 // Why KYC Needs Orbit Explainer
 function WhyKYCNeedsOrbitExplainer() {
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-8">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4">Why KYC Needs Orbit</h2>
-        <p className="text-neutral-700 mb-6">
+    <div className="space-y-4 md:space-y-6">
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-4 md:p-6 lg:p-8">
+        <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-3 md:mb-4">Why KYC Needs Orbit</h2>
+        <p className="text-sm md:text-base text-neutral-700 mb-4 md:mb-6">
           KYC (Know Your Customer) and Identity Verification providers operate high-risk AI systems that are subject to 
           the EU AI Act. These systems make critical decisions about customer identity, fraud risk, and compliance status. 
           Orbit provides the audit trail infrastructure needed for AI Act compliance.
         </p>
         
         {/* Who Uses Orbit in KYC Organisations */}
-        <div className="bg-white rounded-lg border border-amber-200 p-5 mb-6">
-          <h3 className="text-lg font-bold text-neutral-900 mb-3">Who Orbit is for inside KYC companies</h3>
-          <div className="grid md:grid-cols-2 gap-3">
+        <div className="bg-white rounded-lg border border-amber-200 p-4 md:p-5 mb-4 md:mb-6">
+          <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-2 md:mb-3">Who Orbit is for inside KYC companies</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
             <div className="flex items-start gap-2">
               <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">•</div>
               <div>
@@ -3161,40 +3161,40 @@ function WhyKYCNeedsOrbitExplainer() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-lg border border-amber-200 p-4">
-            <div className="font-semibold text-neutral-900 mb-2">High-Risk AI Systems</div>
-            <div className="text-sm text-neutral-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
+          <div className="bg-white rounded-lg border border-amber-200 p-3 md:p-4">
+            <div className="font-semibold text-sm md:text-base text-neutral-900 mb-1 md:mb-2">High-Risk AI Systems</div>
+            <div className="text-xs md:text-sm text-neutral-700">
               KYC systems are classified as high-risk under the AI Act because they make decisions affecting fundamental rights, 
               including access to financial services and identity verification.
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-amber-200 p-4">
-            <div className="font-semibold text-neutral-900 mb-2">Regulatory Requirements</div>
-            <div className="text-sm text-neutral-700">
+          <div className="bg-white rounded-lg border border-amber-200 p-3 md:p-4">
+            <div className="font-semibold text-sm md:text-base text-neutral-900 mb-1 md:mb-2">Regulatory Requirements</div>
+            <div className="text-xs md:text-sm text-neutral-700">
               KYC providers must demonstrate compliance with Annex IV technical documentation requirements, including 
               complete audit trails of all AI decisions, model versions, and human oversight.
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-amber-200 p-4">
-            <div className="font-semibold text-neutral-900 mb-2">Customer Demands</div>
-            <div className="text-sm text-neutral-700">
+          <div className="bg-white rounded-lg border border-amber-200 p-3 md:p-4">
+            <div className="font-semibold text-sm md:text-base text-neutral-900 mb-1 md:mb-2">Customer Demands</div>
+            <div className="text-xs md:text-sm text-neutral-700">
               Financial institutions and regulated entities require proof of AI Act compliance from their KYC vendors. 
               Without proper logging, you cannot generate the required documentation.
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-amber-200 p-4">
-            <div className="font-semibold text-neutral-900 mb-2">Competitive Advantage</div>
-            <div className="text-sm text-neutral-700">
+          <div className="bg-white rounded-lg border border-amber-200 p-3 md:p-4">
+            <div className="font-semibold text-sm md:text-base text-neutral-900 mb-1 md:mb-2">Competitive Advantage</div>
+            <div className="text-xs md:text-sm text-neutral-700">
               Orbit enables KYC providers to differentiate by offering regulator-ready compliance documentation, 
               reducing customer onboarding friction and audit burden.
             </div>
           </div>
         </div>
       </div>
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="font-semibold text-blue-900 mb-2">The Problem</div>
-        <div className="text-sm text-blue-800">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 md:p-5 mb-4 md:mb-6">
+        <div className="font-semibold text-sm md:text-base text-blue-900 mb-1 md:mb-2">The Problem</div>
+        <div className="text-xs md:text-sm text-blue-800">
           Most KYC providers don't have the logging infrastructure needed for AI Act compliance. They log basic events 
           but lack the structured, Annex IV-ready audit trail that Orbit provides. Without Orbit, generating compliance 
           documentation requires manual work and may be incomplete.
@@ -3202,46 +3202,46 @@ function WhyKYCNeedsOrbitExplainer() {
       </div>
 
       {/* Trigger Scenarios */}
-      <div className="bg-purple-50 border border-purple-200 rounded-lg p-5 mb-6">
-        <h3 className="text-lg font-bold text-neutral-900 mb-3">Common Trigger Scenarios</h3>
-        <p className="text-sm text-neutral-700 mb-4 font-medium">When do KYC vendors realise they need Orbit?</p>
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 md:p-5 mb-4 md:mb-6">
+        <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-2 md:mb-3">Common Trigger Scenarios</h3>
+        <p className="text-xs md:text-sm text-neutral-700 mb-3 md:mb-4 font-medium">When do KYC vendors realise they need Orbit?</p>
         <div className="space-y-2">
           <div className="flex items-start gap-2">
             <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">•</div>
-            <div className="text-sm text-neutral-800">A bank asks for Annex IV compliance evidence during procurement</div>
+            <div className="text-xs md:text-sm text-neutral-800">A bank asks for Annex IV compliance evidence during procurement</div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">•</div>
-            <div className="text-sm text-neutral-800">A customer's internal audit demands execution-level logs</div>
+            <div className="text-xs md:text-sm text-neutral-800">A customer's internal audit demands execution-level logs</div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">•</div>
-            <div className="text-sm text-neutral-800">Risk committee requests full lineage + oversight documentation</div>
+            <div className="text-xs md:text-sm text-neutral-800">Risk committee requests full lineage + oversight documentation</div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">•</div>
-            <div className="text-sm text-neutral-800">Enterprise clients delay onboarding due to missing compliance documents</div>
+            <div className="text-xs md:text-sm text-neutral-800">Enterprise clients delay onboarding due to missing compliance documents</div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">•</div>
-            <div className="text-sm text-neutral-800">Expansion into EU triggers legal review for AI Act readiness</div>
+            <div className="text-xs md:text-sm text-neutral-800">Expansion into EU triggers legal review for AI Act readiness</div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5">•</div>
-            <div className="text-sm text-neutral-800">ISO 42001 (AI Management Standard) requests detailed audit trails</div>
+            <div className="text-xs md:text-sm text-neutral-800">ISO 42001 (AI Management Standard) requests detailed audit trails</div>
           </div>
         </div>
-        <div className="mt-4 text-sm font-semibold text-purple-900">Orbit solves all of these immediately.</div>
+        <div className="mt-3 md:mt-4 text-xs md:text-sm font-semibold text-purple-900">Orbit solves all of these immediately.</div>
       </div>
 
       {/* Why Not Build This Yourself */}
-      <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-6">
-        <h3 className="text-lg font-bold text-neutral-900 mb-3">Why Not Build This Yourself?</h3>
-        <p className="text-sm text-neutral-700 mb-4">Building AI Act-ready logging internally typically takes:</p>
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 md:p-5 mb-4 md:mb-6">
+        <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-2 md:mb-3">Why Not Build This Yourself?</h3>
+        <p className="text-xs md:text-sm text-neutral-700 mb-3 md:mb-4">Building AI Act-ready logging internally typically takes:</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
           <div>
-            <div className="font-semibold text-neutral-900 mb-2 text-sm">KYC teams that attempt internal AI Act readiness typically face:</div>
-            <div className="space-y-2 text-sm text-neutral-700">
+            <div className="font-semibold text-neutral-900 mb-2 text-xs md:text-sm">KYC teams that attempt internal AI Act readiness typically face:</div>
+            <div className="space-y-2 text-xs md:text-sm text-neutral-700">
               <div className="flex items-start gap-2">
                 <span className="text-red-600">✗</span>
                 <span>2–6 months engineer time to design logging schema</span>
@@ -3269,8 +3269,8 @@ function WhyKYCNeedsOrbitExplainer() {
             </div>
           </div>
           <div>
-            <div className="font-semibold text-neutral-900 mb-2 text-sm">Orbit gives you:</div>
-            <div className="space-y-2 text-sm text-neutral-700">
+            <div className="font-semibold text-neutral-900 mb-2 text-xs md:text-sm">Orbit gives you:</div>
+            <div className="space-y-2 text-xs md:text-sm text-neutral-700">
               <div className="flex items-start gap-2">
                 <span className="text-green-600">✓</span>
                 <span>Standardised logs</span>
@@ -3294,59 +3294,59 @@ function WhyKYCNeedsOrbitExplainer() {
             </div>
           </div>
         </div>
-        <div className="text-sm font-semibold text-red-900">Orbit replaces all of this with a single SDK and automated documentation engine.</div>
+        <div className="text-xs md:text-sm font-semibold text-red-900">Orbit replaces all of this with a single SDK and automated documentation engine.</div>
       </div>
 
       {/* Orbit in KYC Architecture Diagram */}
-      <div className="bg-white rounded-lg border-2 border-neutral-300 p-6 mb-6">
-        <h3 className="text-lg font-bold text-neutral-900 mb-4">Orbit in a KYC Architecture</h3>
-        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 py-4">
-          <div className="bg-blue-100 rounded-lg px-4 py-2 border border-blue-300">
-            <div className="font-semibold text-blue-900 text-sm">User Input</div>
+      <div className="bg-white rounded-lg border-2 border-neutral-300 p-4 md:p-6 mb-4 md:mb-6">
+        <h3 className="text-base md:text-lg font-bold text-neutral-900 mb-3 md:mb-4">Orbit in a KYC Architecture</h3>
+        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 lg:gap-4 py-3 md:py-4">
+          <div className="bg-blue-100 rounded-lg px-3 md:px-4 py-1.5 md:py-2 border border-blue-300">
+            <div className="font-semibold text-blue-900 text-xs md:text-sm">User Input</div>
           </div>
-          <div className="text-2xl text-neutral-400">→</div>
-          <div className="bg-purple-100 rounded-lg px-4 py-2 border border-purple-300">
-            <div className="font-semibold text-purple-900 text-sm">KYC Model</div>
+          <div className="text-lg md:text-xl lg:text-2xl text-neutral-400">→</div>
+          <div className="bg-purple-100 rounded-lg px-3 md:px-4 py-1.5 md:py-2 border border-purple-300">
+            <div className="font-semibold text-purple-900 text-xs md:text-sm">KYC Model</div>
           </div>
-          <div className="text-2xl text-neutral-400">→</div>
-          <div className="bg-green-100 rounded-lg px-4 py-2 border border-green-300">
-            <div className="font-semibold text-green-900 text-sm">Orbit Logging SDK</div>
+          <div className="text-lg md:text-xl lg:text-2xl text-neutral-400">→</div>
+          <div className="bg-green-100 rounded-lg px-3 md:px-4 py-1.5 md:py-2 border border-green-300">
+            <div className="font-semibold text-green-900 text-xs md:text-sm">Orbit Logging SDK</div>
           </div>
-          <div className="text-2xl text-neutral-400">→</div>
-          <div className="bg-amber-100 rounded-lg px-4 py-2 border border-amber-300">
-            <div className="font-semibold text-amber-900 text-sm">Orbit Integrity Service</div>
+          <div className="text-lg md:text-xl lg:text-2xl text-neutral-400">→</div>
+          <div className="bg-amber-100 rounded-lg px-3 md:px-4 py-1.5 md:py-2 border border-amber-300">
+            <div className="font-semibold text-amber-900 text-xs md:text-sm">Orbit Integrity Service</div>
           </div>
-          <div className="text-2xl text-neutral-400">→</div>
-          <div className="bg-emerald-100 rounded-lg px-4 py-2 border border-emerald-300">
-            <div className="font-semibold text-emerald-900 text-sm">Compliance Bundles</div>
+          <div className="text-lg md:text-xl lg:text-2xl text-neutral-400">→</div>
+          <div className="bg-emerald-100 rounded-lg px-3 md:px-4 py-1.5 md:py-2 border border-emerald-300">
+            <div className="font-semibold text-emerald-900 text-xs md:text-sm">Compliance Bundles</div>
           </div>
         </div>
-        <p className="text-xs text-neutral-600 text-center mt-3">
+        <p className="text-xs text-neutral-600 text-center mt-2 md:mt-3">
           Orbit integrates seamlessly into your existing KYC pipeline without requiring changes to your ML stack.
         </p>
       </div>
 
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-neutral-900 mb-4">Call to Action</h3>
-        <p className="text-neutral-800 mb-4 font-medium">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-4 md:p-6">
+        <h3 className="text-lg md:text-xl font-bold text-neutral-900 mb-3 md:mb-4">Call to Action</h3>
+        <p className="text-sm md:text-base text-neutral-800 mb-3 md:mb-4 font-medium">
           If you are a KYC or identity verification vendor, Orbit unlocks two things immediately:
         </p>
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
+        <div className="space-y-2 md:space-y-3">
+          <div className="flex items-start gap-2 md:gap-3">
+            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-xs md:text-sm flex-shrink-0 mt-0.5">✓</div>
             <div>
-              <div className="font-semibold text-neutral-900">You become AI Act compliant without changing your ML stack.</div>
-              <div className="text-sm text-neutral-700 mt-1">
+              <div className="font-semibold text-sm md:text-base text-neutral-900">You become AI Act compliant without changing your ML stack.</div>
+              <div className="text-xs md:text-sm text-neutral-700 mt-1">
                 Orbit integrates with your existing infrastructure. Add Orbit logging to your models without modifying 
                 your ML pipeline or retraining models.
               </div>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
+          <div className="flex items-start gap-2 md:gap-3">
+            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-xs md:text-sm flex-shrink-0 mt-0.5">✓</div>
             <div>
-              <div className="font-semibold text-neutral-900">You gain a competitive edge in enterprise RFPs today — long before enforcement hits.</div>
-              <div className="text-sm text-neutral-700 mt-1">
+              <div className="font-semibold text-sm md:text-base text-neutral-900">You gain a competitive edge in enterprise RFPs today — long before enforcement hits.</div>
+              <div className="text-xs md:text-sm text-neutral-700 mt-1">
                 Stand out in enterprise sales cycles by offering regulator-ready compliance documentation. Win deals 
                 by demonstrating AI Act readiness while competitors are still scrambling.
               </div>
@@ -3443,9 +3443,9 @@ function AnnexIVRequirementsMapping() {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Annex IV Requirements Mapped to Orbit Logs</h2>
-      <p className="text-sm text-neutral-600 mb-6">
+    <div className="bg-white rounded-2xl border border-neutral-200 p-4 md:p-6">
+      <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-3 md:mb-4">Annex IV Requirements Mapped to Orbit Logs</h2>
+      <p className="text-xs md:text-sm text-neutral-600 mb-4 md:mb-6">
         Every Annex IV requirement is automatically satisfied by Orbit's structured logging. Below is the complete mapping 
         of Annex IV requirements to actual Orbit log types and generated documentation.
       </p>
@@ -3456,22 +3456,22 @@ function AnnexIVRequirementsMapping() {
             <div key={idx} className="border border-neutral-200 rounded-lg bg-neutral-50 overflow-hidden">
               <button
                 onClick={() => toggleRequirement(idx)}
-                className="w-full flex items-start gap-3 p-4 hover:bg-neutral-100 transition-colors text-left"
+                className="w-full flex items-start gap-2 md:gap-3 p-3 md:p-4 hover:bg-neutral-100 transition-colors text-left"
               >
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs md:text-sm flex-shrink-0">
                   {idx + 1}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{req.annexRef}</span>
-                    <div className="font-semibold text-neutral-900">{req.requirement}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                    <span className="text-xs font-mono bg-blue-100 text-blue-800 px-1.5 md:px-2 py-0.5 rounded flex-shrink-0">{req.annexRef}</span>
+                    <div className="font-semibold text-xs md:text-sm text-neutral-900 break-words">{req.requirement}</div>
                   </div>
                   {isExpanded && (
                     <>
-                      <div className="text-sm text-neutral-700 mb-3">{req.description}</div>
-                      <div className="flex flex-wrap gap-2 mb-2">
+                      <div className="text-xs md:text-sm text-neutral-700 mb-2 md:mb-3">{req.description}</div>
+                      <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2">
                         {req.orbitLogs.map((log, logIdx) => (
-                          <span key={logIdx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">
+                          <span key={logIdx} className="px-1.5 md:px-2 py-0.5 md:py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono break-all">
                             {log}
                           </span>
                         ))}
@@ -3482,7 +3482,7 @@ function AnnexIVRequirementsMapping() {
                     </>
                   )}
                 </div>
-                <div className="flex-shrink-0 text-neutral-400">
+                <div className="flex-shrink-0 text-neutral-400 text-sm md:text-base">
                   {isExpanded ? '▼' : '▶'}
                 </div>
               </button>
@@ -3490,9 +3490,9 @@ function AnnexIVRequirementsMapping() {
           );
         })}
       </div>
-      <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="font-semibold text-green-900 mb-2">Complete Coverage</div>
-        <div className="text-sm text-green-800">
+      <div className="mt-4 md:mt-6 bg-green-50 border border-green-200 rounded-lg p-3 md:p-4">
+        <div className="font-semibold text-sm md:text-base text-green-900 mb-1 md:mb-2">Complete Coverage</div>
+        <div className="text-xs md:text-sm text-green-800">
           Orbit's logging schema covers all 10 Annex IV requirements. When you generate a documentation bundle, 
           Orbit automatically assembles all required documentation from your ingested logs, ensuring complete compliance 
           without manual documentation work.
