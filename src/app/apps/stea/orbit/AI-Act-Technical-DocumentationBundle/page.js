@@ -4964,3 +4964,111 @@ function ComplianceWorkflow({ dashboardData, policyDeviations, documentationBund
     </div>
   );
 }
+
+// Security & Architecture Explainer
+function SecurityArchitectureExplainer() {
+  return (
+    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border-2 border-indigo-200 p-8">
+      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Security & Architecture</h2>
+      <p className="text-neutral-700 mb-6">
+        Orbit provides enterprise-grade security, cryptographic integrity, and architectural guarantees 
+        for AI system audit trail infrastructure. AI Act compliance is the first killer use case.
+      </p>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="font-semibold text-blue-900 mb-2">Positioning</div>
+        <div className="text-sm text-blue-800">
+          Orbit is AI System Audit Trail Infrastructure — with AI Act compliance as the first killer use case. 
+          This enables observability, traceability, lineage, integrity, monitoring, and documentation.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Security & Architecture Component
+function SecurityArchitecture() {
+  const [expandedSection, setExpandedSection] = useState('hash-chain');
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-4">Hash Chain Specification</h2>
+        <div className="bg-neutral-50 rounded-lg p-4">
+          <h3 className="font-semibold text-neutral-900 mb-2">Algorithm</h3>
+          <p className="text-sm text-neutral-700 mb-3">
+            SHA-256 for event hashing, HMAC-SHA256 for cryptographic signatures
+          </p>
+          <div className="bg-neutral-900 rounded-lg p-4 font-mono text-sm text-neutral-100">
+            <div>eventHash = SHA256(canonicalJSON(event) + signature)</div>
+            <div className="mt-2">previousEventHash → eventHash → nextEventHash</div>
+            <div className="mt-2">blockIndex = sequential counter per user/org</div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-4">Minimum Viable Log Set</h2>
+        <p className="text-sm text-neutral-600 mb-4">
+          Explicitly defined minimum log requirements for Annex IV compliance. Every extra log type is additive.
+        </p>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">1</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Input Features</div>
+              <div className="text-sm text-neutral-600">All input features used in model inference</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">2</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Model Version</div>
+              <div className="text-sm text-neutral-600">Exact model version identifier</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">3</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Output Decision</div>
+              <div className="text-sm text-neutral-600">Model output/decision</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">4</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Timestamp</div>
+              <div className="text-sm text-neutral-600">ISO 8601 timestamp of model execution</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">5</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Score / Confidence</div>
+              <div className="text-sm text-neutral-600">Model confidence score or risk score</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">6</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Human Oversight Events</div>
+              <div className="text-sm text-neutral-600">Review actions, escalations, manual interventions</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">7</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Error Logs</div>
+              <div className="text-sm text-neutral-600">Model errors, exceptions, fallback decisions</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 border-l-4 border-green-500 bg-green-50 p-4 rounded">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">8</div>
+            <div>
+              <div className="font-semibold text-neutral-900">Training Data Summary</div>
+              <div className="text-sm text-neutral-600">Data size, period, sources, preprocessing steps</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
