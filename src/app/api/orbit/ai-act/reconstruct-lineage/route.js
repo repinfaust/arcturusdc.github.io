@@ -197,15 +197,36 @@ export async function POST(request) {
     const logsRef = db.collection(COLLECTIONS.AI_ACT_LOGS);
     
     // Get all ingested logs for this user
-    const logsSnapshot = await logsRef
-      .where('uploadedBy', '==', session.user.uid)
-      .orderBy('uploadedAt', 'desc')
-      .get();
+    let logs;
+    try {
+      const logsSnapshot = await logsRef
+        .where('uploadedBy', '==', session.user.uid)
+        .orderBy('uploadedAt', 'desc')
+        .get();
 
-    const logs = logsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+      logs = logsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      // If orderBy fails (no index), fetch without ordering and sort in memory
+      console.warn('OrderBy failed, sorting in memory:', error.message);
+      const logsSnapshot = await logsRef
+        .where('uploadedBy', '==', session.user.uid)
+        .get();
+      
+      logs = logsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      
+      // Sort by uploadedAt descending in memory
+      logs.sort((a, b) => {
+        const aTime = a.uploadedAt?.toMillis?.() || a.uploadedAt?._seconds * 1000 || new Date(a.uploadedAt || 0).getTime() || 0;
+        const bTime = b.uploadedAt?.toMillis?.() || b.uploadedAt?._seconds * 1000 || new Date(b.uploadedAt || 0).getTime() || 0;
+        return bTime - aTime;
+      });
+    }
 
     if (logs.length === 0) {
       return NextResponse.json(
