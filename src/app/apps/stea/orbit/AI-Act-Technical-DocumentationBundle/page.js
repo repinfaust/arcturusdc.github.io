@@ -1035,8 +1035,8 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
       </div>
 
       {/* SVG Lineage Visualization */}
-      <div className="bg-neutral-50 rounded-lg p-8 overflow-x-auto">
-        <svg width="100%" height="400" viewBox="0 0 1000 400" className="min-w-[1000px]">
+      <div className="bg-neutral-50 rounded-lg p-8 overflow-x-auto flex justify-center">
+        <svg width="100%" height="450" viewBox="0 0 1000 450" className="max-w-full" preserveAspectRatio="xMidYMid meet">
           {/* Background grid */}
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -1053,10 +1053,15 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
             
             const fromIdx = displayLineage.nodes.indexOf(fromNode);
             const toIdx = displayLineage.nodes.indexOf(toNode);
-            const x1 = 150 + fromIdx * 200;
-            const y1 = 200;
-            const x2 = 150 + toIdx * 200;
-            const y2 = 200;
+            
+            // Center the diagram - calculate center offset
+            const totalWidth = (displayLineage.nodes.length - 1) * 200 + 100; // Total width of all nodes
+            const centerOffset = (1000 - totalWidth) / 2; // Center the nodes in the 1000px viewBox
+            
+            const x1 = centerOffset + fromIdx * 200;
+            const y1 = 225; // Move nodes down a bit to make room for labels
+            const x2 = centerOffset + toIdx * 200;
+            const y2 = 225;
 
             // Convert US to UK spelling
             const edgeLabel = edge.type === 'triggers' ? 'triggers' :
@@ -1065,8 +1070,8 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                             edge.type === 'produces' ? 'produces' :
                             edge.type;
 
-            // Position label above the arrow, well clear of the nodes
-            const labelY = y1 - 35; // Move further up to avoid node overlap
+            // Position label well above the nodes to ensure full visibility
+            const labelY = y1 - 50; // Move much higher to avoid any overlap
 
             return (
               <g key={idx}>
@@ -1079,24 +1084,25 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                   strokeWidth="3"
                   markerEnd="url(#arrowhead)"
                 />
-                {/* Background rectangle for text to ensure visibility */}
+                {/* Background rectangle for text to ensure visibility - make it wider */}
                 <rect
-                  x={(x1 + x2) / 2 - 35}
-                  y={labelY - 8}
-                  width="70"
-                  height="16"
+                  x={(x1 + x2) / 2 - 45}
+                  y={labelY - 10}
+                  width="90"
+                  height="20"
                   fill="white"
-                  fillOpacity="0.9"
-                  stroke="none"
+                  fillOpacity="0.95"
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
                   rx="4"
                 />
                 <text
                   x={(x1 + x2) / 2}
-                  y={labelY}
+                  y={labelY + 2}
                   textAnchor="middle"
-                  fill="#6b7280"
-                  fontSize="11"
-                  fontWeight="500"
+                  fill="#374151"
+                  fontSize="12"
+                  fontWeight="600"
                   style={{ pointerEvents: 'none', userSelect: 'none' }}
                 >
                   {edgeLabel}
@@ -1119,10 +1125,14 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
             </marker>
           </defs>
 
-          {/* Draw nodes */}
-          {displayLineage.nodes?.map((node, idx) => {
-            const x = 150 + idx * 200;
-            const y = 200;
+              {/* Draw nodes */}
+              {displayLineage.nodes?.map((node, idx) => {
+                // Center the diagram - calculate center offset
+                const totalWidth = (displayLineage.nodes.length - 1) * 200 + 100;
+                const centerOffset = (1000 - totalWidth) / 2;
+                
+                const x = centerOffset + idx * 200;
+                const y = 225; // Match the y position used for edges
             const nodeColors = {
               user: '#8b5cf6',
               process: '#3b82f6',
