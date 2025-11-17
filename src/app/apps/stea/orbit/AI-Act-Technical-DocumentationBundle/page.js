@@ -383,6 +383,7 @@ export default function AIActTechnicalDocumentationPage() {
           <nav className="flex space-x-8">
             {[
               { id: 'sdk', label: 'Orbit Logging SDK' },
+              { id: 'kyc', label: 'Why KYC Needs Orbit' },
               { id: 'ingestion', label: 'Data Ingestion' },
               { id: 'dashboard', label: 'Compliance Dashboard' },
               { id: 'workflow', label: 'Compliance Workflow' },
@@ -414,6 +415,14 @@ export default function AIActTechnicalDocumentationPage() {
           <div className="space-y-6">
             <LoggingSDKExplainer />
             <LoggingSDKExamples />
+          </div>
+        )}
+
+        {/* Why KYC Needs Orbit Tab */}
+        {activeTab === 'kyc' && (
+          <div className="space-y-6">
+            <WhyKYCNeedsOrbitExplainer />
+            <AnnexIVRequirementsMapping />
           </div>
         )}
 
