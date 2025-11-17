@@ -31,6 +31,20 @@ export default function AIActTechnicalDocumentationPage() {
     violationsDetected: 2,
     bundlesGenerated: 5,
     riskScore: 78,
+    sourceLogsUsed: {
+      s3: true,
+      pubsub: false,
+      onprem: true,
+      azure: false,
+    },
+  });
+
+  // Regulatory version tracking
+  const [regulatoryVersions, setRegulatoryVersions] = useState({
+    regulationVersion: 'EU AI Act 2024/1689',
+    templateVersion: '1.2.0',
+    interpretationVersion: '2024.11',
+    orbitVersion: '1.0.0',
   });
 
   // Add notification
@@ -196,6 +210,110 @@ export default function AIActTechnicalDocumentationPage() {
 
   // Download documentation bundle
   const downloadBundle = (type = 'full') => {
+    if (type === 'lineage') {
+      // Export lineage as JSON
+      if (!lineage) {
+        addNotification('No lineage data available', 'warning');
+        return;
+      }
+      const blob = new Blob([JSON.stringify(lineage, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DecisionLineage-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addNotification('Lineage exported as JSON', 'success');
+      return;
+    }
+
+    if (type === 'integrity') {
+      // Export evidence integrity report
+      const report = {
+        completenessScore,
+        policyDeviations,
+        generatedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `EvidenceIntegrityReport-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addNotification('Evidence Integrity Report exported', 'success');
+      return;
+    }
+
+    if (type === 'modelcard') {
+      // Export model card
+      if (!documentationBundle) {
+        addNotification('No documentation bundle available', 'warning');
+        return;
+      }
+      const modelCard = {
+        modelVersion: documentationBundle.modelVersion,
+        modelType: 'Risk Assessment Model',
+        purpose: 'Credit decision support',
+        trainingData: 'Extracted from logs',
+        performanceMetrics: 'Extracted from inference logs',
+        limitations: 'Identified from training data analysis',
+        generatedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(modelCard, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ModelCard-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addNotification('Model Card exported', 'success');
+      return;
+    }
+
+    if (type === 'scorecard') {
+      // Export compliance scorecard
+      const scorecard = {
+        annexIV: {
+          score: documentationBundle ? 
+            (documentationBundle.inputs?.length > 0 ? 20 : 0) +
+            (documentationBundle.outputs?.length > 0 ? 20 : 0) +
+            (documentationBundle.modelVersion ? 20 : 0) +
+            (documentationBundle.oversightChain?.length > 0 ? 20 : 0) +
+            (documentationBundle.training ? 20 : 0) : 0,
+        },
+        annexVIII: {
+          score: documentationBundle ?
+            (documentationBundle.logCompleteness?.totalLogs > 0 ? 33 : 0) +
+            (documentationBundle.attestations?.length > 0 ? 33 : 0) +
+            (documentationBundle.monitoring ? 34 : 0) : 0,
+        },
+        annexXI: {
+          score: documentationBundle ?
+            (documentationBundle.consentBasis ? 33 : 0) +
+            (documentationBundle.policyCompliance ? 33 : 0) +
+            (documentationBundle.qualityManagement ? 34 : 0) : 0,
+        },
+        overallScore: completenessScore,
+        generatedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(scorecard, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ComplianceScorecard-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addNotification('Compliance Scorecard exported', 'success');
+      return;
+    }
+
     if (!documentationBundle) {
       addNotification('No documentation bundle available', 'warning');
       return;
@@ -209,12 +327,12 @@ export default function AIActTechnicalDocumentationPage() {
     const filename = type === 'full' 
       ? `FullTechnicalDocumentationBundle-${new Date().toISOString().split('T')[0]}.zip`
       : type === 'training' 
-      ? `TrainingDataSummary-${new Date().toISOString().split('T')[0]}.pdf`
+      ? `TrainingDataSummary-${new Date().toISOString().split('T')[0]}.json`
       : type === 'lineage'
       ? `DecisionLineage-${new Date().toISOString().split('T')[0]}.json`
       : type === 'oversight'
-      ? `HumanOversightEvidence-${new Date().toISOString().split('T')[0]}.pdf`
-      : `ModelExecutionTrace-${new Date().toISOString().split('T')[0]}.md`;
+      ? `HumanOversightEvidence-${new Date().toISOString().split('T')[0]}.json`
+      : `ModelExecutionTrace-${new Date().toISOString().split('T')[0]}.json`;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
@@ -293,6 +411,11 @@ export default function AIActTechnicalDocumentationPage() {
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             <DashboardExplainer />
+            <ComplianceScorecard 
+              completenessScore={completenessScore}
+              documentationBundle={documentationBundle}
+              onExport={downloadBundle}
+            />
             <ComplianceDashboard 
               dashboardData={dashboardData}
               completenessScore={completenessScore}
@@ -306,7 +429,10 @@ export default function AIActTechnicalDocumentationPage() {
               completenessScore={completenessScore}
               policyDeviations={policyDeviations}
               dashboardData={dashboardData}
+              onExport={downloadBundle}
             />
+            <SourceLogsUsed dashboardData={dashboardData} />
+            <RegulatoryVersionTracking regulatoryVersions={regulatoryVersions} />
           </div>
         )}
 
@@ -314,7 +440,13 @@ export default function AIActTechnicalDocumentationPage() {
         {activeTab === 'lineage' && (
           <div className="space-y-6">
             <LineageVisualisationExplainer />
-            <LineageVisualization lineage={lineage} onReconstructLineage={reconstructLineage} loading={loading} />
+            <LineageVisualization 
+              lineage={lineage} 
+              onReconstructLineage={reconstructLineage} 
+              loading={loading}
+              onExport={downloadBundle}
+              addNotification={addNotification}
+            />
           </div>
         )}
 
@@ -322,7 +454,10 @@ export default function AIActTechnicalDocumentationPage() {
         {activeTab === 'bundles' && (
           <div className="space-y-6">
             <BundlesExplainer />
-            <ModelCardGenerator documentationBundle={documentationBundle} />
+            <ModelCardGenerator 
+              documentationBundle={documentationBundle}
+              onExport={downloadBundle}
+            />
             <DocumentationBundles 
               documentationBundle={documentationBundle}
               onDownloadBundle={downloadBundle}
@@ -815,15 +950,73 @@ function LineageVisualization({ lineage, onReconstructLineage, loading }) {
     <div className="bg-white rounded-2xl border border-neutral-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-neutral-900">Data Lineage Visualisation</h2>
-        {!lineage && (
-          <button
-            onClick={onReconstructLineage}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Reconstructing...' : 'Reconstruct Lineage'}
-          </button>
-        )}
+        <div className="flex gap-2">
+          {lineage && (
+            <>
+              <button
+                onClick={() => onExport && onExport('lineage')}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+              >
+                📥 Export JSON
+              </button>
+              <button
+                onClick={() => {
+                  if (addNotification) addNotification('PDF export functionality coming soon', 'info');
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+              >
+                📄 Export PDF
+              </button>
+              <button
+                onClick={() => {
+                  const svg = document.querySelector('svg');
+                  if (!svg) {
+                    if (addNotification) addNotification('No lineage graph to export', 'warning');
+                    return;
+                  }
+                  
+                  // Convert SVG to PNG
+                  const svgData = new XMLSerializer().serializeToString(svg);
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d');
+                  const img = new Image();
+                  
+                  canvas.width = svg.viewBox.baseVal.width || 1000;
+                  canvas.height = svg.viewBox.baseVal.height || 400;
+                  
+                  img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => {
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `lineage-${new Date().toISOString().split('T')[0]}.png`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                      if (addNotification) addNotification('Lineage graph exported as PNG', 'success');
+                    });
+                  };
+                  
+                  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              >
+                🖼️ Export PNG
+              </button>
+            </>
+          )}
+          {!lineage && (
+            <button
+              onClick={onReconstructLineage}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Reconstructing...' : 'Reconstruct Lineage'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* SVG Lineage Visualization */}
@@ -1033,12 +1226,20 @@ function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboar
     <div className="bg-white rounded-2xl border border-neutral-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold text-neutral-900">Evidence Integrity Report</h2>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="text-sm text-blue-600 hover:text-blue-700"
-        >
-          {expanded ? '▼ Collapse' : '▶ Expand'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onExport && onExport('integrity')}
+            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+          >
+            📥 Export PDF
+          </button>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-sm text-blue-600 hover:text-blue-700"
+          >
+            {expanded ? '▼ Collapse' : '▶ Expand'}
+          </button>
+        </div>
       </div>
 
       {expanded && (
@@ -1135,7 +1336,7 @@ function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboar
 }
 
 // Model Card Generator
-function ModelCardGenerator({ documentationBundle }) {
+function ModelCardGenerator({ documentationBundle, onExport }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!documentationBundle) {
@@ -1161,12 +1362,20 @@ function ModelCardGenerator({ documentationBundle }) {
             Every high-risk AI system needs a model card. Orbit automatically generates Annex IV-compliant model cards from your logs.
           </p>
         </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-        >
-          {expanded ? 'Hide Preview' : 'Show Preview'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onExport && onExport('modelcard')}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+          >
+            📥 Export PDF
+          </button>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+          >
+            {expanded ? 'Hide Preview' : 'Show Preview'}
+          </button>
+        </div>
       </div>
 
       {expanded && (

@@ -180,6 +180,12 @@ export async function POST(request) {
         version: '1.0',
         purpose: 'AI Act Technical Documentation',
         generatedBy: session.user.uid,
+        regulatoryVersions: {
+          regulationVersion: 'EU AI Act 2024/1689',
+          templateVersion: '1.2.0',
+          interpretationVersion: '2024.11',
+          orbitVersion: '1.0.0',
+        },
       },
       modelVersion,
       inputs,
