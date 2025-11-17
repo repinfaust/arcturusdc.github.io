@@ -41,6 +41,7 @@ export async function middleware(req) {
     '/apps/stea/hans',
     '/apps/stea/harls',
     '/apps/stea/orbit/poc',
+    '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
     '/apps/stea/toume',
     '/stea/admin',
     '/stea/automatedtestsdashboard',
@@ -49,6 +50,7 @@ export async function middleware(req) {
     '/stea/hans',
     '/stea/harls',
     '/stea/orbit/poc',
+    '/stea/orbit/AI-Act-Technical-DocumentationBundle',
     '/stea/toume',
   ];
 

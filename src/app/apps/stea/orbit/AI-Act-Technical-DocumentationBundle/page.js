@@ -41,26 +41,23 @@ export default function AIActTechnicalDocumentationPage() {
   // Auth check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        router.push('/apps/stea');
-        return;
-      }
       setAuthLoading(false);
+      if (!firebaseUser) {
+        router.replace('/apps/stea?next=/apps/stea/orbit/AI-Act-Technical-DocumentationBundle');
+      }
     });
-
     return () => unsubscribe();
   }, [router]);
 
-  // Tenant check
+  // Authorization check - must be member of Orbit POC workspace
   useEffect(() => {
-    if (tenantLoading || authLoading) return;
-    
-    const hasAccess = availableTenants?.some(
-      tenant => tenant.tenantId === ORBIT_POC_TENANT_ID
-    );
-    
-    if (!hasAccess) {
-      router.push('/apps/stea');
+    if (!tenantLoading && !authLoading) {
+      const hasOrbitPocAccess = availableTenants?.some(
+        tenant => tenant.id === ORBIT_POC_TENANT_ID || tenant.tenantId === ORBIT_POC_TENANT_ID
+      );
+      if (!hasOrbitPocAccess) {
+        router.replace('/apps/stea?error=no_orbit_poc_access');
+      }
     }
   }, [availableTenants, tenantLoading, authLoading, router]);
 
