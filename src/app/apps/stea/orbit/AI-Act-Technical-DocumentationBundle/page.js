@@ -363,7 +363,8 @@ export default function AIActTechnicalDocumentationPage() {
             <div>
               <h1 className="text-3xl font-bold text-neutral-900">AI Act Technical Documentation</h1>
               <p className="text-sm text-neutral-600 mt-1">
-                Orbit automates Annex IV, VIII, and XI technical documentation using existing logs — no code changes, no new standards to adopt.
+                Compliance documentation as a service for AI providers. Generate Annex IV, VIII, and XI technical documentation 
+                using the Orbit Logging SDK and Integrity Service.
               </p>
             </div>
             <Link
@@ -381,8 +382,10 @@ export default function AIActTechnicalDocumentationPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
             {[
+              { id: 'sdk', label: 'Orbit Logging SDK' },
               { id: 'ingestion', label: 'Data Ingestion' },
               { id: 'dashboard', label: 'Compliance Dashboard' },
+              { id: 'workflow', label: 'Compliance Workflow' },
               { id: 'lineage', label: 'Lineage Visualisation' },
               { id: 'bundles', label: 'Documentation Bundles' },
               { id: 'model-risk', label: 'Model Risk Team View' },
