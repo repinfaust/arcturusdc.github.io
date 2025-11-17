@@ -507,34 +507,40 @@ export default function OrbitPage() {
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-neutral-900 mb-4">Try Orbit PoCs</h2>
+          <h2 className="text-3xl font-bold text-neutral-900 mb-4">Try Orbit PoC</h2>
           <p className="text-neutral-600 mb-8">
-            Explore our proof-of-concept implementations
+            Proof-of-concept for AI providers: Logging SDK, Compliance Workflows, and Technical Documentation Generation
           </p>
         </div>
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-            <div className="text-3xl mb-3">👤</div>
-            <h3 className="text-lg font-bold text-blue-900 mb-2">User Consent & Data Usage</h3>
-            <p className="text-sm text-neutral-700 mb-4">
-              Interactive POC dashboard with demo data, consent management, and event simulation
+        <div className="max-w-2xl mx-auto">
+          <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-8">
+            <div className="text-4xl mb-4">📋</div>
+            <h3 className="text-2xl font-bold text-purple-900 mb-3">AI Act Technical Documentation</h3>
+            <p className="text-neutral-700 mb-6">
+              Compliance documentation as a service for AI providers. Generate Annex IV, VIII, and XI technical documentation 
+              using the Orbit Logging SDK, Integrity Service, and Compliance Workflows.
             </p>
-            <Link
-              href="/apps/stea/orbit/poc"
-              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-            >
-              Open Consent POC →
-            </Link>
-          </div>
-          <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-6">
-            <div className="text-3xl mb-3">📋</div>
-            <h3 className="text-lg font-bold text-purple-900 mb-2">AI Act Technical Documentation</h3>
-            <p className="text-sm text-neutral-700 mb-4">
-              Automated compliance documentation from logs → lineage → regulator-ready proofs
-            </p>
+            <div className="space-y-3 mb-6">
+              <div className="flex items-start gap-3">
+                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-sm text-neutral-700"><strong>Orbit Logging SDK:</strong> Open standard for Annex IV-ready logging (Python, Node.js, Java, Go)</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-sm text-neutral-700"><strong>Orbit Integrity Service:</strong> Cryptographic signing and hash chain linking for tamper-evident logs</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-sm text-neutral-700"><strong>Compliance Workflows:</strong> Active governance alerts and compliance tasks powered by policy engine</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-sm text-neutral-700"><strong>Documentation Generation:</strong> Automated Annex IV, VIII, XI bundles from logs</span>
+              </div>
+            </div>
             <Link
               href="/apps/stea/orbit/AI-Act-Technical-DocumentationBundle"
-              className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+              className="inline-block px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               Open AI Act POC →
             </Link>
