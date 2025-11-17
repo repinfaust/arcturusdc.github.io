@@ -1036,7 +1036,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
 
       {/* SVG Lineage Visualization */}
       <div className="bg-neutral-50 rounded-lg p-8 overflow-x-auto flex justify-center">
-        <svg width="100%" height="450" viewBox="0 0 1000 450" className="max-w-full" preserveAspectRatio="xMidYMid meet">
+        <svg width="100%" height="500" viewBox="0 0 1000 500" className="max-w-full" preserveAspectRatio="xMidYMid meet">
           {/* Background grid */}
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -1059,9 +1059,9 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
             const centerOffset = (1000 - totalWidth) / 2; // Center the nodes in the 1000px viewBox
             
             const x1 = centerOffset + fromIdx * 200;
-            const y1 = 225; // Move nodes down a bit to make room for labels
+            const y1 = 280; // Move nodes further down to make room for labels
             const x2 = centerOffset + toIdx * 200;
-            const y2 = 225;
+            const y2 = 280;
 
             // Convert US to UK spelling
             const edgeLabel = edge.type === 'triggers' ? 'triggers' :
@@ -1070,8 +1070,8 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                             edge.type === 'produces' ? 'produces' :
                             edge.type;
 
-            // Position label well above the nodes to ensure full visibility
-            const labelY = y1 - 50; // Move much higher to avoid any overlap
+            // Position label well above the nodes to ensure full visibility - much higher
+            const labelY = y1 - 90; // Move much higher to avoid any overlap with nodes
 
             return (
               <g key={idx}>
@@ -1084,25 +1084,25 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                   strokeWidth="3"
                   markerEnd="url(#arrowhead)"
                 />
-                {/* Background rectangle for text to ensure visibility - make it wider */}
+                {/* Background rectangle for text to ensure visibility - make it wider and taller */}
                 <rect
-                  x={(x1 + x2) / 2 - 45}
-                  y={labelY - 10}
-                  width="90"
-                  height="20"
+                  x={(x1 + x2) / 2 - 50}
+                  y={labelY - 12}
+                  width="100"
+                  height="24"
                   fill="white"
-                  fillOpacity="0.95"
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                  rx="4"
+                  fillOpacity="1"
+                  stroke="#d1d5db"
+                  strokeWidth="1.5"
+                  rx="6"
                 />
                 <text
                   x={(x1 + x2) / 2}
-                  y={labelY + 2}
+                  y={labelY + 4}
                   textAnchor="middle"
-                  fill="#374151"
-                  fontSize="12"
-                  fontWeight="600"
+                  fill="#1f2937"
+                  fontSize="13"
+                  fontWeight="700"
                   style={{ pointerEvents: 'none', userSelect: 'none' }}
                 >
                   {edgeLabel}
@@ -1125,14 +1125,14 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
             </marker>
           </defs>
 
-              {/* Draw nodes */}
+          {/* Draw nodes AFTER edges so they appear on top */}
               {displayLineage.nodes?.map((node, idx) => {
                 // Center the diagram - calculate center offset
                 const totalWidth = (displayLineage.nodes.length - 1) * 200 + 100;
                 const centerOffset = (1000 - totalWidth) / 2;
                 
                 const x = centerOffset + idx * 200;
-                const y = 225; // Match the y position used for edges
+                const y = 280; // Match the y position used for edges
             const nodeColors = {
               user: '#8b5cf6',
               process: '#3b82f6',
