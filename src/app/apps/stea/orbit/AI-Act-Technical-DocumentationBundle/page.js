@@ -1540,3 +1540,258 @@ function AnnexIVBundlePreview({ documentationBundle }) {
     </div>
   );
 }
+
+// Compliance Scorecard Component
+function ComplianceScorecard({ completenessScore, documentationBundle, onExport }) {
+  // Calculate Annex-specific scores
+  const annexIVScore = documentationBundle ? 
+    (documentationBundle.inputs?.length > 0 ? 20 : 0) +
+    (documentationBundle.outputs?.length > 0 ? 20 : 0) +
+    (documentationBundle.modelVersion ? 20 : 0) +
+    (documentationBundle.oversightChain?.length > 0 ? 20 : 0) +
+    (documentationBundle.training ? 20 : 0)
+    : 0;
+  
+  const annexVIIIScore = documentationBundle ?
+    (documentationBundle.logCompleteness?.totalLogs > 0 ? 33 : 0) +
+    (documentationBundle.attestations?.length > 0 ? 33 : 0) +
+    (documentationBundle.monitoring ? 34 : 0)
+    : 0;
+  
+  const annexXIScore = documentationBundle ?
+    (documentationBundle.consentBasis ? 33 : 0) +
+    (documentationBundle.policyCompliance ? 33 : 0) +
+    (documentationBundle.qualityManagement ? 34 : 0)
+    : 0;
+
+  const getScoreColor = (score) => {
+    if (score >= 80) return 'green';
+    if (score >= 60) return 'amber';
+    return 'red';
+  };
+
+  const getScoreLabel = (score) => {
+    if (score >= 80) return 'Complete';
+    if (score >= 60) return 'Partial';
+    return 'Incomplete';
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-neutral-900">Full Compliance Scorecard</h2>
+          <p className="text-sm text-neutral-600 mt-1">
+            Executive heatmap showing AI Act Annex compliance status
+          </p>
+        </div>
+        <button
+          onClick={() => onExport && onExport('scorecard')}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+        >
+          📥 Export PDF
+        </button>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Annex IV */}
+        <div className={`border-2 rounded-lg p-6 ${
+          getScoreColor(annexIVScore) === 'green' ? 'border-green-500 bg-green-50' :
+          getScoreColor(annexIVScore) === 'amber' ? 'border-amber-500 bg-amber-50' :
+          'border-red-500 bg-red-50'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-neutral-900">Annex IV</h3>
+            <div className={`w-4 h-4 rounded-full ${
+              getScoreColor(annexIVScore) === 'green' ? 'bg-green-500' :
+              getScoreColor(annexIVScore) === 'amber' ? 'bg-amber-500' :
+              'bg-red-500'
+            }`}></div>
+          </div>
+          <div className="text-4xl font-bold text-neutral-900 mb-2">{annexIVScore}%</div>
+          <div className="text-sm text-neutral-600 mb-4">{getScoreLabel(annexIVScore)}</div>
+          <div className="text-xs text-neutral-700">
+            <div className="font-semibold mb-2">Technical Documentation:</div>
+            <div className="space-y-1">
+              <div>• Inputs: {documentationBundle?.inputs?.length > 0 ? '✓' : '✗'}</div>
+              <div>• Outputs: {documentationBundle?.outputs?.length > 0 ? '✓' : '✗'}</div>
+              <div>• Model Version: {documentationBundle?.modelVersion ? '✓' : '✗'}</div>
+              <div>• Oversight Chain: {documentationBundle?.oversightChain?.length > 0 ? '✓' : '✗'}</div>
+              <div>• Training Data: {documentationBundle?.training ? '✓' : '✗'}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Annex VIII */}
+        <div className={`border-2 rounded-lg p-6 ${
+          getScoreColor(annexVIIIScore) === 'green' ? 'border-green-500 bg-green-50' :
+          getScoreColor(annexVIIIScore) === 'amber' ? 'border-amber-500 bg-amber-50' :
+          'border-red-500 bg-red-50'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-neutral-900">Annex VIII</h3>
+            <div className={`w-4 h-4 rounded-full ${
+              getScoreColor(annexVIIIScore) === 'green' ? 'bg-green-500' :
+              getScoreColor(annexVIIIScore) === 'amber' ? 'bg-amber-500' :
+              'bg-red-500'
+            }`}></div>
+          </div>
+          <div className="text-4xl font-bold text-neutral-900 mb-2">{annexVIIIScore}%</div>
+          <div className="text-sm text-neutral-600 mb-4">{getScoreLabel(annexVIIIScore)}</div>
+          <div className="text-xs text-neutral-700">
+            <div className="font-semibold mb-2">Post-Market Monitoring:</div>
+            <div className="space-y-1">
+              <div>• Log Completeness: {documentationBundle?.logCompleteness?.totalLogs > 0 ? '✓' : '✗'}</div>
+              <div>• Attestations: {documentationBundle?.attestations?.length > 0 ? '✓' : '✗'}</div>
+              <div>• Monitoring Evidence: {documentationBundle?.monitoring ? '✓' : '✗'}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Annex XI */}
+        <div className={`border-2 rounded-lg p-6 ${
+          getScoreColor(annexXIScore) === 'green' ? 'border-green-500 bg-green-50' :
+          getScoreColor(annexXIScore) === 'amber' ? 'border-amber-500 bg-amber-50' :
+          'border-red-500 bg-red-50'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-neutral-900">Annex XI</h3>
+            <div className={`w-4 h-4 rounded-full ${
+              getScoreColor(annexXIScore) === 'green' ? 'bg-green-500' :
+              getScoreColor(annexXIScore) === 'amber' ? 'bg-amber-500' :
+              'bg-red-500'
+            }`}></div>
+          </div>
+          <div className="text-4xl font-bold text-neutral-900 mb-2">{annexXIScore}%</div>
+          <div className="text-sm text-neutral-600 mb-4">{getScoreLabel(annexXIScore)}</div>
+          <div className="text-xs text-neutral-700">
+            <div className="font-semibold mb-2">Quality Management:</div>
+            <div className="space-y-1">
+              <div>• Consent Basis: {documentationBundle?.consentBasis ? '✓' : '✗'}</div>
+              <div>• Policy Compliance: {documentationBundle?.policyCompliance ? '✓' : '✗'}</div>
+              <div>• QMS Artefacts: {documentationBundle?.qualityManagement ? '✓' : '✗'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Source Logs Used Component
+function SourceLogsUsed({ dashboardData }) {
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Source Logs Used</h2>
+      <p className="text-sm text-neutral-600 mb-4">
+        Ingestion sources confirmed for Annex VIII post-market monitoring evidence
+      </p>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`border-2 rounded-lg p-4 ${
+          dashboardData.sourceLogsUsed?.s3 
+            ? 'border-green-500 bg-green-50' 
+            : 'border-neutral-200 bg-neutral-50'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-semibold text-neutral-900">AWS S3</div>
+            {dashboardData.sourceLogsUsed?.s3 ? (
+              <span className="text-green-600 font-bold">✓</span>
+            ) : (
+              <span className="text-neutral-400">○</span>
+            )}
+          </div>
+          <div className="text-xs text-neutral-600">
+            {dashboardData.sourceLogsUsed?.s3 ? 'Ingestion complete' : 'Not configured'}
+          </div>
+        </div>
+
+        <div className={`border-2 rounded-lg p-4 ${
+          dashboardData.sourceLogsUsed?.pubsub 
+            ? 'border-green-500 bg-green-50' 
+            : 'border-neutral-200 bg-neutral-50'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-semibold text-neutral-900">Google Pub/Sub</div>
+            {dashboardData.sourceLogsUsed?.pubsub ? (
+              <span className="text-green-600 font-bold">✓</span>
+            ) : (
+              <span className="text-neutral-400">○</span>
+            )}
+          </div>
+          <div className="text-xs text-neutral-600">
+            {dashboardData.sourceLogsUsed?.pubsub ? 'Ingestion complete' : 'Not configured'}
+          </div>
+        </div>
+
+        <div className={`border-2 rounded-lg p-4 ${
+          dashboardData.sourceLogsUsed?.onprem 
+            ? 'border-green-500 bg-green-50' 
+            : 'border-neutral-200 bg-neutral-50'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-semibold text-neutral-900">On-Prem Agent</div>
+            {dashboardData.sourceLogsUsed?.onprem ? (
+              <span className="text-green-600 font-bold">✓</span>
+            ) : (
+              <span className="text-neutral-400">○</span>
+            )}
+          </div>
+          <div className="text-xs text-neutral-600">
+            {dashboardData.sourceLogsUsed?.onprem ? 'Ingestion complete' : 'Not configured'}
+          </div>
+        </div>
+
+        <div className={`border-2 rounded-lg p-4 ${
+          dashboardData.sourceLogsUsed?.azure 
+            ? 'border-green-500 bg-green-50' 
+            : 'border-neutral-200 bg-neutral-50'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-semibold text-neutral-900">Azure Blob</div>
+            {dashboardData.sourceLogsUsed?.azure ? (
+              <span className="text-green-600 font-bold">✓</span>
+            ) : (
+              <span className="text-neutral-400">○</span>
+            )}
+          </div>
+          <div className="text-xs text-neutral-600">
+            {dashboardData.sourceLogsUsed?.azure ? 'Ingestion complete' : 'Not configured'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Regulatory Version Tracking Component
+function RegulatoryVersionTracking({ regulatoryVersions }) {
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Regulatory Version Tracking</h2>
+      <p className="text-sm text-neutral-600 mb-4">
+        Version tracking protects compliance as regulations and interpretations evolve
+      </p>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
+          <div className="text-xs text-neutral-500 mb-1">Regulation Version</div>
+          <div className="font-semibold text-neutral-900">{regulatoryVersions.regulationVersion}</div>
+        </div>
+        <div className="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
+          <div className="text-xs text-neutral-500 mb-1">Template Version</div>
+          <div className="font-semibold text-neutral-900">{regulatoryVersions.templateVersion}</div>
+        </div>
+        <div className="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
+          <div className="text-xs text-neutral-500 mb-1">Interpretation Version</div>
+          <div className="font-semibold text-neutral-900">{regulatoryVersions.interpretationVersion}</div>
+        </div>
+        <div className="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
+          <div className="text-xs text-neutral-500 mb-1">Orbit Version</div>
+          <div className="font-semibold text-neutral-900">{regulatoryVersions.orbitVersion}</div>
+        </div>
+      </div>
+      <div className="mt-4 text-xs text-neutral-500">
+        These versions are included in all documentation bundles to ensure regulatory traceability and protect against future changes.
+      </div>
+    </div>
+  );
+}
