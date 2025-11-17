@@ -153,7 +153,12 @@ export default function AIActTechnicalDocumentationPage() {
       if (response.ok) {
         setLineage(data.lineage);
         setDashboardData(prev => ({ ...prev, modelsReconstructed: prev.modelsReconstructed + 1, lineageMaps: prev.lineageMaps + 1 }));
-        addNotification('Lineage reconstructed successfully', 'success');
+        
+        if (data.warning) {
+          addNotification(data.warning, 'warning');
+        } else {
+          addNotification('Lineage reconstructed successfully', 'success');
+        }
         
         // Automatically generate documentation bundle
         await generateDocumentationBundle(data.lineage);
