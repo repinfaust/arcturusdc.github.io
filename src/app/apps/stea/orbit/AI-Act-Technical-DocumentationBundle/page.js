@@ -1084,29 +1084,6 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                   strokeWidth="3"
                   markerEnd="url(#arrowhead)"
                 />
-                {/* Background rectangle for text to ensure visibility - make it wider and taller */}
-                <rect
-                  x={(x1 + x2) / 2 - 50}
-                  y={labelY - 12}
-                  width="100"
-                  height="24"
-                  fill="white"
-                  fillOpacity="1"
-                  stroke="#d1d5db"
-                  strokeWidth="1.5"
-                  rx="6"
-                />
-                <text
-                  x={(x1 + x2) / 2}
-                  y={labelY + 4}
-                  textAnchor="middle"
-                  fill="#1f2937"
-                  fontSize="13"
-                  fontWeight="700"
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
-                >
-                  {edgeLabel}
-                </text>
               </g>
             );
           })}
