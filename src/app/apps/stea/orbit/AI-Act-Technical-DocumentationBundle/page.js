@@ -1687,8 +1687,9 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                   x={x + 50}
                   y={y - 30}
                   textAnchor="middle"
-                  className="font-semibold fill-neutral-900"
+                  fill="#171717"
                   fontSize="12"
+                  fontWeight="600"
                 >
                   {node.label.split(':')[0]}
                 </text>
@@ -1697,7 +1698,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                     x={x + 50}
                     y={y - 15}
                     textAnchor="middle"
-                    className="fill-neutral-600"
+                    fill="#525252"
                     fontSize="10"
                   >
                     {node.label.split(':')[1]}
@@ -1708,8 +1709,9 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                     x={x + 50}
                     y={y + 5}
                     textAnchor="middle"
-                    className="fill-blue-600 font-medium"
+                    fill="#2563eb"
                     fontSize="11"
+                    fontWeight="500"
                   >
                     {node.version}
                   </text>
@@ -1718,7 +1720,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                   x={x + 50}
                   y={y + 25}
                   textAnchor="middle"
-                  className="fill-neutral-500"
+                  fill="#737373"
                   fontSize="9"
                 >
                   {node.type}
@@ -1728,7 +1730,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                     x={x + 50}
                     y={y + 45}
                     textAnchor="middle"
-                    className="fill-neutral-400"
+                    fill="#a3a3a3"
                     fontSize="8"
                   >
                     {new Date(node.timestamp).toLocaleDateString()}
@@ -1786,7 +1788,6 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                   fill="#1f2937"
                   fontSize="13"
                   fontWeight="700"
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
                 >
                   {edgeLabel}
                 </text>
