@@ -5,6 +5,30 @@ import { generateEventId } from '@/lib/orbit/eventTypes';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import crypto from 'crypto';
 
+// Sanitize Firestore data to prevent circular structure errors
+function sanitizeFirestoreData(data) {
+  if (!data) return data;
+
+  // Convert to plain object and handle timestamps
+  const sanitized = JSON.parse(JSON.stringify(data, (key, value) => {
+    // Convert Firestore timestamps to ISO strings
+    if (value && typeof value === 'object') {
+      if (value._seconds !== undefined && value._nanoseconds !== undefined) {
+        return new Date(value._seconds * 1000).toISOString();
+      }
+      if (value.toDate && typeof value.toDate === 'function') {
+        return value.toDate().toISOString();
+      }
+      if (value.toMillis && typeof value.toMillis === 'function') {
+        return new Date(value.toMillis()).toISOString();
+      }
+    }
+    return value;
+  }));
+
+  return sanitized;
+}
+
 // Calculate completeness score
 function calculateCompletenessScore(lineage, logs) {
   let score = 0;
@@ -107,7 +131,7 @@ export async function POST(request) {
     const logsSnapshot = await logsRef
       .where('uploadedBy', '==', session.user.uid)
       .get();
-    const logs = logsSnapshot.docs.map(doc => doc.data());
+    const logs = logsSnapshot.docs.map(doc => sanitizeFirestoreData(doc.data()));
 
     // Calculate completeness score
     const completenessScore = calculateCompletenessScore(lineage, logs);

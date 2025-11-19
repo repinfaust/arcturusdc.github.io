@@ -7,13 +7,13 @@ import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 
-const ORBIT_POC_TENANT_ID = 'l5nH79ZIiknHuqPT8YW7';
+const ALLOWED_TENANT_IDS = ['l5nH79ZIiknHuqPT8YW7', 'FqhckqMaorJMAQ6B29mP']; // Orbit POC and ArcturusDC
 
 export default function AIActTechnicalDocumentationPage() {
   const router = useRouter();
   const { availableTenants, loading: tenantLoading } = useTenant();
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('sdk');
+  const [activeTab, setActiveTab] = useState('kyc');
   const [uploadedLogs, setUploadedLogs] = useState([]);
   const [lineage, setLineage] = useState(null);
   const [documentationBundle, setDocumentationBundle] = useState(null);
@@ -73,14 +73,14 @@ export default function AIActTechnicalDocumentationPage() {
     return () => unsubscribe();
   }, [router]);
 
-  // Authorization check - must be member of Orbit POC workspace
+  // Authorization check - must be member of Orbit POC or ArcturusDC workspace
   useEffect(() => {
     if (!tenantLoading && !authLoading) {
-      const hasOrbitPocAccess = availableTenants?.some(
-        tenant => tenant.id === ORBIT_POC_TENANT_ID || tenant.tenantId === ORBIT_POC_TENANT_ID
+      const hasAccess = availableTenants?.some(
+        tenant => ALLOWED_TENANT_IDS.includes(tenant.id) || ALLOWED_TENANT_IDS.includes(tenant.tenantId)
       );
-      if (!hasOrbitPocAccess) {
-        router.replace('/apps/stea?error=no_orbit_poc_access');
+      if (!hasAccess) {
+        router.replace('/apps/stea?error=no_access_to_ai_act_demo');
       }
     }
   }, [availableTenants, tenantLoading, authLoading, router]);
@@ -382,8 +382,8 @@ export default function AIActTechnicalDocumentationPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-4 md:space-x-8 overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             {[
+              { id: 'kyc', label: 'Orbit and KYC Use Case' },
               { id: 'sdk', label: 'Orbit Logging SDK' },
-              { id: 'kyc', label: 'Why KYC Needs Orbit' },
               { id: 'ingestion', label: 'Data Ingestion' },
               { id: 'dashboard', label: 'Compliance Dashboard' },
               { id: 'workflow', label: 'Compliance Workflow' },
@@ -394,6 +394,7 @@ export default function AIActTechnicalDocumentationPage() {
             ].map(tab => (
               <button
                 key={tab.id}
+                data-tab={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-2 md:px-1 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
@@ -762,10 +763,10 @@ function ComplianceDashboard({ dashboardData, completenessScore, policyDeviation
           </div>
           <div className="flex-1">
             <p className="text-sm text-neutral-600 mb-4">
-              This score reflects compliance with AI Act requirements for technical documentation (Annex IV), 
+              This score reflects compliance with AI Act requirements for technical documentation (Annex IV),
               post-market monitoring (Annex VIII), and quality management systems (Annex XI).
             </p>
-            <div className="flex gap-3">
+            <div id="compliance-actions" className="flex gap-3">
               <button
                 onClick={onReconstructLineage}
                 disabled={loading}
@@ -3118,8 +3119,54 @@ function ModelRiskTeamView({ dashboardData, documentationBundle }) {
 function WhyKYCNeedsOrbitExplainer() {
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* Demo Instructions */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-300 p-4 md:p-6 shadow-lg">
+        <h2 className="text-xl md:text-2xl font-bold text-blue-900 mb-3">How to Use This Demo</h2>
+        <p className="text-sm md:text-base text-neutral-700 mb-4">
+          This interactive demo shows how Orbit helps KYC providers achieve EU AI Act compliance. Follow these steps:
+        </p>
+        <div className="space-y-3 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">1</div>
+            <div className="text-sm md:text-base text-neutral-800">
+              <strong>Read this page</strong> to understand why KYC providers need Orbit for AI Act compliance
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">2</div>
+            <div className="text-sm md:text-base text-neutral-800">
+              <strong>Explore the tabs</strong> above to see how Orbit logging SDK works and how data flows
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">3</div>
+            <div className="text-sm md:text-base text-neutral-800">
+              <strong>Try the interactive demo</strong> by going to the{' '}
+              <button
+                onClick={() => {
+                  const dashboardTab = document.querySelector('[data-tab="dashboard"]');
+                  if (dashboardTab) dashboardTab.click();
+                  setTimeout(() => {
+                    document.getElementById('compliance-actions')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 100);
+                }}
+                className="text-blue-600 hover:text-blue-800 font-semibold underline"
+              >
+                Compliance Dashboard
+              </button>
+              {' '}tab and using the "Reconstruct Lineage" and "Generate Bundle" buttons
+            </div>
+          </div>
+        </div>
+        <div className="bg-white border border-blue-200 rounded-lg p-3">
+          <p className="text-xs md:text-sm text-neutral-600">
+            <strong>Note:</strong> This is a demonstration environment with sample data. In production, Orbit processes real logs from your KYC systems.
+          </p>
+        </div>
+      </div>
+
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-200 p-4 md:p-6 lg:p-8">
-        <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-3 md:mb-4">Why KYC Needs Orbit</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-neutral-900 mb-3 md:mb-4">Orbit and KYC Use Case</h2>
         <p className="text-sm md:text-base text-neutral-700 mb-4 md:mb-6">
           KYC (Know Your Customer) and Identity Verification providers operate high-risk AI systems that are subject to 
           the EU AI Act. These systems make critical decisions about customer identity, fraud risk, and compliance status. 

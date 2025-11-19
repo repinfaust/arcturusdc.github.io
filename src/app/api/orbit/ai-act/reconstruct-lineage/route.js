@@ -7,6 +7,30 @@ const COLLECTIONS = {
   AI_ACT_LINEAGE: 'orbit_ai_act_lineage',
 };
 
+// Sanitize Firestore data to prevent circular structure errors
+function sanitizeFirestoreData(data) {
+  if (!data) return data;
+
+  // Convert to plain object and handle timestamps
+  const sanitized = JSON.parse(JSON.stringify(data, (key, value) => {
+    // Convert Firestore timestamps to ISO strings
+    if (value && typeof value === 'object') {
+      if (value._seconds !== undefined && value._nanoseconds !== undefined) {
+        return new Date(value._seconds * 1000).toISOString();
+      }
+      if (value.toDate && typeof value.toDate === 'function') {
+        return value.toDate().toISOString();
+      }
+      if (value.toMillis && typeof value.toMillis === 'function') {
+        return new Date(value.toMillis()).toISOString();
+      }
+    }
+    return value;
+  }));
+
+  return sanitized;
+}
+
 // Reconstruct lineage from ingested logs
 function reconstructLineageFromLogs(logs) {
   const nodes = [];
@@ -206,7 +230,7 @@ export async function POST(request) {
 
       logs = logsSnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
+        ...sanitizeFirestoreData(doc.data()),
       }));
     } catch (error) {
       // If orderBy fails (no index), fetch without ordering and sort in memory
@@ -214,10 +238,10 @@ export async function POST(request) {
       const logsSnapshot = await logsRef
         .where('uploadedBy', '==', session.user.uid)
         .get();
-      
+
       logs = logsSnapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
+        ...sanitizeFirestoreData(doc.data()),
       }));
       
       // Sort by uploadedAt descending in memory
