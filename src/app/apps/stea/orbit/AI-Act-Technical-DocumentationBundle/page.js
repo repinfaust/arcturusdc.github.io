@@ -352,8 +352,8 @@ export default function AIActTechnicalDocumentationPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const filename = type === 'full' 
-      ? `FullTechnicalDocumentationBundle-${new Date().toISOString().split('T')[0]}.zip`
+    const filename = type === 'full'
+      ? `FullTechnicalDocumentationBundle-${new Date().toISOString().split('T')[0]}.json`
       : type === 'training' 
       ? `TrainingDataSummary-${new Date().toISOString().split('T')[0]}.json`
       : type === 'lineage'
@@ -865,7 +865,7 @@ function DocumentationBundles({ documentationBundle, onDownloadBundle, truncateH
     { id: 'lineage', name: 'DecisionLineage.json', description: 'Complete decision lineage from input to output', annex: 'Annex IV' },
     { id: 'oversight', name: 'HumanOversightEvidence.pdf', description: 'Human oversight and intervention evidence', annex: 'Annex VIII' },
     { id: 'trace', name: 'ModelExecutionTrace.md', description: 'Model execution trace and inference logs', annex: 'Annex IV' },
-    { id: 'full', name: 'FullTechnicalDocumentationBundle.zip', description: 'Complete AI Act technical documentation bundle', annex: 'Annex IV, VIII, XI' },
+    { id: 'full', name: 'FullTechnicalDocumentationBundle.json', description: 'Complete AI Act technical documentation bundle', annex: 'Annex IV, VIII, XI' },
   ];
 
   return (
