@@ -75,12 +75,23 @@ export default function AIActTechnicalDocumentationPage() {
 
   // Authorization check - must be member of Orbit POC or ArcturusDC workspace
   useEffect(() => {
-    if (!tenantLoading && !authLoading) {
-      // Debug logging
+    // Wait for both auth and tenants to finish loading
+    if (tenantLoading || authLoading) {
+      return;
+    }
+
+    // Add a small delay to ensure tenants are fully populated after sign-in
+    const checkAccess = () => {
       console.log('[AI Act Access Check] Available tenants:', availableTenants);
       console.log('[AI Act Access Check] Allowed tenant IDs:', ALLOWED_TENANT_IDS);
 
-      const hasAccess = availableTenants?.some(
+      // If no tenants available, likely still loading - don't redirect yet
+      if (!availableTenants || availableTenants.length === 0) {
+        console.log('[AI Act Access Check] No tenants loaded yet, waiting...');
+        return;
+      }
+
+      const hasAccess = availableTenants.some(
         tenant => {
           const tenantId = tenant.id || tenant.tenantId;
           console.log('[AI Act Access Check] Checking tenant:', tenantId, tenant.name);
@@ -90,14 +101,15 @@ export default function AIActTechnicalDocumentationPage() {
 
       console.log('[AI Act Access Check] Has access:', hasAccess);
 
-      if (!hasAccess && availableTenants?.length > 0) {
+      if (!hasAccess) {
         console.warn('[AI Act Access Check] Access denied. User tenants:', availableTenants.map(t => ({ id: t.id, name: t.name })));
         router.replace('/apps/stea?error=no_access_to_ai_act_demo');
-      } else if (!hasAccess && availableTenants?.length === 0) {
-        console.warn('[AI Act Access Check] Access denied. User has no tenants.');
-        router.replace('/apps/stea?error=no_workspace');
       }
-    }
+    };
+
+    // Small delay to ensure tenants are populated after auth redirect
+    const timeoutId = setTimeout(checkAccess, 100);
+    return () => clearTimeout(timeoutId);
   }, [availableTenants, tenantLoading, authLoading, router]);
 
   if (authLoading || tenantLoading) {
