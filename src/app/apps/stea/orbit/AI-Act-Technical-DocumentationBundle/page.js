@@ -76,11 +76,26 @@ export default function AIActTechnicalDocumentationPage() {
   // Authorization check - must be member of Orbit POC or ArcturusDC workspace
   useEffect(() => {
     if (!tenantLoading && !authLoading) {
+      // Debug logging
+      console.log('[AI Act Access Check] Available tenants:', availableTenants);
+      console.log('[AI Act Access Check] Allowed tenant IDs:', ALLOWED_TENANT_IDS);
+
       const hasAccess = availableTenants?.some(
-        tenant => ALLOWED_TENANT_IDS.includes(tenant.id) || ALLOWED_TENANT_IDS.includes(tenant.tenantId)
+        tenant => {
+          const tenantId = tenant.id || tenant.tenantId;
+          console.log('[AI Act Access Check] Checking tenant:', tenantId, tenant.name);
+          return ALLOWED_TENANT_IDS.includes(tenantId);
+        }
       );
-      if (!hasAccess) {
+
+      console.log('[AI Act Access Check] Has access:', hasAccess);
+
+      if (!hasAccess && availableTenants?.length > 0) {
+        console.warn('[AI Act Access Check] Access denied. User tenants:', availableTenants.map(t => ({ id: t.id, name: t.name })));
         router.replace('/apps/stea?error=no_access_to_ai_act_demo');
+      } else if (!hasAccess && availableTenants?.length === 0) {
+        console.warn('[AI Act Access Check] Access denied. User has no tenants.');
+        router.replace('/apps/stea?error=no_workspace');
       }
     }
   }, [availableTenants, tenantLoading, authLoading, router]);
