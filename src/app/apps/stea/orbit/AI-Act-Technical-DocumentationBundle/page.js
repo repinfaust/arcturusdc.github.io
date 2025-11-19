@@ -1588,17 +1588,25 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                     return;
                   }
 
-                  // Convert SVG to PNG
+                  // Convert SVG to PNG with high resolution
                   const svgData = new XMLSerializer().serializeToString(svg);
                   const canvas = document.createElement('canvas');
                   const ctx = canvas.getContext('2d');
                   const img = new Image();
 
-                  canvas.width = svg.viewBox.baseVal.width || 1000;
-                  canvas.height = svg.viewBox.baseVal.height || 500;
+                  // Scale up for high-DPI export (3x resolution for crisp output)
+                  const scale = 3;
+                  const width = svg.viewBox.baseVal.width || 1000;
+                  const height = svg.viewBox.baseVal.height || 500;
+
+                  canvas.width = width * scale;
+                  canvas.height = height * scale;
 
                   img.onload = () => {
-                    ctx.drawImage(img, 0, 0);
+                    // Scale the context and draw at higher resolution
+                    ctx.scale(scale, scale);
+                    ctx.drawImage(img, 0, 0, width, height);
+
                     canvas.toBlob((blob) => {
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
@@ -1608,7 +1616,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                       a.click();
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
-                      if (addNotification) addNotification('Lineage graph exported as PNG', 'success');
+                      if (addNotification) addNotification('Lineage graph exported as PNG (high resolution)', 'success');
                     });
                   };
 
