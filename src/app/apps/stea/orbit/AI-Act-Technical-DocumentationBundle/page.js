@@ -1836,7 +1836,7 @@ function LineageVisualisationExplainer() {
 }
 
 // Evidence Integrity Report
-function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboardData }) {
+function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboardData, onExport }) {
   const [expanded, setExpanded] = useState(true);
 
   // Calculate integrity metrics
