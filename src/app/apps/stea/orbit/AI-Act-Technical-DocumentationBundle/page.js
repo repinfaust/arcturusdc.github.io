@@ -1582,21 +1582,21 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
               </button>
               <button
                 onClick={() => {
-                  const svg = document.querySelector('svg');
+                  const svg = document.getElementById('lineage-graph-svg');
                   if (!svg) {
                     if (addNotification) addNotification('No lineage graph to export', 'warning');
                     return;
                   }
-                  
+
                   // Convert SVG to PNG
                   const svgData = new XMLSerializer().serializeToString(svg);
                   const canvas = document.createElement('canvas');
                   const ctx = canvas.getContext('2d');
                   const img = new Image();
-                  
+
                   canvas.width = svg.viewBox.baseVal.width || 1000;
-                  canvas.height = svg.viewBox.baseVal.height || 400;
-                  
+                  canvas.height = svg.viewBox.baseVal.height || 500;
+
                   img.onload = () => {
                     ctx.drawImage(img, 0, 0);
                     canvas.toBlob((blob) => {
@@ -1611,7 +1611,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
                       if (addNotification) addNotification('Lineage graph exported as PNG', 'success');
                     });
                   };
-                  
+
                   img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
@@ -1634,7 +1634,7 @@ function LineageVisualization({ lineage, onReconstructLineage, loading, onExport
 
       {/* SVG Lineage Visualization */}
       <div className="bg-neutral-50 rounded-lg p-8 overflow-x-auto flex justify-center">
-        <svg width="100%" height="500" viewBox="0 0 1000 500" className="max-w-full" preserveAspectRatio="xMidYMid meet">
+        <svg id="lineage-graph-svg" width="100%" height="500" viewBox="0 0 1000 500" className="max-w-full" preserveAspectRatio="xMidYMid meet">
           {/* Background grid */}
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
