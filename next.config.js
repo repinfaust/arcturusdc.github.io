@@ -2,7 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    return [];
+    return [
+      {
+        source: '/stea/:path*',
+        destination: '/apps/stea/:path*',
+      },
+    ];
   },
 
   async headers() {
