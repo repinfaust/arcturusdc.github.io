@@ -595,38 +595,62 @@ export default function AIActTechnicalDocumentationPage() {
         )}
       </div>
 
-      {/* Notifications */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-2">
+      {/* Notifications - Centered and Prominent */}
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 space-y-3 w-full max-w-2xl px-4">
         {notifications.map(notification => (
           <div
             key={notification.id}
-            className={`max-w-sm w-full rounded-lg shadow-lg p-4 flex items-start space-x-3 ${
+            className={`w-full rounded-2xl shadow-2xl p-6 flex items-start gap-4 transform transition-all duration-300 ${
               notification.type === 'success'
-                ? 'bg-green-50 border border-green-200'
+                ? 'bg-green-50 border-2 border-green-400'
                 : notification.type === 'error'
-                ? 'bg-red-50 border border-red-200'
+                ? 'bg-red-50 border-2 border-red-400'
                 : notification.type === 'warning'
-                ? 'bg-amber-50 border border-amber-200'
-                : 'bg-blue-50 border border-blue-200'
+                ? 'bg-amber-50 border-3 border-amber-500 ring-4 ring-amber-200'
+                : 'bg-blue-50 border-2 border-blue-400'
             }`}
           >
+            <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-2xl ${
+              notification.type === 'success'
+                ? 'bg-green-500 text-white'
+                : notification.type === 'error'
+                ? 'bg-red-500 text-white'
+                : notification.type === 'warning'
+                ? 'bg-amber-500 text-white'
+                : 'bg-blue-500 text-white'
+            }`}>
+              {notification.type === 'success' ? '✓' : notification.type === 'error' ? '✕' : notification.type === 'warning' ? '⚠' : 'ℹ'}
+            </div>
+            <div className="flex-1">
+              <p className={`font-bold mb-1 ${
+                notification.type === 'success'
+                  ? 'text-green-900 text-base'
+                  : notification.type === 'error'
+                  ? 'text-red-900 text-base'
+                  : notification.type === 'warning'
+                  ? 'text-amber-900 text-lg'
+                  : 'text-blue-900 text-base'
+              }`}>
+                {notification.type === 'success' ? 'Success' : notification.type === 'error' ? 'Error' : notification.type === 'warning' ? 'Warning' : 'Info'}
+              </p>
+              <p className={`${
+                notification.type === 'success'
+                  ? 'text-green-800 text-sm'
+                  : notification.type === 'error'
+                  ? 'text-red-800 text-sm'
+                  : notification.type === 'warning'
+                  ? 'text-amber-800 text-base font-medium'
+                  : 'text-blue-800 text-sm'
+              }`}>
+                {notification.message}
+              </p>
+            </div>
             <button
               onClick={() => removeNotification(notification.id)}
-              className="flex-shrink-0 text-neutral-400 hover:text-neutral-600"
+              className="flex-shrink-0 text-neutral-400 hover:text-neutral-700 text-xl font-bold"
             >
               ✕
             </button>
-            <p className={`text-sm font-medium ${
-              notification.type === 'success'
-                ? 'text-green-900'
-                : notification.type === 'error'
-                ? 'text-red-900'
-                : notification.type === 'warning'
-                ? 'text-amber-900'
-                : 'text-blue-900'
-            }`}>
-              {notification.message}
-            </p>
           </div>
         ))}
       </div>
