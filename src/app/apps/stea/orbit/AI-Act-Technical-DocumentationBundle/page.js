@@ -226,6 +226,7 @@ export default function AIActTechnicalDocumentationPage() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `DecisionLineage-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
@@ -245,6 +246,7 @@ export default function AIActTechnicalDocumentationPage() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `EvidenceIntegrityReport-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
@@ -325,7 +327,28 @@ export default function AIActTechnicalDocumentationPage() {
     }
 
     const bundle = type === 'full' ? documentationBundle : { ...documentationBundle, type };
-    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+
+    // Safely stringify bundle, handling circular references
+    let bundleJson;
+    try {
+      // Create a set to track seen objects and prevent circular references
+      const seen = new WeakSet();
+      bundleJson = JSON.stringify(bundle, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular Reference]';
+          }
+          seen.add(value);
+        }
+        return value;
+      }, 2);
+    } catch (error) {
+      console.error('Error stringifying bundle:', error);
+      addNotification('Error preparing bundle for download', 'error');
+      return;
+    }
+
+    const blob = new Blob([bundleJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
