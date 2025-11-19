@@ -386,7 +386,7 @@ export default function AIActTechnicalDocumentationPage() {
             <div>
               <h1 className="text-3xl font-bold text-neutral-900">AI Act Technical Documentation</h1>
               <p className="text-sm text-neutral-600 mt-1">
-                Compliance documentation as a service for AI providers. Generate Annex IV, VIII, and XI technical documentation 
+                Compliance documentation as a service for AI providers. Generate Annex IV, VIII, and XI technical documentation
                 using the Orbit Logging SDK and Integrity Service.
               </p>
             </div>
@@ -396,6 +396,26 @@ export default function AIActTechnicalDocumentationPage() {
             >
               ← Back to Orbit
             </Link>
+          </div>
+
+          {/* Positioning Block */}
+          <div className="mt-6 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+                🎯
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base font-bold text-neutral-900 mb-2">
+                  Orbit = AI Act Compliance Documentation Infrastructure for High-Risk AI Providers
+                </h2>
+                <p className="text-sm text-neutral-700 leading-relaxed">
+                  This demo highlights our strongest early use case: <span className="font-semibold text-neutral-900">KYC and Identity Verification vendors</span>,
+                  who face immediate AI Act obligations and strict enterprise procurement requirements.
+                  The same Orbit Logging SDK and Integrity Service apply to any high-risk AI system —
+                  <span className="font-semibold text-neutral-900"> KYC is simply the first vertical where demand is urgent and the benefits are clearest</span>.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -3147,7 +3167,8 @@ function WhyKYCNeedsOrbitExplainer() {
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-300 p-4 md:p-6 shadow-lg">
         <h2 className="text-xl md:text-2xl font-bold text-blue-900 mb-3">How to Use This Demo</h2>
         <p className="text-sm md:text-base text-neutral-700 mb-4">
-          This interactive demo shows how Orbit helps KYC providers achieve EU AI Act compliance. Follow these steps:
+          This demo uses <span className="font-semibold text-blue-900">KYC and Identity Verification as an example high-risk AI system</span>.
+          See how Orbit helps AI providers achieve EU AI Act compliance through automated documentation generation. Follow these steps:
         </p>
         <div className="space-y-3 mb-4">
           <div className="flex items-start gap-3">
