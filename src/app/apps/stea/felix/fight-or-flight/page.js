@@ -423,63 +423,254 @@ export default function FightOrFlightPage() {
   return (
     <div style={{
       margin: 0,
+      padding: '20px',
       backgroundColor: '#222',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
       minHeight: '100vh',
       fontFamily: "'Comic Sans MS', 'Chalkboard SE', sans-serif",
       color: 'white',
-      overflow: 'hidden'
+      overflowY: 'auto'
     }}>
-      <div id="gameContainer" style={{
-        position: 'relative',
-        border: '5px solid #fff',
-        boxShadow: '0 0 20px rgba(0,255,255,0.5)'
+      {/* Title */}
+      <h1 style={{
+        textAlign: 'center',
+        fontSize: '48px',
+        margin: '20px 0',
+        color: '#00FFFF',
+        textShadow: '3px 3px 0 #FF4500'
       }}>
-        <div id="ui" style={{
-          position: 'absolute',
-          top: '10px',
-          left: '10px',
-          fontSize: '20px',
-          color: '#000',
-          textShadow: '1px 1px 0 #fff',
-          pointerEvents: 'none'
+        FIGHT OR FLIGHT v0.1
+      </h1>
+
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        gap: '20px',
+        flexWrap: 'wrap',
+        maxWidth: '1400px',
+        margin: '0 auto'
+      }}>
+        {/* Left Panel - Controls */}
+        <div style={{
+          backgroundColor: '#333',
+          border: '3px solid #00FFFF',
+          borderRadius: '10px',
+          padding: '20px',
+          minWidth: '250px',
+          maxWidth: '280px'
         }}>
-          HERO: <span id="heroName">SMASHER</span><br />
-          HP: <span id="hp">100</span>%<br />
-          COINS: <span id="score">0</span>
+          <h2 style={{
+            color: '#FFD700',
+            fontSize: '24px',
+            marginTop: 0,
+            borderBottom: '2px solid #FFD700',
+            paddingBottom: '10px'
+          }}>CONTROLS</h2>
+
+          <div style={{ fontSize: '16px', lineHeight: '1.8' }}>
+            <p><strong style={{ color: '#00FF00' }}>MOVE:</strong></p>
+            <p>← → or A D - Left/Right</p>
+            <p>↑ or W - Jump/Flight</p>
+
+            <p style={{ marginTop: '15px' }}><strong style={{ color: '#FF4500' }}>FIGHT:</strong></p>
+            <p>SPACE - Punch!</p>
+
+            <p style={{ marginTop: '15px' }}><strong style={{ color: '#FFD700' }}>START:</strong></p>
+            <p>SPACE - Begin Game</p>
+          </div>
         </div>
-        <div id="message" style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          textAlign: 'center',
-          fontSize: '40px',
-          color: '#FF4500',
-          textShadow: '2px 2px 0 #fff',
-          display: 'block'
+
+        {/* Center - Game Container */}
+        <div id="gameContainer" style={{
+          position: 'relative',
+          border: '5px solid #fff',
+          boxShadow: '0 0 20px rgba(0,255,255,0.5)'
         }}>
-          PRESS SPACE TO START
+          <div id="ui" style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            fontSize: '20px',
+            color: '#000',
+            textShadow: '1px 1px 0 #fff',
+            pointerEvents: 'none'
+          }}>
+            HERO: <span id="heroName">SMASHER</span><br />
+            HP: <span id="hp">100</span>%<br />
+            COINS: <span id="score">0</span>
+          </div>
+          <div id="message" style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+            fontSize: '40px',
+            color: '#FF4500',
+            textShadow: '2px 2px 0 #fff',
+            display: 'block'
+          }}>
+            PRESS SPACE TO START
+          </div>
+          <canvas
+            id="gameCanvas"
+            width="800"
+            height="600"
+            style={{
+              display: 'block',
+              background: 'linear-gradient(to bottom, #F0F8FF, #B0E0E6)' // Antarctic sky
+            }}
+          />
         </div>
-        <canvas
-          id="gameCanvas"
-          width="800"
-          height="600"
-          style={{
-            display: 'block',
-            background: 'linear-gradient(to bottom, #F0F8FF, #B0E0E6)' // Antarctic sky
-          }}
-        />
+
+        {/* Right Panel - Game Info */}
+        <div style={{
+          backgroundColor: '#333',
+          border: '3px solid #00FFFF',
+          borderRadius: '10px',
+          padding: '20px',
+          minWidth: '250px',
+          maxWidth: '280px'
+        }}>
+          <h2 style={{
+            color: '#FFD700',
+            fontSize: '24px',
+            marginTop: 0,
+            borderBottom: '2px solid #FFD700',
+            paddingBottom: '10px'
+          }}>OBJECTIVE</h2>
+
+          <p style={{ fontSize: '16px', lineHeight: '1.6' }}>
+            Defeat <strong style={{ color: '#87CEEB' }}>PISH THE PENGUIN</strong> before he freezes you out!
+          </p>
+
+          <h3 style={{ color: '#FF4500', fontSize: '18px', marginTop: '20px' }}>WATCH OUT!</h3>
+          <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
+            🐧 Pish does massive <strong>BELLY FLOPS</strong> that crack the ice!
+          </p>
+          <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
+            ❄️ Avoid the <strong>ICE CRACKS</strong> or you'll fall through!
+          </p>
+          <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
+            🐟 <strong>PIRANHAS</strong> in the water will bite you for 15 HP!
+          </p>
+
+          <h3 style={{ color: '#00FF00', fontSize: '18px', marginTop: '20px' }}>POWER-UPS!</h3>
+          <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
+            🌭 <strong>HOTDOGS</strong> grant super speed and heal you to full HP!
+          </p>
+        </div>
       </div>
+
+      {/* Bottom Panel - Characters */}
+      <div style={{
+        maxWidth: '1200px',
+        margin: '30px auto',
+        backgroundColor: '#333',
+        border: '3px solid #FFD700',
+        borderRadius: '10px',
+        padding: '20px'
+      }}>
+        <h2 style={{
+          color: '#FFD700',
+          fontSize: '28px',
+          textAlign: 'center',
+          marginTop: 0,
+          borderBottom: '2px solid #FFD700',
+          paddingBottom: '10px'
+        }}>CHARACTERS</h2>
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          flexWrap: 'wrap',
+          gap: '20px',
+          marginTop: '20px'
+        }}>
+          {/* Hero */}
+          <div style={{
+            textAlign: 'center',
+            flex: '1',
+            minWidth: '200px',
+            padding: '15px',
+            backgroundColor: '#444',
+            borderRadius: '8px'
+          }}>
+            <div style={{ fontSize: '60px' }}>🦸‍♂️</div>
+            <h3 style={{ color: '#00FF00', margin: '10px 0' }}>SMASHER</h3>
+            <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
+              The hero! Quick on his feet and packs a mean punch. When powered up by hotdogs, nothing can stop him!
+            </p>
+          </div>
+
+          {/* Boss */}
+          <div style={{
+            textAlign: 'center',
+            flex: '1',
+            minWidth: '200px',
+            padding: '15px',
+            backgroundColor: '#444',
+            borderRadius: '8px'
+          }}>
+            <div style={{ fontSize: '60px' }}>🐧</div>
+            <h3 style={{ color: '#87CEEB', margin: '10px 0' }}>PISH THE PENGUIN</h3>
+            <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
+              A MASSIVE penguin from Antarctica! Attacks with devastating belly flops that crack the ice. Controls the piranhas of the frozen south!
+            </p>
+          </div>
+
+          {/* Piranhas */}
+          <div style={{
+            textAlign: 'center',
+            flex: '1',
+            minWidth: '200px',
+            padding: '15px',
+            backgroundColor: '#444',
+            borderRadius: '8px'
+          }}>
+            <div style={{ fontSize: '60px' }}>🐟</div>
+            <h3 style={{ color: '#FF6347', margin: '10px 0' }}>ICE PIRANHAS</h3>
+            <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
+              Deadly fish that lurk in the crevices created by Pish's attacks. Fall in and they'll chomp you for massive damage!
+            </p>
+          </div>
+
+          {/* Power-up */}
+          <div style={{
+            textAlign: 'center',
+            flex: '1',
+            minWidth: '200px',
+            padding: '15px',
+            backgroundColor: '#444',
+            borderRadius: '8px'
+          }}>
+            <div style={{ fontSize: '60px' }}>🌭</div>
+            <h3 style={{ color: '#FFD700', margin: '10px 0' }}>HOTDOG</h3>
+            <p style={{ fontSize: '14px', lineHeight: '1.5' }}>
+              A mystical hotdog that falls from the sky! Grants super speed, mega strength, and full health restoration!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Credits */}
+      <div style={{
+        textAlign: 'center',
+        marginTop: '20px',
+        fontSize: '14px',
+        color: '#888'
+      }}>
+        <p>👨‍💻 ARCTURUS DIGITAL CONSULTING</p>
+        <p>Junior Creative Assistant: Felix | Lead Designer: Dad</p>
+        <p>Version: 0.1</p>
+      </div>
+
       <style jsx>{`
-        /*
-           👨‍💻 ARCTURUS DIGITAL CONSULTING
-           Junior Creative Assistant: Felix
-           Lead Designer: Dad
-           Version: 0.1
-        */
+        @media (max-width: 1200px) {
+          h1 {
+            font-size: 36px !important;
+          }
+        }
       `}</style>
     </div>
   );
