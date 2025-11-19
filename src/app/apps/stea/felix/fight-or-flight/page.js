@@ -62,6 +62,11 @@ export default function FightOrFlightPage() {
     // --- INPUTS ---
     const keys = {};
     const handleKeyDown = (e) => {
+      // Prevent arrow keys and space from scrolling the page
+      if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
+
       keys[e.code] = true;
       if(gameState === 'START' && e.code === 'Space') resetGame();
       if(gameState === 'GAMEOVER' && e.code === 'Space') resetGame();
@@ -72,10 +77,38 @@ export default function FightOrFlightPage() {
         punch();
       }
     };
-    const handleKeyUp = (e) => keys[e.code] = false;
+    const handleKeyUp = (e) => {
+      // Prevent arrow keys from scrolling the page
+      if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
+      keys[e.code] = false;
+    };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+
+    // --- MOBILE TOUCH CONTROLS ---
+    const handleTouchButton = (action, isPressed) => {
+      if (action === 'left') {
+        keys['ArrowLeft'] = isPressed;
+      } else if (action === 'right') {
+        keys['ArrowRight'] = isPressed;
+      } else if (action === 'jump') {
+        keys['ArrowUp'] = isPressed;
+      } else if (action === 'punch') {
+        if (isPressed) {
+          if (gameState === 'START' || gameState === 'GAMEOVER' || gameState === 'WIN') {
+            resetGame();
+          } else if (gameState === 'PLAYING') {
+            punch();
+          }
+        }
+      }
+    };
+
+    // Make touch handler available globally for buttons
+    window.handleTouchButton = handleTouchButton;
 
     function resetGame() {
       hero.hp = 100;
@@ -521,6 +554,127 @@ export default function FightOrFlightPage() {
               background: 'linear-gradient(to bottom, #F0F8FF, #B0E0E6)' // Antarctic sky
             }}
           />
+
+          {/* Mobile Touch Controls - Only visible on touch devices */}
+          <div style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '0',
+            right: '0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '0 20px',
+            pointerEvents: 'none'
+          }}>
+            {/* Left side - Movement controls */}
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              pointerEvents: 'auto'
+            }}>
+              {/* Left button */}
+              <button
+                onTouchStart={() => window.handleTouchButton('left', true)}
+                onTouchEnd={() => window.handleTouchButton('left', false)}
+                onMouseDown={() => window.handleTouchButton('left', true)}
+                onMouseUp={() => window.handleTouchButton('left', false)}
+                onMouseLeave={() => window.handleTouchButton('left', false)}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  fontSize: '24px',
+                  backgroundColor: 'rgba(0, 255, 255, 0.7)',
+                  border: '3px solid white',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  touchAction: 'none',
+                  userSelect: 'none'
+                }}
+              >
+                ◄
+              </button>
+
+              {/* Right button */}
+              <button
+                onTouchStart={() => window.handleTouchButton('right', true)}
+                onTouchEnd={() => window.handleTouchButton('right', false)}
+                onMouseDown={() => window.handleTouchButton('right', true)}
+                onMouseUp={() => window.handleTouchButton('right', false)}
+                onMouseLeave={() => window.handleTouchButton('right', false)}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  fontSize: '24px',
+                  backgroundColor: 'rgba(0, 255, 255, 0.7)',
+                  border: '3px solid white',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  touchAction: 'none',
+                  userSelect: 'none'
+                }}
+              >
+                ►
+              </button>
+            </div>
+
+            {/* Right side - Action controls */}
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              pointerEvents: 'auto'
+            }}>
+              {/* Jump button */}
+              <button
+                onTouchStart={() => window.handleTouchButton('jump', true)}
+                onTouchEnd={() => window.handleTouchButton('jump', false)}
+                onMouseDown={() => window.handleTouchButton('jump', true)}
+                onMouseUp={() => window.handleTouchButton('jump', false)}
+                onMouseLeave={() => window.handleTouchButton('jump', false)}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  fontSize: '20px',
+                  backgroundColor: 'rgba(0, 255, 0, 0.7)',
+                  border: '3px solid white',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  touchAction: 'none',
+                  userSelect: 'none'
+                }}
+              >
+                JUMP
+              </button>
+
+              {/* Punch button */}
+              <button
+                onTouchStart={() => window.handleTouchButton('punch', true)}
+                onTouchEnd={() => window.handleTouchButton('punch', false)}
+                onMouseDown={() => window.handleTouchButton('punch', true)}
+                onMouseUp={() => window.handleTouchButton('punch', false)}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  fontSize: '16px',
+                  backgroundColor: 'rgba(255, 69, 0, 0.7)',
+                  border: '3px solid white',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  touchAction: 'none',
+                  userSelect: 'none'
+                }}
+              >
+                PUNCH
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Right Panel - Game Info */}
