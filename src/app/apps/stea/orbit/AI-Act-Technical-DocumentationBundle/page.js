@@ -775,7 +775,7 @@ function ComplianceDashboard({ dashboardData, completenessScore, policyDeviation
                 Reconstruct Lineage
               </button>
               <button
-                onClick={onGenerateBundle}
+                onClick={() => onGenerateBundle()}
                 disabled={loading}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
               >

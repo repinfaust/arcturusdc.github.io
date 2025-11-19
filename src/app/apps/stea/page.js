@@ -61,6 +61,20 @@ const IN_SESSION_DESTINATIONS = [
     gradient: 'from-pink-50/80 to-fuchsia-50/30',
     borderColor: 'border-pink-200',
   },
+  {
+    label: 'Orbit POC',
+    href: '/apps/stea/orbit/poc',
+    description: 'Cryptographically-verifiable audit trail for AI systems. Track consent, data usage, and verification events.',
+    gradient: 'from-cyan-50/80 to-teal-50/30',
+    borderColor: 'border-cyan-200',
+  },
+  {
+    label: 'Orbit: AI Act Demo',
+    href: '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
+    description: 'EU AI Act compliance demo for KYC providers. Reconstruct lineage, generate Annex IV documentation bundles.',
+    gradient: 'from-sky-50/80 to-blue-50/30',
+    borderColor: 'border-sky-200',
+  },
 ];
 
 function sanitizeNext(raw) {
