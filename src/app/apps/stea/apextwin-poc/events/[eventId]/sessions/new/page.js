@@ -1,0 +1,420 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { db, auth } from '@/lib/firebase';
+import { doc, getDoc, addDoc, updateDoc, collection, increment, serverTimestamp, Timestamp } from 'firebase/firestore';
+
+export default function NewEventSessionPage() {
+  const params = useParams();
+  const router = useRouter();
+  const eventId = params.eventId;
+
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [formData, setFormData] = useState({
+    sessionTime: '',
+    bikeId: '',
+    sessionNumber: '',
+    tireBrandFront: '',
+    tireCompoundFront: '',
+    tirePressureFrontColdPsi: '',
+    tirePressureFrontHotPsi: '',
+    tireBrandRear: '',
+    tireCompoundRear: '',
+    tirePressureRearColdPsi: '',
+    tirePressureRearHotPsi: '',
+    tireSetAgeSessions: '',
+    forkCompClicksOut: '',
+    forkRebClicksOut: '',
+    shockCompClicksOut: '',
+    shockRebClicksOut: '',
+    tractionControlLevel: '',
+    engineMap: '',
+    lapsCompleted: '',
+    fastestLapMin: '',
+    fastestLapSec: '',
+    notesHandling: '',
+    weather: '',
+  });
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const eventDoc = await getDoc(doc(db, 'apextwin_events', eventId));
+        if (!eventDoc.exists()) {
+          router.replace('/apps/stea/apextwin-poc/events');
+          return;
+        }
+        setEvent({ id: eventDoc.id, ...eventDoc.data() });
+      } catch (err) {
+        console.error('Error fetching event:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [eventId, router]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user || !event) return;
+
+    if (!formData.bikeId) {
+      alert('Please select a bike');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const selectedBike = event.bikes?.find(b => b.id === formData.bikeId);
+
+      let fastestLapSec = null;
+      if (formData.fastestLapMin || formData.fastestLapSec) {
+        const mins = parseFloat(formData.fastestLapMin) || 0;
+        const secs = parseFloat(formData.fastestLapSec) || 0;
+        fastestLapSec = mins * 60 + secs;
+      }
+
+      const sessionData = {
+        riderId: user.uid,
+        riderName: user.displayName || user.email?.split('@')[0] || 'Unknown',
+        eventId: eventId,
+        bikeId: formData.bikeId,
+        bikeName: selectedBike?.name || 'Unknown',
+        trackId: event.trackId,
+        trackName: event.trackName,
+        date: event.startDate,
+        sessionTime: formData.sessionTime || null,
+        sessionNumber: formData.sessionNumber ? parseInt(formData.sessionNumber) : null,
+        tireBrandFront: formData.tireBrandFront.trim() || null,
+        tireCompoundFront: formData.tireCompoundFront.trim() || null,
+        tirePressureFrontColdPsi: formData.tirePressureFrontColdPsi ? parseFloat(formData.tirePressureFrontColdPsi) : null,
+        tirePressureFrontHotPsi: formData.tirePressureFrontHotPsi ? parseFloat(formData.tirePressureFrontHotPsi) : null,
+        tireBrandRear: formData.tireBrandRear.trim() || null,
+        tireCompoundRear: formData.tireCompoundRear.trim() || null,
+        tirePressureRearColdPsi: formData.tirePressureRearColdPsi ? parseFloat(formData.tirePressureRearColdPsi) : null,
+        tirePressureRearHotPsi: formData.tirePressureRearHotPsi ? parseFloat(formData.tirePressureRearHotPsi) : null,
+        tireSetAgeSessions: formData.tireSetAgeSessions ? parseInt(formData.tireSetAgeSessions) : null,
+        forkCompClicksOut: formData.forkCompClicksOut ? parseInt(formData.forkCompClicksOut) : null,
+        forkRebClicksOut: formData.forkRebClicksOut ? parseInt(formData.forkRebClicksOut) : null,
+        shockCompClicksOut: formData.shockCompClicksOut ? parseInt(formData.shockCompClicksOut) : null,
+        shockRebClicksOut: formData.shockRebClicksOut ? parseInt(formData.shockRebClicksOut) : null,
+        tractionControlLevel: formData.tractionControlLevel.trim() || null,
+        engineMap: formData.engineMap.trim() || null,
+        lapsCompleted: formData.lapsCompleted ? parseInt(formData.lapsCompleted) : null,
+        fastestLapSec: fastestLapSec,
+        notesHandling: formData.notesHandling.trim() || null,
+        weather: formData.weather || null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(db, 'apextwin_sessions'), sessionData);
+
+      // Update event session count
+      await updateDoc(doc(db, 'apextwin_events', eventId), {
+        sessionCount: increment(1),
+      });
+
+      router.push(`/apps/stea/apextwin-poc/events/${eventId}`);
+    } catch (err) {
+      console.error('Error saving session:', err);
+      alert('Failed to save session');
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="apex-panel p-8 text-center text-apex-soft">Loading...</div>;
+  }
+
+  if (!event) {
+    return (
+      <div className="apex-panel p-8 text-center">
+        <p className="text-apex-soft mb-4">Event not found</p>
+        <Link href="/apps/stea/apextwin-poc/events" className="apex-btn apex-btn-secondary">
+          Back to Events
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-center gap-3 mb-2">
+          <Link href={`/apps/stea/apextwin-poc/events/${eventId}`} className="text-apex-soft hover:text-apex-white">
+            ← {event.trackName}
+          </Link>
+        </div>
+        <h1 className="apex-h1 mb-1">Log Session</h1>
+        <p className="text-apex-soft text-sm">{event.trackName}</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        {/* Session Basics */}
+        <div className="apex-panel p-4 sm:p-6">
+          <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Session Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="apex-label block mb-1">Session Time</label>
+              <input
+                type="time"
+                className="apex-input"
+                value={formData.sessionTime}
+                onChange={(e) => setFormData({ ...formData, sessionTime: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Session #</label>
+              <input
+                type="number"
+                min="1"
+                placeholder="1, 2, 3..."
+                className="apex-input"
+                value={formData.sessionNumber}
+                onChange={(e) => setFormData({ ...formData, sessionNumber: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Weather</label>
+              <select
+                className="apex-input"
+                value={formData.weather}
+                onChange={(e) => setFormData({ ...formData, weather: e.target.value })}
+              >
+                <option value="">Select...</option>
+                <option value="sunny">Sunny</option>
+                <option value="cloudy">Cloudy</option>
+                <option value="wet">Wet</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Bike Selection */}
+          <div className="mt-4">
+            <label className="apex-label block mb-2">Bike *</label>
+            {event.bikes && event.bikes.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {event.bikes.map(bike => (
+                  <button
+                    key={bike.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, bikeId: bike.id })}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      formData.bikeId === bike.id
+                        ? 'border-apex-mint bg-apex-mint/10'
+                        : 'border-apex-stealth hover:border-apex-mint/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        formData.bikeId === bike.id
+                          ? 'border-apex-mint bg-apex-mint'
+                          : 'border-apex-stealth'
+                      }`}>
+                        {formData.bikeId === bike.id && (
+                          <span className="text-apex-carbon text-[10px]">✓</span>
+                        )}
+                      </div>
+                      <span className="text-apex-white font-medium">{bike.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-apex-heat text-sm">No bikes on this event</p>
+            )}
+          </div>
+        </div>
+
+        {/* Tyres */}
+        <div className="apex-panel p-4 sm:p-6">
+          <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Tyre Setup</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Front */}
+            <div className="space-y-3">
+              <h3 className="text-apex-mint font-semibold text-sm uppercase tracking-wider">Front</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="apex-label block mb-1">Brand</label>
+                  <input type="text" placeholder="e.g. Pirelli" className="apex-input"
+                    value={formData.tireBrandFront}
+                    onChange={(e) => setFormData({ ...formData, tireBrandFront: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="apex-label block mb-1">Compound</label>
+                  <input type="text" placeholder="e.g. SC1" className="apex-input"
+                    value={formData.tireCompoundFront}
+                    onChange={(e) => setFormData({ ...formData, tireCompoundFront: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="apex-label block mb-1">Cold PSI</label>
+                  <input type="number" step="0.1" placeholder="32.0" className="apex-input font-mono"
+                    value={formData.tirePressureFrontColdPsi}
+                    onChange={(e) => setFormData({ ...formData, tirePressureFrontColdPsi: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="apex-label block mb-1">Hot PSI</label>
+                  <input type="number" step="0.1" placeholder="35.0" className="apex-input font-mono"
+                    value={formData.tirePressureFrontHotPsi}
+                    onChange={(e) => setFormData({ ...formData, tirePressureFrontHotPsi: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+            {/* Rear */}
+            <div className="space-y-3">
+              <h3 className="text-apex-mint font-semibold text-sm uppercase tracking-wider">Rear</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="apex-label block mb-1">Brand</label>
+                  <input type="text" placeholder="e.g. Pirelli" className="apex-input"
+                    value={formData.tireBrandRear}
+                    onChange={(e) => setFormData({ ...formData, tireBrandRear: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="apex-label block mb-1">Compound</label>
+                  <input type="text" placeholder="e.g. SC0" className="apex-input"
+                    value={formData.tireCompoundRear}
+                    onChange={(e) => setFormData({ ...formData, tireCompoundRear: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="apex-label block mb-1">Cold PSI</label>
+                  <input type="number" step="0.1" placeholder="29.0" className="apex-input font-mono"
+                    value={formData.tirePressureRearColdPsi}
+                    onChange={(e) => setFormData({ ...formData, tirePressureRearColdPsi: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="apex-label block mb-1">Hot PSI</label>
+                  <input type="number" step="0.1" placeholder="31.0" className="apex-input font-mono"
+                    value={formData.tirePressureRearHotPsi}
+                    onChange={(e) => setFormData({ ...formData, tirePressureRearHotPsi: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="apex-label block mb-1">Tyre Set Age (sessions)</label>
+            <input type="number" min="0" placeholder="0" className="apex-input w-32"
+              value={formData.tireSetAgeSessions}
+              onChange={(e) => setFormData({ ...formData, tireSetAgeSessions: e.target.value })}
+            />
+          </div>
+        </div>
+
+        {/* Quick Setup */}
+        <div className="apex-panel p-4 sm:p-6">
+          <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Quick Setup</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            <div>
+              <label className="apex-label block mb-1">Fork Comp</label>
+              <input type="number" min="0" className="apex-input font-mono"
+                value={formData.forkCompClicksOut}
+                onChange={(e) => setFormData({ ...formData, forkCompClicksOut: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Fork Reb</label>
+              <input type="number" min="0" className="apex-input font-mono"
+                value={formData.forkRebClicksOut}
+                onChange={(e) => setFormData({ ...formData, forkRebClicksOut: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Shock Comp</label>
+              <input type="number" min="0" className="apex-input font-mono"
+                value={formData.shockCompClicksOut}
+                onChange={(e) => setFormData({ ...formData, shockCompClicksOut: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Shock Reb</label>
+              <input type="number" min="0" className="apex-input font-mono"
+                value={formData.shockRebClicksOut}
+                onChange={(e) => setFormData({ ...formData, shockRebClicksOut: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">TC Level</label>
+              <input type="text" placeholder="e.g. 3" className="apex-input font-mono"
+                value={formData.tractionControlLevel}
+                onChange={(e) => setFormData({ ...formData, tractionControlLevel: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Engine Map</label>
+              <input type="text" placeholder="e.g. A" className="apex-input font-mono"
+                value={formData.engineMap}
+                onChange={(e) => setFormData({ ...formData, engineMap: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Outcome */}
+        <div className="apex-panel p-4 sm:p-6">
+          <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Outcome</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="apex-label block mb-1">Laps Completed</label>
+              <input type="number" min="0" className="apex-input font-mono"
+                value={formData.lapsCompleted}
+                onChange={(e) => setFormData({ ...formData, lapsCompleted: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Fastest Lap (mm:ss.xx)</label>
+              <div className="flex items-center gap-2">
+                <input type="number" min="0" placeholder="1" className="apex-input w-16 font-mono text-center"
+                  value={formData.fastestLapMin}
+                  onChange={(e) => setFormData({ ...formData, fastestLapMin: e.target.value })}
+                />
+                <span className="text-apex-white text-xl">:</span>
+                <input type="number" min="0" max="59.99" step="0.01" placeholder="45.00" className="apex-input w-24 font-mono text-center"
+                  value={formData.fastestLapSec}
+                  onChange={(e) => setFormData({ ...formData, fastestLapSec: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="apex-label block mb-1">Notes / Handling</label>
+            <textarea rows={3} placeholder="How did the bike feel?" className="apex-input resize-none"
+              value={formData.notesHandling}
+              onChange={(e) => setFormData({ ...formData, notesHandling: e.target.value })}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <button type="submit" disabled={saving} className="apex-btn apex-btn-primary px-8 min-h-[48px] sm:min-h-0">
+            {saving ? 'Saving...' : 'Save Session'}
+          </button>
+          <Link href={`/apps/stea/apextwin-poc/events/${eventId}`} className="apex-btn apex-btn-secondary text-center min-h-[48px] sm:min-h-0">
+            Cancel
+          </Link>
+        </div>
+      </form>
+    </div>
+  );
+}

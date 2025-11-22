@@ -12,7 +12,7 @@ const APEXTWIN_TENANT_ID = 'DL7ScScEhvAcFpAmmS8h';
 const NAV_ITEMS = [
   { href: '/apps/stea/apextwin-poc', label: 'Home', mobileLabel: 'Home', icon: '◇', exact: true },
   { href: '/apps/stea/apextwin-poc/bikes', label: 'Bikes', mobileLabel: 'Bikes', icon: '⟁' },
-  { href: '/apps/stea/apextwin-poc/sessions', label: 'Sessions', mobileLabel: 'Sessions', icon: '◈' },
+  { href: '/apps/stea/apextwin-poc/events', label: 'Events', mobileLabel: 'Events', icon: '◈' },
   { href: '/apps/stea/apextwin-poc/paddock', label: 'Paddock', mobileLabel: 'Paddock', icon: '⬡' },
 ];
 

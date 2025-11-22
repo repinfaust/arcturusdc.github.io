@@ -575,5 +575,17 @@ service cloud.firestore {
       // Only session owner can update/delete
       allow update, delete: if authed() && resource.data.riderId == request.auth.uid;
     }
+
+    // ApexTwin Events - track day / weekend events
+    match /apextwin_events/{eventId} {
+      // Authenticated users can create their own events
+      allow create: if authed() && request.resource.data.riderId == request.auth.uid;
+
+      // All authenticated users can read events (for paddock view)
+      allow read: if authed();
+
+      // Only event owner can update/delete
+      allow update, delete: if authed() && resource.data.riderId == request.auth.uid;
+    }
   }
 }
