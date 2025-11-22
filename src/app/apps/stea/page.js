@@ -10,6 +10,9 @@ import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import WorkspacePulse from '@/components/workspace/WorkspacePulse';
 
+// Tenant ID for ApexTwin-exclusive workspace
+const APEXTWIN_TENANT_ID = 'DL7ScScEhvAcFpAmmS8h';
+
 const IN_SESSION_DESTINATIONS = [
   {
     label: 'Harls',
@@ -17,6 +20,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Product discovery lab: capture requirements, sketch on whiteboard, export structured prompts for LLMs.',
     gradient: 'from-amber-50/80 to-orange-50/30',
     borderColor: 'border-amber-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Auto Product',
@@ -24,6 +28,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'AI-powered backlog generation via MCP. Turn product specs into structured Epics, Features, and Cards.',
     gradient: 'from-indigo-50/80 to-blue-50/30',
     borderColor: 'border-indigo-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Filo',
@@ -32,6 +37,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Plan, prioritise, and track the STEa backlog.',
     gradient: 'from-violet-50/80 to-purple-50/30',
     borderColor: 'border-violet-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Hans Testing Suite',
@@ -39,6 +45,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Test case management and user testing coordination across all apps.',
     gradient: 'from-emerald-50/80 to-green-50/30',
     borderColor: 'border-emerald-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Ruby',
@@ -46,6 +53,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Product Intelligence documentation repository for notes, architecture designs, and technical docs across all apps.',
     gradient: 'from-rose-50/80 to-pink-50/30',
     borderColor: 'border-rose-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Automated Tests',
@@ -53,6 +61,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Trigger Jest suites and review the latest run results.',
     gradient: 'from-slate-50/80 to-gray-50/30',
     borderColor: 'border-slate-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Explore STEa',
@@ -60,6 +69,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Interactive showcase of the complete STEa tech stack, closed-loop workflow, and pricing.',
     gradient: 'from-pink-50/80 to-fuchsia-50/30',
     borderColor: 'border-pink-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Orbit POC',
@@ -67,6 +77,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Cryptographically-verifiable audit trail for AI systems. Track consent, data usage, and verification events.',
     gradient: 'from-cyan-50/80 to-teal-50/30',
     borderColor: 'border-cyan-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
     label: 'Orbit: AI Act Demo',
@@ -74,6 +85,16 @@ const IN_SESSION_DESTINATIONS = [
     description: 'EU AI Act compliance demo for KYC providers. Reconstruct lineage, generate Annex IV documentation bundles.',
     gradient: 'from-sky-50/80 to-blue-50/30',
     borderColor: 'border-sky-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
+  },
+  {
+    label: 'ApexTwin',
+    href: '/apps/stea/apextwin-poc',
+    description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',
+    gradient: 'from-emerald-950/90 to-neutral-900/95',
+    borderColor: 'border-emerald-500/50',
+    textLight: true,
+    onlyForTenants: [APEXTWIN_TENANT_ID],
   },
 ];
 
@@ -332,7 +353,20 @@ export default function SteaAccessPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {IN_SESSION_DESTINATIONS.map((dest) => (
+        {IN_SESSION_DESTINATIONS
+          .filter((dest) => {
+            const tenantId = currentTenant?.id;
+            // If destination is only for specific tenants, check if current tenant is in the list
+            if (dest.onlyForTenants) {
+              return tenantId && dest.onlyForTenants.includes(tenantId);
+            }
+            // If destination is excluded for specific tenants, check if current tenant is NOT in the list
+            if (dest.excludeForTenants && tenantId) {
+              return !dest.excludeForTenants.includes(tenantId);
+            }
+            return true;
+          })
+          .map((dest) => (
           <Link
             key={dest.href}
             href={dest.href}
@@ -340,16 +374,16 @@ export default function SteaAccessPage() {
           >
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-neutral-900">{dest.label}</h2>
+                <h2 className={`text-xl font-semibold ${dest.textLight ? 'text-white' : 'text-neutral-900'}`}>{dest.label}</h2>
                 {dest.note ? (
-                  <div className="text-xs text-neutral-400">{dest.note}</div>
+                  <div className={`text-xs ${dest.textLight ? 'text-neutral-400' : 'text-neutral-400'}`}>{dest.note}</div>
                 ) : null}
               </div>
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 transition group-hover:border-neutral-300 group-hover:text-neutral-900">
+              <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${dest.textLight ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-400' : 'border-neutral-200 bg-white text-neutral-500'} transition ${dest.textLight ? 'group-hover:border-emerald-400 group-hover:text-emerald-300' : 'group-hover:border-neutral-300 group-hover:text-neutral-900'}`}>
                 →
               </span>
             </div>
-            <p className="text-sm text-neutral-600">{dest.description}</p>
+            <p className={`text-sm ${dest.textLight ? 'text-neutral-300' : 'text-neutral-600'}`}>{dest.description}</p>
           </Link>
         ))}
       </div>

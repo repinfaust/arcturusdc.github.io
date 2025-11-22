@@ -533,5 +533,47 @@ service cloud.firestore {
     match /orbit_ai_act_lineage/{lineageId} {
       allow read, write: if false;
     }
+
+    /* ==========================================================
+       ApexTwin POC Collections (Track Setup Companion)
+       Restricted to tenantId: DL7ScScEhvAcFpAmmS8h
+       ========================================================== */
+
+    // ApexTwin Riders - profile per authenticated user
+    match /apextwin_riders/{riderId} {
+      // Users can only read/write their own rider profile
+      allow read, write: if authed() && request.auth.uid == riderId;
+
+      // Bikes subcollection - owned by rider
+      match /bikes/{bikeId} {
+        allow read, write: if authed() && request.auth.uid == riderId;
+      }
+    }
+
+    // ApexTwin Tracks - shared track registry
+    match /apextwin_tracks/{trackId} {
+      // Any authenticated user can read tracks
+      allow read: if authed();
+
+      // Authenticated users can create tracks
+      allow create: if authed();
+
+      // Only creators or super admins can update/delete
+      allow update, delete: if authed() && (
+        isSuperAdmin() || resource.data.createdBy == request.auth.uid
+      );
+    }
+
+    // ApexTwin Sessions - individual session records
+    match /apextwin_sessions/{sessionId} {
+      // Authenticated users can create their own sessions
+      allow create: if authed() && request.resource.data.riderId == request.auth.uid;
+
+      // Paddock view: all authenticated users can read all sessions
+      allow read: if authed();
+
+      // Only session owner can update/delete
+      allow update, delete: if authed() && resource.data.riderId == request.auth.uid;
+    }
   }
 }
