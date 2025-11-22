@@ -55,6 +55,9 @@ const TRACKS = [
   { name: 'Ascari Race Resort', layout: 'Full', country: 'Spain', latitude: 36.7961, longitude: -4.9547 },
   { name: 'Almería Circuit', layout: 'Full', country: 'Spain', latitude: 36.8539, longitude: -2.3553 },
   { name: 'Cartagena', layout: 'Full', country: 'Spain', latitude: 37.5572, longitude: -1.0081 },
+  { name: 'Circuito de Andalucía', layout: 'Full', country: 'Spain', latitude: 36.8539, longitude: -2.3553 },
+  { name: 'Guadix', layout: 'Full', country: 'Spain', latitude: 37.3017, longitude: -3.1358 },
+  { name: 'Motorland Aragón', layout: 'National', country: 'Spain', latitude: 41.0783, longitude: -0.4303 },
 
   // Portugal
   { name: 'Autódromo Internacional do Algarve (Portimão)', layout: 'GP', country: 'Portugal', latitude: 37.2297, longitude: -8.6267 },
