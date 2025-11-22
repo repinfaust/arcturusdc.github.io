@@ -16,6 +16,7 @@ export default function NewSessionPage() {
   const [formData, setFormData] = useState({
     // Session basics
     date: new Date().toISOString().split('T')[0],
+    sessionTime: '',
     bikeId: '',
     trackId: '',
     eventName: '',
@@ -128,6 +129,7 @@ export default function NewSessionPage() {
         trackId: trackId,
         trackName: trackName,
         date: Timestamp.fromDate(new Date(formData.date)),
+        sessionTime: formData.sessionTime || null,
         eventName: formData.eventName.trim() || null,
         sessionNumber: formData.sessionNumber ? parseInt(formData.sessionNumber) : null,
         // Tyres
@@ -194,6 +196,15 @@ export default function NewSessionPage() {
                 className="apex-input"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-1">Session Time</label>
+              <input
+                type="time"
+                className="apex-input"
+                value={formData.sessionTime}
+                onChange={(e) => setFormData({ ...formData, sessionTime: e.target.value })}
               />
             </div>
             <div>

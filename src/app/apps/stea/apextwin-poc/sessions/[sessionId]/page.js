@@ -116,7 +116,10 @@ export default function SessionDetailPage() {
             </Link>
           </div>
           <h1 className="apex-h1">{session.trackName || 'Unknown Track'}</h1>
-          <p className="text-apex-soft">{formatDate(session.date)}</p>
+          <p className="text-apex-soft">
+            {formatDate(session.date)}
+            {session.sessionTime && <span className="ml-2 apex-data">@ {session.sessionTime}</span>}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -148,6 +151,10 @@ export default function SessionDetailPage() {
           <div>
             <div className="apex-label mb-1">Session #</div>
             <div className="apex-data">{session.sessionNumber || '--'}</div>
+          </div>
+          <div>
+            <div className="apex-label mb-1">Time</div>
+            <div className="apex-data">{session.sessionTime || '--'}</div>
           </div>
           <div>
             <div className="apex-label mb-1">Laps</div>
