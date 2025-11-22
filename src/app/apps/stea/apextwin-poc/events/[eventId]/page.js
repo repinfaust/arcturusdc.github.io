@@ -161,13 +161,22 @@ export default function EventDetailPage() {
       </div>
 
       {/* Map */}
-      <div className="apex-panel overflow-hidden">
+      <div className="apex-panel overflow-hidden relative">
         <CircuitMap
           lat={event.trackLat}
           lng={event.trackLng}
           trackName={event.trackName}
           className="h-48 sm:h-64"
         />
+        {/* Map Actions */}
+        <div className="absolute bottom-3 right-3 flex gap-2">
+          <Link
+            href={`/apps/stea/apextwin-poc/events/${eventId}/strategy`}
+            className="px-3 py-1.5 bg-apex-mint text-apex-carbon text-xs font-semibold rounded-lg shadow-lg hover:bg-apex-mint-tint transition-colors"
+          >
+            Track Strategy
+          </Link>
+        </div>
       </div>
 
       {/* Quick Stats */}

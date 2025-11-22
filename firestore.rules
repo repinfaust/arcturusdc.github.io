@@ -586,6 +586,11 @@ service cloud.firestore {
 
       // Only event owner can update/delete
       allow update, delete: if authed() && resource.data.riderId == request.auth.uid;
+
+      // Strategy whiteboard subcollection - event owner only
+      match /strategy/{docId} {
+        allow read, write: if authed() && get(/databases/$(database)/documents/apextwin_events/$(eventId)).data.riderId == request.auth.uid;
+      }
     }
   }
 }
