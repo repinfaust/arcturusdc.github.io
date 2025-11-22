@@ -28,6 +28,11 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
   }
+
+  /* Safe area for iPhone notch/home indicator */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
 }
 
 /* -------- Component layer -------- */
@@ -116,9 +121,19 @@
 
   /* ApexTwin Heading */
   .apex-h1 {
-    @apply text-3xl font-bold text-[#F2F2F2] tracking-tight;
+    @apply text-2xl sm:text-3xl font-bold text-[#F2F2F2] tracking-tight;
   }
   .apex-h2 {
-    @apply text-xl font-semibold text-[#F2F2F2] uppercase tracking-wide;
+    @apply text-base sm:text-xl font-semibold text-[#F2F2F2] uppercase tracking-wide;
+  }
+
+  /* ApexTwin Mobile Panel - reduced padding on small screens */
+  .apex-panel-mobile {
+    @apply bg-[#1A1C1F] border border-[#2C2E32] rounded-lg p-4 sm:p-6;
+  }
+
+  /* ApexTwin Touch-friendly Button */
+  .apex-btn-touch {
+    @apply min-h-[44px] min-w-[44px];
   }
 }

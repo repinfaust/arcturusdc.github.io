@@ -181,9 +181,9 @@ export default function NewSessionPage() {
         <p className="text-apex-soft">Record your setup and performance</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Session Basics */}
-        <div className="apex-panel p-6">
+        <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Session Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
@@ -306,7 +306,7 @@ export default function NewSessionPage() {
         </div>
 
         {/* Tyres */}
-        <div className="apex-panel p-6">
+        <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Tyre Setup</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Front */}
@@ -420,9 +420,9 @@ export default function NewSessionPage() {
         </div>
 
         {/* Quick Setup */}
-        <div className="apex-panel p-6">
+        <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Quick Setup</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <label className="apex-label block mb-1">Fork Comp (clicks out)</label>
               <input
@@ -487,9 +487,9 @@ export default function NewSessionPage() {
         </div>
 
         {/* Outcome */}
-        <div className="apex-panel p-6">
+        <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Outcome</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <label className="apex-label block mb-1">Laps Completed</label>
               <input
@@ -538,18 +538,18 @@ export default function NewSessionPage() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <button
             type="submit"
             disabled={saving}
-            className="apex-btn apex-btn-primary px-8"
+            className="apex-btn apex-btn-primary px-8 min-h-[48px] sm:min-h-0 order-1 sm:order-none"
           >
             {saving ? 'Saving...' : 'Save Session'}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="apex-btn apex-btn-secondary"
+            className="apex-btn apex-btn-secondary min-h-[48px] sm:min-h-0 order-2 sm:order-none"
           >
             Cancel
           </button>

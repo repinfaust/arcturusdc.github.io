@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -10,17 +10,23 @@ import { useTenant } from '@/contexts/TenantContext';
 const APEXTWIN_TENANT_ID = 'DL7ScScEhvAcFpAmmS8h';
 
 const NAV_ITEMS = [
-  { href: '/apps/stea/apextwin-poc', label: 'Dashboard', icon: '◇' },
-  { href: '/apps/stea/apextwin-poc/bikes', label: 'Bikes', icon: '⟁' },
-  { href: '/apps/stea/apextwin-poc/sessions', label: 'Sessions', icon: '◈' },
-  { href: '/apps/stea/apextwin-poc/paddock', label: 'Paddock', icon: '⬡' },
+  { href: '/apps/stea/apextwin-poc', label: 'Home', mobileLabel: 'Home', icon: '◇', exact: true },
+  { href: '/apps/stea/apextwin-poc/bikes', label: 'Bikes', mobileLabel: 'Bikes', icon: '⟁' },
+  { href: '/apps/stea/apextwin-poc/sessions', label: 'Sessions', mobileLabel: 'Sessions', icon: '◈' },
+  { href: '/apps/stea/apextwin-poc/paddock', label: 'Paddock', mobileLabel: 'Paddock', icon: '⬡' },
 ];
 
 export default function ApexTwinLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { currentTenant, loading: tenantLoading } = useTenant();
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  const isActive = (item) => {
+    if (item.exact) return pathname === item.href;
+    return pathname.startsWith(item.href);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -76,26 +82,30 @@ export default function ApexTwinLayout({ children }) {
 
   return (
     <div className="min-h-screen apex-bg apex-noise">
-      {/* Header */}
-      <header className="border-b border-apex-stealth">
+      {/* Header - Sticky on mobile */}
+      <header className="sticky top-0 z-50 bg-apex-carbon/95 backdrop-blur-sm border-b border-apex-stealth">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo / Brand */}
-            <div className="flex items-center gap-6">
-              <Link href="/apps/stea/apextwin-poc" className="flex items-center gap-3">
-                <span className="text-apex-mint text-2xl font-bold tracking-tighter">∆</span>
-                <span className="text-apex-white font-semibold tracking-tight">ApexTwin</span>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Link href="/apps/stea/apextwin-poc" className="flex items-center gap-2 sm:gap-3">
+                <span className="text-apex-mint text-xl sm:text-2xl font-bold tracking-tighter">∆</span>
+                <span className="text-apex-white font-semibold tracking-tight text-sm sm:text-base">ApexTwin</span>
               </Link>
 
-              {/* Navigation */}
+              {/* Desktop Navigation */}
               <nav className="hidden md:flex items-center gap-1">
                 {NAV_ITEMS.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="px-3 py-2 text-sm text-apex-soft hover:text-apex-white hover:bg-apex-graphite rounded-lg transition-colors"
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                      isActive(item)
+                        ? 'text-apex-mint bg-apex-mint/10'
+                        : 'text-apex-soft hover:text-apex-white hover:bg-apex-graphite'
+                    }`}
                   >
-                    <span className="mr-2 text-apex-mint/60">{item.icon}</span>
+                    <span className={`mr-2 ${isActive(item) ? 'text-apex-mint' : 'text-apex-mint/60'}`}>{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}
@@ -103,13 +113,13 @@ export default function ApexTwinLayout({ children }) {
             </div>
 
             {/* User / Actions */}
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-apex-soft hidden sm:block">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-xs text-apex-soft hidden sm:block truncate max-w-[120px]">
                 {user.displayName || user.email}
               </span>
               <button
                 onClick={handleSignOut}
-                className="text-xs text-apex-soft hover:text-apex-white transition-colors"
+                className="text-xs text-apex-soft hover:text-apex-white transition-colors px-2 py-1"
               >
                 Sign out
               </button>
@@ -118,24 +128,28 @@ export default function ApexTwinLayout({ children }) {
         </div>
       </header>
 
-      {/* Mobile Navigation */}
-      <div className="md:hidden border-b border-apex-stealth overflow-x-auto">
-        <nav className="flex items-center gap-1 px-4 py-2">
+      {/* Mobile Bottom Navigation - Fixed at bottom */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-apex-carbon/95 backdrop-blur-sm border-t border-apex-stealth safe-area-pb">
+        <div className="flex items-center justify-around py-2">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="px-3 py-2 text-sm text-apex-soft hover:text-apex-white hover:bg-apex-graphite rounded-lg transition-colors whitespace-nowrap"
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors min-w-[64px] ${
+                isActive(item)
+                  ? 'text-apex-mint'
+                  : 'text-apex-soft'
+              }`}
             >
-              <span className="mr-1 text-apex-mint/60">{item.icon}</span>
-              {item.label}
+              <span className={`text-lg ${isActive(item) ? 'text-apex-mint' : 'text-apex-mint/40'}`}>{item.icon}</span>
+              <span className="text-[10px] font-medium">{item.mobileLabel}</span>
             </Link>
           ))}
-        </nav>
-      </div>
+        </div>
+      </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content - Add bottom padding on mobile for fixed nav */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 md:pb-8">
         {children}
       </main>
     </div>

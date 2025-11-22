@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fight or Flight: v0.1</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        #gameContainer {
+            position: relative;
+            border: 5px solid #fff;
+            box-shadow: 0 0 20px rgba(0,255,255,0.5);
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FA); /* Sky School Colors */
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            color: #000;
+            text-shadow: 1px 1px 0 #fff;
+            pointer-events: none;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 40px;
+            color: #FF4500;
+            text-shadow: 2px 2px 0 #fff;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="ui">
+        HERO: <span id="heroName">SMASHER</span><br>
+        HP: <span id="hp">100</span>%<br>
+        COINS: <span id="score">0</span>
+    </div>
+    <div id="message">PRESS SPACE TO START</div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+</div>
+
+<script>
+/* 
+   👨‍💻 ARCTURUS DIGITAL CONSULTING 
+   Junior Creative Assistant: Felix
+   Lead Designer: Dad
+   Version: 0.1
+*/
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const uiHp = document.getElementById('hp');
+const uiScore = document.getElementById('score');
+const uiMsg = document.getElementById('message');
+
+// --- GAME SETTINGS ---
+let gameState = 'START'; // START, PLAYING, GAMEOVER, WIN
+let frames = 0;
+let gravity = 0.5;
+
+// --- HERO: SMASHER ---
+const hero = {
+    x: 100,
+    y: 300,
+    width: 50,
+    height: 50,
+    vx: 0,
+    vy: 0,
+    speed: 5,
+    jumpPower: -10,
+    hp: 100,
+    coins: 0,
+    color: 'blue',
+    emoji: '🦸‍♂️',
+    facingRight: true,
+    powerUp: false,
+    powerTimer: 0
+};
+
+// --- VILLAIN: THE COWBOY ---
+const boss = {
+    x: 600,
+    y: 450,
+    width: 60,
+    height: 60,
+    hp: 100,
+    maxHp: 100,
+    speed: 2,
+    direction: -1,
+    emoji: '🤠',
+    name: 'COWBOY',
+    attackTimer: 0
+};
+
+// --- OBJECTS ---
+let lasers = [];
+let hotdogs = [];
+let punches = [];
+
+// --- INPUTS ---
+const keys = {};
+window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if(gameState === 'START' && e.code === 'Space') resetGame();
+    if(gameState === 'GAMEOVER' && e.code === 'Space') resetGame();
+    if(gameState === 'WIN' && e.code === 'Space') resetGame();
+    
+    // Fighting Logic
+    if(gameState === 'PLAYING' && e.code === 'Space') {
+        punch();
+    }
+});
+window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+function resetGame() {
+    hero.hp = 100;
+    hero.x = 100;
+    hero.y = 300;
+    hero.coins = 0;
+    boss.hp = 100;
+    boss.x = 600;
+    boss.y = 450; // Ground level
+    lasers = [];
+    hotdogs = [];
+    gameState = 'PLAYING';
+    uiMsg.style.display = 'none';
+}
+
+function punch() {
+    // Create a punch hitbox
+    const punchX = hero.facingRight ? hero.x + 40 : hero.x - 40;
+    punches.push({
+        x: punchX,
+        y: hero.y + 10,
+        width: 40,
+        height: 30,
+        life: 10
+    });
+}
+
+// --- GAME LOOP ---
+function update() {
+    if(gameState !== 'PLAYING') return;
+    frames++;
+
+    // 1. HERO MOVEMENT (Fight or Flight!)
+    if (keys['ArrowLeft'] || keys['KeyA']) { hero.vx = -hero.speed; hero.facingRight = false; }
+    else if (keys['ArrowRight'] || keys['KeyD']) { hero.vx = hero.speed; hero.facingRight = true; }
+    else { hero.vx = 0; }
+
+    if (keys['ArrowUp'] || keys['KeyW']) { 
+        hero.vy = hero.jumpPower; // Flight/Jump
+    }
+
+    hero.vy += gravity;
+    hero.x += hero.vx;
+    hero.y += hero.vy;
+
+    // Floor Collision
+    if (hero.y > 500) { hero.y = 500; hero.vy = 0; }
+    // Ceiling/Walls
+    if (hero.y < 0) hero.y = 0;
+    if (hero.x < 0) hero.x = 0;
+    if (hero.x > canvas.width - hero.width) hero.x = canvas.width - hero.width;
+
+    // 2. BOSS AI (The Cowboy)
+    // Move back and forth
+    boss.x += boss.speed * boss.direction;
+    if (boss.x < 400 || boss.x > 700) boss.direction *= -1;
+    
+    // Cowboy Laser Eyes Attack
+    boss.attackTimer++;
+    if(boss.attackTimer > 100) {
+        lasers.push({x: boss.x, y: boss.y + 15, vx: -8, vy: 0, color: 'red'});
+        boss.attackTimer = 0;
+    }
+
+    // 3. SPAWN HOTDOGS (Randomly)
+    if(Math.random() < 0.005) { // Rare chance
+        hotdogs.push({x: Math.random() * 700, y: 0, vy: 2, emoji: '🌭'});
+    }
+
+    // 4. PHYSICS & COLLISIONS
+    
+    // Lasers
+    for(let i=0; i<lasers.length; i++) {
+        lasers[i].x += lasers[i].vx;
+        // Hit Hero?
+        if(rectIntersect(lasers[i].x, lasers[i].y, 20, 5, hero)) {
+            hero.hp -= 10;
+            lasers.splice(i, 1);
+            i--;
+        }
+    }
+
+    // Punches hitting Boss
+    for(let i=0; i<punches.length; i++) {
+        punches[i].life--;
+        if(rectIntersect(punches[i].x, punches[i].y, punches[i].width, punches[i].height, boss)) {
+            let dmg = hero.powerUp ? 10 : 2; // Super strength!
+            boss.hp -= dmg;
+            punches.splice(i, 1);
+            i--;
+            // Knockback boss
+            boss.x += 10;
+        } else if (punches[i].life <= 0) {
+            punches.splice(i, 1);
+            i--;
+        }
+    }
+
+    // Eating Hotdogs
+    for(let i=0; i<hotdogs.length; i++) {
+        hotdogs[i].y += hotdogs[i].vy;
+        if(rectIntersect(hotdogs[i].x, hotdogs[i].y, 30, 30, hero)) {
+            activateHotdogPower();
+            hotdogs.splice(i, 1);
+            i--;
+        }
+    }
+
+    // Hero Power Timer
+    if(hero.powerUp) {
+        hero.powerTimer--;
+        if(hero.powerTimer <= 0) {
+            hero.powerUp = false;
+            hero.speed = 5; // Reset speed
+            hero.emoji = '🦸‍♂️';
+        }
+    }
+
+    // 5. WIN/LOSS CHECKS
+    if(hero.hp <= 0) {
+        gameState = 'GAMEOVER';
+        uiMsg.innerText = "GAME OVER! TRY AGAIN!";
+        uiMsg.style.display = 'block';
+    }
+    if(boss.hp <= 0) {
+        gameState = 'WIN';
+        uiMsg.innerText = "YOU DEFEATED THE COWBOY!";
+        uiMsg.style.display = 'block';
+    }
+
+    // Update UI
+    uiHp.innerText = hero.hp;
+    uiScore.innerText = hero.coins;
+}
+
+function activateHotdogPower() {
+    hero.powerUp = true;
+    hero.powerTimer = 300; // 5 seconds approx
+    hero.hp = 100; // Heal
+    hero.speed = 15; // SUPER SPEED
+    hero.emoji = '🌭⚡'; // Visual change
+    // Add floating text effect in draw loop later
+}
+
+function rectIntersect(x1, y1, w1, h1, r2) {
+    return r2.x < x1 + w1 && r2.x + r2.width > x1 &&
+           r2.y < y1 + h1 && r2.y + r2.height > y1;
+}
+
+// --- DRAW LOOP ---
+function draw() {
+    // Clear Screen
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw Ground
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillRect(0, 550, 800, 50);
+
+    // Draw Hero
+    ctx.font = '50px Arial';
+    // Flip emoji if facing left
+    ctx.save();
+    if(!hero.facingRight) {
+        ctx.scale(-1, 1);
+        ctx.fillText(hero.emoji, -hero.x - hero.width, hero.y + 40);
+    } else {
+        ctx.fillText(hero.emoji, hero.x, hero.y + 40);
+    }
+    ctx.restore();
+
+    // Draw Boss (Cowboy)
+    if(boss.hp > 0) {
+        ctx.fillText(boss.emoji, boss.x, boss.y + 40);
+        // Boss Health Bar
+        ctx.fillStyle = 'red';
+        ctx.fillRect(boss.x, boss.y - 10, 60, 5);
+        ctx.fillStyle = 'green';
+        ctx.fillRect(boss.x, boss.y - 10, 60 * (boss.hp/boss.maxHp), 5);
+    }
+
+    // Draw Lasers
+    ctx.fillStyle = 'red';
+    for(let l of lasers) {
+        ctx.fillRect(l.x, l.y, 20, 5);
+    }
+
+    // Draw Hotdogs
+    ctx.font = '30px Arial';
+    for(let h of hotdogs) {
+        ctx.fillText(h.emoji, h.x, h.y);
+    }
+
+    // Draw Punch Visual
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    for(let p of punches) {
+        ctx.beginPath();
+        ctx.arc(p.x + p.width/2, p.y + p.height/2, 20, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    // Draw Powerup Text
+    if(hero.powerUp) {
+        ctx.fillStyle = 'yellow';
+        ctx.font = '20px Arial';
+        ctx.fillText("HOTDOG SPEED!!!", hero.x - 20, hero.y - 10);
+    }
+
+    if(gameState === 'START') {
+        uiMsg.style.display = 'block';
+    }
+}
+
+// Run Game
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
+
+</script>
+</body>
+</html>
