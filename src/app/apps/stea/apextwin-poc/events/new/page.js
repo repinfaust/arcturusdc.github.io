@@ -13,6 +13,12 @@ const EVENT_TYPES = [
   { value: 'test_session', label: 'Test Session' },
 ];
 
+const RIDER_GROUPS = [
+  { value: 'orange', label: 'Orange', description: 'Newcomers / Learning', color: 'bg-orange-500' },
+  { value: 'red', label: 'Red', description: 'Intermediate', color: 'bg-red-500' },
+  { value: 'gold', label: 'Gold', description: 'Fast / Experienced', color: 'bg-yellow-500' },
+];
+
 export default function NewEventPage() {
   const router = useRouter();
   const [tracks, setTracks] = useState([]);
@@ -23,6 +29,7 @@ export default function NewEventPage() {
   const [formData, setFormData] = useState({
     trackId: '',
     eventType: 'track_day',
+    riderGroup: '',
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
     selectedBikes: [],
@@ -99,6 +106,7 @@ export default function NewEventPage() {
         trackLng: selectedTrack?.longitude || selectedTrack?.lng || null,
         trackCountry: selectedTrack?.country || null,
         eventType: formData.eventType,
+        riderGroup: formData.riderGroup || null,
         startDate: Timestamp.fromDate(new Date(formData.startDate)),
         endDate: formData.endDate ? Timestamp.fromDate(new Date(formData.endDate)) : null,
         bikes: selectedBikesData,
@@ -160,7 +168,7 @@ export default function NewEventPage() {
         {/* Event Details */}
         <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Event Details</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="apex-label block mb-2">Event Type</label>
               <select
@@ -170,6 +178,19 @@ export default function NewEventPage() {
               >
                 {EVENT_TYPES.map(type => (
                   <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="apex-label block mb-2">Rider Group</label>
+              <select
+                value={formData.riderGroup}
+                onChange={(e) => setFormData(prev => ({ ...prev, riderGroup: e.target.value }))}
+                className="apex-input"
+              >
+                <option value="">Select group...</option>
+                {RIDER_GROUPS.map(group => (
+                  <option key={group.value} value={group.value}>{group.label} - {group.description}</option>
                 ))}
               </select>
             </div>
@@ -202,7 +223,7 @@ export default function NewEventPage() {
           {bikes.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-apex-soft mb-3">No bikes registered yet</p>
-              <Link href="/apps/stea/apextwin-poc/bikes" className="apex-btn apex-btn-secondary text-sm">
+              <Link href="/apps/stea/apextwin-poc/garage" className="apex-btn apex-btn-secondary text-sm">
                 Add a bike first
               </Link>
             </div>

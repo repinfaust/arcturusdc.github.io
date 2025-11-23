@@ -49,6 +49,8 @@ export default function NewSessionPage() {
     notesHandling: '',
     // Conditions
     weather: '',
+    // Confidence
+    confidence: 50,
   });
 
   useEffect(() => {
@@ -156,6 +158,8 @@ export default function NewSessionPage() {
         notesHandling: formData.notesHandling.trim() || null,
         // Conditions
         weather: formData.weather || null,
+        // Confidence
+        confidence: formData.confidence,
         // Meta
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -536,6 +540,27 @@ export default function NewSessionPage() {
               </div>
             </div>
           </div>
+          {/* Confidence Slider */}
+          <div className="mt-4">
+            <label className="apex-label block mb-2">Confidence Level</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                className="flex-1 h-2 bg-apex-stealth rounded-lg appearance-none cursor-pointer accent-apex-mint"
+                value={formData.confidence}
+                onChange={(e) => setFormData({ ...formData, confidence: parseInt(e.target.value) })}
+              />
+              <span className="apex-data text-apex-mint w-12 text-right">{formData.confidence}%</span>
+            </div>
+            <div className="flex justify-between text-[10px] text-apex-soft mt-1 px-1">
+              <span>Cautious</span>
+              <span>Pushing</span>
+            </div>
+          </div>
+
           <div className="mt-4">
             <label className="apex-label block mb-1">Notes / Handling Feedback</label>
             <textarea

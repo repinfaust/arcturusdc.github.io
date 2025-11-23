@@ -110,6 +110,15 @@ export default function EventDetailPage() {
     return labels[type] || type;
   };
 
+  const riderGroupLabel = (group) => {
+    const groups = {
+      'orange': { label: 'Orange', color: 'bg-orange-500' },
+      'red': { label: 'Red', color: 'bg-red-500' },
+      'gold': { label: 'Gold', color: 'bg-yellow-500' },
+    };
+    return groups[group] || null;
+  };
+
   if (loading) {
     return (
       <div className="apex-panel p-8 text-center text-apex-soft">Loading event...</div>
@@ -149,6 +158,12 @@ export default function EventDetailPage() {
             {event.eventType && (
               <span className="ml-2 text-apex-mint/70">• {eventTypeLabel(event.eventType)}</span>
             )}
+            {event.riderGroup && riderGroupLabel(event.riderGroup) && (
+              <span className={`ml-2 inline-flex items-center gap-1`}>
+                <span className={`w-2 h-2 rounded-full ${riderGroupLabel(event.riderGroup).color}`}></span>
+                <span className="text-apex-white/70">{riderGroupLabel(event.riderGroup).label}</span>
+              </span>
+            )}
           </p>
         </div>
         <button
@@ -169,7 +184,7 @@ export default function EventDetailPage() {
           className="h-48 sm:h-64"
         />
         {/* Map Actions */}
-        <div className="absolute bottom-3 right-3 flex gap-2">
+        <div className="absolute bottom-3 right-3 z-10 flex gap-2">
           <Link
             href={`/apps/stea/apextwin-poc/events/${eventId}/strategy`}
             className="px-3 py-1.5 bg-apex-mint text-apex-carbon text-xs font-semibold rounded-lg shadow-lg hover:bg-apex-mint-tint transition-colors"
