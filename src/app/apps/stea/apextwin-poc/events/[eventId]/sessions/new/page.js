@@ -12,6 +12,7 @@ export default function NewEventSessionPage() {
   const eventId = params.eventId;
 
   const [event, setEvent] = useState(null);
+  const [userBikes, setUserBikes] = useState({});
   const [previousSessions, setPreviousSessions] = useState([]);
   const [weatherData, setWeatherData] = useState(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
@@ -95,6 +96,15 @@ export default function NewEventSessionPage() {
         if (eventData.trackLat && eventData.trackLng) {
           fetchWeather(eventData.trackLat, eventData.trackLng, eventData.startDate, eventData.endDate);
         }
+
+        // Fetch user's bikes with default settings
+        const bikesQuery = query(collection(db, 'apextwin_riders', user.uid, 'bikes'));
+        const bikesSnap = await getDocs(bikesQuery);
+        const bikesMap = {};
+        bikesSnap.docs.forEach(d => {
+          bikesMap[d.id] = { id: d.id, ...d.data() };
+        });
+        setUserBikes(bikesMap);
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -161,6 +171,45 @@ export default function NewEventSessionPage() {
       tractionControlLevel: session.tractionControlLevel || '',
       engineMap: session.engineMap || '',
     }));
+  };
+
+  // Apply default settings from a bike
+  const applyBikeDefaults = (bikeId) => {
+    const bike = userBikes[bikeId];
+    if (!bike?.defaultSettings) return;
+
+    const d = bike.defaultSettings;
+    setFormData(prev => ({
+      ...prev,
+      // Gearing
+      frontSprocket: d.frontSprocket?.toString() || prev.frontSprocket,
+      rearSprocket: d.rearSprocket?.toString() || prev.rearSprocket,
+      chainLength: d.chainLength?.toString() || prev.chainLength,
+      // Tyres (use bike's default tyre sizes if available)
+      tireSizeFront: bike.tyreSizeFront || prev.tireSizeFront,
+      tireBrandFront: d.tireBrandFront || prev.tireBrandFront,
+      tireCompoundFront: d.tireCompoundFront || prev.tireCompoundFront,
+      tirePressureFrontColdPsi: d.tirePressureFrontColdPsi?.toString() || prev.tirePressureFrontColdPsi,
+      tireSizeRear: bike.tyreSizeRear || prev.tireSizeRear,
+      tireBrandRear: d.tireBrandRear || prev.tireBrandRear,
+      tireCompoundRear: d.tireCompoundRear || prev.tireCompoundRear,
+      tirePressureRearColdPsi: d.tirePressureRearColdPsi?.toString() || prev.tirePressureRearColdPsi,
+      // Suspension
+      forkCompClicksOut: d.forkCompClicksOut?.toString() || prev.forkCompClicksOut,
+      forkRebClicksOut: d.forkRebClicksOut?.toString() || prev.forkRebClicksOut,
+      shockCompClicksOut: d.shockCompClicksOut?.toString() || prev.shockCompClicksOut,
+      shockRebClicksOut: d.shockRebClicksOut?.toString() || prev.shockRebClicksOut,
+      // Electronics
+      tractionControlLevel: d.tractionControlLevel || prev.tractionControlLevel,
+      engineMap: d.engineMap || prev.engineMap,
+    }));
+  };
+
+  // Check if a bike has default settings
+  const bikeHasDefaults = (bikeId) => {
+    const bike = userBikes[bikeId];
+    if (!bike?.defaultSettings) return false;
+    return Object.values(bike.defaultSettings).some(v => v !== null && v !== undefined && v !== '');
   };
 
   // Get weather description from code
@@ -396,29 +445,44 @@ export default function NewEventSessionPage() {
             {event.bikes && event.bikes.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {event.bikes.map(bike => (
-                  <button
-                    key={bike.id}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, bikeId: bike.id })}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      formData.bikeId === bike.id
-                        ? 'border-apex-mint bg-apex-mint/10'
-                        : 'border-apex-stealth hover:border-apex-mint/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  <div key={bike.id} className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, bikeId: bike.id })}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${
                         formData.bikeId === bike.id
-                          ? 'border-apex-mint bg-apex-mint'
-                          : 'border-apex-stealth'
-                      }`}>
-                        {formData.bikeId === bike.id && (
-                          <span className="text-apex-carbon text-[10px]">✓</span>
-                        )}
+                          ? 'border-apex-mint bg-apex-mint/10'
+                          : 'border-apex-stealth hover:border-apex-mint/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          formData.bikeId === bike.id
+                            ? 'border-apex-mint bg-apex-mint'
+                            : 'border-apex-stealth'
+                        }`}>
+                          {formData.bikeId === bike.id && (
+                            <span className="text-apex-carbon text-[10px]">✓</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-apex-white font-medium">{bike.name}</span>
+                          {bikeHasDefaults(bike.id) && (
+                            <span className="ml-2 text-[10px] bg-apex-mint/20 text-apex-mint px-1.5 py-0.5 rounded">HAS DEFAULTS</span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-apex-white font-medium">{bike.name}</span>
-                    </div>
-                  </button>
+                    </button>
+                    {formData.bikeId === bike.id && bikeHasDefaults(bike.id) && (
+                      <button
+                        type="button"
+                        onClick={() => applyBikeDefaults(bike.id)}
+                        className="w-full px-3 py-2 bg-apex-mint/10 hover:bg-apex-mint/20 text-apex-mint text-sm rounded-lg border border-apex-mint/30 transition-colors"
+                      >
+                        Use Default Settings from Garage
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             ) : (

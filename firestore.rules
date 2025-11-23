@@ -547,6 +547,11 @@ service cloud.firestore {
       // Bikes subcollection - owned by rider
       match /bikes/{bikeId} {
         allow read, write: if authed() && request.auth.uid == riderId;
+
+        // Settings history subcollection
+        match /settings_history/{historyId} {
+          allow read, write: if authed() && request.auth.uid == riderId;
+        }
       }
     }
 
