@@ -534,138 +534,161 @@ function LapTimeVisualization({ sessions, bestLap, formatLapTime }) {
 
   const variances = calculateVariance();
 
+  // Determine if we need horizontal scroll (more than 6 sessions on mobile)
+  const needsScroll = sortedSessions.length > 6;
+
   return (
-    <div className="apex-panel p-4 sm:p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="apex-h2">Lap Time Analysis</h2>
+    <div className="apex-panel p-3 sm:p-6 space-y-3 sm:space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="apex-h2 text-sm sm:text-base">Lap Time Analysis</h2>
         <div className="relative">
           <button
             onClick={() => setShowOverlayMenu(!showOverlayMenu)}
-            className="apex-btn apex-btn-secondary text-xs px-3 py-1"
+            className="apex-btn apex-btn-secondary text-[10px] sm:text-xs px-2 sm:px-3 py-1 whitespace-nowrap"
           >
             Overlays {activeOverlays.length > 0 && `(${activeOverlays.length})`}
           </button>
           {showOverlayMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-apex-graphite border border-apex-stealth rounded-lg p-2 z-20 min-w-48 shadow-xl">
-              {OVERLAY_OPTIONS.map(option => (
-                <button
-                  key={option.key}
-                  onClick={() => toggleOverlay(option.key)}
-                  className={`w-full text-left px-3 py-2 rounded text-xs flex items-center gap-2 transition-colors ${
-                    activeOverlays.includes(option.key)
-                      ? 'bg-apex-stealth text-apex-white'
-                      : 'text-apex-soft hover:bg-apex-stealth/50'
-                  }`}
-                >
-                  <span
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: option.color }}
-                  />
-                  {option.label}
-                </button>
-              ))}
-            </div>
+            <>
+              {/* Backdrop to close menu */}
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowOverlayMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-1 bg-apex-graphite border border-apex-stealth rounded-lg p-2 z-20 w-44 sm:w-48 shadow-xl max-h-64 overflow-y-auto">
+                {OVERLAY_OPTIONS.map(option => (
+                  <button
+                    key={option.key}
+                    onClick={() => toggleOverlay(option.key)}
+                    className={`w-full text-left px-2 sm:px-3 py-2.5 sm:py-2 rounded text-xs flex items-center gap-2 transition-colors ${
+                      activeOverlays.includes(option.key)
+                        ? 'bg-apex-stealth text-apex-white'
+                        : 'text-apex-soft hover:bg-apex-stealth/50 active:bg-apex-stealth/50'
+                    }`}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: option.color }}
+                    />
+                    <span className="truncate">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
 
       {/* Chart Area */}
-      <div className="relative bg-apex-graphite rounded-lg p-4 min-h-48">
-        {/* Y-axis labels */}
-        <div className="absolute left-0 top-4 bottom-8 w-12 flex flex-col justify-between text-[10px] text-apex-soft">
-          <span>{formatLapTime(minLap)}</span>
+      <div className="relative bg-apex-graphite rounded-lg p-2 sm:p-4">
+        {/* Y-axis labels - narrower on mobile */}
+        <div className="absolute left-1 sm:left-0 top-3 sm:top-4 bottom-6 sm:bottom-8 w-10 sm:w-12 flex flex-col justify-between text-[8px] sm:text-[10px] text-apex-soft">
+          <span className="truncate">{formatLapTime(minLap)}</span>
           <span className="text-apex-mint">Best</span>
-          <span>{formatLapTime(maxLap)}</span>
+          <span className="truncate">{formatLapTime(maxLap)}</span>
         </div>
 
-        {/* Chart Grid */}
-        <div className="ml-14 relative h-40">
-          {/* Horizontal grid lines */}
-          <div className="absolute inset-0 flex flex-col justify-between">
-            {[0, 1, 2, 3, 4].map(i => (
-              <div key={i} className="border-b border-apex-stealth/30 w-full" />
-            ))}
-          </div>
-
-          {/* Best lap reference line */}
+        {/* Chart Grid - scrollable on mobile if many sessions */}
+        <div className={`ml-11 sm:ml-14 relative ${needsScroll ? 'overflow-x-auto pb-2 -mr-2 sm:mr-0' : ''}`}>
           <div
-            className="absolute w-full border-t border-dashed border-apex-mint/50"
-            style={{ top: `${getLapPosition(bestLap)}%` }}
-          />
+            className="relative h-32 sm:h-40"
+            style={needsScroll ? { minWidth: `${sortedSessions.length * 40}px` } : {}}
+          >
+            {/* Horizontal grid lines */}
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+              {[0, 1, 2, 3, 4].map(i => (
+                <div key={i} className="border-b border-apex-stealth/30 w-full" />
+              ))}
+            </div>
 
-          {/* Session bars and points */}
-          <div className="absolute inset-0 flex items-end justify-around px-2">
-            {sortedSessions.map((session, idx) => {
-              const lapPos = getLapPosition(session.fastestLapSec);
-              const isBest = session.fastestLapSec === bestLap;
+            {/* Best lap reference line */}
+            <div
+              className="absolute w-full border-t border-dashed border-apex-mint/50 pointer-events-none"
+              style={{ top: `${getLapPosition(bestLap)}%` }}
+            />
 
-              return (
-                <div
-                  key={session.id}
-                  className="relative flex flex-col items-center"
-                  style={{ height: '100%', flex: 1 }}
-                >
-                  {/* Lap time point */}
-                  {session.fastestLapSec && (
-                    <div
-                      className={`absolute w-3 h-3 rounded-full transition-all ${
-                        isBest ? 'bg-apex-mint ring-2 ring-apex-mint/30' : 'bg-apex-white'
-                      }`}
-                      style={{ top: `${lapPos}%`, transform: 'translateY(-50%)' }}
-                      title={`${formatLapTime(session.fastestLapSec)}`}
-                    />
-                  )}
+            {/* Session bars and points */}
+            <div className="absolute inset-0 flex items-end justify-around px-1 sm:px-2">
+              {sortedSessions.map((session, idx) => {
+                const lapPos = getLapPosition(session.fastestLapSec);
+                const isBest = session.fastestLapSec === bestLap;
 
-                  {/* Overlay points */}
-                  {activeOverlays.map(overlayKey => {
-                    const overlay = OVERLAY_OPTIONS.find(o => o.key === overlayKey);
-                    const value = session[overlayKey];
-                    if (value === undefined || value === null) return null;
-
-                    const overlayRange = getOverlayRange(overlayKey);
-                    const overlayPos = 100 - ((value - overlayRange.min) / (overlayRange.max - overlayRange.min || 1)) * 80 - 10;
-
-                    return (
+                return (
+                  <div
+                    key={session.id}
+                    className="relative flex flex-col items-center min-w-[24px] sm:min-w-0"
+                    style={{ height: '100%', flex: needsScroll ? '0 0 auto' : 1 }}
+                  >
+                    {/* Lap time point - larger touch target on mobile */}
+                    {session.fastestLapSec && (
                       <div
-                        key={overlayKey}
-                        className="absolute w-2 h-2 rounded-full opacity-70"
-                        style={{
-                          backgroundColor: overlay.color,
-                          top: `${overlayPos}%`,
-                          transform: 'translateY(-50%)',
-                        }}
-                        title={`${overlay.label}: ${value}${overlay.unit}`}
+                        className={`absolute w-4 h-4 sm:w-3 sm:h-3 rounded-full transition-all ${
+                          isBest ? 'bg-apex-mint ring-2 ring-apex-mint/30' : 'bg-apex-white'
+                        }`}
+                        style={{ top: `${lapPos}%`, transform: 'translateY(-50%)' }}
+                        title={`${formatLapTime(session.fastestLapSec)}`}
                       />
-                    );
-                  })}
+                    )}
 
-                  {/* Session label */}
-                  <div className="absolute bottom-0 transform translate-y-full pt-1">
-                    <span className="text-[10px] text-apex-soft">S{session.sessionNumber || idx + 1}</span>
+                    {/* Overlay points */}
+                    {activeOverlays.map(overlayKey => {
+                      const overlay = OVERLAY_OPTIONS.find(o => o.key === overlayKey);
+                      const value = session[overlayKey];
+                      if (value === undefined || value === null) return null;
+
+                      const overlayRange = getOverlayRange(overlayKey);
+                      const overlayPos = 100 - ((value - overlayRange.min) / (overlayRange.max - overlayRange.min || 1)) * 80 - 10;
+
+                      return (
+                        <div
+                          key={overlayKey}
+                          className="absolute w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full opacity-70"
+                          style={{
+                            backgroundColor: overlay.color,
+                            top: `${overlayPos}%`,
+                            transform: 'translateY(-50%)',
+                          }}
+                          title={`${overlay.label}: ${value}${overlay.unit}`}
+                        />
+                      );
+                    })}
+
+                    {/* Session label */}
+                    <div className="absolute bottom-0 transform translate-y-full pt-0.5 sm:pt-1">
+                      <span className="text-[8px] sm:text-[10px] text-apex-soft">S{session.sessionNumber || idx + 1}</span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
+
+        {/* Scroll hint for mobile */}
+        {needsScroll && (
+          <div className="sm:hidden text-[8px] text-apex-soft text-center mt-1">
+            ← Scroll to see all sessions →
+          </div>
+        )}
       </div>
 
       {/* Active Overlays Legend */}
       {activeOverlays.length > 0 && (
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-apex-white" />
-            <span className="text-[10px] text-apex-soft">Lap Time</span>
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-apex-white" />
+            <span className="text-[9px] sm:text-[10px] text-apex-soft">Lap Time</span>
           </div>
           {activeOverlays.map(key => {
             const overlay = OVERLAY_OPTIONS.find(o => o.key === key);
             return (
-              <div key={key} className="flex items-center gap-1.5">
+              <div key={key} className="flex items-center gap-1">
                 <span
-                  className="w-3 h-3 rounded-full opacity-70"
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full opacity-70 flex-shrink-0"
                   style={{ backgroundColor: overlay.color }}
                 />
-                <span className="text-[10px] text-apex-soft">{overlay.label}</span>
+                <span className="text-[9px] sm:text-[10px] text-apex-soft">{overlay.label}</span>
               </div>
             );
           })}
@@ -674,32 +697,32 @@ function LapTimeVisualization({ sessions, bestLap, formatLapTime }) {
 
       {/* Variance Insights */}
       {variances.length > 0 && (
-        <div className="border-t border-apex-stealth pt-4">
-          <h3 className="text-xs font-semibold text-apex-white mb-2">Performance Insights</h3>
+        <div className="border-t border-apex-stealth pt-3 sm:pt-4">
+          <h3 className="text-[10px] sm:text-xs font-semibold text-apex-white mb-2">Performance Insights</h3>
           <div className="space-y-2">
             {variances.slice(0, 3).map(v => (
               <div
                 key={v.key}
-                className="flex items-center justify-between bg-apex-graphite/50 rounded px-3 py-2"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 bg-apex-graphite/50 rounded px-2 sm:px-3 py-2"
               >
-                <span className="text-xs text-apex-soft">{v.label}</span>
-                <span className={`text-xs font-medium ${
+                <span className="text-[10px] sm:text-xs text-apex-soft">{v.label}</span>
+                <span className={`text-[10px] sm:text-xs font-medium ${
                   v.impact === 'faster' ? 'text-apex-mint' : 'text-apex-heat'
                 }`}>
-                  Higher = {v.impact} ({(Math.abs(v.correlation) * 100).toFixed(0)}% correlation)
+                  Higher = {v.impact} ({(Math.abs(v.correlation) * 100).toFixed(0)}%)
                 </span>
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-apex-soft mt-2">
-            Based on correlation analysis across {sessions.length} sessions
+          <p className="text-[8px] sm:text-[10px] text-apex-soft mt-2">
+            Based on {sessions.length} sessions
           </p>
         </div>
       )}
 
       {/* No data state */}
       {sortedSessions.length === 0 && (
-        <div className="text-center py-8 text-apex-soft text-sm">
+        <div className="text-center py-6 sm:py-8 text-apex-soft text-xs sm:text-sm">
           Log sessions to see lap time analysis
         </div>
       )}
