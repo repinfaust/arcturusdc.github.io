@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, addDoc, updateDoc, collection, query, where, orderBy, getDocs, increment, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { isFieldVisible, EXPERIENCE_LEVELS } from '@/config/skillModes';
 
 export default function NewEventSessionPage() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function NewEventSessionPage() {
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [experienceLevel, setExperienceLevel] = useState('novice');
 
   const [formData, setFormData] = useState({
     sessionDate: '',
@@ -50,8 +52,12 @@ export default function NewEventSessionPage() {
     fastestLapSec: '',
     notesHandling: '',
     weather: '',
+    weatherSource: 'auto',
     confidence: 50,
   });
+
+  // Helper to check if a field group should be shown
+  const showField = (fieldId) => isFieldVisible(experienceLevel, fieldId);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,6 +111,13 @@ export default function NewEventSessionPage() {
           bikesMap[d.id] = { id: d.id, ...d.data() };
         });
         setUserBikes(bikesMap);
+
+        // Fetch rider's experience level
+        const riderDoc = await getDoc(doc(db, 'apextwin_riders', user.uid));
+        if (riderDoc.exists()) {
+          const riderData = riderDoc.data();
+          setExperienceLevel(riderData.experienceLevel || 'novice');
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -285,6 +298,7 @@ export default function NewEventSessionPage() {
         fastestLapSec: fastestLapSec,
         notesHandling: formData.notesHandling.trim() || null,
         weather: formData.weather || null,
+        weatherSource: formData.weatherSource || 'auto',
         confidence: formData.confidence,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -323,10 +337,13 @@ export default function NewEventSessionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center justify-between gap-3 mb-2">
           <Link href={`/apps/stea/apextwin-poc/events/${eventId}`} className="text-apex-soft hover:text-apex-white">
             ← {event.trackName}
           </Link>
+          <span className="text-[10px] px-2 py-1 bg-apex-stealth rounded text-apex-soft">
+            {EXPERIENCE_LEVELS[experienceLevel]?.icon} {EXPERIENCE_LEVELS[experienceLevel]?.label} Mode
+          </span>
         </div>
         <h1 className="apex-h1 mb-1">Log Session</h1>
         <p className="text-apex-soft text-sm">{event.trackName}</p>
@@ -424,11 +441,18 @@ export default function NewEventSessionPage() {
               />
             </div>
             <div>
-              <label className="apex-label block mb-1">Weather</label>
+              <label className="apex-label block mb-1">
+                Weather
+                <span className={`ml-2 text-[9px] px-1.5 py-0.5 rounded ${
+                  formData.weatherSource === 'auto' ? 'bg-apex-mint/20 text-apex-mint' : 'bg-apex-stealth text-apex-soft'
+                }`}>
+                  {formData.weatherSource === 'auto' ? 'Auto' : 'Manual'}
+                </span>
+              </label>
               <select
                 className="apex-input"
                 value={formData.weather}
-                onChange={(e) => setFormData({ ...formData, weather: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, weather: e.target.value, weatherSource: 'manual' })}
               >
                 <option value="">Select...</option>
                 <option value="sunny">Sunny</option>
@@ -499,27 +523,33 @@ export default function NewEventSessionPage() {
             <div className="space-y-3">
               <h3 className="text-apex-mint font-semibold text-sm uppercase tracking-wider">Front</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="apex-label block mb-1">Size</label>
-                  <input type="text" placeholder="e.g. 120/70-17" className="apex-input"
-                    value={formData.tireSizeFront}
-                    onChange={(e) => setFormData({ ...formData, tireSizeFront: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="apex-label block mb-1">Brand</label>
-                  <input type="text" placeholder="e.g. Pirelli" className="apex-input"
-                    value={formData.tireBrandFront}
-                    onChange={(e) => setFormData({ ...formData, tireBrandFront: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="apex-label block mb-1">Compound</label>
-                  <input type="text" placeholder="e.g. SC1" className="apex-input"
-                    value={formData.tireCompoundFront}
-                    onChange={(e) => setFormData({ ...formData, tireCompoundFront: e.target.value })}
-                  />
-                </div>
+                {showField('tyreSizes') && (
+                  <div className="col-span-2">
+                    <label className="apex-label block mb-1">Size</label>
+                    <input type="text" placeholder="e.g. 120/70-17" className="apex-input"
+                      value={formData.tireSizeFront}
+                      onChange={(e) => setFormData({ ...formData, tireSizeFront: e.target.value })}
+                    />
+                  </div>
+                )}
+                {showField('tyreCompounds') && (
+                  <>
+                    <div>
+                      <label className="apex-label block mb-1">Brand</label>
+                      <input type="text" placeholder="e.g. Pirelli" className="apex-input"
+                        value={formData.tireBrandFront}
+                        onChange={(e) => setFormData({ ...formData, tireBrandFront: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="apex-label block mb-1">Compound</label>
+                      <input type="text" placeholder="e.g. SC1" className="apex-input"
+                        value={formData.tireCompoundFront}
+                        onChange={(e) => setFormData({ ...formData, tireCompoundFront: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <label className="apex-label block mb-1">Cold PSI</label>
                   <input type="number" step="0.1" placeholder="32.0" className="apex-input font-mono"
@@ -540,27 +570,33 @@ export default function NewEventSessionPage() {
             <div className="space-y-3">
               <h3 className="text-apex-mint font-semibold text-sm uppercase tracking-wider">Rear</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="apex-label block mb-1">Size</label>
-                  <input type="text" placeholder="e.g. 180/55-17" className="apex-input"
-                    value={formData.tireSizeRear}
-                    onChange={(e) => setFormData({ ...formData, tireSizeRear: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="apex-label block mb-1">Brand</label>
-                  <input type="text" placeholder="e.g. Pirelli" className="apex-input"
-                    value={formData.tireBrandRear}
-                    onChange={(e) => setFormData({ ...formData, tireBrandRear: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="apex-label block mb-1">Compound</label>
-                  <input type="text" placeholder="e.g. SC0" className="apex-input"
-                    value={formData.tireCompoundRear}
-                    onChange={(e) => setFormData({ ...formData, tireCompoundRear: e.target.value })}
-                  />
-                </div>
+                {showField('tyreSizes') && (
+                  <div className="col-span-2">
+                    <label className="apex-label block mb-1">Size</label>
+                    <input type="text" placeholder="e.g. 180/55-17" className="apex-input"
+                      value={formData.tireSizeRear}
+                      onChange={(e) => setFormData({ ...formData, tireSizeRear: e.target.value })}
+                    />
+                  </div>
+                )}
+                {showField('tyreCompounds') && (
+                  <>
+                    <div>
+                      <label className="apex-label block mb-1">Brand</label>
+                      <input type="text" placeholder="e.g. Pirelli" className="apex-input"
+                        value={formData.tireBrandRear}
+                        onChange={(e) => setFormData({ ...formData, tireBrandRear: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="apex-label block mb-1">Compound</label>
+                      <input type="text" placeholder="e.g. SC0" className="apex-input"
+                        value={formData.tireCompoundRear}
+                        onChange={(e) => setFormData({ ...formData, tireCompoundRear: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <label className="apex-label block mb-1">Cold PSI</label>
                   <input type="number" step="0.1" placeholder="29.0" className="apex-input font-mono"
@@ -587,108 +623,126 @@ export default function NewEventSessionPage() {
           </div>
         </div>
 
-        {/* Gearing */}
-        <div className="apex-panel p-4 sm:p-6">
-          <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Gearing</h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="apex-label block mb-1">Front Sprocket</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="10"
-                  max="20"
-                  placeholder="15"
-                  className="apex-input font-mono"
-                  value={formData.frontSprocket}
-                  onChange={(e) => setFormData({ ...formData, frontSprocket: e.target.value })}
-                />
-                <span className="text-apex-soft text-sm">T</span>
+        {/* Gearing - intermediate+ */}
+        {showField('gearing') && (
+          <div className="apex-panel p-4 sm:p-6">
+            <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Gearing</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="apex-label block mb-1">Front Sprocket</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="10"
+                    max="20"
+                    placeholder="15"
+                    className="apex-input font-mono"
+                    value={formData.frontSprocket}
+                    onChange={(e) => setFormData({ ...formData, frontSprocket: e.target.value })}
+                  />
+                  <span className="text-apex-soft text-sm">T</span>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="apex-label block mb-1">Rear Sprocket</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="30"
-                  max="60"
-                  placeholder="45"
-                  className="apex-input font-mono"
-                  value={formData.rearSprocket}
-                  onChange={(e) => setFormData({ ...formData, rearSprocket: e.target.value })}
-                />
-                <span className="text-apex-soft text-sm">T</span>
+              <div>
+                <label className="apex-label block mb-1">Rear Sprocket</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="30"
+                    max="60"
+                    placeholder="45"
+                    className="apex-input font-mono"
+                    value={formData.rearSprocket}
+                    onChange={(e) => setFormData({ ...formData, rearSprocket: e.target.value })}
+                  />
+                  <span className="text-apex-soft text-sm">T</span>
+                </div>
               </div>
+              {showField('chainLength') && (
+                <div>
+                  <label className="apex-label block mb-1">Chain Links</label>
+                  <input
+                    type="number"
+                    min="100"
+                    max="140"
+                    placeholder="118"
+                    className="apex-input font-mono"
+                    value={formData.chainLength}
+                    onChange={(e) => setFormData({ ...formData, chainLength: e.target.value })}
+                  />
+                </div>
+              )}
             </div>
-            <div>
-              <label className="apex-label block mb-1">Chain Links</label>
-              <input
-                type="number"
-                min="100"
-                max="140"
-                placeholder="118"
-                className="apex-input font-mono"
-                value={formData.chainLength}
-                onChange={(e) => setFormData({ ...formData, chainLength: e.target.value })}
-              />
-            </div>
+            {formData.frontSprocket && formData.rearSprocket && (
+              <div className="mt-3 text-apex-soft text-sm">
+                Ratio: <span className="text-apex-mint font-mono">{(parseInt(formData.rearSprocket) / parseInt(formData.frontSprocket)).toFixed(2)}</span>
+              </div>
+            )}
           </div>
-          {formData.frontSprocket && formData.rearSprocket && (
-            <div className="mt-3 text-apex-soft text-sm">
-              Ratio: <span className="text-apex-mint font-mono">{(parseInt(formData.rearSprocket) / parseInt(formData.frontSprocket)).toFixed(2)}</span>
-            </div>
-          )}
-        </div>
+        )}
 
-        {/* Quick Setup */}
-        <div className="apex-panel p-4 sm:p-6">
-          <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Suspension & Electronics</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-            <div>
-              <label className="apex-label block mb-1">Fork Comp</label>
-              <input type="number" min="0" className="apex-input font-mono"
-                value={formData.forkCompClicksOut}
-                onChange={(e) => setFormData({ ...formData, forkCompClicksOut: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="apex-label block mb-1">Fork Reb</label>
-              <input type="number" min="0" className="apex-input font-mono"
-                value={formData.forkRebClicksOut}
-                onChange={(e) => setFormData({ ...formData, forkRebClicksOut: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="apex-label block mb-1">Shock Comp</label>
-              <input type="number" min="0" className="apex-input font-mono"
-                value={formData.shockCompClicksOut}
-                onChange={(e) => setFormData({ ...formData, shockCompClicksOut: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="apex-label block mb-1">Shock Reb</label>
-              <input type="number" min="0" className="apex-input font-mono"
-                value={formData.shockRebClicksOut}
-                onChange={(e) => setFormData({ ...formData, shockRebClicksOut: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="apex-label block mb-1">TC Level</label>
-              <input type="text" placeholder="e.g. 3" className="apex-input font-mono"
-                value={formData.tractionControlLevel}
-                onChange={(e) => setFormData({ ...formData, tractionControlLevel: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="apex-label block mb-1">Engine Map</label>
-              <input type="text" placeholder="e.g. A" className="apex-input font-mono"
-                value={formData.engineMap}
-                onChange={(e) => setFormData({ ...formData, engineMap: e.target.value })}
-              />
+        {/* Suspension & Electronics - intermediate+ */}
+        {(showField('suspensionBasic') || showField('electronics')) && (
+          <div className="apex-panel p-4 sm:p-6">
+            <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Suspension & Electronics</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+              {showField('suspensionBasic') && (
+                <>
+                  <div>
+                    <label className="apex-label block mb-1">Fork Reb</label>
+                    <input type="number" min="0" className="apex-input font-mono"
+                      value={formData.forkRebClicksOut}
+                      onChange={(e) => setFormData({ ...formData, forkRebClicksOut: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="apex-label block mb-1">Shock Reb</label>
+                    <input type="number" min="0" className="apex-input font-mono"
+                      value={formData.shockRebClicksOut}
+                      onChange={(e) => setFormData({ ...formData, shockRebClicksOut: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+              {showField('suspensionAdvanced') && (
+                <>
+                  <div>
+                    <label className="apex-label block mb-1">Fork Comp</label>
+                    <input type="number" min="0" className="apex-input font-mono"
+                      value={formData.forkCompClicksOut}
+                      onChange={(e) => setFormData({ ...formData, forkCompClicksOut: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="apex-label block mb-1">Shock Comp</label>
+                    <input type="number" min="0" className="apex-input font-mono"
+                      value={formData.shockCompClicksOut}
+                      onChange={(e) => setFormData({ ...formData, shockCompClicksOut: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+              {showField('electronics') && (
+                <>
+                  <div>
+                    <label className="apex-label block mb-1">TC Level</label>
+                    <input type="text" placeholder="e.g. 3" className="apex-input font-mono"
+                      value={formData.tractionControlLevel}
+                      onChange={(e) => setFormData({ ...formData, tractionControlLevel: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="apex-label block mb-1">Engine Map</label>
+                    <input type="text" placeholder="e.g. A" className="apex-input font-mono"
+                      value={formData.engineMap}
+                      onChange={(e) => setFormData({ ...formData, engineMap: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         {/* Outcome */}
         <div className="apex-panel p-4 sm:p-6">
@@ -718,7 +772,10 @@ export default function NewEventSessionPage() {
           </div>
           {/* Confidence Slider */}
           <div className="mt-4">
-            <label className="apex-label block mb-2">Confidence Level</label>
+            <label className="apex-label block mb-2">
+              Confidence Level
+              <span className="text-apex-soft text-[10px] ml-2 font-normal">Helps your insights later</span>
+            </label>
             <div className="flex items-center gap-4">
               <input
                 type="range"

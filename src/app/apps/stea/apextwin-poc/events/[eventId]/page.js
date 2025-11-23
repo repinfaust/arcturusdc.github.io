@@ -522,6 +522,8 @@ function LapTimeVisualization({ sessions, bestLap, formatLapTime }) {
             label: overlay.label,
             correlation: correlation,
             impact: correlation > 0 ? 'slower' : 'faster',
+            dataPoints: sessionsWithBoth.length,
+            confidence: sessionsWithBoth.length >= 5 ? 'high' : sessionsWithBoth.length >= 3 ? 'medium' : 'low',
           });
         }
       }
@@ -709,19 +711,30 @@ function LapTimeVisualization({ sessions, bestLap, formatLapTime }) {
             {variances.slice(0, 3).map(v => (
               <div
                 key={v.key}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 bg-apex-graphite/50 rounded px-2 sm:px-3 py-2"
+                className="bg-apex-graphite/50 rounded px-2 sm:px-3 py-2"
               >
-                <span className="text-[10px] sm:text-xs text-apex-soft">{v.label}</span>
-                <span className={`text-[10px] sm:text-xs font-medium ${
-                  v.impact === 'faster' ? 'text-apex-mint' : 'text-apex-heat'
-                }`}>
-                  Higher = {v.impact} ({(Math.abs(v.correlation) * 100).toFixed(0)}%)
-                </span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] sm:text-xs text-apex-soft">{v.label}</span>
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded ${
+                      v.confidence === 'high' ? 'bg-apex-mint/20 text-apex-mint' :
+                      v.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-apex-stealth text-apex-soft'
+                    }`}>
+                      {v.dataPoints} pts
+                    </span>
+                  </div>
+                  <span className={`text-[10px] sm:text-xs font-medium ${
+                    v.impact === 'faster' ? 'text-apex-mint' : 'text-apex-heat'
+                  }`}>
+                    Higher = {v.impact} ({(Math.abs(v.correlation) * 100).toFixed(0)}%)
+                  </span>
+                </div>
               </div>
             ))}
           </div>
           <p className="text-[8px] sm:text-[10px] text-apex-soft mt-2">
-            Based on {sessions.length} sessions
+            Based on {sessions.length} sessions • More data = more accurate insights
           </p>
         </div>
       )}

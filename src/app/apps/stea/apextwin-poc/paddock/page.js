@@ -14,6 +14,15 @@ export default function PaddockPage() {
   const [selectedTrack, setSelectedTrack] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
+  // Sorting
+  const [sortBy, setSortBy] = useState('fastestLapSec');
+  const [sortOrder, setSortOrder] = useState('asc');
+
+  // Quick filters
+  const [filterPsi, setFilterPsi] = useState(null);
+  const [filterWithTimes, setFilterWithTimes] = useState(false);
+  const [userFrontPsi, setUserFrontPsi] = useState(null);
+
   useEffect(() => {
     const fetchTracks = async () => {
       try {
@@ -37,13 +46,17 @@ export default function PaddockPage() {
 
     setSearching(true);
     setSessions([]);
+    setFilterPsi(null);
+    setFilterWithTimes(false);
 
     try {
-      // Calculate start and end of selected day
+      // Extend range to ±2 days to catch multi-day events
       const dayStart = new Date(selectedDate);
       dayStart.setHours(0, 0, 0, 0);
+      dayStart.setDate(dayStart.getDate() - 2);
       const dayEnd = new Date(selectedDate);
       dayEnd.setHours(23, 59, 59, 999);
+      dayEnd.setDate(dayEnd.getDate() + 2);
 
       const paddockQuery = query(
         collection(db, 'apextwin_sessions'),
@@ -56,6 +69,15 @@ export default function PaddockPage() {
       const paddockSnap = await getDocs(paddockQuery);
       const paddockSessions = paddockSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setSessions(paddockSessions);
+
+      // Find current user's front PSI for filtering
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userSession = paddockSessions.find(s => s.riderId === currentUser.uid);
+        if (userSession?.tirePressureFrontColdPsi) {
+          setUserFrontPsi(userSession.tirePressureFrontColdPsi);
+        }
+      }
     } catch (err) {
       console.error('Error fetching paddock data:', err);
       // Handle index error gracefully
@@ -65,6 +87,75 @@ export default function PaddockPage() {
     } finally {
       setSearching(false);
     }
+  };
+
+  // Sorting handler
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder(field === 'fastestLapSec' ? 'asc' : 'desc');
+    }
+  };
+
+  // Apply sorting and filtering
+  const getDisplaySessions = () => {
+    let result = [...sessions];
+
+    // Apply filters
+    if (filterWithTimes) {
+      result = result.filter(s => s.fastestLapSec);
+    }
+    if (filterPsi && userFrontPsi) {
+      result = result.filter(s => {
+        if (!s.tirePressureFrontColdPsi) return true;
+        return Math.abs(s.tirePressureFrontColdPsi - userFrontPsi) <= filterPsi;
+      });
+    }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      let valA = a[sortBy];
+      let valB = b[sortBy];
+
+      // Handle nulls
+      if (valA === null || valA === undefined) valA = sortOrder === 'asc' ? Infinity : -Infinity;
+      if (valB === null || valB === undefined) valB = sortOrder === 'asc' ? Infinity : -Infinity;
+
+      if (sortOrder === 'asc') {
+        return valA > valB ? 1 : -1;
+      }
+      return valA < valB ? 1 : -1;
+    });
+
+    return result;
+  };
+
+  const displaySessions = getDisplaySessions();
+
+  const SortIcon = ({ field }) => {
+    if (sortBy !== field) return <span className="ml-1 text-apex-stealth">⇅</span>;
+    return <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  // Calculate stats
+  const getStats = () => {
+    const withFrontPsi = displaySessions.filter(s => s.tirePressureFrontColdPsi);
+    const withRearPsi = displaySessions.filter(s => s.tirePressureRearColdPsi);
+    const withTimes = displaySessions.filter(s => s.fastestLapSec);
+
+    return {
+      avgFrontPsi: withFrontPsi.length > 0
+        ? (withFrontPsi.reduce((sum, s) => sum + s.tirePressureFrontColdPsi, 0) / withFrontPsi.length).toFixed(1)
+        : '--',
+      avgRearPsi: withRearPsi.length > 0
+        ? (withRearPsi.reduce((sum, s) => sum + s.tirePressureRearColdPsi, 0) / withRearPsi.length).toFixed(1)
+        : '--',
+      fastestLap: withTimes.length > 0
+        ? Math.min(...withTimes.map(s => s.fastestLapSec))
+        : null,
+    };
   };
 
   const formatLapTime = (seconds) => {

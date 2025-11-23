@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { EXPERIENCE_LEVELS } from '@/config/skillModes';
 
+// Competitive ability levels (for racing classification)
 const ABILITY_LEVELS = [
   { value: 'amateur', label: 'Amateur', description: 'New to track days, learning the basics' },
   { value: 'club', label: 'Club', description: 'Regular track days, developing skills' },
@@ -24,6 +26,7 @@ export default function RiderPage() {
 
   const [formData, setFormData] = useState({
     displayName: '',
+    experienceLevel: 'novice',
     ability: '',
     weight: '',
     height: '',
@@ -31,6 +34,8 @@ export default function RiderPage() {
     homeTrack: '',
     goals: '',
   });
+  const [showModeWarning, setShowModeWarning] = useState(false);
+  const [pendingModeChange, setPendingModeChange] = useState(null);
 
   useEffect(() => {
     const fetchRiderData = async () => {
@@ -45,6 +50,7 @@ export default function RiderPage() {
           setRiderData(data);
           setFormData({
             displayName: data.displayName || user.displayName || '',
+            experienceLevel: data.experienceLevel || 'novice',
             ability: data.ability || '',
             weight: data.weight?.toString() || '',
             height: data.height?.toString() || '',
@@ -56,6 +62,7 @@ export default function RiderPage() {
           setFormData({
             ...formData,
             displayName: user.displayName || '',
+            experienceLevel: 'novice',
           });
         }
 
@@ -112,6 +119,7 @@ export default function RiderPage() {
     try {
       await setDoc(doc(db, 'apextwin_riders', user.uid), {
         displayName: formData.displayName.trim() || null,
+        experienceLevel: formData.experienceLevel || 'novice',
         ability: formData.ability || null,
         weight: formData.weight ? parseFloat(formData.weight) : null,
         height: formData.height ? parseInt(formData.height) : null,
@@ -158,8 +166,10 @@ export default function RiderPage() {
       {/* Stats Overview */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="apex-panel p-4 text-center">
-          <div className="apex-label text-[10px] mb-1">Ability</div>
-          <div className="apex-data text-lg text-apex-mint">{getAbilityLabel(formData.ability)}</div>
+          <div className="apex-label text-[10px] mb-1">Level</div>
+          <div className="apex-data text-lg text-apex-mint">
+            {EXPERIENCE_LEVELS[formData.experienceLevel]?.label || 'Novice'}
+          </div>
         </div>
         <div className="apex-panel p-4 text-center">
           <div className="apex-label text-[10px] mb-1">Sessions</div>
@@ -190,6 +200,100 @@ export default function RiderPage() {
           </div>
         </div>
       )}
+
+      {/* Experience Level / Skill Mode Selector */}
+      <div className="apex-panel p-4 sm:p-6">
+        <h2 className="apex-h2 mb-2">Experience Level</h2>
+        <p className="text-apex-soft text-xs mb-4">
+          Controls which fields appear in session logging. Your data is always preserved.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {Object.entries(EXPERIENCE_LEVELS).map(([key, level]) => {
+            const isSelected = formData.experienceLevel === key;
+            const isDowngrade = formData.experienceLevel === 'pro' && key !== 'pro' ||
+                               formData.experienceLevel === 'intermediate' && key === 'novice';
+
+            const handleClick = () => {
+              if (isDowngrade && !isSelected) {
+                setPendingModeChange(key);
+                setShowModeWarning(true);
+              } else {
+                setFormData({ ...formData, experienceLevel: key });
+              }
+            };
+
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={handleClick}
+                className={`p-4 rounded-lg border text-left transition-all ${
+                  isSelected
+                    ? 'border-apex-mint bg-apex-mint/10'
+                    : 'border-apex-stealth hover:border-apex-mint/50'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`text-2xl ${isSelected ? 'text-apex-mint' : 'text-apex-soft'}`}>
+                    {level.icon}
+                  </span>
+                  <span className="text-apex-white font-semibold">{level.label}</span>
+                </div>
+                <p className="text-apex-soft text-xs">{level.description}</p>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {level.showFields.slice(0, 4).map(field => (
+                    <span key={field} className="text-[9px] px-1.5 py-0.5 bg-apex-stealth rounded text-apex-soft">
+                      {field.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                  ))}
+                  {level.showFields.length > 4 && (
+                    <span className="text-[9px] px-1.5 py-0.5 bg-apex-stealth rounded text-apex-soft">
+                      +{level.showFields.length - 4} more
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mode change warning modal */}
+        {showModeWarning && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="apex-panel p-6 max-w-md">
+              <h3 className="text-apex-white font-semibold mb-2">Change Experience Level?</h3>
+              <p className="text-apex-soft text-sm mb-4">
+                Switching to a simpler mode will hide some advanced fields in forms.
+                Your existing data will be preserved safely — nothing is deleted.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({ ...formData, experienceLevel: pendingModeChange });
+                    setShowModeWarning(false);
+                    setPendingModeChange(null);
+                  }}
+                  className="apex-btn apex-btn-primary flex-1"
+                >
+                  Switch Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModeWarning(false);
+                    setPendingModeChange(null);
+                  }}
+                  className="apex-btn apex-btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Profile Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
