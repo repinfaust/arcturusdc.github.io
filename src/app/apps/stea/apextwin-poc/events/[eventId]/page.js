@@ -176,23 +176,29 @@ export default function EventDetailPage() {
       </div>
 
       {/* Map */}
-      <div className="apex-panel overflow-hidden relative">
+      <div className="apex-panel overflow-hidden">
         <CircuitMap
           lat={event.trackLat}
           lng={event.trackLng}
           trackName={event.trackName}
           className="h-48 sm:h-64"
         />
-        {/* Map Actions */}
-        <div className="absolute bottom-3 right-3 z-10 flex gap-2">
-          <Link
-            href={`/apps/stea/apextwin-poc/events/${eventId}/strategy`}
-            className="px-3 py-1.5 bg-apex-mint text-apex-carbon text-xs font-semibold rounded-lg shadow-lg hover:bg-apex-mint-tint transition-colors"
-          >
-            Track Strategy
-          </Link>
-        </div>
       </div>
+
+      {/* Track Strategy Link */}
+      <Link
+        href={`/apps/stea/apextwin-poc/events/${eventId}/strategy`}
+        className="apex-panel p-3 sm:p-4 flex items-center justify-between hover:border-apex-mint/50 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xl text-apex-mint">⚑</span>
+          <div>
+            <span className="text-apex-white font-semibold text-sm sm:text-base">Track Strategy</span>
+            <p className="text-apex-soft text-xs">Annotate circuit with notes & markers</p>
+          </div>
+        </div>
+        <span className="text-apex-soft group-hover:text-apex-mint transition-colors">→</span>
+      </Link>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-3">
