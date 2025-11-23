@@ -263,6 +263,11 @@ export default function EventDetailPage() {
             <span className="text-apex-soft group-hover:text-apex-mint transition-colors">→</span>
           </Link>
 
+          {/* Lap Time Visualization */}
+          {sessions.length > 0 && (
+            <LapTimeVisualization sessions={sessions} bestLap={bestLap} formatLapTime={formatLapTime} />
+          )}
+
           {/* Sessions List */}
           {sessions.length === 0 ? (
             <div className="apex-panel p-6 text-center">
@@ -426,4 +431,278 @@ function formatLapTimeStatic(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = (seconds % 60).toFixed(2).padStart(5, '0');
   return `${mins}:${secs}`;
+}
+
+// Lap Time Visualization Component
+function LapTimeVisualization({ sessions, bestLap, formatLapTime }) {
+  const [activeOverlays, setActiveOverlays] = useState([]);
+  const [showOverlayMenu, setShowOverlayMenu] = useState(false);
+
+  // Available data overlays
+  const OVERLAY_OPTIONS = [
+    { key: 'tirePressureFront', label: 'Front Tyre PSI', color: '#4ade80', unit: 'psi' },
+    { key: 'tirePressureRear', label: 'Rear Tyre PSI', color: '#60a5fa', unit: 'psi' },
+    { key: 'suspensionFrontRebound', label: 'Front Rebound', color: '#f472b6', unit: 'clicks' },
+    { key: 'suspensionRearRebound', label: 'Rear Rebound', color: '#fb923c', unit: 'clicks' },
+    { key: 'confidence', label: 'Confidence', color: '#a78bfa', unit: '%' },
+    { key: 'lapsCompleted', label: 'Laps', color: '#fbbf24', unit: '' },
+    { key: 'trackTemp', label: 'Track Temp', color: '#f87171', unit: '°C' },
+    { key: 'tyreSetAge', label: 'Tyre Age', color: '#94a3b8', unit: 'sessions' },
+  ];
+
+  // Sort sessions by session number or creation order
+  const sortedSessions = [...sessions].sort((a, b) => {
+    const numA = a.sessionNumber || 0;
+    const numB = b.sessionNumber || 0;
+    return numA - numB;
+  });
+
+  // Calculate lap time range for scaling
+  const lapTimes = sortedSessions.map(s => s.fastestLapSec).filter(Boolean);
+  const minLap = Math.min(...lapTimes);
+  const maxLap = Math.max(...lapTimes);
+  const range = maxLap - minLap || 1;
+
+  // Calculate percentage position for lap time bar
+  const getLapPosition = (lapSec) => {
+    if (!lapSec) return 50;
+    // Invert so faster (lower) times appear higher
+    return 100 - ((lapSec - minLap) / range) * 80 - 10;
+  };
+
+  // Get overlay value ranges for scaling
+  const getOverlayRange = (key) => {
+    const values = sortedSessions.map(s => s[key]).filter(v => v !== undefined && v !== null);
+    if (values.length === 0) return { min: 0, max: 100 };
+    return { min: Math.min(...values), max: Math.max(...values) };
+  };
+
+  // Calculate variance impact
+  const calculateVariance = () => {
+    if (sortedSessions.length < 2) return [];
+
+    const variances = [];
+
+    OVERLAY_OPTIONS.forEach(overlay => {
+      const sessionsWithBoth = sortedSessions.filter(s =>
+        s.fastestLapSec && s[overlay.key] !== undefined && s[overlay.key] !== null
+      );
+
+      if (sessionsWithBoth.length >= 2) {
+        // Simple correlation calculation
+        const values = sessionsWithBoth.map(s => s[overlay.key]);
+        const times = sessionsWithBoth.map(s => s.fastestLapSec);
+
+        const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
+        const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+
+        let numerator = 0;
+        let denomValue = 0;
+        let denomTime = 0;
+
+        for (let i = 0; i < values.length; i++) {
+          numerator += (values[i] - avgValue) * (times[i] - avgTime);
+          denomValue += Math.pow(values[i] - avgValue, 2);
+          denomTime += Math.pow(times[i] - avgTime, 2);
+        }
+
+        const correlation = denomValue && denomTime
+          ? numerator / (Math.sqrt(denomValue) * Math.sqrt(denomTime))
+          : 0;
+
+        if (Math.abs(correlation) > 0.3) {
+          variances.push({
+            key: overlay.key,
+            label: overlay.label,
+            correlation: correlation,
+            impact: correlation > 0 ? 'slower' : 'faster',
+          });
+        }
+      }
+    });
+
+    return variances.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
+  };
+
+  const toggleOverlay = (key) => {
+    setActiveOverlays(prev =>
+      prev.includes(key)
+        ? prev.filter(k => k !== key)
+        : [...prev, key]
+    );
+  };
+
+  const variances = calculateVariance();
+
+  return (
+    <div className="apex-panel p-4 sm:p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="apex-h2">Lap Time Analysis</h2>
+        <div className="relative">
+          <button
+            onClick={() => setShowOverlayMenu(!showOverlayMenu)}
+            className="apex-btn apex-btn-secondary text-xs px-3 py-1"
+          >
+            Overlays {activeOverlays.length > 0 && `(${activeOverlays.length})`}
+          </button>
+          {showOverlayMenu && (
+            <div className="absolute right-0 top-full mt-1 bg-apex-graphite border border-apex-stealth rounded-lg p-2 z-20 min-w-48 shadow-xl">
+              {OVERLAY_OPTIONS.map(option => (
+                <button
+                  key={option.key}
+                  onClick={() => toggleOverlay(option.key)}
+                  className={`w-full text-left px-3 py-2 rounded text-xs flex items-center gap-2 transition-colors ${
+                    activeOverlays.includes(option.key)
+                      ? 'bg-apex-stealth text-apex-white'
+                      : 'text-apex-soft hover:bg-apex-stealth/50'
+                  }`}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: option.color }}
+                  />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chart Area */}
+      <div className="relative bg-apex-graphite rounded-lg p-4 min-h-48">
+        {/* Y-axis labels */}
+        <div className="absolute left-0 top-4 bottom-8 w-12 flex flex-col justify-between text-[10px] text-apex-soft">
+          <span>{formatLapTime(minLap)}</span>
+          <span className="text-apex-mint">Best</span>
+          <span>{formatLapTime(maxLap)}</span>
+        </div>
+
+        {/* Chart Grid */}
+        <div className="ml-14 relative h-40">
+          {/* Horizontal grid lines */}
+          <div className="absolute inset-0 flex flex-col justify-between">
+            {[0, 1, 2, 3, 4].map(i => (
+              <div key={i} className="border-b border-apex-stealth/30 w-full" />
+            ))}
+          </div>
+
+          {/* Best lap reference line */}
+          <div
+            className="absolute w-full border-t border-dashed border-apex-mint/50"
+            style={{ top: `${getLapPosition(bestLap)}%` }}
+          />
+
+          {/* Session bars and points */}
+          <div className="absolute inset-0 flex items-end justify-around px-2">
+            {sortedSessions.map((session, idx) => {
+              const lapPos = getLapPosition(session.fastestLapSec);
+              const isBest = session.fastestLapSec === bestLap;
+
+              return (
+                <div
+                  key={session.id}
+                  className="relative flex flex-col items-center"
+                  style={{ height: '100%', flex: 1 }}
+                >
+                  {/* Lap time point */}
+                  {session.fastestLapSec && (
+                    <div
+                      className={`absolute w-3 h-3 rounded-full transition-all ${
+                        isBest ? 'bg-apex-mint ring-2 ring-apex-mint/30' : 'bg-apex-white'
+                      }`}
+                      style={{ top: `${lapPos}%`, transform: 'translateY(-50%)' }}
+                      title={`${formatLapTime(session.fastestLapSec)}`}
+                    />
+                  )}
+
+                  {/* Overlay points */}
+                  {activeOverlays.map(overlayKey => {
+                    const overlay = OVERLAY_OPTIONS.find(o => o.key === overlayKey);
+                    const value = session[overlayKey];
+                    if (value === undefined || value === null) return null;
+
+                    const overlayRange = getOverlayRange(overlayKey);
+                    const overlayPos = 100 - ((value - overlayRange.min) / (overlayRange.max - overlayRange.min || 1)) * 80 - 10;
+
+                    return (
+                      <div
+                        key={overlayKey}
+                        className="absolute w-2 h-2 rounded-full opacity-70"
+                        style={{
+                          backgroundColor: overlay.color,
+                          top: `${overlayPos}%`,
+                          transform: 'translateY(-50%)',
+                        }}
+                        title={`${overlay.label}: ${value}${overlay.unit}`}
+                      />
+                    );
+                  })}
+
+                  {/* Session label */}
+                  <div className="absolute bottom-0 transform translate-y-full pt-1">
+                    <span className="text-[10px] text-apex-soft">S{session.sessionNumber || idx + 1}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Active Overlays Legend */}
+      {activeOverlays.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-apex-white" />
+            <span className="text-[10px] text-apex-soft">Lap Time</span>
+          </div>
+          {activeOverlays.map(key => {
+            const overlay = OVERLAY_OPTIONS.find(o => o.key === key);
+            return (
+              <div key={key} className="flex items-center gap-1.5">
+                <span
+                  className="w-3 h-3 rounded-full opacity-70"
+                  style={{ backgroundColor: overlay.color }}
+                />
+                <span className="text-[10px] text-apex-soft">{overlay.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Variance Insights */}
+      {variances.length > 0 && (
+        <div className="border-t border-apex-stealth pt-4">
+          <h3 className="text-xs font-semibold text-apex-white mb-2">Performance Insights</h3>
+          <div className="space-y-2">
+            {variances.slice(0, 3).map(v => (
+              <div
+                key={v.key}
+                className="flex items-center justify-between bg-apex-graphite/50 rounded px-3 py-2"
+              >
+                <span className="text-xs text-apex-soft">{v.label}</span>
+                <span className={`text-xs font-medium ${
+                  v.impact === 'faster' ? 'text-apex-mint' : 'text-apex-heat'
+                }`}>
+                  Higher = {v.impact} ({(Math.abs(v.correlation) * 100).toFixed(0)}% correlation)
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-apex-soft mt-2">
+            Based on correlation analysis across {sessions.length} sessions
+          </p>
+        </div>
+      )}
+
+      {/* No data state */}
+      {sortedSessions.length === 0 && (
+        <div className="text-center py-8 text-apex-soft text-sm">
+          Log sessions to see lap time analysis
+        </div>
+      )}
+    </div>
+  );
 }
