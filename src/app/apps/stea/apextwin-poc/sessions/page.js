@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 
 export default function SessionsListPage() {
   const [sessions, setSessions] = useState([]);
   const [bikes, setBikes] = useState([]);
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lapTimerActive, setLapTimerActive] = useState(false);
 
   // Filters
   const [selectedBike, setSelectedBike] = useState('');
@@ -39,6 +40,16 @@ export default function SessionsListPage() {
 
         const sessionsSnap = await getDocs(sessionsQuery);
         setSessions(sessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+        // Fetch rider preferences
+        const riderDoc = await getDoc(doc(db, 'apextwin_riders', user.uid));
+        if (riderDoc.exists()) {
+          const riderData = riderDoc.data();
+          const inferredLapTimerActive = typeof riderData.lapTimerActive === 'boolean'
+            ? riderData.lapTimerActive
+            : ['intermediate', 'pro'].includes(riderData.experienceLevel || 'novice');
+          setLapTimerActive(inferredLapTimerActive);
+        }
       } catch (err) {
         console.error('Error fetching sessions:', err);
       } finally {
@@ -166,16 +177,23 @@ export default function SessionsListPage() {
                     </div>
 
                     {/* Laps */}
-                    <div className="text-right hidden md:block">
-                      <div className="apex-label text-[10px]">Laps</div>
-                      <div className="apex-data">{session.lapsCompleted || '--'}</div>
-                    </div>
-
-                    {/* Fastest Lap */}
-                    <div className="text-right">
-                      <div className="apex-label text-[10px]">Fastest</div>
-                      <div className="apex-data text-apex-mint">{formatLapTime(session.fastestLapSec)}</div>
-                    </div>
+                    {lapTimerActive ? (
+                      <>
+                        <div className="text-right hidden md:block">
+                          <div className="apex-label text-[10px]">Laps</div>
+                          <div className="apex-data">{session.lapsCompleted || '--'}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="apex-label text-[10px]">Fastest</div>
+                          <div className="apex-data text-apex-mint">{formatLapTime(session.fastestLapSec)}</div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-right">
+                        <div className="apex-label text-[10px]">Lap Timing</div>
+                        <div className="text-apex-soft text-xs">Off</div>
+                      </div>
+                    )}
 
                     <span className="text-apex-soft">→</span>
                   </div>

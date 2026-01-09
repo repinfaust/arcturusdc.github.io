@@ -33,6 +33,7 @@ export default function RiderPage() {
     yearsRiding: '',
     homeTrack: '',
     goals: '',
+    lapTimerActive: false,
   });
   const [showModeWarning, setShowModeWarning] = useState(false);
   const [pendingModeChange, setPendingModeChange] = useState(null);
@@ -47,6 +48,9 @@ export default function RiderPage() {
         const riderDoc = await getDoc(doc(db, 'apextwin_riders', user.uid));
         if (riderDoc.exists()) {
           const data = riderDoc.data();
+          const inferredLapTimerActive = typeof data.lapTimerActive === 'boolean'
+            ? data.lapTimerActive
+            : ['intermediate', 'pro'].includes(data.experienceLevel || 'novice');
           setRiderData(data);
           setFormData({
             displayName: data.displayName || user.displayName || '',
@@ -57,12 +61,14 @@ export default function RiderPage() {
             yearsRiding: data.yearsRiding?.toString() || '',
             homeTrack: data.homeTrack || '',
             goals: data.goals || '',
+            lapTimerActive: inferredLapTimerActive,
           });
         } else {
           setFormData({
             ...formData,
             displayName: user.displayName || '',
             experienceLevel: 'novice',
+            lapTimerActive: false,
           });
         }
 
@@ -126,6 +132,7 @@ export default function RiderPage() {
         yearsRiding: formData.yearsRiding ? parseInt(formData.yearsRiding) : null,
         homeTrack: formData.homeTrack.trim() || null,
         goals: formData.goals.trim() || null,
+        lapTimerActive: !!formData.lapTimerActive,
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
@@ -175,14 +182,18 @@ export default function RiderPage() {
           <div className="apex-label text-[10px] mb-1">Sessions</div>
           <div className="apex-data text-lg">{stats.totalSessions}</div>
         </div>
-        <div className="apex-panel p-4 text-center">
-          <div className="apex-label text-[10px] mb-1">Total Laps</div>
-          <div className="apex-data text-lg">{stats.totalLaps}</div>
-        </div>
-        <div className="apex-panel p-4 text-center">
-          <div className="apex-label text-[10px] mb-1">Best Lap</div>
-          <div className="apex-data text-lg text-apex-mint">{formatLapTime(stats.bestLapTime)}</div>
-        </div>
+        {formData.lapTimerActive && (
+          <div className="apex-panel p-4 text-center">
+            <div className="apex-label text-[10px] mb-1">Total Laps</div>
+            <div className="apex-data text-lg">{stats.totalLaps}</div>
+          </div>
+        )}
+        {formData.lapTimerActive && (
+          <div className="apex-panel p-4 text-center">
+            <div className="apex-label text-[10px] mb-1">Best Lap</div>
+            <div className="apex-data text-lg text-apex-mint">{formatLapTime(stats.bestLapTime)}</div>
+          </div>
+        )}
       </div>
 
       {/* Confidence Indicator */}
@@ -293,6 +304,27 @@ export default function RiderPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Lap Timer */}
+      <div className="apex-panel p-4 sm:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="apex-h2 mb-1">Lap Timing</h2>
+            <p className="text-apex-soft text-xs">
+              Enable this if you use a lap timer. Lap-time fields and analysis will appear.
+            </p>
+          </div>
+          <label className="flex items-center gap-2 text-xs text-apex-soft">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-apex-mint"
+              checked={!!formData.lapTimerActive}
+              onChange={(e) => setFormData({ ...formData, lapTimerActive: e.target.checked })}
+            />
+            Active lap timer in use
+          </label>
+        </div>
       </div>
 
       {/* Profile Form */}

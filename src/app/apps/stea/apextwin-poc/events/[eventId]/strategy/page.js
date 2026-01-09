@@ -16,7 +16,7 @@ export default function TrackStrategyPage() {
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [circuitImageUrl, setCircuitImageUrl] = useState(null);
+  const templateInsertedRef = useRef(false);
 
   // TLDraw state
   const editorRef = useRef(null);
@@ -61,13 +61,6 @@ export default function TrackStrategyPage() {
         const eventData = { id: eventDoc.id, ...eventDoc.data() };
         setEvent(eventData);
 
-        // Generate circuit satellite image URL using OpenStreetMap
-        if (eventData.trackLat && eventData.trackLng) {
-          // Use CartoDB dark tiles with higher zoom for circuit detail
-          const zoom = 15;
-          const tileUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${latToTileY(eventData.trackLat, zoom)}/${lngToTileX(eventData.trackLng, zoom)}`;
-          setCircuitImageUrl(tileUrl);
-        }
       } catch (err) {
         console.error('Error fetching event:', err);
       } finally {
@@ -77,10 +70,6 @@ export default function TrackStrategyPage() {
 
     fetchEvent();
   }, [eventId, router]);
-
-  // Helper functions for tile coordinates
-  const lngToTileX = (lng, zoom) => Math.floor((lng + 180) / 360 * Math.pow(2, zoom));
-  const latToTileY = (lat, zoom) => Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
 
   // Debounce helper
   const debounceSave = (fn, ms = 1500) => {
@@ -201,24 +190,8 @@ export default function TrackStrategyPage() {
     return () => unsub();
   }, [applySnapshot, strategyDocRef]);
 
-  // Add circuit image to whiteboard
-  const addCircuitImage = async () => {
-    if (!editorRef.current || !event?.trackLat || !event?.trackLng) return;
-
-    const editor = editorRef.current;
-
-    // Create a static map image URL with satellite view
-    const lat = event.trackLat;
-    const lng = event.trackLng;
-    const zoom = 16;
-    const width = 800;
-    const height = 600;
-
-    // Use OpenStreetMap static image service
-    const imageUrl = `https://static-maps.yandex.ru/1.x/?ll=${lng},${lat}&z=${zoom}&l=sat&size=${width},${height}`;
-
-    // Alternative: Mapbox (requires API key) or use a screenshot approach
-    // For now, let's add a geo frame shape as a placeholder
+  const addCircuitTemplate = (editor) => {
+    if (!editor || !event) return;
     try {
       const shapeId = createShapeId();
       editor.createShape({
@@ -228,21 +201,27 @@ export default function TrackStrategyPage() {
         y: 100,
         props: {
           geo: 'rectangle',
-          w: 600,
-          h: 400,
+          w: 640,
+          h: 420,
           color: 'light-blue',
           fill: 'solid',
           labelColor: 'black',
-          text: `${event.trackName}\n\nAdd circuit layout image here\n(Export map or screenshot)`,
+          text: `${event.trackName || 'Track'}\n\nTrack map placeholder\nAdd your braking markers + lines`,
         },
       });
-
-      // Center on the shape
       editor.zoomToFit();
     } catch (err) {
       console.error('Error adding circuit placeholder:', err);
     }
   };
+
+  useEffect(() => {
+    if (!event || !editorRef.current || !tlLoaded) return;
+    if (templateInsertedRef.current) return;
+    if (initialSnapshotRef.current) return;
+    addCircuitTemplate(editorRef.current);
+    templateInsertedRef.current = true;
+  }, [event, tlLoaded]);
 
   if (loading) {
     return <div className="apex-panel p-8 text-center text-apex-soft">Loading...</div>;
@@ -275,10 +254,10 @@ export default function TrackStrategyPage() {
           <p className="text-apex-soft text-sm">Plan your lines, braking points, and reference markers</p>
         </div>
         <button
-          onClick={addCircuitImage}
+          onClick={() => addCircuitTemplate(editorRef.current)}
           className="apex-btn apex-btn-secondary text-sm"
         >
-          + Add Circuit Template
+          + Add Track Placeholder
         </button>
       </div>
 

@@ -15,6 +15,7 @@ export default function SessionDetailPage() {
   const [previousSessions, setPreviousSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [lapTimerActive, setLapTimerActive] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -30,6 +31,15 @@ export default function SessionDetailPage() {
 
         const sessionData = { id: sessionDoc.id, ...sessionDoc.data() };
         setSession(sessionData);
+
+        const riderDoc = await getDoc(doc(db, 'apextwin_riders', user.uid));
+        if (riderDoc.exists()) {
+          const riderData = riderDoc.data();
+          const inferredLapTimerActive = typeof riderData.lapTimerActive === 'boolean'
+            ? riderData.lapTimerActive
+            : ['intermediate', 'pro'].includes(riderData.experienceLevel || 'novice');
+          setLapTimerActive(inferredLapTimerActive);
+        }
 
         // Fetch previous sessions at this track with same bike
         if (sessionData.trackId && sessionData.bikeId && sessionData.date) {
@@ -156,14 +166,18 @@ export default function SessionDetailPage() {
             <div className="apex-label mb-1">Time</div>
             <div className="apex-data">{session.sessionTime || '--'}</div>
           </div>
-          <div>
-            <div className="apex-label mb-1">Laps</div>
-            <div className="apex-data text-xl">{session.lapsCompleted || '--'}</div>
-          </div>
-          <div>
-            <div className="apex-label mb-1">Fastest Lap</div>
-            <div className="apex-data text-xl text-apex-mint">{formatLapTime(session.fastestLapSec)}</div>
-          </div>
+          {lapTimerActive && (
+            <div>
+              <div className="apex-label mb-1">Laps</div>
+              <div className="apex-data text-xl">{session.lapsCompleted || '--'}</div>
+            </div>
+          )}
+          {lapTimerActive && (
+            <div>
+              <div className="apex-label mb-1">Fastest Lap</div>
+              <div className="apex-data text-xl text-apex-mint">{formatLapTime(session.fastestLapSec)}</div>
+            </div>
+          )}
           <div>
             <div className="apex-label mb-1">Weather</div>
             <div className="text-apex-white capitalize">{session.weather || '--'}</div>
@@ -313,10 +327,12 @@ export default function SessionDetailPage() {
                       {prev.tirePressureFrontColdPsi || '--'} / {prev.tirePressureRearColdPsi || '--'}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="apex-label text-[10px]">Fastest</div>
-                    <div className="apex-data text-apex-mint">{formatLapTime(prev.fastestLapSec)}</div>
-                  </div>
+                  {lapTimerActive && (
+                    <div className="text-right">
+                      <div className="apex-label text-[10px]">Fastest</div>
+                      <div className="apex-data text-apex-mint">{formatLapTime(prev.fastestLapSec)}</div>
+                    </div>
+                  )}
                   <span className="text-apex-soft">→</span>
                 </div>
               </Link>

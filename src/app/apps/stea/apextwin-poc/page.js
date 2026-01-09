@@ -9,6 +9,16 @@ export default function ApexTwinDashboard() {
   const [recentEvents, setRecentEvents] = useState([]);
   const [bikesCount, setBikesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hasCookie = document.cookie.includes('apextwin_onboarding=1');
+    const hasLocal = window.localStorage.getItem('apextwin_onboarding_seen') === '1';
+    if (!hasCookie && !hasLocal) {
+      setShowOnboarding(true);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +68,56 @@ export default function ApexTwinDashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {showOnboarding && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="apex-panel p-6 max-w-lg w-full">
+            <h2 className="apex-h2 mb-2">Welcome to ApexTwin</h2>
+            <p className="text-apex-soft text-sm mb-4">
+              Quick tour — keep it simple, then refine after you ride.
+            </p>
+            <div className="space-y-3 text-apex-soft text-sm">
+              <div>1. Add a bike so your setup defaults are ready.</div>
+              <div>2. Create an event for your track day or test.</div>
+              <div>3. Log sessions and capture your notes + confidence.</div>
+            </div>
+            <div className="flex flex-wrap gap-3 mt-5">
+              <Link
+                href="/apps/stea/apextwin-poc/bikes"
+                className="apex-btn apex-btn-secondary text-xs"
+                onClick={() => {
+                  setShowOnboarding(false);
+                  window.localStorage.setItem('apextwin_onboarding_seen', '1');
+                  document.cookie = 'apextwin_onboarding=1; path=/; max-age=31536000';
+                }}
+              >
+                Add a Bike
+              </Link>
+              <Link
+                href="/apps/stea/apextwin-poc/events/new"
+                className="apex-btn apex-btn-primary text-xs"
+                onClick={() => {
+                  setShowOnboarding(false);
+                  window.localStorage.setItem('apextwin_onboarding_seen', '1');
+                  document.cookie = 'apextwin_onboarding=1; path=/; max-age=31536000';
+                }}
+              >
+                Create Event
+              </Link>
+              <button
+                type="button"
+                className="text-apex-soft text-xs"
+                onClick={() => {
+                  setShowOnboarding(false);
+                  window.localStorage.setItem('apextwin_onboarding_seen', '1');
+                  document.cookie = 'apextwin_onboarding=1; path=/; max-age=31536000';
+                }}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Hero */}
       <div className="apex-panel p-4 sm:p-8">
         <h1 className="apex-h1 mb-2">Track Setup Companion</h1>
@@ -107,7 +167,7 @@ export default function ApexTwinDashboard() {
               <span className="text-apex-soft group-hover:text-apex-mint transition-colors">→</span>
             </div>
             <h3 className="text-apex-white font-semibold text-sm sm:text-base">Paddock</h3>
-            <p className="text-apex-soft text-xs hidden sm:block">See others</p>
+            <p className="text-apex-soft text-xs hidden sm:block">Shared setups (opt-in)</p>
           </Link>
         </div>
       </div>

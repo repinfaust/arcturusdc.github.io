@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, getDocs, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, serverTimestamp, Timestamp, doc, getDoc } from 'firebase/firestore';
 
 export default function NewSessionPage() {
   const router = useRouter();
@@ -12,6 +12,7 @@ export default function NewSessionPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCustomTrack, setShowCustomTrack] = useState(false);
+  const [lapTimerActive, setLapTimerActive] = useState(false);
 
   const [formData, setFormData] = useState({
     // Session basics
@@ -66,6 +67,16 @@ export default function NewSessionPage() {
         // Fetch tracks
         const tracksSnap = await getDocs(collection(db, 'apextwin_tracks'));
         setTracks(tracksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+        // Fetch rider preferences
+        const riderDoc = await getDoc(doc(db, 'apextwin_riders', user.uid));
+        if (riderDoc.exists()) {
+          const riderData = riderDoc.data();
+          const inferredLapTimerActive = typeof riderData.lapTimerActive === 'boolean'
+            ? riderData.lapTimerActive
+            : ['intermediate', 'pro'].includes(riderData.experienceLevel || 'novice');
+          setLapTimerActive(inferredLapTimerActive);
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -116,7 +127,7 @@ export default function NewSessionPage() {
 
       // Calculate fastest lap in seconds
       let fastestLapSec = null;
-      if (formData.fastestLapMin || formData.fastestLapSec) {
+      if (lapTimerActive && (formData.fastestLapMin || formData.fastestLapSec)) {
         const mins = parseFloat(formData.fastestLapMin) || 0;
         const secs = parseFloat(formData.fastestLapSec) || 0;
         fastestLapSec = mins * 60 + secs;
@@ -153,13 +164,14 @@ export default function NewSessionPage() {
         tractionControlLevel: formData.tractionControlLevel.trim() || null,
         engineMap: formData.engineMap.trim() || null,
         // Outcome
-        lapsCompleted: formData.lapsCompleted ? parseInt(formData.lapsCompleted) : null,
+        lapsCompleted: lapTimerActive && formData.lapsCompleted ? parseInt(formData.lapsCompleted) : null,
         fastestLapSec: fastestLapSec,
         notesHandling: formData.notesHandling.trim() || null,
         // Conditions
         weather: formData.weather || null,
         // Confidence
         confidence: formData.confidence,
+        paddockOptIn: false,
         // Meta
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -504,42 +516,48 @@ export default function NewSessionPage() {
         {/* Outcome */}
         <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Outcome</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <label className="apex-label block mb-1">Laps Completed</label>
-              <input
-                type="number"
-                min="0"
-                className="apex-input font-mono"
-                value={formData.lapsCompleted}
-                onChange={(e) => setFormData({ ...formData, lapsCompleted: e.target.value })}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="apex-label block mb-1">Fastest Lap (mm:ss.xx)</label>
-              <div className="flex items-center gap-2">
+          {lapTimerActive ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <label className="apex-label block mb-1">Laps Completed</label>
                 <input
                   type="number"
                   min="0"
-                  placeholder="1"
-                  className="apex-input w-20 font-mono text-center"
-                  value={formData.fastestLapMin}
-                  onChange={(e) => setFormData({ ...formData, fastestLapMin: e.target.value })}
-                />
-                <span className="text-apex-white text-xl">:</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="59.99"
-                  step="0.01"
-                  placeholder="45.00"
-                  className="apex-input w-28 font-mono text-center"
-                  value={formData.fastestLapSec}
-                  onChange={(e) => setFormData({ ...formData, fastestLapSec: e.target.value })}
+                  className="apex-input font-mono"
+                  value={formData.lapsCompleted}
+                  onChange={(e) => setFormData({ ...formData, lapsCompleted: e.target.value })}
                 />
               </div>
+              <div className="md:col-span-2">
+                <label className="apex-label block mb-1">Fastest Lap (mm:ss.xx)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="1"
+                    className="apex-input w-20 font-mono text-center"
+                    value={formData.fastestLapMin}
+                    onChange={(e) => setFormData({ ...formData, fastestLapMin: e.target.value })}
+                  />
+                  <span className="text-apex-white text-xl">:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59.99"
+                    step="0.01"
+                    placeholder="45.00"
+                    className="apex-input w-28 font-mono text-center"
+                    value={formData.fastestLapSec}
+                    onChange={(e) => setFormData({ ...formData, fastestLapSec: e.target.value })}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-apex-soft text-xs mb-4">
+              Lap timing is off. Enable “Active lap timer in use” in your rider profile to log lap metrics.
+            </p>
+          )}
           {/* Confidence Slider */}
           <div className="mt-4">
             <label className="apex-label block mb-2">Confidence Level</label>

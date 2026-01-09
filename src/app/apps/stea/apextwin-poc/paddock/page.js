@@ -67,7 +67,9 @@ export default function PaddockPage() {
       );
 
       const paddockSnap = await getDocs(paddockQuery);
-      const paddockSessions = paddockSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const paddockSessions = paddockSnap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(session => !!session.paddockOptIn);
       setSessions(paddockSessions);
 
       // Find current user's front PSI for filtering
@@ -177,7 +179,7 @@ export default function PaddockPage() {
       {/* Header */}
       <div>
         <h1 className="apex-h1 mb-1">Paddock View</h1>
-        <p className="text-apex-soft">See what other riders are running at the track today</p>
+        <p className="text-apex-soft">See anonymised setups shared by riders at the track</p>
       </div>
 
       {/* Filters */}
@@ -342,10 +344,10 @@ export default function PaddockPage() {
           <span className="text-apex-mint">ℹ</span>
           <div className="text-apex-soft text-sm">
             <p className="mb-1">
-              <strong className="text-apex-white">Privacy note:</strong> Only first names and basic setup data are shown.
+              <strong className="text-apex-white">Privacy note:</strong> Shared sessions are opt-in per event.
             </p>
             <p>
-              Detailed suspension settings, personal notes, and contact info are not shared in paddock view.
+              Only first names and basic setup data are shown. Notes and contact info stay private.
             </p>
           </div>
         </div>

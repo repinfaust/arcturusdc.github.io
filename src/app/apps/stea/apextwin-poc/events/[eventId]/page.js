@@ -26,7 +26,8 @@ export default function EventDetailPage() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const [activeTab, setActiveTab] = useState('sessions');
+  const [lapTimerActive, setLapTimerActive] = useState(false);
+  const [paddockUpdating, setPaddockUpdating] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,6 +53,16 @@ export default function EventDetailPage() {
         );
         const sessionsSnap = await getDocs(sessionsQuery);
         setSessions(sessionsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+        // Fetch rider preferences for lap timing
+        const riderDoc = await getDoc(doc(db, 'apextwin_riders', user.uid));
+        if (riderDoc.exists()) {
+          const riderData = riderDoc.data();
+          const inferredLapTimerActive = typeof riderData.lapTimerActive === 'boolean'
+            ? riderData.lapTimerActive
+            : ['intermediate', 'pro'].includes(riderData.experienceLevel || 'novice');
+          setLapTimerActive(inferredLapTimerActive);
+        }
       } catch (err) {
         console.error('Error fetching event:', err);
       } finally {
@@ -81,16 +92,36 @@ export default function EventDetailPage() {
     }
   };
 
+  const handlePaddockToggle = async () => {
+    if (!event) return;
+    const nextValue = !event.paddockOptIn;
+    setPaddockUpdating(true);
+    setEvent(prev => ({ ...prev, paddockOptIn: nextValue }));
+    setSessions(prev => prev.map(session => ({ ...session, paddockOptIn: nextValue })));
+
+    try {
+      await updateDoc(doc(db, 'apextwin_events', eventId), { paddockOptIn: nextValue });
+      if (sessions.length > 0) {
+        await Promise.all(
+          sessions.map(session =>
+            updateDoc(doc(db, 'apextwin_sessions', session.id), { paddockOptIn: nextValue })
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error updating paddock setting:', err);
+      setEvent(prev => ({ ...prev, paddockOptIn: !nextValue }));
+      setSessions(prev => prev.map(session => ({ ...session, paddockOptIn: !nextValue })));
+      alert('Failed to update paddock sharing');
+    } finally {
+      setPaddockUpdating(false);
+    }
+  };
+
   const formatDate = (timestamp) => {
     if (!timestamp) return '--';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-  };
-
-  const formatShortDate = (timestamp) => {
-    if (!timestamp) return '--';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
   };
 
   const formatLapTime = (seconds) => {
@@ -141,6 +172,7 @@ export default function EventDetailPage() {
     if (s.fastestLapSec && (!best || s.fastestLapSec < best)) return s.fastestLapSec;
     return best;
   }, null);
+  const summaryCols = lapTimerActive ? 'grid-cols-3' : 'grid-cols-2';
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -178,129 +210,128 @@ export default function EventDetailPage() {
       {/* Map */}
       <div className="apex-panel overflow-hidden">
         <CircuitMap
-          lat={event.trackLat}
-          lng={event.trackLng}
           trackName={event.trackName}
           className="h-48 sm:h-64"
+          variant="placeholder"
         />
       </div>
 
-      {/* Track Strategy Link */}
+      {/* Track Strategy */}
+      <details className="apex-panel p-3 sm:p-4 group">
+        <summary className="flex items-center justify-between cursor-pointer list-none">
+          <div className="flex items-center gap-3">
+            <span className="text-xl text-apex-mint">⚑</span>
+            <div>
+              <span className="text-apex-white font-semibold text-sm sm:text-base">Track Strategy</span>
+              <p className="text-apex-soft text-xs">Open your notes and map references</p>
+            </div>
+          </div>
+          <span className="text-apex-soft group-hover:text-apex-mint transition-colors">▾</span>
+        </summary>
+        <div className="mt-3 text-apex-soft text-xs sm:text-sm">
+          Use this board to mark braking points, lines, and corner notes.
+          <div className="mt-3">
+            <Link
+              href={`/apps/stea/apextwin-poc/events/${eventId}/strategy`}
+              className="apex-btn apex-btn-secondary text-xs sm:text-sm"
+            >
+              Open Strategy
+            </Link>
+          </div>
+        </div>
+      </details>
+
+      {/* Session Summary */}
+      <div className="apex-panel p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="apex-h2">Session Summary</h2>
+          <span
+            className="text-apex-soft text-xs"
+            title="Lap metrics show when an active lap timer is in use."
+          >
+            ⓘ
+          </span>
+        </div>
+        <div className={`grid ${summaryCols} gap-3`}>
+          <div className="apex-panel p-3 text-center">
+            <div className="apex-label text-[10px] mb-1">Sessions</div>
+            <div className="apex-data text-xl sm:text-2xl">{sessions.length}</div>
+          </div>
+          {lapTimerActive && (
+            <div className="apex-panel p-3 text-center">
+              <div className="apex-label text-[10px] mb-1">Best Lap</div>
+              <div className="apex-data text-xl sm:text-2xl text-apex-mint">{formatLapTime(bestLap)}</div>
+            </div>
+          )}
+          <div className="apex-panel p-3 text-center">
+            <div className="apex-label text-[10px] mb-1">Bikes</div>
+            <div className="apex-data text-xl sm:text-2xl">{event.bikes?.length || 0}</div>
+          </div>
+        </div>
+        {event.bikes && event.bikes.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {event.bikes.map(bike => (
+              <span key={bike.id} className="px-3 py-1 bg-apex-stealth rounded-full text-xs text-apex-white">
+                {bike.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* New Session Button */}
       <Link
-        href={`/apps/stea/apextwin-poc/events/${eventId}/strategy`}
-        className="apex-panel p-3 sm:p-4 flex items-center justify-between hover:border-apex-mint/50 transition-colors group"
+        href={`/apps/stea/apextwin-poc/events/${eventId}/sessions/new`}
+        className="apex-panel p-4 hover:border-apex-mint/50 transition-colors group flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          <span className="text-xl text-apex-mint">⚑</span>
+          <span className="text-2xl text-apex-mint">+</span>
           <div>
-            <span className="text-apex-white font-semibold text-sm sm:text-base">Track Strategy</span>
-            <p className="text-apex-soft text-xs">Annotate circuit with notes & markers</p>
+            <span className="text-apex-white font-semibold">Log New Session</span>
+            <p className="text-apex-soft text-xs">Record setup and performance</p>
           </div>
         </div>
         <span className="text-apex-soft group-hover:text-apex-mint transition-colors">→</span>
       </Link>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="apex-panel p-3 sm:p-4 text-center">
-          <div className="apex-label text-[10px] mb-1">Sessions</div>
-          <div className="apex-data text-xl sm:text-2xl">{sessions.length}</div>
+      {/* Previous Sessions */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="apex-h2">Previous Sessions</h2>
+          <span className="text-apex-soft text-xs">At this track</span>
         </div>
-        <div className="apex-panel p-3 sm:p-4 text-center">
-          <div className="apex-label text-[10px] mb-1">Best Lap</div>
-          <div className="apex-data text-xl sm:text-2xl text-apex-mint">{formatLapTime(bestLap)}</div>
-        </div>
-        <div className="apex-panel p-3 sm:p-4 text-center">
-          <div className="apex-label text-[10px] mb-1">Bikes</div>
-          <div className="apex-data text-xl sm:text-2xl">{event.bikes?.length || 0}</div>
-        </div>
-      </div>
 
-      {/* Bikes List */}
-      {event.bikes && event.bikes.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {event.bikes.map(bike => (
-            <span key={bike.id} className="px-3 py-1 bg-apex-stealth rounded-full text-xs text-apex-white">
-              {bike.name}
-            </span>
-          ))}
-        </div>
-      )}
+        {lapTimerActive && sessions.length > 0 && (
+          <LapTimeVisualization sessions={sessions} bestLap={bestLap} formatLapTime={formatLapTime} />
+        )}
 
-      {/* Tabs */}
-      <div className="flex border-b border-apex-stealth">
-        <button
-          onClick={() => setActiveTab('sessions')}
-          className={`px-4 py-3 text-sm font-medium transition-colors ${
-            activeTab === 'sessions'
-              ? 'text-apex-mint border-b-2 border-apex-mint'
-              : 'text-apex-soft hover:text-apex-white'
-          }`}
-        >
-          Sessions
-        </button>
-        <button
-          onClick={() => setActiveTab('paddock')}
-          className={`px-4 py-3 text-sm font-medium transition-colors ${
-            activeTab === 'paddock'
-              ? 'text-apex-mint border-b-2 border-apex-mint'
-              : 'text-apex-soft hover:text-apex-white'
-          }`}
-        >
-          Paddock
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'sessions' && (
-        <div className="space-y-4">
-          {/* New Session Button */}
-          <Link
-            href={`/apps/stea/apextwin-poc/events/${eventId}/sessions/new`}
-            className="apex-panel p-4 hover:border-apex-mint/50 transition-colors group flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl text-apex-mint">+</span>
-              <div>
-                <span className="text-apex-white font-semibold">Log New Session</span>
-                <p className="text-apex-soft text-xs">Record setup and performance</p>
-              </div>
-            </div>
-            <span className="text-apex-soft group-hover:text-apex-mint transition-colors">→</span>
-          </Link>
-
-          {/* Lap Time Visualization */}
-          {sessions.length > 0 && (
-            <LapTimeVisualization sessions={sessions} bestLap={bestLap} formatLapTime={formatLapTime} />
-          )}
-
-          {/* Sessions List */}
-          {sessions.length === 0 ? (
-            <div className="apex-panel p-6 text-center">
-              <p className="text-apex-soft">No sessions logged yet</p>
-            </div>
-          ) : (
-            <div className="apex-panel divide-y divide-apex-stealth">
-              {sessions.map((session, idx) => (
-                <Link
-                  key={session.id}
-                  href={`/apps/stea/apextwin-poc/events/${eventId}/sessions/${session.id}`}
-                  className="block p-4 hover:bg-apex-graphite/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-apex-white font-medium">
-                          Session {session.sessionNumber || sessions.length - idx}
-                        </span>
-                        {session.sessionTime && (
-                          <span className="text-apex-soft text-xs">@ {session.sessionTime}</span>
-                        )}
-                      </div>
-                      <div className="text-apex-soft text-xs">
-                        {session.bikeName || 'Unknown bike'}
-                      </div>
+        {sessions.length === 0 ? (
+          <div className="apex-panel p-6 text-center">
+            <p className="text-apex-soft">No sessions logged yet</p>
+          </div>
+        ) : (
+          <div className="apex-panel divide-y divide-apex-stealth">
+            {sessions.map((session, idx) => (
+              <Link
+                key={session.id}
+                href={`/apps/stea/apextwin-poc/events/${eventId}/sessions/${session.id}`}
+                className="block p-4 hover:bg-apex-graphite/50 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-apex-white font-medium">
+                        Session {session.sessionNumber || sessions.length - idx}
+                      </span>
+                      {session.sessionTime && (
+                        <span className="text-apex-soft text-xs">@ {session.sessionTime}</span>
+                      )}
                     </div>
+                    <div className="text-apex-soft text-xs">
+                      {session.bikeName || 'Unknown bike'}
+                    </div>
+                  </div>
+                  {lapTimerActive ? (
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <div className="apex-label text-[10px]">Laps</div>
@@ -312,17 +343,25 @@ export default function EventDetailPage() {
                       </div>
                       <span className="text-apex-soft">→</span>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                  ) : (
+                    <span className="text-apex-soft text-xs">View notes →</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {activeTab === 'paddock' && (
-        <PaddockView eventId={eventId} trackId={event.trackId} startDate={event.startDate} />
-      )}
+      {/* Paddock */}
+      <PaddockView
+        eventId={eventId}
+        trackId={event.trackId}
+        startDate={event.startDate}
+        paddockOptIn={!!event.paddockOptIn}
+        onToggleOptIn={handlePaddockToggle}
+        toggling={paddockUpdating}
+      />
 
       {/* Notes */}
       {event.notes && (
@@ -336,7 +375,7 @@ export default function EventDetailPage() {
 }
 
 // Paddock component showing other riders' setups at same track/date
-function PaddockView({ eventId, trackId, startDate }) {
+function PaddockView({ eventId, trackId, startDate, paddockOptIn, onToggleOptIn, toggling }) {
   const [setups, setSetups] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -363,7 +402,8 @@ function PaddockView({ eventId, trackId, startDate }) {
         const user = auth.currentUser;
         const otherSetups = snap.docs
           .map(d => ({ id: d.id, ...d.data() }))
-          .filter(s => s.riderId !== user?.uid);
+          .filter(s => s.riderId !== user?.uid)
+          .filter(s => !!s.paddockOptIn);
 
         setSetups(otherSetups);
       } catch (err) {
@@ -378,56 +418,76 @@ function PaddockView({ eventId, trackId, startDate }) {
     }
   }, [eventId, trackId, startDate]);
 
-  if (loading) {
-    return <div className="apex-panel p-6 text-center text-apex-soft">Loading paddock...</div>;
-  }
-
-  if (setups.length === 0) {
-    return (
-      <div className="apex-panel p-6 text-center">
-        <p className="text-apex-soft">No other riders logged at this track yet</p>
-        <p className="text-apex-soft text-xs mt-1">Setups from others at the same track & date will appear here</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="apex-panel divide-y divide-apex-stealth">
-      <div className="p-4 border-b border-apex-stealth">
-        <h3 className="text-apex-white font-semibold">Other Riders at Track</h3>
-        <p className="text-apex-soft text-xs">Anonymous setups from other riders</p>
-      </div>
-      {setups.map((setup) => (
-        <div key={setup.id} className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <span className="text-apex-white font-medium">{setup.bikeName || 'Unknown'}</span>
-              <span className="text-apex-soft text-xs ml-2">by {setup.riderName?.split(' ')[0] || 'Rider'}</span>
-            </div>
-            {setup.fastestLapSec && (
-              <span className="apex-data text-apex-mint">{formatLapTimeStatic(setup.fastestLapSec)}</span>
-            )}
+    <div className="space-y-3">
+      <div className="apex-panel p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="apex-h2 mb-1">Paddock</h3>
+            <p className="text-apex-soft text-xs">
+              See anonymised setups from riders at the same track and date range.
+            </p>
+            <p className="text-apex-soft text-xs mt-1">
+              Your identity is hidden. You control whether your data is shared for this event.
+            </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div>
-              <span className="apex-label">Front PSI</span>
-              <div className="apex-data">{setup.tirePressureFrontColdPsi || '--'}</div>
-            </div>
-            <div>
-              <span className="apex-label">Rear PSI</span>
-              <div className="apex-data">{setup.tirePressureRearColdPsi || '--'}</div>
-            </div>
-            <div>
-              <span className="apex-label">Weather</span>
-              <div className="text-apex-white capitalize">{setup.weather || '--'}</div>
-            </div>
-            <div>
-              <span className="apex-label">Laps</span>
-              <div className="apex-data">{setup.lapsCompleted || '--'}</div>
-            </div>
-          </div>
+          <button
+            onClick={onToggleOptIn}
+            disabled={toggling}
+            className={`apex-btn ${paddockOptIn ? 'apex-btn-primary' : 'apex-btn-secondary'} text-xs`}
+            title="Share anonymised tyre pressures and basic session info for this event."
+          >
+            {toggling ? 'Updating...' : paddockOptIn ? 'Sharing On' : 'Share My Data'}
+          </button>
         </div>
-      ))}
+      </div>
+
+      {loading ? (
+        <div className="apex-panel p-6 text-center text-apex-soft">Loading paddock...</div>
+      ) : setups.length === 0 ? (
+        <div className="apex-panel p-6 text-center">
+          <p className="text-apex-soft">No shared setups yet for this track</p>
+          <p className="text-apex-soft text-xs mt-1">Shared data from other riders will appear here</p>
+        </div>
+      ) : (
+        <div className="apex-panel divide-y divide-apex-stealth">
+          <div className="p-4 border-b border-apex-stealth">
+            <h4 className="text-apex-white font-semibold">Other Riders at Track</h4>
+            <p className="text-apex-soft text-xs">Shared, anonymised snapshots</p>
+          </div>
+          {setups.map((setup) => (
+            <div key={setup.id} className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <span className="text-apex-white font-medium">{setup.bikeName || 'Unknown'}</span>
+                  <span className="text-apex-soft text-xs ml-2">by {setup.riderName?.split(' ')[0] || 'Rider'}</span>
+                </div>
+                {setup.fastestLapSec && (
+                  <span className="apex-data text-apex-mint">{formatLapTimeStatic(setup.fastestLapSec)}</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <span className="apex-label">Front PSI</span>
+                  <div className="apex-data">{setup.tirePressureFrontColdPsi || '--'}</div>
+                </div>
+                <div>
+                  <span className="apex-label">Rear PSI</span>
+                  <div className="apex-data">{setup.tirePressureRearColdPsi || '--'}</div>
+                </div>
+                <div>
+                  <span className="apex-label">Weather</span>
+                  <div className="text-apex-white capitalize">{setup.weather || '--'}</div>
+                </div>
+                <div>
+                  <span className="apex-label">Laps</span>
+                  <div className="apex-data">{setup.lapsCompleted || '--'}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

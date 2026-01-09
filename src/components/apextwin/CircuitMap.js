@@ -21,11 +21,12 @@ const Popup = dynamic(
   { ssr: false }
 );
 
-export default function CircuitMap({ lat, lng, trackName, className = '' }) {
+export default function CircuitMap({ lat, lng, trackName, className = '', variant = 'map' }) {
   const [isMounted, setIsMounted] = useState(false);
   const [customIcon, setCustomIcon] = useState(null);
 
   useEffect(() => {
+    if (variant === 'placeholder') return;
     setIsMounted(true);
 
     // Import leaflet CSS and create custom icon
@@ -47,6 +48,20 @@ export default function CircuitMap({ lat, lng, trackName, className = '' }) {
       setCustomIcon(icon);
     });
   }, []);
+
+  if (variant === 'placeholder') {
+    return (
+      <div className={`bg-apex-graphite rounded-lg flex items-center justify-center ${className}`}>
+        <div className="text-center px-4">
+          <div className="text-apex-mint text-2xl mb-2">◌</div>
+          <div className="text-apex-white text-sm font-semibold">{trackName || 'Track Map'}</div>
+          <div className="text-apex-soft text-xs mt-1">
+            Placeholder map — detailed layouts coming soon.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isMounted || !lat || !lng) {
     return (

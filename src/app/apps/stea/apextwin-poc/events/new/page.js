@@ -112,6 +112,7 @@ export default function NewEventPage() {
         bikes: selectedBikesData,
         notes: formData.notes || null,
         sessionCount: 0,
+        paddockOptIn: false,
         createdAt: Timestamp.now(),
       };
 
