@@ -25,6 +25,7 @@ export default function NewEventPage() {
   const [bikes, setBikes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [trackFilter, setTrackFilter] = useState('');
 
   const [formData, setFormData] = useState({
     trackId: '',
@@ -34,6 +35,12 @@ export default function NewEventPage() {
     endDate: '',
     selectedBikes: [],
     notes: '',
+  });
+
+  const filteredTracks = tracks.filter((track) => {
+    if (!trackFilter.trim()) return true;
+    const label = `${track.name || ''} ${track.country || ''}`.toLowerCase();
+    return label.includes(trackFilter.trim().toLowerCase());
   });
 
   useEffect(() => {
@@ -148,21 +155,37 @@ export default function NewEventPage() {
         {/* Track Selection */}
         <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Circuit</h2>
-          <div>
-            <label className="apex-label block mb-2">Track *</label>
-            <select
-              value={formData.trackId}
-              onChange={(e) => setFormData(prev => ({ ...prev, trackId: e.target.value }))}
-              className="apex-input"
-              required
-            >
-              <option value="">Select track...</option>
-              {tracks.map(track => (
-                <option key={track.id} value={track.id}>
-                  {track.name} ({track.country})
-                </option>
-              ))}
-            </select>
+          <div className="space-y-3">
+            <div>
+              <label className="apex-label block mb-2">Filter Tracks</label>
+              <input
+                type="text"
+                className="apex-input"
+                placeholder="Type to filter tracks..."
+                value={trackFilter}
+                onChange={(e) => setTrackFilter(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="apex-label block mb-2">Track *</label>
+              <select
+                value={formData.trackId}
+                onChange={(e) => setFormData(prev => ({ ...prev, trackId: e.target.value }))}
+                className="apex-input"
+                required
+              >
+                <option value="">Select track...</option>
+                {filteredTracks.length === 0 ? (
+                  <option value="" disabled>No matches</option>
+                ) : (
+                  filteredTracks.map(track => (
+                    <option key={track.id} value={track.id}>
+                      {track.name} ({track.country})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
           </div>
         </div>
 
