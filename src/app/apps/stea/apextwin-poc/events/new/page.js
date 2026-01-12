@@ -25,7 +25,7 @@ export default function NewEventPage() {
   const [bikes, setBikes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [trackFilter, setTrackFilter] = useState('');
+  const [trackQuery, setTrackQuery] = useState('');
 
   const [formData, setFormData] = useState({
     trackId: '',
@@ -37,11 +37,9 @@ export default function NewEventPage() {
     notes: '',
   });
 
-  const filteredTracks = tracks.filter((track) => {
-    if (!trackFilter.trim()) return true;
-    const label = `${track.name || ''} ${track.country || ''}`.toLowerCase();
-    return label.includes(trackFilter.trim().toLowerCase());
-  });
+  const getTrackLabel = (track) => `${track.name || ''} (${track.country || 'Unknown'})`;
+  const findTrackByLabel = (label) =>
+    tracks.find((track) => getTrackLabel(track).toLowerCase() === label.toLowerCase());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -155,37 +153,30 @@ export default function NewEventPage() {
         {/* Track Selection */}
         <div className="apex-panel p-4 sm:p-6">
           <h2 className="apex-h2 mb-4 border-b border-apex-stealth pb-2">Circuit</h2>
-          <div className="space-y-3">
-            <div>
-              <label className="apex-label block mb-2">Filter Tracks</label>
-              <input
-                type="text"
-                className="apex-input"
-                placeholder="Type to filter tracks..."
-                value={trackFilter}
-                onChange={(e) => setTrackFilter(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="apex-label block mb-2">Track *</label>
-              <select
-                value={formData.trackId}
-                onChange={(e) => setFormData(prev => ({ ...prev, trackId: e.target.value }))}
-                className="apex-input"
-                required
-              >
-                <option value="">Select track...</option>
-                {filteredTracks.length === 0 ? (
-                  <option value="" disabled>No matches</option>
-                ) : (
-                  filteredTracks.map(track => (
-                    <option key={track.id} value={track.id}>
-                      {track.name} ({track.country})
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
+          <div className="space-y-2">
+            <label className="apex-label block mb-1">Track *</label>
+            <input
+              type="text"
+              list="apextwin-track-options"
+              className="apex-input"
+              placeholder="Search and select a track..."
+              value={trackQuery}
+              onChange={(e) => {
+                const value = e.target.value;
+                setTrackQuery(value);
+                const match = findTrackByLabel(value);
+                setFormData(prev => ({ ...prev, trackId: match?.id || '' }));
+              }}
+              required
+            />
+            <datalist id="apextwin-track-options">
+              {tracks.map(track => (
+                <option key={track.id} value={getTrackLabel(track)} />
+              ))}
+            </datalist>
+            <p className="text-apex-soft text-[10px]">
+              Start typing to search, then select a track from the dropdown.
+            </p>
           </div>
         </div>
 
