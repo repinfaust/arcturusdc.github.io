@@ -1,0 +1,35 @@
+name: STEa Run Tests
+run-name: STEa Run Tests - ${{ github.event.client_payload.runId }}
+
+on:
+  repository_dispatch:
+    types: [stea_run_tests]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Jest with Firestore reporter
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          STEA_RUN_ID: ${{ github.event.client_payload.runId }}
+          STEA_INITIATED_BY: ${{ github.event.client_payload.initiatedBy }}
+          STEA_CONFIG_TYPE: ${{ github.event.client_payload.configType }}
+        run: |
+          echo "Running Jest for runId=${STEA_RUN_ID}"
+          node scripts/run-jest-tests.js --reporters="<rootDir>/scripts/firestore-jest-reporter.js"

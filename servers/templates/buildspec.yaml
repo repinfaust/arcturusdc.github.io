@@ -1,0 +1,109 @@
+name: Build Specification
+description: Technical build specification for engineering implementation
+type: documentation
+variables:
+  - name: title
+    description: Feature/component title
+    required: true
+  - name: overview
+    description: Technical overview
+    required: true
+  - name: userStory
+    description: User story context
+    required: false
+  - name: acceptanceCriteria
+    description: Acceptance criteria from card
+    required: false
+  - name: constraints
+    description: Technical constraints
+    required: false
+  - name: dependencies
+    description: Technical dependencies
+    required: false
+
+template: |
+  # Build Spec: {{title}}
+
+  ## Overview
+  {{overview}}
+
+  ## User Story Context
+  {{userStory || "See linked Filo card for context"}}
+
+  ## Acceptance Criteria
+  {{acceptanceCriteria || "See linked Filo card"}}
+
+  ## Architecture
+
+  ### System Components
+  - **Frontend**: _To be defined_
+  - **Backend**: _To be defined_
+  - **Database**: _To be defined_
+
+  ### Component Diagram
+  _To be added_
+
+  ## Data Model
+
+  ### Entities
+  _To be defined_
+
+  ### Schema Changes
+  - [ ] List any database schema changes
+  - [ ] Include migration strategy
+
+  ## API Specification
+
+  ### Endpoints
+  _To be defined_
+
+  ### Request/Response Examples
+  ```json
+  // To be added
+  ```
+
+  ## UI/UX Requirements
+  - **Screens**: _List screens/views_
+  - **Interactions**: _Key user interactions_
+  - **Accessibility**: _WCAG requirements_
+
+  ## Technical Constraints
+  {{constraints || "None identified"}}
+
+  ## Dependencies
+  {{dependencies || "None identified"}}
+
+  ## Error Handling
+  - [ ] Define error scenarios
+  - [ ] User-facing error messages
+  - [ ] Logging strategy
+
+  ## Testing Strategy
+  - [ ] Unit tests: _Coverage target_
+  - [ ] Integration tests: _Key flows_
+  - [ ] E2E tests: _Critical paths_
+  - [ ] Performance tests: _SLAs_
+
+  ## Security Considerations
+  - [ ] Authentication/Authorization
+  - [ ] Data validation
+  - [ ] Rate limiting
+  - [ ] PII handling
+
+  ## Performance Requirements
+  - **Response time**: _Target in ms_
+  - **Throughput**: _Requests per second_
+  - **Data volume**: _Expected scale_
+
+  ## Rollout Plan
+  - [ ] Feature flag strategy
+  - [ ] A/B testing approach
+  - [ ] Rollback procedure
+
+  ## Open Questions
+  - [ ] To be resolved during implementation
+
+  ## Sign-off
+  - **Engineering Lead**: _Pending_
+  - **Tech Lead**: _Pending_
+  - **Security Review**: _Pending_

@@ -1,0 +1,87 @@
+name: Security Review
+description: Security considerations for features including authentication, data handling, and storage
+category: security
+items:
+  - id: sec-001
+    question: Are all user inputs validated and sanitized?
+    category: Input Validation
+    severity: Critical
+    guidance: Validate all inputs on both client and server side. Use allowlists, not denylists. Sanitize before rendering or storing.
+
+  - id: sec-002
+    question: Is authentication required for all sensitive operations?
+    category: Authentication
+    severity: Critical
+    guidance: Verify that all endpoints handling sensitive data or operations require valid authentication tokens.
+
+  - id: sec-003
+    question: Are authorization checks performed for resource access?
+    category: Authorization
+    severity: Critical
+    guidance: Ensure users can only access resources they own or have explicit permission to view/modify.
+
+  - id: sec-004
+    question: Is sensitive data encrypted in transit (HTTPS/TLS)?
+    category: Data Protection
+    severity: Critical
+    guidance: All network communication containing sensitive data must use TLS 1.2 or higher.
+
+  - id: sec-005
+    question: Is sensitive data encrypted at rest?
+    category: Data Protection
+    severity: Critical
+    guidance: PII, credentials, payment info, and other sensitive data should be encrypted when stored.
+
+  - id: sec-006
+    question: Are SQL injection vulnerabilities prevented (parameterized queries)?
+    category: Injection Prevention
+    severity: Critical
+    guidance: Use parameterized queries or ORMs. Never concatenate user input into SQL statements.
+
+  - id: sec-007
+    question: Are XSS vulnerabilities prevented (output encoding)?
+    category: Injection Prevention
+    severity: Critical
+    guidance: Encode all user-generated content before rendering. Use framework protections (React auto-escaping, CSP headers).
+
+  - id: sec-008
+    question: Are CSRF protections in place for state-changing operations?
+    category: Request Forgery
+    severity: Major
+    guidance: Use CSRF tokens, SameSite cookies, or require custom headers for API calls.
+
+  - id: sec-009
+    question: Are secrets and API keys stored securely (not in code)?
+    category: Secret Management
+    severity: Critical
+    guidance: Use environment variables or secret management services. Never commit secrets to version control.
+
+  - id: sec-010
+    question: Is rate limiting implemented to prevent abuse?
+    category: Denial of Service
+    severity: Major
+    guidance: Apply rate limits to authentication endpoints, API calls, and resource-intensive operations.
+
+  - id: sec-011
+    question: Are error messages sanitized to avoid information disclosure?
+    category: Information Disclosure
+    severity: Major
+    guidance: Error messages should not reveal system details, stack traces, or internal paths in production.
+
+  - id: sec-012
+    question: Are file uploads validated for type, size, and content?
+    category: File Upload Security
+    severity: Major
+    guidance: Validate MIME types, enforce size limits, scan for malware, and store uploads outside webroot.
+
+  - id: sec-013
+    question: Are security headers configured (CSP, X-Frame-Options, HSTS)?
+    category: HTTP Security
+    severity: Major
+    guidance: Implement Content-Security-Policy, X-Frame-Options, HSTS, X-Content-Type-Options headers.
+
+  - id: sec-014
+    question: Is logging implemented for security events (auth failures, privilege escalation)?
+    category: Monitoring
+    severity: Minor
+    guidance: Log authentication failures, authorization denials, and suspicious activities for security monitoring.

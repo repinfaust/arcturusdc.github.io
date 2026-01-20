@@ -1,0 +1,129 @@
+name: Architecture Decision Record (ADR)
+description: Document significant architecture and design decisions
+type: documentation
+variables:
+  - name: title
+    description: Decision title
+    required: true
+  - name: status
+    description: Status (Proposed, Accepted, Deprecated, Superseded)
+    required: true
+  - name: context
+    description: What is the context of this decision
+    required: true
+  - name: decision
+    description: What is the decision
+    required: true
+  - name: consequences
+    description: What are the consequences
+    required: false
+  - name: deciders
+    description: Who is involved in the decision
+    required: false
+  - name: date
+    description: Decision date
+    required: false
+  - name: supersedes
+    description: Which ADR does this supersede
+    required: false
+  - name: supersededBy
+    description: Which ADR supersedes this one
+    required: false
+
+template: |
+  # ADR: {{title}}
+
+  **Status**: {{status}}
+  **Date**: {{date || "To be determined"}}
+  **Deciders**: {{deciders || "To be determined"}}
+  {{#if supersedes}}**Supersedes**: {{supersedes}}{{/if}}
+  {{#if supersededBy}}**Superseded by**: {{supersededBy}}{{/if}}
+
+  ---
+
+  ## Context
+
+  {{context}}
+
+  ## Decision
+
+  {{decision}}
+
+  ## Consequences
+
+  {{consequences || "To be documented"}}
+
+  ### Positive Consequences
+  - _Benefit 1_
+  - _Benefit 2_
+  - _Benefit 3_
+
+  ### Negative Consequences
+  - _Trade-off 1_
+  - _Trade-off 2_
+  - _Trade-off 3_
+
+  ## Options Considered
+
+  ### Option 1: _Name_
+  **Description**: _Brief description_
+
+  **Pros**:
+  - _Pro 1_
+  - _Pro 2_
+
+  **Cons**:
+  - _Con 1_
+  - _Con 2_
+
+  **Decision**: ✅ **Selected** / ❌ **Not Selected**
+
+  ### Option 2: _Name_
+  **Description**: _Brief description_
+
+  **Pros**:
+  - _Pro 1_
+  - _Pro 2_
+
+  **Cons**:
+  - _Con 1_
+  - _Con 2_
+
+  **Decision**: ✅ **Selected** / ❌ **Not Selected**
+
+  ### Option 3: _Name_
+  **Description**: _Brief description_
+
+  **Pros**:
+  - _Pro 1_
+  - _Pro 2_
+
+  **Cons**:
+  - _Con 1_
+  - _Con 2_
+
+  **Decision**: ✅ **Selected** / ❌ **Not Selected**
+
+  ## Implementation Notes
+  - _Note 1_
+  - _Note 2_
+  - _Note 3_
+
+  ## Validation
+  - [ ] **Proof of Concept**: _Results_
+  - [ ] **Benchmarks**: _Performance data_
+  - [ ] **Team Consensus**: _Agreement level_
+
+  ## References
+  - _Link 1_
+  - _Link 2_
+  - _Link 3_
+
+  ## Related Decisions
+  - **ADR-XXX**: _Related decision title_
+  - **ADR-YYY**: _Related decision title_
+
+  ---
+
+  **Template Version**: 1.0
+  **Last Updated**: {{date || "To be determined"}}

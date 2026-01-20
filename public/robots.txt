@@ -1,0 +1,8 @@
+# robots.txt for https://www.arcturusdc.com/
+User-agent: *
+Allow: /
+
+# While Privacy/Terms are placeholders, prefer meta noindex on-page (stronger than disallow).
+# See meta examples below.
+
+Sitemap: https://www.arcturusdc.com/sitemap.xml

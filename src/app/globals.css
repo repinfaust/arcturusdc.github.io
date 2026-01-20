@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------- Root & Background -------- */
+:root { --ring: rgba(240,69,47,.25); }
+
+/* Subtle arcturus starburst background */
+.bg-starburst {
+  background:
+    radial-gradient(1200px 600px at -10% -20%, rgba(240,69,47,.07), transparent 50%),
+    radial-gradient(800px 400px at 110% -10%, rgba(32,32,32,.05), transparent 60%);
+}
+
+/* -------- Custom shadows -------- */
+.shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+
+/* Optional: smoother theme transitions */
+* { transition: color .15s ease, background-color .15s ease, border-color .15s ease; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* -------- Utilities -------- */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
+  /* Safe area for iPhone notch/home indicator */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+/* -------- Component layer -------- */
+@layer components {
+  /* Cards */
+  .card { @apply bg-white border border-black/10 rounded-2xl shadow-soft; }
+
+  /* Buttons */
+  .btn       { @apply inline-flex items-center justify-center rounded-xl font-extrabold px-4 py-2; }
+  .btn-primary   { @apply bg-red-600 text-white hover:bg-red-700; }
+  .btn-secondary { @apply bg-white border border-black/10 text-neutral-900 hover:bg-white/80; }
+
+  /* --- Badges (chips) --- */
+
+  /* Row helper: consistent centering, spacing, sizing */
+  .badges {
+    @apply w-full flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm;
+  }
+
+  /* Core badge */
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1
+           font-medium leading-none
+           bg-neutral-300 text-neutral-900
+           select-none cursor-default;
+  }
+
+  /* Orange dot */
+  .badge::before {
+    content: "";
+    @apply inline-block w-2 h-2 rounded-full mr-2 bg-orange-500;
+  }
+}
+
+/* -------- ApexTwin Design System -------- */
+.apex-bg {
+  background-color: #0B0B0C;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(44, 46, 50, 0.05) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(44, 46, 50, 0.05) 40px);
+}
+
+.apex-noise {
+  position: relative;
+}
+.apex-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+@layer components {
+  /* ApexTwin Panel */
+  .apex-panel {
+    @apply bg-[#1A1C1F] border border-[#2C2E32] rounded-lg;
+  }
+
+  /* ApexTwin Button */
+  .apex-btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all;
+  }
+  .apex-btn-primary {
+    @apply bg-[#00FF9A] text-[#0B0B0C] hover:bg-[#7DFFD0] hover:shadow-[0_0_12px_rgba(0,255,154,0.3)];
+  }
+  .apex-btn-secondary {
+    @apply bg-[#2C2E32] text-[#F2F2F2] border border-[#2C2E32] hover:border-[#00FF9A]/50;
+  }
+
+  /* ApexTwin Input */
+  .apex-input {
+    @apply w-full px-3 py-2 bg-[#1A1C1F] border border-[#2C2E32] rounded-lg text-[#F2F2F2] placeholder-[#A0A4A8] focus:outline-none focus:border-[#00FF9A]/50 focus:ring-1 focus:ring-[#00FF9A]/20;
+  }
+
+  /* ApexTwin Label */
+  .apex-label {
+    @apply text-xs font-semibold uppercase tracking-wider text-[#A0A4A8];
+  }
+
+  /* ApexTwin Data (monospace readouts) */
+  .apex-data {
+    @apply font-mono text-[#F2F2F2] tracking-tight;
+  }
+
+  /* ApexTwin Heading */
+  .apex-h1 {
+    @apply text-2xl sm:text-3xl font-bold text-[#F2F2F2] tracking-tight;
+  }
+  .apex-h2 {
+    @apply text-base sm:text-xl font-semibold text-[#F2F2F2] uppercase tracking-wide;
+  }
+
+  /* ApexTwin Mobile Panel - reduced padding on small screens */
+  .apex-panel-mobile {
+    @apply bg-[#1A1C1F] border border-[#2C2E32] rounded-lg p-4 sm:p-6;
+  }
+
+  /* ApexTwin Touch-friendly Button */
+  .apex-btn-touch {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}

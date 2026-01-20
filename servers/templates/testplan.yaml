@@ -1,0 +1,250 @@
+name: Test Plan
+description: Comprehensive test plan for features and releases
+type: documentation
+variables:
+  - name: title
+    description: Feature/release title
+    required: true
+  - name: overview
+    description: Test plan overview
+    required: true
+  - name: scope
+    description: What's in scope for testing
+    required: false
+  - name: outOfScope
+    description: What's explicitly out of scope
+    required: false
+  - name: testObjectives
+    description: Testing objectives
+    required: false
+  - name: testEnvironment
+    description: Test environment details
+    required: false
+  - name: entryExitCriteria
+    description: When testing starts/ends
+    required: false
+  - name: risks
+    description: Testing risks
+    required: false
+
+template: |
+  # Test Plan: {{title}}
+
+  **Version**: 1.0
+  **Last Updated**: _YYYY-MM-DD_
+  **Test Lead**: _Name_
+
+  ---
+
+  ## Overview
+  {{overview}}
+
+  ## Test Objectives
+  {{testObjectives || "To be defined"}}
+
+  ## Scope
+
+  ### In Scope
+  {{scope || "To be defined"}}
+
+  ### Out of Scope
+  {{outOfScope || "To be defined"}}
+
+  ## Test Strategy
+
+  ### Testing Levels
+  - **Unit Testing**: _Approach and coverage target_
+  - **Integration Testing**: _Key integration points_
+  - **System Testing**: _End-to-end scenarios_
+  - **Acceptance Testing**: _User acceptance criteria_
+  - **Regression Testing**: _Scope and automation_
+  - **Performance Testing**: _Load, stress, scalability_
+  - **Security Testing**: _Vulnerability assessment_
+
+  ### Testing Types
+  - [ ] **Functional Testing**: _Core functionality verification_
+  - [ ] **Usability Testing**: _User experience validation_
+  - [ ] **Accessibility Testing**: _WCAG compliance_
+  - [ ] **Cross-browser Testing**: _Browser compatibility_
+  - [ ] **Mobile Testing**: _iOS/Android testing_
+  - [ ] **API Testing**: _Endpoint validation_
+  - [ ] **Database Testing**: _Data integrity_
+
+  ## Test Environment
+  {{testEnvironment || "To be defined"}}
+
+  **Environments**:
+  - **Development**: _Local environment_
+  - **Staging**: _Pre-production environment_
+  - **Production**: _Live environment (smoke tests only)_
+
+  **Test Data**:
+  - _Test data strategy_
+  - _Data generation approach_
+  - _Data cleanup procedures_
+
+  ## Test Cases
+
+  ### Functional Test Cases
+
+  #### TC-001: _Test Case Title_
+  **Priority**: High/Medium/Low
+  **Type**: Functional
+
+  **Preconditions**:
+  - _Precondition 1_
+  - _Precondition 2_
+
+  **Steps**:
+  1. _Step 1_
+  2. _Step 2_
+  3. _Step 3_
+
+  **Expected Results**:
+  - _Expected result 1_
+  - _Expected result 2_
+
+  **Actual Results**: _To be filled during testing_
+  **Status**: ⏳ Pending / ✅ Pass / ❌ Fail / ⊘ Blocked
+  **Notes**: _Additional notes_
+
+  ---
+
+  #### TC-002: _Test Case Title_
+  _[Repeat structure above]_
+
+  ### Non-Functional Test Cases
+
+  #### TC-100: Performance - Response Time
+  **Priority**: High
+  **Type**: Performance
+
+  **Test Criteria**:
+  - API response time < 200ms
+  - Page load time < 2 seconds
+  - Database query time < 100ms
+
+  **Test Method**: _Load testing tool and approach_
+  **Status**: ⏳ Pending
+  **Results**: _To be filled_
+
+  ---
+
+  #### TC-101: Security - Authentication
+  **Priority**: High
+  **Type**: Security
+
+  **Test Criteria**:
+  - Unauthorized access blocked
+  - Session timeout enforced
+  - XSS/CSRF protection verified
+
+  **Test Method**: _Security testing approach_
+  **Status**: ⏳ Pending
+  **Results**: _To be filled_
+
+  ## Entry and Exit Criteria
+
+  ### Entry Criteria
+  {{entryExitCriteria || "To be defined"}}
+  - [ ] All code development complete
+  - [ ] Unit tests passing
+  - [ ] Test environment ready
+  - [ ] Test data prepared
+  - [ ] Test cases reviewed and approved
+
+  ### Exit Criteria
+  - [ ] All high-priority test cases executed
+  - [ ] All critical bugs resolved
+  - [ ] Test coverage >= XX%
+  - [ ] Performance benchmarks met
+  - [ ] Security scan passed
+  - [ ] Stakeholder sign-off received
+
+  ## Test Schedule
+
+  | Phase | Start Date | End Date | Owner | Status |
+  |-------|------------|----------|-------|--------|
+  | Test Planning | _YYYY-MM-DD_ | _YYYY-MM-DD_ | _Name_ | ⏳ |
+  | Test Case Development | _YYYY-MM-DD_ | _YYYY-MM-DD_ | _Name_ | ⏳ |
+  | Test Execution | _YYYY-MM-DD_ | _YYYY-MM-DD_ | _Name_ | ⏳ |
+  | Bug Fixing | _YYYY-MM-DD_ | _YYYY-MM-DD_ | _Name_ | ⏳ |
+  | Regression Testing | _YYYY-MM-DD_ | _YYYY-MM-DD_ | _Name_ | ⏳ |
+  | Sign-off | _YYYY-MM-DD_ | _YYYY-MM-DD_ | _Name_ | ⏳ |
+
+  ## Defect Management
+
+  **Defect Tracking**: _Tool/system used_
+  **Severity Levels**:
+  - **Critical**: System crash, data loss, security breach
+  - **High**: Major functionality broken
+  - **Medium**: Minor functionality issue
+  - **Low**: Cosmetic issues, typos
+
+  **Bug Workflow**: _Reported → Triaged → Assigned → Fixed → Verified → Closed_
+
+  ## Risks & Mitigations
+  {{risks || "To be assessed"}}
+
+  | Risk | Impact | Probability | Mitigation |
+  |------|--------|-------------|------------|
+  | _Risk 1_ | High/Medium/Low | High/Medium/Low | _Strategy_ |
+  | _Risk 2_ | High/Medium/Low | High/Medium/Low | _Strategy_ |
+
+  ## Test Deliverables
+  - [ ] Test Plan (this document)
+  - [ ] Test Cases
+  - [ ] Test Scripts (automated)
+  - [ ] Test Data
+  - [ ] Defect Reports
+  - [ ] Test Summary Report
+  - [ ] Test Metrics Dashboard
+
+  ## Automation Strategy
+  - **Framework**: _Testing framework used_
+  - **Coverage**: _What's automated_
+  - **CI/CD Integration**: _How tests run in pipeline_
+  - **Maintenance**: _Who maintains test scripts_
+
+  ## Success Metrics
+  - **Test Coverage**: _Target percentage_
+  - **Defect Detection Rate**: _Bugs found vs. escaped_
+  - **Test Execution Rate**: _Cases run vs. planned_
+  - **Pass Rate**: _Target percentage_
+
+  ## Resources
+
+  ### Team
+  - **Test Lead**: _Name_
+  - **QA Engineers**: _Names_
+  - **Automation Engineers**: _Names_
+  - **SMEs**: _Domain experts_
+
+  ### Tools
+  - **Test Management**: _Tool name_
+  - **Bug Tracking**: _Tool name_
+  - **Automation**: _Framework name_
+  - **Performance Testing**: _Tool name_
+  - **Security Testing**: _Tool name_
+
+  ## Sign-off
+
+  | Role | Name | Signature | Date |
+  |------|------|-----------|------|
+  | Test Lead | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+  | QA Manager | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+  | Product Owner | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+  | Engineering Lead | _Name_ | _Pending_ | _YYYY-MM-DD_ |
+
+  ---
+
+  ## Appendix
+
+  ### A. Test Case Index
+  _Quick reference list of all test cases_
+
+  ### B. Test Data Samples
+  _Example test data sets_
+
+  ### C. Environment Setup Guide
+  _How to configure test environment_

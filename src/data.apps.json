@@ -1,0 +1,26 @@
+[
+  {
+    "id": "mandrake",
+    "name": "Mandrake",
+    "desc": "Private urge logging, quick tactics, and pattern insights.",
+    "link": "/apps/mandrake",
+    "bg": "/img/mandrake-card-background.png"
+  },
+  {
+    "id": "syncfit",
+    "name": "SyncFit",
+    "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
+    "link": "/apps/syncfit"
+  },
+  {
+    "id": "adhd-acclaim",
+    "name": "ADHD Acclaim",
+    "desc": "Gamified rewards to celebrate wins and encourage progress.",
+    "link": "/apps/adhd-acclaim"
+  },
+  {
+    "id": "toume",
+    "name": "Tou.me (coming soon)",
+    "desc": "For you, for me, for them."
+  }
+]

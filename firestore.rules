@@ -1,0 +1,601 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ---------- Helpers ---------- */
+    function authed() { return request.auth != null; }
+    function isTsOrIso(x) { return x is timestamp || x is string; }
+    function isNullOrStr(x) { return x == null || x is string; }
+    function inArray(v, arr) { return arr.hasAll([v]); }
+
+    // Super admin helper
+    function isSuperAdmin() {
+      return authed() && (
+        request.auth.token.email == 'repinfaust@gmail.com' ||
+        request.auth.token.email == 'daryn.shaxted@gmail.com'
+      );
+    }
+
+    // Check if user belongs to a tenant (workspace)
+    function inTenant(tenantId) {
+      let membershipId = request.auth.token.email + '_' + tenantId;
+      let membership = /databases/$(database)/documents/tenant_members/$(membershipId);
+      return authed() && exists(membership) &&
+        get(membership).data.status == 'active';
+    }
+
+    // Check if user can access resource's tenant
+    function canAccessTenant(tenantId) {
+      return isSuperAdmin() || inTenant(tenantId);
+    }
+
+    // Membership helper: require auth, project exists, and user is owner or in members
+    function inProject(projectId) {
+      let p = /databases/$(database)/documents/projects/$(projectId);
+      return authed() && exists(p) && (
+        get(p).data.ownerUid == request.auth.uid ||
+        (('members' in get(p).data) && get(p).data.members.hasAny([request.auth.uid]))
+      );
+    }
+
+    /* ---------- Validators for Tou.me testing ---------- */
+    function isValidResult() {
+      return request.resource.data.keys().hasAll(
+               ['testId','status','timestamp','tester','build','platform','notes']
+             ) &&
+             request.resource.data.testId is string &&
+             inArray(request.resource.data.status, ['pass','fail','skip']) &&
+             isTsOrIso(request.resource.data.timestamp) &&
+             isNullOrStr(request.resource.data.tester) &&
+             isNullOrStr(request.resource.data.build) &&
+             isNullOrStr(request.resource.data.platform) &&
+             isNullOrStr(request.resource.data.notes);
+    }
+
+    function isValidSession() {
+      return request.resource.data.keys().hasAll(
+               ['tester','build','platform','timestamp','testResults','summary','generalFeedback']
+             ) &&
+             isNullOrStr(request.resource.data.tester) &&
+             isNullOrStr(request.resource.data.build) &&
+             isNullOrStr(request.resource.data.platform) &&
+             isTsOrIso(request.resource.data.timestamp) &&
+             (request.resource.data.testResults is map || request.resource.data.testResults is list) &&
+             request.resource.data.summary.total is number &&
+             request.resource.data.summary.passed is number &&
+             request.resource.data.summary.failed is number &&
+             request.resource.data.summary.skipped is number &&
+             isNullOrStr(request.resource.data.generalFeedback);
+    }
+
+    /* ==========================================================
+       Multi-tenant collections management
+       ========================================================== */
+    match /tenants/{tenantId} {
+      // Super admins can manage all tenants (read includes get+list)
+      allow read, write: if isSuperAdmin();
+
+      // Members can read their own tenants
+      allow get: if inTenant(tenantId);
+
+      // Workspace dashboard metrics
+      match /dashboard/{metricDoc} {
+        // Members can read dashboard metrics for their tenant
+        allow read: if canAccessTenant(tenantId);
+
+        // Only super admins can write dashboard metrics
+        // (In future, this could be expanded to allow backend services)
+        allow write: if isSuperAdmin();
+      }
+    }
+
+    match /tenant_members/{membershipId} {
+      // Super admins can manage all memberships (read includes get+list)
+      allow read, write: if isSuperAdmin();
+
+      // Users can read/list their own memberships only
+      // The list operation inherits this check, so users can only see their own membership docs
+      allow get, list: if authed() &&
+        resource.data.userEmail == request.auth.token.email;
+
+      // Tenant admins can manage members in their tenant
+      allow create, update, delete: if authed() &&
+        exists(/databases/$(database)/documents/tenant_members/$(request.auth.token.email + '_' + resource.data.tenantId)) &&
+        get(/databases/$(database)/documents/tenant_members/$(request.auth.token.email + '_' + resource.data.tenantId)).data.role == 'admin';
+    }
+
+    /* ==========================================================
+       STEa board (with tenant isolation - migration-friendly)
+       Allow access to legacy data without tenantId OR new data with tenantId check
+       ========================================================== */
+    match /stea_epics/{epicId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+
+      match /comments/{cid} {
+        allow read, create, delete: if authed();
+      }
+    }
+
+    match /stea_features/{featureId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+
+      match /comments/{cid} {
+        allow read, create, delete: if authed();
+      }
+    }
+
+    match /stea_cards/{doc} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+
+      match /comments/{cid} {
+        allow read, create, delete: if authed();
+      }
+    }
+
+    /* ==========================================================
+       Ruby Documentation (migration-friendly)
+       ========================================================== */
+    match /stea_doc_spaces/{spaceId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    match /stea_docs/{docId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    match /stea_doc_versions/{versionId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    match /stea_doc_assets/{assetId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    match /stea_doc_links/{linkId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    /* R8: Doc Templates Library */
+    match /stea_doc_templates/{templateId} {
+      // Users can read built-in templates (tenantId == null) OR templates in their tenant
+      allow read: if authed() && (
+        resource.data.tenantId == null || canAccessTenant(resource.data.tenantId)
+      );
+      // Users can create custom templates in their tenant
+      allow create: if authed() &&
+        request.resource.data.tenantId != null &&
+        canAccessTenant(request.resource.data.tenantId) &&
+        request.resource.data.isBuiltIn == false;
+      // Users can update custom templates they own (not built-in)
+      allow update: if authed() &&
+        resource.data.isBuiltIn == false &&
+        canAccessTenant(resource.data.tenantId);
+      // Users can delete custom templates they own (not built-in)
+      allow delete: if authed() &&
+        resource.data.isBuiltIn == false &&
+        canAccessTenant(resource.data.tenantId);
+    }
+
+    /* R5: Reviewer Mode */
+    match /stea_reviews/{reviewId} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    /* ==========================================================
+       R7: API & Component Docs
+       ========================================================== */
+    match /stea_api_specs/{specId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId);
+      allow update: if authed() && canAccessTenant(resource.data.tenantId);
+      allow delete: if authed() && canAccessTenant(resource.data.tenantId);
+    }
+
+    match /stea_api_endpoints/{endpointId} {
+      allow read: if authed();
+      // Only server/MCP can write endpoints
+      allow write: if false;
+    }
+
+    match /stea_figma_files/{fileId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId);
+      allow update: if authed() && canAccessTenant(resource.data.tenantId);
+      allow delete: if authed() && canAccessTenant(resource.data.tenantId);
+    }
+
+    match /stea_figma_components/{componentId} {
+      allow read: if authed();
+      // Only server/MCP can write components
+      allow write: if false;
+    }
+
+    match /stea_api_webhooks/{webhookId} {
+      // Only server can manage webhooks
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /stea_figma_webhooks/{webhookId} {
+      // Only server can manage webhooks
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /stea_broken_links/{linkId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      // Users can update status to mark as fixed/ignored
+      allow update: if authed() && canAccessTenant(resource.data.tenantId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolvedBy']);
+      // Only server can create/delete
+      allow create, delete: if false;
+    }
+
+    /* R12: Share Links for Document Export */
+    match /stea_share_links/{linkId} {
+      // Share links are accessed via API route, not directly from client
+      // API route handles authentication and expiration checks
+      allow read, write: if false;
+    }
+
+    /* ==========================================================
+       Automated testing + CI (migration-friendly)
+       ========================================================== */
+    match /automated_test_runs/{doc} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+    match /automated_test_issues/{doc} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    match /testRuns/{runId} {
+      allow read: if authed();   // dashboard watch (consider adding tenant isolation)
+      allow write: if false;     // CI writes via Admin SDK only
+    }
+
+    /* Tou.me testing collections (migration-friendly) */
+    match /toume_test_results/{doc} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && isValidResult() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+    match /toume_test_sessions/{doc} {
+      allow read: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+      allow create: if authed() && isValidSession() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+      allow update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+    }
+
+    /* ==========================================================
+       Hans Testing Suite (migration-friendly)
+       ========================================================== */
+    match /hans_cases/{caseId} {
+      // Authenticated users can access legacy data OR tenant data they have access to
+      allow read, update, delete: if authed() && (
+        !('tenantId' in resource.data) || canAccessTenant(resource.data.tenantId)
+      );
+
+      // Creation allows legacy (no tenantId) OR with tenant access
+      allow create: if authed() && (
+        !request.resource.data.keys().hasAny(['tenantId']) ||
+        canAccessTenant(request.resource.data.tenantId)
+      );
+
+      // Subcollection: submissions from testers
+      match /submissions/{submissionId} {
+        // Authenticated users can read submissions
+        allow read: if authed();
+
+        // Public can create submissions (testers don't need auth)
+        // Validation happens in the API
+        allow create: if true;
+
+        // Only authenticated users can update/delete
+        allow update, delete: if authed();
+      }
+    }
+
+    /* ==========================================================
+       Product Lab (Harls) - Multi-tenant support
+       ========================================================== */
+    match /projects/{projectId} {
+      // Create: require tenant access, owner = self, and self included in members
+      allow create: if authed()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.members.hasAny([request.auth.uid])
+        && (
+          !request.resource.data.keys().hasAny(['tenantId']) ||
+          canAccessTenant(request.resource.data.tenantId)
+        );
+
+      // Read: Allow if no tenant (legacy) OR user has tenant access AND is project member
+      allow get: if authed() && (
+        !exists(/databases/$(database)/documents/projects/$(projectId)) ||
+        (
+          inProject(projectId) &&
+          (
+            !('tenantId' in resource.data) ||
+            canAccessTenant(resource.data.tenantId)
+          )
+        )
+      );
+
+      // Update / delete: require tenant access AND project membership
+      allow update, delete: if authed() && inProject(projectId) && (
+        !('tenantId' in resource.data) ||
+        canAccessTenant(resource.data.tenantId)
+      );
+
+      // Subcollection: whiteboards (board doc holds tldrawSnapshot field)
+      match /whiteboards/{boardId} {
+        allow read, write: if inProject(projectId);
+
+        // Sidebar: Jobs to be done / Questions
+        match /jobs/{jobId} {
+          allow read, write: if inProject(projectId);
+        }
+
+        // If you later persist TLDraw shapes per element
+        match /elements/{elementId} {
+          allow read, write: if inProject(projectId);
+        }
+      }
+
+      // Subcollection: stories
+      match /stories/{storyId} {
+        allow read, write: if inProject(projectId);
+      }
+
+      // Subcollection: discovery (product requirements)
+      match /discovery/{docId} {
+        allow read, write: if inProject(projectId);
+      }
+
+      // Subcollection: specs (optional)
+      match /specs/{specId} {
+        allow read, write: if inProject(projectId);
+      }
+
+      // Subcollection: presence (only self can write)
+      match /presence/{uid} {
+        allow read: if inProject(projectId);
+        allow write: if inProject(projectId) && authed() && request.auth.uid == uid;
+      }
+    }
+
+    /* ==========================================================
+       User profiles, badges, metrics
+       ========================================================== */
+    match /users/{uid} {
+      // Self-only profile access
+      allow read, create, update: if authed() && request.auth.uid == uid;
+
+      match /badges/{badgeId} {
+        allow read, create, update, delete: if authed() && request.auth.uid == uid;
+      }
+
+      match /metrics/{docId} {
+        allow read: if authed() && request.auth.uid == uid;
+        allow create, update: if authed() && request.auth.uid == uid;
+        allow delete: if false;
+      }
+    }
+
+    /* ==========================================================
+       Orbit POC Collections
+       Server-side only (via Admin SDK) - no client access
+       ========================================================== */
+    match /orbit_orgs/{orgId} {
+      // Only server (Admin SDK) can access
+      allow read, write: if false;
+    }
+
+    match /orbit_users/{userId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_snapshots/{snapshotId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_ledger_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_consent_state/{consentId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_verification_routes/{routeId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_alerts/{alertId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_ai_act_logs/{logId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_ai_act_lineage/{lineageId} {
+      allow read, write: if false;
+    }
+
+    /* ==========================================================
+       ApexTwin POC Collections (Track Setup Companion)
+       Restricted to tenantId: DL7ScScEhvAcFpAmmS8h
+       ========================================================== */
+
+    // ApexTwin Riders - profile per authenticated user
+    match /apextwin_riders/{riderId} {
+      // Users can only read/write their own rider profile
+      allow read, write: if authed() && request.auth.uid == riderId;
+
+      // Bikes subcollection - owned by rider
+      match /bikes/{bikeId} {
+        allow read, write: if authed() && request.auth.uid == riderId;
+
+        // Settings history subcollection
+        match /settings_history/{historyId} {
+          allow read, write: if authed() && request.auth.uid == riderId;
+        }
+      }
+    }
+
+    // ApexTwin Tracks - shared track registry
+    match /apextwin_tracks/{trackId} {
+      // Any authenticated user can read tracks
+      allow read: if authed();
+
+      // Authenticated users can create tracks
+      allow create: if authed();
+
+      // Only creators or super admins can update/delete
+      allow update, delete: if authed() && (
+        isSuperAdmin() || resource.data.createdBy == request.auth.uid
+      );
+    }
+
+    // ApexTwin Sessions - individual session records
+    match /apextwin_sessions/{sessionId} {
+      // Authenticated users can create their own sessions
+      allow create: if authed() && request.resource.data.riderId == request.auth.uid;
+
+      // Paddock view: all authenticated users can read all sessions
+      allow read: if authed();
+
+      // Only session owner can update/delete
+      allow update, delete: if authed() && resource.data.riderId == request.auth.uid;
+    }
+
+    // ApexTwin Events - track day / weekend events
+    match /apextwin_events/{eventId} {
+      // Authenticated users can create their own events
+      allow create: if authed() && request.resource.data.riderId == request.auth.uid;
+
+      // All authenticated users can read events (for paddock view)
+      allow read: if authed();
+
+      // Only event owner can update/delete
+      allow update, delete: if authed() && resource.data.riderId == request.auth.uid;
+
+      // Strategy whiteboard subcollection - event owner only
+      match /strategy/{docId} {
+        allow read, write: if authed() && get(/databases/$(database)/documents/apextwin_events/$(eventId)).data.riderId == request.auth.uid;
+      }
+    }
+  }
+}
