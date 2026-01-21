@@ -146,51 +146,37 @@ export default function HeroWithCapabilities() {
         style={{ top: "84%", transform: "translate(-50%, -50%)" }}
       >
         <h3 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-extrabold text-neutral-900 mb-4">
-          Capabilities
+          Building systems that help people make better decisions.
         </h3>
+        <p className="text-lg text-neutral-700 max-w-3xl">
+          I design and build practical product, delivery, and decision-support systems - especially where
+          regulation, risk, and operational reality matter.
+        </p>
+        <p className="text-sm text-neutral-600 mt-3 max-w-3xl">
+          From internal platforms like STEa to audit-focused work like Orbit, my focus is on clarity,
+          accountability, and things that actually get used.
+        </p>
 
-        {/* 3-column content (unchanged) */}
-        <div className="grid gap-8 md:grid-cols-3 text-neutral-700">
-          <div>
-            <div className="text-xs font-semibold text-neutral-500 mb-1">AD</div>
-            <h4 className="font-semibold text-neutral-900 text-lg">App development</h4>
-            <p className="text-sm text-neutral-600">
-              Design and build of Android and iOS apps with privacy-first principles. Each app is
-              focused on a niche where existing tools are either too generic or too complex,
-              ensuring usability and compliance without unnecessary features.
-            </p>
-          </div>
-
-          <div>
-            <div className="text-xs font-semibold text-neutral-500 mb-1">PS</div>
-            <h4 className="font-semibold text-neutral-900 text-lg">Product strategy</h4>
-            <p className="text-sm text-neutral-600">
-              Helping organisations cut through noise to find and deliver the next most valuable outcome.
-              The emphasis is on solving genuine problems in the simplest, most effective way.
-            </p>
-          </div>
-
-          <div>
-            <div className="text-xs font-semibold text-neutral-500 mb-1">DA</div>
-            <h4 className="font-semibold text-neutral-900 text-lg">Data &amp; analytics</h4>
-            <p className="text-sm text-neutral-600">
-              From setup to insight, data is handled with clarity and purpose. No spin, no vanity metrics —
-              just reliable instrumentation and reporting that support decision-making and improvement.
-            </p>
-          </div>
-        </div>
-
-        {/* CTA moved BELOW the grid, left-aligned — matches HeroWithApps */}
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap gap-3">
           <a
-            href="/capabilities"
+            href="/apps"
             className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
             data-analytics="button"
-            data-name="Capabilities hero: Learn more"
+            data-name="Capabilities hero: View work"
             data-component="HeroWithCapabilities"
             data-location="hero"
           >
-            Learn more
+            View work
+          </a>
+          <a
+            href="/capabilities"
+            className="inline-flex items-center rounded-xl border border-neutral-300 bg-white/70 px-4 py-2 text-neutral-800 font-medium hover:bg-white"
+            data-analytics="button"
+            data-name="Capabilities hero: Capabilities"
+            data-component="HeroWithCapabilities"
+            data-location="hero"
+          >
+            Capabilities
           </a>
         </div>
 
