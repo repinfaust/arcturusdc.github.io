@@ -228,9 +228,6 @@ export default function SteaOrbitOverviewPage() {
                 </h4>
                 <p className="text-neutral-700 mt-3 max-w-2xl">{layer.description}</p>
               </div>
-              {index < architecture.length - 1 ? (
-                <div className="text-2xl text-neutral-400 hidden md:block">v</div>
-              ) : null}
             </div>
           ))}
         </div>
