@@ -235,7 +235,6 @@ export default function SteaOrbitOverviewPage() {
 
       <section className="max-w-6xl mx-auto px-6 py-12">
         <div className="bg-neutral-900 text-white rounded-3xl p-10 md:p-12">
-          <p className="text-sm uppercase tracking-[0.3em] text-neutral-300 mb-3">The Honest Claim</p>
           <p className="text-2xl md:text-3xl font-semibold leading-tight">
             "We cannot prevent all mistakes. We can prove what we believed, what rules we applied, and who was
             responsible when they occurred."
