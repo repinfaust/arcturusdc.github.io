@@ -11,7 +11,7 @@ export default function Capabilities() {
         <div className="mx-auto max-w-6xl px-4">
           {/* Hero */}
           <section className="card p-6 mt-2">
-            <h1 className="text-3xl sm:text-4xl font-extrabold">Capabilities (reframed)</h1>
+            <h1 className="text-3xl sm:text-4xl font-extrabold">Capabilities</h1>
             <p className="mt-2 text-neutral-700 font-semibold">What I actually work on</p>
             <p className="mt-3 text-neutral-700">
               I build and evolve practical systems that help people and organisations make better decisions under
@@ -31,7 +31,12 @@ export default function Capabilities() {
             <div className="text-neutral-700 mb-4">
               <p className="font-semibold mb-2">Examples:</p>
               <ul className="list-disc list-inside space-y-1">
-                <li><strong>STEa</strong> - a structured product and delivery workspace that links decisions, testing, documentation, and outcomes, without turning into process theatre.</li>
+                <li>
+                  <strong>
+                    <a className="text-red-600 hover:underline" href="/apps/stea/explore">STEa</a>
+                  </strong>{" "}
+                  - a structured product and delivery workspace that links decisions, testing, documentation, and outcomes, without turning into process theatre.
+                </li>
                 <li>Lightweight systems for capturing why decisions were made, not just what was delivered.</li>
                 <li>Tools that reduce handover loss between product, engineering, QA, and stakeholders.</li>
               </ul>
@@ -55,7 +60,16 @@ export default function Capabilities() {
             <div className="text-neutral-700 mb-4">
               <p className="font-semibold mb-2">Examples:</p>
               <ul className="list-disc list-inside space-y-1">
-                <li><strong>Orbit</strong> - an append-only, verifiable ledger for recording decisions, data usage, and system interactions in a way that supports accountability and post-hoc review.</li>
+                <li>
+                  <strong>
+                    <a className="text-red-600 hover:underline" href="/apps/stea/orbit">Orbit</a>
+                  </strong>{" "}
+                  - an append-only, verifiable ledger for recording decisions, data usage, and system interactions in a way that supports accountability and post-hoc review.
+                </li>
+                <li>
+                  <a className="text-red-600 hover:underline" href="/apps/stea/orbit/overview">Orbit overview</a>{" "}
+                  - the STEa + Orbit accountability framework and staged proof-of-concept plan.
+                </li>
                 <li>Exploring how cryptographic proofs and structured logs can replace brittle screenshots, spreadsheets, and "trust me" documentation.</li>
                 <li>Designing for explainability rather than blind automation.</li>
               </ul>
