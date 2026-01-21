@@ -152,7 +152,7 @@ export default function SteaOrbitOverviewPage() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link href="/apps/stea/orbit" className="text-sm text-neutral-600 hover:text-neutral-900">
-              <- Back to Orbit
+              &larr; Back to Orbit
             </Link>
             <div className="h-6 w-px bg-neutral-300" />
             <div>
