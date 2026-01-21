@@ -11,68 +11,129 @@ export default function Capabilities() {
         <div className="mx-auto max-w-6xl px-4">
           {/* Hero */}
           <section className="card p-6 mt-2">
-            <h1 className="text-3xl sm:text-4xl font-extrabold">Capabilities</h1>
-            <p className="mt-2 text-neutral-700">
-              At Arcturus Digital Consulting we focus on three things: building apps,
-              making digital measurement reliable, and sharpening product strategy.
-              Everything we do is outcome-first, practical, and grounded in solving real problems.
+            <h1 className="text-3xl sm:text-4xl font-extrabold">Capabilities (reframed)</h1>
+            <p className="mt-2 text-neutral-700 font-semibold">What I actually work on</p>
+            <p className="mt-3 text-neutral-700">
+              I build and evolve practical systems that help people and organisations make better decisions under
+              real-world constraints - regulation, legacy platforms, operational risk, and imperfect data.
+            </p>
+            <p className="mt-3 text-neutral-700">
+              Most of the work below comes from shipping and iterating on my own products, not advisory decks.
             </p>
           </section>
 
-          {/* App development */}
+          {/* Decision-support platforms */}
           <section className="card p-6 mt-4">
-            <h2 className="text-xl font-extrabold mb-2">App development</h2>
+            <h2 className="text-xl font-extrabold mb-2">Decision-support platforms (Product &amp; Delivery)</h2>
             <p className="text-neutral-700 mb-4">
-              We design and build Android and iOS apps with privacy-first principles and a
-              focus on niches where existing tools fall short. Instead of bloated, generic
-              products, we create simple, purposeful apps that people actually use.
+              I design and build tools that make complex work visible, auditable, and easier to reason about.
             </p>
-            <ul className="list-disc list-inside space-y-1 text-neutral-700">
-              <li><strong>Focused</strong> — built around a single clear job-to-be-done.</li>
-              <li><strong>Usable</strong> — clean interfaces without unnecessary complexity.</li>
-              <li><strong>Compliant</strong> — designed to pass App Store and Google Play approvals smoothly.</li>
-            </ul>
-            <p className="text-neutral-700 mt-4">
-              From early prototyping through to release and updates, we keep things lean
-              and intentional. The result is software that makes a difference without
-              demanding attention it doesn’t deserve.
-            </p>
+            <div className="text-neutral-700 mb-4">
+              <p className="font-semibold mb-2">Examples:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li><strong>STEa</strong> - a structured product and delivery workspace that links decisions, testing, documentation, and outcomes, without turning into process theatre.</li>
+                <li>Lightweight systems for capturing why decisions were made, not just what was delivered.</li>
+                <li>Tools that reduce handover loss between product, engineering, QA, and stakeholders.</li>
+              </ul>
+            </div>
+            <div className="text-neutral-700">
+              <p className="font-semibold mb-2">Focus:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>clarity over ceremony</li>
+                <li>traceability without bureaucracy</li>
+                <li>systems that teams actually keep using</li>
+              </ul>
+            </div>
           </section>
 
-          {/* Data & analytics */}
+          {/* Auditability, risk & accountability */}
           <section className="card p-6 mt-4">
-            <h2 className="text-xl font-extrabold mb-2">Data &amp; analytics</h2>
+            <h2 className="text-xl font-extrabold mb-2">Auditability, risk &amp; accountability (Orbit)</h2>
             <p className="text-neutral-700 mb-4">
-              Measurement is only useful if it’s reliable and decision-ready. We make data
-              work by stripping away vanity dashboards and focusing on instrumentation that
-              proves outcomes.
+              I am interested in how systems hold up when they are questioned later - by regulators, auditors, or customers.
             </p>
-            <ul className="list-disc list-inside space-y-1 text-neutral-700">
-              <li><strong>Implementation &amp; audit</strong> — ensuring your analytics setup is clean, compliant, and accurate.</li>
-              <li><strong>Frameworks</strong> — defining KPIs and event structures that map directly to business outcomes.</li>
-              <li><strong>Reporting</strong> — building clarity into how data is surfaced, so teams can act on it.</li>
-            </ul>
-            <p className="text-neutral-700 mt-4">
-              Every event, tag, and metric is designed with purpose — to answer the
-              questions that matter, not to inflate a dashboard.
-            </p>
+            <div className="text-neutral-700 mb-4">
+              <p className="font-semibold mb-2">Examples:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li><strong>Orbit</strong> - an append-only, verifiable ledger for recording decisions, data usage, and system interactions in a way that supports accountability and post-hoc review.</li>
+                <li>Exploring how cryptographic proofs and structured logs can replace brittle screenshots, spreadsheets, and "trust me" documentation.</li>
+                <li>Designing for explainability rather than blind automation.</li>
+              </ul>
+            </div>
+            <div className="text-neutral-700">
+              <p className="font-semibold mb-2">Focus:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>human accountability stays explicit</li>
+                <li>clear boundaries on where automation is allowed</li>
+                <li>evidence by default, not reconstruction later</li>
+              </ul>
+            </div>
           </section>
 
-          {/* Product strategy */}
+          {/* Applied AI */}
           <section className="card p-6 mt-4">
-            <h2 className="text-xl font-extrabold mb-2">Product strategy</h2>
+            <h2 className="text-xl font-extrabold mb-2">Applied AI (used carefully, not everywhere)</h2>
             <p className="text-neutral-700 mb-4">
-              Great products don’t start with features, they start with outcomes. We help
-              organisations cut through noise to find and deliver the next most valuable
-              outcome, reducing wasted effort and surfacing opportunities faster.
+              I use AI as a thinking and support tool, not as an authority.
+            </p>
+            <div className="text-neutral-700 mb-4">
+              <p className="font-semibold mb-2">Examples:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Using AI to help surface inconsistencies, risks, or gaps for human review - not to make final decisions.</li>
+                <li>Designing human-in-the-loop patterns with clear ignore/override rules.</li>
+                <li>Testing small, low-risk pilots before scaling anything.</li>
+              </ul>
+            </div>
+            <div className="text-neutral-700">
+              <p className="font-semibold mb-2">Focus:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>validation over novelty</li>
+                <li>bounded scope and clear ownership</li>
+                <li>knowing where AI should not be used</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* App & system development */}
+          <section className="card p-6 mt-4">
+            <h2 className="text-xl font-extrabold mb-2">App &amp; system development</h2>
+            <p className="text-neutral-700 mb-4">
+              Alongside platform work, I design and ship focused apps where existing tools are either too generic or too heavy.
+            </p>
+            <div className="text-neutral-700 mb-4">
+              <p className="font-semibold mb-2">Examples:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>iOS and Android apps with privacy-first principles.</li>
+                <li>Narrow, opinionated products built around a specific job-to-be-done.</li>
+                <li>Systems designed to be maintained realistically, not abandoned after launch.</li>
+              </ul>
+            </div>
+            <div className="text-neutral-700">
+              <p className="font-semibold mb-2">Focus:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>simplicity over feature volume</li>
+                <li>compliance baked in, not bolted on</li>
+                <li>real usage, not demos</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* How this ties together */}
+          <section className="card p-6 mt-4">
+            <h2 className="text-xl font-extrabold mb-2">How this all ties together</h2>
+            <p className="text-neutral-700 mb-4">
+              Across STEa, Orbit, and my app work, the common thread is the same:
             </p>
             <ul className="list-disc list-inside space-y-1 text-neutral-700">
-              <li><strong>Outcome-first planning</strong> — defining measurable signals that prove progress.</li>
-              <li><strong>Opportunity sizing</strong> — quantifying upside and risk before committing resources.</li>
-              <li><strong>Delivery alignment</strong> — ensuring regulatory, data, and technical realities are built in from day one.</li>
+              <li>make complex work easier to reason about</li>
+              <li>reduce risk without freezing progress</li>
+              <li>design systems that reflect how people actually work</li>
             </ul>
             <p className="text-neutral-700 mt-4">
-              The emphasis is always on solving genuine problems in the simplest, most effective way.
+              No spin. No vanity metrics. Just tools that hold up when things get messy.
+            </p>
+            <p className="text-neutral-700 mt-3 font-semibold">
+              Distinct systems. Clear decisions. Fewer surprises later.
             </p>
           </section>
 
