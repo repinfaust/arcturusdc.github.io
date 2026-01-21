@@ -82,17 +82,19 @@ export default function Hero() {
           fadeIn ? "opacity-100" : "opacity-0"
         )}
       >
-        <p className="text-xs font-semibold text-red-600 mb-3">Product &amp; Apps</p>
+        <p className="text-xs font-semibold text-red-600 mb-3">
+          Product, platforms &amp; decision-support systems
+        </p>
 
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900">
-          Practical software for real needs.
+          Practical systems for complex product environments.
         </h1>
 
         <p className="mt-3 text-neutral-700 max-w-prose">
-          Arcturus Digital Consulting builds apps and digital products that focus on real-world
-          problems — not technology for its own sake. From ADHD support to family organisation and
-          fitness planning, every product is designed around a clear need, with privacy and
-          compliance built in from the start.
+          I design and build software that helps people make better decisions in the real world -
+          where regulation, operational constraints, and imperfect information are part of the job.
+          From focused apps to internal platforms like STEa and audit-oriented work such as Orbit,
+          everything is built to be used, understood, and trusted over time.
         </p>
 
         <div className="mt-5 flex gap-3 flex-wrap">
@@ -100,10 +102,10 @@ export default function Hero() {
             href="/apps"
             className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-white font-medium shadow hover:bg-red-700"
           >
-            Explore apps
+            View work
           </a>
           <a
-            href="#capabilities"
+            href="/capabilities"
             className="inline-flex items-center rounded-xl border border-neutral-300 px-4 py-2 text-neutral-800 hover:bg-neutral-50"
           >
             Capabilities
@@ -113,8 +115,8 @@ export default function Hero() {
         {/* Chips now match Capabilities hero */}
         <div className="mt-6 badges">
           <span className="badge">Independent</span>
-          <span className="badge">App Store &amp; Google Play compliant</span>
-          <span className="badge">UK based</span>
+          <span className="badge">Privacy &amp; compliance by design</span>
+          <span className="badge">UK-based</span>
         </div>
       </div>
     </section>
