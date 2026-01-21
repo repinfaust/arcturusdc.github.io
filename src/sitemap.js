@@ -8,6 +8,7 @@ export default function sitemap() {
     '',                // /
     '/apps',
     '/apps/stea/explore',  // STEa pricing and overview page
+    '/apps/stea/orbit/overview',
     '/capabilities',   // (if you still want this)
     '/privacy',
     '/terms',

@@ -130,6 +130,12 @@ export default function OrbitPage() {
               </h1>
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                href="/apps/stea/orbit/overview"
+                className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium hover:bg-emerald-200 transition-colors"
+              >
+                STEa + Orbit Overview
+              </Link>
               <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
                 PoC Phase
               </span>
@@ -551,4 +557,3 @@ export default function OrbitPage() {
     </main>
   );
 }
-
