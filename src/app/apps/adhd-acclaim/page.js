@@ -90,8 +90,8 @@ export default function ADHDAcclaim() {
               >
                 <Image
                   src="/assets/badges/google-play-badge.png"
-                  width={104}
-                  height={40}
+                  width={120}
+                  height={46}
                   alt="Get it on Google Play"
                 />
               </Link>
