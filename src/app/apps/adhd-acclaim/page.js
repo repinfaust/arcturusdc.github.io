@@ -85,10 +85,15 @@ export default function ADHDAcclaim() {
                 href="https://play.google.com/store/apps/details?id=com.adhdacclaim.app&pcampaignid=web_share"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="inline-flex items-center justify-center rounded-2xl px-2 h-12 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Get ADHD Acclaim on Google Play (opens in a new tab)"
               >
-                Get it on Android
+                <Image
+                  src="/assets/badges/google-play-badge.png"
+                  width={104}
+                  height={40}
+                  alt="Get it on Google Play"
+                />
               </Link>
               <Link
                 href="https://apps.apple.com/gb/app/adhdacclaim/id6754703402"
