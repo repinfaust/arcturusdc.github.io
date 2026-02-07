@@ -90,12 +90,20 @@ export default function ADHDAcclaim() {
               >
                 Get it on Android
               </Link>
-              <button
-                disabled
-                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-white text-black opacity-70 cursor-not-allowed border border-black/10"
+              <Link
+                href="https://apps.apple.com/gb/app/adhdacclaim/id6754703402"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-2xl px-3 h-12 bg-white border border-black/10 hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label="Get ADHD Acclaim on the App Store (opens in a new tab)"
               >
-                iOS – Coming Soon
-              </button>
+                <Image
+                  src="/assets/badges/download-on-the-app-store.svg"
+                  width={120}
+                  height={40}
+                  alt="Download on the App Store"
+                />
+              </Link>
             </div>
           </div>
 
