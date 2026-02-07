@@ -99,7 +99,7 @@ export default function ADHDAcclaim() {
                 href="https://apps.apple.com/gb/app/adhdacclaim/id6754703402"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl px-3 h-12 bg-white border border-black/10 hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="inline-flex items-center justify-center px-2 h-12 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Get ADHD Acclaim on the App Store (opens in a new tab)"
               >
                 <Image
