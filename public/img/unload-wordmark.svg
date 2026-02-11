@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="200" viewBox="0 0 800 200">
+  <defs>
+    <linearGradient id="seedGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6B9A7D" />
+      <stop offset="40%" stop-color="#95B8A3" />
+      <stop offset="100%" stop-color="#D4E5D9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Seed mark -->
+  <path d="
+        M 77.6 24.8
+        C 86.81599999999999 29.6, 106.39999999999999 52.0, 114.46399999999998 80.8
+        C 123.67999999999999 109.60000000000001, 121.37599999999999 141.6, 102.94399999999999 164.0
+        C 91.42399999999999 175.2, 63.775999999999996 175.2, 52.256 164.0
+        C 33.824 141.6, 31.52 109.60000000000001, 40.736 80.8
+        C 48.8 52.0, 68.38399999999999 29.6, 77.6 24.8
+        Z
+    " fill="url(#seedGrad)" />
+  <line x1="77.6" y1="32.8" x2="77.6" y2="135.2"
+        stroke="#6B9A7D" stroke-width="1" opacity="0.25" stroke-linecap="round" />
+  <g opacity="0.4">
+    <rect x="72.75151515151515" y="86.13333333333333" width="9.696969696969697" height="15.515151515151516" rx="4.848484848484849" fill="#3A6B4A" />
+    <path d="M 68.87272727272727 99.7090909090909 A 8.727272727272727 8.727272727272727 0 0 0 86.32727272727271 99.7090909090909"
+          fill="none" stroke="#3A6B4A" stroke-width="1.7454545454545456" stroke-linecap="round" />
+    <line x1="77.6" y1="108.43636363636364" x2="77.6" y2="112.31515151515151"
+          stroke="#3A6B4A" stroke-width="1.7454545454545456" stroke-linecap="round" />
+    <line x1="73.72121212121212" y1="112.31515151515151" x2="81.47878787878787" y2="112.31515151515151"
+          stroke="#3A6B4A" stroke-width="1.7454545454545456" stroke-linecap="round" />
+  </g>
+
+  <!-- Wordmark -->
+  <text x="163.2" y="115.99999999999999"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="72" font-weight="400" fill="#2C2520" letter-spacing="1">
+    Unload
+  </text>
+</svg>

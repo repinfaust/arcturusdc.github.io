@@ -3,7 +3,7 @@
     "id": "mandrake",
     "name": "Mandrake",
     "strap": "Rhythm, not perfection.",
-    "summary": "Mandrake helps you self-manage urges with awareness and choice, turning each one into practice instead of pressure. With a breath and a move, you redirect the pull and record it in seconds, building a repertoire that strengthens your form. Over time, the shadow stops being just a test — it becomes the trainer that sharpens your rhythm and restores your balance.",
+    "summary": "Mandrake helps you self-manage urges with awareness and choice, turning each one into practice instead of pressure. With a breath and a move, you redirect the pull and record it in seconds, building a repertoire that strengthens your form. Over time, the shadow stops being just a test \u2014 it becomes the trainer that sharpens your rhythm and restores your balance.",
     "desc": "Private urge logging, quick tactics, and pattern insights.",
     "link": "/apps/mandrake",
     "icon": "/img/mandrake-app-logo.png",
@@ -13,7 +13,7 @@
     "id": "syncfit",
     "name": "SyncFit",
     "strap": "Workouts that fit your schedule.",
-    "summary": "SyncFit makes fitness planning practical by working around real calendars. The app finds free time slots in Google Calendar, recommends sessions based on goals, and lets users log or adjust workouts on the fly. No wasted plans, no guilt—just exercise that slots into daily life and sticks.",
+    "summary": "SyncFit makes fitness planning practical by working around real calendars. The app finds free time slots in Google Calendar, recommends sessions based on goals, and lets users log or adjust workouts on the fly. No wasted plans, no guilt\u2014just exercise that slots into daily life and sticks.",
     "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
     "icon": "/img/SyncFit_App_Icon_512x512.png",
     "bg": "/img/syncfit-card-background.png",
@@ -23,11 +23,21 @@
     "id": "adhd-acclaim",
     "name": "ADHD Acclaim",
     "strap": "Small wins, real rewards.",
-    "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",
+    "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (\u201cWins\u201d) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward\u2014simple, supportive, and sustainable.",
     "desc": "Gamified rewards to celebrate wins and encourage progress.",
     "link": "/apps/adhd-acclaim",
     "icon": "/img/adhdacclaim_logo_1024x1024.png",
     "bg": "/img/adhdacclaim-card-background.png"
+  },
+  {
+    "id": "unload",
+    "name": "Unload",
+    "strap": "Relief first. Momentum second.",
+    "summary": "Unload is a calm, voice-first app for the moment before clarity. It helps you set things down when you\u2019re overloaded, name what would make today easier, and feel lighter without pressure, streaks, or integrations. Relief comes first; momentum can wait.",
+    "desc": "A voice-first way to set things down and feel lighter.",
+    "link": "/apps/unload",
+    "icon": "/img/unload-logo.svg",
+    "bg": "/img/unload-hero-bg.svg"
   },
   {
     "id": "toume",
@@ -39,16 +49,22 @@
     "icon": "/img/tou.me_logo.jpeg",
     "bg": "/img/toume-card-background.png",
     "policies": [
-    { "label": "Privacy Policy (PDF)", "href": "/assets/policies/Toume_PrivacyPolicy.pdf" },
-    { "label": "Terms of Service (PDF)", "href": "/assets/policies/Toume_TermsOfService.pdf" }
-  ]
+      {
+        "label": "Privacy Policy (PDF)",
+        "href": "/assets/policies/Toume_PrivacyPolicy.pdf"
+      },
+      {
+        "label": "Terms of Service (PDF)",
+        "href": "/assets/policies/Toume_TermsOfService.pdf"
+      }
+    ]
   },
   {
     "id": "apex-twin",
     "name": "ApexTwin",
     "strap": "Setup. Session. Progress.",
-    "summary": "ApexTwin is a track-day setup companion for motorcyclists who want structure over guesswork. Whether you're logging tyre pressures between sessions or tracking suspension changes across a season, ApexTwin keeps everything in one place—so you can see what works, repeat what's fast, and ride with confidence.",
-    "desc": "A modern setup journal for track-day riders—structured, fast, and built to help you improve.",
+    "summary": "ApexTwin is a track-day setup companion for motorcyclists who want structure over guesswork. Whether you're logging tyre pressures between sessions or tracking suspension changes across a season, ApexTwin keeps everything in one place\u2014so you can see what works, repeat what's fast, and ride with confidence.",
+    "desc": "A modern setup journal for track-day riders\u2014structured, fast, and built to help you improve.",
     "link": "/apps/apex-twin",
     "icon": "/img/apextwin-card-background.png",
     "bg": "/img/apextwin-card-background.png"
@@ -57,7 +73,7 @@
     "id": "rehabpath",
     "name": "RehabPath",
     "strap": "Your guided path to recovery.",
-    "summary": "RehabPath is a structured recovery companion for people working through injury rehab. It provides clear, phase-based programmes, step-by-step exercise guidance, and visible progress tracking—all stored privately on your device. No accounts, no tracking, no complexity. Just a calm, focused tool to help you stay on course and see your improvement.",
+    "summary": "RehabPath is a structured recovery companion for people working through injury rehab. It provides clear, phase-based programmes, step-by-step exercise guidance, and visible progress tracking\u2014all stored privately on your device. No accounts, no tracking, no complexity. Just a calm, focused tool to help you stay on course and see your improvement.",
     "desc": "Structured rehab programmes, simple exercise guidance, and private progress tracking.",
     "link": "/apps/rehabpath",
     "icon": "/img/rehabpath-card-background.png",
