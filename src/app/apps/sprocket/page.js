@@ -54,7 +54,7 @@ export default function Sprocket() {
               <div className="rounded-xl border border-black/10 shadow-2xl overflow-hidden bg-white/60 backdrop-blur-sm">
                 <video
                   className="w-full h-auto aspect-video"
-                  src="/vid/sprocket-for-web.mp4"
+                  src="/vid/sprocket%20for%20web.mp4"
                   poster="/img/sprocket-logo.png"
                   autoPlay
                   muted
