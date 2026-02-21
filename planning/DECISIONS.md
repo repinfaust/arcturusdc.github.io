@@ -15,3 +15,8 @@
 - This repo uses Next.js App Router (`src/app/`) for page routes.
 - App cards are driven by `src/data/apps.json`.
 - Static assets are served from `public/` via absolute paths.
+
+## 2026-02-21 — Sprocket page structure
+- Added Sprocket as a first-class app route under `src/app/apps/sprocket/`.
+- Policy links for Sprocket use HTML routes (`/apps/sprocket/privacy-policy`, `/apps/sprocket/terms-of-use`) to meet accessibility and store-readability requirements.
+- Sprocket card metadata is kept in `src/data/apps.json`; hero and branding assets live under `public/img/`.

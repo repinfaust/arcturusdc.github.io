@@ -1,0 +1,17 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="800" fill="#F2F4EF"/>
+  <rect width="1200" height="800" fill="url(#mistGlow)"/>
+  <path d="M0 620C180 560 340 560 500 620C660 680 860 700 1200 620V800H0V620Z" fill="#E6ECE3"/>
+  <circle cx="940" cy="210" r="170" fill="#E3F0EB" fill-opacity="0.9"/>
+  <circle cx="280" cy="220" r="230" fill="#E9F1EC" fill-opacity="0.8"/>
+  <path d="M1040 130C1010 160 980 180 940 188C905 194 868 192 828 173" stroke="#278A6C" stroke-opacity="0.35" stroke-width="3" stroke-linecap="round"/>
+  <path d="M890 270C860 298 818 313 770 314" stroke="#1B5E4B" stroke-opacity="0.25" stroke-width="3" stroke-linecap="round"/>
+  <path d="M350 150C390 190 410 240 406 300" stroke="#1B5E4B" stroke-opacity="0.25" stroke-width="3" stroke-linecap="round"/>
+  <path d="M150 280C210 300 260 340 290 390" stroke="#278A6C" stroke-opacity="0.22" stroke-width="3" stroke-linecap="round"/>
+  <defs>
+    <radialGradient id="mistGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 150) rotate(90) scale(420 620)">
+      <stop stop-color="#DCEBE4"/>
+      <stop offset="1" stop-color="#F2F4EF"/>
+    </radialGradient>
+  </defs>
+</svg>

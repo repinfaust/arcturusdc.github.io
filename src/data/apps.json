@@ -40,6 +40,16 @@
     "bg": "/img/unload-hero-bg.svg"
   },
   {
+    "id": "sprocket",
+    "name": "Sprocket",
+    "strap": "Calm help, one clear next step.",
+    "summary": "Sprocket is a voice-first support app for stressful admin moments. It helps people untangle difficult messages into plain language, urgency, and one practical next step, with optional reply drafts and privacy-first handling for sensitive details.",
+    "desc": "Voice-first support for reminders, admin tasks, and difficult messages.",
+    "link": "/apps/sprocket",
+    "icon": "/img/sprocket-logo.png",
+    "bg": "/img/sprocket-hero-bg.svg"
+  },
+  {
     "id": "toume",
     "name": "Tou.me (coming soon)",
     "strap": "For you, for me, for them.",
