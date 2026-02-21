@@ -23,11 +23,11 @@ export default function Sprocket() {
               priority
             />
           </div>
-          <div className="text-muted text-sm">Voice-first support for stressful tasks.</div>
+          <div className="text-muted text-sm">Voice and text support for stressful tasks.</div>
           <p className="mt-2 text-sm text-neutral-700">
             Sprocket is a calm assistant for people who feel overwhelmed by everyday admin,
             reminders, and difficult messages. It helps users go from confusion to one clear
-            next step using plain language, voice-first guidance, and private-by-default flows.
+            next step using plain language, flexible voice or text guidance, and private-by-default flows.
           </p>
         </div>
       </div>
@@ -45,7 +45,7 @@ export default function Sprocket() {
               Inside Sprocket
             </h1>
             <p className="mt-3 text-[#4B5B54] max-w-2xl mx-auto">
-              Calm voice support to make sense of stressful messages and take one safe next step.
+              Calm support through voice or text to make sense of stressful messages and take one safe next step.
             </p>
           </div>
 
@@ -80,8 +80,8 @@ export default function Sprocket() {
 
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-[#1A2420]">
               <Feature
-                title="Voice-First Help"
-                desc="Tap and speak to get support without navigating complex menus."
+                title="Voice and Text Help"
+                desc="Speak or type to get support without navigating complex menus."
                 icon="mic"
               />
               <Feature
@@ -145,9 +145,9 @@ export default function Sprocket() {
                     message text is not automatically saved by default flows.
                   </p>
                 </AccordionItem>
-                <AccordionItem question="Do I need to use voice every time?">
+                <AccordionItem question="Do I have to use voice?">
                   <p>
-                    No. Voice is the default path, but text input is also available when preferred.
+                    No. Voice and text are both first-class options, and you can switch between them anytime.
                   </p>
                 </AccordionItem>
               </div>
