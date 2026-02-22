@@ -16,25 +16,24 @@ export default function TermsOfUsePage() {
           https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
         </a>
       </p>
-      <p>The terms below supplement Apple&apos;s standard EULA.</p>
+      <p>The following terms supplement Apple&apos;s standard EULA.</p>
 
       <h2>1. About Sprocket</h2>
       <p>
         Sprocket is an AI-assisted voice and text assistant designed to help people with everyday
-        tasks on their smartphone. It is provided by [Developer/Company name], registered in
-        [England and Wales / jurisdiction].
+        tasks on their smartphone. It is provided by [Developer/Company name], registered in England and Wales.
       </p>
 
       <h2>2. Using Sprocket</h2>
       <p><strong>What Sprocket is for:</strong></p>
       <p>
-        Personal, non-commercial use to ask questions, set reminders, store notes, get step-by-step
-        phone help, and understand confusing messages.
+        Sprocket is for personal, non-commercial use. You may use it to ask questions, set reminders,
+        store personal notes, get step-by-step help with your phone, and understand confusing messages.
       </p>
       <p><strong>What Sprocket is not:</strong></p>
       <p>
         Sprocket is not a substitute for professional medical, legal, or financial advice.
-        Responses are for general information only.
+        Replies are for general information only.
       </p>
       <p><strong>Emergency situations:</strong></p>
       <p>
@@ -42,99 +41,96 @@ export default function TermsOfUsePage() {
         call 999 (UK) or your local emergency number.
       </p>
 
-      <h2>3. Subscription - Sprocket Plus</h2>
-      <h3>3.1 What&apos;s included</h3>
+      <h2>3. Free use and Sprocket Unlock</h2>
+      <h3>3.1 Free use</h3>
       <p>
-        Sprocket Plus includes voice assistant, Untangle Text, step-by-step playbooks,
-        reminders, and memory notes.
+        Sprocket is free to download and use. New users can ask up to 20 questions across their
+        lifetime of free use. All features are available during free use.
       </p>
 
-      <h3>3.2 Free trial</h3>
+      <h3>3.2 Sprocket Unlock - one-time purchase</h3>
       <p>
-        A free 7-day trial is available to new subscribers who have not previously subscribed.
-        You are not charged during the trial period.
+        To continue using Sprocket after your 20 free questions, you can purchase
+        <strong> Sprocket Unlock</strong> as a one-time, non-consumable in-app purchase.
       </p>
-
-      <h3>3.3 Pricing</h3>
       <ul>
-        <li><strong>Annual plan:</strong> GBP 23.99 per year (about GBP 1.99 per month)</li>
-        <li><strong>Monthly plan:</strong> GBP 3.49 per month</li>
+        <li><strong>Price:</strong> GBP 59.99 (one-time, no ongoing charge)</li>
+        <li>Unlock is permanent. You pay once and keep it.</li>
+        <li>Unlocked users can ask up to 60 questions per day.</li>
+        <li>Payment is charged to your Apple ID at purchase.</li>
       </ul>
       <p>Prices include VAT where applicable and may vary by region.</p>
 
-      <h3>3.4 Automatic renewal</h3>
+      <h3>3.3 What you get with Sprocket Unlock</h3>
       <p>
-        Subscriptions renew automatically each billing period unless cancelled at least 24 hours
-        before the period ends. Payment is charged to your Apple ID at purchase and renewal.
+        All app features, including voice assistant, Untangle Text, step-by-step tech help playbooks,
+        reminders, and memory notes. Up to 60 questions per day.
       </p>
 
-      <h3>3.5 Cancellation</h3>
+      <h3>3.4 Restoring a purchase</h3>
       <p>
-        Cancel anytime via iPhone Settings -&gt; [Your Name] -&gt; Subscriptions -&gt; Sprocket.
-        Cancellation takes effect at period end. No partial refunds except where required by law.
+        If you previously purchased Sprocket Unlock and are using a new device or reinstalled the app,
+        tap &quot;Restore previous purchase&quot; on the unlock screen.
       </p>
 
-      <h3>3.6 Free trial cancellation</h3>
+      <h3>3.5 No recurring charges</h3>
       <p>
-        To avoid charges, cancel at least 24 hours before trial end using iPhone Settings -&gt;
-        [Your Name] -&gt; Subscriptions -&gt; Sprocket.
+        Sprocket Unlock is not a subscription. There are no automatic renewals,
+        monthly charges, or annual fees.
       </p>
 
-      <h3>3.7 Restoring a purchase</h3>
+      <h3>3.6 Refunds</h3>
       <p>
-        If you subscribed before and changed device or reinstalled the app, tap
-        &quot;Restore previous purchase&quot; on the subscription screen.
-      </p>
-
-      <h3>3.8 Price changes</h3>
-      <p>
-        We may change prices. You will be notified in advance. Continued use after the change
-        takes effect means you accept the new price.
+        Refund requests are handled by Apple under App Store policy. We do not process refunds directly.
+        To request a refund, visit{' '}
+        <a href="https://reportaproblem.apple.com" target="_blank" rel="noopener noreferrer">
+          https://reportaproblem.apple.com
+        </a>
+        .
       </p>
 
       <h2>4. AI service - acceptable use</h2>
-      <p>Sprocket uses OpenAI&apos;s AI. You agree not to use Sprocket to:</p>
+      <p>Sprocket uses OpenAI&apos;s AI to generate replies. You agree not to use Sprocket to:</p>
       <ul>
-        <li>Bypass, manipulate, or jailbreak the AI system</li>
+        <li>Attempt to bypass, manipulate, or jailbreak the AI system</li>
         <li>Generate harmful, illegal, or abusive content</li>
         <li>Submit personal data of third parties without their knowledge</li>
         <li>Use the service for commercial, resale, or automated purposes</li>
       </ul>
-      <p>We may terminate access if these terms are violated.</p>
+      <p>We reserve the right to terminate access if these terms are violated.</p>
 
       <h2>5. Accuracy of AI responses</h2>
       <p>
-        AI responses may be inaccurate, incomplete, or out of date. Verify important information
-        using official sources.
+        Sprocket responses are generated by AI and may sometimes be inaccurate, incomplete, or out of date.
+        Verify important information using official sources.
       </p>
 
       <h2>6. Your content</h2>
       <p>
-        Notes and reminders remain yours and are stored locally on your device. Questions are
-        processed by OpenAI as described in the Privacy Policy. We do not claim ownership of your
-        questions or generated replies.
+        Notes and reminders remain yours and stay on your device. Questions are processed by OpenAI
+        as described in the Privacy Policy. We do not claim ownership of your questions or generated replies.
       </p>
 
       <h2>7. Availability</h2>
       <p>
-        We aim for reliable service but cannot guarantee uninterrupted availability.
-        AI features depend on OpenAI service uptime.
+        We aim to keep Sprocket reliable, but cannot guarantee uninterrupted service.
+        AI functionality depends on OpenAI availability.
       </p>
 
       <h2>8. Updates and changes</h2>
       <p>
-        We may update the app and these terms to improve features, fix issues, or comply with legal
-        and platform requirements. Material changes are announced in-app.
+        We may update Sprocket to improve features, fix issues, or comply with legal and platform requirements.
+        We may also update these terms and provide in-app notice for material changes.
       </p>
 
       <h2>9. Limitation of liability</h2>
       <p>
-        To the extent permitted by law, we are not liable for indirect, incidental, or consequential
-        damages. Total liability is limited to the amount paid for your current subscription period.
+        To the extent permitted by law, we are not liable for indirect, incidental, or consequential damages.
+        Total liability is limited to the amount you paid for Sprocket Unlock, or zero if you use the free tier.
       </p>
       <p>
-        Nothing limits liability for death or personal injury caused by negligence, fraud,
-        or anything that cannot be limited by law.
+        Nothing in these terms limits liability for death or personal injury caused by negligence,
+        fraud, or anything else that cannot be limited by law.
       </p>
 
       <h2>10. Governing law</h2>
@@ -151,7 +147,7 @@ export default function TermsOfUsePage() {
       </p>
 
       <p>
-        <em>These terms are written in plain English. If anything is unclear, please contact us.</em>
+        <em>These terms are written in plain English. If something is not clear, please contact us.</em>
       </p>
     </main>
   );

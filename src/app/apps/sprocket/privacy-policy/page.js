@@ -20,14 +20,17 @@ export default function PrivacyPolicyPage() {
       <h2>1. What Sprocket does with what you say</h2>
       <p>
         When you ask Sprocket a question, by voice or by typing, your words are sent to
-        <strong> OpenAI&apos;s AI service</strong> to generate a reply. This is required for Sprocket
-        to work.
+        <strong> OpenAI&apos;s AI service</strong> to generate a helpful reply.
+      </p>
+      <p>
+        This is necessary for Sprocket to work. Without sending your question to OpenAI,
+        Sprocket cannot answer you.
       </p>
       <p><strong>What OpenAI receives:</strong></p>
       <ul>
-        <li>The text of your question or request (after voice transcription)</li>
+        <li>The text of your question or request (after any voice transcription)</li>
         <li>The mode you are using (for example: general question, tech help, untangle a message)</li>
-        <li>A small amount of relevant context from things you previously asked Sprocket to remember</li>
+        <li>A small amount of context from things you previously asked Sprocket to remember, only if relevant</li>
       </ul>
       <p><strong>What OpenAI does not receive:</strong></p>
       <ul>
@@ -37,39 +40,62 @@ export default function PrivacyPolicyPage() {
         <li>Your Apple ID or account information</li>
       </ul>
       <p>
-        We configure OpenAI API usage to opt out of data use for model training where available.
+        We have configured OpenAI API access to opt out of data use for model training where this option is available.
         For details, see{' '}
         <a href="https://openai.com/privacy" target="_blank" rel="noopener noreferrer">
-          OpenAI&apos;s privacy policy
+          https://openai.com/privacy
         </a>
         .
       </p>
-      <p>Your messages travel securely via our server relay, not directly from your phone to OpenAI.</p>
+      <p>Your messages travel securely via our server relay and are never sent directly from your phone to OpenAI.</p>
 
       <h2>2. Untangle a message - how this works</h2>
-      <p>When you use Untangle to paste a letter or message, the text is:</p>
+      <p>When you use the Untangle feature to paste a letter or message, the text is:</p>
       <ul>
-        <li>Held temporarily in app memory while analysed</li>
+        <li>Held temporarily in app memory while we analyse it</li>
         <li>Sent to OpenAI to generate a plain-English interpretation</li>
         <li>Discarded when you leave the screen or close the app</li>
       </ul>
       <p>
-        The original text is <strong>never stored</strong> unless you explicitly tap
-        &quot;Save summary.&quot; If saved, only the interpretation is stored, not the original text.
+        The original text is <strong>never stored</strong> on your phone or anywhere else unless you
+        explicitly tap &quot;Save summary.&quot; If you save a summary, only the plain-English interpretation is
+        saved, not the original text.
       </p>
       <p>
-        If pasted text contains likely sensitive information, for example a 6-digit code, card number,
-        or National Insurance number, Sprocket warns you before processing. Saving is disabled until you
-        confirm how to proceed.
+        If pasted text contains sensitive information, for example a 6-digit code, a bank card number,
+        or a National Insurance number, Sprocket warns you before processing. Saving is disabled until
+        you confirm how you want to proceed.
       </p>
 
-      <h2>3. What we measure</h2>
+      <h2>3. How Sprocket protects sensitive information</h2>
       <p>
-        Sprocket uses <strong>Firebase Analytics</strong> (Google) to count feature usage.
+        Sprocket is designed to detect likely sensitive details and warn you before anything is sent or saved.
+        This is a safety assist, not a guarantee that every sensitive detail will be caught.
       </p>
+      <p><strong>What Sprocket looks for:</strong></p>
+      <ul>
+        <li>6-digit codes (such as one-time passcodes)</li>
+        <li>Bank card numbers (13-19 digit sequences)</li>
+        <li>UK National Insurance number patterns</li>
+        <li>Phrases that suggest a password is being shared (for example: &quot;my password is...&quot;)</li>
+      </ul>
+      <p><strong>What happens when something is detected:</strong></p>
+      <ul>
+        <li>You see a clear warning before anything is sent to OpenAI</li>
+        <li>Saving is disabled until you choose how to proceed</li>
+        <li>You can continue without saving, or clear the input and start again</li>
+        <li>Sprocket will never store a detected sensitive string in your notes</li>
+      </ul>
+      <p>
+        This is designed for common accidental mistakes. It is not designed to detect every format
+        of every type of sensitive data, and should not be relied on as a security tool.
+      </p>
+
+      <h2>4. What we measure</h2>
+      <p>Sprocket uses <strong>Firebase Analytics</strong> (Google) to count how often features are used.</p>
       <p><strong>What Firebase receives:</strong></p>
       <ul>
-        <li>Anonymous feature-use counts (for example: voice button tapped, reminder created)</li>
+        <li>Anonymous counts of feature use (for example: voice button tapped, reminder created)</li>
         <li>Which playbooks are completed</li>
         <li>App session counts</li>
       </ul>
@@ -80,11 +106,12 @@ export default function PrivacyPolicyPage() {
         <li>Any note or reminder content</li>
       </ul>
       <p>
-        You can disable this in Settings -&gt; Privacy -&gt; Usage data. Collection stops immediately.
+        This data is anonymous and used to improve the app. Analytics are off by default until you give consent.
+        You can withdraw consent at any time in Settings -&gt; Privacy -&gt; Usage data.
       </p>
 
-      <h2>4. What stays on your phone</h2>
-      <p>The following is stored only on your iPhone in local storage:</p>
+      <h2>5. What stays on your phone</h2>
+      <p>The following is stored only on your iPhone, in local storage:</p>
       <ul>
         <li>Notes you asked Sprocket to remember</li>
         <li>Reminders you set</li>
@@ -92,39 +119,41 @@ export default function PrivacyPolicyPage() {
         <li>Your consent choices</li>
       </ul>
       <p>
-        None of this is sent to our servers, backed up to cloud by us, or accessible to us.
+        None of this is sent to our servers, backed up to the cloud, or accessible to us.
         If you lose your phone or delete the app, this data is gone.
       </p>
       <p>
-        To delete everything, use Settings -&gt; Clear My Data. This is permanent and cannot be undone.
+        To delete everything, go to Settings -&gt; Clear My Data. This permanently removes all notes,
+        reminders, history, and settings. It cannot be undone.
       </p>
 
-      <h2>5. Subscription and payment</h2>
+      <h2>6. Payment and Sprocket Unlock</h2>
       <p>
-        If you subscribe to Sprocket Plus, payments are handled by Apple via the App Store.
-        We do not receive or store payment card details.
+        If you purchase Sprocket Unlock, payment is handled entirely by Apple through the App Store.
+        We do not receive or store your payment card details. Sprocket Unlock is a one-time purchase
+        with no subscriptions and no recurring charges.
       </p>
 
-      <h2>6. Children</h2>
+      <h2>7. Children</h2>
       <p>
         Sprocket is designed for adults. We do not knowingly collect data from children under 13.
-        If you believe a child is using the app and have a concern, contact us below.
+        If you believe a child is using the app and have a concern, contact us.
       </p>
 
-      <h2>7. Changes to this policy</h2>
+      <h2>8. Changes to this policy</h2>
       <p>
-        If we make material changes to data handling, we will notify users in-app and update this policy.
+        If we make material changes to how Sprocket handles data, we will notify users in-app and update this policy.
         Minor clarifications may be made without notice.
       </p>
 
-      <h2>8. Contact us</h2>
+      <h2>9. Contact us</h2>
       <p>
         Questions about privacy?<br />
         <strong>Email:</strong> <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a><br />
         <strong>Web:</strong> <a href="https://sprocket.app/privacy" target="_blank" rel="noopener noreferrer">https://sprocket.app/privacy</a>
       </p>
 
-      <h2>9. Your rights (UK / GDPR)</h2>
+      <h2>10. Your rights (UK / GDPR)</h2>
       <p>If you are in the UK or EU, you have rights under data protection law, including:</p>
       <ul>
         <li>The right to know what data we hold about you</li>
@@ -133,16 +162,16 @@ export default function PrivacyPolicyPage() {
       </ul>
       <p>
         Because Sprocket stores almost all data locally and does not require an account,
-        most rights can be exercised directly through Settings -&gt; Clear My Data.
+        most rights can be exercised directly in-app via Settings -&gt; Clear My Data.
       </p>
       <p>
-        For data processed by OpenAI on our behalf, we act as the data controller.
-        Contact <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a> with requests.
+        For data processed by OpenAI on our behalf, we are the data controller.
+        Contact <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a> with any requests.
       </p>
 
       <p>
         <em>
-          This policy is available in plain English. If anything is unclear, contact us and we will explain.
+          This policy is available in plain English. If any part is unclear, contact us and we will explain.
         </em>
       </p>
     </main>
