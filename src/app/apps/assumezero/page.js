@@ -222,9 +222,11 @@ nav .logo span { color: var(--parchment); }
 }
 .gazette-masthead {
   border-bottom: 4px solid var(--dark-text);
-  padding: 18px 40px 12px;
+  padding: 18px 24px 12px;
   text-align: center;
   position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 .gazette-above {
   font-family: 'IBM Plex Mono', monospace;
@@ -291,10 +293,12 @@ nav .logo span { color: var(--parchment); }
 /* Hero body */
 .hero-body {
   display: grid;
-  grid-template-columns: 1fr 240px;
-  gap: 40px;
-  padding: 40px 40px 32px;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 28px;
+  padding: 36px 24px 28px;
   align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 @media (max-width: 768px) {
   .hero-body { grid-template-columns: 1fr; }
@@ -396,7 +400,7 @@ section { position: relative; }
 /* ─── PROBLEM ─── */
 .problem-section {
   background: #F0E6CC;
-  padding: 72px 40px;
+  padding: 60px 24px;
 }
 .pull-quote {
   font-family: 'Playfair Display', serif;
@@ -458,7 +462,7 @@ section { position: relative; }
 /* ─── THE GAME ─── */
 .game-section {
   background: var(--dark-text);
-  padding: 72px 40px;
+  padding: 60px 24px;
   position: relative;
 }
 .mechanic-grid {
@@ -608,7 +612,7 @@ section { position: relative; }
 /* ─── MARKET ─── */
 .market-section {
   background: #F0E6CC;
-  padding: 72px 40px;
+  padding: 60px 24px;
 }
 .market-grid {
   display: grid;
@@ -696,7 +700,7 @@ section { position: relative; }
 /* ─── LOOK & FEEL ─── */
 .lookfeel-section {
   background: #12100C;
-  padding: 72px 40px;
+  padding: 60px 24px;
   position: relative;
 }
 .lookfeel-sub {
@@ -927,7 +931,7 @@ section { position: relative; }
 /* ─── STATUS ─── */
 .status-section {
   background: var(--indigo);
-  padding: 72px 40px;
+  padding: 60px 24px;
   border-top: 2px solid var(--phosphor);
   position: relative;
 }
@@ -992,7 +996,7 @@ section { position: relative; }
 /* ─── THREE ASKS ─── */
 .asks-section {
   background: var(--crt-black);
-  padding: 72px 40px;
+  padding: 60px 24px;
   border-top: 1px solid rgba(0,255,136,0.2);
   position: relative;
 }
@@ -1062,8 +1066,20 @@ section { position: relative; }
 /* ─── ABOUT ─── */
 .about-section {
   background: var(--parchment);
-  padding: 72px 40px;
+  padding: 60px 24px;
   border-top: 3px solid var(--dark-text);
+}
+/* desktop readability: avoid ultra-wide, sparse layouts */
+.problem-section > *,
+.game-section > *,
+.market-section > *,
+.lookfeel-section > *,
+.status-section > *,
+.asks-section > *,
+.about-section > * {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .about-grid {
   display: grid;
@@ -1632,19 +1648,19 @@ footer {
       <div class="ask-icon">🏫</div>
       <div class="ask-title">EDUCATORS</div>
       <p class="ask-body">Are you a KS2 or KS3 teacher, PSHE lead, or headteacher? I'm looking for listening conversations — 30 minutes, no commitment — and 1–2 schools willing to endorse a pilot via ClassDojo.</p>
-      <a href="/cdn-cgi/l/email-protection#f89c998e919cb8998a9b8c8d8a8d8b9c9bd69b9795c78b8d9a929d9b8cc5b4918c8c949dd8be919a9a91969fd8d5d8bd9c8d9b998c978ad89d96898d918a81" class="ask-btn">GET IN TOUCH →</a>
+      <a href="https://www.arcturusdc.com/contact" class="ask-btn">GET IN TOUCH →</a>
     </div>
     <div class="ask-card">
       <div class="ask-icon">🎨</div>
       <div class="ask-title">DESIGNERS</div>
       <p class="ask-body">The Visual Bible is complete. I need a children's illustrator for character sprite sheets — specifically the News Runner (4 states, 8-frame run loop). Full brief and style references available immediately.</p>
-      <a href="/cdn-cgi/l/email-protection#ea8e8b9c838eaa8b98899e9f989f998e89c4898587d5999f88808f899ed7a6839e9e868fcaac83888883848dcac7caae8f99838d84ca8f849b9f839893" class="ask-btn">SEE THE BRIEF →</a>
+      <a href="https://www.arcturusdc.com/contact" class="ask-btn">SEE THE BRIEF →</a>
     </div>
     <div class="ask-card">
       <div class="ask-icon">💷</div>
       <div class="ask-title">FUNDING</div>
       <p class="ask-body">Pre-seed. Looking for individuals or small funds who understand the edtech and consumer opportunity in media literacy for children. The market gap is real and documented. Happy to share research.</p>
-      <a href="/cdn-cgi/l/email-protection#94f0f5e2fdf0d4f5e6f7e0e1e6e1e7f0f7baf7fbf9abe7e1f6fef1f7e0a9d8fde0e0f8f1b4d2fdf6f6fdfaf3b4b9b4ddfae2f1e7e0f9f1fae0b4f1fae5e1fde6ed" class="ask-btn">LET'S TALK →</a>
+      <a href="https://www.arcturusdc.com/contact" class="ask-btn">LET'S TALK →</a>
     </div>
   </div>
 </section>
