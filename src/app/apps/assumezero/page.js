@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 export const metadata = {
   title: 'AssumeZero — Arcturus Digital Consulting',
   description: 'AssumeZero teaser page.',
@@ -5,9 +7,31 @@ export const metadata = {
 
 export default function AssumeZeroPage() {
   return (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: `<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <>
+      <Script id="assumezero-reveal" strategy="afterInteractive">
+        {`
+          (() => {
+            if (!('IntersectionObserver' in window)) return;
+            const root = document.getElementById('assumezero-page');
+            if (!root) return;
+            root.classList.add('js-loaded');
+            const reveals = root.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('visible');
+                  observer.unobserve(entry.target);
+                }
+              });
+            }, { threshold: 0.08 });
+            reveals.forEach((el) => observer.observe(el));
+          })();
+        `}
+      </Script>
+      <div
+        id="assumezero-page"
+        dangerouslySetInnerHTML={{
+          __html: `<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
   --mustard:     #D4873A;
@@ -258,6 +282,13 @@ nav .logo span { color: var(--parchment); }
   object-fit: cover;
   object-position: center top;
   display: block;
+}
+.mayor-fallback {
+  display: none;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  font-size: 72px;
 }
 .mayor-caption {
   background: var(--dark-text);
@@ -1083,9 +1114,13 @@ footer {
 
 /* ─── SCROLL REVEAL ─── */
 .reveal {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+#assumezero-page.js-loaded .reveal {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .reveal.visible {
   opacity: 1;
@@ -1153,7 +1188,8 @@ footer {
     <div>
       <div class="mayor-box">
         <div class="mayor-portrait">
-          <img src="/img/assumezero/image.png" alt="Mayor Reginald Grinwell, AssumeZero c.1958">
+          <img src="/img/assumezero/image.png" alt="Mayor Reginald Grinwell, AssumeZero c.1958" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+          <div class="mayor-fallback" aria-hidden="true">🎩</div>
         </div>
         <div class="mayor-caption">Mayor Reginald Grinwell<br>AssumeZero, c.1958</div>
         <div class="mayor-desc">Beloved civic leader.<br>Entirely trustworthy.<br><em>Definitely.</em></div>
@@ -1580,7 +1616,8 @@ footer {
 </footer>
 
 `,
-      }}
-    />
+        }}
+      />
+    </>
   );
 }
