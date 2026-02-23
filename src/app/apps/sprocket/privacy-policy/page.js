@@ -91,7 +91,39 @@ export default function PrivacyPolicyPage() {
         of every type of sensitive data, and should not be relied on as a security tool.
       </p>
 
-      <h2>4. What we measure</h2>
+      <h2>4. What Sprocket stores and where</h2>
+      <p><strong>On your phone only:</strong></p>
+      <ul>
+        <li>Your settings and preferences</li>
+        <li>Your consent choices</li>
+        <li>Any memory records marked as sensitive (these are intentionally never sent anywhere)</li>
+      </ul>
+      <p><strong>On your phone and securely backed up to our UK servers:</strong></p>
+      <ul>
+        <li>Notes you asked Sprocket to remember (except sensitive ones)</li>
+        <li>Reminders you set</li>
+      </ul>
+      <p>
+        Backed-up data is stored on Google Firebase servers located in the United Kingdom (London).
+        It is used to restore your notes and reminders if you sign in on a new device. If you use
+        Sprocket without signing in, this data stays on your device only.
+      </p>
+      <p><strong>On our UK servers only (not your phone):</strong></p>
+      <ul>
+        <li>An anonymous identifier so we can manage your usage limits</li>
+        <li>A count of how many questions you&apos;ve asked</li>
+        <li>Whether you&apos;ve purchased Sprocket Unlock</li>
+        <li>Rate limiting records to prevent abuse</li>
+      </ul>
+      <p>
+        <strong>To delete everything:</strong><br />
+        Go to Settings -&gt; Clear My Data. This permanently removes all notes, reminders, and local data.
+        Server-side usage counters and entitlement records are retained to prevent abuse of the free tier.
+        If you want server-side counters or entitlement records deleted, contact{' '}
+        <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>.
+      </p>
+
+      <h2>5. What we measure</h2>
       <p>Sprocket uses <strong>Firebase Analytics</strong> (Google) to count how often features are used.</p>
       <p><strong>What Firebase receives:</strong></p>
       <ul>
@@ -108,23 +140,6 @@ export default function PrivacyPolicyPage() {
       <p>
         This data is anonymous and used to improve the app. Analytics are off by default until you give consent.
         You can withdraw consent at any time in Settings -&gt; Privacy -&gt; Usage data.
-      </p>
-
-      <h2>5. What stays on your phone</h2>
-      <p>The following is stored only on your iPhone, in local storage:</p>
-      <ul>
-        <li>Notes you asked Sprocket to remember</li>
-        <li>Reminders you set</li>
-        <li>Your settings and preferences</li>
-        <li>Your consent choices</li>
-      </ul>
-      <p>
-        None of this is sent to our servers, backed up to the cloud, or accessible to us.
-        If you lose your phone or delete the app, this data is gone.
-      </p>
-      <p>
-        To delete everything, go to Settings -&gt; Clear My Data. This permanently removes all notes,
-        reminders, history, and settings. It cannot be undone.
       </p>
 
       <h2>6. Payment and Sprocket Unlock</h2>
@@ -167,6 +182,14 @@ export default function PrivacyPolicyPage() {
       <p>
         For data processed by OpenAI on our behalf, we are the data controller.
         Contact <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a> with any requests.
+      </p>
+
+      <h2>11. Where your data is held</h2>
+      <p>
+        All Sprocket server data, including backed-up notes, reminders, usage counters, and entitlement
+        records, is stored on Google Firebase servers located in the United Kingdom (London, europe-west2 region).
+        No Sprocket user data is transferred outside the UK for storage or processing, with the exception
+        of questions you send to OpenAI as described in section 1.
       </p>
 
       <p>
