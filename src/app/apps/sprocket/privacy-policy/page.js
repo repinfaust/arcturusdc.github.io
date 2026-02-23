@@ -120,9 +120,9 @@ export default function PrivacyPolicyPage() {
         Go to Settings -&gt; Clear My Data. This permanently removes all notes, reminders, and local data.
         Server-side usage counters and entitlement records are retained to prevent abuse of the free tier.
         If you want server-side counters or entitlement records deleted, contact{' '}
-        <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a> or visit{' '}
-        <a href="https://sprocket.app/privacy" target="_blank" rel="noopener noreferrer">
-          https://sprocket.app/privacy
+        <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a> or visit{' '}
+        <a href="https://www.arcturusdc.com/apps/sprocket/privacy-policy" target="_blank" rel="noopener noreferrer">
+          https://www.arcturusdc.com/apps/sprocket/privacy-policy
         </a>.
       </p>
 
@@ -167,8 +167,8 @@ export default function PrivacyPolicyPage() {
       <h2>9. Contact us</h2>
       <p>
         Questions about privacy?<br />
-        <strong>Email:</strong> <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a><br />
-        <strong>Web:</strong> <a href="https://sprocket.app/privacy" target="_blank" rel="noopener noreferrer">https://sprocket.app/privacy</a>
+        <strong>Email:</strong> <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a><br />
+        <strong>Web:</strong> <a href="https://www.arcturusdc.com/apps/sprocket/privacy-policy" target="_blank" rel="noopener noreferrer">https://www.arcturusdc.com/apps/sprocket/privacy-policy</a>
       </p>
 
       <h2>10. Your rights (UK / GDPR)</h2>
@@ -184,7 +184,7 @@ export default function PrivacyPolicyPage() {
       </p>
       <p>
         For data processed by OpenAI on our behalf, we are the data controller.
-        Contact <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a> with any requests.
+        Contact <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a> with any requests.
       </p>
 
       <h2>11. Where your data is held</h2>
