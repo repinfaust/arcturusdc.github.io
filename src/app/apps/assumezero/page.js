@@ -1342,6 +1342,14 @@ footer {
       <div class="stat-source">Source: Ofcom, 2025</div>
     </div>
   </div>
+  <div class="reveal d5" style="margin-top: 32px; padding: 16px 24px; border-left: 3px solid var(--teal); background: rgba(61,110,110,0.08);">
+    <p style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.7; margin: 0;">
+      Research consistently shows that <em>inoculation</em> — exposure to weakened forms of manipulation before encountering the real thing — is more effective at building misinformation resilience than correction after the fact. Little Fibbing is inoculation, delivered as a game.
+    </p>
+    <p style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--teal); letter-spacing: 1px; margin: 8px 0 0;">
+      Ref: Lewandowsky &amp; van der Linden, 2021 · Psychological Science in the Public Interest
+    </p>
+  </div>
 </section>
 
 <!-- THE GAME -->
