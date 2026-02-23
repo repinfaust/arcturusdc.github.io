@@ -77,6 +77,7 @@ export default function AssumeZeroPage() {
               '.stat-cell',
               '.status-item',
               '.ask-card',
+              '.pilot-row',
               '.act-dot',
               '.comparison-card',
               '.phone-frame',
@@ -1086,6 +1087,15 @@ section { position: relative; }
 }
 
 /* ─── ABOUT ─── */
+.pilot-section {
+  background: var(--parchment);
+  padding: 80px 40px;
+  position: relative;
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .pilot-section .pilot-grid { grid-template-columns: 1fr !important; }
+}
 .about-section {
   background: var(--parchment);
   padding: 60px 24px;
@@ -1098,6 +1108,7 @@ section { position: relative; }
 .lookfeel-section > *,
 .status-section > *,
 .asks-section > *,
+.pilot-section > *,
 .about-section > * {
   max-width: 1200px;
   margin-left: auto;
@@ -1693,6 +1704,68 @@ footer {
       <a href="https://www.arcturusdc.com/contact" class="ask-btn">LET'S TALK →</a>
     </div>
   </div>
+</section>
+
+<!-- HOW A PILOT WORKS -->
+<section class="pilot-section paper">
+  <div class="section-label warm reveal">PILOT SCHOOLS //</div>
+  <h2 class="section-headline warm reveal d1" style="font-size: clamp(22px, 3vw, 34px);">What a pilot actually looks like.</h2>
+
+  <div class="pilot-grid reveal d2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 900px; margin: 32px auto 0; align-items: start;">
+    
+    <div>
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <div class="pilot-row reveal d2" style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">4 WEEKS</div>
+          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Structured pilot period. No commitment beyond the four weeks. Honest feedback at the end is the only ask.</div>
+        </div>
+
+        <div class="pilot-row reveal d3" style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">10 MIN</div>
+          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Per session. Designed to fit inside a PSHE slot or go home as voluntary play. No lesson planning required.</div>
+        </div>
+
+        <div class="pilot-row reveal d4" style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">ZERO PREP</div>
+          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">No CPD, no marking, no moderation. Optional discussion prompts are available if teachers want them — but nothing requires teacher involvement to function.</div>
+        </div>
+
+        <div class="pilot-row reveal d5" style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">FREE</div>
+          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Pilot schools pay nothing. The exchange is access and honest feedback — both of which matter more at this stage than revenue.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="reveal d3">
+      <div style="background: rgba(61,110,110,0.06); border: 1.5px solid rgba(61,110,110,0.2); border-radius: 6px; padding: 24px;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--teal); letter-spacing: 2px; margin-bottom: 16px;">STATUTORY ALIGNMENT</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">Supports statutory RSHE digital literacy requirements (DfE 2021)</div>
+          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">Supports Online Safety Act duties around critical evaluation of online content</div>
+          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">KS2: English reading comprehension, PSHE — trust and authority</div>
+          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">KS3+: Citizenship, Media Studies, Computing, Online Safety</div>
+        </div>
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(61,110,110,0.15); font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--warm-grey); line-height: 1.7;">
+          Content is fictional and non-partisan throughout. No current events, no real political figures, no user-generated content. Designed to be parent-complaint-proof.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="reveal d5" style="text-align: center; margin-top: 40px;">
+    <a href="mailto:david@arcturusdc.com?subject=Little Fibbing - Pilot school enquiry" 
+       style="display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--teal); border: 2px solid var(--teal); padding: 12px 32px; border-radius: 3px; text-decoration: none; transition: all 0.2s;"
+       onmouseover="this.style.background='var(--teal)'; this.style.color='var(--parchment)'"
+       onmouseout="this.style.background='transparent'; this.style.color='var(--teal)'">
+      REGISTER PILOT INTEREST →
+    </a>
+    <div style="font-family: 'Lora', serif; font-size: 12px; color: var(--warm-grey); margin-top: 10px; font-style: italic;">Seeking 2–3 UK primary schools for Q2 2026. No commitment required at this stage.</div>
+  </div>
+
 </section>
 
 <!-- ABOUT -->
