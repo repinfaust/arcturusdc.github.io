@@ -1738,6 +1738,10 @@ footer {
           <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">FREE</div>
           <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Pilot schools pay nothing. The exchange is access and honest feedback — both of which matter more at this stage than revenue.</div>
         </div>
+        <div class="pilot-row reveal d5" style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">OUTCOMES</div>
+          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Short pre/post scenario evaluation measuring changes in reasoning confidence. Qualitative teacher feedback at close. Results shared with pilot schools.</div>
+        </div>
 
       </div>
     </div>
@@ -1753,6 +1757,7 @@ footer {
         </div>
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(61,110,110,0.15); font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--warm-grey); line-height: 1.7;">
           Content is fictional and non-partisan throughout. No current events, no real political figures, no user-generated content. Designed to be parent-complaint-proof.
+          No personal data collected. No accounts required for pilot. GDPR compliant by design.
         </div>
       </div>
     </div>
@@ -1766,7 +1771,7 @@ footer {
        onmouseout="this.style.background='transparent'; this.style.color='var(--teal)'">
       REGISTER PILOT INTEREST →
     </a>
-    <div style="font-family: 'Lora', serif; font-size: 12px; color: var(--warm-grey); margin-top: 10px; font-style: italic;">Seeking 2–3 UK primary schools for Q2 2026. No commitment required at this stage.</div>
+    <div style="font-family: 'Lora', serif; font-size: 12px; color: var(--warm-grey); margin-top: 10px; font-style: italic;">Seeking 2–3 UK primary schools for a Year 5 / Year 6 pilot (ages 9–11), Q2 2026. No commitment required at this stage.</div>
   </div>
 
 </section>
