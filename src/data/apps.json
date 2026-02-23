@@ -50,6 +50,16 @@
     "bg": "/img/sprocket-hero-bg.svg"
   },
   {
+    "id": "assumezero",
+    "name": "AssumeZero",
+    "strap": "Assume zero. Ask the question.",
+    "summary": "AssumeZero is a media literacy game in development that helps children spot manipulation, question claims, and practice critical thinking in the flow of play.",
+    "desc": "A teaser page for the upcoming AssumeZero project.",
+    "link": "/apps/assumezero",
+    "icon": "/img/assumezero/image.png",
+    "bg": "/img/assumezero/image.png"
+  },
+  {
     "id": "toume",
     "name": "Tou.me (coming soon)",
     "strap": "For you, for me, for them.",

@@ -4,6 +4,7 @@ const STATIC_APP_ROUTES = new Set([
   'mandrake',
   'adhd-acclaim',
   'syncfit',
+  'assumezero',
   'toume',      // static page at /apps/toume
   // add any others you move to standalone pages
 ]);
