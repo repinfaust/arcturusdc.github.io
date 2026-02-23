@@ -1353,6 +1353,9 @@ footer {
       <div class="stat-source">Source: Ofcom, 2025</div>
     </div>
   </div>
+  <p class="stat-source" style="margin-top: 10px; font-size: 11px;">
+    Two-thirds of UK teenagers say they worry about online misinformation — but teachers report struggling to support them. (The i Paper, 2025)
+  </p>
   <div class="reveal d5" style="margin-top: 32px; padding: 16px 24px; border-left: 3px solid var(--teal); background: rgba(61,110,110,0.08);">
     <p style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.7; margin: 0;">
       Research consistently shows that <em>inoculation</em> — exposure to weakened forms of manipulation before encountering the real thing — is more effective at building misinformation resilience than correction after the fact. Little Fibbing is inoculation, delivered as a game.
@@ -1757,7 +1760,7 @@ footer {
   </div>
 
   <div class="reveal d5" style="text-align: center; margin-top: 40px;">
-    <a href="mailto:david@arcturusdc.com?subject=Little Fibbing - Pilot school enquiry" 
+    <a href="https://www.arcturusdc.com/contact" 
        style="display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--teal); border: 2px solid var(--teal); padding: 12px 32px; border-radius: 3px; text-decoration: none; transition: all 0.2s;"
        onmouseover="this.style.background='var(--teal)'; this.style.color='var(--parchment)'"
        onmouseout="this.style.background='transparent'; this.style.color='var(--teal)'">
