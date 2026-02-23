@@ -12,9 +12,9 @@ export default function PrivacyPolicyPage() {
 
       <h2>The short version</h2>
       <p>
-        Sprocket saves as little as possible. What you ask it to remember stays on your phone.
-        Your questions go to an AI service to get answers. We count how often features are used,
-        not what you say or type.
+        Sprocket saves as little as possible. What you ask it to remember stays on your phone,
+        and is backed up to our UK servers if you sign in. Your questions go to an AI service
+        to get answers. We count how often features are used, not what you say or type.
       </p>
 
       <h2>1. What Sprocket does with what you say</h2>
@@ -115,6 +115,10 @@ export default function PrivacyPolicyPage() {
         <li>Whether you&apos;ve purchased Sprocket Unlock</li>
         <li>Rate limiting records to prevent abuse</li>
       </ul>
+      <p>
+        Free access limits are different by account status: anonymous users get 3 free questions,
+        and signed-in users get 20 free questions.
+      </p>
       <p>
         <strong>To delete everything:</strong><br />
         Go to Settings -&gt; Clear My Data. This permanently removes all notes, reminders, and local data.

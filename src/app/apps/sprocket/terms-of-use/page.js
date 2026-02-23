@@ -21,7 +21,7 @@ export default function TermsOfUsePage() {
       <h2>1. About Sprocket</h2>
       <p>
         Sprocket is an AI-assisted voice and text assistant designed to help people with everyday
-        tasks on their smartphone. It is provided by [Developer/Company name], registered in England and Wales.
+        tasks on their smartphone. It is provided by Arcturus Digital Consulting, registered in England and Wales.
       </p>
 
       <h2>2. Using Sprocket</h2>
@@ -44,13 +44,14 @@ export default function TermsOfUsePage() {
       <h2>3. Free use and Sprocket Unlock</h2>
       <h3>3.1 Free use</h3>
       <p>
-        Sprocket is free to download and use. New users can ask up to 20 questions across their
-        lifetime of free use. All features are available during free use.
+        Sprocket is free to download and use. New users can try Sprocket free without signing in
+        with 3 free questions. If you sign in with Apple or Google, you get 20 free questions and
+        can keep your notes safe if you change your phone. All features are available during free use.
       </p>
 
       <h3>3.2 Sprocket Unlock - one-time purchase</h3>
       <p>
-        To continue using Sprocket after your 20 free questions, you can purchase
+        To continue using Sprocket after your free questions are used, you can purchase
         <strong> Sprocket Unlock</strong> as a one-time, non-consumable in-app purchase.
       </p>
       <ul>
