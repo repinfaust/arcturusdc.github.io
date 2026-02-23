@@ -3,6 +3,27 @@ import Script from "next/script";
 export const metadata = {
   title: 'AssumeZero — Arcturus Digital Consulting',
   description: 'AssumeZero teaser page.',
+  openGraph: {
+    title: 'AssumeZero — Arcturus Digital Consulting',
+    description: 'AssumeZero teaser page.',
+    url: 'https://www.arcturusdc.com/apps/assumezero',
+    siteName: 'Arcturus Digital Consulting',
+    images: [
+      {
+        url: 'https://www.arcturusdc.com/img/assumezero/image.png',
+        width: 1227,
+        height: 2000,
+        alt: 'Mayor Reginald Grinwell poster artwork',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AssumeZero — Arcturus Digital Consulting',
+    description: 'AssumeZero teaser page.',
+    images: ['https://www.arcturusdc.com/img/assumezero/image.png'],
+  },
 };
 
 export default function AssumeZeroPage() {
