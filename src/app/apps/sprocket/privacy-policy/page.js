@@ -120,7 +120,10 @@ export default function PrivacyPolicyPage() {
         Go to Settings -&gt; Clear My Data. This permanently removes all notes, reminders, and local data.
         Server-side usage counters and entitlement records are retained to prevent abuse of the free tier.
         If you want server-side counters or entitlement records deleted, contact{' '}
-        <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>.
+        <a href="mailto:privacy@sprocket.app">privacy@sprocket.app</a> or visit{' '}
+        <a href="https://sprocket.app/privacy" target="_blank" rel="noopener noreferrer">
+          https://sprocket.app/privacy
+        </a>.
       </p>
 
       <h2>5. What we measure</h2>
