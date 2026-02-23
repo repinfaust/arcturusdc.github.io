@@ -108,8 +108,9 @@ export default function TermsOfUsePage() {
 
       <h2>6. Your content</h2>
       <p>
-        Notes and reminders remain yours and stay on your device. Questions are processed by OpenAI
-        as described in the Privacy Policy. We do not claim ownership of your questions or generated replies.
+        Notes and reminders remain yours. They stay on your device and, if you sign in, are backed up
+        to our UK servers. Questions are processed by OpenAI as described in the Privacy Policy.
+        We do not claim ownership of your questions or generated replies.
       </p>
 
       <h2>7. Availability</h2>
@@ -143,8 +144,8 @@ export default function TermsOfUsePage() {
       <h2>11. Contact</h2>
       <p>
         Questions about these terms?<br />
-        <strong>Email:</strong> <a href="mailto:legal@sprocket.app">legal@sprocket.app</a><br />
-        <strong>Web:</strong> <a href="https://sprocket.app/terms" target="_blank" rel="noopener noreferrer">https://sprocket.app/terms</a>
+        <strong>Email:</strong> <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a><br />
+        <strong>Web:</strong> <a href="https://www.arcturusdc.com/apps/sprocket/terms-of-use" target="_blank" rel="noopener noreferrer">https://www.arcturusdc.com/apps/sprocket/terms-of-use</a>
       </p>
 
       <p>
