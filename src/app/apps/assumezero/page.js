@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 export const metadata = {
   title: 'AssumeZero — Arcturus Digital Consulting',
   description: 'AssumeZero teaser page.',
@@ -5,8 +7,98 @@ export const metadata = {
 
 export default function AssumeZeroPage() {
   return (
-    <div
-      id="assumezero-page"
+    <>
+      <Script id="assumezero-mayor-reveal" strategy="afterInteractive">
+        {`
+          (() => {
+            const root = document.getElementById('assumezero-page');
+            if (!root) return;
+            const portrait = root.querySelector('.mayor-portrait');
+            const img = portrait ? portrait.querySelector('img') : null;
+            if (!img || !portrait) return;
+
+            const update = () => {
+              const rect = portrait.getBoundingClientRect();
+              const vh = window.innerHeight || document.documentElement.clientHeight;
+              const start = vh * 0.95;
+              const end = -rect.height * 0.35;
+              const raw = (start - rect.top) / (start - end);
+              const p = Math.max(0, Math.min(1, raw));
+              const pos = 5 + (p * 90);
+              img.style.setProperty('--mayor-pos', pos.toFixed(2) + '%');
+            };
+
+            let ticking = false;
+            const onScroll = () => {
+              if (ticking) return;
+              ticking = true;
+              requestAnimationFrame(() => {
+                update();
+                ticking = false;
+              });
+            };
+
+            update();
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', update);
+          })();
+        `}
+      </Script>
+      <Script id="assumezero-staggered-reveal" strategy="afterInteractive">
+        {`
+          (() => {
+            if (!('IntersectionObserver' in window)) return;
+            const root = document.getElementById('assumezero-page');
+            if (!root) return;
+
+            const itemSelector = [
+              '.stat-cell',
+              '.status-item',
+              '.ask-card',
+              '.act-dot',
+              '.comparison-card',
+              '.phone-frame',
+              '.type-col',
+              '.swatch',
+              '.phase-card',
+              '.mode-pill',
+              '.body-copy',
+              '.pull-quote',
+              '.timeline-note',
+              'p'
+            ].join(', ');
+
+            const sections = root.querySelectorAll('section.reveal');
+            sections.forEach((section) => {
+              let items = Array.from(section.querySelectorAll(itemSelector));
+              if (!items.length) {
+                items = Array.from(section.children);
+              }
+
+              items = items.filter((el) => !el.closest('.mayor-portrait'));
+              items.forEach((el, i) => {
+                el.classList.add('reveal-child');
+                el.style.setProperty('--reveal-delay', Math.min(i * 70, 840) + 'ms');
+              });
+            });
+
+            root.classList.add('seq-init');
+
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('seq-visible');
+                  observer.unobserve(entry.target);
+                }
+              });
+            }, { threshold: 0.12 });
+
+            sections.forEach((section) => observer.observe(section));
+          })();
+        `}
+      </Script>
+      <div
+        id="assumezero-page"
         dangerouslySetInnerHTML={{
           __html: `<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
@@ -257,8 +349,9 @@ nav .logo span { color: var(--parchment); }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center var(--mayor-pos, 5%);
   display: block;
+  transition: object-position 120ms linear;
 }
 .mayor-fallback {
   display: none;
@@ -1099,6 +1192,19 @@ footer {
   opacity: 1;
   transform: translateY(0);
 }
+#assumezero-page.seq-init section.reveal .reveal-child {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(1px);
+  transition: opacity 520ms ease, transform 560ms ease, filter 560ms ease;
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+#assumezero-page.seq-init section.reveal.seq-visible .reveal-child {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
 </style>
 
 
@@ -1591,5 +1697,6 @@ footer {
 `,
       }}
     />
+    </>
   );
 }
