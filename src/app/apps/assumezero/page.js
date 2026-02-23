@@ -41,11 +41,12 @@ export default function AssumeZeroPage() {
             const update = () => {
               const rect = portrait.getBoundingClientRect();
               const vh = window.innerHeight || document.documentElement.clientHeight;
-              const start = vh * 0.95;
+              // Keep the top of the poster visible on load, then pan down progressively.
+              const trigger = vh * 0.6;
               const end = -rect.height * 0.35;
-              const raw = (start - rect.top) / (start - end);
+              const raw = (trigger - rect.top) / (trigger - end);
               const p = Math.max(0, Math.min(1, raw));
-              const pos = 5 + (p * 90);
+              const pos = p * 78;
               img.style.setProperty('--mayor-pos', pos.toFixed(2) + '%');
             };
 
@@ -374,7 +375,7 @@ nav .logo span { color: var(--parchment); }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center var(--mayor-pos, 5%);
+  object-position: center var(--mayor-pos, 0%);
   display: block;
   transition: object-position 120ms linear;
 }
