@@ -205,6 +205,7 @@ export default function OrbitGrapheneosPocPage() {
   const [email, setEmail] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [authErrorCode, setAuthErrorCode] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(true);
   const [demoData, setDemoData] = useState(DEMO_BASE);
@@ -314,6 +315,7 @@ export default function OrbitGrapheneosPocPage() {
   async function sendMagicLink() {
     setAuthBusy(true);
     setAuthError('');
+    setAuthErrorCode('');
     try {
       const target = `${window.location.origin}/apps/stea/orbit-grapheneos/poc`;
       await sendSignInLinkToEmail(auth, email, {
@@ -323,7 +325,17 @@ export default function OrbitGrapheneosPocPage() {
       window.localStorage.setItem(MAGIC_LINK_EMAIL_KEY, email);
       setModalOpen(false);
     } catch (error) {
-      setAuthError(error?.message || 'Unable to send sign-in link.');
+      const code = error?.code || '';
+      setAuthErrorCode(code);
+      if (code === 'auth/operation-not-allowed') {
+        setAuthError('Magic link sign-in is not enabled in the Firebase project for this environment.');
+      } else if (code === 'auth/invalid-email') {
+        setAuthError('Enter a valid email address.');
+      } else if (code === 'auth/unauthorized-continue-uri') {
+        setAuthError('This domain is not authorised for Firebase email-link sign-in.');
+      } else {
+        setAuthError(error?.message || 'Unable to send sign-in link.');
+      }
     } finally {
       setAuthBusy(false);
     }
@@ -836,6 +848,17 @@ export default function OrbitGrapheneosPocPage() {
               style={{ width: '100%', marginTop: 6, background: COLORS.slate, color: COLORS.textPrimary, border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: '10px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}
             />
             {authError && <div style={{ marginTop: 10, color: COLORS.low, fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>{authError}</div>}
+            {authErrorCode === 'auth/operation-not-allowed' && (
+              <div style={{ marginTop: 10, border: `1px solid ${COLORS.border}`, background: COLORS.slate, borderRadius: 6, padding: '10px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: COLORS.textSecondary, lineHeight: 1.6 }}>
+                Firebase setup required:
+                <br />
+                1. Firebase Console -> Authentication -> Sign-in method.
+                <br />
+                2. Enable Email/Password and toggle Email link (passwordless).
+                <br />
+                3. Add `www.arcturusdc.com` to authorised domains.
+              </div>
+            )}
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button onClick={() => setModalOpen(false)} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textSecondary, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Cancel</button>
               <button onClick={sendMagicLink} disabled={authBusy || !email} style={{ border: 'none', opacity: authBusy || !email ? 0.6 : 1, background: COLORS.teal, color: COLORS.obsidian, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>
