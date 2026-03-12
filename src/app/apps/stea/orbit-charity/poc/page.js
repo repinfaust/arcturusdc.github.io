@@ -14,22 +14,28 @@ import {
 import { auth } from '@/lib/firebase';
 
 const COLORS = {
-  obsidian: '#0D1117',
-  graphite: '#161B22',
-  slate: '#21262D',
-  border: '#30363D',
-  textPrimary: '#E6EDF3',
-  textSecondary: '#8B949E',
-  textDim: '#484F58',
-  navyDeep: '#0E1F35',
-  teal: '#2DD4BF',
-  tealFaint: '#0D4A43',
-  high: '#10B981',
-  highBg: '#052E1C',
-  medium: '#F59E0B',
-  mediumBg: '#2D1F00',
-  low: '#EF4444',
-  lowBg: '#2D0808',
+  obsidian: '#F5F3F0',
+  graphite: '#FFFFFF',
+  slate: '#F0EDE8',
+  border: '#DDD8D0',
+  textPrimary: '#1A1814',
+  textSecondary: '#5C5650',
+  textDim: '#9C9690',
+  navyDeep: '#FFFFFF',
+  teal: '#3D7A5C',
+  tealFaint: '#EAF4EF',
+  tealDim: '#6BAE8A',
+  blue: '#005EB8',
+  blueDark: '#003087',
+  high: '#006747',
+  highBg: '#E8F5EF',
+  medium: '#B06000',
+  mediumBg: '#FEF6E8',
+  low: '#AE1C28',
+  lowBg: '#FBEAEA',
+  critical: '#7B1A6B',
+  criticalBg: '#F7EAF5',
+  criticalBorder: '#D4A8CC',
 };
 
 const DEMO_BANNER_KEY = 'orbit_charity_demo_banner_hidden';
@@ -49,18 +55,18 @@ const ORGS = [
 ];
 
 const DOMAIN_COLORS = {
-  donor: { bg: '#0D4A43', color: '#2DD4BF', border: '#1A9E8F' },
-  service_user: { bg: '#2D0808', color: '#EF4444', border: '#4A1010' },
-  volunteer: { bg: '#052E1C', color: '#10B981', border: '#0A4A2E' },
-  nhs: { bg: '#1E1B4B', color: '#A78BFA', border: '#4338CA' },
-  mixed: { bg: '#2D1F00', color: '#F59E0B', border: '#4A3000' },
+  donor: { bg: '#E8F1FB', color: '#005EB8', border: '#B8D4F0' },
+  service_user: { bg: '#EAF4EF', color: '#2A5740', border: '#B3DCC8' },
+  volunteer: { bg: '#FEF6E8', color: '#6B4F00', border: '#F5CC88' },
+  nhs: { bg: '#F7EAF5', color: '#7B1A6B', border: '#D4A8CC' },
+  mixed: { bg: '#F0EDE8', color: '#5C5650', border: '#DDD8D0' },
 };
 
 const ALERT_STYLES = {
-  LOW: { bg: COLORS.highBg, color: COLORS.high, border: '#0A4A2E' },
-  MEDIUM: { bg: COLORS.mediumBg, color: COLORS.medium, border: '#4A3000' },
-  HIGH: { bg: COLORS.lowBg, color: COLORS.low, border: '#4A1010' },
-  CRITICAL: { bg: COLORS.lowBg, color: '#FF6B6B', border: '#7A1616' },
+  LOW: { bg: COLORS.highBg, color: COLORS.high, border: '#B3DCC8' },
+  MEDIUM: { bg: COLORS.mediumBg, color: COLORS.medium, border: '#F5CC88' },
+  HIGH: { bg: COLORS.lowBg, color: COLORS.low, border: '#E8A8A8' },
+  CRITICAL: { bg: COLORS.criticalBg, color: COLORS.critical, border: COLORS.criticalBorder },
 };
 
 const MARGARET_PROFILE = {
@@ -431,35 +437,35 @@ export default function OrbitCharityPocPage() {
         }
       `}</style>
 
-      <header style={{ background: COLORS.navyDeep, borderBottom: `1px solid ${COLORS.border}` }}>
+      <header style={{ background: COLORS.navyDeep, borderBottom: `3px solid ${COLORS.blue}` }}>
         <div className="oc-wrap" style={{ minHeight: 72, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <Link href="/apps/stea/orbit" style={{ color: COLORS.textSecondary, fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>← Back to Orbit</Link>
+            <Link href="/apps/stea/orbit" style={{ color: COLORS.textSecondary, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13 }}>← Back to Orbit</Link>
             <div style={{ width: 1, height: 20, background: COLORS.border }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ width: 26, height: 26, borderRadius: '50%', border: `2px solid ${COLORS.teal}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.teal }} />
               </span>
               <div>
-                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, fontWeight: 700 }}>ORBIT</div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: COLORS.textSecondary }}>Charity Sector POC v2.0</div>
+                <div style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 13, fontWeight: 700 }}>ORBIT</div>
+                <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 11, color: COLORS.textSecondary }}>Charity Sector POC v2.0</div>
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <span style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textSecondary, padding: '5px 8px', borderRadius: 4, fontFamily: "'Space Mono', monospace", fontSize: 10 }}>
+            <span style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textSecondary, padding: '5px 8px', borderRadius: 4, fontFamily: "'Source Code Pro', monospace", fontSize: 10 }}>
               {tier === 'public' ? 'PUBLIC / DEMO' : 'AUTHENTICATED'}
             </span>
             {!authReady ? (
               <button className="oc-card" style={{ padding: '8px 12px', borderRadius: 6, fontSize: 13, color: COLORS.textSecondary }}>Checking auth...</button>
             ) : user ? (
               <>
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: COLORS.textSecondary }}>{user.email}</span>
-                <button onClick={handleSignOut} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Sign Out</button>
+                <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 12, color: COLORS.textSecondary }}>{user.email}</span>
+                <button onClick={handleSignOut} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13 }}>Sign Out</button>
               </>
             ) : (
-              <button onClick={() => setModalOpen(true)} style={{ border: 'none', background: COLORS.teal, color: COLORS.obsidian, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>Sign In</button>
+              <button onClick={() => setModalOpen(true)} style={{ border: 'none', background: COLORS.blue, color: '#FFFFFF', borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, fontWeight: 700 }}>Sign In</button>
             )}
           </div>
         </div>
@@ -468,10 +474,10 @@ export default function OrbitCharityPocPage() {
       {tier === 'public' && bannerVisible && (
         <div style={{ background: COLORS.tealFaint, borderBottom: `1px solid ${COLORS.teal}` }}>
           <div className="oc-wrap" style={{ padding: '10px 20px', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", color: COLORS.teal, fontSize: 13 }}>
+            <div style={{ fontFamily: "'Source Sans 3', sans-serif", color: COLORS.teal, fontSize: 13 }}>
               You are viewing demo data. Sign in to post real governance events.
             </div>
-            <button onClick={dismissBanner} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 4, padding: '4px 10px', fontFamily: "'Space Mono', monospace", fontSize: 10 }}>
+            <button onClick={dismissBanner} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 4, padding: '4px 10px', fontFamily: "'Source Code Pro', monospace", fontSize: 10 }}>
               Dismiss
             </button>
           </div>
@@ -490,7 +496,7 @@ export default function OrbitCharityPocPage() {
                 borderBottom: activeTab === tab.id ? `2px solid ${COLORS.teal}` : '2px solid transparent',
                 color: activeTab === tab.id ? COLORS.teal : COLORS.textSecondary,
                 padding: '13px 16px',
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'Source Sans 3', sans-serif",
                 fontSize: 13,
                 fontWeight: activeTab === tab.id ? 600 : 400,
                 cursor: 'pointer',
@@ -506,65 +512,65 @@ export default function OrbitCharityPocPage() {
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gap: 14 }}>
             <div className="oc-card" style={{ padding: 16 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 18 }}>What This Demonstrates</div>
-              <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
+              <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontWeight: 700, fontSize: 18 }}>What This Demonstrates</div>
+              <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
                 This PoC shows one individual (Margaret) across donor, service user, volunteer, and NHS referral domains under one pseudonymous OII.
                 The core point is role bleed risk: cross-domain use is detected, signed, and retained in an immutable timeline for audit evidence.
               </div>
-              <div style={{ marginTop: 10, fontFamily: "'Space Mono', monospace", color: COLORS.teal, fontSize: 10, letterSpacing: '0.07em' }}>
+              <div style={{ marginTop: 10, fontFamily: "'Source Code Pro', monospace", color: COLORS.teal, fontSize: 10, letterSpacing: '0.07em' }}>
                 To explore: open Org Sandbox, seed data, then inspect Timeline, Alerts, Individual Timeline, and ICO Audit View.
               </div>
             </div>
 
             <div className="oc-grid-4">
               <div className="oc-card" style={{ padding: 14 }}>
-                <div style={{ fontFamily: "'Space Mono', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Orbit Individual ID</div>
-                <div style={{ marginTop: 6, fontFamily: "'Space Mono', monospace", fontSize: 15 }}>{TARGET_OII}</div>
+                <div style={{ fontFamily: "'Source Code Pro', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Orbit Individual ID</div>
+                <div style={{ marginTop: 6, fontFamily: "'Source Code Pro', monospace", fontSize: 15 }}>{TARGET_OII}</div>
               </div>
               <div className="oc-card" style={{ padding: 14 }}>
-                <div style={{ fontFamily: "'Space Mono', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Seeded Events</div>
-                <div style={{ marginTop: 6, fontFamily: "'Space Mono', monospace", fontSize: 24 }}>{scoped.events.length}</div>
+                <div style={{ fontFamily: "'Source Code Pro', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Seeded Events</div>
+                <div style={{ marginTop: 6, fontFamily: "'Source Code Pro', monospace", fontSize: 24 }}>{scoped.events.length}</div>
               </div>
               <div className="oc-card" style={{ padding: 14 }}>
-                <div style={{ fontFamily: "'Space Mono', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Critical Alerts</div>
-                <div style={{ marginTop: 6, fontFamily: "'Space Mono', monospace", fontSize: 24, color: criticalAlerts.length ? '#FF6B6B' : COLORS.high }}>{criticalAlerts.length}</div>
+                <div style={{ fontFamily: "'Source Code Pro', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Critical Alerts</div>
+                <div style={{ marginTop: 6, fontFamily: "'Source Code Pro', monospace", fontSize: 24, color: criticalAlerts.length ? COLORS.critical : COLORS.high }}>{criticalAlerts.length}</div>
               </div>
               <div className="oc-card" style={{ padding: 14 }}>
-                <div style={{ fontFamily: "'Space Mono', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Hash Chain</div>
-                <div style={{ marginTop: 6, fontFamily: "'Space Mono', monospace", fontSize: 20, color: chainIntact(scoped.events) ? COLORS.high : COLORS.low }}>
+                <div style={{ fontFamily: "'Source Code Pro', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Hash Chain</div>
+                <div style={{ marginTop: 6, fontFamily: "'Source Code Pro', monospace", fontSize: 20, color: chainIntact(scoped.events) ? COLORS.high : COLORS.low }}>
                   {chainIntact(scoped.events) ? 'INTACT' : 'BROKEN'}
                 </div>
               </div>
             </div>
 
             <div className="oc-card" style={{ padding: 16 }}>
-              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: COLORS.teal, letterSpacing: '0.08em' }}>MULTI-ROLE INDIVIDUAL MODEL</div>
-              <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 10, color: COLORS.teal, letterSpacing: '0.08em' }}>MULTI-ROLE INDIVIDUAL MODEL</div>
+              <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.6 }}>
                 Margaret appears across donor, volunteer, service user, and NHS referral data domains. Orbit tracks role separation with a pseudonymous OII and flags cross-domain bleed as CRITICAL.
               </div>
             </div>
 
             <div className="oc-card" style={{ padding: 16 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 12 }}>Domain Wall Status</div>
+              <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 12 }}>Domain Wall Status</div>
               <div className="oc-grid-2">
                 {walls.map((wall) => (
-                  <div key={wall.pair} style={{ border: `1px solid ${wall.state === 'BREACH DETECTED' ? '#7A1616' : COLORS.border}`, background: wall.state === 'BREACH DETECTED' ? COLORS.lowBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600 }}>{wall.pair}</div>
-                    <div style={{ marginTop: 6, fontFamily: "'Space Mono', monospace", fontSize: 11, color: wall.state === 'BREACH DETECTED' ? '#FF6B6B' : COLORS.high }}>{wall.state}</div>
+                  <div key={wall.pair} style={{ border: `1px solid ${wall.state === 'BREACH DETECTED' ? COLORS.criticalBorder : COLORS.border}`, background: wall.state === 'BREACH DETECTED' ? COLORS.criticalBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, fontWeight: 600 }}>{wall.pair}</div>
+                    <div style={{ marginTop: 6, fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: wall.state === 'BREACH DETECTED' ? COLORS.critical : COLORS.high }}>{wall.state}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="oc-card" style={{ padding: 16 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 12 }}>Role Records (Margaret)</div>
+              <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 12 }}>Role Records (Margaret)</div>
               <div className="oc-grid-2">
                 {MARGARET_PROFILE.roles.map((role) => (
                   <div key={role.roleId} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, borderRadius: 8, padding: 12 }}>
-                    <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 700 }}>{role.role}</div>
-                    <div style={{ marginTop: 4, fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>{role.roleId}</div>
-                    <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: COLORS.textSecondary }}>{role.status}</div>
-                    <div style={{ marginTop: 4, fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: COLORS.textDim }}>Since {role.since}</div>
+                    <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 14, fontWeight: 700 }}>{role.role}</div>
+                    <div style={{ marginTop: 4, fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: COLORS.textSecondary }}>{role.roleId}</div>
+                    <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", fontSize: 12, color: COLORS.textSecondary }}>{role.status}</div>
+                    <div style={{ marginTop: 4, fontFamily: "'Source Sans 3', sans-serif", fontSize: 11, color: COLORS.textDim }}>Since {role.since}</div>
                   </div>
                 ))}
               </div>
@@ -574,29 +580,29 @@ export default function OrbitCharityPocPage() {
 
         {activeTab === 'timeline' && (
           <div className="oc-card" style={{ padding: 16 }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Timeline</div>
+            <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Timeline</div>
             <div style={{ display: 'grid', gap: 10 }}>
               {scoped.events.map((event) => {
                 const ds = domainStyle(event.domain);
                 const critical = event.alert?.severity === 'CRITICAL';
                 return (
-                  <div key={event.id} style={{ border: `1px solid ${critical ? '#7A1616' : COLORS.border}`, background: critical ? COLORS.lowBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
+                  <div key={event.id} style={{ border: `1px solid ${critical ? COLORS.criticalBorder : COLORS.border}`, background: critical ? COLORS.criticalBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>#{event.blockIndex}</span>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11 }}>{event.eventType}</span>
-                        <span style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${ds.border}`, background: ds.bg, color: ds.color, fontFamily: "'Space Mono', monospace", fontSize: 10 }}>{event.domain}</span>
-                        {critical && <span style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #7A1616', background: COLORS.lowBg, color: '#FF6B6B', fontFamily: "'Space Mono', monospace", fontSize: 10 }}>CRITICAL</span>}
+                        <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: COLORS.textSecondary }}>#{event.blockIndex}</span>
+                        <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 11 }}>{event.eventType}</span>
+                        <span style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${ds.border}`, background: ds.bg, color: ds.color, fontFamily: "'Source Code Pro', monospace", fontSize: 10 }}>{event.domain}</span>
+                        {critical && <span style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${COLORS.criticalBorder}`, background: COLORS.criticalBg, color: COLORS.critical, fontFamily: "'Source Code Pro', monospace", fontSize: 10 }}>CRITICAL</span>}
                       </div>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(event.timestamp).toLocaleString()}</span>
+                      <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(event.timestamp).toLocaleString()}</span>
                     </div>
-                    <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>
+                    <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>
                       {event.orgId} · {event.purpose}
                     </div>
-                    <div style={{ marginTop: 8, fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>
+                    <div style={{ marginTop: 8, fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: COLORS.textSecondary }}>
                       scopes: {event.scopes.join(', ')}
                     </div>
-                    <div style={{ marginTop: 8, fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>
+                    <div style={{ marginTop: 8, fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: COLORS.textSecondary }}>
                       prev: {shortHash(event.previousHash)} · hash: {shortHash(event.eventHash)} · sig: {shortHash(event.signature)}
                     </div>
                   </div>
@@ -610,34 +616,34 @@ export default function OrbitCharityPocPage() {
           <div className="oc-card" style={{ padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>Individual Timeline</div>
-                <div style={{ marginTop: 4, fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 13 }}>Search by Orbit Individual ID (OII) across all domains.</div>
+                <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 20, fontWeight: 700 }}>Individual Timeline</div>
+                <div style={{ marginTop: 4, fontFamily: "'Source Sans 3', sans-serif", color: COLORS.textSecondary, fontSize: 13 }}>Search by Orbit Individual ID (OII) across all domains.</div>
               </div>
               <input
                 value={searchOii}
                 onChange={(event) => setSearchOii(event.target.value)}
-                style={{ minWidth: 260, background: COLORS.slate, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.textPrimary, padding: '9px 10px', fontFamily: "'Space Mono', monospace", fontSize: 12 }}
+                style={{ minWidth: 260, background: COLORS.slate, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.textPrimary, padding: '9px 10px', fontFamily: "'Source Code Pro', monospace", fontSize: 12 }}
               />
             </div>
             <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
               {filteredTimeline.length === 0 ? (
-                <div style={{ fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 14 }}>No events found for this OII.</div>
+                <div style={{ fontFamily: "'Source Sans 3', sans-serif", color: COLORS.textSecondary, fontSize: 14 }}>No events found for this OII.</div>
               ) : (
                 filteredTimeline.map((event) => {
                   const critical = event.blockIndex === 14 || event.blockIndex === 15;
                   const ds = domainStyle(event.domain);
                   return (
-                    <div key={`ind-${event.id}`} style={{ border: `1px solid ${critical ? '#7A1616' : COLORS.border}`, background: critical ? COLORS.lowBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
+                    <div key={`ind-${event.id}`} style={{ border: `1px solid ${critical ? COLORS.criticalBorder : COLORS.border}`, background: critical ? COLORS.criticalBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11 }}>Block #{event.blockIndex}</span>
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>{event.eventType}</span>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${ds.border}`, background: ds.bg, color: ds.color, fontFamily: "'Space Mono', monospace", fontSize: 10 }}>{event.domain}</span>
-                          {critical && <span style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #7A1616', background: COLORS.lowBg, color: '#FF6B6B', fontFamily: "'Space Mono', monospace", fontSize: 10 }}>CRITICAL</span>}
+                          <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 11 }}>Block #{event.blockIndex}</span>
+                          <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: COLORS.textSecondary }}>{event.eventType}</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${ds.border}`, background: ds.bg, color: ds.color, fontFamily: "'Source Code Pro', monospace", fontSize: 10 }}>{event.domain}</span>
+                          {critical && <span style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${COLORS.criticalBorder}`, background: COLORS.criticalBg, color: COLORS.critical, fontFamily: "'Source Code Pro', monospace", fontSize: 10 }}>CRITICAL</span>}
                         </div>
-                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(event.timestamp).toLocaleString()}</span>
+                        <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(event.timestamp).toLocaleString()}</span>
                       </div>
-                      <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>{event.purpose}</div>
+                      <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>{event.purpose}</div>
                     </div>
                   );
                 })
@@ -648,7 +654,7 @@ export default function OrbitCharityPocPage() {
 
         {activeTab === 'alerts' && (
           <div className="oc-card" style={{ padding: 16 }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Alerts</div>
+            <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Alerts</div>
             <div style={{ display: 'grid', gap: 10 }}>
               {scoped.alerts.map((alert) => {
                 const as = severityStyle(alert.severity);
@@ -656,13 +662,13 @@ export default function OrbitCharityPocPage() {
                   <div key={alert.id} style={{ border: `1px solid ${as.border}`, background: as.bg, borderRadius: 8, padding: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: "'Space Mono', monospace", color: as.color, fontSize: 10 }}>{alert.severity}</span>
-                        <span style={{ fontFamily: "'Space Mono', monospace", color: as.color, fontSize: 11 }}>{alert.alertType}</span>
-                        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>Block #{alert.blockIndex}</span>
+                        <span style={{ fontFamily: "'Source Code Pro', monospace", color: as.color, fontSize: 10 }}>{alert.severity}</span>
+                        <span style={{ fontFamily: "'Source Code Pro', monospace", color: as.color, fontSize: 11 }}>{alert.alertType}</span>
+                        <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: COLORS.textSecondary }}>Block #{alert.blockIndex}</span>
                       </div>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(alert.createdAt).toLocaleString()}</span>
+                      <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(alert.createdAt).toLocaleString()}</span>
                     </div>
-                    <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 13 }}>{alert.message}</div>
+                    <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", color: COLORS.textSecondary, fontSize: 13 }}>{alert.message}</div>
                   </div>
                 );
               })}
@@ -674,46 +680,46 @@ export default function OrbitCharityPocPage() {
           <div style={{ display: 'grid', gap: 14 }}>
             <div className="oc-card" style={{ padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>ICO Audit View</div>
-                <div style={{ marginTop: 4, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>Includes critical alert summary, NHS boundary log, and evidence pack export.</div>
+                <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 20, fontWeight: 700 }}>ICO Audit View</div>
+                <div style={{ marginTop: 4, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>Includes critical alert summary, NHS boundary log, and evidence pack export.</div>
               </div>
-              <button onClick={downloadEvidencePack} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textPrimary, borderRadius: 6, padding: '9px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Download ICO Evidence Pack</button>
+              <button onClick={downloadEvidencePack} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textPrimary, borderRadius: 6, padding: '9px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13 }}>Download ICO Evidence Pack</button>
             </div>
 
             <div className="oc-grid-3">
               <div className="oc-card" style={{ padding: 14 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Role Collision Risk Score</div>
-                <div style={{ marginTop: 8, fontFamily: "'Space Mono', monospace", fontSize: 30, color: roleCollisionRiskScore >= 50 ? COLORS.low : COLORS.high }}>{roleCollisionRiskScore}</div>
-                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: COLORS.textSecondary }}>Deterministic metric based on multi-role OIIs</div>
+                <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontWeight: 600 }}>Role Collision Risk Score</div>
+                <div style={{ marginTop: 8, fontFamily: "'Source Code Pro', monospace", fontSize: 30, color: roleCollisionRiskScore >= 50 ? COLORS.low : COLORS.high }}>{roleCollisionRiskScore}</div>
+                <div style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 10, color: COLORS.textSecondary }}>Deterministic metric based on multi-role OIIs</div>
               </div>
               <div className="oc-card" style={{ padding: 14 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>Critical Alerts</div>
-                <div style={{ marginTop: 8, fontFamily: "'Space Mono', monospace", fontSize: 30, color: '#FF6B6B' }}>{criticalAlerts.length}</div>
-                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: COLORS.textSecondary }}>CROSS_DOMAIN + GRATEFUL_PATIENT</div>
+                <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontWeight: 600 }}>Critical Alerts</div>
+                <div style={{ marginTop: 8, fontFamily: "'Source Code Pro', monospace", fontSize: 30, color: COLORS.critical }}>{criticalAlerts.length}</div>
+                <div style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 10, color: COLORS.textSecondary }}>CROSS_DOMAIN + GRATEFUL_PATIENT</div>
               </div>
               <div className="oc-card" style={{ padding: 14 }}>
-                <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>DSA Status</div>
-                <div style={{ marginTop: 8, fontFamily: "'Space Mono', monospace", fontSize: 13 }}>{scoped.dsa.reference}</div>
-                <div style={{ marginTop: 4, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: COLORS.textSecondary }}>Expires {scoped.dsa.expiresAt}</div>
+                <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontWeight: 600 }}>DSA Status</div>
+                <div style={{ marginTop: 8, fontFamily: "'Source Code Pro', monospace", fontSize: 13 }}>{scoped.dsa.reference}</div>
+                <div style={{ marginTop: 4, fontFamily: "'Source Sans 3', sans-serif", fontSize: 12, color: COLORS.textSecondary }}>Expires {scoped.dsa.expiresAt}</div>
               </div>
             </div>
 
             <div className="oc-card" style={{ padding: 16 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 10 }}>NHS Data Boundary Panel</div>
+              <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 10 }}>NHS Data Boundary Panel</div>
               <div style={{ display: 'grid', gap: 8 }}>
                 {nhsBoundaryEvents.map((event) => {
                   const breached = event.blockIndex === 15;
                   return (
-                    <div key={`nhs-${event.id}`} style={{ border: `1px solid ${breached ? '#7A1616' : COLORS.border}`, background: breached ? COLORS.lowBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
+                    <div key={`nhs-${event.id}`} style={{ border: `1px solid ${breached ? COLORS.criticalBorder : COLORS.border}`, background: breached ? COLORS.criticalBg : COLORS.slate, borderRadius: 8, padding: 12 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11 }}>Block #{event.blockIndex}</span>
-                          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>{event.eventType}</span>
-                          {breached && <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: '#FF6B6B' }}>NHS_DATA_BOUNDARY BREACH</span>}
+                          <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 11 }}>Block #{event.blockIndex}</span>
+                          <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 11, color: COLORS.textSecondary }}>{event.eventType}</span>
+                          {breached && <span style={{ fontFamily: "'Source Code Pro', monospace", fontSize: 10, color: COLORS.critical }}>NHS_DATA_BOUNDARY BREACH</span>}
                         </div>
-                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(event.timestamp).toLocaleString()}</span>
+                        <span style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 11, color: COLORS.textDim }}>{new Date(event.timestamp).toLocaleString()}</span>
                       </div>
-                      <div style={{ marginTop: 7, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>{event.purpose}</div>
+                      <div style={{ marginTop: 7, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>{event.purpose}</div>
                     </div>
                   );
                 })}
@@ -724,13 +730,13 @@ export default function OrbitCharityPocPage() {
 
         {activeTab === 'sandbox' && (
           <div className="oc-card" style={{ padding: 16 }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>Org Sandbox</div>
-            <div style={{ marginTop: 6, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>
+            <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 20, fontWeight: 700 }}>Org Sandbox</div>
+            <div style={{ marginTop: 6, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>
               Public tier allows read-only walkthrough and evidence download. Authenticated tier allows posting new verification events.
             </div>
             <div style={{ marginTop: 12, border: `1px solid ${COLORS.border}`, background: COLORS.slate, borderRadius: 8, padding: 12 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600 }}>How To Run The Demo</div>
-              <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
+              <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 14, fontWeight: 600 }}>How To Run The Demo</div>
+              <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
                 1. Click {tier === 'public' ? '"Seed Demo Data"' : '"Seed My Data"'} to load Margaret's 17-block sequence.
                 <br />
                 2. Open Timeline and jump to Blocks #14 and #15 to see CRITICAL cross-domain events.
@@ -741,12 +747,12 @@ export default function OrbitCharityPocPage() {
               </div>
             </div>
             <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button onClick={seedDemo} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>
+              <button onClick={seedDemo} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13 }}>
                 {tier === 'public' ? 'Seed Demo Data' : 'Seed My Data'}
               </button>
-              <button onClick={resetSandbox} style={{ border: `1px solid ${COLORS.low}`, background: 'transparent', color: COLORS.low, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Reset Sandbox</button>
-              <button onClick={postDemoAuditEvent} style={{ border: 'none', background: COLORS.teal, color: COLORS.obsidian, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>Post Real Event</button>
-              <button onClick={downloadEvidencePack} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textPrimary, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Download ICO Evidence Pack</button>
+              <button onClick={resetSandbox} style={{ border: `1px solid ${COLORS.low}`, background: 'transparent', color: COLORS.low, borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13 }}>Reset Sandbox</button>
+              <button onClick={postDemoAuditEvent} style={{ border: 'none', background: COLORS.teal, color: COLORS.obsidian, borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, fontWeight: 700 }}>Post Real Event</button>
+              <button onClick={downloadEvidencePack} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textPrimary, borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13 }}>Download ICO Evidence Pack</button>
             </div>
           </div>
         )}
@@ -755,22 +761,22 @@ export default function OrbitCharityPocPage() {
       {modalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 80, padding: 16 }}>
           <div className="oc-card" style={{ width: '100%', maxWidth: 430, padding: 18 }}>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 20, fontWeight: 700 }}>Staff Sign-In (Magic Link)</div>
-            <p style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.6 }}>
+            <div style={{ fontFamily: "'Source Sans 3', sans-serif", fontSize: 20, fontWeight: 700 }}>Staff Sign-In (Magic Link)</div>
+            <p style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.6 }}>
               This charity POC supports role-based staff access. Enter an email to receive a sign-in link.
             </p>
-            <label style={{ display: 'block', marginTop: 12, fontFamily: "'Space Mono', monospace", color: COLORS.textSecondary, fontSize: 11 }}>Email</label>
+            <label style={{ display: 'block', marginTop: 12, fontFamily: "'Source Code Pro', monospace", color: COLORS.textSecondary, fontSize: 11 }}>Email</label>
             <input
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               type="email"
               placeholder="dpo@charity.org"
-              style={{ width: '100%', marginTop: 6, border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textPrimary, borderRadius: 6, padding: '10px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 14 }}
+              style={{ width: '100%', marginTop: 6, border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textPrimary, borderRadius: 6, padding: '10px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 14 }}
             />
-            {authError && <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: COLORS.low }}>{authError}</div>}
+            {authError && <div style={{ marginTop: 8, fontFamily: "'Source Sans 3', sans-serif", fontSize: 12, color: COLORS.low }}>{authError}</div>}
             <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setModalOpen(false)} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textSecondary, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Cancel</button>
-              <button onClick={sendMagicLink} disabled={authBusy || !email} style={{ border: 'none', opacity: authBusy || !email ? 0.6 : 1, background: COLORS.teal, color: COLORS.obsidian, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>{authBusy ? 'Sending...' : 'Send Sign-In Link'}</button>
+              <button onClick={() => setModalOpen(false)} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textSecondary, borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13 }}>Cancel</button>
+              <button onClick={sendMagicLink} disabled={authBusy || !email} style={{ border: 'none', opacity: authBusy || !email ? 0.6 : 1, background: COLORS.teal, color: COLORS.obsidian, borderRadius: 6, padding: '8px 12px', fontFamily: "'Source Sans 3', sans-serif", fontSize: 13, fontWeight: 700 }}>{authBusy ? 'Sending...' : 'Send Sign-In Link'}</button>
             </div>
           </div>
         </div>

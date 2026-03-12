@@ -590,6 +590,17 @@ export default function OrbitGrapheneosPocPage() {
       <section className="og-wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gap: 16 }}>
+            <div className="og-card" style={{ padding: 18 }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 18, fontWeight: 700 }}>What This Demonstrates</div>
+              <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.7 }}>
+                This PoC demonstrates deterministic device trust scoring from GrapheneOS-oriented integrity signals, with a signed event ledger and hash-chain linkage.
+                It shows how posture changes (ADB, developer options, patch age, verified boot) become auditable trust events and alerts.
+              </div>
+              <div style={{ marginTop: 10, fontFamily: "'Space Mono', monospace", color: COLORS.teal, fontSize: 10, letterSpacing: '0.08em' }}>
+                To explore: open Org Sandbox, seed data, post events, then inspect Timeline, Alerts, and Regulator View.
+              </div>
+            </div>
+
             <div className="og-grid-3">
               <div className="og-card" style={{ padding: 16 }}>
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: COLORS.textSecondary }}>Total Events</div>
@@ -640,6 +651,18 @@ export default function OrbitGrapheneosPocPage() {
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 20 }}>Org Sandbox</div>
             <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 14 }}>
               Post Real Event is gated behind authentication per spec. Public users can still run demo read flows.
+            </div>
+            <div style={{ marginTop: 12, border: `1px solid ${COLORS.border}`, background: COLORS.slate, borderRadius: 8, padding: 12 }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600 }}>How To Run The Demo</div>
+              <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
+                1. Click {tier === 'public' ? '"Seed Demo Data"' : '"Seed My Data"'} to initialize a baseline trust event.
+                <br />
+                2. Click "Post Real Event" repeatedly to simulate changing posture outcomes.
+                <br />
+                3. Open Timeline to inspect block order, previous hash, event hash, and signatures.
+                <br />
+                4. Open Alerts and Regulator View to review violations and exported evidence.
+              </div>
             </div>
             <div style={{ marginTop: 18, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button onClick={postRealEvent} style={{ background: COLORS.teal, color: COLORS.obsidian, border: 'none', borderRadius: 6, padding: '9px 14px', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13 }}>
