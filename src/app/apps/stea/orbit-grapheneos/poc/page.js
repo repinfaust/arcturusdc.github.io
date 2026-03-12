@@ -591,10 +591,12 @@ export default function OrbitGrapheneosPocPage() {
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gap: 16 }}>
             <div className="og-card" style={{ padding: 18 }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 18, fontWeight: 700 }}>What This Demonstrates</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 18, fontWeight: 700 }}>Why This PoC Exists</div>
               <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.7 }}>
-                This PoC demonstrates deterministic device trust scoring from GrapheneOS-oriented integrity signals, with a signed event ledger and hash-chain linkage.
-                It shows how posture changes (ADB, developer options, patch age, verified boot) become auditable trust events and alerts.
+                Orbit Device Trust is a proof of concept exploring what device security attestation looks like when it is not owned by a single platform vendor. Today, the dominant mechanism for establishing whether a mobile device can be trusted - Google's Play Integrity API - returns a binary pass or fail, with no reasoning, no audit trail, and no independent verification. For organisations running hardened or non-standard Android deployments, including GrapheneOS, that binary fails routinely on devices that are objectively more secure than a default consumer handset. The question Orbit asks is straightforward: what if the trust decision came with evidence?
+              </div>
+              <div style={{ marginTop: 10, fontFamily: "'DM Sans', sans-serif", color: COLORS.textSecondary, fontSize: 14, lineHeight: 1.7 }}>
+                The POC is aimed at security professionals and enterprise teams who already feel the friction - heads of information security managing non-standard device fleets, security operations teams who need auditable device posture records, and organisations in government-adjacent or regulated environments where \"Google said so\" is not a sufficient compliance answer. It demonstrates a cryptographically signed, hash-chain linked device trust report generated from real hardware signals - verified boot state, kernel hardening, SELinux posture, patch currency - that a security team can inspect, file, and present to an auditor. Not a bypass of existing attestation. A better alternative to it.
               </div>
               <div style={{ marginTop: 10, fontFamily: "'Space Mono', monospace", color: COLORS.teal, fontSize: 10, letterSpacing: '0.08em' }}>
                 To explore: open Org Sandbox, seed data, post events, then inspect Timeline, Alerts, and Regulator View.
