@@ -20,3 +20,8 @@
 - Added Sprocket as a first-class app route under `src/app/apps/sprocket/`.
 - Policy links for Sprocket use HTML routes (`/apps/sprocket/privacy-policy`, `/apps/sprocket/terms-of-use`) to meet accessibility and store-readability requirements.
 - Sprocket card metadata is kept in `src/data/apps.json`; hero and branding assets live under `public/img/`.
+
+## 2026-03-12 — Orbit GrapheneOS POC v2 route
+- Added a new App Router path at `/apps/stea/orbit-grapheneos/poc` as a separate POC surface, leaving existing Orbit routes unchanged.
+- Implemented the v2 two-tier UX in the new page: public demo tier (seeded demo dataset + demo banner) and magic-link sign-in tier for posting real device events.
+- Kept implementation frontend-first (no new backend or infrastructure) to preserve project constraints; authenticated-tier event history is scoped per signed-in user in local storage for POC behaviour.
