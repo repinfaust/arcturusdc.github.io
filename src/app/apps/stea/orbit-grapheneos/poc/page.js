@@ -341,7 +341,51 @@ export default function OrbitGrapheneosPocPage() {
   }
 
   function seedDemoData() {
-    setDemoData(DEMO_BASE);
+    if (tier === 'public') {
+      setDemoData(DEMO_BASE);
+      return;
+    }
+
+    const payload = { ...DEMO_SIGNALS };
+    const trustRating = computeTrustRating(payload);
+    const seededBase = {
+      id: `seed-${Date.now()}`,
+      eventType: 'DEVICE_SIGNAL_REPORTED',
+      orgId: 'device_emitter',
+      userId: user?.uid || 'seeded_user',
+      scopes: Object.keys(payload),
+      purpose: 'device_trust_assessment',
+      timestamp: new Date().toISOString(),
+      previousHash: 'GENESIS',
+      blockIndex: 1,
+      trustRating,
+      payload,
+    };
+    const eventHash = pseudoHash(seededBase);
+    const seededEvent = {
+      ...seededBase,
+      eventHash,
+      signature: pseudoHash(`sig-${eventHash}-${user?.uid || 'seed'}`),
+    };
+
+    setRealData({
+      events: [seededEvent],
+      alerts: deriveAlerts(trustRating, payload).map((alert) => ({
+        ...alert,
+        id: `${seededEvent.id}-${alert.alertType}`,
+        orgId: 'device_emitter',
+        eventId: seededEvent.id,
+        createdAt: seededEvent.timestamp,
+      })),
+      consent: [
+        {
+          orgId: 'device_emitter',
+          scope: 'device_trust_assessment',
+          status: 'GRANTED',
+          updatedAt: seededEvent.timestamp,
+        },
+      ],
+    });
   }
 
   function resetSandbox() {
@@ -572,7 +616,9 @@ export default function OrbitGrapheneosPocPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button onClick={seedDemoData} style={{ border: `1px solid ${COLORS.teal}`, color: COLORS.teal, background: 'transparent', borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Seed Demo Data</button>
+                  <button onClick={seedDemoData} style={{ border: `1px solid ${COLORS.teal}`, color: COLORS.teal, background: 'transparent', borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>
+                    {tier === 'public' ? 'Seed Demo Data' : 'Seed My Data'}
+                  </button>
                   <button onClick={resetSandbox} style={{ border: `1px solid ${COLORS.low}`, color: COLORS.low, background: 'transparent', borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Reset Sandbox</button>
                 </div>
               </div>
