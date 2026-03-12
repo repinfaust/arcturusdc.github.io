@@ -461,7 +461,6 @@ export default function OrbitGrapheneosPocPage() {
   return (
     <main style={{ minHeight: '100vh', background: COLORS.obsidian, color: COLORS.textPrimary }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
         * { box-sizing: border-box; }
         .og-wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
         .og-card { background: ${COLORS.graphite}; border: 1px solid ${COLORS.border}; border-radius: 10px; }
