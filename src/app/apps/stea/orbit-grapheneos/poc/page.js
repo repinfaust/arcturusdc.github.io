@@ -657,7 +657,7 @@ export default function OrbitGrapheneosPocPage() {
             <div style={{ marginTop: 12, border: `1px solid ${COLORS.border}`, background: COLORS.slate, borderRadius: 8, padding: 12 }}>
               <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600 }}>How To Run The Demo</div>
               <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
-                1. Click {tier === 'public' ? '"Seed Demo Data"' : '"Seed My Data"'} to initialize a baseline trust event.
+                1. Click {tier === 'public' ? '"Seed Demo Data"' : '"Seed My Data"'} to initialise a baseline trust event.
                 <br />
                 2. Click "Post Real Event" repeatedly to simulate changing posture outcomes.
                 <br />
@@ -667,6 +667,9 @@ export default function OrbitGrapheneosPocPage() {
               </div>
             </div>
             <div style={{ marginTop: 18, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={seedDemoData} style={{ border: `1px solid ${COLORS.teal}`, color: COLORS.teal, background: 'transparent', borderRadius: 6, padding: '9px 14px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>
+                {tier === 'public' ? 'Seed Demo Data' : 'Seed My Data'}
+              </button>
               <button onClick={postRealEvent} style={{ background: COLORS.teal, color: COLORS.obsidian, border: 'none', borderRadius: 6, padding: '9px 14px', fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 13 }}>
                 Post Real Event
               </button>
