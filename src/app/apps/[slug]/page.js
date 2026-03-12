@@ -5,6 +5,7 @@ const STATIC_APP_ROUTES = new Set([
   'adhd-acclaim',
   'syncfit',
   'assumezero',
+  'dialled-mtb',
   'toume',      // static page at /apps/toume
   // add any others you move to standalone pages
 ]);
