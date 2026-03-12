@@ -770,6 +770,8 @@ export default function OrbitCharityPocPage() {
                 3. Open Alerts to review CROSS_DOMAIN_VIOLATION and GRATEFUL_PATIENT_VIOLATION.
                 <br />
                 4. Open ICO Audit View and download the evidence pack.
+                <br />
+                5. Return to Overview to see status updates following alerts.
               </div>
             </div>
             <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
