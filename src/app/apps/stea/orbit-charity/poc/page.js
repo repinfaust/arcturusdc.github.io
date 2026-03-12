@@ -174,6 +174,16 @@ const SEED_STATE = {
   },
 };
 
+function cloneSeedState() {
+  return {
+    orgs: SEED_STATE.orgs.map((org) => ({ ...org })),
+    events: SEED_STATE.events.map((event) => ({ ...event, scopes: [...event.scopes], roleIds: [...event.roleIds] })),
+    alerts: SEED_STATE.alerts.map((alert) => ({ ...alert })),
+    consent: SEED_STATE.consent.map((consent) => ({ ...consent })),
+    dsa: { ...SEED_STATE.dsa },
+  };
+}
+
 function domainStyle(domain) {
   return DOMAIN_COLORS[domain] || DOMAIN_COLORS.mixed;
 }
@@ -304,12 +314,16 @@ export default function OrbitCharityPocPage() {
   }
 
   function seedDemo() {
-    setDemoState(SEED_STATE);
+    if (tier === 'public') {
+      setDemoState(cloneSeedState());
+      return;
+    }
+    setRealState(cloneSeedState());
   }
 
   function resetSandbox() {
     if (tier === 'public') {
-      setDemoState(SEED_STATE);
+      setDemoState(cloneSeedState());
     } else {
       setRealState({ orgs: ORGS, events: [], alerts: [], consent: [], dsa: SEED_STATE.dsa });
     }
@@ -393,11 +407,11 @@ export default function OrbitCharityPocPage() {
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
+    { id: 'sandbox', label: 'Org Sandbox' },
     { id: 'timeline', label: 'Timeline' },
     { id: 'individual', label: 'Individual Timeline' },
     { id: 'alerts', label: 'Alerts' },
     { id: 'ico', label: 'ICO Audit View' },
-    { id: 'sandbox', label: 'Org Sandbox' },
   ];
 
   const walls = wallStatus(scoped.events);
@@ -491,6 +505,17 @@ export default function OrbitCharityPocPage() {
       <section className="oc-wrap" style={{ paddingTop: 22, paddingBottom: 40 }}>
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gap: 14 }}>
+            <div className="oc-card" style={{ padding: 16 }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: 18 }}>What This Demonstrates</div>
+              <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
+                This PoC shows one individual (Margaret) across donor, service user, volunteer, and NHS referral domains under one pseudonymous OII.
+                The core point is role bleed risk: cross-domain use is detected, signed, and retained in an immutable timeline for audit evidence.
+              </div>
+              <div style={{ marginTop: 10, fontFamily: "'Space Mono', monospace", color: COLORS.teal, fontSize: 10, letterSpacing: '0.07em' }}>
+                To explore: open Org Sandbox, seed data, then inspect Timeline, Alerts, Individual Timeline, and ICO Audit View.
+              </div>
+            </div>
+
             <div className="oc-grid-4">
               <div className="oc-card" style={{ padding: 14 }}>
                 <div style={{ fontFamily: "'Space Mono', monospace", color: COLORS.textSecondary, fontSize: 10 }}>Orbit Individual ID</div>
@@ -703,8 +728,22 @@ export default function OrbitCharityPocPage() {
             <div style={{ marginTop: 6, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary }}>
               Public tier allows read-only walkthrough and evidence download. Authenticated tier allows posting new verification events.
             </div>
+            <div style={{ marginTop: 12, border: `1px solid ${COLORS.border}`, background: COLORS.slate, borderRadius: 8, padding: 12 }}>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600 }}>How To Run The Demo</div>
+              <div style={{ marginTop: 8, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.7 }}>
+                1. Click {tier === 'public' ? '"Seed Demo Data"' : '"Seed My Data"'} to load Margaret's 17-block sequence.
+                <br />
+                2. Open Timeline and jump to Blocks #14 and #15 to see CRITICAL cross-domain events.
+                <br />
+                3. Open Alerts to review CROSS_DOMAIN_VIOLATION and GRATEFUL_PATIENT_VIOLATION.
+                <br />
+                4. Open ICO Audit View and download the evidence pack.
+              </div>
+            </div>
             <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button onClick={seedDemo} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Seed Demo Data</button>
+              <button onClick={seedDemo} style={{ border: `1px solid ${COLORS.teal}`, background: 'transparent', color: COLORS.teal, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>
+                {tier === 'public' ? 'Seed Demo Data' : 'Seed My Data'}
+              </button>
               <button onClick={resetSandbox} style={{ border: `1px solid ${COLORS.low}`, background: 'transparent', color: COLORS.low, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Reset Sandbox</button>
               <button onClick={postDemoAuditEvent} style={{ border: 'none', background: COLORS.teal, color: COLORS.obsidian, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 700 }}>Post Real Event</button>
               <button onClick={downloadEvidencePack} style={{ border: `1px solid ${COLORS.border}`, background: COLORS.slate, color: COLORS.textPrimary, borderRadius: 6, padding: '8px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>Download ICO Evidence Pack</button>
