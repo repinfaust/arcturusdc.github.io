@@ -209,6 +209,7 @@ export default function OrbitGrapheneosPocPage() {
   const [bannerVisible, setBannerVisible] = useState(true);
   const [demoData, setDemoData] = useState(DEMO_BASE);
   const [realData, setRealData] = useState({ events: [], alerts: [], consent: [] });
+  const [notice, setNotice] = useState(null);
 
   const tier = user ? 'authenticated' : 'public';
 
@@ -340,9 +341,15 @@ export default function OrbitGrapheneosPocPage() {
     setBannerVisible(false);
   }
 
+  function showNotice(message, type = 'success') {
+    setNotice({ message, type });
+    window.setTimeout(() => setNotice(null), 3200);
+  }
+
   function seedDemoData() {
     if (tier === 'public') {
       setDemoData(DEMO_BASE);
+      showNotice('Demo data initialised.');
       return;
     }
 
@@ -386,6 +393,7 @@ export default function OrbitGrapheneosPocPage() {
         },
       ],
     });
+    showNotice('Your data has been initialised.');
   }
 
   function resetSandbox() {
@@ -586,6 +594,22 @@ export default function OrbitGrapheneosPocPage() {
           ))}
         </div>
       </nav>
+
+      {notice && (
+        <div className="og-wrap" style={{ paddingTop: 12 }}>
+          <div style={{
+            border: `1px solid ${notice.type === 'error' ? '#4A1010' : '#0A4A2E'}`,
+            background: notice.type === 'error' ? COLORS.lowBg : COLORS.highBg,
+            color: notice.type === 'error' ? COLORS.low : COLORS.high,
+            borderRadius: 8,
+            padding: '10px 12px',
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 13,
+          }}>
+            {notice.message}
+          </div>
+        </div>
+      )}
 
       <section className="og-wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
         {activeTab === 'overview' && (

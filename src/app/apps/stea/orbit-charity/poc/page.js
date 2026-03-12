@@ -229,6 +229,7 @@ export default function OrbitCharityPocPage() {
   const [searchOii, setSearchOii] = useState(TARGET_OII);
   const [demoState, setDemoState] = useState(SEED_STATE);
   const [realState, setRealState] = useState({ orgs: ORGS, events: [], alerts: [], consent: [], dsa: SEED_STATE.dsa });
+  const [notice, setNotice] = useState(null);
 
   const tier = user ? 'authenticated' : 'public';
 
@@ -319,12 +320,19 @@ export default function OrbitCharityPocPage() {
     setBannerVisible(false);
   }
 
+  function showNotice(message, type = 'success') {
+    setNotice({ message, type });
+    window.setTimeout(() => setNotice(null), 3200);
+  }
+
   function seedDemo() {
     if (tier === 'public') {
       setDemoState(cloneSeedState());
+      showNotice('Demo data initialised.');
       return;
     }
     setRealState(cloneSeedState());
+    showNotice('Your data has been initialised.');
   }
 
   function resetSandbox() {
@@ -507,6 +515,22 @@ export default function OrbitCharityPocPage() {
           ))}
         </div>
       </nav>
+
+      {notice && (
+        <div className="oc-wrap" style={{ paddingTop: 12 }}>
+          <div style={{
+            border: `1px solid ${notice.type === 'error' ? '#E8A8A8' : '#B3DCC8'}`,
+            background: notice.type === 'error' ? COLORS.lowBg : COLORS.highBg,
+            color: notice.type === 'error' ? COLORS.low : COLORS.high,
+            borderRadius: 8,
+            padding: '10px 12px',
+            fontFamily: "'Source Sans 3', sans-serif",
+            fontSize: 13,
+          }}>
+            {notice.message}
+          </div>
+        </div>
+      )}
 
       <section className="oc-wrap" style={{ paddingTop: 22, paddingBottom: 40 }}>
         {activeTab === 'overview' && (
