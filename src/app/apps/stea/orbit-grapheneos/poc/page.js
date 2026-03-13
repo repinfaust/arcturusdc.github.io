@@ -852,11 +852,11 @@ export default function OrbitGrapheneosPocPage() {
               <div style={{ marginTop: 10, border: `1px solid ${COLORS.border}`, background: COLORS.slate, borderRadius: 6, padding: '10px 12px', fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: COLORS.textSecondary, lineHeight: 1.6 }}>
                 Firebase setup required:
                 <br />
-                1. Firebase Console -> Authentication -> Sign-in method.
+                {'1. Firebase Console -> Authentication -> Sign-in method.'}
                 <br />
-                2. Enable Email/Password and toggle Email link (passwordless).
+                {'2. Enable Email/Password and toggle Email link (passwordless).'}
                 <br />
-                3. Add `www.arcturusdc.com` to authorised domains.
+                {'3. Add www.arcturusdc.com to authorised domains.'}
               </div>
             )}
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
