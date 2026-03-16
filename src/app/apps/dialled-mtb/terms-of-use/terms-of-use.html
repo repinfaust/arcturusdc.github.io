@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dialled MTB – Terms of Use</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #121214;
+      --surface:   #1e1e22;
+      --surface-2: #28282e;
+      --border:    #2e2e36;
+      --text:      #f0f0f2;
+      --muted:     #8a8a9a;
+      --accent:    #e8196e;
+      --accent-dim:#2a0d1a;
+      --link:      #e8196e;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      gap: 14px;
+    }
+    .nav-mark { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-triangle { width: 22px; height: 20px; }
+    .nav-wordmark { font-size: 16px; font-weight: 900; letter-spacing: 0.04em; color: var(--accent); }
+    .nav-sub { font-size: 13px; color: var(--muted); font-weight: 400; letter-spacing: 0; }
+    nav .divider { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+    nav a.nav-link { font-size: 13px; color: var(--muted); text-decoration: none; }
+    nav a.nav-link:hover { color: var(--text); }
+
+    .hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 900; letter-spacing: -0.02em; color: var(--text); }
+    .hero h1 span { color: var(--accent); }
+    .hero .meta { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+    .summary { background: var(--accent-dim); border-bottom: 1px solid #3d1025; padding: 20px 24px; }
+    .summary-box { max-width: 740px; margin: 0 auto; }
+    .summary-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 8px; }
+    .summary-box p { font-size: 15px; color: #c8c8d8; line-height: 1.6; }
+
+    .content { max-width: 740px; margin: 0 auto; padding: 40px 24px 72px; }
+    .content h2 { font-size: 18px; font-weight: 800; color: var(--text); margin-top: 40px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .content h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 24px; margin-bottom: 6px; }
+    .content p { margin-bottom: 14px; color: #c0c0d0; font-size: 15px; }
+    .content ul { list-style: none; margin: 10px 0 14px; padding: 0; }
+    .content ul li { position: relative; padding-left: 18px; margin-bottom: 6px; font-size: 15px; color: #c0c0d0; }
+    .content ul li::before { content: "–"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+    a { color: var(--link); }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text); font-weight: 600; }
+
+    /* Tier table */
+    .tier-table { width: 100%; border-collapse: collapse; margin: 16px 0 20px; font-size: 15px; }
+    .tier-table th { background: var(--surface-2); border: 1px solid var(--border); padding: 10px 14px; text-align: left; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .tier-table td { border: 1px solid var(--border); padding: 10px 14px; color: #c0c0d0; vertical-align: middle; }
+    .tier-table tr:nth-child(even) td { background: var(--surface); }
+    .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 3px 9px; border-radius: 4px; text-transform: uppercase; }
+    .badge-free { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+    .badge-premium { background: var(--accent); color: #fff; }
+    .tick { color: var(--accent); font-weight: 700; }
+    .dash { color: var(--muted); }
+
+    .contact-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin-top: 12px; }
+    .contact-box p { margin: 4px 0; font-size: 15px; }
+    .fine { margin-top: 32px; font-size: 13px; font-style: italic; color: var(--muted); }
+
+    footer { border-top: 1px solid var(--border); padding: 24px; text-align: center; font-size: 13px; color: var(--muted); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-mark" href="/apps/dialled-mtb">
+      <svg class="nav-triangle" viewBox="0 0 22 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="11,2 21,18 1,18" stroke="#e8196e" stroke-width="2" fill="none" stroke-linejoin="round"/>
+      </svg>
+      <span class="nav-wordmark">DIALLED <span class="nav-sub">MTB</span></span>
+    </a>
+    <div class="divider"></div>
+    <a class="nav-link" href="/apps/dialled-mtb">Home</a>
+  </nav>
+
+  <div class="hero">
+    <h1><span>Terms</span> of Use</h1>
+    <p class="meta">Last updated: March 2026 &nbsp;&middot;&nbsp; Applies to: Dialled MTB Android &amp; iOS apps, v0.1 and later</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-box">
+      <div class="summary-label">The short version</div>
+      <p>Dialled has a free tier (one bike) and a Premium subscription (&pound;4.99/month) that unlocks unlimited bikes, the full maintenance tracker, and the AI Advisor. Subscriptions are billed through Apple or Google. The AI Advisor gives general guidance &mdash; it is not a substitute for a professional mechanic. We don&rsquo;t run ads. Some links to partners or retailers may earn us a commission. Ride safely. These terms are governed by the laws of England and Wales.</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2>1. About Dialled MTB</h2>
+    <p>Dialled MTB is a mountain bike maintenance tracking and setup application provided by <strong>Arcturus Digital Consulting</strong>, registered in England and Wales. The app helps riders track service intervals, log rides, calculate suspension and tyre setup, and get AI-assisted maintenance advice.</p>
+    <p>By downloading or using Dialled MTB, you agree to these terms. If you do not agree, please do not use the app.</p>
+
+    <h2>2. Free and Premium tiers</h2>
+
+    <h3>What&rsquo;s included</h3>
+    <table class="tier-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th><span class="badge badge-free">Free</span></th>
+          <th><span class="badge badge-premium">Premium &middot; &pound;4.99/mo</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bike profiles</td>
+          <td>1</td>
+          <td><span class="tick">Unlimited</span></td>
+        </tr>
+        <tr>
+          <td>Maintenance tracker</td>
+          <td><span class="dash">&mdash;</span></td>
+          <td><span class="tick">&#10003; Full access</span></td>
+        </tr>
+        <tr>
+          <td>Setup calculators (suspension &amp; tyre)</td>
+          <td><span class="tick">&#10003;</span></td>
+          <td><span class="tick">&#10003;</span></td>
+        </tr>
+        <tr>
+          <td>Strava ride sync</td>
+          <td><span class="tick">&#10003;</span></td>
+          <td><span class="tick">&#10003;</span></td>
+        </tr>
+        <tr>
+          <td>AI Advisor</td>
+          <td><span class="dash">&mdash;</span></td>
+          <td><span class="tick">&#10003;</span></td>
+        </tr>
+        <tr>
+          <td>Partner discounts</td>
+          <td><span class="tick">&#10003;</span></td>
+          <td><span class="tick">&#10003;</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Subscriptions</h3>
+    <p>Premium is available as a monthly subscription at &pound;4.99/month. Subscriptions are purchased and managed through the Apple App Store or Google Play. Payment is charged to your Apple or Google account at confirmation of purchase and renews automatically each month unless cancelled.</p>
+    <p>You can cancel at any time through your App Store or Play Store account settings. Cancellation takes effect at the end of the current billing period &mdash; you retain Premium access until then. We do not offer refunds for partial billing periods, except where required by law.</p>
+    <p>Pricing may change. We will give reasonable in-app notice before any price change takes effect. Continued use after a price change constitutes acceptance of the new price.</p>
+
+    <h2>3. Using Dialled MTB</h2>
+
+    <h3>What Dialled is for</h3>
+    <p>Dialled MTB is for personal, non-commercial use. You may use it to:</p>
+    <ul>
+      <li>Track maintenance and service intervals for your own bikes</li>
+      <li>Log rides manually or via Strava integration</li>
+      <li>Calculate suspension PSI, sag, and tyre pressure for your setup</li>
+      <li>Ask the AI Advisor general maintenance and setup questions (Premium)</li>
+      <li>Access partner discounts and affiliate offers</li>
+    </ul>
+
+    <h3>What Dialled is not</h3>
+    <p>Dialled MTB is not a substitute for professional mechanical inspection or advice. Recommendations produced by the app &mdash; including suspension PSI values, sag targets, and tyre pressures &mdash; are starting points based on general guidelines. They are not tailored to your specific components and should always be verified against manufacturer documentation.</p>
+    <p><strong>Safety:</strong> Always check your bike is mechanically safe before riding, regardless of what the app shows. A maintenance tracker does not replace a physical inspection. If you are unsure, consult a qualified bicycle mechanic.</p>
+
+    <h3>Emergency situations</h3>
+    <p>Dialled MTB is not an emergency service. If you or someone else is in danger on or off the trail, call 999 (UK) or your local emergency number immediately.</p>
+
+    <h2>4. Account and access</h2>
+    <p>Dialled MTB requires a Google account to sign in. You are responsible for maintaining the security of your Google account. We are not liable for any loss or damage resulting from unauthorised access to your account.</p>
+    <p>We reserve the right to suspend or terminate accounts that violate these terms, misuse the service, or engage in behaviour that harms other users or the integrity of the app.</p>
+
+    <h2>5. Strava integration</h2>
+    <p>Connecting your Strava account is optional. If you connect Strava, you grant Dialled MTB read-only access to your mountain bike activity data for the purpose of updating your maintenance counters. We do not post to Strava, modify your activities, or access data beyond what is described in the <a href="/apps/dialled-mtb/privacy-policy">Privacy Policy</a>.</p>
+    <p>You can disconnect Strava at any time in Settings. Disconnecting immediately revokes our read access. Previously synced ride counts are retained in your maintenance records unless you choose to delete them.</p>
+
+    <h2>6. AI Advisor &mdash; acceptable use (Premium)</h2>
+    <p>The AI Advisor uses OpenAI&rsquo;s API to generate responses to your maintenance and setup questions. This feature is available to Premium subscribers only. You agree not to use the AI Advisor to:</p>
+    <ul>
+      <li>Attempt to bypass, manipulate, or jailbreak the AI system</li>
+      <li>Generate harmful, abusive, or illegal content</li>
+      <li>Submit personal data of third parties without their knowledge</li>
+      <li>Use the feature for commercial, resale, or automated purposes</li>
+    </ul>
+
+    <h3>Accuracy of AI responses</h3>
+    <p>AI Advisor responses are generated automatically and may sometimes be inaccurate, incomplete, or out of date. Always cross-reference important advice against your component manufacturer&rsquo;s documentation. We accept no liability for decisions made solely on the basis of AI Advisor output.</p>
+
+    <h2>7. Partner discounts and affiliate links</h2>
+    <p>Dialled MTB does not display advertising. Instead, we may surface links to partner retailers or brands offering discounts to Dialled users. These are affiliate or commercial partnerships &mdash; if you make a purchase through one of these links, we may receive a commission from the retailer.</p>
+    <p>Partner links are clearly identified in the app. We only feature partners whose products are relevant to mountain biking. We are not responsible for the availability, pricing, or quality of products offered by third-party retailers, and any purchase you make is subject to the retailer&rsquo;s own terms and conditions.</p>
+
+    <h2>8. Your content</h2>
+    <p>Bike profiles, maintenance records, and ride logs you create remain yours. We do not claim ownership of your data. By using the app, you grant us a limited licence to store and process this data solely to provide the service to you.</p>
+    <p>Questions you send to the AI Advisor are processed by OpenAI as described in the <a href="/apps/dialled-mtb/privacy-policy">Privacy Policy</a>. We do not claim ownership of your questions or the generated replies.</p>
+
+    <h2>9. Intellectual property</h2>
+    <p>The Dialled MTB name, logo, and app design are owned by Arcturus Digital Consulting. You may not reproduce, modify, or redistribute any part of the app or its branding without our written permission.</p>
+    <p>The bike catalogue included in the app contains publicly available product information. Brand names and model names remain the property of their respective manufacturers. Dialled MTB has no commercial relationship with any bike brand listed in the catalogue.</p>
+
+    <h2>10. Availability and updates</h2>
+    <p>We aim to keep Dialled MTB reliable and available, but we cannot guarantee uninterrupted service. AI Advisor functionality depends on OpenAI availability. Strava integration depends on the Strava API remaining accessible under its current terms.</p>
+    <p>We may update Dialled MTB to add features, fix issues, or comply with platform requirements. We may also update these terms and will provide in-app notice for material changes. Continued use of the app after a change constitutes acceptance of the updated terms.</p>
+
+    <h2>11. Limitation of liability</h2>
+    <p>To the extent permitted by law, Arcturus Digital Consulting is not liable for any indirect, incidental, or consequential loss or damage arising from your use of Dialled MTB, including but not limited to:</p>
+    <ul>
+      <li>Mechanical failure of a bike that was serviced or not serviced based on app recommendations</li>
+      <li>Inaccurate PSI, sag, or tyre pressure outputs applied without independent verification</li>
+      <li>Loss of ride data or maintenance records due to account deletion or technical failure</li>
+      <li>Interruption of the Strava integration or AI Advisor service</li>
+      <li>Any purchase made through a partner or affiliate link</li>
+    </ul>
+    <p>Nothing in these terms limits liability for death or personal injury caused by negligence, fraud, or any other matter that cannot be excluded by law.</p>
+
+    <h2>12. Governing law</h2>
+    <p>These terms are governed by the laws of England and Wales. Any disputes arising from your use of Dialled MTB are subject to the non-exclusive jurisdiction of the courts of England and Wales.</p>
+
+    <h2>13. Contact</h2>
+    <p>Questions about these terms?</p>
+    <div class="contact-box">
+      <p><strong>Email:</strong> <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a></p>
+      <p><strong>Web:</strong> <a href="/apps/dialled-mtb/terms-of-use">dialledmtb.co.uk/terms-of-use</a></p>
+    </div>
+    <p class="fine">These terms are written in plain English. If something is not clear, please contact us and we will explain.</p>
+
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Arcturus Digital Consulting &nbsp;&middot;&nbsp;
+      <a href="/apps/dialled-mtb/privacy-policy">Privacy</a> &nbsp;&middot;&nbsp;
+      <a href="/apps/dialled-mtb/terms-of-use">Terms</a>
+    </p>
+  </footer>
+
+</body>
+</html>
