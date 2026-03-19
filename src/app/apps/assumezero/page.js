@@ -1262,6 +1262,13 @@ footer {
 
 /* ─── MOBILE READABILITY ─── */
 @media (max-width: 900px) {
+  html,
+  body,
+  #assumezero-page {
+    -webkit-text-size-adjust: 120%;
+    text-size-adjust: 120%;
+  }
+
   .hero-standfirst,
   .body-copy,
   .market-body,
