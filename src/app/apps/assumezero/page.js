@@ -1254,6 +1254,39 @@ footer {
   transform: translateY(0);
   filter: blur(0);
 }
+
+/* ─── MOBILE READABILITY ─── */
+@media (max-width: 768px) {
+  .hero-standfirst,
+  .body-copy,
+  .market-body,
+  .lookfeel-sub,
+  .about-body,
+  .status-desc,
+  .ask-body {
+    font-size: 18px;
+    line-height: 1.75;
+  }
+
+  .mechanic-body {
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .comparison-item {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .pull-quote {
+    font-size: clamp(21px, 5.3vw, 28px);
+    line-height: 1.45;
+  }
+
+  .curriculum-text {
+    font-size: 14px;
+  }
+}
 </style>
 
 
@@ -1433,11 +1466,13 @@ footer {
 
   <div class="market-grid">
     <div>
-      <p class="market-body">The dominant format for digital literacy education in UK primary and secondary schools is the PDF. Often hand-designed, rarely updated, and distributed via school apps where they are opened once and forgotten.</p>
+      <p class="market-body">The tools exist. The engagement doesn't.</p>
       <br>
-      <p class="market-body">AssumeZero is not competing with Duolingo. It's competing with a PDF about the perils of TikTok, illustrated in clip art, sent home on ClassDojo on a Tuesday.</p>
+      <p class="market-body">Digital literacy education in UK primary and secondary schools is well-intentioned and genuinely valued — but the dominant format remains the PDF. Static, quickly dated, and distributed through school apps that children rarely revisit.</p>
       <br>
-      <p class="market-body">The bar is low. The opportunity is significant. And the Online Safety Act has created statutory pull toward exactly this kind of provision — without anyone yet delivering something children will actually use.</p>
+      <p class="market-body">AssumeZero isn't trying to replace Duolingo. It's filling a gap that worksheet-based resources can't: voluntary, repeated engagement that builds habits rather than completing a task.</p>
+      <br>
+      <p class="market-body">The opportunity is significant. The Online Safety Act has created real statutory pull toward this kind of provision — and game-based learning at this age group remains largely untapped.</p>
     </div>
     <div>
       <div class="comparison-card existing">
