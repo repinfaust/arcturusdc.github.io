@@ -1265,52 +1265,44 @@ footer {
   html,
   body,
   #assumezero-page {
-    -webkit-text-size-adjust: 120%;
-    text-size-adjust: 120%;
+    -webkit-text-size-adjust: 130%;
+    text-size-adjust: 130%;
   }
 
-  .hero-standfirst,
-  .body-copy,
-  .market-body,
-  .lookfeel-sub,
-  .about-body,
-  .status-desc,
-  .ask-body {
-    font-size: 20px !important;
-    line-height: 1.8 !important;
+  /* Force larger readable type across the entire page, including inline font-size styles */
+  #assumezero-page p,
+  #assumezero-page li,
+  #assumezero-page a,
+  #assumezero-page span,
+  #assumezero-page blockquote,
+  #assumezero-page .hero-standfirst,
+  #assumezero-page .body-copy,
+  #assumezero-page .market-body,
+  #assumezero-page .lookfeel-sub,
+  #assumezero-page .about-body,
+  #assumezero-page .status-desc,
+  #assumezero-page .ask-body,
+  #assumezero-page .mechanic-body,
+  #assumezero-page .comparison-item,
+  #assumezero-page .curriculum-text,
+  #assumezero-page .section-label,
+  #assumezero-page .section-headline,
+  #assumezero-page .status-title,
+  #assumezero-page .ask-title,
+  #assumezero-page .timeline-note,
+  #assumezero-page .phone-caption,
+  #assumezero-page .footer-copy,
+  #assumezero-page .footer-nav a,
+  #assumezero-page nav .logo,
+  #assumezero-page .hero-tag,
+  #assumezero-page [style*="font-size"] {
+    font-size: max(18px, 1em) !important;
+    line-height: 1.7 !important;
   }
 
-  .mechanic-body {
-    font-size: 18px !important;
-    line-height: 1.8 !important;
-  }
-
-  .comparison-item {
-    font-size: 17px !important;
-    line-height: 1.75 !important;
-  }
-
-  .pull-quote {
+  #assumezero-page .pull-quote {
     font-size: clamp(24px, 7vw, 32px) !important;
     line-height: 1.5 !important;
-  }
-
-  .curriculum-text {
-    font-size: 16px !important;
-    line-height: 1.75 !important;
-  }
-
-  .section-label,
-  .section-headline,
-  .status-title,
-  .ask-title,
-  .timeline-note,
-  .phone-caption,
-  .footer-copy,
-  .footer-nav a,
-  nav .logo,
-  .hero-tag {
-    font-size: 14px !important;
   }
 }
 </style>
