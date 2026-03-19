@@ -1260,50 +1260,42 @@ footer {
   filter: blur(0);
 }
 
-/* ─── MOBILE READABILITY ─── */
-@media (max-width: 900px) {
-  html,
-  body,
-  #assumezero-page {
-    -webkit-text-size-adjust: 130%;
-    text-size-adjust: 130%;
-  }
+/* ─── READABILITY OVERRIDE ─── */
+#assumezero-page p,
+#assumezero-page li,
+#assumezero-page a,
+#assumezero-page span,
+#assumezero-page blockquote,
+#assumezero-page .hero-standfirst,
+#assumezero-page .body-copy,
+#assumezero-page .market-body,
+#assumezero-page .lookfeel-sub,
+#assumezero-page .about-body,
+#assumezero-page .status-desc,
+#assumezero-page .ask-body,
+#assumezero-page .mechanic-body,
+#assumezero-page .comparison-item,
+#assumezero-page .curriculum-text,
+#assumezero-page [style*="font-size"] {
+  font-size: max(20px, 1em) !important;
+  line-height: 1.75 !important;
+}
 
-  /* Force larger readable type across the entire page, including inline font-size styles */
-  #assumezero-page p,
-  #assumezero-page li,
-  #assumezero-page a,
-  #assumezero-page span,
-  #assumezero-page blockquote,
-  #assumezero-page .hero-standfirst,
-  #assumezero-page .body-copy,
-  #assumezero-page .market-body,
-  #assumezero-page .lookfeel-sub,
-  #assumezero-page .about-body,
-  #assumezero-page .status-desc,
-  #assumezero-page .ask-body,
-  #assumezero-page .mechanic-body,
-  #assumezero-page .comparison-item,
-  #assumezero-page .curriculum-text,
-  #assumezero-page .section-label,
-  #assumezero-page .section-headline,
-  #assumezero-page .status-title,
-  #assumezero-page .ask-title,
-  #assumezero-page .timeline-note,
-  #assumezero-page .phone-caption,
-  #assumezero-page .footer-copy,
-  #assumezero-page .footer-nav a,
-  #assumezero-page nav .logo,
-  #assumezero-page .hero-tag,
-  #assumezero-page [style*="font-size"] {
-    font-size: max(18px, 1em) !important;
-    line-height: 1.7 !important;
-  }
+#assumezero-page .section-label,
+#assumezero-page .status-title,
+#assumezero-page .ask-title,
+#assumezero-page .timeline-note,
+#assumezero-page .phone-caption,
+#assumezero-page .footer-copy,
+#assumezero-page .footer-nav a,
+#assumezero-page nav .logo,
+#assumezero-page .hero-tag {
+  font-size: 16px !important;
+}
 
-  #assumezero-page .pull-quote {
-    font-size: clamp(24px, 7vw, 32px) !important;
-    line-height: 1.5 !important;
-  }
+#assumezero-page .pull-quote {
+  font-size: clamp(28px, 6vw, 36px) !important;
+  line-height: 1.5 !important;
 }
 </style>
 
