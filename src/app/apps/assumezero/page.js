@@ -1256,7 +1256,7 @@ footer {
 }
 
 /* ─── MOBILE READABILITY ─── */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .hero-standfirst,
   .body-copy,
   .market-body,
@@ -1264,27 +1264,41 @@ footer {
   .about-body,
   .status-desc,
   .ask-body {
-    font-size: 18px;
-    line-height: 1.75;
+    font-size: 20px !important;
+    line-height: 1.8 !important;
   }
 
   .mechanic-body {
-    font-size: 16px;
-    line-height: 1.75;
+    font-size: 18px !important;
+    line-height: 1.8 !important;
   }
 
   .comparison-item {
-    font-size: 15px;
-    line-height: 1.7;
+    font-size: 17px !important;
+    line-height: 1.75 !important;
   }
 
   .pull-quote {
-    font-size: clamp(21px, 5.3vw, 28px);
-    line-height: 1.45;
+    font-size: clamp(24px, 7vw, 32px) !important;
+    line-height: 1.5 !important;
   }
 
   .curriculum-text {
-    font-size: 14px;
+    font-size: 16px !important;
+    line-height: 1.75 !important;
+  }
+
+  .section-label,
+  .section-headline,
+  .status-title,
+  .ask-title,
+  .timeline-note,
+  .phone-caption,
+  .footer-copy,
+  .footer-nav a,
+  nav .logo,
+  .hero-tag {
+    font-size: 14px !important;
   }
 }
 </style>
