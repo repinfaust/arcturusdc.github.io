@@ -1835,7 +1835,7 @@ footer {
     </div>
     <div>
       <div class="about-body">
-        <p>I'm David, a product manager and app developer based in the UK. <em>Arcturus Digital Consulting</em> is where I build products that sit at the intersection of technology and everyday life.</p>
+        <p>I'm David, a product manager and app developer based in the UK. <em>Arcturus Digital Consulting</em> is where I build products that sit between technology and everyday life.</p>
         <p>AssumeZero grew out of a question I couldn't stop asking: if the information environment is genuinely dangerous for children, why does every educational response to it look like it was made on a Sunday afternoon with a printer?</p>
         <p>My son Felix, 9, is my first tester, harshest critic, and Chief Testing Officer. He has access to other 9-year-olds. This is considered an asset.</p>
         <p>Background in digital product, analytics, and mobile development. Previous work includes Sprocket (calm admin support for anxious users) and STEa.</p>
