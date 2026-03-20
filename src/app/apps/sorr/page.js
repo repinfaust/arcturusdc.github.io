@@ -260,7 +260,6 @@ export default function SorrPublicOverviewPage() {
               Use SoRR to ground product work, documentation, AI-assisted delivery, and multi-agent execution in a shared source of truth.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <button className="rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white">Book a Demo</button>
               <a
                 href="#example-structure"
                 className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-semibold text-amber-800 hover:bg-amber-100"
