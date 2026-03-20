@@ -133,21 +133,6 @@ export default function SorrPublicOverviewPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-slate-100/70 text-zinc-800">
       <div className="mx-auto max-w-6xl px-6 py-8 lg:px-8">
-        <header className="sticky top-4 z-20 mb-10 rounded-full border border-slate-700 bg-slate-900 px-5 py-3 text-sm text-white shadow-sm">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 font-semibold">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">S</div>
-              <span>ArcturusDC</span>
-            </div>
-            <a
-              href="#example-structure"
-              className="rounded-xl border border-white/30 bg-white/10 px-4 py-2 font-semibold transition hover:bg-white/20"
-            >
-              View Example Structure
-            </a>
-          </div>
-        </header>
-
         <section className="rounded-3xl border border-zinc-200 bg-white px-8 py-12 shadow-sm lg:px-12">
           <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
