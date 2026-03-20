@@ -184,6 +184,11 @@ export default function Unload() {
               Terms of Use (HTML)
             </Link>
           </li>
+          <li>
+            <Link href="/apps/unload/delete-account" className="text-blue-600 hover:underline">
+              Delete Account or Data
+            </Link>
+          </li>
         </ul>
       </section>
     </main>
