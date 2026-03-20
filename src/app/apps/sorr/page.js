@@ -122,14 +122,21 @@ const excerpts = [
   },
 ];
 
+const accentTones = [
+  'border-l-4 border-l-amber-300 bg-amber-50/40',
+  'border-l-4 border-l-indigo-300 bg-indigo-50/40',
+  'border-l-4 border-l-emerald-300 bg-emerald-50/40',
+  'border-l-4 border-l-rose-300 bg-rose-50/40',
+];
+
 export default function SorrPublicOverviewPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-800">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-slate-100/70 text-zinc-800">
       <div className="mx-auto max-w-6xl px-6 py-8 lg:px-8">
-        <header className="sticky top-4 z-20 mb-10 rounded-full border border-zinc-300 bg-zinc-800 px-5 py-3 text-sm text-white shadow-sm">
+        <header className="sticky top-4 z-20 mb-10 rounded-full border border-slate-700 bg-slate-900 px-5 py-3 text-sm text-white shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 font-semibold">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs text-zinc-800">S</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">S</div>
               <span>ArcturusDC</span>
             </div>
             <a
@@ -144,7 +151,7 @@ export default function SorrPublicOverviewPage() {
         <section className="rounded-3xl border border-zinc-200 bg-white px-8 py-12 shadow-sm lg:px-12">
           <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <p className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-600">
+              <p className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
                 System of Record for Reasoning
               </p>
               <h1 className="mt-5 text-4xl font-black tracking-tight text-zinc-900 lg:text-6xl">SoRR</h1>
@@ -154,22 +161,22 @@ export default function SorrPublicOverviewPage() {
                 reduces execution drift, and makes decisions, evidence, and constraints durable across every session.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href="#example-structure" className="rounded-xl bg-zinc-900 px-5 py-3 font-semibold text-white">
+                <a href="#example-structure" className="rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white">
                   Explore SoRR
                 </a>
                 <a
                   href="#example-structure"
-                  className="rounded-xl border border-zinc-300 bg-white px-5 py-3 font-semibold text-zinc-700 hover:bg-zinc-100"
+                  className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-semibold text-amber-800 hover:bg-amber-100"
                 >
                   View Example Structure
                 </a>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-zinc-200 bg-zinc-100 p-5">
+            <div className="rounded-3xl border border-slate-200 bg-slate-100 p-5">
               <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-4">
-                {['README.md', 'CURRENT_STATE.md', 'DECISIONS.md', 'FINDINGS.md', 'AI_CONSTRAINTS.md', 'TESTING.md'].map((item) => (
-                  <div key={item} className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                {['README.md', 'CURRENT_STATE.md', 'DECISIONS.md', 'FINDINGS.md', 'AI_CONSTRAINTS.md', 'TESTING.md'].map((item, idx) => (
+                  <div key={item} className={`flex items-center justify-between rounded-xl border border-zinc-200 px-4 py-3 ${accentTones[idx % accentTones.length]}`}>
                     <span className="font-medium text-zinc-700">{item}</span>
                     <span className="text-xs text-zinc-500">live</span>
                   </div>
@@ -186,8 +193,8 @@ export default function SorrPublicOverviewPage() {
             undocumented decisions, and agents acting without clear boundaries.
           </p>
           <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {principles.map((item) => (
-              <div key={item.title} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            {principles.map((item, idx) => (
+              <div key={item.title} className={`rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm ${accentTones[idx % accentTones.length]}`}>
                 <h3 className="text-xl font-bold text-zinc-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-7 text-zinc-600">{item.body}</p>
               </div>
@@ -201,9 +208,9 @@ export default function SorrPublicOverviewPage() {
             A practical SoRR implementation is made of small, durable documents that define how work should happen and what is true right now.
           </p>
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {docs.map((doc) => (
-              <div key={doc.name} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">Core Document</p>
+            {docs.map((doc, idx) => (
+              <div key={doc.name} className={`rounded-2xl border border-zinc-200 p-5 ${accentTones[idx % accentTones.length]}`}>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">Core Document</p>
                 <h3 className="mt-2 text-xl font-black text-zinc-900">{doc.name}</h3>
                 <p className="mt-3 text-sm leading-7 text-zinc-600">{doc.desc}</p>
               </div>
@@ -217,11 +224,11 @@ export default function SorrPublicOverviewPage() {
             Excerpts from a sample SoRR docs set. This is intentionally selective rather than a full dump.
           </p>
           <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {excerpts.map((item) => (
-              <article key={item.doc} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">{item.doc}</p>
+            {excerpts.map((item, idx) => (
+              <article key={item.doc} className={`rounded-2xl border border-zinc-200 p-6 shadow-sm ${accentTones[idx % accentTones.length]}`}>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">{item.doc}</p>
                 <h3 className="mt-2 text-lg font-bold text-zinc-900">{item.heading}</h3>
-                <blockquote className="mt-3 rounded-lg border-l-4 border-zinc-300 bg-zinc-50 px-4 py-3 text-sm leading-7 text-zinc-700">
+                <blockquote className="mt-3 rounded-lg border-l-4 border-slate-300 bg-white/70 px-4 py-3 text-sm leading-7 text-zinc-700">
                   {item.text}
                 </blockquote>
               </article>
@@ -232,9 +239,9 @@ export default function SorrPublicOverviewPage() {
         <section className="rounded-3xl border border-zinc-200 bg-white px-8 py-12 shadow-sm lg:px-12">
           <h2 className="text-3xl font-black tracking-tight text-zinc-900 lg:text-4xl">How It Works</h2>
           <div className="mt-8 space-y-6">
-            {steps.map((step) => (
-              <div key={step.n} className="flex gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-300 bg-white text-sm font-black text-zinc-800">
+            {steps.map((step, idx) => (
+              <div key={step.n} className={`flex gap-4 rounded-2xl border border-zinc-200 p-5 ${accentTones[idx % accentTones.length]}`}>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-sm font-black text-slate-800">
                   {step.n}
                 </div>
                 <div>
@@ -253,10 +260,10 @@ export default function SorrPublicOverviewPage() {
               Use SoRR to ground product work, documentation, AI-assisted delivery, and multi-agent execution in a shared source of truth.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <button className="rounded-xl bg-zinc-900 px-5 py-3 font-semibold text-white">Book a Demo</button>
+              <button className="rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white">Book a Demo</button>
               <a
                 href="#example-structure"
-                className="rounded-xl border border-zinc-300 bg-zinc-100 px-5 py-3 font-semibold text-zinc-700 hover:bg-zinc-200"
+                className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-semibold text-amber-800 hover:bg-amber-100"
               >
                 See Example Docs
               </a>
@@ -268,8 +275,8 @@ export default function SorrPublicOverviewPage() {
           <div className="rounded-3xl border border-zinc-200 bg-white px-8 py-10 shadow-sm lg:px-12">
             <h2 className="text-2xl font-black tracking-tight text-zinc-900">Outcomes</h2>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {outcomes.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
+              {outcomes.map((item, idx) => (
+                <div key={item.title} className={`rounded-2xl border border-zinc-200 p-5 ${accentTones[idx % accentTones.length]}`}>
                   <h3 className="text-lg font-bold text-zinc-900">{item.title}</h3>
                   <p className="mt-2 text-sm leading-7 text-zinc-600">{item.body}</p>
                 </div>
