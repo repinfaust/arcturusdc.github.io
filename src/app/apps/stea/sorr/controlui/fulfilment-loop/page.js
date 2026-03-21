@@ -19,14 +19,14 @@ export default function SorrControlFulfilmentLoopPage() {
           <div style={{ color: '#0F6E56', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Path A</div>
           <div style={{ marginTop: 4, color: '#10294D', fontWeight: 700 }}>Auto-approve</div>
           <div style={{ marginTop: 6, color: '#475569', fontSize: 13, lineHeight: '20px' }}>
-            Match use case -> permission pass -> assemble governed prompt -> call Claude API -> store response -> render + audit.
+            Match use case, pass permission checks, assemble governed prompt, call Claude API, store response, then render with audit.
           </div>
         </div>
         <div style={{ background: '#EFF6FF', borderRadius: 14, padding: 12 }}>
           <div style={{ color: '#1E40AF', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Path B</div>
           <div style={{ marginTop: 4, color: '#10294D', fontWeight: 700 }}>Human approval</div>
           <div style={{ marginTop: 6, color: '#475569', fontSize: 13, lineHeight: '20px' }}>
-            Approval-required request -> approver action -> Firestore status change -> backend trigger -> governed API call -> notify + audit.
+            Approval-required request, approver action, Firestore status change, backend trigger, governed API call, then notification and audit.
           </div>
         </div>
       </div>
