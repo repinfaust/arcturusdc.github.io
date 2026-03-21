@@ -5,7 +5,15 @@ const manrope = Manrope({ subsets: ['latin'], variable: '--font-controlui-displa
 
 export default function SorrControlUiLayout({ children }) {
   return (
-    <div className={`${inter.variable} ${manrope.variable} min-h-screen bg-[radial-gradient(circle_at_20%_0%,#d6e6ff_0,#f8f9ff_38%,#f8f9ff_100%)] px-4 py-6 [font-family:var(--font-controlui-body)] md:px-8`}>
+    <div
+      className={`${inter.variable} ${manrope.variable} min-h-screen px-4 py-6 [font-family:var(--font-controlui-body)] md:px-8`}
+      style={{
+        backgroundColor: '#0A1220',
+        backgroundImage:
+          'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0), radial-gradient(circle at 25% -10%, rgba(35,76,132,0.35), transparent 40%)',
+        backgroundSize: '22px 22px, auto',
+      }}
+    >
       {children}
     </div>
   );
