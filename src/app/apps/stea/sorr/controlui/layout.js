@@ -1,4 +1,5 @@
 import { Inter, Manrope } from 'next/font/google';
+import SorrRouteAuthGate from './_components/SorrRouteAuthGate';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-controlui-body' });
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-controlui-display' });
@@ -14,7 +15,7 @@ export default function SorrControlUiLayout({ children }) {
         backgroundSize: '22px 22px, auto',
       }}
     >
-      {children}
+      <SorrRouteAuthGate>{children}</SorrRouteAuthGate>
     </div>
   );
 }
