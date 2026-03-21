@@ -16,6 +16,7 @@ const TABS = [
   { href: '/apps/stea/sorr/controlui', label: 'Overview' },
   { href: '/apps/stea/sorr/controlui/handoff', label: 'Claude Handoff States' },
   { href: '/apps/stea/sorr/controlui/use-cases', label: 'Governed Use Cases' },
+  { href: '/apps/stea/sorr/controlui/implementation', label: 'Implementation' },
   { href: '/apps/stea/sorr/controlui/admin-preview', label: 'Admin Console Preview' },
 ];
 
