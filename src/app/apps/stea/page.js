@@ -88,6 +88,14 @@ const IN_SESSION_DESTINATIONS = [
     excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
+    label: 'SoRR Control UI',
+    href: '/apps/stea/sorr/controlui',
+    description: 'Governed orchestration layer for AI requests with risk-tier routing, approvals, audit, and workspace drafting.',
+    gradient: 'from-blue-50/80 to-cyan-50/30',
+    borderColor: 'border-blue-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
+  },
+  {
     label: 'ApexTwin',
     href: '/apps/stea/apextwin-poc',
     description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',
@@ -393,4 +401,3 @@ export default function SteaAccessPage() {
     </div>
   );
 }
-
