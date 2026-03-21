@@ -39,3 +39,8 @@
 - User explicitly approved a SoRR override to allow backend work (Firestore + Claude proxy) for this POC, despite baseline repo constraints that usually keep POCs frontend-first.
 - Implemented SoRR Control under `/apps/stea/sorr/controlui` with multi-page module routes (overview, request engine, classification, approvals, audit trail, governed workspace).
 - Kept magic-link authentication pattern aligned with existing Orbit POCs and made the entry visible from `/apps/stea`.
+
+## 2026-03-21 — SoRR product-model reset (Claude-first, SoRR-as-broker)
+- Repositioned `/apps/stea/sorr/controlui` as a product concept layer: Claude-first workflow with contextual SoRR handoff, product-governed use cases, and admin-console preview.
+- Retained existing governance/admin screens under dedicated subroutes (`/overview`, `/request`, `/approvals`, `/audit`, `/classification`, `/workspace`) as internal control surfaces rather than universal front door UX.
+- Removed the mixed front-door governance flow component to reduce ambiguity between product UX and backend/infosec operations views.
