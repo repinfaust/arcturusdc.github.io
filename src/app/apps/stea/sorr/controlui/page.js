@@ -1,4 +1,4 @@
-import ControlUiClient from './_components/ControlUiClient';
+import FrontDoorClient from './_components/FrontDoorClient';
 
 export const metadata = {
   title: 'SoRR Control UI',
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function SorrControlUiOverviewPage() {
-  return <ControlUiClient activeView="overview" />;
+  return <FrontDoorClient />;
 }
