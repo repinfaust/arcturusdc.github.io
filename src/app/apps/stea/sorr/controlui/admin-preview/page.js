@@ -24,7 +24,7 @@ const LINKS = [
   },
   {
     title: 'Resource Hub / Governed Workspace',
-    body: 'Controlled execution environment after policy routing determines workspace lane.',
+    body: 'A persistent environment for company data analysis, approved workflows, and auditable outputs with full context and traceability.',
     href: '/apps/stea/sorr/controlui/workspace',
   },
 ];

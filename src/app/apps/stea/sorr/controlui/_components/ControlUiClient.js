@@ -484,8 +484,8 @@ export default function ControlUiClient({ activeView }) {
           {activeView === 'request' ? (
             <section style={{ marginTop: 16, display: 'grid', gap: 14 }}>
               <div style={{ background: TOKENS.card, borderRadius: 16, padding: 20 }}>
-                <h2 style={{ margin: 0, color: TOKENS.navyDeep, fontSize: 42, lineHeight: '44px', fontFamily: 'var(--font-controlui-display)' }}>Request Engine</h2>
-                <p style={{ marginTop: 4, color: TOKENS.textSoft }}>Task-first input with governed classification.</p>
+                <h2 style={{ margin: 0, color: TOKENS.navyDeep, fontSize: 42, lineHeight: '44px', fontFamily: 'var(--font-controlui-display)' }}>Review Access</h2>
+                <p style={{ marginTop: 4, color: TOKENS.textSoft }}>Task-first input with access review and governed routing.</p>
                 <textarea
                   value={prompt}
                   onChange={(event) => setPrompt(event.target.value)}
@@ -506,17 +506,19 @@ export default function ControlUiClient({ activeView }) {
                   disabled={requestBusy || !prompt.trim()}
                   style={{ marginTop: 12, border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#10294D,#001432)', color: 'white', fontWeight: 700, padding: '10px 14px', opacity: requestBusy || !prompt.trim() ? 0.6 : 1 }}
                 >
-                  {requestBusy ? 'Classifying...' : 'Classify Request'}
+                  {requestBusy ? 'Reviewing access...' : 'Review Access'}
                 </button>
               </div>
 
               {classificationResult ? (
                 <div style={{ background: TOKENS.card, borderRadius: 16, padding: 20 }}>
-                  <div style={{ color: TOKENS.navyDeep, fontWeight: 700, fontSize: 15 }}>Latest classification</div>
+                  <div style={{ color: TOKENS.navyDeep, fontWeight: 700, fontSize: 15 }}>What happens next</div>
                   <div style={{ marginTop: 8, color: TOKENS.textSoft, fontSize: 14 }}>Request: {classificationResult.request.id}</div>
                   <div style={{ color: TOKENS.textSoft, fontSize: 14 }}>Use case: {classificationResult.policyBundle.matchedUseCase?.name || 'Blocked/Unknown'}</div>
                   <div style={{ color: TOKENS.textSoft, fontSize: 14 }}>Route: {classificationResult.policyBundle.route}</div>
                   <div style={{ color: TOKENS.textSoft, fontSize: 14 }}>Confidence: {classificationResult.policyBundle.confidence}</div>
+                  <div style={{ color: TOKENS.textSoft, fontSize: 14 }}>Allowed actions: {(classificationResult.policyBundle.permittedTools || []).join(', ') || 'None'}</div>
+                  <div style={{ color: TOKENS.textSoft, fontSize: 14 }}>Cannot use enterprise tools: {(classificationResult.policyBundle.blockedActions || []).join(', ') || 'None'}</div>
                 </div>
               ) : null}
             </section>
@@ -524,7 +526,7 @@ export default function ControlUiClient({ activeView }) {
 
           {activeView === 'classification' ? (
             <section style={{ marginTop: 16, background: TOKENS.card, borderRadius: 16, padding: 20 }}>
-              <h2 style={{ margin: 0, color: TOKENS.navyDeep, fontSize: 42, lineHeight: '44px', fontFamily: 'var(--font-controlui-display)' }}>Classification & Policy</h2>
+              <h2 style={{ margin: 0, color: TOKENS.navyDeep, fontSize: 42, lineHeight: '44px', fontFamily: 'var(--font-controlui-display)' }}>What Happens Next</h2>
               <div style={{ marginTop: 12, display: 'grid', gap: 9 }}>
                 {requests.slice(0, 14).map((row) => (
                   <div key={row.id} style={{ background: TOKENS.cardAlt, borderRadius: 12, padding: 12 }}>
@@ -610,7 +612,9 @@ export default function ControlUiClient({ activeView }) {
             <section style={{ marginTop: 16, display: 'grid', gap: 14 }}>
               <div style={{ background: TOKENS.card, borderRadius: 16, padding: 20 }}>
                 <h2 style={{ margin: 0, color: TOKENS.navyDeep, fontSize: 42, lineHeight: '44px', fontFamily: 'var(--font-controlui-display)' }}>Governed Workspace</h2>
-                <p style={{ marginTop: 6, color: TOKENS.textSoft }}>Generate constrained draft outputs after approval.</p>
+                <p style={{ marginTop: 6, color: TOKENS.textSoft }}>
+                  A persistent environment for working with company data, running approved analysis, and producing auditable outputs. Multi-turn work continues here with full context, permissions, and traceability.
+                </p>
                 <select value={selectedRequestId} onChange={(event) => setSelectedRequestId(event.target.value)} style={{ marginTop: 10, width: '100%', borderRadius: 12, border: 'none', background: TOKENS.cardAlt, padding: 12, outline: 'none', color: TOKENS.text }}>
                   <option value="">Select request...</option>
                   {requests.map((row) => (

@@ -33,6 +33,9 @@ export default function ProductPocShell({ activeTab, title, subtitle, children }
             {title}
           </h1>
           <p style={{ margin: '8px 0 0', color: TOKENS.textSoft, fontSize: 17, maxWidth: 860 }}>{subtitle}</p>
+          <p style={{ margin: '8px 0 0', color: TOKENS.primaryContainer, fontSize: 14, fontWeight: 600 }}>
+            SoRR does not replace Claude - it enables it to operate safely inside your business.
+          </p>
         </div>
         <Link
           href="/apps/stea/sorr/controlui/overview"
