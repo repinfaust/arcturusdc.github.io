@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   browserLocalPersistence,
   isSignInWithEmailLink,
@@ -30,6 +31,13 @@ const SHORTCUTS = [
   'Prepare metering dispute decision notes for high-risk account review.',
   'Generate tariff comparison guidance for support colleagues.',
   'Prepare safeguarding support plan for vulnerable customer arrears case.',
+];
+
+const PRODUCT_POC_LINKS = [
+  { href: '/apps/stea/sorr/controlui', label: 'Product Overview' },
+  { href: '/apps/stea/sorr/controlui/handoff', label: 'Claude Handoff States' },
+  { href: '/apps/stea/sorr/controlui/use-cases', label: 'Governed Use Cases' },
+  { href: '/apps/stea/sorr/controlui/admin-preview', label: 'Admin Console Preview' },
 ];
 
 const TOKENS = {
@@ -106,6 +114,7 @@ function SimpleBars() {
 }
 
 export default function ControlUiClient({ activeView }) {
+  const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [email, setEmail] = useState('');
@@ -370,7 +379,35 @@ export default function ControlUiClient({ activeView }) {
             ))}
           </nav>
 
-          <div style={{ marginTop: 28, display: 'grid', gap: 10 }}>
+          <div style={{ marginTop: 20, borderRadius: 12, background: '#D8DEE9', padding: 10 }}>
+            <div style={{ color: '#556C8F', fontSize: 11, letterSpacing: '0.09em', textTransform: 'uppercase', fontWeight: 700 }}>
+              Product POC
+            </div>
+            <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
+              {PRODUCT_POC_LINKS.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    style={{
+                      textDecoration: 'none',
+                      borderRadius: 10,
+                      padding: '8px 10px',
+                      fontSize: 12,
+                      fontWeight: active ? 700 : 600,
+                      background: active ? '#F4F6FA' : '#E7EBF3',
+                      color: active ? TOKENS.primaryContainer : '#425879',
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
             <button
               type="button"
               onClick={handleSignOut}
