@@ -26,11 +26,11 @@ const NAV_ITEMS = [
 ];
 
 const SHORTCUTS = [
-  'Draft a billing correction explanation for an estimated meter read dispute.',
-  'Summarise a complaint escalation for regulator review with remedy options.',
-  'Prepare metering dispute decision notes for high-risk account review.',
-  'Generate tariff comparison guidance for support colleagues.',
-  'Prepare safeguarding support plan for vulnerable customer arrears case.',
+  'Analyse churn across our last three customer cohorts.',
+  'Combine feature adoption data with support feedback themes and summarise likely drivers.',
+  'Run the pricing review agent against this quarter’s usage data.',
+  'Create a workspace that tracks onboarding drop-off weekly and updates the report.',
+  'Turn this analysis into a product update for leadership.',
 ];
 
 const PRODUCT_POC_LINKS = [
