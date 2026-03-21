@@ -16,7 +16,7 @@ import { auth } from '@/lib/firebase';
 const MAGIC_LINK_EMAIL_KEY = 'sorr_controlui_magic_email';
 
 const NAV_ITEMS = [
-  { id: 'overview', href: '/apps/stea/sorr/controlui', label: 'Dashboard' },
+  { id: 'overview', href: '/apps/stea/sorr/controlui/overview', label: 'Dashboard' },
   { id: 'request', href: '/apps/stea/sorr/controlui/request', label: 'Requests' },
   { id: 'approvals', href: '/apps/stea/sorr/controlui/approvals', label: 'Approvals' },
   { id: 'audit', href: '/apps/stea/sorr/controlui/audit', label: 'Audit' },
