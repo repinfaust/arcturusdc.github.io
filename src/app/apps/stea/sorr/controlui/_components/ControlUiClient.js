@@ -37,6 +37,8 @@ const PRODUCT_POC_LINKS = [
   { href: '/apps/stea/sorr/controlui', label: 'Product Overview' },
   { href: '/apps/stea/sorr/controlui/handoff', label: 'Claude Handoff States' },
   { href: '/apps/stea/sorr/controlui/use-cases', label: 'Governed Use Cases' },
+  { href: '/apps/stea/sorr/controlui/implementation', label: 'Implementation' },
+  { href: '/apps/stea/sorr/controlui/fulfilment-loop', label: 'Fulfilment Loop' },
   { href: '/apps/stea/sorr/controlui/admin-preview', label: 'Admin Console Preview' },
 ];
 

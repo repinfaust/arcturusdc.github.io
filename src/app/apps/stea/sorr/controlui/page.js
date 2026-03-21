@@ -19,11 +19,11 @@ export default function SorrControlUiOverviewPage() {
           </div>
           <div style={{ marginTop: 10, display: 'grid', gap: 10 }}>
             {[
-              '1. User asks Claude for analysis or drafting.',
-              '2. Boundary check detects whether governed capability is needed.',
-              '3. Claude either continues directly or hands off to SoRR.',
-              '4. SoRR routes to fast lane, approval, or governed workspace.',
-              '5. Admin console retains full approvals and audit visibility.',
+              '1. User starts in Claude (general reasoning/drafting).',
+              '2. Governed trigger detected: internal data, agent, workspace, or formal output.',
+              '3. SoRR classifies request and resolves policy bundle (use case, tier, rules).',
+              '4. Route selected: auto-approve, human approval, or governed workspace.',
+              '5. SoRR executes via governed Claude API and returns response + audit log to user.',
             ].map((line) => (
               <div key={line} style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74', fontSize: 14 }}>
                 {line}
@@ -37,10 +37,10 @@ export default function SorrControlUiOverviewPage() {
           </div>
           <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
             <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#0B1C30', fontWeight: 600 }}>Claude Query</div>
-            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>Boundary Check: data, agent, workspace, formal output?</div>
-            <div style={{ background: '#DDF9EE', borderRadius: 12, padding: 11, color: '#006C50', fontWeight: 600 }}>Continue In Claude (No governed trigger)</div>
-            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>OR SoRR Route:</div>
-            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>Fast Lane | Approval Required | Governed Workspace | Blocked</div>
+            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>No governed trigger -> continue in Claude (general path)</div>
+            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>Governed trigger -> handoff to SoRR boundary + policy checks</div>
+            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>SoRR route -> Auto-approve | Human approval | Governed workspace</div>
+            <div style={{ background: '#DDF9EE', borderRadius: 12, padding: 11, color: '#006C50', fontWeight: 600 }}>Fulfil via governed Claude API -> response returned + auditable loop closed</div>
           </div>
         </div>
       </div>
