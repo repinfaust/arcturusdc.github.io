@@ -9,13 +9,13 @@ const STATES = [
   },
   {
     title: 'State B: Approved Capability Available',
-    body: 'This task can use approved product data and analysis tools. Continue with Product Insight Agent.',
+    body: 'This task can use approved product data and analysis tools. Continue in the governed SoRR workspace (via API execution).',
     tone: '#EFF4FF',
     text: '#10294D',
   },
   {
     title: 'State C: Approval Required',
-    body: 'This task needs approval before accessing company data. Approval request created.',
+    body: 'This task needs approval before accessing company data. Approval request created. If approved, execution continues in the governed SoRR workspace (via API execution).',
     tone: '#FFEFE3',
     text: '#9A3D08',
   },
