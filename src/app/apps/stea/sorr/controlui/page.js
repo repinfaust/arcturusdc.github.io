@@ -37,10 +37,10 @@ export default function SorrControlUiOverviewPage() {
           </div>
           <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
             <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#0B1C30', fontWeight: 600 }}>Claude Query</div>
-            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>No governed trigger -> continue in Claude (general path)</div>
-            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>Governed trigger -> handoff to SoRR boundary + policy checks</div>
-            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>SoRR route -> Auto-approve | Human approval | Governed workspace</div>
-            <div style={{ background: '#DDF9EE', borderRadius: 12, padding: 11, color: '#006C50', fontWeight: 600 }}>Fulfil via governed Claude API -> response returned + auditable loop closed</div>
+            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>No governed trigger: continue in Claude (general path)</div>
+            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>Governed trigger: handoff to SoRR boundary plus policy checks</div>
+            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 11, color: '#4C5D74' }}>SoRR route: Auto-approve | Human approval | Governed workspace</div>
+            <div style={{ background: '#DDF9EE', borderRadius: 12, padding: 11, color: '#006C50', fontWeight: 600 }}>Fulfil via governed Claude API: response returned and auditable loop closed</div>
           </div>
         </div>
       </div>
