@@ -11,7 +11,7 @@ export default function SorrControlUiOverviewPage() {
     <ProductPocShell
       activeTab="/apps/stea/sorr/controlui"
       title="Use Claude normally. Move to SoRR only when needed."
-      subtitle="The fastest way to understand this POC: ask the OpenAI panel below about your task and it will show when SoRR should take over."
+      subtitle="Use the OpenAI panel below to summarise the docs/deck and quickly understand what SoRR Control is, why it exists, and when it should be used."
     >
       <div style={{ background: '#EFF4FF', borderRadius: 16, padding: 16, color: '#4C5D74', fontSize: 15, lineHeight: '24px', border: '1px solid #D6E0F4' }}>
         Claude stays your thinking interface. SoRR activates only for governed work: company data, approved tools, persistent workspaces, or formal outputs.
@@ -20,7 +20,7 @@ export default function SorrControlUiOverviewPage() {
       <PocDocAssistant
         compact
         title="Start Here: Ask OpenAI"
-        subtitle="Use this shortcut to discover when work stays in Claude vs moves into SoRR."
+        subtitle="Shortcut: summarise the POC docs/deck to discover SoRR Control."
       />
 
       <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>

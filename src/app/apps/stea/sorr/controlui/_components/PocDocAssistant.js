@@ -158,7 +158,7 @@ export default function PocDocAssistant({ compact = false, title = 'POC Analysis
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             rows={compact ? 3 : 4}
-            placeholder="Ask about the POC model or any listed document..."
+            placeholder="Ask for a summary, comparison, or key takeaways from the docs/deck..."
             style={{
               width: '100%',
               border: 'none',
@@ -173,7 +173,7 @@ export default function PocDocAssistant({ compact = false, title = 'POC Analysis
           />
           <div style={{ borderTop: '1px solid #E4ECFA', padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <span style={{ color: '#94A3B8', fontSize: 12 }}>
-              {compact ? 'Fast shortcut: ask a question to see if work should stay in Claude or move to SoRR.' : 'Uses POC context + markdown docs. PDF/DOCX/PPTX are listed and linkable.'}
+              {compact ? 'Discovery shortcut: summarise across the docs/deck to understand SoRR Control.' : 'Uses POC context + markdown docs. PDF/DOCX/PPTX are listed and linkable.'}
             </span>
             <button
               type="button"
