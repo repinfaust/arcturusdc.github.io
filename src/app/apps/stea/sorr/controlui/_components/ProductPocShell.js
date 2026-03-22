@@ -25,7 +25,7 @@ const TABS = [
 export default function ProductPocShell({ activeTab, title, subtitle, children }) {
   return (
     <div style={{ maxWidth: 1160, margin: '24px auto', background: TOKENS.surface, borderRadius: 22, padding: 24, boxShadow: '0 26px 86px rgba(0,20,50,0.18)' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <header>
         <div>
           <div style={{ color: TOKENS.secondary, fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
             SoRR Control Product POC
@@ -38,12 +38,6 @@ export default function ProductPocShell({ activeTab, title, subtitle, children }
             SoRR does not replace Claude - it enables it to operate safely inside your business.
           </p>
         </div>
-        <Link
-          href="/apps/stea/sorr/controlui/overview"
-          style={{ textDecoration: 'none', borderRadius: 12, padding: '10px 14px', background: TOKENS.surfaceLow, color: TOKENS.primaryContainer, fontWeight: 700, fontSize: 14 }}
-        >
-          Open Admin Console
-        </Link>
       </header>
 
       <nav style={{ marginTop: 16, background: TOKENS.surfaceLow, borderRadius: 14, padding: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
