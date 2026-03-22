@@ -173,7 +173,7 @@ export default function PocDocAssistant({ compact = false, title = 'POC Analysis
           />
           <div style={{ borderTop: '1px solid #E4ECFA', padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <span style={{ color: '#94A3B8', fontSize: 12 }}>
-              Uses POC context + markdown docs. PDF/DOCX/PPTX are listed and linkable.
+              {compact ? 'Fast shortcut: ask a question to see if work should stay in Claude or move to SoRR.' : 'Uses POC context + markdown docs. PDF/DOCX/PPTX are listed and linkable.'}
             </span>
             <button
               type="button"

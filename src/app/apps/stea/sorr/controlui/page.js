@@ -10,17 +10,17 @@ export default function SorrControlUiOverviewPage() {
   return (
     <ProductPocShell
       activeTab="/apps/stea/sorr/controlui"
-      title="Claude for thinking. SoRR for doing real work with company data."
-      subtitle="Use Claude normally. When a task needs access to company data, approved agents, or persistent outputs, SoRR enables it with governance, approvals, and full audit applied automatically."
+      title="Use Claude normally. Move to SoRR only when needed."
+      subtitle="The fastest way to understand this POC: ask the OpenAI panel below about your task and it will show when SoRR should take over."
     >
-      <div style={{ background: '#EFF4FF', borderRadius: 16, padding: 16, color: '#4C5D74', fontSize: 15, lineHeight: '24px' }}>
-        Claude is where product teams think, explore, and draft. When work needs company data, approved agents, or formal outputs, it moves into SoRR - a governed execution layer that applies permissions, approvals, and audit automatically. Claude remains the interface; SoRR enables it to operate safely in a real business context.
+      <div style={{ background: '#EFF4FF', borderRadius: 16, padding: 16, color: '#4C5D74', fontSize: 15, lineHeight: '24px', border: '1px solid #D6E0F4' }}>
+        Claude stays your thinking interface. SoRR activates only for governed work: company data, approved tools, persistent workspaces, or formal outputs.
       </div>
 
       <PocDocAssistant
         compact
-        title="Ask About This POC"
-        subtitle="Ask OpenAI questions about this operating model and the attached SoRR document set."
+        title="Start Here: Ask OpenAI"
+        subtitle="Use this shortcut to discover when work stays in Claude vs moves into SoRR."
       />
 
       <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -32,8 +32,7 @@ export default function SorrControlUiOverviewPage() {
             {[
               'Think and explore ideas',
               'Draft from pasted content',
-              'Work with public information',
-              'One-off analysis',
+              'Public information tasks',
             ].map((line) => (
               <div key={line} style={{ background: 'rgba(255,255,255,0.72)', borderRadius: 12, padding: 10, color: '#5F4B2B', fontSize: 14, border: '1px solid #E5D7BE' }}>
                 {line}
@@ -49,9 +48,8 @@ export default function SorrControlUiOverviewPage() {
             {[
               'Access approved company datasets',
               'Run approved analysis agents',
-              'Create persistent workspaces (Cowork-style)',
               'Generate shareable, auditable outputs',
-              'Apply approvals and policy automatically',
+              'Use governed workspaces when required',
             ].map((line) => (
               <div key={line} style={{ background: 'rgba(255,255,255,0.72)', borderRadius: 12, padding: 10, color: '#0C6650', fontSize: 14, border: '1px solid #BFE7D6' }}>
                 {line}
@@ -70,8 +68,8 @@ export default function SorrControlUiOverviewPage() {
             {[
               'Company data (not pasted manually)',
               'Approved agents or tools',
-              'Ongoing or auto-updating work',
               'Outputs that will be shared or stored',
+              'Ongoing governed workspace work',
             ].map((line) => (
               <div key={line} style={{ background: 'rgba(255,255,255,0.75)', borderRadius: 12, padding: 10, color: '#1E3A8A', fontSize: 14, border: '1px solid #C5D3FA' }}>
                 {line}
@@ -85,10 +83,10 @@ export default function SorrControlUiOverviewPage() {
           </div>
           <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
             {[
-              'Claude recognises the need',
-              'SoRR applies the right controls',
-              'Work continues in the correct lane',
-              'Cannot use enterprise tools appears only when no approved path exists',
+              'SoRR applies access + policy controls',
+              'Work continues in approved lane',
+              'Auto-approve, approval, or governed workspace',
+              'Blocked only when no approved enterprise path exists',
             ].map((line) => (
               <div key={line} style={{ background: 'rgba(255,255,255,0.75)', borderRadius: 12, padding: 10, color: '#5530A5', fontSize: 14, border: '1px solid #D0C3F7' }}>
                 {line}
@@ -103,7 +101,7 @@ export default function SorrControlUiOverviewPage() {
           Closed Loop Graphic
         </div>
         <div style={{ marginTop: 5, color: '#4C5D74', fontSize: 14 }}>
-          Claude handles general thinking. SoRR enables governed work with company data, agents, and outputs, and returns auditable results.
+          Claude for thinking. SoRR for governed execution and auditable outcomes.
         </div>
 
         <img
@@ -113,31 +111,6 @@ export default function SorrControlUiOverviewPage() {
         />
       </div>
 
-      <div style={{ marginTop: 14, background: '#EFF4FF', borderRadius: 16, padding: 16 }}>
-        <div style={{ color: '#10294D', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          One-line Positioning
-        </div>
-        <div style={{ marginTop: 8, color: '#0B1C30', fontSize: 15, fontWeight: 600 }}>
-          SoRR does not replace Claude - it enables it to operate safely inside your business.
-        </div>
-      </div>
-
-      <div style={{ marginTop: 14, background: '#EFF4FF', borderRadius: 16, padding: 16 }}>
-        <div style={{ color: '#10294D', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Final Clarity
-        </div>
-        <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
-          <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 10, color: '#4C5D74', fontSize: 14 }}>
-            Claude remains the interface for thinking and exploration.
-          </div>
-          <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 10, color: '#4C5D74', fontSize: 14 }}>
-            SoRR handles work that touches company data, approved workflows, or formal outputs.
-          </div>
-          <div style={{ background: '#FFFFFF', borderRadius: 12, padding: 10, color: '#4C5D74', fontSize: 14 }}>
-            This keeps everyday use simple while ensuring governed work is secure, auditable, and controlled.
-          </div>
-        </div>
-      </div>
     </ProductPocShell>
   );
 }
