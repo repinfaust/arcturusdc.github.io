@@ -18,6 +18,7 @@ const TABS = [
   { href: '/apps/stea/sorr/controlui/use-cases', label: 'Governed Use Cases' },
   { href: '/apps/stea/sorr/controlui/implementation', label: 'Implementation' },
   { href: '/apps/stea/sorr/controlui/fulfilment-loop', label: 'Fulfilment Loop' },
+  { href: '/apps/stea/sorr/controlui/poc-analysis', label: 'POC Analysis' },
   { href: '/apps/stea/sorr/controlui/admin-preview', label: 'Admin Console Preview' },
 ];
 

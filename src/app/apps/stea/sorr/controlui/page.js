@@ -1,4 +1,5 @@
 import ProductPocShell from './_components/ProductPocShell';
+import PocDocAssistant from './_components/PocDocAssistant';
 
 export const metadata = {
   title: 'SoRR Control UI',
@@ -16,9 +17,15 @@ export default function SorrControlUiOverviewPage() {
         Claude is where product teams think, explore, and draft. When work needs company data, approved agents, or formal outputs, it moves into SoRR - a governed execution layer that applies permissions, approvals, and audit automatically. Claude remains the interface; SoRR enables it to operate safely in a real business context.
       </div>
 
+      <PocDocAssistant
+        compact
+        title="Ask About This POC"
+        subtitle="Ask OpenAI questions about this operating model and the attached SoRR document set."
+      />
+
       <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div style={{ background: '#EFF4FF', borderRadius: 16, padding: 16 }}>
-          <div style={{ color: '#10294D', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <div style={{ background: 'linear-gradient(145deg, #F5F1EA 0%, #EFE7DA 100%)', borderRadius: 16, padding: 16, border: '1px solid #E5D7BE' }}>
+          <div style={{ color: '#6A450D', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             Without SoRR
           </div>
           <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
@@ -28,14 +35,14 @@ export default function SorrControlUiOverviewPage() {
               'Work with public information',
               'One-off analysis',
             ].map((line) => (
-              <div key={line} style={{ background: '#FFFFFF', borderRadius: 12, padding: 10, color: '#4C5D74', fontSize: 14 }}>
+              <div key={line} style={{ background: 'rgba(255,255,255,0.72)', borderRadius: 12, padding: 10, color: '#5F4B2B', fontSize: 14, border: '1px solid #E5D7BE' }}>
                 {line}
               </div>
             ))}
           </div>
         </div>
-        <div style={{ background: '#EFF4FF', borderRadius: 16, padding: 16 }}>
-          <div style={{ color: '#10294D', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <div style={{ background: 'linear-gradient(145deg, #EAF8F2 0%, #DEF2E9 100%)', borderRadius: 16, padding: 16, border: '1px solid #BFE7D6' }}>
+          <div style={{ color: '#0F6E56', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             With SoRR
           </div>
           <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
@@ -46,7 +53,7 @@ export default function SorrControlUiOverviewPage() {
               'Generate shareable, auditable outputs',
               'Apply approvals and policy automatically',
             ].map((line) => (
-              <div key={line} style={{ background: '#FFFFFF', borderRadius: 12, padding: 10, color: '#4C5D74', fontSize: 14 }}>
+              <div key={line} style={{ background: 'rgba(255,255,255,0.72)', borderRadius: 12, padding: 10, color: '#0C6650', fontSize: 14, border: '1px solid #BFE7D6' }}>
                 {line}
               </div>
             ))}
@@ -55,8 +62,8 @@ export default function SorrControlUiOverviewPage() {
       </div>
 
       <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div style={{ background: '#EFF4FF', borderRadius: 16, padding: 16 }}>
-          <div style={{ color: '#10294D', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <div style={{ background: 'linear-gradient(145deg, #EAF0FF 0%, #DEE7FF 100%)', borderRadius: 16, padding: 16, border: '1px solid #C5D3FA' }}>
+          <div style={{ color: '#1D3C8A', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             When does work move into SoRR?
           </div>
           <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
@@ -66,14 +73,14 @@ export default function SorrControlUiOverviewPage() {
               'Ongoing or auto-updating work',
               'Outputs that will be shared or stored',
             ].map((line) => (
-              <div key={line} style={{ background: '#FFFFFF', borderRadius: 12, padding: 10, color: '#4C5D74', fontSize: 14 }}>
+              <div key={line} style={{ background: 'rgba(255,255,255,0.75)', borderRadius: 12, padding: 10, color: '#1E3A8A', fontSize: 14, border: '1px solid #C5D3FA' }}>
                 {line}
               </div>
             ))}
           </div>
         </div>
-        <div style={{ background: '#EFF4FF', borderRadius: 16, padding: 16 }}>
-          <div style={{ color: '#10294D', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <div style={{ background: 'linear-gradient(145deg, #F2EBFF 0%, #E9E2FF 100%)', borderRadius: 16, padding: 16, border: '1px solid #D0C3F7' }}>
+          <div style={{ color: '#4A2B90', fontWeight: 700, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             What happens next?
           </div>
           <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
@@ -83,7 +90,7 @@ export default function SorrControlUiOverviewPage() {
               'Work continues in the correct lane',
               'Cannot use enterprise tools appears only when no approved path exists',
             ].map((line) => (
-              <div key={line} style={{ background: '#FFFFFF', borderRadius: 12, padding: 10, color: '#4C5D74', fontSize: 14 }}>
+              <div key={line} style={{ background: 'rgba(255,255,255,0.75)', borderRadius: 12, padding: 10, color: '#5530A5', fontSize: 14, border: '1px solid #D0C3F7' }}>
                 {line}
               </div>
             ))}
