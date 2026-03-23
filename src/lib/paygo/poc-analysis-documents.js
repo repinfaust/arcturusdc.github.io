@@ -1,33 +1,4 @@
-export const PAYGO_POC_DOCUMENTS = [
-  {
-    id: 'paygo-poc-v02',
-    title: 'PAYGO POC Build Spec v02',
-    href: '/docs/paygo/paygo_poc_build_spec_v02.md',
-    type: 'MD',
-    indexable: true,
-  },
-  {
-    id: 'payg-poc-v1',
-    title: 'PAYG POC Build Spec',
-    href: '/docs/paygo/payg_poc_build_spec.md',
-    type: 'MD',
-    indexable: true,
-  },
-  {
-    id: 'paygo-ai-analyst',
-    title: 'PAYGO AI Analyst Spec',
-    href: '/docs/paygo/paygo_ai_analyst_spec.md',
-    type: 'MD',
-    indexable: true,
-  },
-  {
-    id: 'paygo-seed-data',
-    title: 'PAYGO Seed Data v4',
-    href: '/docs/paygo/payg_seed_data_v4.xlsx',
-    type: 'XLSX',
-    indexable: false,
-  },
-];
+export const PAYGO_POC_DOC_COLLECTION = 'paygo_poc_analysis_docs';
 
 export const PAYGO_CONTEXT_PRIMER = [
   'PAYGO is a product demonstration for prepayment energy management across UK, Ireland, and USA.',

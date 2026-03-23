@@ -16,7 +16,6 @@ export default function PaygoWebMirrorPage() {
       <PaygoMagicLinkGate>
         <section className={styles.paygoLayout}>
           <aside className={styles.leftColumn}>
-            <PaygoDocAssistant />
             <div className={`${styles.leftCopy} ${styles.card}`}>
               <h2>PAYGO - Demo App</h2>
               <p>
@@ -32,6 +31,7 @@ export default function PaygoWebMirrorPage() {
                 Built by <a href="mailto:david.loake@ensek.co.uk">David Loake</a>
               </p>
             </div>
+            <PaygoDocAssistant />
           </aside>
 
           <div className={styles.phoneColumn}>

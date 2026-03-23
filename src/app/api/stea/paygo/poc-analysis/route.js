@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import path from 'path';
-import { readFile } from 'fs/promises';
-import { PAYGO_CONTEXT_PRIMER, PAYGO_POC_DOCUMENTS } from '@/lib/paygo/poc-analysis-documents';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { PAYGO_CONTEXT_PRIMER, PAYGO_POC_DOC_COLLECTION } from '@/lib/paygo/poc-analysis-documents';
 import { verifySorrSession } from '@/lib/sorr/controlui-server';
 
 function tokenize(value) {
@@ -23,17 +22,23 @@ function trimText(value, maxLength = 7000) {
   return `${normalized.slice(0, maxLength)}...`;
 }
 
-async function loadIndexableDocs() {
-  const docs = await Promise.all(
-    PAYGO_POC_DOCUMENTS.filter((doc) => doc.indexable).map(async (doc) => {
-      const filePath = path.join(process.cwd(), 'public', doc.href.replace(/^\//, ''));
-      const text = await readFile(filePath, 'utf8');
-      return {
-        ...doc,
-        text: trimText(text),
-      };
-    })
-  );
+async function loadIndexableDocsFromFirestore() {
+  const { db } = getFirebaseAdmin();
+  const snapshot = await db.collection(PAYGO_POC_DOC_COLLECTION).get();
+
+  const docs = snapshot.docs
+    .map((doc) => ({ id: doc.id, ...(doc.data() || {}) }))
+    .filter((doc) => doc.indexable !== false && typeof doc.text === 'string' && doc.text.trim().length > 0)
+    .map((doc) => ({
+      id: doc.id,
+      title: String(doc.title || doc.id),
+      text: trimText(doc.text),
+    }));
+
+  if (docs.length === 0) {
+    throw new Error('No PAYGO analysis documents found in Firestore. Run `npm run paygo:seed-docs` first.');
+  }
+
   return docs;
 }
 
@@ -44,8 +49,7 @@ export async function GET(request) {
   }
 
   return NextResponse.json({
-    docs: PAYGO_POC_DOCUMENTS,
-    note: 'Indexed analysis uses markdown specs. XLSX is listed for reference/download only.',
+    note: 'PAYGO document analysis is enabled. Source specs are loaded server-side from Firebase and are not publicly exposed.',
   });
 }
 
@@ -73,7 +77,7 @@ export async function POST(request) {
     }
 
     const model = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
-    const indexedDocs = await loadIndexableDocs();
+    const indexedDocs = await loadIndexableDocsFromFirestore();
     const terms = tokenize(question);
     const ranked = indexedDocs
       .map((doc) => ({ ...doc, score: scoreDocForQuestion(doc, terms) }))
@@ -132,10 +136,8 @@ export async function POST(request) {
       sources: docsForPrompt.map((doc, index) => ({
         id: doc.id,
         title: doc.title,
-        href: doc.href,
         cite: `[${index + 1}]`,
       })),
-      listedDocs: PAYGO_POC_DOCUMENTS,
       model,
     });
   } catch (error) {
