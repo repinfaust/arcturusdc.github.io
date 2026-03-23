@@ -1,6 +1,8 @@
 node_modules
 !src/app/apps/stea/paygo/_runtime/assets/node_modules/
 !src/app/apps/stea/paygo/_runtime/assets/node_modules/**
+!public/paygo-runtime-assets/node_modules/
+!public/paygo-runtime-assets/node_modules/**
 .env.local
 .next
 *.log
