@@ -27,12 +27,7 @@ function resolveContentType(filePath) {
 }
 
 function getRuntimeFirebaseApiKey() {
-  return (
-    process.env.PAYGO_FIREBASE_API_KEY ||
-    process.env.EXPO_PUBLIC_FIREBASE_API_KEY ||
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
-    ''
-  );
+  return process.env.PAYGO_FIREBASE_API_KEY || '';
 }
 
 async function verifySession(request) {
@@ -72,6 +67,12 @@ export async function GET(request, { params }) {
 
     if (contentType.startsWith('application/javascript')) {
       const apiKey = getRuntimeFirebaseApiKey();
+      if (!apiKey) {
+        return NextResponse.json(
+          { error: 'PAYGO_FIREBASE_API_KEY is not configured for runtime key hydration' },
+          { status: 500 }
+        );
+      }
       const source = body.toString('utf8');
       const hydrated = source.replace(/__PAYGO_FIREBASE_API_KEY__/g, apiKey);
       body = Buffer.from(hydrated, 'utf8');
