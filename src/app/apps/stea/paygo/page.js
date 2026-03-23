@@ -1,4 +1,5 @@
 import PaygoMagicLinkGate from './_components/PaygoMagicLinkGate';
+import PaygoDocAssistant from './_components/PaygoDocAssistant';
 import styles from './paygo.module.css';
 
 export default function PaygoWebMirrorPage() {
@@ -14,20 +15,23 @@ export default function PaygoWebMirrorPage() {
     >
       <PaygoMagicLinkGate>
         <section className={styles.paygoLayout}>
-          <aside className={`${styles.leftCopy} ${styles.card}`}>
-            <h2>PAYGO - Demo App</h2>
-            <p>
-              This app is a product demonstration tool built to explore prepayment energy management concepts across UK, Irish, and
-              US markets.
-            </p>
-            <p>
-              All customer profiles, account data, and energy usage shown are entirely fictional. No real customer information,
-              payment details, or live energy accounts are used at any point.
-            </p>
-            <p>This is not a consumer product. No personal data is collected or stored.</p>
-            <p className={styles.attribution}>
-              Built by <a href="mailto:david.loake@ensek.co.uk">David Loake</a>
-            </p>
+          <aside className={styles.leftColumn}>
+            <PaygoDocAssistant />
+            <div className={`${styles.leftCopy} ${styles.card}`}>
+              <h2>PAYGO - Demo App</h2>
+              <p>
+                This app is a product demonstration tool built to explore prepayment energy management concepts across UK, Irish,
+                and US markets.
+              </p>
+              <p>
+                All customer profiles, account data, and energy usage shown are entirely fictional. No real customer information,
+                payment details, or live energy accounts are used at any point.
+              </p>
+              <p>This is not a consumer product. No personal data is collected or stored.</p>
+              <p className={styles.attribution}>
+                Built by <a href="mailto:david.loake@ensek.co.uk">David Loake</a>
+              </p>
+            </div>
           </aside>
 
           <div className={styles.phoneColumn}>
@@ -161,7 +165,6 @@ export default function PaygoWebMirrorPage() {
             </div>
           </aside>
         </section>
-
       </PaygoMagicLinkGate>
     </main>
   );

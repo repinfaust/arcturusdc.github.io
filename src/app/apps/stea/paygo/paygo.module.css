@@ -117,8 +117,14 @@
   justify-self: center;
 }
 
-.leftCopy {
+.leftColumn {
   justify-self: end;
+  width: min(520px, 100%);
+  display: grid;
+  gap: 16px;
+}
+
+.leftCopy {
   width: min(420px, 100%);
 }
 
@@ -164,9 +170,14 @@
     order: 1;
   }
 
-  .leftCopy {
+  .leftColumn {
     order: 2;
+    justify-self: center;
     width: min(680px, 96vw);
+  }
+
+  .leftCopy {
+    width: 100%;
   }
 
   .rightCopy {
