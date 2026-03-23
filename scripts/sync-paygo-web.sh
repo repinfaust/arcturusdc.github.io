@@ -7,6 +7,15 @@ PAYGO_DIST_DIR="$PAYGO_MOBILE_DIR/dist"
 PAYGO_RUNTIME_DIR="$ROOT_DIR/src/app/apps/stea/paygo/_runtime"
 STAMP_FILE="$PAYGO_RUNTIME_DIR/.paygo-source-stamp"
 
+sanitize_runtime_js() {
+  while IFS= read -r js_file; do
+    [[ -f "$js_file" ]] || continue
+    perl -0pi -e 's#"/assets/#"/apps/stea/paygo/runtime/assets/#g; s#"/_expo/#"/apps/stea/paygo/runtime/_expo/#g; s#"/favicon\.ico"#"/apps/stea/paygo/runtime/favicon.ico"#g' "$js_file"
+    # Remove Firebase-style API key literals from tracked runtime bundles.
+    perl -0pi -e 's#AIza[0-9A-Za-z_-]{35}#__PAYGO_FIREBASE_API_KEY__#g' "$js_file"
+  done < <(find "$PAYGO_RUNTIME_DIR/_expo/static/js/web" -name 'index-*.js' | LC_ALL=C sort)
+}
+
 if [[ ! -d "$PAYGO_MOBILE_DIR" ]]; then
   echo "PAYGO mobile path not found: $PAYGO_MOBILE_DIR"
   exit 1
@@ -37,6 +46,7 @@ SOURCE_STAMP="$({
 } | shasum | awk '{print $1}')"
 
 if [[ -f "$STAMP_FILE" ]] && [[ "$(cat "$STAMP_FILE")" == "$SOURCE_STAMP" ]]; then
+  sanitize_runtime_js
   echo "PAYGO web mirror is already up to date."
   exit 0
 fi
@@ -58,9 +68,7 @@ fi
 
 perl -0pi -e 's#href="/favicon\.ico"#href="/apps/stea/paygo/runtime/favicon.ico"#g; s#src="/_expo/static/js/web/#src="/apps/stea/paygo/runtime/_expo/static/js/web/#g' "$INDEX_HTML"
 
-while IFS= read -r js_file; do
-  perl -0pi -e 's#"/assets/#"/apps/stea/paygo/runtime/assets/#g; s#"/_expo/#"/apps/stea/paygo/runtime/_expo/#g; s#"/favicon\.ico"#"/apps/stea/paygo/runtime/favicon.ico"#g' "$js_file"
-done < <(find "$PAYGO_RUNTIME_DIR/_expo/static/js/web" -name 'index-*.js' | LC_ALL=C sort)
+sanitize_runtime_js
 
 echo "$SOURCE_STAMP" > "$STAMP_FILE"
 

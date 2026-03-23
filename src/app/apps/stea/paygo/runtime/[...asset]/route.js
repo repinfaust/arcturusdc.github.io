@@ -26,6 +26,15 @@ function resolveContentType(filePath) {
   return CONTENT_TYPES[ext] || 'application/octet-stream';
 }
 
+function getRuntimeFirebaseApiKey() {
+  return (
+    process.env.PAYGO_FIREBASE_API_KEY ||
+    process.env.EXPO_PUBLIC_FIREBASE_API_KEY ||
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
+    ''
+  );
+}
+
 async function verifySession(request) {
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (!sessionCookie) return false;
@@ -58,11 +67,20 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const bytes = await fs.readFile(absolutePath);
-    return new NextResponse(bytes, {
+    const contentType = resolveContentType(absolutePath);
+    let body = await fs.readFile(absolutePath);
+
+    if (contentType.startsWith('application/javascript')) {
+      const apiKey = getRuntimeFirebaseApiKey();
+      const source = body.toString('utf8');
+      const hydrated = source.replace(/__PAYGO_FIREBASE_API_KEY__/g, apiKey);
+      body = Buffer.from(hydrated, 'utf8');
+    }
+
+    return new NextResponse(body, {
       status: 200,
       headers: {
-        'Content-Type': resolveContentType(absolutePath),
+        'Content-Type': contentType,
         'Cache-Control': 'private, max-age=600',
       },
     });
