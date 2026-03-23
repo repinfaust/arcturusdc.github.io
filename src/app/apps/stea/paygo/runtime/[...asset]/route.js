@@ -27,7 +27,15 @@ function resolveContentType(filePath) {
 }
 
 function getRuntimeFirebaseApiKey() {
-  return process.env.PAYGO_FIREBASE_API_KEY || '';
+  return String(process.env.PAYGO_FIREBASE_API_KEY || '').trim();
+}
+
+function escapeForJsStringLiteral(value) {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '')
+    .replace(/\n/g, '');
 }
 
 async function verifySession(request) {
@@ -73,8 +81,9 @@ export async function GET(request, { params }) {
           { status: 500 }
         );
       }
+      const safeApiKey = escapeForJsStringLiteral(apiKey);
       const source = body.toString('utf8');
-      const hydrated = source.replace(/__PAYGO_FIREBASE_API_KEY__/g, apiKey);
+      const hydrated = source.replace(/__PAYGO_FIREBASE_API_KEY__/g, safeApiKey);
       body = Buffer.from(hydrated, 'utf8');
     }
 
