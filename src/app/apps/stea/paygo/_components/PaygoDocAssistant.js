@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 
-export default function PaygoDocAssistant({ compact = false, title = 'Start Here: Ask OpenAI', subtitle = 'Ask questions across the PAYGO build specs (loaded privately from Firebase).' }) {
+export default function PaygoDocAssistant({
+  compact = false,
+  title = 'Start Here: Ask OpenAI',
+  subtitle = 'Ask questions about the Demo App/Prototyping Platform.',
+}) {
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState('');
@@ -45,7 +49,7 @@ export default function PaygoDocAssistant({ compact = false, title = 'Start Here
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             rows={compact ? 3 : 4}
-            placeholder="Ask a question about the PAYGO POC/build specs..."
+            placeholder="Ask questions about the Demo App/Prototyping Platform..."
             style={{ width: '100%', border: 'none', outline: 'none', resize: 'vertical', padding: '12px 14px', color: '#10294D', fontSize: 14, lineHeight: '22px', fontFamily: 'inherit' }}
           />
           <div style={{ borderTop: '1px solid #E4ECFA', padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
