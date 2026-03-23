@@ -26,7 +26,7 @@ export default function PaygoWebMirrorPage() {
             </p>
             <p>This is not a consumer product. No personal data is collected or stored.</p>
             <p className={styles.attribution}>
-              Built by <a href="mailto:david.loake@ensek.co.uk">David Loake</a> · david.loake@ensek.co.uk
+              Built by <a href="mailto:david.loake@ensek.co.uk">David Loake</a>
             </p>
           </aside>
 
