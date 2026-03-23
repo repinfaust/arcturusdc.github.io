@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import path from 'path';
-import { readFile } from 'fs/promises';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
-import { PAYGO_CONTEXT_PRIMER, PAYGO_POC_DOC_COLLECTION, PAYGO_PRIVATE_DOCS } from '@/lib/paygo/poc-analysis-documents';
+import { PAYGO_CONTEXT_PRIMER, PAYGO_POC_DOC_COLLECTION } from '@/lib/paygo/poc-analysis-documents';
 import { verifySorrSession } from '@/lib/sorr/controlui-server';
 
 function tokenize(value) {
@@ -37,61 +35,11 @@ async function loadIndexableDocsFromFirestore() {
       text: trimText(doc.text),
     }));
 
-  return docs;
-}
-
-async function loadPrivateDocs() {
-  const docs = await Promise.all(
-    PAYGO_PRIVATE_DOCS.map(async (doc) => {
-      const fullPath = path.join(process.cwd(), doc.privatePath);
-      const text = await readFile(fullPath, 'utf8');
-      return {
-        id: doc.id,
-        title: doc.title,
-        text: trimText(text),
-      };
-    })
-  );
-  return docs;
-}
-
-async function backfillFirestoreDocs(docs) {
-  if (!Array.isArray(docs) || docs.length === 0) return;
-  const { db, FieldValue } = getFirebaseAdmin();
-  const batch = db.batch();
-
-  for (const doc of docs) {
-    const ref = db.collection(PAYGO_POC_DOC_COLLECTION).doc(doc.id);
-    batch.set(
-      ref,
-      {
-        id: doc.id,
-        title: doc.title,
-        text: doc.text,
-        indexable: true,
-        enabled: true,
-        charCount: String(doc.text || '').length,
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+  if (docs.length === 0) {
+    throw new Error('No PAYGO analysis documents found in Firestore.');
   }
 
-  await batch.commit();
-}
-
-async function loadDocsWithFallback() {
-  const firestoreDocs = await loadIndexableDocsFromFirestore();
-  if (firestoreDocs.length > 0) return firestoreDocs;
-
-  const privateDocs = await loadPrivateDocs();
-  if (privateDocs.length === 0) {
-    throw new Error('No PAYGO analysis documents are available.');
-  }
-
-  // Self-heal: repopulate Firestore on first request if collection is empty.
-  await backfillFirestoreDocs(privateDocs).catch(() => undefined);
-  return privateDocs;
+  return docs;
 }
 
 export async function GET(request) {
@@ -129,7 +77,7 @@ export async function POST(request) {
     }
 
     const model = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
-    const indexedDocs = await loadDocsWithFallback();
+    const indexedDocs = await loadIndexableDocsFromFirestore();
     const terms = tokenize(question);
     const ranked = indexedDocs
       .map((doc) => ({ ...doc, score: scoreDocForQuestion(doc, terms) }))
