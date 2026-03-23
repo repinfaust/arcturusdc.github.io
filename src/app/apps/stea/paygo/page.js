@@ -25,7 +25,9 @@ export default function PaygoWebMirrorPage() {
               payment details, or live energy accounts are used at any point.
             </p>
             <p>This is not a consumer product. No personal data is collected or stored.</p>
-            <p className={styles.attribution}>Built by David Loake · david.loake@ensek.co.uk</p>
+            <p className={styles.attribution}>
+              Built by <a href="mailto:david.loake@ensek.co.uk">David Loake</a> · david.loake@ensek.co.uk
+            </p>
           </aside>
 
           <div className={styles.phoneColumn}>

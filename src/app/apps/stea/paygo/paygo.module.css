@@ -37,6 +37,11 @@
   color: #0f172a;
 }
 
+.attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .rightCopy {
   justify-self: start;
   width: min(600px, 100%);
