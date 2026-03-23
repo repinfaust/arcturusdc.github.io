@@ -62,6 +62,33 @@
   color: #0f172a;
 }
 
+.downloadPanel {
+  margin-top: 12px;
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.downloadText {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.downloadLink {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  text-decoration: underline;
+}
+
+.downloadLink:hover {
+  color: #1e3a8a;
+}
+
 .kicker {
   margin: 0 0 10px;
   color: #94a3b8;

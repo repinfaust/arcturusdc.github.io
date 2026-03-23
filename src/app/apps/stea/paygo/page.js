@@ -149,6 +149,15 @@ export default function PaygoWebMirrorPage() {
                 names, addresses, card details, and meter references are fictional.
               </p>
             </details>
+
+            <div className={styles.downloadPanel}>
+              <p className={styles.downloadText}>
+                Download the PAYGO summary seed data used for the region/profile demo setup.
+              </p>
+              <a className={styles.downloadLink} href="/docs/paygo/payg_seed_data_v4.xlsx" download>
+                Download payg_seed_data_v4.xlsx
+              </a>
+            </div>
           </aside>
         </section>
 
