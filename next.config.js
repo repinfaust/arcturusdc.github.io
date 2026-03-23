@@ -26,6 +26,9 @@ const nextConfig = {
   // Ensure API routes are not statically optimized
   experimental: {
     serverComponentsExternalPackages: ['stripe'],
+    outputFileTracingIncludes: {
+      '/apps/stea/paygo/runtime/[...asset]': ['./src/app/apps/stea/paygo/_runtime/**/*'],
+    },
   },
   
   // Ensure stripe is properly resolved
