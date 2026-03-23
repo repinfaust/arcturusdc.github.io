@@ -87,7 +87,16 @@ export default function PaygoMagicLinkGate({ children }) {
         window.localStorage.removeItem(MAGIC_LINK_EMAIL_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
       })
-      .catch((err) => setError(err?.message || 'Magic link sign-in failed.'));
+      .catch((err) => {
+        const code = err?.code || '';
+        if (code === 'auth/invalid-action-code') {
+          setError('That magic link is invalid, expired, or already used. Request a fresh link and check your junk/spam folder.');
+        } else {
+          setError(err?.message || 'Magic link sign-in failed.');
+        }
+        // Remove stale sign-in params so the page does not keep retrying a broken link.
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
   }, []);
 
   async function sendMagicLink() {
