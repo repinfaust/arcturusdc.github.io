@@ -1,4 +1,5 @@
 import PaygoMagicLinkGate from './_components/PaygoMagicLinkGate';
+import styles from './paygo.module.css';
 
 export default function PaygoWebMirrorPage() {
   return (
@@ -12,8 +13,8 @@ export default function PaygoWebMirrorPage() {
       }}
     >
       <PaygoMagicLinkGate>
-        <section className="paygo-layout">
-          <aside className="left-copy card">
+        <section className={styles.paygoLayout}>
+          <aside className={`${styles.leftCopy} ${styles.card}`}>
             <h2>PAYGO - Demo App</h2>
             <p>
               This app is a product demonstration tool built to explore prepayment energy management concepts across UK, Irish, and
@@ -24,14 +25,15 @@ export default function PaygoWebMirrorPage() {
               payment details, or live energy accounts are used at any point.
             </p>
             <p>This is not a consumer product. No personal data is collected or stored.</p>
-            <p className="attribution">Built by David Loake · david.loake@ensek.co.uk</p>
+            <p className={styles.attribution}>Built by David Loake · david.loake@ensek.co.uk</p>
           </aside>
 
-          <div className="phone-column">
-            <p className="kicker">PAYGO iOS Mirror</p>
-            <div className="phone-shell">
-              <div aria-hidden className="phone-notch" />
-              <div className="phone-screen">
+          <div className={styles.phoneColumn}>
+            <p className={styles.kicker}>PAYGO iOS Mirror</p>
+            <p className={styles.contactHint}>Prefer to see the app on your iPhone? Contact david.loake@ensek.co.uk for the link</p>
+            <div className={styles.phoneShell}>
+              <div aria-hidden className={styles.phoneNotch} />
+              <div className={styles.phoneScreen}>
                 <iframe
                   title="PAYGO Web Mirror"
                   src="/apps/stea/paygo/runtime/index.html"
@@ -43,7 +45,7 @@ export default function PaygoWebMirrorPage() {
             </div>
           </div>
 
-          <aside className="right-copy card">
+          <aside className={`${styles.rightCopy} ${styles.card}`}>
             <h2>Six profiles across three regions. Here&apos;s how each is tailored.</h2>
             <details>
               <summary>UK - Ember</summary>
@@ -150,138 +152,6 @@ export default function PaygoWebMirrorPage() {
           </aside>
         </section>
 
-        <style jsx>{`
-          .paygo-layout {
-            width: min(1520px, 100%);
-            display: grid;
-            grid-template-columns: minmax(260px, 420px) minmax(320px, 390px) minmax(320px, 600px);
-            gap: 20px;
-            align-items: start;
-          }
-
-          .card {
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            background: linear-gradient(170deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
-            box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
-            border-radius: 20px;
-            padding: 18px;
-            color: #0f172a;
-          }
-
-          .left-copy h2,
-          .right-copy h2 {
-            margin: 0 0 10px;
-            font-size: 22px;
-            line-height: 1.2;
-          }
-
-          .left-copy p,
-          .right-copy p {
-            margin: 0 0 10px;
-            font-size: 14px;
-            line-height: 1.5;
-            color: #1e293b;
-          }
-
-          .left-copy .attribution {
-            margin-top: 16px;
-            margin-bottom: 0;
-            font-weight: 600;
-            color: #0f172a;
-          }
-
-          .right-copy {
-            max-height: calc(100vh - 72px);
-            overflow: auto;
-          }
-
-          .right-copy details {
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
-            background: #fff;
-          }
-
-          .right-copy details details {
-            margin-top: 8px;
-            margin-bottom: 0;
-            background: #f8fafc;
-          }
-
-          .right-copy summary {
-            cursor: pointer;
-            font-weight: 700;
-            color: #0f172a;
-          }
-
-          .kicker {
-            margin: 0 0 10px;
-            color: #94a3b8;
-            font-size: 13px;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            text-align: center;
-          }
-
-          .phone-column {
-            justify-self: center;
-          }
-
-          .phone-shell {
-            width: min(390px, 94vw);
-            aspect-ratio: 390 / 844;
-            border-radius: 52px;
-            background: linear-gradient(160deg, #0f172a, #0b1326);
-            padding: 12px;
-            box-shadow: 0 40px 120px rgba(2, 6, 23, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-            position: relative;
-          }
-
-          .phone-notch {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 130px;
-            height: 28px;
-            border-radius: 999px;
-            background: #020617;
-            z-index: 3;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
-          }
-
-          .phone-screen {
-            width: 100%;
-            height: 100%;
-            border-radius: 42px;
-            overflow: hidden;
-            background: #000;
-            position: relative;
-          }
-
-          @media (max-width: 1080px) {
-            .paygo-layout {
-              grid-template-columns: 1fr;
-              justify-items: center;
-            }
-
-            .phone-column {
-              order: 1;
-            }
-
-            .left-copy {
-              order: 2;
-              width: min(680px, 96vw);
-            }
-
-            .right-copy {
-              order: 3;
-              width: min(680px, 96vw);
-              max-height: none;
-            }
-          }
-        `}</style>
       </PaygoMagicLinkGate>
     </main>
   );
