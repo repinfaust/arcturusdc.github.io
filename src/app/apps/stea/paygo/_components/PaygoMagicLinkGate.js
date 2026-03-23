@@ -8,15 +8,17 @@ import {
   sendSignInLinkToEmail,
   setPersistence,
   signInWithEmailLink,
+  signOut,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 const MAGIC_LINK_EMAIL_KEY = 'paygo_magic_email';
+const ALLOWED_DOMAIN = 'ensek.co.uk';
 
 function isAllowedEmail(value) {
   if (!value) return false;
   const clean = String(value).trim().toLowerCase();
-  return clean.includes('@');
+  return clean.endsWith(`@${ALLOWED_DOMAIN}`);
 }
 
 export default function PaygoMagicLinkGate({ children }) {
@@ -37,6 +39,12 @@ export default function PaygoMagicLinkGate({ children }) {
       setSessionReady(false);
 
       if (!firebaseUser) return;
+      const userEmail = String(firebaseUser.email || '').toLowerCase();
+      if (!isAllowedEmail(userEmail)) {
+        await signOut(auth).catch(() => undefined);
+        setError(`Access is restricted to @${ALLOWED_DOMAIN} email addresses.`);
+        return;
+      }
 
       try {
         const idToken = await firebaseUser.getIdToken();
@@ -69,7 +77,7 @@ export default function PaygoMagicLinkGate({ children }) {
     const normalizedEmail = emailForLink.trim().toLowerCase();
 
     if (!isAllowedEmail(normalizedEmail)) {
-      setError('Use a valid email address.');
+      setError(`Use an @${ALLOWED_DOMAIN} email address.`);
       return;
     }
 
@@ -84,7 +92,7 @@ export default function PaygoMagicLinkGate({ children }) {
   async function sendMagicLink() {
     const clean = email.trim().toLowerCase();
     if (!isAllowedEmail(clean)) {
-      setError('Enter a valid email address.');
+      setError(`Only @${ALLOWED_DOMAIN} addresses are allowed.`);
       return;
     }
 
@@ -98,7 +106,7 @@ export default function PaygoMagicLinkGate({ children }) {
         handleCodeInApp: true,
       });
       window.localStorage.setItem(MAGIC_LINK_EMAIL_KEY, clean);
-      setNotice(`Magic link sent to ${clean}`);
+      setNotice(`Magic link sent to ${clean}. Check your junk/spam folder if it does not appear.`);
     } catch (err) {
       setError(err?.message || 'Failed to send sign-in link.');
     } finally {
@@ -128,13 +136,15 @@ export default function PaygoMagicLinkGate({ children }) {
         <p style={{ marginTop: 10, marginBottom: 0, color: '#334155', fontSize: 14, lineHeight: '20px' }}>
           This web mirror is restricted. Request a magic link using your work email.
         </p>
+        <p style={{ marginTop: 4, marginBottom: 0, color: '#475569', fontSize: 13 }}>Allowed domain: @{ALLOWED_DOMAIN}</p>
+        <p style={{ marginTop: 4, marginBottom: 0, color: '#475569', fontSize: 13 }}>If the link does not arrive quickly, check your junk/spam folder.</p>
 
         <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@company.com"
+            placeholder={`name@${ALLOWED_DOMAIN}`}
             style={{
               flex: 1,
               border: '1px solid #cbd5e1',
