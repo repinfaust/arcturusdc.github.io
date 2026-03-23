@@ -96,6 +96,14 @@ const IN_SESSION_DESTINATIONS = [
     excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
+    label: 'PayGo',
+    href: '/apps/stea/paygo',
+    description: 'iOS app mirror in-browser with magic-link access and live Firebase-backed demo state.',
+    gradient: 'from-orange-50/80 to-amber-50/30',
+    borderColor: 'border-orange-200',
+    excludeForTenants: [APEXTWIN_TENANT_ID],
+  },
+  {
     label: 'ApexTwin',
     href: '/apps/stea/apextwin-poc',
     description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',

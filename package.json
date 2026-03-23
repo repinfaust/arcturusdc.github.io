@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "dashboard:test": "node scripts/run-jest-tests.js"
+    "dashboard:test": "node scripts/run-jest-tests.js",
+    "paygo:sync": "bash ./scripts/sync-paygo-web.sh"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
