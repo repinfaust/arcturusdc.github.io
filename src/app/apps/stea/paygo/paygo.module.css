@@ -1,7 +1,7 @@
 .paygoLayout {
-  width: min(1520px, 100%);
+  width: min(1700px, 100%);
   display: grid;
-  grid-template-columns: minmax(260px, 420px) minmax(320px, 390px) minmax(320px, 600px);
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 390px) minmax(320px, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -38,6 +38,8 @@
 }
 
 .rightCopy {
+  justify-self: start;
+  width: min(600px, 100%);
   max-height: calc(100vh - 72px);
   overflow: auto;
 }
@@ -108,6 +110,11 @@
 
 .phoneColumn {
   justify-self: center;
+}
+
+.leftCopy {
+  justify-self: end;
+  width: min(420px, 100%);
 }
 
 .phoneShell {
