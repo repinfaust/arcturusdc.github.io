@@ -14,11 +14,12 @@ import { auth } from '@/lib/firebase';
 
 const MAGIC_LINK_EMAIL_KEY = 'paygo_magic_email';
 const ALLOWED_DOMAIN = 'ensek.co.uk';
+const ALLOWED_EMAILS = new Set(['repinfaust@gmail.com']);
 
 function isAllowedEmail(value) {
   if (!value) return false;
   const clean = String(value).trim().toLowerCase();
-  return clean.endsWith(`@${ALLOWED_DOMAIN}`);
+  return clean.endsWith(`@${ALLOWED_DOMAIN}`) || ALLOWED_EMAILS.has(clean);
 }
 
 export default function PaygoMagicLinkGate({ children }) {
@@ -42,7 +43,7 @@ export default function PaygoMagicLinkGate({ children }) {
       const userEmail = String(firebaseUser.email || '').toLowerCase();
       if (!isAllowedEmail(userEmail)) {
         await signOut(auth).catch(() => undefined);
-        setError(`Access is restricted to @${ALLOWED_DOMAIN} email addresses.`);
+        setError(`Access is restricted to @${ALLOWED_DOMAIN} email addresses and approved accounts.`);
         return;
       }
 
@@ -77,7 +78,7 @@ export default function PaygoMagicLinkGate({ children }) {
     const normalizedEmail = emailForLink.trim().toLowerCase();
 
     if (!isAllowedEmail(normalizedEmail)) {
-      setError(`Use an @${ALLOWED_DOMAIN} email address.`);
+      setError(`Use an @${ALLOWED_DOMAIN} email address or an approved account.`);
       return;
     }
 
@@ -92,7 +93,7 @@ export default function PaygoMagicLinkGate({ children }) {
   async function sendMagicLink() {
     const clean = email.trim().toLowerCase();
     if (!isAllowedEmail(clean)) {
-      setError(`Only @${ALLOWED_DOMAIN} addresses are allowed.`);
+      setError(`Only @${ALLOWED_DOMAIN} addresses and approved accounts are allowed.`);
       return;
     }
 
