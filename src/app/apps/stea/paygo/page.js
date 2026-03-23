@@ -48,6 +48,14 @@ export default function PaygoWebMirrorPage() {
                 />
               </div>
             </div>
+            <div className={styles.releaseNotes}>
+              <h3>Release Notes</h3>
+              <ul>
+                <li>Added scheduled top-up configuration flow with day-of-week/date-of-month modes.</li>
+                <li>Added auto top-up journey for threshold-based top-up management.</li>
+                <li>Updated top-up controls and button styling for the new schedule/automation screens.</li>
+              </ul>
+            </div>
           </div>
 
           <aside className={`${styles.rightCopy} ${styles.card}`}>

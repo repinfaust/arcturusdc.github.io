@@ -115,6 +115,9 @@
 
 .phoneColumn {
   justify-self: center;
+  width: min(390px, 94vw);
+  display: grid;
+  gap: 12px;
 }
 
 .leftColumn {
@@ -158,6 +161,36 @@
   overflow: hidden;
   background: #000;
   position: relative;
+}
+
+.releaseNotes {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.97);
+  padding: 12px 14px;
+  color: #0f172a;
+}
+
+.releaseNotes h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.releaseNotes ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.releaseNotes li {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.releaseNotes li:last-child {
+  margin-bottom: 0;
 }
 
 @media (max-width: 1080px) {
