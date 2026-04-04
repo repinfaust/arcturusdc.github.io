@@ -181,7 +181,7 @@ function AppCard({ app }) {
 
         <div
           className={`mt-5 border-t border-black/[0.04] pt-4 ${
-            app.appStoreUrl ? "flex flex-col items-center gap-3" : ""
+            app.appStoreUrl ? "flex justify-center" : ""
           }`}
           style={
             accent
@@ -207,13 +207,14 @@ function AppCard({ app }) {
                 className="h-auto w-full max-w-[120px]"
               />
             </Link>
-          ) : null}
-          <Link href={href} className={ctaLinkClass}>
-            {cta}
-            <span className="ml-1 transition-transform duration-200 motion-reduce:group-hover:translate-x-0 group-hover:translate-x-0.5">
-              →
-            </span>
-          </Link>
+          ) : (
+            <Link href={href} className={ctaLinkClass}>
+              {cta}
+              <span className="ml-1 transition-transform duration-200 motion-reduce:group-hover:translate-x-0 group-hover:translate-x-0.5">
+                →
+              </span>
+            </Link>
+          )}
         </div>
       </div>
     </article>
