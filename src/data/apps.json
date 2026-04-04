@@ -2,17 +2,26 @@
   {
     "id": "sprocket",
     "name": "Sprocket",
+    "cardAccent": {
+      "primary": "#F0452F",
+      "tintTop": "rgba(240, 69, 47, 0.1)"
+    },
     "status": "live",
     "strap": "Clear, step-by-step help for everyday phone tasks.",
     "summary": "Sprocket is a voice-first support app for stressful admin moments. It helps people untangle difficult messages into plain language, urgency, and one practical next step, with optional reply drafts and privacy-first handling for sensitive details.",
     "desc": "Voice-first support for reminders, admin tasks, and difficult messages.",
     "link": "/apps/sprocket",
+    "appStoreUrl": "https://apps.apple.com/us/app/sprocket-calm-phone-helper/id6759454436",
     "icon": "/img/sprocket-logo.png",
     "bg": "/img/sprocket-hero-bg.svg"
   },
   {
     "id": "unload",
     "name": "Unload",
+    "cardAccent": {
+      "primary": "#4B6A5B",
+      "tintTop": "rgba(75, 106, 91, 0.11)"
+    },
     "status": "live",
     "strap": "A calmer way to get things out of your head and move forward.",
     "summary": "Unload is a calm, voice-first app for the moment before clarity. It helps you set things down when you’re overloaded, name what would make today easier, and feel lighter without pressure, streaks, or integrations. Relief comes first; momentum can wait.",
@@ -24,6 +33,10 @@
   {
     "id": "adhd-acclaim",
     "name": "ADHD Acclaim",
+    "cardAccent": {
+      "primary": "#7BA3D0",
+      "tintTop": "rgba(123, 163, 208, 0.14)"
+    },
     "status": "live",
     "strap": "Small wins. Visible progress. Rewards without pressure.",
     "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",

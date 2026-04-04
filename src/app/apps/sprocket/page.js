@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
+const SPROCKET_APP_STORE_US =
+  'https://apps.apple.com/us/app/sprocket-calm-phone-helper/id6759454436';
+
 export default function Sprocket() {
   return (
     <main className="pb-10">
@@ -13,7 +16,7 @@ export default function Sprocket() {
           alt="Sprocket logo"
           priority
         />
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <Image
               src="/img/sprocket-wordmark.png"
@@ -29,6 +32,15 @@ export default function Sprocket() {
             reminders, and difficult messages. It helps users go from confusion to one clear
             next step using plain language, flexible voice or text guidance, and private-by-default flows.
           </p>
+
+          <div className="mt-5 flex flex-col items-stretch gap-2 border-t border-[#E0E4DB]/80 pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#4B5B54]">
+              Available on iPhone
+            </p>
+            <div className="flex justify-center sm:justify-end">
+              <AppStoreBadgeLink prominent priority />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -153,6 +165,13 @@ export default function Sprocket() {
               </div>
             </div>
           </div>
+
+          <div className="mt-12 md:mt-14 flex flex-col items-center gap-3 border-t border-[#E0E4DB] pt-10 md:pt-12">
+            <p className="text-center text-sm font-medium text-[#4B5B54]">
+              Download Sprocket for iPhone
+            </p>
+            <AppStoreBadgeLink prominent />
+          </div>
         </div>
       </section>
 
@@ -172,6 +191,30 @@ export default function Sprocket() {
         </ul>
       </section>
     </main>
+  );
+}
+
+/** Official Apple “Download on the App Store” badge — do not crop or recolour (App Store marketing guidelines). */
+function AppStoreBadgeLink({ prominent = false, priority = false }) {
+  const w = prominent ? 168 : 120;
+  const h = Math.round((w * 40) / 119.66407);
+  return (
+    <Link
+      href={SPROCKET_APP_STORE_US}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B5E4B]/35 focus-visible:ring-offset-2 transition-[transform,opacity] hover:opacity-95 motion-reduce:transition-none hover:scale-[1.02] motion-reduce:hover:scale-100 active:scale-[0.99]"
+      aria-label="Download Sprocket on the App Store (opens in a new tab)"
+    >
+      <Image
+        src="/assets/badges/download-on-the-app-store.svg"
+        width={w}
+        height={h}
+        alt="Download on the App Store"
+        className="h-auto w-full max-w-[168px]"
+        priority={priority}
+      />
+    </Link>
   );
 }
 
