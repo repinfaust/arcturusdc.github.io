@@ -1,48 +1,9 @@
 [
   {
-    "id": "mandrake",
-    "name": "Mandrake",
-    "strap": "Rhythm, not perfection.",
-    "summary": "Mandrake helps you self-manage urges with awareness and choice, turning each one into practice instead of pressure. With a breath and a move, you redirect the pull and record it in seconds, building a repertoire that strengthens your form. Over time, the shadow stops being just a test — it becomes the trainer that sharpens your rhythm and restores your balance.",
-    "desc": "Private urge logging, quick tactics, and pattern insights.",
-    "link": "/apps/mandrake",
-    "icon": "/img/mandrake-app-logo.png",
-    "bg": "/img/mandrake-card-background.png"
-  },
-  {
-    "id": "syncfit",
-    "name": "SyncFit",
-    "strap": "Workouts that fit your schedule.",
-    "summary": "SyncFit makes fitness planning practical by working around real calendars. The app finds free time slots in Google Calendar, recommends sessions based on goals, and lets users log or adjust workouts on the fly. No wasted plans, no guilt—just exercise that slots into daily life and sticks.",
-    "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
-    "icon": "/img/SyncFit_App_Icon_512x512.png",
-    "bg": "/img/syncfit-card-background.png",
-    "link": "/apps/syncfit"
-  },
-  {
-    "id": "adhd-acclaim",
-    "name": "ADHD Acclaim",
-    "strap": "Small wins, real rewards.",
-    "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",
-    "desc": "Gamified rewards to celebrate wins and encourage progress.",
-    "link": "/apps/adhd-acclaim",
-    "icon": "/img/adhdacclaim_logo_1024x1024.png",
-    "bg": "/img/adhdacclaim-card-background.png"
-  },
-  {
-    "id": "unload",
-    "name": "Unload",
-    "strap": "Relief first. Momentum second.",
-    "summary": "Unload is a calm, voice-first app for the moment before clarity. It helps you set things down when you’re overloaded, name what would make today easier, and feel lighter without pressure, streaks, or integrations. Relief comes first; momentum can wait.",
-    "desc": "A voice-first way to set things down and feel lighter.",
-    "link": "/apps/unload",
-    "icon": "/img/unload-logo.svg",
-    "bg": "/img/unload-hero-bg.svg"
-  },
-  {
     "id": "sprocket",
     "name": "Sprocket",
-    "strap": "Calm help, one clear next step.",
+    "status": "live",
+    "strap": "Clear, step-by-step help for everyday phone tasks.",
     "summary": "Sprocket is a voice-first support app for stressful admin moments. It helps people untangle difficult messages into plain language, urgency, and one practical next step, with optional reply drafts and privacy-first handling for sensitive details.",
     "desc": "Voice-first support for reminders, admin tasks, and difficult messages.",
     "link": "/apps/sprocket",
@@ -50,29 +11,32 @@
     "bg": "/img/sprocket-hero-bg.svg"
   },
   {
-    "id": "assumezero",
-    "name": "AssumeZero",
-    "strap": "Assume zero. Ask the question.",
-    "summary": "AssumeZero is a media literacy game in development that helps children spot manipulation, question claims, and practice critical thinking in the flow of play.",
-    "desc": "A teaser page for the upcoming AssumeZero project.",
-    "link": "/apps/assumezero",
-    "icon": "/img/assumezero/image.png",
-    "bg": "/img/assumezero/image.png"
+    "id": "unload",
+    "name": "Unload",
+    "status": "live",
+    "strap": "A calmer way to get things out of your head and move forward.",
+    "summary": "Unload is a calm, voice-first app for the moment before clarity. It helps you set things down when you’re overloaded, name what would make today easier, and feel lighter without pressure, streaks, or integrations. Relief comes first; momentum can wait.",
+    "desc": "A voice-first way to set things down and feel lighter.",
+    "link": "/apps/unload",
+    "icon": "/img/unload-logo.svg",
+    "bg": "/img/unload-hero-bg.svg"
   },
   {
-    "id": "dialled-mtb",
-    "name": "Dialled MTB",
-    "strap": "Set up right. Every ride.",
-    "summary": "Dialled MTB is a maintenance and setup app for mountain bikers, combining passive Strava ride sync, structured service tracking, setup calculations, and contextual AI support.",
-    "desc": "Maintenance tracking, setup guidance, and AI support for MTB riders.",
-    "link": "/apps/dialled-mtb",
-    "icon": "/img/dialled-mtb-logo.svg",
-    "bg": "/img/dialled-mtb-card-background.svg"
+    "id": "adhd-acclaim",
+    "name": "ADHD Acclaim",
+    "status": "live",
+    "strap": "Small wins. Visible progress. Rewards without pressure.",
+    "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",
+    "desc": "Gamified rewards to celebrate wins and encourage progress.",
+    "link": "/apps/adhd-acclaim",
+    "icon": "/img/adhdacclaim_logo_1024x1024.png",
+    "bg": "/img/adhdacclaim-card-background.png"
   },
   {
     "id": "toume",
-    "name": "Tou.me (coming soon)",
-    "strap": "For you, for me, for them.",
+    "name": "Tou.me",
+    "status": "comingSoon",
+    "strap": "A calmer shared space for separated families.",
     "summary": "Tou.me is a shared-care organiser for families and support circles. It simplifies coordination between parents, relatives, and carers with lightweight scheduling and clear roles. Built to reduce friction and keep everyone on the same page, Tou.me helps households focus more on connection, less on admin.",
     "desc": "For you, for me, for them.",
     "link": "/apps/toume",
@@ -90,8 +54,53 @@
     ]
   },
   {
+    "id": "dialled-mtb",
+    "name": "Dialled MTB",
+    "status": "comingSoon",
+    "strap": "Setup, maintenance, and support for riders who want things right.",
+    "summary": "Dialled MTB is a maintenance and setup app for mountain bikers, combining passive Strava ride sync, structured service tracking, setup calculations, and contextual AI support.",
+    "desc": "Maintenance tracking, setup guidance, and AI support for MTB riders.",
+    "link": "/apps/dialled-mtb",
+    "icon": "/img/dialled-mtb-logo.svg",
+    "bg": "/img/dialled-mtb-card-background.svg"
+  },
+  {
+    "id": "mandrake",
+    "name": "Mandrake",
+    "status": "development",
+    "strap": "Rhythm, not perfection.",
+    "summary": "Mandrake helps you self-manage urges with awareness and choice, turning each one into practice instead of pressure. With a breath and a move, you redirect the pull and record it in seconds, building a repertoire that strengthens your form. Over time, the shadow stops being just a test — it becomes the trainer that sharpens your rhythm and restores your balance.",
+    "desc": "Private urge logging, quick tactics, and pattern insights.",
+    "link": "/apps/mandrake",
+    "icon": "/img/mandrake-app-logo.png",
+    "bg": "/img/mandrake-card-background.png"
+  },
+  {
+    "id": "syncfit",
+    "name": "SyncFit",
+    "status": "development",
+    "strap": "Workouts that fit your schedule.",
+    "summary": "SyncFit makes fitness planning practical by working around real calendars. The app finds free time slots in Google Calendar, recommends sessions based on goals, and lets users log or adjust workouts on the fly. No wasted plans, no guilt—just exercise that slots into daily life and sticks.",
+    "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
+    "icon": "/img/SyncFit_App_Icon_512x512.png",
+    "bg": "/img/syncfit-card-background.png",
+    "link": "/apps/syncfit"
+  },
+  {
+    "id": "assumezero",
+    "name": "AssumeZero",
+    "status": "development",
+    "strap": "Question first. Certainty second.",
+    "summary": "AssumeZero is a media literacy game in development that helps children spot manipulation, question claims, and practice critical thinking in the flow of play.",
+    "desc": "A teaser page for the upcoming AssumeZero project.",
+    "link": "/apps/assumezero",
+    "icon": "/img/assumezero/image.png",
+    "bg": "/img/assumezero/image.png"
+  },
+  {
     "id": "apex-twin",
     "name": "ApexTwin",
+    "status": "development",
     "strap": "Setup. Session. Progress.",
     "summary": "ApexTwin is a track-day setup companion for motorcyclists who want structure over guesswork. Whether you're logging tyre pressures between sessions or tracking suspension changes across a season, ApexTwin keeps everything in one place—so you can see what works, repeat what's fast, and ride with confidence.",
     "desc": "A modern setup journal for track-day riders—structured, fast, and built to help you improve.",
@@ -102,7 +111,8 @@
   {
     "id": "rehabpath",
     "name": "RehabPath",
-    "strap": "Your guided path to recovery.",
+    "status": "development",
+    "strap": "A guided path to recovery.",
     "summary": "RehabPath is a structured recovery companion for people working through injury rehab. It provides clear, phase-based programmes, step-by-step exercise guidance, and visible progress tracking—all stored privately on your device. No accounts, no tracking, no complexity. Just a calm, focused tool to help you stay on course and see your improvement.",
     "desc": "Structured rehab programmes, simple exercise guidance, and private progress tracking.",
     "link": "/apps/rehabpath",
