@@ -180,7 +180,9 @@ function AppCard({ app }) {
         )}
 
         <div
-          className="mt-5 border-t border-black/[0.04] pt-4"
+          className={`mt-5 border-t border-black/[0.04] pt-4 ${
+            app.appStoreUrl ? "flex flex-col items-center gap-3" : ""
+          }`}
           style={
             accent
               ? {
@@ -194,7 +196,7 @@ function AppCard({ app }) {
               href={app.appStoreUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mb-3 inline-flex max-w-full rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/30 focus-visible:ring-offset-2"
+              className="inline-flex max-w-full rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/30 focus-visible:ring-offset-2"
               aria-label={`Download ${app.name} on the App Store (opens in a new tab)`}
             >
               <Image
