@@ -27,6 +27,7 @@
     "summary": "Unload is a calm, voice-first app for the moment before clarity. It helps you set things down when you’re overloaded, name what would make today easier, and feel lighter without pressure, streaks, or integrations. Relief comes first; momentum can wait.",
     "desc": "A voice-first way to set things down and feel lighter.",
     "link": "/apps/unload",
+    "appStoreUrl": "https://apps.apple.com/us/app/unload-app/id6758965862",
     "icon": "/img/unload-logo.svg",
     "bg": "/img/unload-hero-bg.svg"
   },
@@ -42,6 +43,7 @@
     "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",
     "desc": "Gamified rewards to celebrate wins and encourage progress.",
     "link": "/apps/adhd-acclaim",
+    "appStoreUrl": "https://apps.apple.com/us/app/adhdacclaim/id6754703402",
     "icon": "/img/adhdacclaim_logo_1024x1024.png",
     "bg": "/img/adhdacclaim-card-background.png"
   },
