@@ -93,8 +93,12 @@ function AppCard({ app }) {
       style={articleStyle}
       className={`group relative flex h-full flex-col overflow-hidden rounded-2xl transition-[transform,box-shadow,border-color] duration-200 ease-out ${cardClass} ${
         tier === "live"
-          ? "min-h-[280px] sm:min-h-[300px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
-          : "min-h-[260px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+          ? app.appStoreUrl
+            ? "min-h-0 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+            : "min-h-[280px] sm:min-h-[300px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+          : app.appStoreUrl
+            ? "min-h-0 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+            : "min-h-[260px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
       }`}
     >
       {app.bg ? (
@@ -126,7 +130,11 @@ function AppCard({ app }) {
         </>
       ) : null}
 
-      <div className="relative flex h-full flex-col p-5 sm:p-6">
+      <div
+        className={`relative flex h-full flex-col ${
+          app.appStoreUrl ? "p-4 pb-4 sm:p-5 sm:pb-5" : "p-5 sm:p-6"
+        }`}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <span className={iconClass}>
@@ -172,26 +180,21 @@ function AppCard({ app }) {
         </div>
 
         {strap ? (
-          <p className="mt-4 flex-1 text-sm sm:text-[0.9375rem] leading-relaxed text-[#555]">
+          <p
+            className={`text-sm sm:text-[0.9375rem] leading-relaxed text-[#555] ${
+              app.appStoreUrl
+                ? "mt-3"
+                : "mt-4 flex-1"
+            }`}
+          >
             {strap}
           </p>
-        ) : (
+        ) : !app.appStoreUrl ? (
           <div className="flex-1" />
-        )}
+        ) : null}
 
-        <div
-          className={`mt-5 border-t border-black/[0.04] pt-4 ${
-            app.appStoreUrl ? "flex justify-center" : ""
-          }`}
-          style={
-            accent
-              ? {
-                  borderColor: `color-mix(in srgb, ${accent.primary} 16%, transparent)`,
-                }
-              : undefined
-          }
-        >
-          {app.appStoreUrl ? (
+        {app.appStoreUrl ? (
+          <div className="mt-3 flex justify-center sm:mt-3.5">
             <Link
               href={app.appStoreUrl}
               target="_blank"
@@ -204,17 +207,34 @@ function AppCard({ app }) {
                 width={120}
                 height={40}
                 alt="Download on the App Store"
-                className="h-auto w-full max-w-[120px]"
+                className="h-auto w-full max-w-[118px] sm:max-w-[120px]"
               />
             </Link>
-          ) : (
+          </div>
+        ) : null}
+
+        <div
+          className={
+            app.appStoreUrl
+              ? "mt-3 border-t border-black/[0.04] sm:mt-3.5"
+              : "mt-5 border-t border-black/[0.04] pt-4"
+          }
+          style={
+            accent
+              ? {
+                  borderColor: `color-mix(in srgb, ${accent.primary} 16%, transparent)`,
+                }
+              : undefined
+          }
+        >
+          {!app.appStoreUrl ? (
             <Link href={href} className={ctaLinkClass}>
               {cta}
               <span className="ml-1 transition-transform duration-200 motion-reduce:group-hover:translate-x-0 group-hover:translate-x-0.5">
                 →
               </span>
             </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </article>
@@ -230,7 +250,7 @@ export default function AppsClient({ apps }) {
 
         const cols =
           status === "live"
-            ? "grid grid-cols-1 gap-6 sm:gap-7 sm:grid-cols-2 lg:grid-cols-3"
+            ? "grid grid-cols-1 items-start gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7"
             : status === "comingSoon"
               ? "grid grid-cols-1 gap-6 sm:gap-7 sm:grid-cols-2"
               : "grid grid-cols-1 gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3";
