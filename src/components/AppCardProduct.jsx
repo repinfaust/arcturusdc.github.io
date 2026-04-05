@@ -1,0 +1,226 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+
+export const STATUS_LABEL = {
+  live: "Live",
+  comingSoon: "Coming soon",
+  development: "In development",
+};
+
+export function defaultCta(status) {
+  switch (status) {
+    case "live":
+      return "View app";
+    case "comingSoon":
+      return "Learn more";
+    case "development":
+      return "Explore concept";
+    default:
+      return "View details";
+  }
+}
+
+export default function AppCardProduct({ app }) {
+  const href = app.link || `/apps/${app.id}`;
+  const strap = app.strap || app.desc || "";
+  const status = app.status || "development";
+  const label = STATUS_LABEL[status] || STATUS_LABEL.development;
+  const cta = app.ctaLabel || defaultCta(status);
+  const accent = app.cardAccent;
+
+  const tier =
+    status === "live"
+      ? "live"
+      : status === "comingSoon"
+        ? "soon"
+        : "dev";
+
+  const cardClass =
+    tier === "live"
+      ? accent
+        ? "border-y border-r border-black/[0.04] border-l-[3px] bg-white shadow-apps-card-live hover:shadow-[0_12px_32px_rgba(0,0,0,0.07)] hover:border-y-black/[0.07] hover:border-r-black/[0.07]"
+        : "border border-black/[0.04] bg-white shadow-apps-card-live hover:shadow-[0_12px_32px_rgba(0,0,0,0.07)] hover:border-black/[0.07]"
+      : "border border-black/[0.04] bg-white shadow-apps-card hover:shadow-[0_10px_28px_rgba(0,0,0,0.055)] hover:border-black/[0.06]";
+
+  const articleStyle = accent
+    ? {
+        ["--app-accent"]: accent.primary,
+        ...(tier === "live" ? { borderLeftColor: accent.primary } : {}),
+      }
+    : undefined;
+
+  const titleLinkClass = accent
+    ? "app-card-title underline-offset-4 hover:underline decoration-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/25 focus-visible:ring-offset-2 rounded-sm"
+    : "underline-offset-4 hover:underline hover:text-brand decoration-brand/0 hover:decoration-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 rounded-sm";
+
+  const ctaLinkClass = accent
+    ? "app-card-cta inline-flex items-center text-sm font-medium text-[#1a1a1a] underline-offset-4 decoration-transparent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/25 focus-visible:ring-offset-2 rounded-sm"
+    : "inline-flex items-center text-sm font-medium text-[#1a1a1a] underline-offset-4 decoration-brand/70 hover:underline hover:text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 rounded-sm";
+
+  const iconClass = [
+    "relative flex h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-white transition-[transform,box-shadow] duration-200 motion-reduce:group-hover:translate-y-0 group-hover:-translate-y-px",
+    accent ? "app-card-icon shadow-sm" : "",
+    !accent && tier === "live"
+      ? "motion-reduce:group-hover:shadow-sm group-hover:shadow-[0_0_0_3px_rgba(240,69,47,0.12)] shadow-sm"
+      : !accent && tier !== "live"
+        ? "motion-reduce:group-hover:shadow-sm"
+        : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <article
+      data-app-accent={accent ? "" : undefined}
+      style={articleStyle}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl transition-[transform,box-shadow,border-color] duration-200 ease-out ${cardClass} ${
+        tier === "live"
+          ? app.appStoreUrl
+            ? "min-h-0 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+            : "min-h-[280px] sm:min-h-[300px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+          : app.appStoreUrl
+            ? "min-h-0 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+            : "min-h-[260px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+      }`}
+    >
+      {app.bg ? (
+        <>
+          <Image
+            src={app.bg}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className={`absolute inset-0 object-cover pointer-events-none transition-opacity duration-200 ${
+              tier === "live" ? "opacity-[0.14]" : "opacity-[0.1]"
+            } group-hover:opacity-[0.18]`}
+            priority={false}
+          />
+          {accent ? (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg, ${accent.tintTop} 0%, rgba(255,255,255,0.82) 36%, rgba(255,255,255,0.95) 68%, #fff 100%)`,
+              }}
+              aria-hidden
+            />
+          ) : (
+            <div
+              className="absolute inset-0 bg-gradient-to-b from-white/[0.92] via-white/[0.96] to-white pointer-events-none"
+              aria-hidden
+            />
+          )}
+        </>
+      ) : null}
+
+      <div
+        className={`relative flex h-full flex-col ${
+          app.appStoreUrl ? "p-4 pb-4 sm:p-5 sm:pb-5" : "p-5 sm:p-6"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className={iconClass}>
+              {app.icon ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={app.icon}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <span className="block h-full w-full bg-neutral-100" />
+              )}
+            </span>
+            <h3
+              className={`min-w-0 font-semibold leading-snug ${
+                tier === "live"
+                  ? "text-lg sm:text-xl text-[#1a1a1a]"
+                  : tier === "soon"
+                    ? "text-base sm:text-lg text-[#1a1a1a]"
+                    : "text-base sm:text-lg text-[#1a1a1a]"
+              }`}
+            >
+              <Link href={href} className={titleLinkClass}>
+                {app.name}
+              </Link>
+            </h3>
+          </div>
+          <span
+            className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-wider ${
+              tier === "live"
+                ? accent
+                  ? "border-black/[0.07] bg-white/85 text-[#555]"
+                  : "border-black/[0.08] bg-white/80 text-[#555]"
+                : tier === "soon"
+                  ? "border-black/[0.06] bg-white/90 text-[#555]"
+                  : "border-black/[0.05] bg-white/80 text-[#666]"
+            }`}
+          >
+            {label}
+          </span>
+        </div>
+
+        {strap ? (
+          <p
+            className={`text-sm sm:text-[0.9375rem] leading-relaxed text-[#555] ${
+              app.appStoreUrl
+                ? "mt-3"
+                : "mt-4 flex-1"
+            }`}
+          >
+            {strap}
+          </p>
+        ) : !app.appStoreUrl ? (
+          <div className="flex-1" />
+        ) : null}
+
+        {app.appStoreUrl ? (
+          <div className="mt-3 flex justify-center sm:mt-3.5">
+            <Link
+              href={app.appStoreUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex max-w-full rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/30 focus-visible:ring-offset-2"
+              aria-label={`Download ${app.name} on the App Store (opens in a new tab)`}
+            >
+              <Image
+                src="/assets/badges/download-on-the-app-store.svg"
+                width={120}
+                height={40}
+                alt="Download on the App Store"
+                className="h-auto w-full max-w-[118px] sm:max-w-[120px]"
+              />
+            </Link>
+          </div>
+        ) : null}
+
+        <div
+          className={
+            app.appStoreUrl
+              ? "mt-3 border-t border-black/[0.04] sm:mt-3.5"
+              : "mt-5 border-t border-black/[0.04] pt-4"
+          }
+          style={
+            accent
+              ? {
+                  borderColor: `color-mix(in srgb, ${accent.primary} 16%, transparent)`,
+                }
+              : undefined
+          }
+        >
+          {!app.appStoreUrl ? (
+            <Link href={href} className={ctaLinkClass}>
+              {cta}
+              <span className="ml-1 transition-transform duration-200 motion-reduce:group-hover:translate-x-0 group-hover:translate-x-0.5">
+                →
+              </span>
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
