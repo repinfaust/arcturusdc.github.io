@@ -26,11 +26,9 @@ export default function Sprocket() {
               priority
             />
           </div>
-          <div className="text-muted text-sm">Voice and text support for stressful tasks.</div>
+          <div className="text-muted text-sm">Struggling to understand a message or letter?</div>
           <p className="mt-2 text-sm text-neutral-700">
-            Sprocket is a calm assistant for people who feel overwhelmed by everyday admin,
-            reminders, and difficult messages. It helps users go from confusion to one clear
-            next step using plain language, flexible voice or text guidance, and private-by-default flows.
+            If you&rsquo;ve ever looked at a message, email, or official letter and thought &ldquo;what does this actually mean?&rdquo;, Sprocket breaks it down into plain English.
           </p>
 
           <div className="mt-5 flex flex-col items-stretch gap-2 border-t border-[#E0E4DB]/80 pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
