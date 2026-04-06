@@ -233,82 +233,173 @@ const DiscoveryInbox = () => (
 
 /* ---------------- Configuration & Onboarding Components ---------------- */
 
-const ProfileYamlEditor = ({ value, onChange, onSave, isSaving }) => (
-  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
+  <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-[#10294D]">account_circle</span>
-        <h3 className="font-bold text-[#10294D] text-sm">Profile YAML</h3>
+        <h3 className="font-bold text-[#10294D] text-lg tracking-tight">Candidate Profile</h3>
       </div>
       <button 
         onClick={onSave}
         disabled={isSaving}
-        className="px-3 py-1 bg-[#10294D] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
+        className="px-6 py-2 bg-[#10294D] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50 shadow-lg shadow-blue-900/10"
       >
-        {isSaving ? 'Saving...' : 'Save Changes'}
+        {isSaving ? 'Saving...' : 'Save Profile'}
       </button>
     </div>
-    <div className="flex-1 bg-[#001432] rounded-xl overflow-hidden shadow-inner">
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-[350px] bg-transparent text-blue-100 p-5 font-mono text-[11px] leading-relaxed border-none focus:ring-0 resize-none custom-scrollbar"
-        spellCheck="false"
-      />
+    
+    <div className="grid grid-cols-1 gap-5">
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+        <input 
+          type="text" 
+          value={data?.name || ''} 
+          onChange={(e) => onChange({...data, name: e.target.value})}
+          className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
+          placeholder="e.g. David Loake"
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Current Role</label>
+          <input 
+            type="text" 
+            value={data?.current_role || ''} 
+            onChange={(e) => onChange({...data, current_role: e.target.value})}
+            className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
+            placeholder="e.g. Senior Product Manager"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Salary Floor (£)</label>
+          <input 
+            type="number" 
+            value={data?.min_salary || ''} 
+            onChange={(e) => onChange({...data, min_salary: e.target.value})}
+            className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
+            placeholder="e.g. 125000"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Target Roles (Comma separated)</label>
+        <textarea 
+          value={data?.target_roles?.join(', ') || ''} 
+          onChange={(e) => onChange({...data, target_roles: e.target.value.split(',').map(s => s.trim())})}
+          className="w-full h-24 bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100 resize-none"
+          placeholder="e.g. Lead Product Manager, Principal PM, Platform PM"
+        />
+      </div>
     </div>
   </div>
 );
 
-const EvidenceAnchors = ({ value, onChange, onSave, isSaving }) => (
-  <section className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col gap-4">
+const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving }) => (
+  <section className="bg-slate-50 rounded-2xl p-8 border border-slate-100 flex flex-col gap-6">
     <div className="flex items-center justify-between">
-      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
+      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-lg tracking-tight">
         <span className="material-symbols-outlined text-[#10294D]">deployed_code</span>
-        Evidence Anchors (YAML)
+        Evidence Anchors
       </h3>
-      <button 
-        onClick={onSave}
-        disabled={isSaving}
-        className="px-3 py-1 bg-[#10294D] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
-      >
-        {isSaving ? 'Saving...' : 'Save Anchors'}
-      </button>
+      <div className="flex gap-3">
+        <button 
+          onClick={onAdd}
+          className="px-4 py-2 bg-white border border-slate-200 text-[#10294D] rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all"
+        >
+          + Add Anchor
+        </button>
+        <button 
+          onClick={onSave}
+          disabled={isSaving}
+          className="px-6 py-2 bg-[#10294D] text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
+        >
+          {isSaving ? 'Saving...' : 'Save All'}
+        </button>
+      </div>
     </div>
-    <div className="bg-white rounded-xl overflow-hidden shadow-inner border border-slate-200">
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-[250px] bg-transparent text-slate-600 p-5 font-mono text-[11px] leading-relaxed border-none focus:ring-0 resize-none custom-scrollbar"
-        spellCheck="false"
-        placeholder="Define your career anchors here in YAML format..."
-      />
+    
+    <div className="grid grid-cols-1 gap-4">
+      {anchors?.map((anchor, i) => (
+        <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group relative">
+          <button 
+            onClick={() => onDelete(i)}
+            className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <span className="material-symbols-outlined text-sm">delete</span>
+          </button>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-1 space-y-4">
+              <input 
+                className="w-full font-bold text-[#10294D] border-b border-slate-100 focus:border-blue-400 focus:ring-0 text-sm" 
+                placeholder="Company Name" 
+                value={anchor.company || ''}
+                onChange={(e) => onUpdate(i, {...anchor, company: e.target.value})}
+              />
+              <input 
+                className="w-full text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 focus:border-blue-400 focus:ring-0" 
+                placeholder="Period (e.g. 2021-Present)" 
+                value={anchor.period || ''}
+                onChange={(e) => onUpdate(i, {...anchor, period: e.target.value})}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <textarea 
+                className="w-full h-24 bg-slate-50 border-none rounded-xl p-3 text-[11px] text-slate-600 font-medium leading-relaxed resize-none" 
+                placeholder="List your key outcomes and proof points..."
+                value={anchor.bullets?.join('\n') || ''}
+                onChange={(e) => onUpdate(i, {...anchor, bullets: e.target.value.split('\n')})}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   </section>
 );
 
-const ScoringModelWeights = ({ value, onChange, onSave, isSaving }) => (
-  <section className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
+  <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
     <div className="flex items-center justify-between">
-      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
+      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-lg tracking-tight">
         <span className="material-symbols-outlined text-[#10294D]">tune</span>
-        Scoring Weights (YAML)
+        Scoring Model Tuning
       </h3>
       <button 
         onClick={onSave}
         disabled={isSaving}
-        className="px-3 py-1 bg-[#10294D] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
+        className="px-6 py-2 bg-[#10294D] text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50 shadow-lg shadow-blue-900/10"
       >
-        {isSaving ? 'Saving...' : 'Save Weights'}
+        {isSaving ? 'Saving...' : 'Apply Weights'}
       </button>
     </div>
-    <div className="bg-slate-50 rounded-xl overflow-hidden shadow-inner border border-slate-100">
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-[150px] bg-transparent text-slate-600 p-5 font-mono text-[11px] leading-relaxed border-none focus:ring-0 resize-none custom-scrollbar"
-        spellCheck="false"
-        placeholder="Adjust your scoring model weights here..."
-      />
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+      {[
+        { id: 'domain_complexity', label: 'Domain Complexity' },
+        { id: 'platform_data_depth', label: 'Platform/Data Depth' },
+        { id: 'compensation', label: 'Compensation Parity' },
+        { id: 'interview_likelihood', label: 'Interview Prediction' },
+      ].map((factor) => (
+        <div key={factor.id} className="space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-bold text-[#10294D] uppercase tracking-widest">{factor.label}</span>
+            <span className="text-sm font-black text-[#10294D]">{( (weights?.[factor.id] || 0.5) * 100).toFixed(0)}%</span>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max="1" 
+            step="0.1" 
+            value={weights?.[factor.id] || 0.5}
+            onChange={(e) => onChange({...weights, [factor.id]: parseFloat(e.target.value)})}
+            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#10294D]"
+          />
+        </div>
+      ))}
     </div>
   </section>
 );
@@ -371,9 +462,9 @@ export default function CareerOpsDashboard() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
-  const [yamlContent, setYamlContent] = useState('');
-  const [evidenceContent, setEvidenceContent] = useState('');
-  const [weightsContent, setWeightsContent] = useState('');
+  const [profileData, setProfileData] = useState({ name: '', current_role: '', min_salary: 0, target_roles: [] });
+  const [anchorsData, setAnchorsData] = useState([]);
+  const [weightsData, setWeightsData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -391,9 +482,10 @@ export default function CareerOpsDashboard() {
       });
       const data = await res.json();
       setConfigStatus({ loading: false, has_config: data.has_config });
-      if (data.profile) setYamlContent(data.profile);
-      if (data.evidence) setEvidenceContent(data.evidence);
-      if (data.weights) setWeightsContent(data.weights);
+      
+      if (data.profile_obj) setProfileData(data.profile_obj);
+      if (data.evidence_obj) setAnchorsData(data.evidence_obj);
+      if (data.weights_obj) setWeightsData(data.weights_obj);
     } catch (err) {
       console.error('Failed to check config', err);
       setConfigStatus({ loading: false, has_config: false });
@@ -410,9 +502,9 @@ export default function CareerOpsDashboard() {
         body: JSON.stringify({ 
           action: 'save_config', 
           tenantId: currentTenant.id,
-          profile: yamlContent,
-          evidence: evidenceContent,
-          weights: weightsContent
+          profile_obj: profileData,
+          evidence_obj: anchorsData,
+          weights_obj: weightsData
         }),
       });
       if (res.ok) {
@@ -425,6 +517,20 @@ export default function CareerOpsDashboard() {
       setIsSaving(false);
     }
   }
+
+  const addAnchor = () => {
+    setAnchorsData([...anchorsData, { company: '', period: '', bullets: [''] }]);
+  };
+
+  const deleteAnchor = (index) => {
+    setAnchorsData(anchorsData.filter((_, i) => i !== index));
+  };
+
+  const updateAnchor = (index, updated) => {
+    const newData = [...anchorsData];
+    newData[index] = updated;
+    setAnchorsData(newData);
+  };
 
   const tabs = [
     { id: 'pipeline', label: 'Pipeline', icon: '📋' },
@@ -541,7 +647,59 @@ export default function CareerOpsDashboard() {
       {/* Pipeline Table */}
       {activeTab === 'pipeline' && (
         <section className="space-y-6">
-...
+          <div className="flex items-center justify-between">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Active Pipeline</h3>
+            <div className="flex gap-2">
+              <button className="px-4 py-2 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors">Filter</button>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Company / Role</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Score</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Timeline</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {mockPipeline.map((item, i) => (
+                  <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
+                          {item.company[0]}
+                        </div>
+                        <div>
+                          <p className="font-bold text-[#10294D] text-sm">{item.company}</p>
+                          <p className="text-xs text-slate-400">{item.role}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="font-mono font-bold text-[#006C50]">{item.score.toFixed(1)}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                        item.status === 'Interviewing' ? 'bg-green-100 text-green-700' : 
+                        item.status === 'Applied' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <p className="text-xs font-semibold text-slate-600">{item.timeline}</p>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <button className="text-slate-300 hover:text-slate-600 transition-colors">•••</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 
@@ -570,56 +728,7 @@ export default function CareerOpsDashboard() {
         </div>
       )}
 
-      {/* Config Tab View */}
-      {activeTab === 'settings' && (
-        <section className="animate-in fade-in duration-300">
-           {/* Validation Banner */}
-           {!configStatus.has_config && (
-             <div className="mb-8 flex items-center justify-between bg-red-50 text-red-900 px-6 py-3 rounded-xl border border-red-100">
-               <div className="flex items-center gap-3">
-                 <span className="material-symbols-outlined text-red-500">report</span>
-                 <span className="text-xs font-bold uppercase tracking-wider">Validation Alert:</span>
-                 <span className="text-xs font-medium">Missing Target Salary floor and Evidence Anchors in profile configuration.</span>
-               </div>
-               <button className="text-[10px] font-bold underline decoration-2 underline-offset-4 uppercase tracking-widest">Fix Now</button>
-             </div>
-           )}
-
-           <header className="mb-10">
-             <h3 className="text-3xl font-bold text-[#10294D] tracking-tight">Onboarding & Configuration.</h3>
-             <p className="text-slate-500 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
-           </header>
-           
-           <div className="grid grid-cols-12 gap-8 mb-8">
-              <div className="col-span-12 lg:col-span-5 flex flex-col">
-                <ProfileYamlEditor 
-                  value={yamlContent} 
-                  onChange={setYamlContent} 
-                  onSave={handleSaveConfig}
-                  isSaving={isSaving}
-                />
-              </div>
-              <div className="col-span-12 lg:col-span-7 flex flex-col gap-8">
-                <EvidenceAnchors 
-                  value={evidenceContent} 
-                  onChange={setEvidenceContent} 
-                  onSave={handleSaveConfig}
-                  isSaving={isSaving}
-                />
-                <ScoringModelWeights 
-                  value={weightsContent} 
-                  onChange={setWeightsContent} 
-                  onSave={handleSaveConfig}
-                  isSaving={isSaving}
-                />
-              </div>
-           </div>
-
-           <CvPreviewer />
-        </section>
-      )}
-
-      {/* Other Tabs (Scans, CVS) - Placeholder for now */}
+      {/* CVs Tab */}
       {activeTab === 'cvs' && (
         <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-500">
           <div className="col-span-12 lg:col-span-8 space-y-8">
@@ -672,6 +781,57 @@ export default function CareerOpsDashboard() {
             </div>
           </aside>
         </div>
+      )}
+
+      {/* Config Tab View */}
+      {activeTab === 'settings' && (
+        <section className="animate-in fade-in duration-300">
+           {/* Validation Banner */}
+           {!configStatus.has_config && (
+             <div className="mb-8 flex items-center justify-between bg-red-50 text-red-900 px-6 py-3 rounded-xl border border-red-100">
+               <div className="flex items-center gap-3">
+                 <span className="material-symbols-outlined text-red-500">report</span>
+                 <span className="text-xs font-bold uppercase tracking-wider">Validation Alert:</span>
+                 <span className="text-xs font-medium">Missing Target Salary floor and Evidence Anchors in profile configuration.</span>
+               </div>
+               <button className="text-[10px] font-bold underline decoration-2 underline-offset-4 uppercase tracking-widest">Fix Now</button>
+             </div>
+           )}
+
+           <header className="mb-10">
+             <h3 className="text-3xl font-bold text-[#10294D] tracking-tight">Onboarding & Configuration.</h3>
+             <p className="text-slate-500 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
+           </header>
+           
+           <div className="grid grid-cols-12 gap-8 mb-8">
+              <div className="col-span-12 lg:col-span-5 flex flex-col">
+                <ProfileForm 
+                  data={profileData} 
+                  onChange={setProfileData} 
+                  onSave={handleSaveConfig}
+                  isSaving={isSaving}
+                />
+              </div>
+              <div className="col-span-12 lg:col-span-7 flex flex-col gap-8">
+                <EvidenceManager 
+                  anchors={anchorsData} 
+                  onAdd={addAnchor}
+                  onDelete={deleteAnchor}
+                  onUpdate={updateAnchor}
+                  onSave={handleSaveConfig}
+                  isSaving={isSaving}
+                />
+                <VisualWeightEditor 
+                  weights={weightsData} 
+                  onChange={setWeightsData} 
+                  onSave={handleSaveConfig}
+                  isSaving={isSaving}
+                />
+              </div>
+           </div>
+
+           <CvPreviewer />
+        </section>
       )}
 
     </div>
