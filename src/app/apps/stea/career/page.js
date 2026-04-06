@@ -233,35 +233,28 @@ const DiscoveryInbox = () => (
 
 /* ---------------- Configuration & Onboarding Components ---------------- */
 
-const ProfileYamlEditor = () => (
+const ProfileYamlEditor = ({ value, onChange, onSave, isSaving }) => (
   <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-[#10294D]">account_circle</span>
         <h3 className="font-bold text-[#10294D] text-sm">Profile YAML</h3>
       </div>
-      <span className="px-2 py-1 bg-slate-100 rounded font-mono text-[9px] text-slate-500 uppercase tracking-widest font-bold">Read/Write</span>
+      <button 
+        onClick={onSave}
+        disabled={isSaving}
+        className="px-3 py-1 bg-[#10294D] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
+      >
+        {isSaving ? 'Saving...' : 'Save Changes'}
+      </button>
     </div>
-    <div className="flex-1 bg-[#001432] text-blue-100 p-5 rounded-xl font-mono text-[11px] leading-relaxed overflow-auto custom-scrollbar min-h-[350px] shadow-inner">
-      <pre className="whitespace-pre-wrap">
-<span className="text-[#53FDC7]">candidate:</span>
-  <span className="text-blue-300">name:</span> David Loake
-  <span className="text-blue-300">identity_tag:</span> dl-stea-01
-  <span className="text-blue-300">status:</span> active_search
-
-<span className="text-[#53FDC7]">preferences:</span>
-  <span className="text-blue-300">target_roles:</span>
-    - Senior Product Manager
-    - Lead Product Manager
-    - Principal PM
-  <span className="text-blue-300">salary_floor:</span> 125000
-  <span className="text-blue-300">relocation:</span> false
-  <span className="text-blue-300">notice_period:</span> 30_days
-
-<span className="text-[#53FDC7]">specialization:</span>
-  <span className="text-blue-300">domain:</span> Regulated SaaS / FinTech
-  <span className="text-blue-300">stack:</span> [React, Node, Firebase, OpenAI]
-      </pre>
+    <div className="flex-1 bg-[#001432] rounded-xl overflow-hidden shadow-inner">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-[350px] bg-transparent text-blue-100 p-5 font-mono text-[11px] leading-relaxed border-none focus:ring-0 resize-none custom-scrollbar"
+        spellCheck="false"
+      />
     </div>
   </div>
 );
@@ -383,13 +376,8 @@ export default function CareerOpsDashboard() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
-
-  // Mock data for initial view/demo
-  const mockPipeline = [
-    { company: 'Nebula Systems', role: 'Principal PM, Platform', score: 4.8, status: 'Interviewing', timeline: 'Round 3: System Design' },
-    { company: 'Veridian Finance', role: 'Head of Product, Payments', score: 4.2, status: 'Applied', timeline: 'Pending Review' },
-    { company: 'Stellar AI', role: 'Senior PM, Data Governance', score: 3.9, status: 'Shortlisted', timeline: 'Awaiting Feedback' },
-  ];
+  const [yamlContent, setYamlContent] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (currentTenant?.id) {
@@ -406,9 +394,36 @@ export default function CareerOpsDashboard() {
       });
       const data = await res.json();
       setConfigStatus({ loading: false, has_config: data.has_config });
+      if (data.profile) {
+        setYamlContent(data.profile);
+      }
     } catch (err) {
       console.error('Failed to check config', err);
       setConfigStatus({ loading: false, has_config: false });
+    }
+  }
+
+  async function handleSaveConfig() {
+    if (!currentTenant?.id) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'save_config', 
+          tenantId: currentTenant.id,
+          profile: yamlContent
+        }),
+      });
+      if (res.ok) {
+        alert('Configuration saved successfully.');
+        checkConfig();
+      }
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -578,7 +593,12 @@ export default function CareerOpsDashboard() {
            
            <div className="grid grid-cols-12 gap-8 mb-8">
               <div className="col-span-12 lg:col-span-5 flex flex-col">
-                <ProfileYamlEditor />
+                <ProfileYamlEditor 
+                  value={yamlContent} 
+                  onChange={setYamlContent} 
+                  onSave={handleSaveConfig}
+                  isSaving={isSaving}
+                />
               </div>
               <div className="col-span-12 lg:col-span-7 flex flex-col gap-8">
                 <EvidenceAnchors />
