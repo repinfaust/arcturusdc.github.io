@@ -22,7 +22,7 @@ export default function CareerOpsDashboard() {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'analyze', url: jdUrl }),
+        body: JSON.stringify({ action: 'analyse', url: jdUrl }),
       });
       const data = await res.json();
       setResults(data);
@@ -68,7 +68,7 @@ export default function CareerOpsDashboard() {
               opacity: loading ? 0.7 : 1
             }}
           >
-            {loading ? 'Analyzing...' : 'Analyze Role'}
+            {loading ? 'Analysing...' : 'Analyse Role'}
           </button>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function CareerOpsDashboard() {
         {activeTab === 'pipeline' && (
           <div style={{ textAlign: 'center', color: '#94A3B8', marginTop: 100 }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-            <p>Your pipeline is empty. Analyze a role to get started.</p>
+            <p>Your pipeline is empty. Analyse a role to get started.</p>
           </div>
         )}
         
@@ -131,16 +131,38 @@ export default function CareerOpsDashboard() {
         )}
 
         {activeTab === 'settings' && (
-           <div style={{ display: 'grid', gap: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#10294D' }}>Configuration</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                 <div style={{ padding: 16, border: '1px solid #D6E0F4', borderRadius: 12 }}>
-                    <h4 style={{ fontSize: 14, fontWeight: 600, color: '#10294D', marginBottom: 8 }}>Scoring Weights</h4>
-                    <p style={{ fontSize: 12, color: '#64748B' }}>12-factor PM specific model is active.</p>
+           <div style={{ display: 'grid', gap: 24 }}>
+              <div style={{ borderBottom: '1px solid #E2E8F0', pb: 16 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#10294D' }}>Config & Personalisation</h3>
+                <p style={{ color: '#64748B', fontSize: 14 }}>Tailor the system to your specific profile and target roles.</p>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+                 <div style={{ padding: 20, border: '1px solid #D6E0F4', borderRadius: 16, background: '#F8FAFF' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', mb: 12 }}>
+                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#10294D' }}>Candidate Profile</h4>
+                      <span style={{ fontSize: 12, color: '#006C50', fontWeight: 700 }}>profile.yaml</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: '#475569', mb: 16 }}>Define your level, location, and core PM strengths.</p>
+                    <button style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFF', fontSize: 13, fontWeight: 600, color: '#10294D', cursor: 'pointer' }}>Edit Profile</button>
                  </div>
-                 <div style={{ padding: 16, border: '1px solid #D6E0F4', borderRadius: 12 }}>
-                    <h4 style={{ fontSize: 14, fontWeight: 600, color: '#10294D', marginBottom: 8 }}>Candidate Profile</h4>
-                    <p style={{ fontSize: 12, color: '#64748B' }}>David Loake: Senior PM | UK Remote</p>
+
+                 <div style={{ padding: 20, border: '1px solid #D6E0F4', borderRadius: 16, background: '#F8FAFF' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', mb: 12 }}>
+                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#10294D' }}>Evidence Library</h4>
+                      <span style={{ fontSize: 12, color: '#006C50', fontWeight: 700 }}>evidence.yaml</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: '#475569', mb: 16 }}>The "Single Source of Truth" for your achievements and anchors.</p>
+                    <button style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFF', fontSize: 13, fontWeight: 600, color: '#10294D', cursor: 'pointer' }}>Manage Anchors</button>
+                 </div>
+
+                 <div style={{ padding: 20, border: '1px solid #D6E0F4', borderRadius: 16, background: '#F8FAFF' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', mb: 12 }}>
+                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#10294D' }}>Scoring Framework</h4>
+                      <span style={{ fontSize: 12, color: '#006C50', fontWeight: 700 }}>weights.yaml</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: '#475569', mb: 16 }}>Adjust the weights for domain complexity, pay, and fit.</p>
+                    <button style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFF', fontSize: 13, fontWeight: 600, color: '#10294D', cursor: 'pointer' }}>Tune Weights</button>
                  </div>
               </div>
            </div>

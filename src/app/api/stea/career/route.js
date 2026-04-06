@@ -17,7 +17,7 @@ export async function POST(request) {
     const body = await request.json();
     const { action, url, jd_text } = body;
 
-    if (action === 'analyze') {
+    if (action === 'analyse') {
       const apiKey = process.env.OPENAI_API_KEY;
       const model = process.env.OPENAI_MODEL || 'gpt-4o';
 

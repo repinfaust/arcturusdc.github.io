@@ -1,18 +1,18 @@
-import ProductPocShell from '../sorr/controlui/_components/ProductPocShell';
+import CareerOpsShell from './_components/CareerOpsShell';
 
 export const metadata = {
-  title: 'Career Ops | David Loake',
-  description: 'AI-powered job search pipeline for Senior/Lead/Principal PM roles.',
+  title: 'Career Ops | STEa Studio',
+  description: 'AI-powered PM job search pipeline for Senior/Lead/Principal roles.',
 };
 
 export default function CareerOpsLayout({ children }) {
   return (
-    <ProductPocShell
+    <CareerOpsShell
       activeTab="/apps/stea/career"
       title="Career Ops"
       subtitle="AI-powered PM job search pipeline. High-fit only."
     >
       {children}
-    </ProductPocShell>
+    </CareerOpsShell>
   );
 }
