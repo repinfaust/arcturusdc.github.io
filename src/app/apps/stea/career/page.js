@@ -467,6 +467,13 @@ export default function CareerOpsDashboard() {
   const [weightsData, setWeightsData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
+  // Mock data for initial view/demo
+  const mockPipeline = [
+    { company: 'Nebula Systems', role: 'Principal PM, Platform', score: 4.8, status: 'Interviewing', timeline: 'Round 3: System Design' },
+    { company: 'Veridian Finance', role: 'Head of Product, Payments', score: 4.2, status: 'Applied', timeline: 'Pending Review' },
+    { company: 'Stellar AI', role: 'Senior PM, Data Governance', score: 3.9, status: 'Shortlisted', timeline: 'Awaiting Feedback' },
+  ];
+
   useEffect(() => {
     if (currentTenant?.id) {
       checkConfig();
