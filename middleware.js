@@ -37,6 +37,7 @@ export async function middleware(req) {
     '/apps/stea/admin',
     '/apps/stea/automatedtestsdashboard',
     '/apps/stea/autoproduct',
+    '/apps/stea/career',
     '/apps/stea/filo',
     '/apps/stea/hans',
     '/apps/stea/harls',

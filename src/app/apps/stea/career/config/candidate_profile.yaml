@@ -1,0 +1,29 @@
+name: "David Loake"
+location: "UK (Remote Preferred)"
+current_role: "Senior Product Manager"
+target_roles:
+  - "Senior Product Manager"
+  - "Lead Product Manager"
+  - "Principal Product Manager"
+  - "Platform Product Manager"
+  - "Data Product Manager"
+  - "Regulated SaaS Product Manager"
+
+core_strengths:
+  - "Billing Platforms"
+  - "Payments & Debt Recovery"
+  - "Regulatory Compliance"
+  - "Data Analytics & Experimentation"
+  - "Stakeholder Orchestration"
+  - "AI-enabled Prototyping (SoRR)"
+  - "Systems Thinking"
+
+preferences:
+  remote: true
+  min_salary: 95000
+  currency: "GBP"
+  industries:
+    - "FinTech"
+    - "Energy Tech"
+    - "Regulated SaaS"
+    - "Enterprise Infrastructure"

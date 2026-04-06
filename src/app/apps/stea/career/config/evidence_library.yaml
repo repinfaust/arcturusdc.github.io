@@ -1,0 +1,37 @@
+anchors:
+  - id: "ensek_bg"
+    company: "ENSEK / British Gas"
+    outcomes:
+      - "Payment Adequacy engine ownership"
+      - "Debt recovery automation"
+      - "Regulatory alignment across UK energy market"
+      - "Roadmap ownership for core billing systems"
+      - "Architecture/Business/Client coordination"
+    tags: ["billing", "payments", "compliance", "stakeholder-influence"]
+
+  - id: "experian"
+    company: "Experian"
+    outcomes:
+      - "MarTech and analytics ownership"
+      - "AWS migration for legacy data stacks"
+      - "Score Boost product launch"
+      - "GDPR-safe data strategy and implementation"
+      - "Data standardisation across business units"
+    tags: ["analytics", "data", "compliance", "platform"]
+
+  - id: "arcturus"
+    company: "Arcturus Digital"
+    outcomes:
+      - "Independent product development"
+      - "React Native/Firebase/OpenAI prototyping"
+      - "Validation speed and rapid experimentation"
+      - "Shipped multiple real-world apps"
+    tags: ["ai-prototyping", "systems-thinking", "experimentation"]
+
+  - id: "sorr"
+    company: "SoRR (Personal Intellectual Property)"
+    outcomes:
+      - "AI governance and structured reasoning framework"
+      - "AI-assisted product and engineering workflows"
+      - "Context-efficient LLM orchestration"
+    tags: ["ai-governance", "ai-prototyping", "systems-thinking"]

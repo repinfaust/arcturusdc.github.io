@@ -1,0 +1,20 @@
+levels:
+  - id: "senior"
+    label: "Senior Product Manager"
+    min_years: 5
+  - id: "lead"
+    label: "Lead Product Manager"
+    min_years: 8
+  - id: "principal"
+    label: "Principal Product Manager"
+    min_years: 10
+
+archetypes:
+  - id: "platform"
+    focus: ["Internal Tools", "Infrastructure", "Developer Experience", "APIs"]
+  - id: "data"
+    focus: ["Analytics", "ML", "Experimentation", "Data Governance"]
+  - id: "regulated"
+    focus: ["FinTech", "Energy", "Compliance", "Payments"]
+  - id: "systems"
+    focus: ["Workflow Systems", "Complex Logic", "Architecture-adjacent"]

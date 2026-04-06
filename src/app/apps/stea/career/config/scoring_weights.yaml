@@ -1,0 +1,55 @@
+factors:
+  role_level_fit:
+    weight: 0.0
+    type: "gate"
+    description: "Senior/Lead/Principal calibration"
+  domain_complexity:
+    weight: 1.0
+    type: "positive"
+    description: "Complexity of system, workflow, regulation, stakes"
+  product_ownership:
+    weight: 0.0
+    type: "gate"
+    description: "Real ownership vs backlog admin"
+  platform_data_depth:
+    weight: 1.0
+    type: "positive"
+    description: "Platform, internal tools, data products, structural work"
+  regulatory_consequence:
+    weight: 0.5
+    type: "positive"
+    description: "Compliance, financial, operational risk"
+  stakeholder_complexity:
+    weight: 0.5
+    type: "positive"
+    description: "Breadth across business, tech, architecture, clients"
+  ai_governance_relevance:
+    weight: 0.3
+    type: "positive"
+    description: "Opportunity to leverage SoRR / AI workflow thinking"
+  remote_feasibility:
+    weight: 0.5
+    type: "constraint"
+    description: "UK remote/hybrid practicality"
+  compensation:
+    weight: 1.0
+    type: "constraint"
+    description: "Pay band vs target"
+  company_quality:
+    weight: 0.5
+    type: "risk"
+    description: "Product maturity, mission, product culture"
+  interview_likelihood:
+    weight: 1.0
+    type: "prediction"
+    description: "Strength of evidence match"
+  personal_energy:
+    weight: 0.2
+    type: "human_override"
+    description: "Personal resonance with problem space"
+
+thresholds:
+  pursue_aggressively: 4.5
+  strong_target: 4.0
+  selective_only: 3.5
+  archive: 3.49
