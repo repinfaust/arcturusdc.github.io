@@ -1,15 +1,62 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
+
+/* ---------------- UI Components ---------------- */
+
+const FitGauge = ({ score }) => {
+  const percentage = (score / 5) * 100;
+  const strokeDasharray = 552.92;
+  const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
+
+  return (
+    <div className="relative h-48 w-48 mx-auto py-6">
+      <svg className="h-full w-full transform -rotate-90">
+        <circle className="text-slate-100" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" strokeWidth="8"></circle>
+        <circle cx="96" cy="96" fill="transparent" r="88" stroke="url(#gradient-success)" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} strokeLinecap="round" strokeWidth="8"></circle>
+        <defs>
+          <linearGradient id="gradient-success" x1="0%" x2="100%" y1="0%" y2="0%">
+            <stop offset="0%" stopColor="#006C50"></stop>
+            <stop offset="100%" stopColor="#82d7b5"></stop>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-5xl font-extrabold text-[#10294D]">{score.toFixed(1)}</span>
+        <span className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest mt-1">
+          {score >= 4.5 ? 'Aggressive Pursuit' : score >= 4.0 ? 'Strong Match' : score >= 3.5 ? 'Selective' : 'Archive'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const FactorCard = ({ label, isFit }) => (
+  <div className={`p-4 bg-white border-l-4 ${isFit ? 'border-[#006C50]' : 'border-[#ba1a1a]'} rounded-lg shadow-sm flex justify-between items-center`}>
+    <span className="text-sm font-medium text-[#10294D]">{label}</span>
+    <span className={`text-sm font-bold ${isFit ? 'text-[#006C50]' : 'text-[#ba1a1a]'}`}>
+      {isFit ? '✓' : '✕'}
+    </span>
+  </div>
+);
+
+/* ---------------- Main Dashboard ---------------- */
 
 export default function CareerOpsDashboard() {
   const { currentTenant, loading: tenantLoading } = useTenant();
   const [activeTab, setActiveTab] = useState('pipeline');
-  const [jdUrl, setJdUrl] = useState('');
+  const [jdText, setJdText] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
+
+  // Mock data for initial view/demo
+  const mockPipeline = [
+    { company: 'Nebula Systems', role: 'Principal PM, Platform', score: 4.8, status: 'Interviewing', timeline: 'Round 3: System Design' },
+    { company: 'Veridian Finance', role: 'Head of Product, Payments', score: 4.2, status: 'Applied', timeline: 'Pending Review' },
+    { company: 'Stellar AI', role: 'Senior PM, Data Governance', score: 3.9, status: 'Shortlisted', timeline: 'Awaiting Feedback' },
+  ];
 
   useEffect(() => {
     if (currentTenant?.id) {
@@ -40,15 +87,16 @@ export default function CareerOpsDashboard() {
   ];
 
   async function handleAnalyse() {
-    if (!jdUrl.trim() || !currentTenant?.id) return;
+    if (!jdText.trim() || !currentTenant?.id) return;
     setLoading(true);
+    setResults(null);
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           action: 'analyse', 
-          url: jdUrl,
+          jd_text: jdText,
           tenantId: currentTenant.id 
         }),
       });
@@ -64,162 +112,200 @@ export default function CareerOpsDashboard() {
   }
 
   if (tenantLoading || configStatus.loading) {
-    return <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>Loading Career Ops...</div>;
+    return <div className="p-10 text-center text-slate-500 font-medium">Initialising Career Ops...</div>;
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Setup Warning */}
+    <div className="flex flex-col gap-10">
+      {/* Onboarding Alert */}
       {!configStatus.has_config && activeTab !== 'settings' && (
-        <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 16, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="bg-[#FFF7ED] border border-[#FED7AA] rounded-2xl p-6 flex justify-between items-center shadow-sm">
           <div>
-            <div style={{ fontWeight: 700, color: '#9A3412', fontSize: 14 }}>Workspace Setup Required</div>
-            <div style={{ color: '#C2410C', fontSize: 13, marginTop: 2 }}>You need to configure your Candidate Profile and Evidence Library before you can analyse roles.</div>
+            <div className="font-bold text-[#9A3412] text-sm tracking-tight">Workspace Setup Required</div>
+            <p className="text-[#C2410C] text-sm mt-1 opacity-90">Please configure your PM profile and evidence library before running diagnostics.</p>
           </div>
           <button 
             onClick={() => setActiveTab('settings')}
-            style={{ background: '#EA580C', color: '#FFF', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            className="bg-[#EA580C] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-orange-700/10 hover:bg-[#C2410C] transition-all"
           >
             Go to Config
           </button>
         </div>
       )}
 
-      {/* Search / Input Area */}
-      <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #D6E0F4', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#10294D', marginBottom: 16 }}>Process New Role</h2>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <input
-            type="text"
-            value={jdUrl}
-            onChange={(e) => setJdUrl(e.target.value)}
-            placeholder="Paste Job URL or Description..."
-            disabled={!configStatus.has_config}
-            style={{
-              flex: 1,
-              padding: '12px 16px',
-              borderRadius: 12,
-              border: '1px solid #D6E0F4',
-              fontSize: 14,
-              outline: 'none',
-              background: configStatus.has_config ? '#F8FAFC' : '#F1F5F9',
-              cursor: configStatus.has_config ? 'text' : 'not-allowed'
-            }}
-          />
-          <button
-            onClick={handleAnalyse}
-            disabled={loading || !configStatus.has_config}
-            style={{
-              padding: '12px 24px',
-              background: '#10294D',
-              color: '#FFFFFF',
-              borderRadius: 12,
-              fontWeight: 600,
-              border: 'none',
-              cursor: (loading || !configStatus.has_config) ? 'not-allowed' : 'pointer',
-              opacity: (loading || !configStatus.has_config) ? 0.7 : 1
-            }}
-          >
-            {loading ? 'Analysing...' : 'Analyse Role'}
-          </button>
+      {/* Role Input Terminal */}
+      <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-2 text-slate-400">
+            <span className="material-symbols-outlined text-sm">terminal</span>
+            <span className="uppercase tracking-[0.2em] text-[10px] font-bold">Input Terminal</span>
+          </div>
+          <div className="flex flex-col lg:flex-row gap-6 items-end">
+            <textarea 
+              value={jdText}
+              onChange={(e) => setJdText(e.target.value)}
+              className="w-full h-32 bg-slate-50 border-none rounded-xl p-5 font-mono text-sm focus:ring-2 focus:ring-slate-200 placeholder:text-slate-300 resize-none"
+              placeholder="Paste Job Description text or a LinkedIn URL to begin high-precision AI analysis..."
+              disabled={!configStatus.has_config}
+            />
+            <button 
+              onClick={handleAnalyse}
+              disabled={loading || !configStatus.has_config}
+              className={`min-w-[180px] h-14 bg-[#10294D] text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-[#001432] transition-all shadow-xl shadow-blue-900/10 group ${(!configStatus.has_config || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {loading ? 'Analysing...' : 'Analyse Role'}
+              <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, background: '#EFF4FF', padding: 4, borderRadius: 12, alignSelf: 'flex-start' }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              border: 'none',
-              background: activeTab === tab.id ? '#FFFFFF' : 'transparent',
-              color: activeTab === tab.id ? '#10294D' : '#4C5D74',
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-            }}
-          >
-            <span>{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Content Area */}
-      <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #D6E0F4', minHeight: 400 }}>
-        {activeTab === 'pipeline' && (
-          <div style={{ textAlign: 'center', color: '#94A3B8', marginTop: 100 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-            <p>Your pipeline is empty. Analyse a role to get started.</p>
-          </div>
-        )}
-        
-        {activeTab === 'scans' && (
-          <div style={{ display: 'grid', gap: 16 }}>
-             <h3 style={{ fontSize: 16, fontWeight: 700, color: '#10294D' }}>Live Portal Scans</h3>
-             <p style={{ color: '#4C5D74', fontSize: 14 }}>Scanning 45+ pre-configured portals for Senior/Lead PM roles...</p>
-             {/* Mock Scan Results */}
-             <div style={{ padding: 16, background: '#F1F5F9', borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: 'monospace' }}>
-                [INFO] Starting scan for "Platform Product Manager UK"...<br/>
-                [INFO] Checking Greenhouse (Anthropic, OpenAI)...<br/>
-                [INFO] Checking Ashby (Vercel, n8n)...<br/>
-                [INFO] Found 12 potential matches. Filtering by "Senior" level...
-             </div>
-          </div>
-        )}
-
-        {activeTab === 'cvs' && (
-          <div style={{ textAlign: 'center', color: '#94A3B8', marginTop: 100 }}>
-             <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
-             <p>Generate tailored CVs for your shortlisted roles.</p>
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-           <div style={{ display: 'grid', gap: 24 }}>
-              <div style={{ borderBottom: '1px solid #E2E8F0', pb: 16 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#10294D' }}>Config & Personalisation</h3>
-                <p style={{ color: '#64748B', fontSize: 14 }}>Tailor the system to your specific profile and target roles.</p>
+      {/* Analysis Results View */}
+      {results && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200 flex flex-col justify-between shadow-sm">
+            <div>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Fit Diagnostic</h3>
+              <FitGauge score={results.jd_data?.score || 4.2} />
+            </div>
+            <div className="mt-8 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
+              <span className="text-red-500 font-bold">!</span>
+              <div>
+                <h4 className="text-xs font-bold text-red-900">Risk Signal</h4>
+                <p className="text-[11px] text-red-700/80 mt-1 leading-relaxed">
+                  {results.evaluation?.match(/Risk Signal:(.*)/i)?.[1] || 'Potential level misalignment detected based on core responsibilities.'}
+                </p>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-                 <div style={{ padding: 20, border: '1px solid #D6E0F4', borderRadius: 16, background: '#F8FAFF' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', mb: 12 }}>
-                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#10294D' }}>Candidate Profile</h4>
-                      <span style={{ fontSize: 12, color: '#006C50', fontWeight: 700 }}>profile.yaml</span>
-                    </div>
-                    <p style={{ fontSize: 13, color: '#475569', mb: 16 }}>Define your level, location, and core PM strengths.</p>
-                    <button style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFF', fontSize: 13, fontWeight: 600, color: '#10294D', cursor: 'pointer' }}>Edit Profile</button>
-                 </div>
+            </div>
+          </div>
 
-                 <div style={{ padding: 20, border: '1px solid #D6E0F4', borderRadius: 16, background: '#F8FAFF' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', mb: 12 }}>
-                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#10294D' }}>Evidence Library</h4>
-                      <span style={{ fontSize: 12, color: '#006C50', fontWeight: 700 }}>evidence.yaml</span>
-                    </div>
-                    <p style={{ fontSize: 13, color: '#475569', mb: 16 }}>The "Single Source of Truth" for your achievements and anchors.</p>
-                    <button style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFF', fontSize: 13, fontWeight: 600, color: '#10294D', cursor: 'pointer' }}>Manage Anchors</button>
-                 </div>
+          <div className="lg:col-span-8 bg-slate-50 rounded-2xl p-8 border border-slate-100 flex flex-col shadow-inner">
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="text-2xl font-bold text-[#10294D] italic tracking-tight">"The Fit Narrative"</h3>
+              <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest">AI Prediction</div>
+            </div>
+            <div className="text-slate-600 text-base leading-relaxed font-medium whitespace-pre-wrap">
+              {results.evaluation}
+            </div>
+          </div>
+        </div>
+      )}
 
-                 <div style={{ padding: 20, border: '1px solid #D6E0F4', borderRadius: 16, background: '#F8FAFF' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', mb: 12 }}>
-                      <h4 style={{ fontSize: 15, fontWeight: 700, color: '#10294D' }}>Scoring Framework</h4>
-                      <span style={{ fontSize: 12, color: '#006C50', fontWeight: 700 }}>weights.yaml</span>
-                    </div>
-                    <p style={{ fontSize: 13, color: '#475569', mb: 16 }}>Adjust the weights for domain complexity, pay, and fit.</p>
-                    <button style={{ width: '100%', padding: '10px', borderRadius: 10, border: '1px solid #CBD5E1', background: '#FFF', fontSize: 13, fontWeight: 600, color: '#10294D', cursor: 'pointer' }}>Tune Weights</button>
-                 </div>
+      {/* Pipeline Table */}
+      {activeTab === 'pipeline' && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Active Pipeline</h3>
+            <div className="flex gap-2">
+              <button className="px-4 py-2 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors">Filter</button>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Company / Role</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Score</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Status</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Timeline</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {mockPipeline.map((item, i) => (
+                  <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
+                          {item.company[0]}
+                        </div>
+                        <div>
+                          <p className="font-bold text-[#10294D] text-sm">{item.company}</p>
+                          <p className="text-xs text-slate-400">{item.role}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="font-mono font-bold text-[#006C50]">{item.score.toFixed(1)}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                        item.status === 'Interviewing' ? 'bg-green-100 text-green-700' : 
+                        item.status === 'Applied' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <p className="text-xs font-semibold text-slate-600">{item.timeline}</p>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <button className="text-slate-300 hover:text-slate-600 transition-colors">•••</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* Config Tab View */}
+      {activeTab === 'settings' && (
+        <section className="animate-in fade-in duration-300">
+           <div className="border-b border-slate-100 pb-6 mb-8">
+              <h3 className="text-2xl font-bold text-[#10294D] tracking-tight">Config & Personalisation</h3>
+              <p className="text-slate-500 text-sm mt-1">Tailor the analysis engine to your specific PM profile and evidence library.</p>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-[#10294D]/20 transition-all group">
+                <div className="flex justify-between items-start mb-6">
+                   <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                      <span className="material-symbols-outlined">person</span>
+                   </div>
+                   <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">profile.yaml</span>
+                </div>
+                <h4 className="text-base font-bold text-[#10294D] mb-2">Candidate Profile</h4>
+                <p className="text-xs text-slate-500 mb-6 leading-relaxed">Define your seniority level, target domains, and salary expectations.</p>
+                <button className="w-full py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-[#10294D] hover:text-white transition-all">Edit Profile</button>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-[#10294D]/20 transition-all group">
+                <div className="flex justify-between items-start mb-6">
+                   <div className="h-12 w-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                      <span className="material-symbols-outlined">database</span>
+                   </div>
+                   <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">evidence.yaml</span>
+                </div>
+                <h4 className="text-base font-bold text-[#10294D] mb-2">Evidence Library</h4>
+                <p className="text-xs text-slate-500 mb-6 leading-relaxed">The "Single Source of Truth" for your career anchors and proof points.</p>
+                <button className="w-full py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-[#10294D] hover:text-white transition-all">Manage Anchors</button>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-[#10294D]/20 transition-all group">
+                <div className="flex justify-between items-start mb-6">
+                   <div className="h-12 w-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                      <span className="material-symbols-outlined">tune</span>
+                   </div>
+                   <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">weights.yaml</span>
+                </div>
+                <h4 className="text-base font-bold text-[#10294D] mb-2">Scoring Framework</h4>
+                <p className="text-xs text-slate-500 mb-6 leading-relaxed">Adjust the 12-factor weights to match what matters most to you.</p>
+                <button className="w-full py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-[#10294D] hover:text-white transition-all">Tune Weights</button>
               </div>
            </div>
-        )}
-      </div>
+        </section>
+      )}
+
+      {/* Other Tabs (Scans, CVS) - Placeholder for now */}
+      {(activeTab === 'scans' || activeTab === 'cvs') && (
+        <div className="p-20 text-center bg-slate-50 rounded-3xl border border-slate-100">
+           <div className="text-4xl mb-4">🚧</div>
+           <p className="text-slate-500 font-medium">This module is currently being adapted from the core Career Ops pipeline.</p>
+        </div>
+      )}
     </div>
   );
+}
 }
