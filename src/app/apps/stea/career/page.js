@@ -259,61 +259,56 @@ const ProfileYamlEditor = ({ value, onChange, onSave, isSaving }) => (
   </div>
 );
 
-const EvidenceAnchors = () => (
-  <section className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-    <div className="flex items-center justify-between mb-6">
+const EvidenceAnchors = ({ value, onChange, onSave, isSaving }) => (
+  <section className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col gap-4">
+    <div className="flex items-center justify-between">
       <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
         <span className="material-symbols-outlined text-[#10294D]">deployed_code</span>
-        Evidence Anchors
+        Evidence Anchors (YAML)
       </h3>
-      <button className="text-[#10294D] text-[10px] font-bold hover:underline uppercase tracking-widest">+ Add Anchor</button>
+      <button 
+        onClick={onSave}
+        disabled={isSaving}
+        className="px-3 py-1 bg-[#10294D] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
+      >
+        {isSaving ? 'Saving...' : 'Save Anchors'}
+      </button>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {[
-        { company: 'ENSEK', period: 'JAN 2021 — PRESENT', bullets: ['Scaled event-driven billing core.', 'Led regulator alignment.'] },
-        { company: 'Experian', period: 'MAR 2018 — DEC 2020', bullets: ['Optimised SQL query perf by 40%.', 'Score Boost product launch.'] }
-      ].map((anchor, i) => (
-        <div key={i} className="bg-white p-5 rounded-xl border-l-4 border-[#10294D] shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center font-bold text-slate-400 text-xs">{anchor.company[0]}</div>
-            <div>
-              <h4 className="font-bold text-xs text-[#10294D]">{anchor.company}</h4>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">{anchor.period}</p>
-            </div>
-          </div>
-          <ul className="text-[11px] space-y-1.5 text-slate-500 font-medium">
-            {anchor.bullets.map((b, j) => <li key={j} className="flex gap-2"><span className="text-[#006C50]">•</span> {b}</li>)}
-          </ul>
-        </div>
-      ))}
+    <div className="bg-white rounded-xl overflow-hidden shadow-inner border border-slate-200">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-[250px] bg-transparent text-slate-600 p-5 font-mono text-[11px] leading-relaxed border-none focus:ring-0 resize-none custom-scrollbar"
+        spellCheck="false"
+        placeholder="Define your career anchors here in YAML format..."
+      />
     </div>
   </section>
 );
 
-const ScoringModelWeights = () => (
-  <section className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-    <div className="flex items-center justify-between mb-6">
+const ScoringModelWeights = ({ value, onChange, onSave, isSaving }) => (
+  <section className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+    <div className="flex items-center justify-between">
       <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
         <span className="material-symbols-outlined text-[#10294D]">tune</span>
-        12-Factor Scoring Model
+        Scoring Weights (YAML)
       </h3>
-      <div className="flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-full">
-        <span className="w-1.5 h-1.5 bg-[#006C50] rounded-full animate-pulse"></span>
-        <span className="text-[9px] text-[#006C50] font-bold uppercase tracking-tighter">Engine Active</span>
-      </div>
+      <button 
+        onClick={onSave}
+        disabled={isSaving}
+        className="px-3 py-1 bg-[#10294D] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
+      >
+        {isSaving ? 'Saving...' : 'Save Weights'}
+      </button>
     </div>
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-      {['Complexity', 'Ownership', 'Platform', 'Pay Band'].map((factor, i) => (
-        <div key={i} className="space-y-3">
-          <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-            <span>{factor}</span>
-            <span className="text-[#10294D]">{[85, 42, 91, 76][i]}%</span>
-          </div>
-          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div className={`h-full bg-gradient-to-r from-[#10294D] to-[#495F86] rounded-full`} style={{ width: `${[85, 42, 91, 76][i]}%` }}></div>
-          </div>
-        </div>
-      ))}
+    <div className="bg-slate-50 rounded-xl overflow-hidden shadow-inner border border-slate-100">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-[150px] bg-transparent text-slate-600 p-5 font-mono text-[11px] leading-relaxed border-none focus:ring-0 resize-none custom-scrollbar"
+        spellCheck="false"
+        placeholder="Adjust your scoring model weights here..."
+      />
     </div>
   </section>
 );
@@ -377,6 +372,8 @@ export default function CareerOpsDashboard() {
   const [results, setResults] = useState(null);
   const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
   const [yamlContent, setYamlContent] = useState('');
+  const [evidenceContent, setEvidenceContent] = useState('');
+  const [weightsContent, setWeightsContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -394,9 +391,9 @@ export default function CareerOpsDashboard() {
       });
       const data = await res.json();
       setConfigStatus({ loading: false, has_config: data.has_config });
-      if (data.profile) {
-        setYamlContent(data.profile);
-      }
+      if (data.profile) setYamlContent(data.profile);
+      if (data.evidence) setEvidenceContent(data.evidence);
+      if (data.weights) setWeightsContent(data.weights);
     } catch (err) {
       console.error('Failed to check config', err);
       setConfigStatus({ loading: false, has_config: false });
@@ -413,7 +410,9 @@ export default function CareerOpsDashboard() {
         body: JSON.stringify({ 
           action: 'save_config', 
           tenantId: currentTenant.id,
-          profile: yamlContent
+          profile: yamlContent,
+          evidence: evidenceContent,
+          weights: weightsContent
         }),
       });
       if (res.ok) {
@@ -601,8 +600,18 @@ export default function CareerOpsDashboard() {
                 />
               </div>
               <div className="col-span-12 lg:col-span-7 flex flex-col gap-8">
-                <EvidenceAnchors />
-                <ScoringModelWeights />
+                <EvidenceAnchors 
+                  value={evidenceContent} 
+                  onChange={setEvidenceContent} 
+                  onSave={handleSaveConfig}
+                  isSaving={isSaving}
+                />
+                <ScoringModelWeights 
+                  value={weightsContent} 
+                  onChange={setWeightsContent} 
+                  onSave={handleSaveConfig}
+                  isSaving={isSaving}
+                />
               </div>
            </div>
 
