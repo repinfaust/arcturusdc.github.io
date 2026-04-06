@@ -41,6 +41,80 @@ const FactorCard = ({ label, isFit }) => (
   </div>
 );
 
+/* ---------------- CV Tailoring Components ---------------- */
+
+const CvComparisonView = () => (
+  <div className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200">
+    <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
+      <h2 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
+        <span className="material-symbols-outlined text-blue-600 text-lg">compare_arrows</span>
+        Strategic Reordering
+      </h2>
+      <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold text-slate-500 uppercase tracking-wider">4 CHANGES DETECTED</span>
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-slate-200">
+      <div className="bg-white p-6">
+        <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Master CV (Base)
+        </h3>
+        <div className="space-y-4">
+          <div className="p-3 border-l-2 border-slate-100 opacity-40 italic text-xs leading-relaxed text-slate-500">
+            Led a cross-functional team of 15 designers to launch the 2.0 version of the flagship platform.
+          </div>
+          <div className="p-3 border-l-2 border-[#10294D] bg-slate-50 rounded-r text-xs font-medium text-[#10294D] leading-relaxed">
+            Pioneered AI-driven analytics feature that increased user retention by 34% within the first quarter.
+          </div>
+        </div>
+      </div>
+      <div className="bg-white p-6">
+        <h3 className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest mb-4 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#006C50]"></span> Tailored Version
+        </h3>
+        <div className="space-y-4">
+          <div className="p-3 border-l-2 border-[#006C50] bg-teal-50/50 rounded-r relative text-xs leading-relaxed">
+            <div className="absolute -left-2 top-3 bg-[#006C50] text-white rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[8px]" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_upward</span>
+            </div>
+            <p className="font-bold text-[#006C50]">Pioneered AI-driven analytics feature that increased user retention by 34% within the first quarter.</p>
+            <span className="text-[9px] text-[#006C50]/70 font-bold mt-1 block uppercase tracking-tighter">RANKED #1 - HIGH KEYWORD MATCH</span>
+          </div>
+          <div className="p-3 border-l-2 border-slate-100 text-xs leading-relaxed text-slate-600">
+            Led a cross-functional team of 15 designers to launch the 2.0 version of the flagship platform.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const CoverNoteDrafter = () => (
+  <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="font-bold text-[#10294D] text-lg tracking-tight">Cover Note Drafter</h2>
+        <p className="text-xs text-slate-400 mt-0.5">AI-generated focus: <span className="font-bold text-slate-600">Strategic Leadership</span></p>
+      </div>
+      <div className="flex gap-2">
+        <button className="p-2 hover:bg-slate-50 text-slate-400 rounded-lg transition-colors">
+          <span className="material-symbols-outlined text-xl">autorenew</span>
+        </button>
+        <button className="p-2 hover:bg-slate-50 text-slate-400 rounded-lg transition-colors">
+          <span className="material-symbols-outlined text-xl">content_copy</span>
+        </button>
+      </div>
+    </div>
+    <div className="bg-slate-50 rounded-xl p-6 text-sm text-slate-600 leading-relaxed font-medium">
+      <p className="mb-4">Dear Hiring Manager,</p>
+      <p className="mb-4 italic">"I was immediately drawn to the Senior Product Lead role. My experience pioneering AI-driven analytics features—which directly resulted in a 34% increase in user retention—aligns perfectly with your mission to redefine data interpretation through automated intelligence..."</p>
+      <p>I look forward to discussing how my background can contribute to your continued success.</p>
+    </div>
+    <div className="mt-6 flex justify-end gap-3">
+      <button className="px-5 py-2 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-xs">Regenerate</button>
+      <button className="px-5 py-2 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] transition-colors text-xs">Copy Note</button>
+    </div>
+  </div>
+);
+
 /* ---------------- Main Dashboard ---------------- */
 
 export default function CareerOpsDashboard() {
@@ -299,12 +373,60 @@ export default function CareerOpsDashboard() {
       )}
 
       {/* Other Tabs (Scans, CVS) - Placeholder for now */}
-      {(activeTab === 'scans' || activeTab === 'cvs') && (
-        <div className="p-20 text-center bg-slate-50 rounded-3xl border border-slate-100">
-           <div className="text-4xl mb-4">🚧</div>
-           <p className="text-slate-500 font-medium">This module is currently being adapted from the core Career Ops pipeline.</p>
+      {activeTab === 'cvs' && (
+        <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-500">
+          <div className="col-span-12 lg:col-span-8 space-y-8">
+            <CvComparisonView />
+            <CoverNoteDrafter />
+          </div>
+
+          <aside className="col-span-12 lg:col-span-4 space-y-8">
+            <div className="bg-[#10294D] rounded-2xl overflow-hidden shadow-xl">
+              <div className="px-6 py-4 flex items-center justify-between border-b border-white/10">
+                <h3 className="text-white/50 font-bold text-[10px] uppercase tracking-widest">Portal Metadata</h3>
+                <span className="text-[10px] bg-[#006C50] text-white px-2 py-0.5 rounded-full font-bold">READY</span>
+              </div>
+              <div className="p-6">
+                <div className="bg-[#001432] rounded-xl p-4 font-mono text-[10px] text-blue-200 leading-relaxed overflow-x-auto no-scrollbar">
+                  <pre>{JSON.stringify({
+                    "application_id": "STEA-2026-PM",
+                    "expected_salary": "£125,000",
+                    "notice_period": "30_days",
+                    "location": "Remote / UK",
+                    "key_anchors": ["ENSEK", "Experian", "SoRR"]
+                  }, null, 2)}</pre>
+                </div>
+                <button className="w-full mt-4 text-blue-100 text-[10px] font-bold flex items-center justify-center gap-2 py-2 hover:text-white transition-colors uppercase tracking-widest">
+                  <span className="material-symbols-outlined text-sm">content_copy</span>
+                  Copy Metadata
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+              <h3 className="font-bold text-[#10294D] mb-4 text-sm">Final Polish Checklist</h3>
+              <div className="space-y-4">
+                {[
+                  { label: 'ATS Keyword Check', sub: '92% Match with "Product Operations"' },
+                  { label: 'Tone Analysis', sub: 'Confidence: High | Sentiment: Professional' },
+                  { label: 'Formatting Export', sub: 'A4 Standard - 2 Pages' }
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="mt-0.5 w-5 h-5 rounded bg-white border border-slate-200 flex items-center justify-center text-[#006C50]">
+                      <span className="material-symbols-outlined text-xs font-bold">check</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#10294D]">{item.label}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{item.sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       )}
+
     </div>
   );
 }
