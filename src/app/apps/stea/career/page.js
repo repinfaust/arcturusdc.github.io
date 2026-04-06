@@ -115,6 +115,122 @@ const CoverNoteDrafter = () => (
   </div>
 );
 
+/* ---------------- Search & Discovery Components ---------------- */
+
+const ScanControlPanel = () => (
+  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+    <h3 className="font-bold text-[#10294D] text-base mb-6 flex items-center gap-2">
+      <span className="material-symbols-outlined text-[#10294D]">tune</span>
+      Scan Control Panel
+    </h3>
+    <div className="space-y-3">
+      {['LinkedIn Recruiter', 'Greenhouse API', 'Ashby Portal'].map((source, i) => (
+        <label key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-[#10294D] text-lg">
+              {i === 0 ? 'link' : i === 1 ? 'hub' : 'analytics'}
+            </span>
+            <span className="font-bold text-slate-600 text-xs tracking-tight">{source}</span>
+          </div>
+          <input type="checkbox" defaultChecked={i < 2} className="w-4 h-4 text-[#006C50] border-slate-300 rounded focus:ring-[#006C50]" />
+        </label>
+      ))}
+    </div>
+    <div className="mt-8 pt-6 border-t border-slate-100">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scan Depth</span>
+        <span className="text-[10px] font-bold text-[#10294D] px-2 py-0.5 bg-blue-50 rounded uppercase">Deep</span>
+      </div>
+      <input type="range" className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#10294D]" />
+    </div>
+    <button className="w-full mt-8 py-4 bg-gradient-to-br from-[#10294D] to-[#001432] text-white rounded-xl font-bold text-sm shadow-xl shadow-blue-900/10 flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform">
+      <span className="material-symbols-outlined text-lg">play_circle</span>
+      Start Live Scan
+    </button>
+  </div>
+);
+
+const TerminalOutput = () => (
+  <div className="bg-[#001432] rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[300px]">
+    <div className="bg-[#10294D] px-4 py-2 flex items-center justify-between border-b border-white/5">
+      <div className="flex gap-1.5">
+        <div className="w-2 h-2 rounded-full bg-[#FF5F56]"></div>
+        <div className="w-2 h-2 rounded-full bg-[#FFBD2E]"></div>
+        <div className="w-2 h-2 rounded-full bg-[#27C93F]"></div>
+      </div>
+      <div className="text-[9px] font-mono text-blue-200 uppercase tracking-widest font-bold">Arcturus-Discovery v4.2</div>
+      <div className="w-10"></div>
+    </div>
+    <div className="p-6 font-mono text-[11px] text-blue-100/80 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
+      <p><span className="text-[#53FDC7] opacity-70">info</span> [14:02:11] Initialising Discovery session...</p>
+      <p><span className="text-[#53FDC7] opacity-70">info</span> [14:02:12] Authenticated via OAuth 2.0 (Token: Arct_***_91)</p>
+      <p><span className="text-[#53FDC7] opacity-70">info</span> [14:02:15] Scanning keywords: "Platform PM", "Lead Product", "FinTech"</p>
+      <p><span className="text-orange-300">warn</span> [14:02:22] Rate limit approaching (78/100). Throttling enabled.</p>
+      <p className="text-white font-bold"><span className="text-[#53FDC7]">find</span> [14:02:28] Matched Role: Senior Infrastructure Lead @ Vercel (Score: 4.8)</p>
+      <p className="text-white font-bold"><span className="text-[#53FDC7]">find</span> [14:02:31] Matched Role: Principal PM @ Stripe (Score: 4.6)</p>
+      <p><span className="text-blue-300 animate-pulse">_</span></p>
+    </div>
+    <div className="px-6 py-2 bg-[#10294D]/30 border-t border-white/5 flex items-center gap-2">
+      <span className="w-1.5 h-1.5 bg-[#53FDC7] rounded-full animate-ping"></span>
+      <span className="text-[9px] font-mono text-blue-300 uppercase font-bold tracking-widest">SCANNING PORT 8080 - 1.2MB/s</span>
+    </div>
+  </div>
+);
+
+const DiscoveryInbox = () => (
+  <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="font-bold text-base text-[#10294D] flex items-center gap-2 tracking-tight">
+        <span className="material-symbols-outlined text-[#006C50]" style={{ fontVariationSettings: "'FILL' 1" }}>inbox</span>
+        Discovery Inbox
+      </h3>
+      <div className="flex items-center gap-3">
+        <button className="text-[10px] font-bold text-slate-400 hover:text-[#10294D] transition-colors uppercase tracking-widest">Clear All</button>
+        <button className="px-3 py-1 bg-white rounded-lg text-[10px] font-bold border border-slate-200 flex items-center gap-1 text-slate-600 uppercase tracking-widest">
+          <span className="material-symbols-outlined text-xs">filter_list</span> Filter
+        </button>
+      </div>
+    </div>
+    <div className="space-y-3">
+      {[
+        { company: 'Linear', role: 'Senior Product Engineer', match: '94%', time: '2m ago', logo: 'L' },
+        { company: 'Retool', role: 'Head of Infrastructure', match: '88%', time: '14m ago', logo: 'R' },
+        { company: 'Datadog', role: 'Distributed Systems Lead', match: '81%', time: '45m ago', logo: 'D' },
+      ].map((job, i) => (
+        <div key={i} className={`group bg-white p-4 rounded-xl flex items-center justify-between border border-transparent hover:border-[#006C50]/20 transition-all cursor-pointer shadow-sm ${i === 2 ? 'opacity-60' : ''}`}>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center font-bold text-slate-400 text-sm">
+              {job.logo}
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-[#10294D] group-hover:text-[#006C50] transition-colors">{job.role}</h4>
+              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                <span>{job.company}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                <span>Remote (UK)</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <div className="text-[10px] font-bold text-[#006C50] uppercase tracking-tighter">{job.match} Match</div>
+              <div className="text-[9px] text-slate-300 font-bold uppercase tracking-widest">{job.time}</div>
+            </div>
+            <div className="flex gap-2">
+              <button className="p-2 bg-slate-50 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors text-slate-400">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+              <button className="p-2 bg-teal-50 text-[#006C50] hover:bg-[#006C50] hover:text-white rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-sm">bolt</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 /* ---------------- Main Dashboard ---------------- */
 
 export default function CareerOpsDashboard() {
@@ -268,60 +384,33 @@ export default function CareerOpsDashboard() {
       {/* Pipeline Table */}
       {activeTab === 'pipeline' && (
         <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Active Pipeline</h3>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors">Filter</button>
+...
+        </section>
+      )}
+
+      {/* Scans Tab */}
+      {activeTab === 'scans' && (
+        <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-500">
+          <div className="col-span-12 lg:col-span-4 space-y-8">
+            <ScanControlPanel />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-teal-50 p-4 rounded-2xl border border-teal-100">
+                <div className="text-[#006C50] font-bold text-2xl tracking-tighter">482</div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[#006C50]/70">Roles Analysed</div>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                <div className="text-[#10294D] font-bold text-2xl tracking-tighter">14</div>
+                <div className="text-[9px] font-bold uppercase tracking-widest text-[#10294D]/70">Top Matches</div>
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-100">
-                <tr>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Company / Role</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Score</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Timeline</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {mockPipeline.map((item, i) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
-                          {item.company[0]}
-                        </div>
-                        <div>
-                          <p className="font-bold text-[#10294D] text-sm">{item.company}</p>
-                          <p className="text-xs text-slate-400">{item.role}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="font-mono font-bold text-[#006C50]">{item.score.toFixed(1)}</span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                        item.status === 'Interviewing' ? 'bg-green-100 text-green-700' : 
-                        item.status === 'Applied' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <p className="text-xs font-semibold text-slate-600">{item.timeline}</p>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <button className="text-slate-300 hover:text-slate-600 transition-colors">•••</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="col-span-12 lg:col-span-8 space-y-8">
+            <TerminalOutput />
+            <DiscoveryInbox />
           </div>
-        </section>
+        </div>
       )}
 
       {/* Config Tab View */}
