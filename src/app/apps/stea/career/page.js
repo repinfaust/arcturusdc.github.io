@@ -231,6 +231,149 @@ const DiscoveryInbox = () => (
   </div>
 );
 
+/* ---------------- Configuration & Onboarding Components ---------------- */
+
+const ProfileYamlEditor = () => (
+  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <span className="material-symbols-outlined text-[#10294D]">account_circle</span>
+        <h3 className="font-bold text-[#10294D] text-sm">Profile YAML</h3>
+      </div>
+      <span className="px-2 py-1 bg-slate-100 rounded font-mono text-[9px] text-slate-500 uppercase tracking-widest font-bold">Read/Write</span>
+    </div>
+    <div className="flex-1 bg-[#001432] text-blue-100 p-5 rounded-xl font-mono text-[11px] leading-relaxed overflow-auto custom-scrollbar min-h-[350px] shadow-inner">
+      <pre className="whitespace-pre-wrap">
+<span className="text-[#53FDC7]">candidate:</span>
+  <span className="text-blue-300">name:</span> David Loake
+  <span className="text-blue-300">identity_tag:</span> dl-stea-01
+  <span className="text-blue-300">status:</span> active_search
+
+<span className="text-[#53FDC7]">preferences:</span>
+  <span className="text-blue-300">target_roles:</span>
+    - Senior Product Manager
+    - Lead Product Manager
+    - Principal PM
+  <span className="text-blue-300">salary_floor:</span> 125000
+  <span className="text-blue-300">relocation:</span> false
+  <span className="text-blue-300">notice_period:</span> 30_days
+
+<span className="text-[#53FDC7]">specialization:</span>
+  <span className="text-blue-300">domain:</span> Regulated SaaS / FinTech
+  <span className="text-blue-300">stack:</span> [React, Node, Firebase, OpenAI]
+      </pre>
+    </div>
+  </div>
+);
+
+const EvidenceAnchors = () => (
+  <section className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
+        <span className="material-symbols-outlined text-[#10294D]">deployed_code</span>
+        Evidence Anchors
+      </h3>
+      <button className="text-[#10294D] text-[10px] font-bold hover:underline uppercase tracking-widest">+ Add Anchor</button>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[
+        { company: 'ENSEK', period: 'JAN 2021 — PRESENT', bullets: ['Scaled event-driven billing core.', 'Led regulator alignment.'] },
+        { company: 'Experian', period: 'MAR 2018 — DEC 2020', bullets: ['Optimised SQL query perf by 40%.', 'Score Boost product launch.'] }
+      ].map((anchor, i) => (
+        <div key={i} className="bg-white p-5 rounded-xl border-l-4 border-[#10294D] shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center font-bold text-slate-400 text-xs">{anchor.company[0]}</div>
+            <div>
+              <h4 className="font-bold text-xs text-[#10294D]">{anchor.company}</h4>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">{anchor.period}</p>
+            </div>
+          </div>
+          <ul className="text-[11px] space-y-1.5 text-slate-500 font-medium">
+            {anchor.bullets.map((b, j) => <li key={j} className="flex gap-2"><span className="text-[#006C50]">•</span> {b}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+const ScoringModelWeights = () => (
+  <section className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
+        <span className="material-symbols-outlined text-[#10294D]">tune</span>
+        12-Factor Scoring Model
+      </h3>
+      <div className="flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-full">
+        <span className="w-1.5 h-1.5 bg-[#006C50] rounded-full animate-pulse"></span>
+        <span className="text-[9px] text-[#006C50] font-bold uppercase tracking-tighter">Engine Active</span>
+      </div>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {['Complexity', 'Ownership', 'Platform', 'Pay Band'].map((factor, i) => (
+        <div key={i} className="space-y-3">
+          <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            <span>{factor}</span>
+            <span className="text-[#10294D]">{[85, 42, 91, 76][i]}%</span>
+          </div>
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className={`h-full bg-gradient-to-r from-[#10294D] to-[#495F86] rounded-full`} style={{ width: `${[85, 42, 91, 76][i]}%` }}></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+const CvPreviewer = () => (
+  <section className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex flex-col md:flex-row h-[500px]">
+    <div className="w-full md:w-1/2 flex flex-col border-r border-slate-100">
+      <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Markdown Source</span>
+        <span className="material-symbols-outlined text-slate-400 text-sm">edit_note</span>
+      </div>
+      <div className="flex-1 p-6 font-mono text-xs text-slate-600 overflow-auto custom-scrollbar bg-white">
+        <pre># David Loake
+## Senior Product Manager
+
+Systems-focused Product Manager with **10+ years** experience...
+
+### Key Anchors
+- Payment Adequacy Engine @ ENSEK
+- Score Boost @ Experian
+- SoRR Framework
+
+### Strengths
+`FinTech` `Platform` `Compliance` `AI`
+</pre>
+      </div>
+    </div>
+    <div className="w-full md:w-1/2 flex flex-col bg-slate-50/30">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <span className="text-[10px] font-bold text-[#10294D] uppercase tracking-widest">Engine Preview (PDF Gen)</span>
+        <div className="flex gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#006C50]"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
+        </div>
+      </div>
+      <div className="flex-1 p-8 overflow-auto custom-scrollbar">
+        <div className="max-w-md mx-auto bg-white p-8 shadow-xl border border-slate-100 rounded min-h-full">
+          <h1 className="text-2xl font-bold text-[#10294D] border-b-2 border-[#10294D] pb-2 mb-4 tracking-tighter uppercase">David Loake</h1>
+          <p className="text-[#006C50] font-bold text-[10px] tracking-widest mb-6 uppercase">Senior Product Manager</p>
+          <h3 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Experience</h3>
+          <div className="mb-6">
+            <div className="flex justify-between items-baseline mb-1">
+              <p className="font-bold text-xs text-[#10294D]">ENSEK</p>
+              <p className="text-[8px] text-slate-400 italic">2021 — Present</p>
+            </div>
+            <p className="text-[10px] text-slate-500 leading-relaxed">Pioneered event-driven architectural patterns across the billing core, ensuring 100% regulatory compliance...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 /* ---------------- Main Dashboard ---------------- */
 
 export default function CareerOpsDashboard() {
@@ -416,48 +559,34 @@ export default function CareerOpsDashboard() {
       {/* Config Tab View */}
       {activeTab === 'settings' && (
         <section className="animate-in fade-in duration-300">
-           <div className="border-b border-slate-100 pb-6 mb-8">
-              <h3 className="text-2xl font-bold text-[#10294D] tracking-tight">Config & Personalisation</h3>
-              <p className="text-slate-500 text-sm mt-1">Tailor the analysis engine to your specific PM profile and evidence library.</p>
-           </div>
+           {/* Validation Banner */}
+           {!configStatus.has_config && (
+             <div className="mb-8 flex items-center justify-between bg-red-50 text-red-900 px-6 py-3 rounded-xl border border-red-100">
+               <div className="flex items-center gap-3">
+                 <span className="material-symbols-outlined text-red-500">report</span>
+                 <span className="text-xs font-bold uppercase tracking-wider">Validation Alert:</span>
+                 <span className="text-xs font-medium">Missing Target Salary floor and Evidence Anchors in profile configuration.</span>
+               </div>
+               <button className="text-[10px] font-bold underline decoration-2 underline-offset-4 uppercase tracking-widest">Fix Now</button>
+             </div>
+           )}
+
+           <header className="mb-10">
+             <h3 className="text-3xl font-bold text-[#10294D] tracking-tight">Onboarding & Configuration.</h3>
+             <p className="text-slate-500 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
+           </header>
            
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-[#10294D]/20 transition-all group">
-                <div className="flex justify-between items-start mb-6">
-                   <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                      <span className="material-symbols-outlined">person</span>
-                   </div>
-                   <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">profile.yaml</span>
-                </div>
-                <h4 className="text-base font-bold text-[#10294D] mb-2">Candidate Profile</h4>
-                <p className="text-xs text-slate-500 mb-6 leading-relaxed">Define your seniority level, target domains, and salary expectations.</p>
-                <button className="w-full py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-[#10294D] hover:text-white transition-all">Edit Profile</button>
+           <div className="grid grid-cols-12 gap-8 mb-8">
+              <div className="col-span-12 lg:col-span-5 flex flex-col">
+                <ProfileYamlEditor />
               </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-[#10294D]/20 transition-all group">
-                <div className="flex justify-between items-start mb-6">
-                   <div className="h-12 w-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-                      <span className="material-symbols-outlined">database</span>
-                   </div>
-                   <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">evidence.yaml</span>
-                </div>
-                <h4 className="text-base font-bold text-[#10294D] mb-2">Evidence Library</h4>
-                <p className="text-xs text-slate-500 mb-6 leading-relaxed">The "Single Source of Truth" for your career anchors and proof points.</p>
-                <button className="w-full py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-[#10294D] hover:text-white transition-all">Manage Anchors</button>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-[#10294D]/20 transition-all group">
-                <div className="flex justify-between items-start mb-6">
-                   <div className="h-12 w-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
-                      <span className="material-symbols-outlined">tune</span>
-                   </div>
-                   <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">weights.yaml</span>
-                </div>
-                <h4 className="text-base font-bold text-[#10294D] mb-2">Scoring Framework</h4>
-                <p className="text-xs text-slate-500 mb-6 leading-relaxed">Adjust the 12-factor weights to match what matters most to you.</p>
-                <button className="w-full py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-[#10294D] hover:text-white transition-all">Tune Weights</button>
+              <div className="col-span-12 lg:col-span-7 flex flex-col gap-8">
+                <EvidenceAnchors />
+                <ScoringModelWeights />
               </div>
            </div>
+
+           <CvPreviewer />
         </section>
       )}
 
