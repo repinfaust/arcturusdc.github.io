@@ -302,6 +302,35 @@ async function aggregateDocumentationActivity(tenantId) {
 }
 
 /**
+ * Aggregate Career Ops metrics
+ */
+async function aggregateCareerOps(tenantId) {
+  try {
+    const rolesSnapshot = await db.collection('tenants')
+      .doc(tenantId)
+      .collection('career_ops_roles')
+      .get();
+
+    const cvsSnapshot = await db.collection('tenants')
+      .doc(tenantId)
+      .collection('career_ops_cvs')
+      .get();
+
+    const totalAnalysed = rolesSnapshot.size;
+    const totalCvs = cvsSnapshot.size;
+
+    return {
+      totalAnalysed,
+      totalCvs,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+    };
+  } catch (error) {
+    console.error('Error aggregating career ops metrics:', error);
+    return {totalAnalysed: 0, totalCvs: 0};
+  }
+}
+
+/**
  * Aggregate all workspace pulse metrics for a tenant
  */
 async function aggregateWorkspacePulse(tenantId, apps = []) {
@@ -314,12 +343,14 @@ async function aggregateWorkspacePulse(tenantId, apps = []) {
       backlogHealth,
       discoverySignals,
       documentationActivity,
+      careerOps,
     ] = await Promise.all([
       aggregateBuildProgress(tenantId, apps),
       aggregateTestingSnapshot(tenantId),
       aggregateBacklogHealth(tenantId),
       aggregateDiscoverySignals(tenantId),
       aggregateDocumentationActivity(tenantId),
+      aggregateCareerOps(tenantId),
     ]);
 
     const metrics = {
@@ -328,6 +359,7 @@ async function aggregateWorkspacePulse(tenantId, apps = []) {
       backlogHealth,
       discoverySignals,
       documentationActivity,
+      careerOps,
       lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
       version: 1,
     };

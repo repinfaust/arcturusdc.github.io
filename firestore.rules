@@ -87,6 +87,11 @@ service cloud.firestore {
         // (In future, this could be expanded to allow backend services)
         allow write: if isSuperAdmin();
       }
+
+      // Career Ops configurations and data
+      match /career_ops/{doc} {
+        allow read, write: if canAccessTenant(tenantId);
+      }
     }
 
     match /tenant_members/{membershipId} {
