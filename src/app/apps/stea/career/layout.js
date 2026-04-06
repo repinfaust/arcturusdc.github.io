@@ -10,7 +10,7 @@ export default function CareerOpsLayout({ children }) {
     <CareerOpsShell
       activeTab="/apps/stea/career"
       title="Career Ops"
-      subtitle="AI-powered PM job search pipeline. High-fit only."
+      subtitle="AI-powered PM job search pipeline."
     >
       {children}
     </CareerOpsShell>
