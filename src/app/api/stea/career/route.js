@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { db } from '@/lib/firebaseAdmin';
 
-async function loadConfig(fileName) {
+// David's workspace ID (ArcturusDC primary tenant or his specific one)
+const DAVID_TENANT_ID = 'KovW8P7K5O2537V8I3H1'; 
+
+async function loadLocalConfig(fileName) {
   const filePath = path.join(process.cwd(), 'src/app/apps/stea/career/config', fileName);
   return await readFile(filePath, 'utf8');
+}
+
+async function getWorkspaceConfig(tenantId, configName) {
+  // If it's David's tenant, load from local YAML
+  if (tenantId === DAVID_TENANT_ID) {
+    return await loadLocalConfig(`${configName}.yaml`);
+  }
+
+  // Otherwise, load from Firestore
+  const configDoc = await db.collection('tenants').doc(tenantId).collection('career_ops').doc('config').get();
+  if (configDoc.exists) {
+    return configDoc.data()[configName] || '';
+  }
+  return '';
 }
 
 async function loadPrompt(fileName) {
@@ -15,15 +33,50 @@ async function loadPrompt(fileName) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { action, url, jd_text } = body;
+    const { action, url, jd_text, tenantId } = body;
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+    }
+
+    if (action === 'get_config') {
+      const profile = await getWorkspaceConfig(tenantId, 'candidate_profile');
+      const evidence = await getWorkspaceConfig(tenantId, 'evidence_library');
+      const weights = await getWorkspaceConfig(tenantId, 'scoring_weights');
+      
+      return NextResponse.json({
+        has_config: !!profile && !!evidence,
+        profile,
+        evidence,
+        weights
+      });
+    }
+
+    if (action === 'save_config') {
+      const { profile, evidence, weights } = body;
+      await db.collection('tenants').doc(tenantId).collection('career_ops').doc('config').set({
+        candidate_profile: profile,
+        evidence_library: evidence,
+        scoring_weights: weights,
+        updated_at: new Date()
+      }, { merge: true });
+      
+      return NextResponse.json({ success: true });
+    }
 
     if (action === 'analyse') {
       const apiKey = process.env.OPENAI_API_KEY;
       const model = process.env.OPENAI_MODEL || 'gpt-4o';
 
-      // Load configs and prompts
-      const candidateProfile = await loadConfig('candidate_profile.yaml');
-      const evidenceLibrary = await loadConfig('evidence_library.yaml');
+      // Load workspace-specific config
+      const candidateProfile = await getWorkspaceConfig(tenantId, 'candidate_profile');
+      const evidenceLibrary = await getWorkspaceConfig(tenantId, 'evidence_library');
+
+      if (!candidateProfile || !evidenceLibrary) {
+        return NextResponse.json({ error: 'Workspace configuration is incomplete. Please set up your profile and evidence library first.' }, { status: 400 });
+      }
+
+      // Load generic prompts
       const extractPromptTemplate = await loadPrompt('extract.md');
       const evaluatePromptTemplate = await loadPrompt('evaluate.md');
 

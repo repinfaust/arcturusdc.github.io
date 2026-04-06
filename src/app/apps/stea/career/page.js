@@ -1,12 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTenant } from '@/contexts/TenantContext';
 
 export default function CareerOpsDashboard() {
+  const { currentTenant, loading: tenantLoading } = useTenant();
   const [activeTab, setActiveTab] = useState('pipeline');
   const [jdUrl, setJdUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
+
+  useEffect(() => {
+    if (currentTenant?.id) {
+      checkConfig();
+    }
+  }, [currentTenant]);
+
+  async function checkConfig() {
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_config', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      setConfigStatus({ loading: false, has_config: data.has_config });
+    } catch (err) {
+      console.error('Failed to check config', err);
+      setConfigStatus({ loading: false, has_config: false });
+    }
+  }
 
   const tabs = [
     { id: 'pipeline', label: 'Pipeline', icon: '📋' },
@@ -15,26 +39,52 @@ export default function CareerOpsDashboard() {
     { id: 'settings', label: 'Config', icon: '⚙️' },
   ];
 
-  async function handleAnalyze() {
-    if (!jdUrl.trim()) return;
+  async function handleAnalyse() {
+    if (!jdUrl.trim() || !currentTenant?.id) return;
     setLoading(true);
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'analyse', url: jdUrl }),
+        body: JSON.stringify({ 
+          action: 'analyse', 
+          url: jdUrl,
+          tenantId: currentTenant.id 
+        }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Analyse failed');
       setResults(data);
     } catch (err) {
       console.error(err);
+      alert(err.message);
     } finally {
       setLoading(false);
     }
   }
 
+  if (tenantLoading || configStatus.loading) {
+    return <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>Loading Career Ops...</div>;
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Setup Warning */}
+      {!configStatus.has_config && activeTab !== 'settings' && (
+        <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 16, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontWeight: 700, color: '#9A3412', fontSize: 14 }}>Workspace Setup Required</div>
+            <div style={{ color: '#C2410C', fontSize: 13, marginTop: 2 }}>You need to configure your Candidate Profile and Evidence Library before you can analyse roles.</div>
+          </div>
+          <button 
+            onClick={() => setActiveTab('settings')}
+            style={{ background: '#EA580C', color: '#FFF', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Go to Config
+          </button>
+        </div>
+      )}
+
       {/* Search / Input Area */}
       <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #D6E0F4', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#10294D', marginBottom: 16 }}>Process New Role</h2>
@@ -44,6 +94,7 @@ export default function CareerOpsDashboard() {
             value={jdUrl}
             onChange={(e) => setJdUrl(e.target.value)}
             placeholder="Paste Job URL or Description..."
+            disabled={!configStatus.has_config}
             style={{
               flex: 1,
               padding: '12px 16px',
@@ -51,12 +102,13 @@ export default function CareerOpsDashboard() {
               border: '1px solid #D6E0F4',
               fontSize: 14,
               outline: 'none',
-              background: '#F8FAFC'
+              background: configStatus.has_config ? '#F8FAFC' : '#F1F5F9',
+              cursor: configStatus.has_config ? 'text' : 'not-allowed'
             }}
           />
           <button
-            onClick={handleAnalyze}
-            disabled={loading}
+            onClick={handleAnalyse}
+            disabled={loading || !configStatus.has_config}
             style={{
               padding: '12px 24px',
               background: '#10294D',
@@ -64,8 +116,8 @@ export default function CareerOpsDashboard() {
               borderRadius: 12,
               fontWeight: 600,
               border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1
+              cursor: (loading || !configStatus.has_config) ? 'not-allowed' : 'pointer',
+              opacity: (loading || !configStatus.has_config) ? 0.7 : 1
             }}
           >
             {loading ? 'Analysing...' : 'Analyse Role'}
