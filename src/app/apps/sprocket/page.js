@@ -178,12 +178,27 @@ export default function Sprocket() {
         <ul className="space-y-2 text-sm">
           <li>
             <Link href="/apps/sprocket/privacy-policy" className="text-blue-600 hover:underline">
-              Privacy Policy (HTML)
+              Privacy Policy (HTML, iOS)
             </Link>
           </li>
           <li>
             <Link href="/apps/sprocket/terms-of-use" className="text-blue-600 hover:underline">
-              Terms of Use (HTML)
+              Terms of Use (HTML, iOS)
+            </Link>
+          </li>
+          <li>
+            <Link href="/apps/sprocket/android/privacy-policy" className="text-blue-600 hover:underline">
+              Privacy Policy (HTML, Android)
+            </Link>
+          </li>
+          <li>
+            <Link href="/apps/sprocket/android/terms-of-use" className="text-blue-600 hover:underline">
+              Terms of Use (HTML, Android)
+            </Link>
+          </li>
+          <li>
+            <Link href="/apps/sprocket/delete-account" className="text-blue-600 hover:underline">
+              Delete account or data
             </Link>
           </li>
         </ul>

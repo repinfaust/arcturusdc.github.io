@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sprocket – Delete Account or Data</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f2f4ef;
+      --surface:   #ffffff;
+      --surface-2: #e8ebe4;
+      --border:    #e0e4db;
+      --text:      #1a2420;
+      --muted:     #4b5b54;
+      --accent:    #1b5e4b;
+      --accent-dim:#e3ece8;
+      --link:      #1b5e4b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      gap: 14px;
+      background: var(--surface);
+    }
+    .nav-mark { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .nav-wordmark { font-size: 16px; font-weight: 900; letter-spacing: 0.02em; color: var(--accent); }
+    .nav-sub { font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+    nav .divider { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+    nav a.nav-link { font-size: 13px; color: var(--muted); text-decoration: none; }
+    nav a.nav-link:hover { color: var(--text); }
+
+    .hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 900; letter-spacing: -0.02em; color: var(--text); }
+    .hero h1 span { color: var(--accent); }
+    .hero .meta { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+    .summary { background: var(--accent-dim); border-bottom: 1px solid var(--border); padding: 20px 24px; }
+    .summary-box { max-width: 760px; margin: 0 auto; }
+    .summary-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 8px; }
+    .summary-box p { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+    .content { max-width: 760px; margin: 0 auto; padding: 40px 24px 72px; }
+    .content h2 { font-size: 18px; font-weight: 800; color: var(--text); margin-top: 40px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .content p { margin-bottom: 14px; color: var(--muted); font-size: 15px; }
+    .content ul { margin: 10px 0 18px 22px; color: var(--muted); }
+    .content li { margin-bottom: 8px; }
+    a { color: var(--link); }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text); font-weight: 600; }
+
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin: 14px 0;
+    }
+    .step-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .keep-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-top: 16px;
+    }
+    .keep-box h3 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    .contact-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin-top: 12px; }
+    .contact-box p { margin: 4px 0; font-size: 15px; }
+
+    footer { border-top: 1px solid var(--border); padding: 24px; text-align: center; font-size: 13px; color: var(--muted); background: var(--surface); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-mark" href="/apps/sprocket">
+      <span class="nav-wordmark">SPROCKET <span class="nav-sub">Calm Phone Helper</span></span>
+    </a>
+    <div class="divider"></div>
+    <a class="nav-link" href="/apps/sprocket">Home</a>
+  </nav>
+
+  <div class="hero">
+    <h1><span>Delete</span> Account or Data</h1>
+    <p class="meta">Sprocket account deletion, data deletion, and retention</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-box">
+      <div class="summary-label">What this page covers</div>
+      <p>This page explains how to clear data inside the Sprocket app, how to request deletion of your account and associated server-held data, what is removed, what we may retain for a limited time, and how Google Play purchases relate to account deletion.</p>
+    </div>
+  </div>
+
+  <div class="content">
+    <h2>Clear your data in the app</h2>
+    <p>You can permanently remove notes, reminders, and other local app data from your device:</p>
+
+    <div class="step-card">
+      <div class="step-label">Step 1</div>
+      <p>Open the Sprocket app.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">Step 2</div>
+      <p>Go to <strong>Settings</strong>.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">Step 3</div>
+      <p>Choose <strong>Clear My Data</strong> and confirm. This removes local content and signed-in backups of notes and reminders as described in the privacy policy.</p>
+    </div>
+
+    <h2>Request account or server data deletion</h2>
+    <p>If you signed in with Google (or another method the app supports) and want your account and associated server-held data deleted, email us from the address linked to your account where possible.</p>
+
+    <div class="step-card">
+      <div class="step-label">Email request</div>
+      <p>Send to <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a> with the subject line <strong>Sprocket data deletion request</strong> and describe what you need removed (for example: full account deletion, or specific data categories).</p>
+    </div>
+
+    <p>We may need to verify account ownership before processing a deletion request.</p>
+
+    <h2>What is typically deleted</h2>
+    <ul>
+      <li>Your Sprocket account record (where an account exists)</li>
+      <li>Backed-up notes and reminders tied to that account</li>
+      <li>Associated usage or entitlement records we can unlink after verification, subject to fraud-prevention and legal requirements</li>
+    </ul>
+
+    <h2>Retention period</h2>
+    <div class="keep-box">
+      <h3>Deletion window</h3>
+      <p>Verified account and associated data deletion requests are processed within <strong>30 days</strong>.</p>
+      <p>Selective data-deletion requests are also handled within <strong>30 days</strong> of verification where feasible.</p>
+      <p>Aggregated or anonymised analytics that cannot be linked back to you may be retained.</p>
+    </div>
+
+    <h2>Important notes</h2>
+    <ul>
+      <li>Deleting your Sprocket account or data does <strong>not</strong> automatically cancel or refund a Google Play purchase. Manage purchases and refunds in your Google Play account.</li>
+      <li>If you use subscriptions or entitlements managed via Google Play or third-party tooling (for example RevenueCat), removal of account data may affect restore behaviour; contact us if you need help after deletion.</li>
+    </ul>
+
+    <h2>Policies</h2>
+    <div class="contact-box">
+      <p><strong>Email:</strong> <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a></p>
+      <p><strong>Privacy (iOS):</strong> <a href="/apps/sprocket/privacy-policy">/apps/sprocket/privacy-policy</a></p>
+      <p><strong>Privacy (Android):</strong> <a href="/apps/sprocket/android/privacy-policy">/apps/sprocket/android/privacy-policy</a></p>
+      <p><strong>Terms (iOS):</strong> <a href="/apps/sprocket/terms-of-use">/apps/sprocket/terms-of-use</a></p>
+      <p><strong>Terms (Android):</strong> <a href="/apps/sprocket/android/terms-of-use">/apps/sprocket/android/terms-of-use</a></p>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Arcturus Digital Consulting &nbsp;&middot;&nbsp;
+      <a href="/apps/sprocket/privacy-policy">Privacy</a> &nbsp;&middot;&nbsp;
+      <a href="/apps/sprocket/terms-of-use">Terms</a> &nbsp;&middot;&nbsp;
+      <a href="/apps/sprocket/delete-account">Delete Account</a>
+    </p>
+  </footer>
+
+</body>
+</html>
