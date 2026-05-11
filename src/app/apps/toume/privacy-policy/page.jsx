@@ -3,7 +3,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Tou.me Privacy Policy | Arcturus Digital Consulting',
   description:
-    'Privacy Policy for Tou.me – how we collect, use, and protect your data, and your rights under UK/EU GDPR.',
+    'Privacy Policy for Tou.me – what we store, how data is used, and how Smart Suggestions powered by OpenAI work.',
 };
 
 export default function ToumePrivacyPolicy() {
@@ -20,169 +20,198 @@ export default function ToumePrivacyPolicy() {
       <section className="card p-6 border border-black/10 rounded-2xl">
         <h1 className="text-3xl font-extrabold tracking-tight">Privacy Policy</h1>
         <p className="mt-2 text-neutral-700">
-          Last Updated: <time dateTime="2025-10-16">16th October 2025</time>
+          Last Updated: <time dateTime="2026-05-11">11 May 2026</time>
         </p>
         <p className="mt-4 text-neutral-800">
-          Tou.me (“we,” “our,” or “us”) is committed to protecting your privacy. This Privacy Policy
-          explains how we collect, use, disclose, and safeguard your information when you use our
-          mobile application and services (collectively, the “Service”).
+          Tou.me is operated by ARCTURUS DIGITAL CONSULTING LIMITED. This Privacy Policy explains
+          what information Tou.me stores, how it is used, and how Smart Suggestions powered by
+          OpenAI work.
         </p>
       </section>
 
       {/* Content */}
       <article className="prose prose-neutral max-w-none mt-6">
-        <h2 id="information-we-collect">1. Introduction</h2>
+        <h2>1. Overview</h2>
         <p>
-          Tou.me (“we,” “our,” or “us”) is committed to protecting your privacy. This Privacy Policy
-          explains how we collect, use, disclose, and safeguard your information when you use our
-          mobile application and services (collectively, the “Service”).
+          Tou.me is a calm, logistics-focused organiser for separated, blended, and shared-care
+          families.
+        </p>
+        <p>Tou.me is designed to support practical coordination such as:</p>
+        <ul>
+          <li>calendars and schedules</li>
+          <li>handovers</li>
+          <li>wellbeing updates</li>
+          <li>inventory tracking</li>
+          <li>reminders and shared planning</li>
+        </ul>
+        <p>Tou.me is not:</p>
+        <ul>
+          <li>a legal evidence platform</li>
+          <li>a healthcare platform</li>
+          <li>a therapy service</li>
+          <li>a medical advice service</li>
+        </ul>
+
+        <h2>2. Information We Store</h2>
+        <p>Depending on which features you use, Tou.me may store:</p>
+        <ul>
+          <li>account information (email address, authentication ID)</li>
+          <li>shared calendar events</li>
+          <li>child names and profiles</li>
+          <li>handover information</li>
+          <li>inventory and shared item tracking</li>
+          <li>wellbeing log entries</li>
+          <li>reminder and checklist data</li>
+          <li>Smart Suggestions feedback</li>
+          <li>app configuration and preferences</li>
+        </ul>
+
+        <h2>3. Smart Suggestions and OpenAI</h2>
+        <p>Tou.me optionally offers Smart Suggestions.</p>
+        <p>
+          When enabled for a circle, Tou.me may use OpenAI APIs to analyse near-term calendar events
+          and suggest:
+        </p>
+        <ul>
+          <li>handovers</li>
+          <li>reminders</li>
+          <li>wellbeing follow-ups</li>
+          <li>logistics-related actions</li>
+        </ul>
+        <p>Examples:</p>
+        <ul>
+          <li>&quot;This looks like a handover&quot;</li>
+          <li>&quot;This may overlap school hours&quot;</li>
+          <li>&quot;You may want to add a wellbeing follow-up&quot;</li>
+        </ul>
+        <p>Smart Suggestions are suggestions only. Tou.me does not make decisions for users.</p>
+
+        <h2>4. What Is Sent to OpenAI</h2>
+        <p>Tou.me is designed to minimise data shared with OpenAI.</p>
+        <p>
+          Tou.me sends only small, relevant snippets needed to generate suggestions, such as:
+        </p>
+        <ul>
+          <li>event title</li>
+          <li>event timing</li>
+          <li>limited child context</li>
+          <li>limited operational metadata</li>
+        </ul>
+        <p>Tou.me does NOT intentionally send:</p>
+        <ul>
+          <li>full account history</li>
+          <li>private messages</li>
+          <li>attachments</li>
+          <li>complete family timelines</li>
+          <li>unnecessary personal information</li>
+        </ul>
+
+        <h2>5. Smart Suggestion Feedback</h2>
+        <p>If enabled, Tou.me may occasionally ask why a suggestion was dismissed.</p>
+        <p>Examples:</p>
+        <ul>
+          <li>&quot;Not a handover&quot;</li>
+          <li>&quot;Wrong child&quot;</li>
+          <li>&quot;Already handled&quot;</li>
+        </ul>
+        <p>This feedback:</p>
+        <ul>
+          <li>is stored within Tou.me systems</li>
+          <li>is used for product analytics and future tuning</li>
+          <li>is not currently sent to OpenAI</li>
+        </ul>
+        <p>
+          Optional notes submitted by users should not contain unnecessary sensitive information.
         </p>
 
-        <h2>2. Information We Collect</h2>
-
-        <h3>2.1 Personal Information You Provide</h3>
+        <h2>6. OpenAI Data Handling</h2>
+        <p>Tou.me uses OpenAI APIs to generate Smart Suggestions.</p>
+        <p>As of this policy date:</p>
         <ul>
-          <li>Account information (email address, display name)</li>
-          <li>Profile information (name, preferences)</li>
-          <li>Circle information (family group names, member details)</li>
-          <li>Child profiles (names, ages, preferences)</li>
-          <li>Event information (calendar events, handovers, activities)</li>
-          <li>Communication data (invitations, messages within the app)</li>
+          <li>
+            API data submitted by Tou.me is not used by OpenAI to train public models unless
+            explicitly opted in
+          </li>
+          <li>OpenAI may temporarily retain API data for abuse monitoring and security purposes</li>
         </ul>
-
-        <h3>2.2 Automatically Collected Information</h3>
-        <ul>
-          <li>Device information (device type, operating system, app version)</li>
-          <li>Usage analytics (features used, session duration, crash reports)</li>
-          <li>Location data (only when explicitly granted for location-based features)</li>
-        </ul>
-
-        <h3>2.3 Third-Party Integrations</h3>
-        <ul>
-          <li>Google Calendar data (when you connect your calendar)</li>
-          <li>Firebase Authentication data</li>
-          <li>Analytics data through Google Analytics</li>
-        </ul>
-
-        <h2>3. How We Use Your Information</h2>
-        <ul>
-          <li>Provide and maintain the Service</li>
-          <li>Create and manage your circles (family groups)</li>
-          <li>Synchronize calendar events and schedules</li>
-          <li>Send notifications about events and activities</li>
-          <li>Improve app functionality and user experience</li>
-          <li>Provide customer support</li>
-          <li>Ensure security and prevent fraud</li>
-          <li>Comply with legal obligations</li>
-        </ul>
-
-        <h2>4. Information Sharing and Disclosure</h2>
-
-        <h3>4.1 Within Your Circles</h3>
-        <p>Information you add to circles is shared with other circle members, including:</p>
-        <ul>
-          <li>Events and calendar information</li>
-          <li>Child profiles and schedules</li>
-          <li>Handover details and inventory</li>
-          <li>Messages and notifications</li>
-        </ul>
-
-        <h3>4.2 Third-Party Service Providers</h3>
-        <p>We may share information with:</p>
-        <ul>
-          <li>Firebase (Google) for authentication and data storage</li>
-          <li>Google Analytics for usage analytics</li>
-          <li>Sentry for crash reporting and error monitoring</li>
-          <li>Apple/Google for app store services and in-app purchases</li>
-        </ul>
-
-        <h3>4.3 Legal Requirements</h3>
-        <p>We may disclose information if required by law or to:</p>
-        <ul>
-          <li>Comply with legal processes</li>
-          <li>Protect our rights and safety</li>
-          <li>Investigate potential violations</li>
-          <li>Protect users’ safety and rights</li>
-        </ul>
-
-        <h2>5. Data Security</h2>
-        <p>We implement appropriate security measures including:</p>
-        <ul>
-          <li>Encryption of data in transit and at rest</li>
-          <li>Secure authentication systems</li>
-          <li>Regular security assessments</li>
-          <li>Access controls and monitoring</li>
-        </ul>
-
-        <h2>6. Your Rights and Choices</h2>
-
-        <h3>6.1 Account Management</h3>
-        <ul>
-          <li>Access and update your personal information</li>
-          <li>Manage circle memberships and permissions</li>
-          <li>Control notification preferences</li>
-          <li>Delete your data or account (see Section 7)</li>
-        </ul>
-
-        <h3>6.2 Data Portability</h3>
         <p>
-          You can export your data by contacting us at{' '}
-          <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>.
+          Tou.me does not control OpenAI’s infrastructure or retention policies. Users should review
+          OpenAI policies directly for the latest information.
         </p>
 
-        <h3>6.3 Marketing Communications</h3>
-        <p>You can opt out of promotional communications at any time.</p>
+        <h2>7. Wellbeing Information</h2>
+        <p>Wellbeing logs are intended as lightweight coordination context only.</p>
+        <p>Tou.me is not intended for:</p>
+        <ul>
+          <li>diagnosis</li>
+          <li>treatment</li>
+          <li>clinical records</li>
+          <li>emergency situations</li>
+        </ul>
+        <p>Do not rely on Tou.me for medical advice or safeguarding decisions.</p>
 
-        <h2>7. Data Deletion</h2>
-
-        <h3>7.1 Delete Data Only</h3>
+        <h2>8. Sharing and Visibility</h2>
         <p>
-          You can delete all your personal data while keeping your account active. This removes all
-          circles you’ve created or joined, events and calendar data, child profiles, and personal
-          information. Your account remains active for future use.
+          Information shared within a circle may be visible to other authorised members of that
+          circle depending on permissions and feature usage.
+        </p>
+        <p>
+          Users are responsible for ensuring they are comfortable sharing information entered into
+          Tou.me.
         </p>
 
-        <h3>7.2 Delete Account and Data</h3>
+        <h2>9. Data Storage</h2>
+        <p>Tou.me currently uses:</p>
+        <ul>
+          <li>Firebase Authentication</li>
+          <li>Firestore database services</li>
+          <li>related cloud infrastructure providers</li>
+        </ul>
         <p>
-          You can permanently delete your account and all associated data. This action cannot be
-          undone. To request data deletion, use the “Data Management” option in Settings or contact
-          us at <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>.
+          Data may be processed in regions required to operate these services securely and reliably.
         </p>
 
-        <h2>8. Children’s Privacy</h2>
+        <h2>10. Security</h2>
         <p>
-          While our app helps manage children’s schedules, we do not knowingly collect personal
-          information directly from children under 13. Parents and guardians are responsible for the
-          information they add about their children.
+          Tou.me takes reasonable technical and organisational steps to protect user data, including
+          authenticated access controls and database security rules.
+        </p>
+        <p>However, no online service can guarantee absolute security.</p>
+
+        <h2>11. User Controls</h2>
+        <p>Users may:</p>
+        <ul>
+          <li>disable Smart Suggestions</li>
+          <li>disable Smart Suggestion feedback prompts</li>
+          <li>remove shared data</li>
+          <li>delete their account subject to operational limitations</li>
+        </ul>
+
+        <h2>12. Children</h2>
+        <p>Tou.me is intended for use by adults coordinating shared care. Tou.me is not directed at children.</p>
+
+        <h2>13. Changes</h2>
+        <p>
+          This Privacy Policy may be updated periodically as Tou.me evolves. Continued use of Tou.me
+          after updates constitutes acceptance of the revised policy.
         </p>
 
-        <h2>9. International Data Transfers</h2>
+        <h2>14. Contact</h2>
         <p>
-          Your information may be transferred to and processed in countries other than your own. We
-          ensure appropriate safeguards are in place for such transfers.
+          ARCTURUS DIGITAL CONSULTING LIMITED
+          <br />
+          82 Victoria Street
+          <br />
+          Nottingham
+          <br />
+          NG15 7EA
+          <br />
+          United Kingdom
         </p>
-
-        <h2>10. Changes to This Privacy Policy</h2>
         <p>
-          We may update this Privacy Policy periodically. We will notify you of significant changes
-          through the app or by email. Continued use of the Service after changes constitutes
-          acceptance of the updated policy.
-        </p>
-
-        <h2>11. Contact Information</h2>
-        <p>
-          For questions about this Privacy Policy or our privacy practices, contact us at:{' '}
-          <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a> —{' '}
-          <a href="https://www.arcturusdc.com" target="_blank" rel="noopener noreferrer">
-            www.arcturusdc.com
-          </a>
-          .
-        </p>
-
-        <h2>12. Jurisdiction</h2>
-        <p>
-          This Privacy Policy is governed by the laws of the United Kingdom and any disputes will be
-          resolved in the courts of the United Kingdom.
+          Email:
+          <br />
+          <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>
         </p>
 
         {/* Back link */}
