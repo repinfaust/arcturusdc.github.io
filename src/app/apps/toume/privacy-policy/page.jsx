@@ -66,7 +66,62 @@ export default function ToumePrivacyPolicy() {
           <li>app configuration and preferences</li>
         </ul>
 
-        <h2>3. Smart Suggestions and OpenAI</h2>
+        <h2>3. Google User Data</h2>
+        <p>
+          Tou.me optionally allows users to connect a Google Calendar account in order to:
+        </p>
+        <ul>
+          <li>import calendar events into Tou.me</li>
+          <li>display upcoming parenting and shared-care events</li>
+          <li>support handovers, reminders, and scheduling coordination</li>
+          <li>generate optional Smart Suggestions from near-term calendar activity</li>
+        </ul>
+        <p>Tou.me only requests Google Calendar permissions required for these features.</p>
+        <p>Tou.me does not access:</p>
+        <ul>
+          <li>Gmail content</li>
+          <li>Google Drive files</li>
+          <li>Google Photos</li>
+          <li>Google Contacts</li>
+          <li>unrelated Google account information</li>
+        </ul>
+
+        <h2>4. Data Accessed</h2>
+        <p>When a user connects Google Calendar, Tou.me may access:</p>
+        <ul>
+          <li>calendar names</li>
+          <li>calendar event titles</li>
+          <li>calendar event dates and times</li>
+          <li>calendar event descriptions</li>
+          <li>calendar event locations</li>
+          <li>attendee information where relevant to shared coordination</li>
+        </ul>
+        <p>
+          Tou.me only accesses calendar information necessary to provide the app’s scheduling and
+          shared-family coordination features.
+        </p>
+
+        <h2>5. How Tou.me Uses Google User Data</h2>
+        <p>Google Calendar data is used to:</p>
+        <ul>
+          <li>display upcoming events within Tou.me</li>
+          <li>help coordinate shared parenting schedules</li>
+          <li>identify potential handovers, reminders, or wellbeing follow-ups</li>
+          <li>support Smart Suggestions when enabled by the user</li>
+          <li>reduce duplicate manual entry of events</li>
+        </ul>
+        <p>Tou.me does not use Google user data for:</p>
+        <ul>
+          <li>advertising</li>
+          <li>profiling unrelated to app functionality</li>
+          <li>selling user data</li>
+          <li>training advertising systems</li>
+        </ul>
+        <p>
+          Tou.me uses Google user data only to provide or improve user-facing Tou.me functionality.
+        </p>
+
+        <h2>6. Smart Suggestions and OpenAI</h2>
         <p>Tou.me optionally offers Smart Suggestions.</p>
         <p>
           When enabled for a circle, Tou.me may use OpenAI APIs to analyse near-term calendar events
@@ -86,7 +141,7 @@ export default function ToumePrivacyPolicy() {
         </ul>
         <p>Smart Suggestions are suggestions only. Tou.me does not make decisions for users.</p>
 
-        <h2>4. What Is Sent to OpenAI</h2>
+        <h2>7. What Is Sent to OpenAI</h2>
         <p>Tou.me is designed to minimise data shared with OpenAI.</p>
         <p>
           Tou.me sends only small, relevant snippets needed to generate suggestions, such as:
@@ -106,7 +161,7 @@ export default function ToumePrivacyPolicy() {
           <li>unnecessary personal information</li>
         </ul>
 
-        <h2>5. Smart Suggestion Feedback</h2>
+        <h2>8. Smart Suggestion Feedback</h2>
         <p>If enabled, Tou.me may occasionally ask why a suggestion was dismissed.</p>
         <p>Examples:</p>
         <ul>
@@ -124,7 +179,7 @@ export default function ToumePrivacyPolicy() {
           Optional notes submitted by users should not contain unnecessary sensitive information.
         </p>
 
-        <h2>6. OpenAI Data Handling</h2>
+        <h2>9. OpenAI Data Handling</h2>
         <p>Tou.me uses OpenAI APIs to generate Smart Suggestions.</p>
         <p>As of this policy date:</p>
         <ul>
@@ -139,7 +194,41 @@ export default function ToumePrivacyPolicy() {
           OpenAI policies directly for the latest information.
         </p>
 
-        <h2>7. Wellbeing Information</h2>
+        <h2>10. Data Sharing</h2>
+        <p>Tou.me does not sell Google user data.</p>
+        <p>Tou.me may share limited operational event context with:</p>
+        <ul>
+          <li>OpenAI API services for Smart Suggestions functionality</li>
+          <li>infrastructure providers required to operate Tou.me securely</li>
+        </ul>
+        <p>Tou.me does not share Google user data with advertisers or data brokers.</p>
+
+        <h2>11. Data Retention and Deletion</h2>
+        <p>
+          Tou.me stores imported calendar information only as required to operate app features.
+        </p>
+        <p>Users may:</p>
+        <ul>
+          <li>disconnect Google Calendar integration</li>
+          <li>delete calendar-linked data</li>
+          <li>request deletion of their Tou.me account and associated stored data</li>
+        </ul>
+        <p>
+          Users may revoke Tou.me’s Google access at any time through their Google Account
+          permissions settings.
+        </p>
+
+        <h2>12. Limited Use Compliance</h2>
+        <p>
+          Tou.me’s use of information received from Google APIs adheres to the Google API Services
+          User Data Policy, including the Limited Use requirements.
+        </p>
+        <p>
+          Google user data is only used to provide or improve user-facing Tou.me features directly
+          related to shared-family coordination and scheduling.
+        </p>
+
+        <h2>13. Wellbeing Information</h2>
         <p>Wellbeing logs are intended as lightweight coordination context only.</p>
         <p>Tou.me is not intended for:</p>
         <ul>
@@ -150,7 +239,7 @@ export default function ToumePrivacyPolicy() {
         </ul>
         <p>Do not rely on Tou.me for medical advice or safeguarding decisions.</p>
 
-        <h2>8. Sharing and Visibility</h2>
+        <h2>14. Sharing and Visibility</h2>
         <p>
           Information shared within a circle may be visible to other authorised members of that
           circle depending on permissions and feature usage.
@@ -160,7 +249,7 @@ export default function ToumePrivacyPolicy() {
           Tou.me.
         </p>
 
-        <h2>9. Data Storage</h2>
+        <h2>15. Data Storage</h2>
         <p>Tou.me currently uses:</p>
         <ul>
           <li>Firebase Authentication</li>
@@ -171,14 +260,14 @@ export default function ToumePrivacyPolicy() {
           Data may be processed in regions required to operate these services securely and reliably.
         </p>
 
-        <h2>10. Security</h2>
+        <h2>16. Security</h2>
         <p>
           Tou.me takes reasonable technical and organisational steps to protect user data, including
           authenticated access controls and database security rules.
         </p>
         <p>However, no online service can guarantee absolute security.</p>
 
-        <h2>11. User Controls</h2>
+        <h2>17. User Controls</h2>
         <p>Users may:</p>
         <ul>
           <li>disable Smart Suggestions</li>
@@ -187,16 +276,16 @@ export default function ToumePrivacyPolicy() {
           <li>delete their account subject to operational limitations</li>
         </ul>
 
-        <h2>12. Children</h2>
+        <h2>18. Children</h2>
         <p>Tou.me is intended for use by adults coordinating shared care. Tou.me is not directed at children.</p>
 
-        <h2>13. Changes</h2>
+        <h2>19. Changes</h2>
         <p>
           This Privacy Policy may be updated periodically as Tou.me evolves. Continued use of Tou.me
           after updates constitutes acceptance of the revised policy.
         </p>
 
-        <h2>14. Contact</h2>
+        <h2>20. Contact</h2>
         <p>
           ARCTURUS DIGITAL CONSULTING LIMITED
           <br />
