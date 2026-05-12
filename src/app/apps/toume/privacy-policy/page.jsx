@@ -30,7 +30,21 @@ export default function ToumePrivacyPolicy() {
       </section>
 
       {/* Content */}
-      <article className="prose prose-neutral max-w-none mt-6">
+      <article
+        className={[
+          // Keep this page highly readable (Google review + store policy surface).
+          // The project’s global styles appear to suppress default list markers in some contexts,
+          // so we explicitly re-enable bullets/indentation here.
+          'prose prose-neutral mt-6',
+          'max-w-3xl',
+          'prose-headings:scroll-mt-24',
+          'prose-h2:mt-8 prose-h2:mb-3',
+          'prose-p:my-3',
+          'prose-ul:my-3 prose-ul:list-disc prose-ul:pl-6',
+          'prose-ol:my-3 prose-ol:list-decimal prose-ol:pl-6',
+          'prose-li:my-1',
+        ].join(' ')}
+      >
         <h2>1. Overview</h2>
         <p>
           Tou.me is a calm, logistics-focused organiser for separated, blended, and shared-care
@@ -184,8 +198,8 @@ export default function ToumePrivacyPolicy() {
         <p>As of this policy date:</p>
         <ul>
           <li>
-            API data submitted by Tou.me is not used by OpenAI to train public models unless
-            explicitly opted in
+            Tou.me uses OpenAI API services configured so submitted API data is not used to train
+            OpenAI models by default
           </li>
           <li>OpenAI may temporarily retain API data for abuse monitoring and security purposes</li>
         </ul>
@@ -196,6 +210,7 @@ export default function ToumePrivacyPolicy() {
 
         <h2>10. Data Sharing</h2>
         <p>Tou.me does not sell Google user data.</p>
+        <p>Tou.me does not transfer, sell, or use Google user data for advertising purposes.</p>
         <p>Tou.me may share limited operational event context with:</p>
         <ul>
           <li>OpenAI API services for Smart Suggestions functionality</li>
@@ -213,6 +228,10 @@ export default function ToumePrivacyPolicy() {
           <li>delete calendar-linked data</li>
           <li>request deletion of their Tou.me account and associated stored data</li>
         </ul>
+        <p>
+          Users may request deletion of their Tou.me data by contacting{' '}
+          <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>.
+        </p>
         <p>
           Users may revoke Tou.me’s Google access at any time through their Google Account
           permissions settings.
