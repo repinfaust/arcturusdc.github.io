@@ -32,19 +32,17 @@ export default function ToumePrivacyPolicy() {
       {/* Content */}
       <article
         className={[
-          // Keep this page highly readable (Google review + store policy surface).
-          // The project’s global styles appear to suppress default list markers in some contexts,
-          // so we explicitly re-enable bullets/indentation here.
-          'prose prose-lg prose-neutral mt-6',
-          'max-w-3xl mx-auto',
-          'prose-headings:scroll-mt-24',
-          'prose-h2:mt-8 prose-h2:mb-3',
-          'prose-p:my-3 prose-p:leading-relaxed',
-          // Tailwind Typography + global CSS can sometimes zero out markers; force them back on.
-          'prose-ul:my-3 prose-ul:!list-disc prose-ul:!pl-6',
-          'prose-ol:my-3 prose-ol:!list-decimal prose-ol:!pl-6',
-          'prose-li:my-1',
-          'prose-li:marker:text-neutral-400',
+          // Avoid `prose` here: global styles in this repo appear to suppress typography margins,
+          // resulting in unreadable policy pages. Force spacing via direct-child selectors.
+          'mt-6 max-w-3xl mx-auto',
+          'text-[16px] leading-7 text-neutral-900',
+          '[&>h2]:scroll-mt-24',
+          '[&>h2]:mt-10 [&>h2]:mb-3 [&>h2]:text-xl [&>h2]:font-semibold [&>h2]:tracking-tight',
+          '[&>p]:mt-3',
+          '[&>ul]:mt-3 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-1',
+          '[&>ol]:mt-3 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-1',
+          '[&>ul>li]:leading-7 [&>ol>li]:leading-7',
+          '[&_*::marker]:text-neutral-400',
         ].join(' ')}
       >
         <h2>1. Overview</h2>
