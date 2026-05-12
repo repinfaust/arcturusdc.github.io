@@ -35,14 +35,16 @@ export default function ToumePrivacyPolicy() {
           // Keep this page highly readable (Google review + store policy surface).
           // The project’s global styles appear to suppress default list markers in some contexts,
           // so we explicitly re-enable bullets/indentation here.
-          'prose prose-neutral mt-6',
-          'max-w-3xl',
+          'prose prose-lg prose-neutral mt-6',
+          'max-w-3xl mx-auto',
           'prose-headings:scroll-mt-24',
           'prose-h2:mt-8 prose-h2:mb-3',
-          'prose-p:my-3',
-          'prose-ul:my-3 prose-ul:list-disc prose-ul:pl-6',
-          'prose-ol:my-3 prose-ol:list-decimal prose-ol:pl-6',
+          'prose-p:my-3 prose-p:leading-relaxed',
+          // Tailwind Typography + global CSS can sometimes zero out markers; force them back on.
+          'prose-ul:my-3 prose-ul:!list-disc prose-ul:!pl-6',
+          'prose-ol:my-3 prose-ol:!list-decimal prose-ol:!pl-6',
           'prose-li:my-1',
+          'prose-li:marker:text-neutral-400',
         ].join(' ')}
       >
         <h2>1. Overview</h2>
