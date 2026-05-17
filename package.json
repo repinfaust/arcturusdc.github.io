@@ -9,6 +9,7 @@
     "lint": "next lint",
     "dashboard:test": "node scripts/run-jest-tests.js",
     "paygo:sync": "bash ./scripts/sync-paygo-web.sh",
+    "little-fibbing:sync": "bash ./scripts/sync-little-fibbing-web.sh",
     "paygo:seed-docs": "node scripts/seed-paygo-poc-docs.js"
   },
   "dependencies": {
