@@ -530,6 +530,27 @@ section { position: relative; }
   background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,136,0.02) 3px, rgba(0,255,136,0.02) 6px);
   pointer-events: none;
 }
+.mechanic-screenshot {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.mechanic-screenshot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+.mechanic-cell.cold .mechanic-screenshot {
+  border: 1.5px solid rgba(0,255,136,0.3);
+  box-shadow: 0 0 16px rgba(0,255,136,0.1);
+  position: relative;
+  z-index: 2;
+}
 .mechanic-icon { font-size: 28px; margin-bottom: 12px; }
 .mechanic-title {
   font-family: 'Playfair Display', serif;
@@ -1324,17 +1345,23 @@ footer {
 
   <div class="mechanic-grid">
     <div class="mechanic-cell warm">
-      <div class="mechanic-icon">🗺️</div>
+      <div class="mechanic-screenshot">
+        <img src="/img/little-fibbing/screenshot-v02-village.png" alt="Little Fibbing village square — v0.2">
+      </div>
       <div class="mechanic-title">Explore</div>
       <p class="mechanic-body" style="color: var(--warm-grey);">Nan's tortoise has gone missing again. Wander Little Fibbing — a cosy 1950s English village — talking to locals: Edie the postwoman, Mrs Crumb the baker, the vicar. Everyone has a theory. None of them agree.</p>
     </div>
     <div class="mechanic-cell warm">
-      <div class="mechanic-icon">📰</div>
+      <div class="mechanic-screenshot">
+        <img src="/img/little-fibbing/screenshot-v02-edie.png" alt="Little Fibbing — talking to Edie the postwoman">
+      </div>
       <div class="mechanic-title">Encounter</div>
       <p class="mechanic-body" style="color: var(--warm-grey);">Every character interaction triggers a rumour. Some are plausible. Some are obviously wrong. Some are completely reasonable until you think about them for four seconds. The Gazette is not helping.</p>
     </div>
     <div class="mechanic-cell cold crt">
-      <div class="mechanic-icon" style="position:relative;z-index:2">⚡</div>
+      <div class="mechanic-screenshot">
+        <img src="/img/little-fibbing/screenshot-v02-runner.png" alt="Little Fibbing runner mini-game — LIKELY / CAN'T TELL / UNLIKELY">
+      </div>
       <div class="mechanic-title">Decide</div>
       <p class="mechanic-body">Mini-games fire at pressure points: the runner, the Exagga-rometer, the headline sorter. LIKELY · CAN'T TELL · UNLIKELY. The mechanic is always the same. The disguise keeps changing.</p>
     </div>
