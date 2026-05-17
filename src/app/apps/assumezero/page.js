@@ -1353,7 +1353,7 @@ footer {
     </div>
     <div class="mechanic-cell warm">
       <div class="mechanic-screenshot">
-        <img src="/img/little-fibbing/screenshot-v02-bakery.png" alt="Little Fibbing — inside Mrs Crumb's bakery">
+        <img src="/img/little-fibbing/screenshot-v02-church.png" alt="Little Fibbing — Reverend Pemble at the churchyard">
       </div>
       <div class="mechanic-title">Encounter</div>
       <p class="mechanic-body" style="color: var(--warm-grey);">Every character interaction triggers a rumour. Some are plausible. Some are obviously wrong. Some are completely reasonable until you think about them for four seconds. The Gazette is not helping.</p>
@@ -1407,7 +1407,7 @@ footer {
 <!-- MARKET -->
 <section class="market-section paper reveal">
   <div class="section-label warm">MARKET CONTEXT //</div>
-  <h2 class="section-headline warm" style="font-size: clamp(22px, 3.5vw, 36px);">A quality gap wide enough to drive a bus through.</h2>
+  <h2 class="section-headline warm" style="font-size: clamp(22px, 3.5vw, 36px);">Children are encountering misinformation faster than the tools to help them can keep up.</h2>
 
   <div class="market-grid">
     <div>
