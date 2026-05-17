@@ -1353,7 +1353,7 @@ footer {
     </div>
     <div class="mechanic-cell warm">
       <div class="mechanic-screenshot">
-        <img src="/img/little-fibbing/screenshot-v02-edie.png" alt="Little Fibbing — talking to Edie the postwoman">
+        <img src="/img/little-fibbing/screenshot-v02-bakery.png" alt="Little Fibbing — inside Mrs Crumb's bakery">
       </div>
       <div class="mechanic-title">Encounter</div>
       <p class="mechanic-body" style="color: var(--warm-grey);">Every character interaction triggers a rumour. Some are plausible. Some are obviously wrong. Some are completely reasonable until you think about them for four seconds. The Gazette is not helping.</p>
