@@ -1411,11 +1411,11 @@ footer {
 
   <div class="market-grid">
     <div>
-      <p class="market-body">The dominant format for digital literacy education in UK primary and secondary schools is the PDF. Often hand-designed, rarely updated, and distributed via school apps where they are opened once and forgotten.</p>
+      <p class="market-body">The dominant format for digital literacy education in UK primary and secondary schools is still largely static — PDFs, lesson plans, and web resources that were built for a different information environment and a different kind of child attention.</p>
       <br>
-      <p class="market-body">Little Fibbing is not competing with Duolingo. It's competing with a PDF about the perils of TikTok, illustrated in clip art, sent home on ClassDojo on a Tuesday.</p>
+      <p class="market-body">Teachers are doing their best with what exists. The problem isn't effort — it's that the tools haven't kept pace with the threat. Little Fibbing is built to sit alongside what schools already do, not replace it. Ten minutes, no prep, no procurement.</p>
       <br>
-      <p class="market-body">The bar is low. The opportunity is significant. And the Online Safety Act has created statutory pull toward exactly this kind of provision — without anyone yet delivering something children will actually use.</p>
+      <p class="market-body">The Online Safety Act has created statutory pull toward exactly this kind of provision — without anyone yet delivering something children will voluntarily engage with. That's the gap.</p>
     </div>
     <div>
       <div class="comparison-card existing">
