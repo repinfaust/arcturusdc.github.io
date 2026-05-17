@@ -1,28 +1,28 @@
 import Script from "next/script";
 
 export const metadata = {
-  title: 'AssumeZero — Arcturus Digital Consulting',
-  description: 'AssumeZero teaser page.',
+  title: 'Little Fibbing · A Game by Arcturus Digital Consulting',
+  description: 'Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically.',
   openGraph: {
-    title: 'AssumeZero — Arcturus Digital Consulting',
-    description: 'AssumeZero teaser page.',
+    title: 'Little Fibbing · A Game by Arcturus Digital Consulting',
+    description: 'Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically.',
     url: 'https://www.arcturusdc.com/apps/assumezero',
     siteName: 'Arcturus Digital Consulting',
     images: [
       {
-        url: 'https://www.arcturusdc.com/img/assumezero/image.png',
-        width: 1227,
-        height: 2000,
-        alt: 'Mayor Reginald Grinwell poster artwork',
+        url: 'https://www.arcturusdc.com/img/little-fibbing/mayor-grinwell.png',
+        width: 1200,
+        height: 630,
+        alt: 'Mayor Reginald Grinwell — Little Fibbing',
       },
     ],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AssumeZero — Arcturus Digital Consulting',
-    description: 'AssumeZero teaser page.',
-    images: ['https://www.arcturusdc.com/img/assumezero/image.png'],
+    title: 'Little Fibbing · A Game by Arcturus Digital Consulting',
+    description: 'Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically.',
+    images: ['https://www.arcturusdc.com/img/little-fibbing/mayor-grinwell.png'],
   },
 };
 
@@ -34,7 +34,7 @@ export const viewport = {
 export default function AssumeZeroPage() {
   return (
     <>
-      <Script id="assumezero-mayor-reveal" strategy="afterInteractive">
+      <Script id="lf-mayor-reveal" strategy="afterInteractive">
         {`
           (() => {
             const root = document.getElementById('assumezero-page');
@@ -46,7 +46,6 @@ export default function AssumeZeroPage() {
             const update = () => {
               const rect = portrait.getBoundingClientRect();
               const vh = window.innerHeight || document.documentElement.clientHeight;
-              // Keep the top of the poster visible on load, then pan down progressively.
               const trigger = vh * 0.6;
               const end = -rect.height * 0.35;
               const raw = (trigger - rect.top) / (trigger - end);
@@ -59,10 +58,7 @@ export default function AssumeZeroPage() {
             const onScroll = () => {
               if (ticking) return;
               ticking = true;
-              requestAnimationFrame(() => {
-                update();
-                ticking = false;
-              });
+              requestAnimationFrame(() => { update(); ticking = false; });
             };
 
             update();
@@ -71,7 +67,7 @@ export default function AssumeZeroPage() {
           })();
         `}
       </Script>
-      <Script id="assumezero-staggered-reveal" strategy="afterInteractive">
+      <Script id="lf-staggered-reveal" strategy="afterInteractive">
         {`
           (() => {
             if (!('IntersectionObserver' in window)) return;
@@ -79,30 +75,16 @@ export default function AssumeZeroPage() {
             if (!root) return;
 
             const itemSelector = [
-              '.stat-cell',
-              '.status-item',
-              '.ask-card',
-              '.pilot-row',
-              '.act-dot',
-              '.comparison-card',
-              '.phone-frame',
-              '.type-col',
-              '.swatch',
-              '.phase-card',
-              '.mode-pill',
-              '.body-copy',
-              '.pull-quote',
-              '.timeline-note',
-              'p'
+              '.stat-cell', '.status-item', '.ask-card', '.pilot-row',
+              '.act-dot', '.comparison-card', '.phone-frame', '.type-col',
+              '.swatch', '.phase-card', '.mode-pill', '.body-copy',
+              '.pull-quote', '.timeline-note', 'p'
             ].join(', ');
 
             const sections = root.querySelectorAll('section.reveal');
             sections.forEach((section) => {
               let items = Array.from(section.querySelectorAll(itemSelector));
-              if (!items.length) {
-                items = Array.from(section.children);
-              }
-
+              if (!items.length) items = Array.from(section.children);
               items = items.filter((el) => !el.closest('.mayor-portrait'));
               items.forEach((el, i) => {
                 el.classList.add('reveal-child');
@@ -122,6 +104,39 @@ export default function AssumeZeroPage() {
             }, { threshold: 0.12 });
 
             sections.forEach((section) => observer.observe(section));
+          })();
+        `}
+      </Script>
+      <Script id="lf-stat-counter" strategy="afterInteractive">
+        {`
+          (() => {
+            if (!('IntersectionObserver' in window)) return;
+            function animateCount(el, target, suffix) {
+              let current = 0;
+              const step = target / 60;
+              const timer = setInterval(() => {
+                current = Math.min(current + step, target);
+                el.textContent = Math.round(current) + suffix;
+                if (current >= target) clearInterval(timer);
+              }, 16);
+            }
+            const statsObserver = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  const numbers = entry.target.querySelectorAll('.stat-number');
+                  numbers.forEach(el => {
+                    const text = el.textContent.trim();
+                    const num = parseFloat(text);
+                    if (!isNaN(num)) {
+                      const suffix = text.replace(String(Math.round(num)), '');
+                      animateCount(el, num, suffix);
+                    }
+                  });
+                  statsObserver.unobserve(entry.target);
+                }
+              });
+            }, { threshold: 0.3 });
+            document.querySelectorAll('.stats-row').forEach(el => statsObserver.observe(el));
           })();
         `}
       </Script>
@@ -505,14 +520,9 @@ section { position: relative; }
   padding: 32px 24px;
   border-right: 1px solid rgba(255,255,255,0.1);
 }
-.mechanic-cell:last-child { border-right: none; border-right: none; }
-.mechanic-cell.warm {
-  background: var(--parchment);
-}
-.mechanic-cell.cold {
-  background: var(--crt-black);
-  position: relative;
-}
+.mechanic-cell:last-child { border-right: none; }
+.mechanic-cell.warm { background: var(--parchment); }
+.mechanic-cell.cold { background: var(--crt-black); position: relative; }
 .mechanic-cell.cold::after {
   content: '';
   position: absolute;
@@ -520,10 +530,7 @@ section { position: relative; }
   background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,136,0.02) 3px, rgba(0,255,136,0.02) 6px);
   pointer-events: none;
 }
-.mechanic-icon {
-  font-size: 28px;
-  margin-bottom: 12px;
-}
+.mechanic-icon { font-size: 28px; margin-bottom: 12px; }
 .mechanic-title {
   font-family: 'Playfair Display', serif;
   font-size: 22px;
@@ -776,85 +783,6 @@ section { position: relative; }
   object-fit: cover;
   object-position: top;
 }
-.phone-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--crt-black);
-  position: relative;
-}
-.phone-placeholder::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,136,0.025) 3px, rgba(0,255,136,0.025) 6px);
-}
-.phone-placeholder-text {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--phosphor);
-  text-align: center;
-  letter-spacing: 1px;
-  line-height: 1.8;
-  position: relative;
-  z-index: 2;
-  opacity: 0.8;
-}
-.phone-home-mockup {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(180deg, #8FB4C8 0%, #A8C8D8 40%, #7A9570 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-.phone-home-title {
-  margin-top: 16px;
-  background: var(--parchment);
-  border: 2px solid var(--teal);
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-family: 'Playfair Display', serif;
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--teal);
-  text-align: center;
-  line-height: 1.1;
-  box-shadow: 2px 2px 0 var(--warm-grey);
-}
-.phone-home-crt {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: var(--crt-black);
-  border: 1.5px solid var(--phosphor);
-  border-radius: 3px;
-  padding: 3px 6px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  color: var(--phosphor);
-  box-shadow: 0 0 8px rgba(0,255,136,0.4);
-}
-.phone-home-btn {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, var(--mustard) 0%, #C07028 100%);
-  border: none;
-  border-radius: 24px;
-  padding: 10px 28px;
-  font-family: 'Playfair Display', serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--dark-text);
-  white-space: nowrap;
-  box-shadow: 0 4px 0 #8B5000;
-}
 .phone-footer {
   height: 12px;
   background: #111;
@@ -912,9 +840,7 @@ section { position: relative; }
   overflow: hidden;
   border-radius: 4px;
 }
-.type-col {
-  padding: 24px;
-}
+.type-col { padding: 24px; }
 .type-col.warm { background: var(--parchment); }
 .type-col.cold { background: var(--crt-black); position: relative; }
 .type-col.cold::after {
@@ -1092,28 +1018,18 @@ section { position: relative; }
 }
 
 /* ─── ABOUT ─── */
-.pilot-section {
-  background: var(--parchment);
-  padding: 80px 40px;
-  position: relative;
-  overflow: hidden;
-}
-@media (max-width: 768px) {
-  .pilot-section .pilot-grid { grid-template-columns: 1fr !important; }
-}
 .about-section {
   background: var(--parchment);
   padding: 60px 24px;
   border-top: 3px solid var(--dark-text);
 }
-/* desktop readability: avoid ultra-wide, sparse layouts */
+/* desktop readability: avoid ultra-wide sparse layouts */
 .problem-section > *,
 .game-section > *,
 .market-section > *,
 .lookfeel-section > *,
 .status-section > *,
 .asks-section > *,
-.pilot-section > *,
 .about-section > * {
   max-width: 1200px;
   margin-left: auto;
@@ -1260,7 +1176,7 @@ footer {
   filter: blur(0);
 }
 
-/* ─── READABILITY OVERRIDE ─── */
+/* ─── READABILITY OVERRIDES ─── */
 #assumezero-page p,
 #assumezero-page li,
 #assumezero-page a,
@@ -1277,7 +1193,7 @@ footer {
 #assumezero-page .comparison-item,
 #assumezero-page .curriculum-text,
 #assumezero-page [style*="font-size"] {
-  font-size: max(20px, 1em) !important;
+  font-size: max(16px, 1em) !important;
   line-height: 1.75 !important;
 }
 
@@ -1290,11 +1206,11 @@ footer {
 #assumezero-page .footer-nav a,
 #assumezero-page nav .logo,
 #assumezero-page .hero-tag {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 #assumezero-page .pull-quote {
-  font-size: clamp(28px, 6vw, 36px) !important;
+  font-size: clamp(22px, 4vw, 30px) !important;
   line-height: 1.5 !important;
 }
 </style>
@@ -1310,7 +1226,7 @@ footer {
 <section class="hero paper">
   <div class="gazette-masthead">
     <div class="gazette-above">Est. 2025 · A Game by Arcturus Digital Consulting</div>
-    <div class="gazette-title">The AssumeZero Gazette</div>
+    <div class="gazette-title">The Little Fibbing Gazette</div>
     <div class="gazette-below">
       <span>KS2 &amp; KS3+ EDITION</span>
       <span>IN DEVELOPMENT · 2026</span>
@@ -1326,7 +1242,7 @@ footer {
 
   <div class="marquee-wrap">
     <div class="marquee-track">
-      <span>ASSUMEZERO</span><span>·</span>
+      <span>LITTLE FIBBING</span><span>·</span>
       <span>A GAME BY ARCTURUS DC</span><span>·</span>
       <span>KS2 &amp; KS3+</span><span>·</span>
       <span>IN DEVELOPMENT</span><span>·</span>
@@ -1334,7 +1250,7 @@ footer {
       <span>EDUCATORS WELCOME</span><span>·</span>
       <span>ASSUME ZERO</span><span>·</span>
       <span>ASK THE QUESTION</span><span>·</span>
-      <span>ASSUMEZERO</span><span>·</span>
+      <span>LITTLE FIBBING</span><span>·</span>
       <span>A GAME BY ARCTURUS DC</span><span>·</span>
       <span>KS2 &amp; KS3+</span><span>·</span>
       <span>IN DEVELOPMENT</span><span>·</span>
@@ -1348,21 +1264,24 @@ footer {
   <div class="hero-body">
     <div>
       <h1 class="hero-headline">Can your child tell<br>when they're being<br>fibbed to?</h1>
-      <p class="hero-standfirst">AssumeZero is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically — before the real world demands it of them.</p>
+      <p class="hero-standfirst">Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically — before the real world demands it of them.</p>
       <div>
         <span class="hero-tag">KS2</span>
         <span class="hero-tag">KS3+</span>
         <span class="hero-tag">In Development</span>
         <span class="hero-tag">Pilot Schools Welcome</span>
       </div>
+      <div style="margin-top: 24px;">
+        <a href="/apps/assumezero/littlefibbing" style="display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; letter-spacing:2px; color:var(--phosphor); border:1.5px solid var(--phosphor); padding:10px 24px; border-radius:3px; text-decoration:none; transition:background 0.15s,color 0.15s;" onmouseover="this.style.background='var(--phosphor)';this.style.color='var(--crt-black)'" onmouseout="this.style.background='transparent';this.style.color='var(--phosphor)'">PLAY THE DEMO →</a>
+      </div>
     </div>
     <div>
       <div class="mayor-box">
         <div class="mayor-portrait">
-          <img src="/img/assumezero/image.png" alt="Mayor Reginald Grinwell, AssumeZero c.1958" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+          <img src="/img/little-fibbing/mayor-grinwell.png" alt="Mayor Reginald Grinwell, Little Fibbing c.1958" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
           <div class="mayor-fallback" aria-hidden="true">🎩</div>
         </div>
-        <div class="mayor-caption">Mayor Reginald Grinwell<br>AssumeZero, c.1958</div>
+        <div class="mayor-caption">Mayor Reginald Grinwell<br>Little Fibbing, c.1958</div>
         <div class="mayor-desc">Beloved civic leader.<br>Entirely trustworthy.<br><em>Definitely.</em></div>
       </div>
     </div>
@@ -1377,7 +1296,7 @@ footer {
   </blockquote>
   <p class="body-copy">AI-generated content is now indistinguishable from real photography, video, and writing. Social feeds are engineered to trigger emotional responses before rational ones. The average child encounters hundreds of information claims every day before they've finished breakfast.</p>
   <p class="body-copy">The current school response — well-meaning PDFs, charity worksheets, occasional PSHE lessons — was built for a different world. It assumes children have time to deliberate, access to experts, and the motivation to engage with material that looks like homework. They don't.</p>
-  <p class="body-copy">AssumeZero is built on a different premise: teach critical thinking through a mechanic children will voluntarily play, on a device they already have, in the time they already spend on it.</p>
+  <p class="body-copy">Little Fibbing is built on a different premise: teach critical thinking through a mechanic children will voluntarily play, on a device they already have, in the time they already spend on it.</p>
 
   <div class="stats-row">
     <div class="stat-cell">
@@ -1396,39 +1315,28 @@ footer {
       <div class="stat-source">Source: Ofcom, 2025</div>
     </div>
   </div>
-  <p class="stat-source" style="margin-top: 10px; font-size: 11px;">
-    Two-thirds of UK teenagers say they worry about online misinformation — but teachers report struggling to support them. (The i Paper, 2025)
-  </p>
-  <div class="reveal d5" style="margin-top: 32px; padding: 16px 24px; border-left: 3px solid var(--teal); background: rgba(61,110,110,0.08);">
-    <p style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.7; margin: 0;">
-      Research consistently shows that <em>inoculation</em> — exposure to weakened forms of manipulation before encountering the real thing — is more effective at building misinformation resilience than correction after the fact. Little Fibbing is inoculation, delivered as a game.
-    </p>
-    <p style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--teal); letter-spacing: 1px; margin: 8px 0 0;">
-      Ref: Lewandowsky &amp; van der Linden, 2021 · Psychological Science in the Public Interest
-    </p>
-  </div>
 </section>
 
 <!-- THE GAME -->
 <section class="game-section reveal">
   <div class="section-label cold">THE GAME //</div>
-  <h2 class="section-headline cold" style="font-size: clamp(24px, 4vw, 40px);">Two worlds. One mechanic.</h2>
+  <h2 class="section-headline cold" style="font-size: clamp(24px, 4vw, 40px);">Find Keith. Follow the rumours.</h2>
 
   <div class="mechanic-grid">
     <div class="mechanic-cell warm">
-      <div class="mechanic-icon">🏃</div>
-      <div class="mechanic-title">Run</div>
-      <p class="mechanic-body" style="color: var(--warm-grey);">You're a news runner in AssumeZero — a cosy 1950s English village where Mayor Grinwell's word is law and the Gazette prints only the finest truths.</p>
+      <div class="mechanic-icon">🗺️</div>
+      <div class="mechanic-title">Explore</div>
+      <p class="mechanic-body" style="color: var(--warm-grey);">Nan's tortoise has gone missing again. Wander Little Fibbing — a cosy 1950s English village — talking to locals: Edie the postwoman, Mrs Crumb the baker, the vicar. Everyone has a theory. None of them agree.</p>
     </div>
     <div class="mechanic-cell warm">
       <div class="mechanic-icon">📰</div>
-      <div class="mechanic-title">Read</div>
-      <p class="mechanic-body" style="color: var(--warm-grey);">Headlines from the AssumeZero Gazette appear as obstacles on your route. Some are true. Some are exaggerated. Some are complete fabrications.</p>
+      <div class="mechanic-title">Encounter</div>
+      <p class="mechanic-body" style="color: var(--warm-grey);">Every character interaction triggers a rumour. Some are plausible. Some are obviously wrong. Some are completely reasonable until you think about them for four seconds. The Gazette is not helping.</p>
     </div>
     <div class="mechanic-cell cold crt">
       <div class="mechanic-icon" style="position:relative;z-index:2">⚡</div>
       <div class="mechanic-title">Decide</div>
-      <p class="mechanic-body">LIKELY or UNLIKELY? Or CAN'T TELL — always a valid answer. The lane you choose IS the lesson. No right answer without a reason.</p>
+      <p class="mechanic-body">Mini-games fire at pressure points: the runner, the Exagga-rometer, the headline sorter. LIKELY · CAN'T TELL · UNLIKELY. The mechanic is always the same. The disguise keeps changing.</p>
     </div>
   </div>
 
@@ -1476,13 +1384,11 @@ footer {
 
   <div class="market-grid">
     <div>
-      <p class="market-body">The tools exist. The engagement doesn't.</p>
+      <p class="market-body">The dominant format for digital literacy education in UK primary and secondary schools is the PDF. Often hand-designed, rarely updated, and distributed via school apps where they are opened once and forgotten.</p>
       <br>
-      <p class="market-body">Digital literacy education in UK primary and secondary schools is well-intentioned and genuinely valued — but the dominant format remains the PDF. Static, quickly dated, and distributed through school apps that children rarely revisit.</p>
+      <p class="market-body">Little Fibbing is not competing with Duolingo. It's competing with a PDF about the perils of TikTok, illustrated in clip art, sent home on ClassDojo on a Tuesday.</p>
       <br>
-      <p class="market-body">AssumeZero isn't trying to replace Duolingo. It's filling a gap that worksheet-based resources can't: voluntary, repeated engagement that builds habits rather than completing a task.</p>
-      <br>
-      <p class="market-body">The opportunity is significant. The Online Safety Act has created real statutory pull toward this kind of provision — and game-based learning at this age group remains largely untapped.</p>
+      <p class="market-body">The bar is low. The opportunity is significant. And the Online Safety Act has created statutory pull toward exactly this kind of provision — without anyone yet delivering something children will actually use.</p>
     </div>
     <div>
       <div class="comparison-card existing">
@@ -1496,7 +1402,7 @@ footer {
         </div>
       </div>
       <div class="comparison-card lf">
-        <div class="comparison-card-header">WHERE ASSUMEZERO SITS</div>
+        <div class="comparison-card-header">WHERE LITTLE FIBBING SITS</div>
         <div class="comparison-card-body">
           <p class="comparison-item">✓ &nbsp;Game mechanic, not worksheet</p>
           <p class="comparison-item">✓ &nbsp;Voluntary engagement on existing devices</p>
@@ -1516,97 +1422,51 @@ footer {
 
 <!-- LOOK & FEEL -->
 <section class="lookfeel-section reveal">
-  <div class="section-label cold" style="text-align:center">ASSUMEZERO — ASSUMEZERO · Visual Direction v1.0</div>
+  <div class="section-label cold" style="text-align:center">ASSUMEZERO — LITTLE FIBBING · Visual Direction v0.2</div>
   <h2 class="section-headline cold" style="font-size: clamp(24px, 4vw, 42px); text-align:center; margin-bottom: 16px;">Two worlds. One lesson.</h2>
-  <p class="lookfeel-sub" style="margin: 0 auto 48px; text-align:center;">The warm AssumeZero aesthetic and the sharp AssumeZero digital identity aren't two visual styles — they're the same mechanic expressed in two registers. Players feel the shift before they understand it.</p>
+  <p class="lookfeel-sub" style="margin: 0 auto 48px; text-align:center;">The warm Little Fibbing world and the sharp AssumeZero identity aren't two visual styles — they're the same mechanic in two registers. The screenshots below are from the v0.2 build. This is what it looks like right now.</p>
 
   <div class="phone-frames">
-    <!-- Frame 1: Home Screen -->
     <div>
       <div class="phone-frame warm">
         <div class="phone-notch"><div class="phone-notch-bar"></div></div>
         <div class="phone-screen">
-          <div class="phone-home-mockup">
-            <div class="phone-home-crt">&lt;TRUTH&gt;</div>
-            <div style="height:60px"></div>
-            <div class="phone-home-title">Little<br>Fibbing</div>
-            <div class="phone-home-btn">Start Delivery</div>
-          </div>
+          <img src="/img/little-fibbing/screenshot-v02-home.png" alt="Little Fibbing v0.2 — home screen with Keith the tortoise">
         </div>
         <div class="phone-footer"><div class="phone-footer-bar"></div></div>
       </div>
-      <div class="phone-caption">HOME SCREEN<br>AssumeZero world</div>
+      <div class="phone-caption">HOME SCREEN · v0.2<br>Keith has things to do</div>
     </div>
 
-    <!-- Frame 2: Gameplay -->
     <div>
       <div class="phone-frame warm">
         <div class="phone-notch"><div class="phone-notch-bar"></div></div>
         <div class="phone-screen">
-          <div style="width:100%; height:100%; background: linear-gradient(180deg, #A8C4D0 0%, #8BAA80 35%, #7A9060 100%); position:relative; overflow:hidden;">
-            <div style="position:absolute; top:0; left:0; right:0; height:36px; background: rgba(245,237,214,0.95); border-bottom: 2px solid #1E1A14; display:flex; align-items:center; justify-content:space-between; padding:0 10px;">
-              <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:700; color:#1E1A14; letter-spacing:2px">0257</span>
-              <span style="font-family:'IBM Plex Mono',monospace; font-size:8px; color:#8C7B68">ACT I</span>
-            </div>
-            <div style="position:absolute; top:36px; bottom:0; left:50%; transform:translateX(-50%); width:140px; background:#A09080;"></div>
-            <!-- Gazette obstacle -->
-            <div style="position:absolute; top:22%; right:15%; width:90px;">
-              <div style="background:#D4873A; padding:3px 6px; font-family:'Georgia',serif; font-size:7px; font-weight:bold; color:#F5EDD6; border:1.5px solid #1E1A14; border-bottom:none">GAZETTE</div>
-              <div style="background:#F5EDD6; padding:6px; border:1.5px solid #1E1A14; font-family:'Georgia',serif; font-size:8px; font-weight:bold; color:#1E1A14; line-height:1.2; text-align:center">BIG TURNIP<br>TO BREAK<br>RECORDS</div>
-            </div>
-            <!-- Runner -->
-            <div style="position:absolute; bottom:30%; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center;">
-              <div style="width:22px; height:12px; background:#3D6E6E; border-radius:50% 50% 0 0; border:1.5px solid #1E1A14; margin-bottom:-1px"></div>
-              <div style="width:18px; height:18px; background:#E8C0A0; border-radius:50%; border:1.5px solid #1E1A14"></div>
-              <div style="width:22px; height:24px; background:#3D6E6E; border:1.5px solid #1E1A14; border-radius:3px 3px 6px 6px"></div>
-            </div>
-            <!-- Lane labels -->
-            <div style="position:absolute; bottom:16%; left:0; right:0; display:flex; justify-content:space-around; padding:0 16px;">
-              <div style="background:#4A7C59CC; color:#F5EDD6; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:bold; padding:3px 10px; border-radius:12px; letter-spacing:1px">LIKELY</div>
-              <div style="background:#A64B2ACC; color:#F5EDD6; font-family:'IBM Plex Mono',monospace; font-size:8px; font-weight:bold; padding:3px 10px; border-radius:12px; letter-spacing:1px">UNLIKELY</div>
-            </div>
-          </div>
+          <img src="/img/little-fibbing/screenshot-v02-village.png" alt="Little Fibbing v0.2 — village square with the pothole">
         </div>
         <div class="phone-footer"><div class="phone-footer-bar"></div></div>
       </div>
-      <div class="phone-caption">GAMEPLAY<br>Lane mechanic, Act I</div>
+      <div class="phone-caption">VILLAGE SQUARE · v0.2<br>Find Keith. Follow the rumours.</div>
     </div>
 
-    <!-- Frame 3: Truthnet -->
     <div>
       <div class="phone-frame digital">
         <div class="phone-notch"><div class="phone-notch-bar"></div></div>
         <div class="phone-screen">
-          <div style="width:100%; height:100%; background: linear-gradient(180deg, #8BAA80, #7A9060); position:relative; overflow:hidden; filter:blur(1.5px) brightness(0.7);">
-            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:140px; height:6px; background:#A09080"></div>
-          </div>
-          <!-- CRT panel overlay -->
-          <div style="position:absolute; top:10%; right:4%; bottom:10%; width:56%; background:#0D0D0D; border:2px solid #00FF88; border-radius:4px; box-shadow: 0 0 20px rgba(0,255,136,0.4); padding:14px; overflow:hidden;">
-            <div style="position:absolute; inset:0; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,136,0.025) 3px, rgba(0,255,136,0.025) 6px); pointer-events:none;"></div>
-            <div style="position:relative; z-index:2; font-family:'IBM Plex Mono',monospace; font-size:11px; line-height:1.7;">
-              <div style="color:#39FF14; font-weight:bold; margin-bottom:6px; font-size:10px; letter-spacing:0.5px">TRUTHNET //</div>
-              <div style="color:#00FF88">&gt; Mayor says biggest</div>
-              <div style="color:#00FF88">&gt; &nbsp;&nbsp;turnip ever.</div>
-              <div style="color:#00FF88; margin-top:6px">&gt; Which record?</div>
-              <div style="color:#F5EDD6; font-style:italic; margin-top:6px; font-size:10px">&gt; Who keeps it?</div>
-              <div style="color:#F5EDD6; font-style:italic; font-size:10px">&gt; Has anyone</div>
-              <div style="color:#F5EDD6; font-style:italic; font-size:10px">&nbsp;&nbsp; checked?</div>
-              <div style="color:#39FF14; font-weight:bold; margin-top:10px; letter-spacing:1px; font-size:10px">[ ASSUME ZERO ]</div>
-            </div>
-          </div>
+          <img src="/img/little-fibbing/screenshot-v02-runner.png" alt="Little Fibbing v0.2 — runner mini-game with LIKELY / CAN'T TELL / UNLIKELY">
         </div>
         <div class="phone-footer"><div class="phone-footer-bar"></div></div>
       </div>
-      <div class="phone-caption" style="color:var(--phosphor)">TRUTHNET INTERRUPTION<br>AssumeZero breaks through</div>
+      <div class="phone-caption" style="color:var(--phosphor)">RUNNER MINI-GAME · v0.2<br>Chase Keith. Call it.</div>
     </div>
   </div>
 
   <!-- Palette strips -->
   <div class="palette-section">
     <div style="max-width:600px; margin:0 auto;">
-      <div class="palette-label warm">ASSUMEZERO — WARM WORLD</div>
+      <div class="palette-label warm">LITTLE FIBBING — WARM WORLD</div>
       <div class="palette-swatches" style="margin-bottom:36px;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:20px" >
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:20px">
           <div class="swatch" style="background:#D4873A"></div>
           <div class="swatch-hex" style="position:static;transform:none;">#D4873A</div>
         </div>
@@ -1676,52 +1536,99 @@ footer {
   </div>
 </section>
 
+<!-- FIRST BUILD -->
+<section class="reveal" style="background:#0D0D0D; padding:60px 24px; border-top:2px solid var(--mustard); position:relative; overflow:hidden;">
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,136,0.012) 3px,rgba(0,255,136,0.012) 6px);pointer-events:none;"></div>
+  <div style="max-width:1200px;margin:0 auto;position:relative;z-index:2;">
+    <div class="section-label cold">FIRST BUILD — v0.2 //</div>
+    <h2 class="section-headline cold" style="font-size:clamp(24px,4vw,40px);">This exists. Right now. In a browser.</h2>
+    <p style="font-family:'Lora',serif;font-size:16px;font-style:italic;color:var(--warm-grey);max-width:620px;line-height:1.75;margin-bottom:48px;">Built using Codex. The village is walkable. Characters talk. The pothole is a genuine pothole. The runner mini-game fires with real LIKELY / CAN'T TELL / UNLIKELY buttons. v0.2 proves the concept is buildable at this level without a game studio.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:auto auto;gap:12px;max-width:960px;margin:0 auto 32px;">
+      <div style="grid-column:1/3;border-radius:8px;overflow:hidden;border:2px solid rgba(212,135,58,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6);">
+        <img src="/img/little-fibbing/screenshot-v02-village.png" alt="Little Fibbing village square with the pothole" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+      <div style="border-radius:8px;overflow:hidden;border:2px solid rgba(61,110,110,0.5);box-shadow:0 16px 40px rgba(0,0,0,0.6);">
+        <img src="/img/little-fibbing/screenshot-v02-home.png" alt="Little Fibbing home menu" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+      <div style="border-radius:8px;overflow:hidden;border:2px solid rgba(212,135,58,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6);">
+        <img src="/img/little-fibbing/screenshot-v02-bakery.png" alt="Mrs Crumb's bakery" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+      <div style="border-radius:8px;overflow:hidden;border:2px solid rgba(61,110,110,0.5);box-shadow:0 16px 40px rgba(0,0,0,0.6);">
+        <img src="/img/little-fibbing/screenshot-v02-church.png" alt="Reverend Pemble at the churchyard" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+      <div style="grid-column:2/4;border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
+        <img src="/img/little-fibbing/screenshot-v02-runner.png" alt="Runner mini-game — LIKELY / CAN'T TELL / UNLIKELY" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+    </div>
+
+    <div style="max-width:960px;margin:0 auto;display:flex;gap:24px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;background:rgba(212,135,58,0.08);border:1px solid rgba(212,135,58,0.3);border-radius:6px;padding:20px 24px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--mustard);margin-bottom:8px;">WORKING MECHANICS</div>
+        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Village exploration · NPC dialogue system · Runner mini-game · LIKELY / CAN'T TELL / UNLIKELY judgment loop</p>
+      </div>
+      <div style="flex:1;min-width:200px;background:rgba(61,110,110,0.08);border:1px solid rgba(61,110,110,0.3);border-radius:6px;padding:20px 24px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--teal);margin-bottom:8px;">CHARACTERS IN v0.2</div>
+        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Edie Pratchett (postwoman) · Mrs Crumb (baker) · Reverend Pemble (vicar) · Keith (tortoise, unavailable for comment)</p>
+      </div>
+      <div style="flex:1;min-width:200px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:6px;padding:20px 24px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--phosphor);margin-bottom:8px;">WHAT'S STILL NEEDED</div>
+        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Truthnet layer · Exagga-rometer mini-game · Score / feedback system · Additional NPCs · Mobile optimisation</p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;">
+      <a href="/apps/assumezero/littlefibbing" style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--phosphor);border:1.5px solid var(--phosphor);padding:12px 32px;border-radius:3px;text-decoration:none;transition:background 0.15s,color 0.15s;" onmouseover="this.style.background='var(--phosphor)';this.style.color='var(--crt-black)'" onmouseout="this.style.background='transparent';this.style.color='var(--phosphor)'">PLAY v0.2 NOW →</a>
+    </div>
+  </div>
+</section>
+
 <!-- STATUS -->
 <section class="status-section crt reveal">
   <div class="section-label cold">CURRENT STATUS //</div>
-  <div class="status-timestamp">&gt; last updated: February 2026</div>
+  <div class="status-timestamp">&gt; last updated: May 2026</div>
   <h2 class="section-headline cold" style="font-size: clamp(22px, 3vw, 34px); position:relative; z-index:2;">Where we are. What's next.</h2>
 
   <div class="status-timeline">
     <div class="status-item">
       <div class="status-dot complete">✓</div>
       <div class="status-content">
-        <div class="status-title" style="color:var(--phosphor)">COMPLETE — Visual Bible v1.0</div>
-        <div class="status-desc">Full design system, character specifications, dual aesthetic architecture, asset priorities for Unity prototype, and age-tier system (KS2/KS3+). Available on request to designers and collaborators.</div>
+        <div class="status-title">COMPLETE — Visual Bible v1.0</div>
+        <div class="status-desc">Full design system, character specifications, dual aesthetic architecture, asset priorities, and age-tier system (KS2/KS3+). Available on request to designers and collaborators.</div>
       </div>
     </div>
     <div class="status-item">
       <div class="status-dot complete">✓</div>
       <div class="status-content">
-        <div class="status-title" style="color:var(--phosphor)">COMPLETE — Concept Art Volumes I & II</div>
-        <div class="status-desc">Interactive concept art covering home screen, gameplay, Truthnet interruption, Gazette front page, Mayor Grinwell character card, act escalation, results system, and KS3+ three-lane mechanics.</div>
+        <div class="status-title">COMPLETE — Concept Art Volumes I &amp; II</div>
+        <div class="status-desc">Interactive concept art covering home screen, gameplay, Truthnet interruption, Gazette front page, Mayor Grinwell character card, act escalation, results system, and KS3+ mechanics.</div>
+      </div>
+    </div>
+    <div class="status-item">
+      <div class="status-dot complete">✓</div>
+      <div class="status-content">
+        <div class="status-title">COMPLETE — v0.2 POC (web, Codex)</div>
+        <div class="status-desc">Working browser prototype with explorable village, NPC dialogue system (Edie, Mrs Crumb, Reverend Pemble), runner mini-game with full LIKELY / CAN'T TELL / UNLIKELY judgment loop, and Keith the tortoise being unhelpful throughout. Screenshots above are real.</div>
       </div>
     </div>
     <div class="status-item">
       <div class="status-dot inprogress">◉</div>
       <div class="status-content">
-        <div class="status-title" style="color:var(--mustard)">IN PROGRESS — Unity Prototype</div>
-        <div class="status-desc">Core runner mechanic with placeholder assets. Target completion Q1 2026. Seeking short-engagement Unity developer (scoped brief available).</div>
-      </div>
-    </div>
-    <div class="status-item">
-      <div class="status-dot upcoming">○</div>
-      <div class="status-content">
-        <div class="status-title" style="color:var(--warm-grey)">UPCOMING — Playtest, KS2 Cohort</div>
+        <div class="status-title">IN PROGRESS — Playtest, KS2 Cohort</div>
         <div class="status-desc">Initial testing with 8–10 year olds. Felix, 9, is Chief Testing Officer. He has access to other 9-year-olds. This is considered a significant asset.</div>
       </div>
     </div>
     <div class="status-item">
       <div class="status-dot upcoming">○</div>
       <div class="status-content">
-        <div class="status-title" style="color:var(--warm-grey)">UPCOMING — School Pilot Conversations</div>
+        <div class="status-title">UPCOMING — School Pilot Conversations</div>
         <div class="status-desc">Seeking 2–3 UK primary schools for initial endorsement and ClassDojo distribution pilot. No procurement required at this stage — we're asking heads to look at something and tell us honestly what they think.</div>
       </div>
     </div>
     <div class="status-item">
       <div class="status-dot upcoming">○</div>
       <div class="status-content">
-        <div class="status-title" style="color:var(--warm-grey)">UPCOMING — Designer Engagement</div>
+        <div class="status-title">UPCOMING — Designer Engagement</div>
         <div class="status-desc">Minimum viable asset set defined in Visual Bible Section 8. Priority asset: News Runner character sprite sheet (8-frame run loop). Seeking children's illustrator, UK-based preferred. Full brief available.</div>
       </div>
     </div>
@@ -1737,88 +1644,21 @@ footer {
       <div class="ask-icon">🏫</div>
       <div class="ask-title">EDUCATORS</div>
       <p class="ask-body">Are you a KS2 or KS3 teacher, PSHE lead, or headteacher? I'm looking for listening conversations — 30 minutes, no commitment — and 1–2 schools willing to endorse a pilot via ClassDojo.</p>
-      <a href="https://www.arcturusdc.com/contact" class="ask-btn">GET IN TOUCH →</a>
+      <a href="/contact" class="ask-btn">GET IN TOUCH →</a>
     </div>
     <div class="ask-card">
       <div class="ask-icon">🎨</div>
       <div class="ask-title">DESIGNERS</div>
       <p class="ask-body">The Visual Bible is complete. I need a children's illustrator for character sprite sheets — specifically the News Runner (4 states, 8-frame run loop). Full brief and style references available immediately.</p>
-      <a href="https://www.arcturusdc.com/contact" class="ask-btn">SEE THE BRIEF →</a>
+      <a href="/contact" class="ask-btn">SEE THE BRIEF →</a>
     </div>
     <div class="ask-card">
       <div class="ask-icon">💷</div>
       <div class="ask-title">FUNDING</div>
       <p class="ask-body">Pre-seed. Looking for individuals or small funds who understand the edtech and consumer opportunity in media literacy for children. The market gap is real and documented. Happy to share research.</p>
-      <a href="https://www.arcturusdc.com/contact" class="ask-btn">LET'S TALK →</a>
+      <a href="/contact" class="ask-btn">LET'S TALK →</a>
     </div>
   </div>
-</section>
-
-<!-- HOW A PILOT WORKS -->
-<section class="pilot-section paper">
-  <div class="section-label warm reveal">PILOT SCHOOLS //</div>
-  <h2 class="section-headline warm reveal d1" style="font-size: clamp(22px, 3vw, 34px);">What a pilot actually looks like.</h2>
-
-  <div class="pilot-grid reveal d2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 900px; margin: 32px auto 0; align-items: start;">
-    
-    <div>
-      <div style="display: flex; flex-direction: column; gap: 20px;">
-        
-        <div class="pilot-row reveal d2" style="display: flex; gap: 16px; align-items: flex-start;">
-          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">4 WEEKS</div>
-          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Structured pilot period. No commitment beyond the four weeks. Honest feedback at the end is the only ask.</div>
-        </div>
-
-        <div class="pilot-row reveal d3" style="display: flex; gap: 16px; align-items: flex-start;">
-          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">10 MIN</div>
-          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Per session. Designed to fit inside a PSHE slot or go home as voluntary play. No lesson planning required.</div>
-        </div>
-
-        <div class="pilot-row reveal d4" style="display: flex; gap: 16px; align-items: flex-start;">
-          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">ZERO PREP</div>
-          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">No CPD, no marking, no moderation. Optional discussion prompts are available if teachers want them — but nothing requires teacher involvement to function.</div>
-        </div>
-
-        <div class="pilot-row reveal d5" style="display: flex; gap: 16px; align-items: flex-start;">
-          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">FREE</div>
-          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Pilot schools pay nothing. The exchange is access and honest feedback — both of which matter more at this stage than revenue.</div>
-        </div>
-        <div class="pilot-row reveal d5" style="display: flex; gap: 16px; align-items: flex-start;">
-          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: 1px; min-width: 72px; padding-top: 2px;">OUTCOMES</div>
-          <div style="font-family: 'Lora', serif; font-size: 14px; color: var(--warm-grey); line-height: 1.6;">Short pre/post scenario evaluation measuring changes in reasoning confidence. Qualitative teacher feedback at close. Results shared with pilot schools.</div>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="reveal d3">
-      <div style="background: rgba(61,110,110,0.06); border: 1.5px solid rgba(61,110,110,0.2); border-radius: 6px; padding: 24px;">
-        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--teal); letter-spacing: 2px; margin-bottom: 16px;">STATUTORY ALIGNMENT</div>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">Supports statutory RSHE digital literacy requirements (DfE 2021)</div>
-          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">Supports Online Safety Act duties around critical evaluation of online content</div>
-          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">KS2: English reading comprehension, PSHE — trust and authority</div>
-          <div style="font-family: 'Lora', serif; font-size: 13px; color: var(--warm-grey); line-height: 1.5; padding-left: 12px; border-left: 2px solid var(--teal);">KS3+: Citizenship, Media Studies, Computing, Online Safety</div>
-        </div>
-        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(61,110,110,0.15); font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--warm-grey); line-height: 1.7;">
-          Content is fictional and non-partisan throughout. No current events, no real political figures, no user-generated content. Designed to be parent-complaint-proof.
-          No personal data collected. No accounts required for pilot. GDPR compliant by design.
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="reveal d5" style="text-align: center; margin-top: 40px;">
-    <a href="https://www.arcturusdc.com/contact" 
-       style="display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--teal); border: 2px solid var(--teal); padding: 12px 32px; border-radius: 3px; text-decoration: none; transition: all 0.2s;"
-       onmouseover="this.style.background='var(--teal)'; this.style.color='var(--parchment)'"
-       onmouseout="this.style.background='transparent'; this.style.color='var(--teal)'">
-      REGISTER PILOT INTEREST →
-    </a>
-    <div style="font-family: 'Lora', serif; font-size: 12px; color: var(--warm-grey); margin-top: 10px; font-style: italic;">Seeking 2–3 UK primary schools for a Year 5 / Year 6 pilot (ages 9–11), Q2 2026. No commitment required at this stage.</div>
-  </div>
-
 </section>
 
 <!-- ABOUT -->
@@ -1835,11 +1675,11 @@ footer {
     </div>
     <div>
       <div class="about-body">
-        <p>I'm David, a product manager and app developer based in the UK. <em>Arcturus Digital Consulting</em> is where I build products that sit between technology and everyday life.</p>
-        <p>AssumeZero grew out of a question I couldn't stop asking: if the information environment is genuinely dangerous for children, why has the educational response to it stayed so static? Children live this problem on their phones every day — the tools to address it should meet them there.</p>
+        <p>I'm David, a product manager and app developer based in the UK. <em>Arcturus Digital Consulting</em> is where I build products that sit at the intersection of technology and everyday life.</p>
+        <p>Little Fibbing grew out of a question I couldn't stop asking: if the information environment is genuinely dangerous for children, why does every educational response to it look like it was made on a Sunday afternoon with a printer?</p>
         <p>My son Felix, 9, is my first tester, harshest critic, and Chief Testing Officer. He has access to other 9-year-olds. This is considered an asset.</p>
         <p>Background in digital product, analytics, and mobile development. Previous work includes Sprocket (calm admin support for anxious users) and STEa.</p>
-        <p>AssumeZero is the most ambitious thing I've attempted. I think the timing is right.</p>
+        <p>Little Fibbing is the most ambitious thing I've attempted. I think the timing is right.</p>
       </div>
       <div class="other-apps">
         <a href="/apps/sprocket" class="app-pill">Sprocket →</a>
@@ -1865,10 +1705,9 @@ footer {
     </div>
   </div>
 </footer>
-
 `,
-      }}
-    />
+        }}
+      />
     </>
   );
 }
