@@ -181,7 +181,7 @@ export default function DialledMtbFeedbackClient() {
   }, [establishSession, router]);
 
   const loadFeedback = useCallback(async () => {
-    if (!sessionReady || tenantLoading || !currentTenant?.id || !isDialledWorkspace(currentTenant)) return;
+    if (!sessionReady || tenantLoading || !currentTenant?.id || !hasFeedbackWorkspaceAccess(currentTenant)) return;
 
     setLoading(true);
     setError('');
@@ -209,7 +209,7 @@ export default function DialledMtbFeedbackClient() {
     } finally {
       setLoading(false);
     }
-  }, [currentTenant?.id, filters, isSuperAdmin, sessionReady, tenantLoading]);
+  }, [currentTenant, filters, sessionReady, tenantLoading]);
 
   useEffect(() => {
     loadFeedback();
