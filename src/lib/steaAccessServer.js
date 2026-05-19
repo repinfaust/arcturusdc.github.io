@@ -11,22 +11,30 @@ function normalizeName(name) {
   return typeof name === 'string' ? name.trim().toLowerCase() : '';
 }
 
-async function verifyRequiredWorkspace(db, tenantId, requiredWorkspaceName) {
-  if (!requiredWorkspaceName) return { ok: true };
-  if (!tenantId) return { ok: false, error: `${requiredWorkspaceName} workspace must be selected.` };
+function formatWorkspaceList(workspaceNames) {
+  if (workspaceNames.length <= 1) return workspaceNames[0] || 'required';
+  return `${workspaceNames.slice(0, -1).join(', ')} or ${workspaceNames[workspaceNames.length - 1]}`;
+}
+
+async function verifyRequiredWorkspace(db, tenantId, workspaceNames) {
+  if (!workspaceNames.length) return { ok: true };
+
+  const workspaceLabel = formatWorkspaceList(workspaceNames);
+  if (!tenantId) return { ok: false, error: `${workspaceLabel} workspace must be selected.` };
 
   const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-  if (!tenantDoc.exists) return { ok: false, error: `${requiredWorkspaceName} workspace was not found.` };
+  if (!tenantDoc.exists) return { ok: false, error: `${workspaceLabel} workspace was not found.` };
 
   const tenant = tenantDoc.data() || {};
-  if (normalizeName(tenant.name) !== normalizeName(requiredWorkspaceName)) {
-    return { ok: false, error: `Select the ${requiredWorkspaceName} workspace to use this tool.` };
+  const allowedNames = new Set(workspaceNames.map(normalizeName));
+  if (!allowedNames.has(normalizeName(tenant.name))) {
+    return { ok: false, error: `Select the ${workspaceLabel} workspace to use this tool.` };
   }
 
   return { ok: true, tenant: { id: tenantDoc.id, ...tenant } };
 }
 
-export async function verifySteaWorkspaceAccess(request, { tenantId, requiredWorkspaceName } = {}) {
+export async function verifySteaWorkspaceAccess(request, { tenantId, requiredWorkspaceName, allowedWorkspaceNames } = {}) {
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (!sessionCookie) {
     return { ok: false, status: 401, error: 'Authentication required.' };
@@ -41,7 +49,12 @@ export async function verifySteaWorkspaceAccess(request, { tenantId, requiredWor
       return { ok: false, status: 403, error: 'Signed-in account has no email.' };
     }
 
-    const workspaceCheck = await verifyRequiredWorkspace(db, tenantId, requiredWorkspaceName);
+    const workspaceNames = Array.isArray(allowedWorkspaceNames)
+      ? allowedWorkspaceNames
+      : requiredWorkspaceName
+        ? [requiredWorkspaceName]
+        : [];
+    const workspaceCheck = await verifyRequiredWorkspace(db, tenantId, workspaceNames);
     if (!workspaceCheck.ok) {
       return { ok: false, status: 403, error: workspaceCheck.error };
     }

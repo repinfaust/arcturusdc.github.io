@@ -48,7 +48,7 @@
 ## 2026-05-19 — Dialled MTB workspace feedback triage
 - Added `/apps/stea/dialled-mtb` as the Dialled MTB workspace's internal User Feedback tool for manually triaging friendlies feedback.
 - Dialled MTB is the STEa workspace/tenant. User Feedback is the app/tool inside that workspace.
-- Access remains governed by the existing STEa Google/Firebase session and tenant membership/admin framework; no new auth model is introduced. Users must select the Dialled MTB workspace.
+- Access remains governed by the existing STEa Google/Firebase session and tenant membership/admin framework; no new auth model is introduced. Users may select the Dialled MTB workspace for product access, or ArcturusDC for internal admin access.
 - The server reads the existing Dialled MTB `feedback` collection and `feedbackScreenshots/{uid}/{feedbackId}.jpg` Storage paths with Firebase Admin, preserving the mobile app's write-only client rules.
 - Triage is manual only for now: status, priority, and internal notes are admin-managed fields on the existing feedback document.
 - The admin portal uses the Dialled MTB anthracite + magenta brand system from the app's public policy/style pages.

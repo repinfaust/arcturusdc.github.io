@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const VALID_STATUSES = new Set(['new', 'reviewing', 'planned', 'done', 'wont_do']);
 const VALID_PRIORITIES = new Set(['unset', 'low', 'medium', 'high', 'urgent']);
 const VALID_TYPES = new Set(['bug', 'confusing', 'idea', 'setup_accuracy', 'strava', 'other']);
-const REQUIRED_WORKSPACE = 'Dialled MTB';
+const ALLOWED_WORKSPACES = ['Dialled MTB', 'ArcturusDC'];
 
 function json(body, status = 200) {
   return NextResponse.json(body, { status });
@@ -118,7 +118,7 @@ function buildSummary(items) {
 export async function GET(request) {
   const url = new URL(request.url);
   const tenantId = url.searchParams.get('tenantId') || '';
-  const access = await verifySteaWorkspaceAccess(request, { tenantId, requiredWorkspaceName: REQUIRED_WORKSPACE });
+  const access = await verifySteaWorkspaceAccess(request, { tenantId, allowedWorkspaceNames: ALLOWED_WORKSPACES });
 
   if (!access.ok) {
     return json({ error: access.error }, access.status);
@@ -158,7 +158,7 @@ export async function PATCH(request) {
     return json({ error: 'Invalid JSON body.' }, 400);
   }
 
-  const access = await verifySteaWorkspaceAccess(request, { tenantId: body?.tenantId, requiredWorkspaceName: REQUIRED_WORKSPACE });
+  const access = await verifySteaWorkspaceAccess(request, { tenantId: body?.tenantId, allowedWorkspaceNames: ALLOWED_WORKSPACES });
   if (!access.ok) {
     return json({ error: access.error }, access.status);
   }

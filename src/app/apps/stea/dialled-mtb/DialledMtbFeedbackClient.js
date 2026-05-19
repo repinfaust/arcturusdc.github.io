@@ -33,7 +33,7 @@ const TYPES = [
   ['other', 'Other'],
 ];
 
-const REQUIRED_WORKSPACE_NAME = 'Dialled MTB';
+const ALLOWED_WORKSPACE_NAMES = ['Dialled MTB', 'ArcturusDC'];
 
 const statusTone = {
   new: 'border-[#F72585]/50 bg-[#F72585]/15 text-[#F72585]',
@@ -78,8 +78,9 @@ function labelFor(options, value) {
   return options.find(([key]) => key === value)?.[1] || value || 'Unknown';
 }
 
-function isDialledWorkspace(tenant) {
-  return tenant?.name?.trim().toLowerCase() === REQUIRED_WORKSPACE_NAME.toLowerCase();
+function hasFeedbackWorkspaceAccess(tenant) {
+  const tenantName = tenant?.name?.trim().toLowerCase();
+  return ALLOWED_WORKSPACE_NAMES.some((name) => name.toLowerCase() === tenantName);
 }
 
 function SelectField({ label, value, onChange, options }) {
@@ -256,7 +257,7 @@ export default function DialledMtbFeedbackClient() {
     return null;
   }
 
-  if (!isDialledWorkspace(currentTenant)) {
+  if (!hasFeedbackWorkspaceAccess(currentTenant)) {
     return (
       <main className="min-h-screen bg-[#101113] text-[#E8ECF0]">
         <header className="border-b border-[#333840] bg-[#111214]">
@@ -277,9 +278,9 @@ export default function DialledMtbFeedbackClient() {
         <section className="mx-auto flex min-h-[60vh] max-w-3xl items-center px-5">
           <div className="rounded-lg border border-[#333840] bg-[#1A1C1E] p-6">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-[#F72585]">Select workspace</p>
-            <h1 className="mt-3 text-3xl font-black text-[#F4F6F8]">User Feedback belongs to the Dialled MTB workspace.</h1>
+            <h1 className="mt-3 text-3xl font-black text-[#F4F6F8]">User Feedback is available from Dialled MTB or ArcturusDC.</h1>
             <p className="mt-3 text-sm font-medium leading-6 text-[#A7B0BA]">
-              Switch to the Dialled MTB workspace using the workspace control. Partner access should be managed by adding them to that workspace in STEa Admin.
+              Switch to the Dialled MTB workspace for product access, or ArcturusDC for internal admin access. Partner access should still be managed through the relevant workspace in STEa Admin.
             </p>
           </div>
         </section>
@@ -302,7 +303,7 @@ export default function DialledMtbFeedbackClient() {
                 <span className="hidden h-5 w-px bg-[#333840] sm:block" />
                 <span className="text-sm font-semibold text-[#8A939D]">Friendlies feedback</span>
               </div>
-              <p className="mt-1 text-sm text-[#6A7680]">Dialled MTB workspace / User Feedback tool</p>
+              <p className="mt-1 text-sm text-[#6A7680]">Dialled MTB feedback / User Feedback tool</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
