@@ -332,7 +332,7 @@ export default function DialledMtbFeedbackClient() {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.24em] text-[#F72585]">User Feedback</p>
             <h1 className="mt-3 max-w-3xl text-4xl font-black leading-none tracking-tight text-[#F4F6F8] md:text-6xl">
-              Friendlies queue
+              User Feedback
             </h1>
             <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-[#B8C0C8]">
               Review friendlies feedback in one place, connect notes to screenshots, and mark what needs product attention next.
