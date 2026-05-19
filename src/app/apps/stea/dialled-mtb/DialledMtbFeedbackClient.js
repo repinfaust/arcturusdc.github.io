@@ -301,7 +301,7 @@ export default function DialledMtbFeedbackClient() {
                 </Link>
                 <span className="text-lg font-bold tracking-wide text-[#8A939D]">MTB</span>
                 <span className="hidden h-5 w-px bg-[#333840] sm:block" />
-                <span className="text-sm font-semibold text-[#8A939D]">Friendlies feedback</span>
+                <span className="text-sm font-semibold text-[#8A939D]">User Feedback</span>
               </div>
               <p className="mt-1 text-sm text-[#6A7680]">Dialled MTB feedback / User Feedback tool</p>
             </div>
