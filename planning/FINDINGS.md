@@ -10,6 +10,14 @@
 
 ---
 
+## 2026-05-19 — STEa admin tools are no longer purely static
+**What happened:** The Dialled MTB workspace's User Feedback tool requires server-side Firebase Admin reads and Storage signed URLs under `/apps/stea/dialled-mtb`.  
+**Root cause:** Dialled MTB mobile feedback is intentionally write-only from the client, so an internal admin surface cannot safely use client Firestore reads or loosen Firebase rules.  
+**Fix / workaround:** Keep public site static by default, but document narrow STEa internal-tool backend exceptions and require existing STEa session + workspace access checks.  
+**Promote to global?** no
+
+---
+
 ## YYYY-MM-DD — <Finding title>
 **What happened:**  
 **Root cause:**  

@@ -5,7 +5,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
-const DEFAULT_APPS = ['Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me'];
+const DEFAULT_APPS = ['Adhd Acclaim', 'Mandrake', 'SyncFit', 'Tou.Me', 'User Feedback'];
 
 /**
  * Admin component for managing which apps belong to a tenant

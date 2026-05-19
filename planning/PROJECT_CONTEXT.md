@@ -8,8 +8,8 @@
 ## Stack
 - Platform: Next.js (App Router).
 - Language/framework: React + Next.js.
-- Backend: None (static pages).
-- Auth: None.
+- Backend: Mostly static pages. Narrow STEa internal-tool exceptions use Firebase Admin-backed API routes.
+- Auth: Public site has no auth. STEa internal areas use Firebase Auth with Google sign-in and a server session cookie.
 - Payments: None.
 - Analytics/telemetry: Not configured in repo.
 - CI/CD: Vercel (git-based deploys).
@@ -30,6 +30,8 @@
 ## Non-goals (explicit)
 - Not doing: App backend or authentication.
 - Not supporting: Complex dynamic server rendering.
+
+Exception: documented STEa internal tools may use Firebase-backed API routes and existing STEa workspace access controls when explicitly accepted in `planning/DECISIONS.md`.
 
 ## Overrides vs global knowledge
 List any intentional differences from your normal patterns.

@@ -104,6 +104,15 @@ const IN_SESSION_DESTINATIONS = [
     excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
+    label: 'User Feedback',
+    href: '/apps/stea/dialled-mtb',
+    description: 'Dialled MTB workspace tool for friendlies messages, screenshots, and captured app context.',
+    gradient: 'from-neutral-950/95 to-pink-950/90',
+    borderColor: 'border-pink-500/50',
+    textLight: true,
+    excludeForTenants: [APEXTWIN_TENANT_ID],
+  },
+  {
     label: 'ApexTwin',
     href: '/apps/stea/apextwin-poc',
     description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',

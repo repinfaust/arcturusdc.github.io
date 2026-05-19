@@ -9,6 +9,7 @@ const STEA_APPS = [
   { name: 'Ruby', path: '/apps/stea/ruby', icon: '📕', color: 'text-rose-600', description: 'Documentation' },
   { name: 'Hans', path: '/apps/stea/hans', icon: '🧪', color: 'text-purple-600', description: 'Test Execution' },
   { name: 'Harls', path: '/apps/stea/harls', icon: '🔍', color: 'text-green-600', description: 'Test Cases' },
+  { name: 'User Feedback', path: '/apps/stea/dialled-mtb', icon: '△', color: 'text-pink-600', description: 'Dialled MTB' },
   { name: 'Admin', path: '/apps/stea/admin', icon: '⚙️', color: 'text-gray-600', description: 'Settings' },
 ];
 
