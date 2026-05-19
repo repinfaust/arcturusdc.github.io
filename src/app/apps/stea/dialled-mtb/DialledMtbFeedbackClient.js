@@ -335,7 +335,7 @@ export default function DialledMtbFeedbackClient() {
               User Feedback
             </h1>
             <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-[#B8C0C8]">
-              Review friendlies feedback in one place, connect notes to screenshots, and mark what needs product attention next.
+              Review user feedback in one place, connect notes to screenshots, and mark what needs product attention next.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
