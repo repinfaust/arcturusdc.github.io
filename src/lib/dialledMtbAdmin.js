@@ -32,7 +32,6 @@ function getBucketName(serviceAccount) {
   return (
     process.env.DIALLED_MTB_FIREBASE_STORAGE_BUCKET ||
     process.env.NEXT_PUBLIC_DIALLED_MTB_FIREBASE_STORAGE_BUCKET ||
-    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
     (serviceAccount?.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : null)
   );
 }
