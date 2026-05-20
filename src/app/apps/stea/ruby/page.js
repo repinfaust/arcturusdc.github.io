@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -15,6 +15,55 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 import RubyEditor from '@/components/RubyEditor';
 import { getAllTemplates, templateToTipTapJSON } from '@/lib/templates';
+
+function markdownToTipTap(markdown) {
+  const lines = markdown.split('\n');
+  const content = [];
+  let bulletItems = [];
+  let codeLines = [];
+  let inCode = false;
+  let codeLang = '';
+
+  const flushBullets = () => {
+    if (bulletItems.length === 0) return;
+    content.push({ type: 'bulletList', content: bulletItems.map((text) => ({
+      type: 'listItem',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+    })) });
+    bulletItems = [];
+  };
+
+  for (const line of lines) {
+    if (line.startsWith('```')) {
+      if (!inCode) {
+        flushBullets();
+        inCode = true;
+        codeLang = line.slice(3).trim() || 'plaintext';
+        codeLines = [];
+      } else {
+        content.push({ type: 'codeBlock', attrs: { language: codeLang }, content: [{ type: 'text', text: codeLines.join('\n') }] });
+        inCode = false;
+      }
+      continue;
+    }
+    if (inCode) { codeLines.push(line); continue; }
+
+    const hMatch = line.match(/^(#{1,6})\s+(.+)/);
+    if (hMatch) {
+      flushBullets();
+      content.push({ type: 'heading', attrs: { level: hMatch[1].length }, content: [{ type: 'text', text: hMatch[2] }] });
+      continue;
+    }
+    const bMatch = line.match(/^[-*]\s+(.+)/);
+    if (bMatch) { bulletItems.push(bMatch[1]); continue; }
+
+    flushBullets();
+    if (line.trim() === '') continue;
+    content.push({ type: 'paragraph', content: [{ type: 'text', text: line }] });
+  }
+  flushBullets();
+  return { type: 'doc', content: content.length > 0 ? content : [{ type: 'paragraph', content: [] }] };
+}
 
 const DOC_TYPES = [
   { value: 'documentation', label: 'Documentation', emoji: '📄', color: 'blue' },
@@ -51,6 +100,11 @@ export default function RubyPage() {
   const [newDocType, setNewDocType] = useState('documentation');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showTemplateSelector, setShowTemplateSelector] = useState(true);
+
+  // File import
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+  const dragCounterRef = useRef(0);
 
   // Auth check
   useEffect(() => {
@@ -234,6 +288,63 @@ export default function RubyPage() {
     }
   };
 
+  // Import file as new document
+  const handleImportFile = useCallback(async (file) => {
+    if (!currentTenant?.id || !user?.email) return;
+    if (!file.name.match(/\.(md|txt|markdown)$/i)) {
+      alert('Only .md and .txt files are supported.');
+      return;
+    }
+    const text = await file.text();
+    const title = file.name.replace(/\.(md|txt|markdown)$/i, '').replace(/[-_]/g, ' ');
+    const content = markdownToTipTap(text);
+    try {
+      const newDoc = await addDoc(collection(db, 'stea_docs'), {
+        tenantId: currentTenant.id,
+        title: title || file.name,
+        type: 'documentation',
+        templateId: null,
+        content,
+        spaceId: selectedSpace?.id || null,
+        parentDocId: null,
+        linkedEntities: [],
+        tags: [],
+        createdBy: user.email,
+        createdAt: serverTimestamp(),
+        updatedBy: user.email,
+        updatedAt: serverTimestamp(),
+        version: 1,
+        isPublic: false,
+        collaborators: [user.email],
+      });
+      setSelectedDoc({ id: newDoc.id, title, type: 'documentation' });
+      setView('editor');
+    } catch (err) {
+      console.error('Error importing file:', err);
+      alert('Failed to import file.');
+    }
+  }, [currentTenant, user, selectedSpace]);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleImportFile(file);
+  }, [handleImportFile]);
+
+  const handleDragEnter = useCallback((e) => {
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) setIsDragOver(false);
+  }, []);
+
   // Filter documents by search
   const filteredDocuments = documents.filter((doc) => {
     if (!searchQuery.trim()) return true;
@@ -357,7 +468,33 @@ export default function RubyPage() {
         {/* Main Content */}
         <main className="flex-1 overflow-hidden">
           {view === 'list' ? (
-            <div className="h-full overflow-y-auto p-6">
+            <div
+              className={`relative h-full overflow-y-auto p-6 transition-colors ${isDragOver ? 'bg-rose-50' : ''}`}
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+            >
+              {isDragOver && (
+                <div className="pointer-events-none absolute inset-4 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-rose-400 bg-rose-50/80">
+                  <div className="text-center">
+                    <svg className="mx-auto mb-2 h-10 w-10 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p className="text-sm font-semibold text-rose-700">Drop .md or .txt to import</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".md,.txt,.markdown"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
+              />
+
               {/* Search and Actions */}
               <div className="mb-6 flex items-center gap-4">
                 <div className="relative flex-1 max-w-md">
@@ -382,6 +519,17 @@ export default function RubyPage() {
                     />
                   </svg>
                 </div>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Import .md or .txt file"
+                  className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-rose-400 hover:text-rose-700"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Import
+                </button>
 
                 <button
                   onClick={() => setShowNewDocModal(true)}

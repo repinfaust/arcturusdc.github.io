@@ -139,6 +139,8 @@ export default function DialledMtbFeedbackClient() {
     q: '',
   });
   const searchRef = useRef(null);
+  const [notifPermission, setNotifPermission] = useState('default');
+  const knownIdsRef = useRef(null);
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) || items[0] || null,
@@ -214,6 +216,45 @@ export default function DialledMtbFeedbackClient() {
   useEffect(() => {
     loadFeedback();
   }, [loadFeedback]);
+
+  // Initialise notification permission state
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  // Track new items and fire browser notifications
+  useEffect(() => {
+    if (items.length === 0) return;
+    if (knownIdsRef.current === null) {
+      knownIdsRef.current = new Set(items.map((i) => i.id));
+      return;
+    }
+    const newItems = items.filter((i) => !knownIdsRef.current.has(i.id));
+    if (newItems.length > 0 && notifPermission === 'granted') {
+      const newest = newItems[0];
+      new Notification('New feedback — Dialled MTB', {
+        body: newest.message?.slice(0, 120) || 'New feedback submitted.',
+        icon: '/favicon.ico',
+        tag: `dialled-mtb-${newest.id}`,
+      });
+    }
+    knownIdsRef.current = new Set(items.map((i) => i.id));
+  }, [items, notifPermission]);
+
+  // Auto-poll every 30 seconds
+  useEffect(() => {
+    if (!sessionReady) return;
+    const id = setInterval(() => loadFeedback(), 30_000);
+    return () => clearInterval(id);
+  }, [sessionReady, loadFeedback]);
+
+  async function requestNotifPermission() {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+  }
 
   async function updateFeedback(id, updates) {
     if (!id) return;
@@ -308,6 +349,7 @@ export default function DialledMtbFeedbackClient() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <TenantSwitcher />
+            <NotifToggle permission={notifPermission} onRequest={requestNotifPermission} />
             <button
               type="button"
               onClick={loadFeedback}
@@ -532,5 +574,51 @@ function ContextRow({ label, value }) {
       <dt className="text-xs font-black uppercase tracking-[0.16em] text-[#56606A]">{label}</dt>
       <dd className="break-words font-semibold text-[#C7CED6]">{value || 'Not captured'}</dd>
     </div>
+  );
+}
+
+function NotifToggle({ permission, onRequest }) {
+  if (typeof window === 'undefined' || !('Notification' in window)) return null;
+
+  if (permission === 'granted') {
+    return (
+      <div
+        title="Browser notifications on — polls every 30s"
+        className="flex h-10 items-center gap-2 rounded-lg border border-[#34D399]/40 bg-[#34D399]/10 px-3 text-xs font-bold text-[#6EE7B7]"
+      >
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6ZM10 18a2 2 0 0 1-2-2h4a2 2 0 0 1-2 2Z" />
+        </svg>
+        Notifications on
+      </div>
+    );
+  }
+
+  if (permission === 'denied') {
+    return (
+      <div
+        title="Notifications blocked in browser settings"
+        className="flex h-10 items-center gap-2 rounded-lg border border-[#6A7680]/40 px-3 text-xs font-bold text-[#6A7680]"
+      >
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6ZM10 18a2 2 0 0 1-2-2h4a2 2 0 0 1-2 2Z" />
+        </svg>
+        Notifications blocked
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onRequest}
+      title="Enable browser notifications for new feedback"
+      className="flex h-10 items-center gap-2 rounded-lg border border-[#333840] px-3 text-xs font-bold text-[#8A939D] transition hover:border-[#F72585] hover:text-[#E8ECF0]"
+    >
+      <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6ZM10 18a2 2 0 0 1-2-2h4a2 2 0 0 1-2 2Z" />
+      </svg>
+      Enable notifications
+    </button>
   );
 }
