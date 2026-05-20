@@ -15,249 +15,21 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 import RubyEditor from '@/components/RubyEditor';
 import { getAllTemplates, templateToTipTapJSON } from '@/lib/templates';
-import { uploadAsset } from '@/lib/storage';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-// ─── File → TipTap JSON converters ───────────────────────────────────────────
-
-function wrapDoc(content) {
-  return { type: 'doc', content: content.length > 0 ? content : [{ type: 'paragraph', content: [] }] };
+// Upload a file to Firebase Storage without MIME-type restrictions.
+// Returns { url, storagePath }.
+async function uploadFileRaw(file, tenantId, docId) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const storagePath = `ruby-files/${tenantId}/${docId}/${Date.now()}_${safeName}`;
+  const storageRef = ref(storage, storagePath);
+  await uploadBytes(storageRef, file, { contentType: file.type || 'application/octet-stream' });
+  const url = await getDownloadURL(storageRef);
+  return { url, storagePath };
 }
 
-function markdownToTipTap(markdown) {
-  const lines = markdown.split('\n');
-  const content = [];
-  let bulletItems = [];
-  let orderedItems = [];
-  let orderedStart = 1;
-  let codeLines = [];
-  let inCode = false;
-  let codeLang = '';
-
-  const flushBullets = () => {
-    if (bulletItems.length > 0) {
-      content.push({ type: 'bulletList', content: bulletItems.map((text) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] })) });
-      bulletItems = [];
-    }
-  };
-  const flushOrdered = () => {
-    if (orderedItems.length > 0) {
-      content.push({ type: 'orderedList', attrs: { start: orderedStart }, content: orderedItems.map((text) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] })) });
-      orderedItems = [];
-    }
-  };
-
-  for (const line of lines) {
-    if (line.startsWith('```')) {
-      if (!inCode) { flushBullets(); flushOrdered(); inCode = true; codeLang = line.slice(3).trim() || 'plaintext'; codeLines = []; }
-      else { content.push({ type: 'codeBlock', attrs: { language: codeLang }, content: [{ type: 'text', text: codeLines.join('\n') }] }); inCode = false; }
-      continue;
-    }
-    if (inCode) { codeLines.push(line); continue; }
-
-    const hMatch = line.match(/^(#{1,6})\s+(.+)/);
-    if (hMatch) { flushBullets(); flushOrdered(); content.push({ type: 'heading', attrs: { level: hMatch[1].length }, content: [{ type: 'text', text: hMatch[2] }] }); continue; }
-
-    const oMatch = line.match(/^(\d+)\.\s+(.+)/);
-    if (oMatch) { if (orderedItems.length === 0) orderedStart = parseInt(oMatch[1], 10); orderedItems.push(oMatch[2]); flushBullets(); continue; }
-
-    const bMatch = line.match(/^[-*]\s+(.+)/);
-    if (bMatch) { bulletItems.push(bMatch[1]); flushOrdered(); continue; }
-
-    flushBullets(); flushOrdered();
-    if (line.trim() === '') continue;
-    content.push({ type: 'paragraph', content: [{ type: 'text', text: line }] });
-  }
-  flushBullets(); flushOrdered();
-  return wrapDoc(content);
-}
-
-function htmlToTipTap(html) {
-  if (typeof window === 'undefined') return wrapDoc([]);
-  const dom = new DOMParser().parseFromString(html, 'text/html');
-  const body = dom.body;
-
-  function nodeToTipTap(el) {
-    if (el.nodeType === Node.TEXT_NODE) {
-      const text = el.textContent || '';
-      return text ? [{ type: 'text', text }] : [];
-    }
-    if (el.nodeType !== Node.ELEMENT_NODE) return [];
-    const tag = el.tagName?.toLowerCase();
-    const children = Array.from(el.childNodes).flatMap(nodeToTipTap);
-    const textChildren = children.filter((n) => n.type === 'text');
-
-    if (/^h[1-6]$/.test(tag)) return [{ type: 'heading', attrs: { level: parseInt(tag[1], 10) }, content: textChildren.length ? textChildren : [{ type: 'text', text: el.textContent }] }];
-    if (tag === 'p') return children.length ? [{ type: 'paragraph', content: children }] : [];
-    if (tag === 'ul') return [{ type: 'bulletList', content: Array.from(el.children).map((li) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: li.textContent }] }] })) }];
-    if (tag === 'ol') return [{ type: 'orderedList', attrs: { start: 1 }, content: Array.from(el.children).map((li) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: li.textContent }] }] })) }];
-    if (tag === 'pre') { const code = el.querySelector('code'); return [{ type: 'codeBlock', attrs: { language: (code?.className.match(/language-(\w+)/)?.[1]) || 'plaintext' }, content: [{ type: 'text', text: (code || el).textContent }] }]; }
-    if (tag === 'code' && el.parentElement?.tagName?.toLowerCase() !== 'pre') return textChildren;
-    if (tag === 'blockquote') return Array.from(el.childNodes).flatMap(nodeToTipTap);
-    if (tag === 'hr') return [{ type: 'horizontalRule' }];
-    if (tag === 'br') return [];
-    if (tag === 'img') { const src = el.getAttribute('src'); return src ? [{ type: 'image', attrs: { src, alt: el.getAttribute('alt') || '', title: el.getAttribute('title') || '' } }] : []; }
-    if (['strong', 'b', 'em', 'i', 'u', 's', 'code'].includes(tag)) return children;
-    if (['div', 'section', 'article', 'main', 'header', 'footer', 'body'].includes(tag)) {
-      const blocks = Array.from(el.childNodes).flatMap(nodeToTipTap).filter(Boolean);
-      return blocks;
-    }
-    if (tag === 'table') {
-      const rows = Array.from(el.querySelectorAll('tr'));
-      if (rows.length === 0) return [];
-      const tableContent = rows.map((row, ri) => ({
-        type: 'tableRow',
-        content: Array.from(row.querySelectorAll('th,td')).map((cell) => ({
-          type: ri === 0 && row.closest('thead') ? 'tableHeader' : 'tableCell',
-          attrs: {},
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: cell.textContent.trim() }] }],
-        })),
-      }));
-      return [{ type: 'table', content: tableContent }];
-    }
-    // Fallback: if element has text content treat as paragraph
-    const text = el.textContent?.trim();
-    return text ? [{ type: 'paragraph', content: [{ type: 'text', text }] }] : [];
-  }
-
-  const tipTapContent = Array.from(body.childNodes).flatMap(nodeToTipTap).filter(Boolean);
-  return wrapDoc(tipTapContent);
-}
-
-function csvToTipTap(csv) {
-  const lines = csv.trim().split('\n').filter(Boolean);
-  if (lines.length === 0) return wrapDoc([]);
-  const rows = lines.map((l) => l.split(',').map((c) => c.trim().replace(/^"|"$/g, '')));
-  const [header, ...body] = rows;
-
-  const tableContent = [];
-  if (header) {
-    tableContent.push({ type: 'tableRow', content: header.map((cell) => ({ type: 'tableHeader', attrs: {}, content: [{ type: 'paragraph', content: [{ type: 'text', text: cell }] }] })) });
-  }
-  body.forEach((row) => {
-    tableContent.push({ type: 'tableRow', content: row.map((cell) => ({ type: 'tableCell', attrs: {}, content: [{ type: 'paragraph', content: [{ type: 'text', text: cell }] }] })) });
-  });
-  return wrapDoc([{ type: 'table', content: tableContent }]);
-}
-
-const CODE_LANG_MAP = { js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript', py: 'python', rb: 'ruby', go: 'go', rs: 'rust', java: 'java', kt: 'kotlin', swift: 'swift', css: 'css', scss: 'css', yaml: 'yaml', yml: 'yaml', sh: 'bash', bash: 'bash', sql: 'sql', xml: 'xml', graphql: 'graphql', gql: 'graphql', php: 'php', c: 'c', cpp: 'cpp', cs: 'csharp', json: 'json', toml: 'toml', env: 'bash' };
-
-function codeToTipTap(text, ext) {
-  const lang = CODE_LANG_MAP[ext.toLowerCase()] || ext || 'plaintext';
-  return wrapDoc([{ type: 'codeBlock', attrs: { language: lang }, content: [{ type: 'text', text }] }]);
-}
-
-function jsonToTipTap(text) {
-  try {
-    const parsed = JSON.parse(text);
-    if (parsed?.type === 'doc' && Array.isArray(parsed.content)) return parsed;
-    return codeToTipTap(JSON.stringify(parsed, null, 2), 'json');
-  } catch {
-    return codeToTipTap(text, 'json');
-  }
-}
-
-async function docxToTipTap(arrayBuffer) {
-  const mammoth = (await import('mammoth')).default;
-  const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
-  return htmlToTipTap(html);
-}
-
-async function xlsxToTipTap(arrayBuffer) {
-  const XLSX = (await import('xlsx')).default;
-  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-  const content = [];
-
-  for (const sheetName of workbook.SheetNames) {
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-
-    if (rows.length === 0) continue;
-
-    if (workbook.SheetNames.length > 1) {
-      content.push({ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: sheetName }] });
-    }
-
-    const [headerRow, ...dataRows] = rows;
-    const tableContent = [];
-
-    if (headerRow?.length > 0) {
-      tableContent.push({
-        type: 'tableRow',
-        content: headerRow.map((cell) => ({
-          type: 'tableHeader',
-          attrs: {},
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: String(cell ?? '') }] }],
-        })),
-      });
-    }
-
-    for (const row of dataRows) {
-      if (row.every((c) => c === '' || c == null)) continue;
-      tableContent.push({
-        type: 'tableRow',
-        content: row.map((cell) => ({
-          type: 'tableCell',
-          attrs: {},
-          content: [{ type: 'paragraph', content: [{ type: 'text', text: String(cell ?? '') }] }],
-        })),
-      });
-    }
-
-    if (tableContent.length > 0) {
-      content.push({ type: 'table', content: tableContent });
-    }
-
-    if (workbook.SheetNames.indexOf(sheetName) < workbook.SheetNames.length - 1) {
-      content.push({ type: 'horizontalRule' });
-    }
-  }
-
-  return wrapDoc(content);
-}
-
-async function pdfToTipTap(arrayBuffer) {
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const content = [];
-
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    const textContent = await page.getTextContent();
-
-    if (pdf.numPages > 1) {
-      content.push({ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: `Page ${pageNum}` }] });
-    }
-
-    // Group items into lines by their y-position
-    const lines = [];
-    let currentLine = [];
-    let lastY = null;
-
-    for (const item of textContent.items) {
-      if (!('str' in item)) continue;
-      const y = Math.round(item.transform[5]);
-      if (lastY !== null && Math.abs(y - lastY) > 3) {
-        if (currentLine.length > 0) lines.push(currentLine.join(' ').trim());
-        currentLine = [];
-      }
-      if (item.str.trim()) currentLine.push(item.str);
-      lastY = y;
-    }
-    if (currentLine.length > 0) lines.push(currentLine.join(' ').trim());
-
-    for (const line of lines) {
-      if (line) content.push({ type: 'paragraph', content: [{ type: 'text', text: line }] });
-    }
-
-    if (pageNum < pdf.numPages) content.push({ type: 'horizontalRule' });
-  }
-
-  return wrapDoc(content);
-}
-
-const IMAGE_SIZE_LIMIT = 10 * 1024 * 1024; // 10 MB — uploadAsset limit
+const EMPTY_DOC = { type: 'doc', content: [{ type: 'paragraph', content: [] }] };
 
 const DOC_TYPES = [
   { value: 'documentation', label: 'Documentation', emoji: '📄', color: 'blue' },
@@ -488,21 +260,15 @@ export default function RubyPage() {
 
   const importOneFile = useCallback(async (file) => {
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    const nameWithoutExt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-    const isImage = /^(png|jpg|jpeg|gif|webp|svg)$/.test(ext);
-    const isCode = ext in CODE_LANG_MAP;
-    const supported = /^(md|markdown|txt|html|htm|json|csv|docx|xlsx|xls|pdf|png|jpg|jpeg|gif|webp|svg)$/.test(ext) || isCode;
+    const title = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') || file.name;
 
-    if (!supported) return { ok: false, name: file.name, reason: `unsupported type .${ext}` };
-    if (isImage && file.size > IMAGE_SIZE_LIMIT) return { ok: false, name: file.name, reason: `too large (max ${IMAGE_SIZE_LIMIT / 1024 / 1024} MB)` };
-
-    const docType = isImage ? 'note' : 'documentation';
-    const title = nameWithoutExt || file.name;
-    const baseDoc = {
+    // Create stub doc first to get an ID for the Storage path
+    const docRef = await addDoc(collection(db, 'stea_docs'), {
       tenantId: currentTenant.id,
       title,
-      type: docType,
+      type: 'documentation',
       templateId: null,
+      content: EMPTY_DOC,
       spaceId: selectedSpace?.id || null,
       parentDocId: null,
       linkedEntities: [],
@@ -514,29 +280,21 @@ export default function RubyPage() {
       version: 1,
       isPublic: false,
       collaborators: [user.email],
-    };
+    });
 
-    if (isImage) {
-      // Create doc first to get the ID for the storage path, then upload & patch content
-      const docRef = await addDoc(collection(db, 'stea_docs'), { ...baseDoc, content: wrapDoc([]) });
-      const asset = await uploadAsset(file, docRef.id, currentTenant.id, user.email, null);
-      const content = wrapDoc([{ type: 'image', attrs: { src: asset.url, alt: title, title: '' } }]);
-      await updateDoc(doc(db, 'stea_docs', docRef.id), { content, updatedAt: serverTimestamp() });
-      return { ok: true, id: docRef.id, name: title, type: docType };
-    }
+    // Upload raw file — no conversion whatsoever
+    const { url, storagePath } = await uploadFileRaw(file, currentTenant.id, docRef.id);
 
-    let content;
-    if (/^(md|markdown|txt)$/.test(ext)) content = markdownToTipTap(await file.text());
-    else if (/^(html|htm)$/.test(ext)) content = htmlToTipTap(await file.text());
-    else if (ext === 'json') content = jsonToTipTap(await file.text());
-    else if (ext === 'csv') content = csvToTipTap(await file.text());
-    else if (ext === 'docx') content = await docxToTipTap(await file.arrayBuffer());
-    else if (/^xlsx?$/.test(ext)) content = await xlsxToTipTap(await file.arrayBuffer());
-    else if (ext === 'pdf') content = await pdfToTipTap(await file.arrayBuffer());
-    else content = codeToTipTap(await file.text(), ext);
+    await updateDoc(doc(db, 'stea_docs', docRef.id), {
+      fileUrl: url,
+      storagePath,
+      fileType: ext,
+      fileName: file.name,
+      fileSize: file.size,
+      fileMime: file.type || '',
+    });
 
-    const ref = await addDoc(collection(db, 'stea_docs'), { ...baseDoc, content });
-    return { ok: true, id: ref.id, name: title, type: docType };
+    return { ok: true, id: docRef.id, name: title };
   }, [currentTenant, user, selectedSpace]);
 
   const importFiles = useCallback(async (files) => {
@@ -563,9 +321,9 @@ export default function RubyPage() {
       alert(`${failed.length} file(s) could not be imported:\n${failed.map((f) => `• ${f.name}: ${f.reason}`).join('\n')}`);
     }
 
-    // If exactly one file, open it in the editor. If multiple, stay on list.
+    // Single file: open the viewer. Multiple: stay on list so all are visible.
     if (files.length === 1 && lastSuccessful) {
-      setSelectedDoc({ id: lastSuccessful.id, title: lastSuccessful.name, type: lastSuccessful.type });
+      setSelectedDoc({ id: lastSuccessful.id, title: lastSuccessful.name, type: 'documentation' });
       setView('editor');
     }
   }, [currentTenant, user, importOneFile]);
@@ -739,7 +497,7 @@ export default function RubyPage() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".md,.markdown,.txt,.html,.htm,.docx,.xlsx,.xls,.pdf,.json,.csv,.png,.jpg,.jpeg,.gif,.webp,.svg,.js,.jsx,.ts,.tsx,.py,.rb,.go,.rs,.java,.kt,.swift,.css,.scss,.yaml,.yml,.sh,.bash,.sql,.xml,.graphql,.gql,.php,.c,.cpp,.cs,.toml"
+                accept="*"
                 className="hidden"
                 onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length) importFiles(files); e.target.value = ''; }}
               />
@@ -830,10 +588,12 @@ export default function RubyPage() {
                           className="w-full text-left"
                         >
                           <div className="mb-2 flex items-start justify-between gap-2">
-                            <span className="text-2xl">{typeInfo.emoji}</span>
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium bg-${typeInfo.color}-100 text-${typeInfo.color}-800`}>
-                              {typeInfo.label}
-                            </span>
+                            <span className="text-2xl">{doc.fileType ? '📎' : typeInfo.emoji}</span>
+                            {doc.fileType ? (
+                              <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-mono font-medium text-neutral-600 uppercase">.{doc.fileType}</span>
+                            ) : (
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium bg-${typeInfo.color}-100 text-${typeInfo.color}-800`}>{typeInfo.label}</span>
+                            )}
                           </div>
                           <h3 className="mb-1 font-semibold text-neutral-900 line-clamp-2">
                             {doc.title}

@@ -587,7 +587,85 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     }
   }, [document?.id]);
 
-  if (!editor || !docData) {
+  if (!docData) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-neutral-600">Loading...</div>
+      </div>
+    );
+  }
+
+  // ── Imported file: show as-is instead of the TipTap editor ──────────────
+  if (docData.fileUrl) {
+    const ft = (docData.fileType || '').toLowerCase();
+    const isImage = /^(png|jpg|jpeg|gif|webp|svg)$/.test(ft);
+    const isPdf = ft === 'pdf';
+    const isHtml = /^(html|htm)$/.test(ft);
+    const isFrameable = isPdf || isHtml;
+
+    return (
+      <div className="flex h-full flex-col bg-white">
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-6 py-3">
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-lg font-semibold text-neutral-900">{docData.title}</h1>
+              <p className="text-xs text-neutral-500 uppercase tracking-wide">{docData.fileName || docData.fileType}</p>
+            </div>
+          </div>
+          <a
+            href={docData.fileUrl}
+            target="_blank"
+            rel="noreferrer"
+            download={docData.fileName}
+            className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 hover:border-rose-400 hover:text-rose-700 transition"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download
+          </a>
+        </div>
+
+        {/* File content */}
+        <div className="flex-1 overflow-hidden">
+          {isFrameable && (
+            <iframe
+              src={docData.fileUrl}
+              title={docData.fileName}
+              className="h-full w-full border-0"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+            />
+          )}
+          {isImage && (
+            <div className="flex h-full items-center justify-center overflow-auto bg-neutral-50 p-6">
+              <img src={docData.fileUrl} alt={docData.fileName} className="max-h-full max-w-full object-contain rounded shadow" />
+            </div>
+          )}
+          {!isFrameable && !isImage && (
+            <div className="flex h-full flex-col items-center justify-center gap-4 text-neutral-500">
+              <svg className="h-16 w-16 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-sm font-medium">{docData.fileName}</p>
+              <p className="text-xs text-neutral-400">{docData.fileSize ? `${(docData.fileSize / 1024).toFixed(0)} KB` : ''}</p>
+              <a href={docData.fileUrl} target="_blank" rel="noreferrer" download={docData.fileName}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 transition">
+                Open / Download
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!editor) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-neutral-600">Loading editor...</div>
