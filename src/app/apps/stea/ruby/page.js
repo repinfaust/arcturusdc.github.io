@@ -16,54 +16,163 @@ import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 import RubyEditor from '@/components/RubyEditor';
 import { getAllTemplates, templateToTipTapJSON } from '@/lib/templates';
 
+// ─── File → TipTap JSON converters ───────────────────────────────────────────
+
+function wrapDoc(content) {
+  return { type: 'doc', content: content.length > 0 ? content : [{ type: 'paragraph', content: [] }] };
+}
+
 function markdownToTipTap(markdown) {
   const lines = markdown.split('\n');
   const content = [];
   let bulletItems = [];
+  let orderedItems = [];
+  let orderedStart = 1;
   let codeLines = [];
   let inCode = false;
   let codeLang = '';
 
   const flushBullets = () => {
-    if (bulletItems.length === 0) return;
-    content.push({ type: 'bulletList', content: bulletItems.map((text) => ({
-      type: 'listItem',
-      content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
-    })) });
-    bulletItems = [];
+    if (bulletItems.length > 0) {
+      content.push({ type: 'bulletList', content: bulletItems.map((text) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] })) });
+      bulletItems = [];
+    }
+  };
+  const flushOrdered = () => {
+    if (orderedItems.length > 0) {
+      content.push({ type: 'orderedList', attrs: { start: orderedStart }, content: orderedItems.map((text) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] })) });
+      orderedItems = [];
+    }
   };
 
   for (const line of lines) {
     if (line.startsWith('```')) {
-      if (!inCode) {
-        flushBullets();
-        inCode = true;
-        codeLang = line.slice(3).trim() || 'plaintext';
-        codeLines = [];
-      } else {
-        content.push({ type: 'codeBlock', attrs: { language: codeLang }, content: [{ type: 'text', text: codeLines.join('\n') }] });
-        inCode = false;
-      }
+      if (!inCode) { flushBullets(); flushOrdered(); inCode = true; codeLang = line.slice(3).trim() || 'plaintext'; codeLines = []; }
+      else { content.push({ type: 'codeBlock', attrs: { language: codeLang }, content: [{ type: 'text', text: codeLines.join('\n') }] }); inCode = false; }
       continue;
     }
     if (inCode) { codeLines.push(line); continue; }
 
     const hMatch = line.match(/^(#{1,6})\s+(.+)/);
-    if (hMatch) {
-      flushBullets();
-      content.push({ type: 'heading', attrs: { level: hMatch[1].length }, content: [{ type: 'text', text: hMatch[2] }] });
-      continue;
-    }
-    const bMatch = line.match(/^[-*]\s+(.+)/);
-    if (bMatch) { bulletItems.push(bMatch[1]); continue; }
+    if (hMatch) { flushBullets(); flushOrdered(); content.push({ type: 'heading', attrs: { level: hMatch[1].length }, content: [{ type: 'text', text: hMatch[2] }] }); continue; }
 
-    flushBullets();
+    const oMatch = line.match(/^(\d+)\.\s+(.+)/);
+    if (oMatch) { if (orderedItems.length === 0) orderedStart = parseInt(oMatch[1], 10); orderedItems.push(oMatch[2]); flushBullets(); continue; }
+
+    const bMatch = line.match(/^[-*]\s+(.+)/);
+    if (bMatch) { bulletItems.push(bMatch[1]); flushOrdered(); continue; }
+
+    flushBullets(); flushOrdered();
     if (line.trim() === '') continue;
     content.push({ type: 'paragraph', content: [{ type: 'text', text: line }] });
   }
-  flushBullets();
-  return { type: 'doc', content: content.length > 0 ? content : [{ type: 'paragraph', content: [] }] };
+  flushBullets(); flushOrdered();
+  return wrapDoc(content);
 }
+
+function htmlToTipTap(html) {
+  if (typeof window === 'undefined') return wrapDoc([]);
+  const dom = new DOMParser().parseFromString(html, 'text/html');
+  const body = dom.body;
+
+  function nodeToTipTap(el) {
+    if (el.nodeType === Node.TEXT_NODE) {
+      const text = el.textContent || '';
+      return text ? [{ type: 'text', text }] : [];
+    }
+    if (el.nodeType !== Node.ELEMENT_NODE) return [];
+    const tag = el.tagName?.toLowerCase();
+    const children = Array.from(el.childNodes).flatMap(nodeToTipTap);
+    const textChildren = children.filter((n) => n.type === 'text');
+
+    if (/^h[1-6]$/.test(tag)) return [{ type: 'heading', attrs: { level: parseInt(tag[1], 10) }, content: textChildren.length ? textChildren : [{ type: 'text', text: el.textContent }] }];
+    if (tag === 'p') return children.length ? [{ type: 'paragraph', content: children }] : [];
+    if (tag === 'ul') return [{ type: 'bulletList', content: Array.from(el.children).map((li) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: li.textContent }] }] })) }];
+    if (tag === 'ol') return [{ type: 'orderedList', attrs: { start: 1 }, content: Array.from(el.children).map((li) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: li.textContent }] }] })) }];
+    if (tag === 'pre') { const code = el.querySelector('code'); return [{ type: 'codeBlock', attrs: { language: (code?.className.match(/language-(\w+)/)?.[1]) || 'plaintext' }, content: [{ type: 'text', text: (code || el).textContent }] }]; }
+    if (tag === 'code' && el.parentElement?.tagName?.toLowerCase() !== 'pre') return textChildren;
+    if (tag === 'blockquote') return Array.from(el.childNodes).flatMap(nodeToTipTap);
+    if (tag === 'hr') return [{ type: 'horizontalRule' }];
+    if (tag === 'br') return [];
+    if (tag === 'img') { const src = el.getAttribute('src'); return src ? [{ type: 'image', attrs: { src, alt: el.getAttribute('alt') || '', title: el.getAttribute('title') || '' } }] : []; }
+    if (['strong', 'b', 'em', 'i', 'u', 's', 'code'].includes(tag)) return children;
+    if (['div', 'section', 'article', 'main', 'header', 'footer', 'body'].includes(tag)) {
+      const blocks = Array.from(el.childNodes).flatMap(nodeToTipTap).filter(Boolean);
+      return blocks;
+    }
+    if (tag === 'table') {
+      const rows = Array.from(el.querySelectorAll('tr'));
+      if (rows.length === 0) return [];
+      const tableContent = rows.map((row, ri) => ({
+        type: 'tableRow',
+        content: Array.from(row.querySelectorAll('th,td')).map((cell) => ({
+          type: ri === 0 && row.closest('thead') ? 'tableHeader' : 'tableCell',
+          attrs: {},
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: cell.textContent.trim() }] }],
+        })),
+      }));
+      return [{ type: 'table', content: tableContent }];
+    }
+    // Fallback: if element has text content treat as paragraph
+    const text = el.textContent?.trim();
+    return text ? [{ type: 'paragraph', content: [{ type: 'text', text }] }] : [];
+  }
+
+  const tipTapContent = Array.from(body.childNodes).flatMap(nodeToTipTap).filter(Boolean);
+  return wrapDoc(tipTapContent);
+}
+
+function csvToTipTap(csv) {
+  const lines = csv.trim().split('\n').filter(Boolean);
+  if (lines.length === 0) return wrapDoc([]);
+  const rows = lines.map((l) => l.split(',').map((c) => c.trim().replace(/^"|"$/g, '')));
+  const [header, ...body] = rows;
+
+  const tableContent = [];
+  if (header) {
+    tableContent.push({ type: 'tableRow', content: header.map((cell) => ({ type: 'tableHeader', attrs: {}, content: [{ type: 'paragraph', content: [{ type: 'text', text: cell }] }] })) });
+  }
+  body.forEach((row) => {
+    tableContent.push({ type: 'tableRow', content: row.map((cell) => ({ type: 'tableCell', attrs: {}, content: [{ type: 'paragraph', content: [{ type: 'text', text: cell }] }] })) });
+  });
+  return wrapDoc([{ type: 'table', content: tableContent }]);
+}
+
+const CODE_LANG_MAP = { js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript', py: 'python', rb: 'ruby', go: 'go', rs: 'rust', java: 'java', kt: 'kotlin', swift: 'swift', css: 'css', scss: 'css', yaml: 'yaml', yml: 'yaml', sh: 'bash', bash: 'bash', sql: 'sql', xml: 'xml', graphql: 'graphql', gql: 'graphql', php: 'php', c: 'c', cpp: 'cpp', cs: 'csharp', json: 'json', toml: 'toml', env: 'bash' };
+
+function codeToTipTap(text, ext) {
+  const lang = CODE_LANG_MAP[ext.toLowerCase()] || ext || 'plaintext';
+  return wrapDoc([{ type: 'codeBlock', attrs: { language: lang }, content: [{ type: 'text', text }] }]);
+}
+
+function jsonToTipTap(text) {
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed?.type === 'doc' && Array.isArray(parsed.content)) return parsed;
+    return codeToTipTap(JSON.stringify(parsed, null, 2), 'json');
+  } catch {
+    return codeToTipTap(text, 'json');
+  }
+}
+
+async function imageToTipTap(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result;
+      resolve(wrapDoc(src ? [{ type: 'image', attrs: { src, alt: file.name, title: '' } }] : []));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function docxToTipTap(arrayBuffer) {
+  const mammoth = (await import('mammoth')).default;
+  const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
+  return htmlToTipTap(html);
+}
+
+const IMAGE_SIZE_LIMIT = 600 * 1024; // 600 KB — safe for Firestore 1MB limit
 
 const DOC_TYPES = [
   { value: 'documentation', label: 'Documentation', emoji: '📄', color: 'blue' },
@@ -289,20 +398,50 @@ export default function RubyPage() {
   };
 
   // Import file as new document
+  const [importing, setImporting] = useState(false);
+
   const handleImportFile = useCallback(async (file) => {
     if (!currentTenant?.id || !user?.email) return;
-    if (!file.name.match(/\.(md|txt|markdown)$/i)) {
-      alert('Only .md and .txt files are supported.');
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const nameWithoutExt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+    const isImage = /^(png|jpg|jpeg|gif|webp|svg)$/.test(ext);
+    const isCode = ext in CODE_LANG_MAP;
+    const supported = /^(md|markdown|txt|html|htm|json|csv|docx|png|jpg|jpeg|gif|webp|svg)$/.test(ext) || isCode;
+
+    if (!supported) {
+      alert(`File type .${ext} is not supported yet.`);
       return;
     }
-    const text = await file.text();
-    const title = file.name.replace(/\.(md|txt|markdown)$/i, '').replace(/[-_]/g, ' ');
-    const content = markdownToTipTap(text);
+
+    if (isImage && file.size > IMAGE_SIZE_LIMIT) {
+      alert(`Image is too large (${(file.size / 1024).toFixed(0)} KB). Please resize to under 600 KB and re-import, or paste it into the editor directly.`);
+      return;
+    }
+
+    setImporting(true);
     try {
+      let content;
+      if (/^(md|markdown|txt)$/.test(ext)) {
+        content = markdownToTipTap(await file.text());
+      } else if (/^(html|htm)$/.test(ext)) {
+        content = htmlToTipTap(await file.text());
+      } else if (ext === 'json') {
+        content = jsonToTipTap(await file.text());
+      } else if (ext === 'csv') {
+        content = csvToTipTap(await file.text());
+      } else if (ext === 'docx') {
+        content = await docxToTipTap(await file.arrayBuffer());
+      } else if (isImage) {
+        content = await imageToTipTap(file);
+      } else if (isCode) {
+        content = codeToTipTap(await file.text(), ext);
+      }
+
       const newDoc = await addDoc(collection(db, 'stea_docs'), {
         tenantId: currentTenant.id,
-        title: title || file.name,
-        type: 'documentation',
+        title: nameWithoutExt || file.name,
+        type: isImage ? 'note' : 'documentation',
         templateId: null,
         content,
         spaceId: selectedSpace?.id || null,
@@ -317,11 +456,13 @@ export default function RubyPage() {
         isPublic: false,
         collaborators: [user.email],
       });
-      setSelectedDoc({ id: newDoc.id, title, type: 'documentation' });
+      setSelectedDoc({ id: newDoc.id, title: nameWithoutExt || file.name, type: isImage ? 'note' : 'documentation' });
       setView('editor');
     } catch (err) {
       console.error('Error importing file:', err);
-      alert('Failed to import file.');
+      alert('Failed to import file: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setImporting(false);
     }
   }, [currentTenant, user, selectedSpace]);
 
@@ -481,7 +622,8 @@ export default function RubyPage() {
                     <svg className="mx-auto mb-2 h-10 w-10 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    <p className="text-sm font-semibold text-rose-700">Drop .md or .txt to import</p>
+                    <p className="text-sm font-semibold text-rose-700">Drop to import</p>
+                    <p className="mt-1 text-xs text-rose-500">md · txt · html · docx · json · csv · png · jpg · code files</p>
                   </div>
                 </div>
               )}
@@ -490,7 +632,7 @@ export default function RubyPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".md,.txt,.markdown"
+                accept=".md,.markdown,.txt,.html,.htm,.docx,.json,.csv,.png,.jpg,.jpeg,.gif,.webp,.svg,.js,.jsx,.ts,.tsx,.py,.rb,.go,.rs,.java,.kt,.swift,.css,.scss,.yaml,.yml,.sh,.bash,.sql,.xml,.graphql,.gql,.php,.c,.cpp,.cs,.toml"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
               />
@@ -522,13 +664,14 @@ export default function RubyPage() {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  title="Import .md or .txt file"
-                  className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-rose-400 hover:text-rose-700"
+                  disabled={importing}
+                  title="Import: .md .txt .html .docx .json .csv .png .jpg and code files"
+                  className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-rose-400 hover:text-rose-700 disabled:opacity-60"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  Import
+                  {importing ? 'Importing…' : 'Import'}
                 </button>
 
                 <button
