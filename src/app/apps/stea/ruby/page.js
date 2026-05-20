@@ -283,7 +283,14 @@ export default function RubyPage() {
     });
 
     // Upload raw file — no conversion whatsoever
-    const { url, storagePath } = await uploadFileRaw(file, currentTenant.id, docRef.id);
+    let url, storagePath;
+    try {
+      ({ url, storagePath } = await uploadFileRaw(file, currentTenant.id, docRef.id));
+    } catch (uploadErr) {
+      // Roll back the stub doc so no orphan is left behind
+      await deleteDoc(doc(db, 'stea_docs', docRef.id)).catch(() => {});
+      throw uploadErr;
+    }
 
     await updateDoc(doc(db, 'stea_docs', docRef.id), {
       fileUrl: url,
