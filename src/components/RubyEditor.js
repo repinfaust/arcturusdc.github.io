@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -50,6 +50,7 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
   const [shareLink, setShareLink] = useState(null);
   const [creatingShareLink, setCreatingShareLink] = useState(false);
   const [showDiffViewer, setShowDiffViewer] = useState(false);
+  const autoSaveTimerRef = useRef(null);
 
   // Load document data
   useEffect(() => {
@@ -264,7 +265,11 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
       },
     },
     onUpdate: ({ editor }) => {
-      // Auto-save logic will be triggered by save button for now
+      if (!editor.isEditable) return;
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = setTimeout(() => {
+        handleAutoSave(editor);
+      }, 1500);
     },
   });
 
@@ -274,6 +279,22 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
       editor.commands.setContent(docData.content);
     }
   }, [editor, docData]);
+
+  // Lightweight auto-save — content only, no version snapshot
+  const handleAutoSave = useCallback(async (editorInstance) => {
+    const ed = editorInstance;
+    if (!ed || !document?.id || !tenantId || !userEmail) return;
+    try {
+      await updateDoc(doc(db, 'stea_docs', document.id), {
+        content: ed.getJSON(),
+        updatedBy: userEmail,
+        updatedAt: serverTimestamp(),
+      });
+      setLastSaved(new Date());
+    } catch (err) {
+      console.error('[Ruby] Auto-save failed:', err);
+    }
+  }, [document?.id, tenantId, userEmail]);
 
   // Save document
   const handleSave = useCallback(async () => {
@@ -333,18 +354,8 @@ export default function RubyEditor({ document, onClose, tenantId, userEmail }) {
     }
   }, [editor, document?.id, tenantId, userEmail, docData]);
 
-  // Auto-save every 30 seconds if there are changes
-  useEffect(() => {
-    if (!editor) return;
-
-    const interval = setInterval(() => {
-      if (editor.isEditable && !editor.isEmpty) {
-        handleSave();
-      }
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
-  }, [editor, handleSave]);
+  // Clear debounce timer on unmount
+  useEffect(() => () => clearTimeout(autoSaveTimerRef.current), []);
 
   // Keyboard shortcuts
   useEffect(() => {

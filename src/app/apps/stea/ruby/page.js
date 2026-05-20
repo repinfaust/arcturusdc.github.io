@@ -399,80 +399,88 @@ export default function RubyPage() {
 
   // Import file as new document
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(null); // { done, total }
 
-  const handleImportFile = useCallback(async (file) => {
-    if (!currentTenant?.id || !user?.email) return;
-
+  const importOneFile = useCallback(async (file) => {
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
     const nameWithoutExt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
     const isImage = /^(png|jpg|jpeg|gif|webp|svg)$/.test(ext);
     const isCode = ext in CODE_LANG_MAP;
     const supported = /^(md|markdown|txt|html|htm|json|csv|docx|png|jpg|jpeg|gif|webp|svg)$/.test(ext) || isCode;
 
-    if (!supported) {
-      alert(`File type .${ext} is not supported yet.`);
-      return;
-    }
+    if (!supported) return { ok: false, name: file.name, reason: `unsupported type .${ext}` };
+    if (isImage && file.size > IMAGE_SIZE_LIMIT) return { ok: false, name: file.name, reason: 'too large (max 600 KB)' };
 
-    if (isImage && file.size > IMAGE_SIZE_LIMIT) {
-      alert(`Image is too large (${(file.size / 1024).toFixed(0)} KB). Please resize to under 600 KB and re-import, or paste it into the editor directly.`);
-      return;
-    }
+    let content;
+    if (/^(md|markdown|txt)$/.test(ext)) content = markdownToTipTap(await file.text());
+    else if (/^(html|htm)$/.test(ext)) content = htmlToTipTap(await file.text());
+    else if (ext === 'json') content = jsonToTipTap(await file.text());
+    else if (ext === 'csv') content = csvToTipTap(await file.text());
+    else if (ext === 'docx') content = await docxToTipTap(await file.arrayBuffer());
+    else if (isImage) content = await imageToTipTap(file);
+    else content = codeToTipTap(await file.text(), ext);
 
-    setImporting(true);
-    try {
-      let content;
-      if (/^(md|markdown|txt)$/.test(ext)) {
-        content = markdownToTipTap(await file.text());
-      } else if (/^(html|htm)$/.test(ext)) {
-        content = htmlToTipTap(await file.text());
-      } else if (ext === 'json') {
-        content = jsonToTipTap(await file.text());
-      } else if (ext === 'csv') {
-        content = csvToTipTap(await file.text());
-      } else if (ext === 'docx') {
-        content = await docxToTipTap(await file.arrayBuffer());
-      } else if (isImage) {
-        content = await imageToTipTap(file);
-      } else if (isCode) {
-        content = codeToTipTap(await file.text(), ext);
-      }
-
-      const newDoc = await addDoc(collection(db, 'stea_docs'), {
-        tenantId: currentTenant.id,
-        title: nameWithoutExt || file.name,
-        type: isImage ? 'note' : 'documentation',
-        templateId: null,
-        content,
-        spaceId: selectedSpace?.id || null,
-        parentDocId: null,
-        linkedEntities: [],
-        tags: [],
-        createdBy: user.email,
-        createdAt: serverTimestamp(),
-        updatedBy: user.email,
-        updatedAt: serverTimestamp(),
-        version: 1,
-        isPublic: false,
-        collaborators: [user.email],
-      });
-      setSelectedDoc({ id: newDoc.id, title: nameWithoutExt || file.name, type: isImage ? 'note' : 'documentation' });
-      setView('editor');
-    } catch (err) {
-      console.error('Error importing file:', err);
-      alert('Failed to import file: ' + (err?.message || 'Unknown error'));
-    } finally {
-      setImporting(false);
-    }
+    const ref = await addDoc(collection(db, 'stea_docs'), {
+      tenantId: currentTenant.id,
+      title: nameWithoutExt || file.name,
+      type: isImage ? 'note' : 'documentation',
+      templateId: null,
+      content,
+      spaceId: selectedSpace?.id || null,
+      parentDocId: null,
+      linkedEntities: [],
+      tags: [],
+      createdBy: user.email,
+      createdAt: serverTimestamp(),
+      updatedBy: user.email,
+      updatedAt: serverTimestamp(),
+      version: 1,
+      isPublic: false,
+      collaborators: [user.email],
+    });
+    return { ok: true, id: ref.id, name: nameWithoutExt || file.name, type: isImage ? 'note' : 'documentation' };
   }, [currentTenant, user, selectedSpace]);
+
+  const importFiles = useCallback(async (files) => {
+    if (!currentTenant?.id || !user?.email || files.length === 0) return;
+    setImporting(true);
+    setImportProgress({ done: 0, total: files.length });
+    const results = [];
+    let lastSuccessful = null;
+    for (const file of files) {
+      try {
+        const result = await importOneFile(file);
+        results.push(result);
+        if (result.ok) lastSuccessful = result;
+      } catch (err) {
+        results.push({ ok: false, name: file.name, reason: err?.message || 'unknown error' });
+      }
+      setImportProgress((p) => ({ ...p, done: (p?.done ?? 0) + 1 }));
+    }
+    setImporting(false);
+    setImportProgress(null);
+
+    const failed = results.filter((r) => !r.ok);
+    if (failed.length > 0) {
+      alert(`${failed.length} file(s) could not be imported:\n${failed.map((f) => `• ${f.name}: ${f.reason}`).join('\n')}`);
+    }
+
+    // If exactly one file, open it in the editor. If multiple, stay on list.
+    if (files.length === 1 && lastSuccessful) {
+      setSelectedDoc({ id: lastSuccessful.id, title: lastSuccessful.name, type: lastSuccessful.type });
+      setView('editor');
+    }
+  }, [currentTenant, user, importOneFile]);
+
+  const handleImportFile = useCallback((file) => importFiles([file]), [importFiles]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     dragCounterRef.current = 0;
     setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleImportFile(file);
-  }, [handleImportFile]);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) importFiles(files);
+  }, [importFiles]);
 
   const handleDragEnter = useCallback((e) => {
     e.preventDefault();
@@ -632,9 +640,10 @@ export default function RubyPage() {
               <input
                 ref={fileInputRef}
                 type="file"
+                multiple
                 accept=".md,.markdown,.txt,.html,.htm,.docx,.json,.csv,.png,.jpg,.jpeg,.gif,.webp,.svg,.js,.jsx,.ts,.tsx,.py,.rb,.go,.rs,.java,.kt,.swift,.css,.scss,.yaml,.yml,.sh,.bash,.sql,.xml,.graphql,.gql,.php,.c,.cpp,.cs,.toml"
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.target.value = ''; }}
+                onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length) importFiles(files); e.target.value = ''; }}
               />
 
               {/* Search and Actions */}
@@ -671,7 +680,7 @@ export default function RubyPage() {
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  {importing ? 'Importing…' : 'Import'}
+                  {importing && importProgress ? `${importProgress.done}/${importProgress.total}…` : importing ? 'Importing…' : 'Import'}
                 </button>
 
                 <button
