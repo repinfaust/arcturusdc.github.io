@@ -26,6 +26,7 @@ export function TileHeader({ icon, title }) {
 }
 
 export function formatRelativeTime(date) {
+  if (!date) return '—';
   const now = new Date();
   const diffMs = now - new Date(date);
   const diffMins = Math.floor(diffMs / (1000 * 60));

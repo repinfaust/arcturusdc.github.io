@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import BuildProgressTile from './tiles/BuildProgressTile';
 import TestingSnapshotTile from './tiles/TestingSnapshotTile';
 import BacklogHealthTile from './tiles/BacklogHealthTile';
@@ -12,152 +12,139 @@ import DocumentationActivityTile from './tiles/DocumentationActivityTile';
 
 export default function WorkspacePulse() {
   const { currentTenant } = useTenant();
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedApp, setSelectedApp] = useState('all');
+  const [epics, setEpics] = useState(null);
+  const [features, setFeatures] = useState(null);
+  const [cards, setCards] = useState(null);
+  const [docs, setDocs] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(null);
 
   useEffect(() => {
-    if (!currentTenant?.id) {
-      setLoading(false);
-      return;
-    }
+    if (!currentTenant?.id) return;
+    const tid = currentTenant.id;
 
-    // Set up real-time listener for dashboard metrics
-    const dashboardRef = doc(db, 'tenants', currentTenant.id, 'dashboard', 'metrics');
-
-    const unsubscribe = onSnapshot(
-      dashboardRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-
-          // Convert Firestore Timestamps to Date objects for display
-          const processedData = {
-            ...data,
-            buildProgress: {
-              ...data.buildProgress,
-              apps: data.buildProgress?.apps?.map(app => ({
-                ...app,
-                lastActivity: app.lastActivity?.toDate?.() || app.lastActivity,
-              })) || [],
-            },
-            lastUpdated: data.lastUpdated?.toDate?.() || data.lastUpdated,
-          };
-
-          setDashboardData(processedData);
-        } else {
-          // No data yet - show mock data as fallback
-          const mockData = {
-            buildProgress: {
-              apps: [
-                {
-                  name: 'SyncFit',
-                  progress: 62,
-                  epicsComplete: 3,
-                  epicsTotal: 5,
-                  featuresInProgress: 12,
-                  featuresTotal: 27,
-                  bugsOpen: 4,
-                  lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000),
-                },
-              ],
-            },
-            testingSnapshot: {
-              pass: 23,
-              fail: 5,
-              awaitingRetest: 2,
-              coverage: 76,
-            },
-            backlogHealth: {
-              ready: 14,
-              inDevelopment: 9,
-              blocked: 2,
-              bugsOpen: 7,
-              cycleTime: 2.9,
-            },
-            discoverySignals: {
-              newNotes: 3,
-              jtbdDrafts: 2,
-              coverage: 64,
-            },
-            documentationActivity: {
-              newDocs: 1,
-              updatedThisWeek: 3,
-              linkedPercentage: 92,
-            },
-            lastUpdated: new Date(),
-          };
-          setDashboardData(mockData);
-        }
-        setLoading(false);
+    const unsubEpics = onSnapshot(
+      query(collection(db, 'stea_epics'), where('tenantId', '==', tid)),
+      (snap) => {
+        setEpics(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLastRefresh(new Date());
       },
-      (error) => {
-        console.error('Error fetching dashboard metrics:', error);
-        setLoading(false);
-        // Still show mock data on error
-        const mockData = {
-          buildProgress: { apps: [] },
-          testingSnapshot: { pass: 0, fail: 0, awaitingRetest: 0, coverage: 0 },
-          backlogHealth: { ready: 0, inDevelopment: 0, blocked: 0, bugsOpen: 0, cycleTime: 0 },
-          discoverySignals: { newNotes: 0, jtbdDrafts: 0, coverage: 0 },
-          documentationActivity: { newDocs: 0, updatedThisWeek: 0, linkedPercentage: 0 },
-        };
-        setDashboardData(mockData);
-      }
+      () => setEpics([])
     );
 
-    return () => unsubscribe();
+    const unsubFeatures = onSnapshot(
+      query(collection(db, 'stea_features'), where('tenantId', '==', tid)),
+      (snap) => setFeatures(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      () => setFeatures([])
+    );
+
+    const unsubCards = onSnapshot(
+      query(collection(db, 'stea_cards'), where('tenantId', '==', tid)),
+      (snap) => setCards(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      () => setCards([])
+    );
+
+    const unsubDocs = onSnapshot(
+      query(collection(db, 'stea_docs'), where('tenantId', '==', tid)),
+      (snap) => setDocs(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      () => setDocs([])
+    );
+
+    return () => { unsubEpics(); unsubFeatures(); unsubCards(); unsubDocs(); };
   }, [currentTenant?.id]);
 
-  if (!currentTenant) {
-    return null;
-  }
+  if (!currentTenant) return null;
 
-  // Get list of available apps
-  const availableApps = dashboardData?.buildProgress?.apps?.map(app => app.name) || [];
-  const hasMultipleApps = availableApps.length > 1;
+  const loading = epics === null || features === null || cards === null;
 
-  // Filter data for selected app
-  const getFilteredAppData = () => {
-    if (!dashboardData) return null;
+  // ── Derived metrics ──────────────────────────────────────────────────────
 
-    if (selectedApp === 'all') {
-      // Aggregate all apps
-      const allApps = dashboardData.buildProgress?.apps || [];
-      if (allApps.length === 0) return null;
+  // Most recent createdAt across all items — used as "last activity"
+  const mostRecentActivity = (() => {
+    if (!epics && !features && !cards) return null;
+    const all = [...(epics || []), ...(features || []), ...(cards || [])];
+    const ts = all
+      .map(i => i.createdAt?.toDate?.() || (i.createdAt ? new Date(i.createdAt) : null))
+      .filter(Boolean);
+    return ts.length > 0 ? new Date(Math.max(...ts)) : null;
+  })();
 
-      const totalEpicsComplete = allApps.reduce((sum, app) => sum + (app.epicsComplete || 0), 0);
-      const totalEpicsTotal = allApps.reduce((sum, app) => sum + (app.epicsTotal || 0), 0);
-      const totalFeaturesInProgress = allApps.reduce((sum, app) => sum + (app.featuresInProgress || 0), 0);
-      const totalFeaturesTotal = allApps.reduce((sum, app) => sum + (app.featuresTotal || 0), 0);
-      const totalBugsOpen = allApps.reduce((sum, app) => sum + (app.bugsOpen || 0), 0);
-      const progress = totalEpicsTotal > 0 ? Math.round((totalEpicsComplete / totalEpicsTotal) * 100) : 0;
-
-      return {
-        name: 'All Apps',
+  // Build Progress
+  const buildProgress = (() => {
+    const e = epics || [];
+    const f = features || [];
+    const epicsTotal = e.length;
+    const epicsComplete = e.filter(i => i.statusColumn === 'Done').length;
+    const featuresTotal = f.length;
+    const featuresInProgress = f.filter(i => i.statusColumn === 'Build').length;
+    const progress = epicsTotal > 0 ? Math.round((epicsComplete / epicsTotal) * 100) : 0;
+    return {
+      apps: [{
+        name: currentTenant.name || 'All Apps',
         progress,
-        epicsComplete: totalEpicsComplete,
-        epicsTotal: totalEpicsTotal,
-        featuresInProgress: totalFeaturesInProgress,
-        featuresTotal: totalFeaturesTotal,
-        bugsOpen: totalBugsOpen,
-        lastActivity: allApps.reduce((latest, app) => {
-          const appActivity = new Date(app.lastActivity || 0);
-          return appActivity > latest ? appActivity : latest;
-        }, new Date(0)),
-      };
-    } else {
-      // Find specific app
-      const app = dashboardData.buildProgress?.apps?.find(a => a.name === selectedApp);
-      return app || null;
-    }
-  };
+        epicsComplete,
+        epicsTotal,
+        featuresInProgress,
+        featuresTotal,
+        bugsOpen: 0,
+        lastActivity: mostRecentActivity,
+      }],
+    };
+  })();
 
-  const filteredAppData = getFilteredAppData();
+  // Testing Snapshot — test cards = those with [TEST] or [GATE] prefix
+  const testingSnapshot = (() => {
+    const c = cards || [];
+    const testCards = c.filter(i => /^\[(TEST|GATE)\]/i.test(i.title || ''));
+    const pass = testCards.filter(i => i.statusColumn === 'Done').length;
+    const fail = testCards.filter(i => i.statusColumn === "Won't Do").length;
+    const pending = testCards.filter(i => i.statusColumn !== 'Done' && i.statusColumn !== "Won't Do").length;
+    const totalTests = testCards.length;
+    const passRate = totalTests > 0 ? Math.round((pass / totalTests) * 100) : 0;
+    // Coverage = % of features that have at least one test card
+    const featureIds = [...new Set(testCards.map(c => c.featureId).filter(Boolean))];
+    const featuresTotal = (features || []).length;
+    const coverage = featuresTotal > 0 ? Math.round((featureIds.length / featuresTotal) * 100) : 0;
+    return { pass, fail, awaitingRetest: pending, coverage, passRate, totalTests };
+  })();
+
+  // Backlog Health — map Filo columns to backlog states
+  const backlogHealth = (() => {
+    const c = cards || [];
+    const ready = c.filter(i => i.statusColumn === 'Planning').length;
+    const inDevelopment = c.filter(i => i.statusColumn === 'Build').length;
+    const blocked = c.filter(i => i.blocked === true).length;
+    return { ready, inDevelopment, blocked, bugsOpen: 0, cycleTime: 0 };
+  })();
+
+  // Discovery Signals — if no Harls data, derive from card user stories
+  const discoverySignals = (() => {
+    const c = cards || [];
+    const withStory = c.filter(i => i.userStory && i.userStory.trim().length > 0).length;
+    const total = c.length;
+    const coverage = total > 0 ? Math.round((withStory / total) * 100) : 0;
+    return { newNotes: 0, jtbdDrafts: 0, coverage };
+  })();
+
+  // Documentation Activity
+  const documentationActivity = (() => {
+    const d = docs || [];
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const newDocs = d.filter(i => {
+      const t = i.createdAt?.toDate?.() || (i.createdAt ? new Date(i.createdAt) : null);
+      return t && t >= sevenDaysAgo;
+    }).length;
+    const updatedThisWeek = d.filter(i => {
+      const t = i.updatedAt?.toDate?.() || (i.updatedAt ? new Date(i.updatedAt) : null);
+      return t && t >= sevenDaysAgo;
+    }).length;
+    const linked = d.filter(i => i.cardId || i.linkedCards?.length > 0).length;
+    const linkedPercentage = d.length > 0 ? Math.round((linked / d.length) * 100) : 0;
+    return { newDocs, updatedThisWeek, linkedPercentage };
+  })();
 
   return (
     <div className="mt-12 space-y-8">
-      {/* Main Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-neutral-900">Workspace Pulse</h2>
@@ -165,9 +152,9 @@ export default function WorkspacePulse() {
             At-a-glance health overview across all modules
           </p>
         </div>
-        {dashboardData?.lastUpdated && (
+        {lastRefresh && (
           <span className="text-xs text-neutral-500">
-            Updated {formatRelativeTime(dashboardData.lastUpdated)}
+            Updated {formatRelativeTime(lastRefresh)}
           </span>
         )}
       </div>
@@ -187,51 +174,20 @@ export default function WorkspacePulse() {
         </div>
       ) : (
         <>
-          {/* Section 1: App-Specific Metrics */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-neutral-900">
-                App Progress & Health
-              </h3>
-              {hasMultipleApps && (
-                <div className="flex items-center gap-2">
-                  <label htmlFor="app-selector" className="text-sm text-neutral-600">
-                    Filter by app:
-                  </label>
-                  <select
-                    id="app-selector"
-                    value={selectedApp}
-                    onChange={(e) => setSelectedApp(e.target.value)}
-                    className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 shadow-sm hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-900/20"
-                  >
-                    <option value="all">All Apps (Summary)</option>
-                    {availableApps.map((appName) => (
-                      <option key={appName} value={appName}>
-                        {appName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
+            <h3 className="text-lg font-semibold text-neutral-900">App Progress & Health</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <BuildProgressTile
-                data={filteredAppData ? { apps: [filteredAppData] } : { apps: [] }}
-              />
-              <TestingSnapshotTile data={dashboardData?.testingSnapshot} />
-              <BacklogHealthTile data={dashboardData?.backlogHealth} />
+              <BuildProgressTile data={buildProgress} />
+              <TestingSnapshotTile data={testingSnapshot} />
+              <BacklogHealthTile data={backlogHealth} />
             </div>
           </div>
 
-          {/* Section 2: Workspace-Wide Metrics */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-neutral-900">
-              Workspace Insights
-            </h3>
+            <h3 className="text-lg font-semibold text-neutral-900">Workspace Insights</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DiscoverySignalsTile data={dashboardData?.discoverySignals} />
-              <DocumentationActivityTile data={dashboardData?.documentationActivity} />
+              <DiscoverySignalsTile data={discoverySignals} />
+              <DocumentationActivityTile data={documentationActivity} />
             </div>
           </div>
         </>
@@ -241,16 +197,14 @@ export default function WorkspacePulse() {
 }
 
 function formatRelativeTime(date) {
+  if (!date) return '—';
   const now = new Date();
   const diffMs = now - new Date(date);
   const diffMins = Math.floor(diffMs / (1000 * 60));
-
   if (diffMins < 1) return 'just now';
   if (diffMins < 60) return `${diffMins}m ago`;
-
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return `${diffHours}h ago`;
-
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d ago`;
 }
