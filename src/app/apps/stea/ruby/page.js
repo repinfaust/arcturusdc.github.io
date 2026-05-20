@@ -15,6 +15,7 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 import RubyEditor from '@/components/RubyEditor';
 import { getAllTemplates, templateToTipTapJSON } from '@/lib/templates';
+import { uploadAsset } from '@/lib/storage';
 
 // ─── File → TipTap JSON converters ───────────────────────────────────────────
 
@@ -155,24 +156,13 @@ function jsonToTipTap(text) {
   }
 }
 
-async function imageToTipTap(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const src = e.target?.result;
-      resolve(wrapDoc(src ? [{ type: 'image', attrs: { src, alt: file.name, title: '' } }] : []));
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 async function docxToTipTap(arrayBuffer) {
   const mammoth = (await import('mammoth')).default;
   const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
   return htmlToTipTap(html);
 }
 
-const IMAGE_SIZE_LIMIT = 600 * 1024; // 600 KB — safe for Firestore 1MB limit
+const IMAGE_SIZE_LIMIT = 10 * 1024 * 1024; // 10 MB — uploadAsset limit
 
 const DOC_TYPES = [
   { value: 'documentation', label: 'Documentation', emoji: '📄', color: 'blue' },
@@ -409,23 +399,15 @@ export default function RubyPage() {
     const supported = /^(md|markdown|txt|html|htm|json|csv|docx|png|jpg|jpeg|gif|webp|svg)$/.test(ext) || isCode;
 
     if (!supported) return { ok: false, name: file.name, reason: `unsupported type .${ext}` };
-    if (isImage && file.size > IMAGE_SIZE_LIMIT) return { ok: false, name: file.name, reason: 'too large (max 600 KB)' };
+    if (isImage && file.size > IMAGE_SIZE_LIMIT) return { ok: false, name: file.name, reason: `too large (max ${IMAGE_SIZE_LIMIT / 1024 / 1024} MB)` };
 
-    let content;
-    if (/^(md|markdown|txt)$/.test(ext)) content = markdownToTipTap(await file.text());
-    else if (/^(html|htm)$/.test(ext)) content = htmlToTipTap(await file.text());
-    else if (ext === 'json') content = jsonToTipTap(await file.text());
-    else if (ext === 'csv') content = csvToTipTap(await file.text());
-    else if (ext === 'docx') content = await docxToTipTap(await file.arrayBuffer());
-    else if (isImage) content = await imageToTipTap(file);
-    else content = codeToTipTap(await file.text(), ext);
-
-    const ref = await addDoc(collection(db, 'stea_docs'), {
+    const docType = isImage ? 'note' : 'documentation';
+    const title = nameWithoutExt || file.name;
+    const baseDoc = {
       tenantId: currentTenant.id,
-      title: nameWithoutExt || file.name,
-      type: isImage ? 'note' : 'documentation',
+      title,
+      type: docType,
       templateId: null,
-      content,
       spaceId: selectedSpace?.id || null,
       parentDocId: null,
       linkedEntities: [],
@@ -437,8 +419,27 @@ export default function RubyPage() {
       version: 1,
       isPublic: false,
       collaborators: [user.email],
-    });
-    return { ok: true, id: ref.id, name: nameWithoutExt || file.name, type: isImage ? 'note' : 'documentation' };
+    };
+
+    if (isImage) {
+      // Create doc first to get the ID for the storage path, then upload & patch content
+      const docRef = await addDoc(collection(db, 'stea_docs'), { ...baseDoc, content: wrapDoc([]) });
+      const asset = await uploadAsset(file, docRef.id, currentTenant.id, user.email, null);
+      const content = wrapDoc([{ type: 'image', attrs: { src: asset.url, alt: title, title: '' } }]);
+      await updateDoc(doc(db, 'stea_docs', docRef.id), { content, updatedAt: serverTimestamp() });
+      return { ok: true, id: docRef.id, name: title, type: docType };
+    }
+
+    let content;
+    if (/^(md|markdown|txt)$/.test(ext)) content = markdownToTipTap(await file.text());
+    else if (/^(html|htm)$/.test(ext)) content = htmlToTipTap(await file.text());
+    else if (ext === 'json') content = jsonToTipTap(await file.text());
+    else if (ext === 'csv') content = csvToTipTap(await file.text());
+    else if (ext === 'docx') content = await docxToTipTap(await file.arrayBuffer());
+    else content = codeToTipTap(await file.text(), ext);
+
+    const ref = await addDoc(collection(db, 'stea_docs'), { ...baseDoc, content });
+    return { ok: true, id: ref.id, name: title, type: docType };
   }, [currentTenant, user, selectedSpace]);
 
   const importFiles = useCallback(async (files) => {
@@ -674,7 +675,7 @@ export default function RubyPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={importing}
-                  title="Import: .md .txt .html .docx .json .csv .png .jpg and code files"
+                  title="Import: .md .txt .html .docx .json .csv .png .jpg .gif .webp and code files (images up to 10 MB)"
                   className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-rose-400 hover:text-rose-700 disabled:opacity-60"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
