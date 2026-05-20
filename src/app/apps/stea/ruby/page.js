@@ -162,6 +162,59 @@ async function docxToTipTap(arrayBuffer) {
   return htmlToTipTap(html);
 }
 
+async function xlsxToTipTap(arrayBuffer) {
+  const XLSX = (await import('xlsx')).default;
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+  const content = [];
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+    if (rows.length === 0) continue;
+
+    if (workbook.SheetNames.length > 1) {
+      content.push({ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: sheetName }] });
+    }
+
+    const [headerRow, ...dataRows] = rows;
+    const tableContent = [];
+
+    if (headerRow?.length > 0) {
+      tableContent.push({
+        type: 'tableRow',
+        content: headerRow.map((cell) => ({
+          type: 'tableHeader',
+          attrs: {},
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: String(cell ?? '') }] }],
+        })),
+      });
+    }
+
+    for (const row of dataRows) {
+      if (row.every((c) => c === '' || c == null)) continue;
+      tableContent.push({
+        type: 'tableRow',
+        content: row.map((cell) => ({
+          type: 'tableCell',
+          attrs: {},
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: String(cell ?? '') }] }],
+        })),
+      });
+    }
+
+    if (tableContent.length > 0) {
+      content.push({ type: 'table', content: tableContent });
+    }
+
+    if (workbook.SheetNames.indexOf(sheetName) < workbook.SheetNames.length - 1) {
+      content.push({ type: 'horizontalRule' });
+    }
+  }
+
+  return wrapDoc(content);
+}
+
 async function pdfToTipTap(arrayBuffer) {
   const pdfjsLib = await import('pdfjs-dist');
   pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -438,7 +491,7 @@ export default function RubyPage() {
     const nameWithoutExt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
     const isImage = /^(png|jpg|jpeg|gif|webp|svg)$/.test(ext);
     const isCode = ext in CODE_LANG_MAP;
-    const supported = /^(md|markdown|txt|html|htm|json|csv|docx|pdf|png|jpg|jpeg|gif|webp|svg)$/.test(ext) || isCode;
+    const supported = /^(md|markdown|txt|html|htm|json|csv|docx|xlsx|xls|pdf|png|jpg|jpeg|gif|webp|svg)$/.test(ext) || isCode;
 
     if (!supported) return { ok: false, name: file.name, reason: `unsupported type .${ext}` };
     if (isImage && file.size > IMAGE_SIZE_LIMIT) return { ok: false, name: file.name, reason: `too large (max ${IMAGE_SIZE_LIMIT / 1024 / 1024} MB)` };
@@ -478,6 +531,7 @@ export default function RubyPage() {
     else if (ext === 'json') content = jsonToTipTap(await file.text());
     else if (ext === 'csv') content = csvToTipTap(await file.text());
     else if (ext === 'docx') content = await docxToTipTap(await file.arrayBuffer());
+    else if (/^xlsx?$/.test(ext)) content = await xlsxToTipTap(await file.arrayBuffer());
     else if (ext === 'pdf') content = await pdfToTipTap(await file.arrayBuffer());
     else content = codeToTipTap(await file.text(), ext);
 
@@ -675,7 +729,7 @@ export default function RubyPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     <p className="text-sm font-semibold text-rose-700">Drop to import</p>
-                    <p className="mt-1 text-xs text-rose-500">md · txt · html · docx · pdf · json · csv · png · jpg · code files</p>
+                    <p className="mt-1 text-xs text-rose-500">md · txt · html · docx · xlsx · pdf · json · csv · png · jpg · code files</p>
                   </div>
                 </div>
               )}
@@ -685,7 +739,7 @@ export default function RubyPage() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".md,.markdown,.txt,.html,.htm,.docx,.pdf,.json,.csv,.png,.jpg,.jpeg,.gif,.webp,.svg,.js,.jsx,.ts,.tsx,.py,.rb,.go,.rs,.java,.kt,.swift,.css,.scss,.yaml,.yml,.sh,.bash,.sql,.xml,.graphql,.gql,.php,.c,.cpp,.cs,.toml"
+                accept=".md,.markdown,.txt,.html,.htm,.docx,.xlsx,.xls,.pdf,.json,.csv,.png,.jpg,.jpeg,.gif,.webp,.svg,.js,.jsx,.ts,.tsx,.py,.rb,.go,.rs,.java,.kt,.swift,.css,.scss,.yaml,.yml,.sh,.bash,.sql,.xml,.graphql,.gql,.php,.c,.cpp,.cs,.toml"
                 className="hidden"
                 onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length) importFiles(files); e.target.value = ''; }}
               />
