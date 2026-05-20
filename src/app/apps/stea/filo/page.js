@@ -358,6 +358,10 @@ export default function SteaBoard() {
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const newMenuRef = useRef(null);
 
+  // column resizing
+  const [columnWidths, setColumnWidths] = usePersistentState('stea-col-widths', {});
+  const resizingRef = useRef(null);
+
   // drag & drop
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverCol, setDragOverCol] = useState(null);
@@ -2074,11 +2078,13 @@ export default function SteaBoard() {
             const items = sortMode === 'none' ? baseItems : [...baseItems].sort(compareByPriority);
             const isOver = dragOverCol === col;
 
+            const colWidth = columnWidths[col] ?? 340;
+
             return (
               <section
                 key={col}
-                className={`card p-3 w-[340px] shrink-0 transition ${isOver ? 'ring-2 ring-blue-400' : ''}`}
-                style={{ scrollSnapAlign: 'start' }}
+                className={`card p-3 shrink-0 transition relative ${isOver ? 'ring-2 ring-blue-400' : ''}`}
+                style={{ width: colWidth, scrollSnapAlign: 'start' }}
                 onDragOver={(e) => { e.preventDefault(); setDragOverCol(col); e.dataTransfer.dropEffect = 'move'; }}
                 onDragLeave={() => setDragOverCol(null)}
                 onDrop={async (e) => {
@@ -2176,6 +2182,37 @@ export default function SteaBoard() {
                     })()}
                   </div>
                 )}
+
+                {/* Column resize handle */}
+                <div
+                  className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-10 group flex items-center justify-center"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    resizingRef.current = { col, startX: e.clientX, startWidth: colWidth };
+                    document.body.style.userSelect = 'none';
+                    document.body.style.cursor = 'col-resize';
+
+                    const onMouseMove = (ev) => {
+                      if (!resizingRef.current) return;
+                      const { col: c, startX, startWidth } = resizingRef.current;
+                      const newWidth = Math.max(220, Math.min(800, startWidth + ev.clientX - startX));
+                      setColumnWidths(prev => ({ ...prev, [c]: newWidth }));
+                    };
+
+                    const onMouseUp = () => {
+                      resizingRef.current = null;
+                      document.body.style.userSelect = '';
+                      document.body.style.cursor = '';
+                      document.removeEventListener('mousemove', onMouseMove);
+                      document.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                  }}
+                >
+                  <div className="w-0.5 h-10 rounded-full bg-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </section>
             );
           })}
