@@ -52,6 +52,6 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('[dialledmtb/riders]', err.message, err.stack);
-    return NextResponse.json({ error: 'Internal server error', detail: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
