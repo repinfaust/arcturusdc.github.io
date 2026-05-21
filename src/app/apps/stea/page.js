@@ -88,31 +88,6 @@ const IN_SESSION_DESTINATIONS = [
     excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
-    label: 'SoRR Control UI',
-    href: '/apps/stea/sorr/controlui',
-    description: 'Governed orchestration layer for AI requests with risk-tier routing, approvals, audit, and workspace drafting.',
-    gradient: 'from-blue-50/80 to-cyan-50/30',
-    borderColor: 'border-blue-200',
-    excludeForTenants: [APEXTWIN_TENANT_ID],
-  },
-  {
-    label: 'PayGo',
-    href: '/apps/stea/paygo',
-    description: 'iOS app mirror in-browser with magic-link access and live Firebase-backed demo state.',
-    gradient: 'from-orange-50/80 to-amber-50/30',
-    borderColor: 'border-orange-200',
-    excludeForTenants: [APEXTWIN_TENANT_ID],
-  },
-  {
-    label: 'User Feedback',
-    href: '/apps/stea/dialled-mtb',
-    description: 'Dialled MTB workspace tool for friendlies messages, screenshots, and captured app context.',
-    gradient: 'from-neutral-950/95 to-pink-950/90',
-    borderColor: 'border-pink-500/50',
-    textLight: true,
-    excludeForTenants: [APEXTWIN_TENANT_ID],
-  },
-  {
     label: 'ApexTwin',
     href: '/apps/stea/apextwin-poc',
     description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',
@@ -120,6 +95,14 @@ const IN_SESSION_DESTINATIONS = [
     borderColor: 'border-emerald-500/50',
     textLight: true,
     onlyForTenants: [APEXTWIN_TENANT_ID],
+  },
+  {
+    label: 'Rider Management',
+    href: '/apps/stea/dialledmtb-riders',
+    description: 'Dialled MTB rider lookup and RevenueCat trial entitlement grants.',
+    gradient: 'from-orange-50/80 to-amber-50/30',
+    borderColor: 'border-orange-200',
+    onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'],
   },
 ];
 
@@ -381,6 +364,10 @@ export default function SteaAccessPage() {
         {IN_SESSION_DESTINATIONS
           .filter((dest) => {
             const tenantId = currentTenant?.id;
+            // If destination is restricted to specific email addresses
+            if (dest.onlyForEmails) {
+              return user?.email && dest.onlyForEmails.includes(user.email);
+            }
             // If destination is only for specific tenants, check if current tenant is in the list
             if (dest.onlyForTenants) {
               return tenantId && dest.onlyForTenants.includes(tenantId);
@@ -418,3 +405,4 @@ export default function SteaAccessPage() {
     </div>
   );
 }
+
