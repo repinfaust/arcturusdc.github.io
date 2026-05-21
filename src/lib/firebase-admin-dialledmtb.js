@@ -9,7 +9,7 @@ function parseServiceAccount() {
   const raw = process.env.DIALLEDMTB_FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error('DIALLEDMTB_FIREBASE_SERVICE_ACCOUNT is not set');
   const trimmed = raw.trim();
-  const json = trimmed.startsWith('{') ? trimmed : Buffer.from(trimmed, 'base64').toString('utf8');
+  const json = trimmed.startsWith('{') ? trimmed : Buffer.from(trimmed, 'base64').toString('utf8').trim();
   return JSON.parse(json);
 }
 
