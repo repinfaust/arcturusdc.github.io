@@ -104,6 +104,14 @@ const IN_SESSION_DESTINATIONS = [
     borderColor: 'border-orange-200',
     onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'],
   },
+  {
+    label: 'Dialled MTB — Calendar',
+    href: '/apps/stea/dialled-mtb/calendar',
+    description: 'Track milestones, events and marketing activities for Dialled MTB.',
+    gradient: 'from-pink-50/80 to-rose-50/30',
+    borderColor: 'border-pink-200',
+    onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
+  },
 ];
 
 function sanitizeNext(raw) {
