@@ -297,9 +297,8 @@ export default function DialledMtbCalendarClient() {
                           borderRadius: '2px',
                           padding: '2px 5px',
                           marginBottom: '2px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
                           letterSpacing: '0.01em',
                           lineHeight: '1.5',
                         }}
