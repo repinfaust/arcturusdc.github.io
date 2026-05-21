@@ -4,11 +4,11 @@ import { getDialledMTBDb } from '@/lib/firebase-admin-dialledmtb';
 
 const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
-export async function GET(request) {
+export async function POST(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email')?.toLowerCase().trim();
-    const idToken = request.headers.get('x-id-token');
+    const body = await request.json();
+    const email = body.email?.toLowerCase().trim();
+    const idToken = body.idToken;
 
     if (!email || !idToken) {
       return NextResponse.json({ error: 'Missing email or auth token' }, { status: 400 });
@@ -36,7 +36,6 @@ export async function GET(request) {
     const doc = snap.docs[0];
     const data = doc.data();
 
-    // Count bikes
     const bikesSnap = await db.collection('bikes').where('userId', '==', data.uid).get();
 
     return NextResponse.json({
@@ -52,7 +51,7 @@ export async function GET(request) {
       },
     });
   } catch (err) {
-    console.error('[dialledmtb/riders]', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[dialledmtb/riders]', err.message, err.stack);
+    return NextResponse.json({ error: 'Internal server error', detail: err.message }, { status: 500 });
   }
 }

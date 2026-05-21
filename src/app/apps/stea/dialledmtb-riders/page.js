@@ -58,10 +58,11 @@ export default function DialledMTBRidersPage() {
 
     try {
       const idToken = await user.getIdToken();
-      const res = await fetch(
-        `/api/dialledmtb/riders?email=${encodeURIComponent(email.toLowerCase().trim())}`,
-        { headers: { 'x-id-token': idToken } }
-      );
+      const res = await fetch('/api/dialledmtb/riders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim(), idToken }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Search failed');
       setRider(data.user);
