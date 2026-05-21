@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Space_Mono } from 'next/font/google';
 
 const spaceMono = Space_Mono({ subsets: ['latin'], weight: ['400', '700'] });
@@ -204,12 +205,17 @@ export default function DialledMtbCalendarClient() {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', paddingBottom: '24px', borderBottom: `1px solid ${border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Link href="/apps/stea" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: muted, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: `1px solid ${border}`, borderRadius: '5px', padding: '6px 12px', whiteSpace: 'nowrap' }}>
+              &#8592; STEa
+            </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <TriangleMark size={36} />
             <div>
               <div style={{ fontWeight: 700, fontSize: '18px', letterSpacing: '0.16em', color: accent, lineHeight: 1 }}>DIALLED MTB</div>
               <div style={{ fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: muted2, marginTop: '3px' }}>Calendar</div>
             </div>
+          </div>
           </div>
 
           {/* Month nav */}
