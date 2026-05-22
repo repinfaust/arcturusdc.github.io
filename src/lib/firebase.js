@@ -1,7 +1,7 @@
 // src/lib/firebase.js
-import { initializeApp, getApps, deleteApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, initializeFirestore, terminate } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -14,94 +14,40 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Use global variable to persist across hot reloads in development
-// This prevents multiple Firebase instances during Next.js hot module replacement
-const globalForFirebase = globalThis;
-
-if (!globalForFirebase._firebaseInitialized) {
-  globalForFirebase._firebaseApp = null;
-  globalForFirebase._firebaseDb = null;
-  globalForFirebase._firebaseAuth = null;
-  globalForFirebase._firebaseStorage = null;
-  globalForFirebase._firebaseInitialized = false;
+// Server-side: return nulls, all Firebase ops must be client-only
+if (typeof window === 'undefined') {
+  module.exports = { auth: null, db: null, storage: null, googleProvider: null };
+  // eslint-disable-next-line no-throw-literal
+  throw 'firebase.js imported server-side — use firebaseAdmin instead';
 }
 
-function initializeFirebaseApp() {
-  // Return existing instance if already initialized
-  if (globalForFirebase._firebaseInitialized && globalForFirebase._firebaseApp) {
-    return {
-      app: globalForFirebase._firebaseApp,
-      db: globalForFirebase._firebaseDb,
-      auth: globalForFirebase._firebaseAuth,
-      storage: globalForFirebase._firebaseStorage,
-    };
-  }
+const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
 
-  // Only initialize in browser
-  if (typeof window === 'undefined') {
-    return { app: null, db: null, auth: null, storage: null };
-  }
-
-  try {
-    // Get or create Firebase app
-    let app;
-    const existingApps = getApps();
-
-    if (existingApps.length > 0) {
-      app = existingApps[0];
-    } else {
-      app = initializeApp(firebaseConfig);
-    }
-
-    // Initialize Firestore with long polling to avoid WebChannel/Listen errors
-    // This forces the use of long polling instead of WebSocket connections
-    // which can fail in certain network/browser configurations
-    let db;
-    try {
-      // Try to initialize with long polling settings
-      // This will fail if already initialized, so we'll catch and use getFirestore
-      db = initializeFirestore(app, {
-        experimentalForceLongPolling: true,
-        experimentalAutoDetectLongPolling: true,
-      });
-    } catch (error) {
-      // If already initialized (e.g., hot reload), get the existing instance
-      console.log('Using existing Firestore instance');
-      db = getFirestore(app);
-    }
-
-    const auth = getAuth(app);
-    const storage = getStorage(app);
-
-    // Store in global to survive hot reloads
-    globalForFirebase._firebaseApp = app;
-    globalForFirebase._firebaseDb = db;
-    globalForFirebase._firebaseAuth = auth;
-    globalForFirebase._firebaseStorage = storage;
-    globalForFirebase._firebaseInitialized = true;
-
-    // Cleanup on hot module replacement
-    if (module.hot) {
-      module.hot.dispose(async () => {
-        try {
-          if (db) await terminate(db);
-          if (app) await deleteApp(app);
-        } catch (error) {
-          console.warn('Firebase cleanup warning:', error);
-        }
-        globalForFirebase._firebaseInitialized = false;
-      });
-    }
-
-    return { app, db, auth, storage };
-  } catch (error) {
-    console.error('Firebase initialization error:', error);
-    throw error;
-  }
-}
-
-// Initialize once
-const { app, db, auth, storage } = initializeFirebaseApp();
-
-export { auth, db, storage };
+// auth and storage are always needed — initialise eagerly
+export const auth = getAuth(app);
+export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// db is only needed on pages that use client-side Firestore reads.
+// Lazy-init via getter so pages that only need auth don't open a
+// Firestore WebChannel and generate noise 503s in the network tab.
+let _db = null;
+export const db = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      if (!_db) {
+        try {
+          _db = initializeFirestore(app, {
+            experimentalForceLongPolling: true,
+            experimentalAutoDetectLongPolling: true,
+          });
+        } catch {
+          _db = getFirestore(app);
+        }
+      }
+      const val = _db[prop];
+      return typeof val === 'function' ? val.bind(_db) : val;
+    },
+  }
+);
