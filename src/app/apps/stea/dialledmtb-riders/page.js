@@ -16,6 +16,41 @@ const DURATION_OPTIONS = [
   { value: 'lifetime', label: 'Lifetime' },
 ];
 
+function FlagRow({ label, description, enabled, onEnable, onDisable, disabled }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-neutral-900">{label}</p>
+        <p className="mt-0.5 text-xs text-neutral-500">{description}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+          enabled ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-500'
+        }`}>
+          {enabled ? 'Enabled' : 'Disabled'}
+        </span>
+        {enabled ? (
+          <button
+            onClick={onDisable}
+            disabled={disabled}
+            className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:border-neutral-300 hover:text-neutral-900 disabled:opacity-50"
+          >
+            Disable
+          </button>
+        ) : (
+          <button
+            onClick={onEnable}
+            disabled={disabled}
+            className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+          >
+            Enable
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DialledMTBRidersPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -32,6 +67,11 @@ export default function DialledMTBRidersPage() {
   const [grantSuccess, setGrantSuccess] = useState('');
   const [grantError, setGrantError] = useState('');
 
+  const [featureFlags, setFeatureFlags] = useState(null);
+  const [flagsLoading, setFlagsLoading] = useState(false);
+  const [flagError, setFlagError] = useState('');
+  const [featureNotes, setFeatureNotes] = useState('');
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -47,12 +87,33 @@ export default function DialledMTBRidersPage() {
     }
   }, [authReady, user, router]);
 
+  const fetchFeatureFlags = async (uid) => {
+    setFlagsLoading(true);
+    setFlagError('');
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch(`/api/dialledmtb/feature-flags?uid=${encodeURIComponent(uid)}`, {
+        headers: { 'x-id-token': idToken },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load feature flags');
+      setFeatureFlags(data.flags ?? { labsEnabled: false, nfcBikeSwitchEnabled: false });
+      setFeatureNotes(data.flags?.featureNotes ?? '');
+    } catch (err) {
+      setFlagError(err.message);
+    } finally {
+      setFlagsLoading(false);
+    }
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     setSearchError('');
     setGrantSuccess('');
     setGrantError('');
+    setFlagError('');
     setRider(null);
+    setFeatureFlags(null);
     setSearchDone(false);
     setSearching(true);
 
@@ -67,10 +128,34 @@ export default function DialledMTBRidersPage() {
       if (!res.ok) throw new Error(data.error || 'Search failed');
       setRider(data.user);
       setSearchDone(true);
+      if (data.user) {
+        await fetchFeatureFlags(data.user.uid);
+      }
     } catch (err) {
       setSearchError(err.message);
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleToggleFlag = async (flag, value) => {
+    if (!rider) return;
+    setFlagError('');
+    setFlagsLoading(true);
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/dialledmtb/feature-flags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: rider.uid, flag, value, featureNotes, idToken }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update flag');
+      setFeatureFlags(data.flags);
+    } catch (err) {
+      setFlagError(err.message);
+    } finally {
+      setFlagsLoading(false);
     }
   };
 
@@ -125,7 +210,7 @@ export default function DialledMTBRidersPage() {
           <div className="h-5 w-px bg-neutral-200" />
           <div>
             <h1 className="text-xl font-semibold text-neutral-900">Dialled MTB — Rider Management</h1>
-            <p className="text-sm text-neutral-500">Look up riders and grant RevenueCat trial entitlements</p>
+            <p className="text-sm text-neutral-500">Look up riders, grant trials, and manage feature access</p>
           </div>
         </div>
         <button
@@ -157,10 +242,7 @@ export default function DialledMTBRidersPage() {
           </button>
         </form>
 
-        {searchError && (
-          <p className="mt-3 text-sm text-red-600">{searchError}</p>
-        )}
-
+        {searchError && <p className="mt-3 text-sm text-red-600">{searchError}</p>}
         {searchDone && !rider && !searchError && (
           <p className="mt-3 text-sm text-neutral-500">No rider found for that email.</p>
         )}
@@ -187,7 +269,9 @@ export default function DialledMTBRidersPage() {
             <div>
               <p className="text-xs font-medium text-neutral-400 uppercase tracking-wide">Joined</p>
               <p className="mt-0.5 text-neutral-900">
-                {rider.createdAt ? new Date(rider.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                {rider.createdAt
+                  ? new Date(rider.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '—'}
               </p>
             </div>
             <div>
@@ -218,8 +302,61 @@ export default function DialledMTBRidersPage() {
             </div>
           </div>
 
-          {/* Grant entitlement */}
+          {/* Feature Access */}
           <div className="border-t border-neutral-100 pt-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-neutral-900">Feature Access / Labs</h3>
+              {featureFlags?.updatedAt && (
+                <p className="text-xs text-neutral-400">
+                  Last updated {new Date(featureFlags.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {featureFlags.updatedBy ? ` by ${featureFlags.updatedBy}` : ''}
+                </p>
+              )}
+            </div>
+
+            {flagsLoading && !featureFlags && (
+              <p className="py-3 text-sm text-neutral-400">Loading flags…</p>
+            )}
+
+            {featureFlags && (
+              <div className="divide-y divide-neutral-100">
+                <FlagRow
+                  label="Labs enabled"
+                  description="Shows the Labs section in Settings and allows access to experimental features."
+                  enabled={featureFlags.labsEnabled}
+                  onEnable={() => handleToggleFlag('labsEnabled', true)}
+                  onDisable={() => handleToggleFlag('labsEnabled', false)}
+                  disabled={flagsLoading}
+                />
+                <FlagRow
+                  label="NFC Bike Switch"
+                  description="Enables the NFC Bike Quick Switch feature inside Labs. Requires Labs enabled + Premium subscription."
+                  enabled={featureFlags.nfcBikeSwitchEnabled}
+                  onEnable={() => handleToggleFlag('nfcBikeSwitchEnabled', true)}
+                  onDisable={() => handleToggleFlag('nfcBikeSwitchEnabled', false)}
+                  disabled={flagsLoading}
+                />
+              </div>
+            )}
+
+            <div className="mt-4">
+              <label className="mb-1.5 block text-xs font-medium text-neutral-500">
+                Feature notes / reason (saved with next toggle)
+              </label>
+              <input
+                type="text"
+                value={featureNotes}
+                onChange={(e) => setFeatureNotes(e.target.value)}
+                placeholder="e.g. Friendlies tester, NFC tag received"
+                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+              />
+            </div>
+
+            {flagError && <p className="mt-3 text-sm text-red-600">{flagError}</p>}
+          </div>
+
+          {/* Grant entitlement */}
+          <div className="border-t border-neutral-100 pt-5 mt-5">
             <h3 className="mb-3 text-sm font-semibold text-neutral-900">Grant RevenueCat trial</h3>
             <div className="flex items-center gap-3">
               <select
@@ -240,12 +377,8 @@ export default function DialledMTBRidersPage() {
               </button>
             </div>
 
-            {grantSuccess && (
-              <p className="mt-3 text-sm text-green-700">{grantSuccess}</p>
-            )}
-            {grantError && (
-              <p className="mt-3 text-sm text-red-600">{grantError}</p>
-            )}
+            {grantSuccess && <p className="mt-3 text-sm text-green-700">{grantSuccess}</p>}
+            {grantError && <p className="mt-3 text-sm text-red-600">{grantError}</p>}
           </div>
         </div>
       )}
