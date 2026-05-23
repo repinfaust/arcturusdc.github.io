@@ -28,26 +28,16 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// db is only needed on pages that use client-side Firestore reads.
-// Lazy-init via getter so pages that only need auth don't open a
-// Firestore WebChannel and generate noise 503s in the network tab.
-let _db = null;
-export const db = new Proxy(
-  {},
-  {
-    get(_target, prop) {
-      if (!_db) {
-        try {
-          _db = initializeFirestore(app, {
-            experimentalForceLongPolling: true,
-            experimentalAutoDetectLongPolling: true,
-          });
-        } catch {
-          _db = getFirestore(app);
-        }
-      }
-      const val = _db[prop];
-      return typeof val === 'function' ? val.bind(_db) : val;
-    },
-  }
-);
+// Initialise Firestore eagerly on the client (server guard above handles SSR).
+// The Proxy lazy-init approach was broken — Firebase SDK uses instanceof checks
+// that a Proxy cannot satisfy, causing collection()/doc() calls to throw.
+let db;
+try {
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
+  });
+} catch {
+  db = getFirestore(app);
+}
+export { db };
