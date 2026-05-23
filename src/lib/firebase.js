@@ -14,30 +14,30 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Server-side: return nulls, all Firebase ops must be client-only
-if (typeof window === 'undefined') {
-  module.exports = { auth: null, db: null, storage: null, googleProvider: null };
-  // eslint-disable-next-line no-throw-literal
-  throw 'firebase.js imported server-side — use firebaseAdmin instead';
+// All Firebase ops are client-only. On the server (SSR) export nulls so that
+// SSR of client components succeeds without throwing a 500. Do NOT throw here —
+// the original throw caused HTTP 500 responses when Next.js SSR'd client
+// components that import this file.
+let auth = null;
+let db = null;
+let storage = null;
+let googleProvider = null;
+
+if (typeof window !== 'undefined') {
+  const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
+
+  auth = getAuth(app);
+  storage = getStorage(app);
+  googleProvider = new GoogleAuthProvider();
+
+  try {
+    db = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: true,
+    });
+  } catch {
+    db = getFirestore(app);
+  }
 }
 
-const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
-
-// auth and storage are always needed — initialise eagerly
-export const auth = getAuth(app);
-export const storage = getStorage(app);
-export const googleProvider = new GoogleAuthProvider();
-
-// Initialise Firestore eagerly on the client (server guard above handles SSR).
-// The Proxy lazy-init approach was broken — Firebase SDK uses instanceof checks
-// that a Proxy cannot satisfy, causing collection()/doc() calls to throw.
-let db;
-try {
-  db = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
-    experimentalAutoDetectLongPolling: true,
-  });
-} catch {
-  db = getFirestore(app);
-}
-export { db };
+export { auth, db, storage, googleProvider };
