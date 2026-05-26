@@ -205,14 +205,6 @@ function AppFeature({ app, index }) {
             <dt className="text-[#1c1c1a]/45">Platform</dt>
             <dd className="text-right">{platformLabel(app)}</dd>
           </div>
-          <div className="flex justify-between gap-4 border-b border-dashed border-[#1c1c1a]/25 pb-3">
-            <dt className="text-[#1c1c1a]/45">Privacy</dt>
-            <dd className="text-right">Designed in</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[#1c1c1a]/45">Asset</dt>
-            <dd className="text-right">Actual logo</dd>
-          </div>
         </dl>
       </aside>
     </article>
