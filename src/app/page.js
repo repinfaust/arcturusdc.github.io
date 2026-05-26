@@ -1,6 +1,4 @@
-import Hero from "@/components/Hero";
-import HeroWithCapabilities from "@/components/HeroWithCapabilities";
-import HeroWithApps from "@/components/HeroWithApps";
+import ArcturusRefreshHome from "@/components/ArcturusRefreshHome";
 
 export const metadata = {
   title: "Arcturus Digital Consulting",
@@ -9,16 +7,5 @@ export const metadata = {
 };
 
 export default function Home() {
-  return (
-    <main className="relative">
-      {/* HERO */}
-      <Hero />
-
-      {/* CAPABILITIES */}
-      <HeroWithCapabilities />
-
-      {/* APPS */}
-      <HeroWithApps />
-    </main>
-  );
+  return <ArcturusRefreshHome />;
 }
