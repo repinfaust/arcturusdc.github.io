@@ -29,6 +29,7 @@ export default function AppCardProduct({ app }) {
   const label = STATUS_LABEL[status] || STATUS_LABEL.development;
   const cta = app.ctaLabel || defaultCta(status);
   const accent = app.cardAccent;
+  const isWideLogo = app.id === "dialled-mtb";
 
   const tier =
     status === "live"
@@ -60,7 +61,7 @@ export default function AppCardProduct({ app }) {
     : "inline-flex items-center text-sm font-medium text-[#1a1a1a] underline-offset-4 decoration-brand/70 hover:underline hover:text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-2 rounded-sm";
 
   const iconClass = [
-    "relative flex h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-white transition-[transform,box-shadow] duration-200 motion-reduce:group-hover:translate-y-0 group-hover:-translate-y-px",
+    `relative flex h-12 ${isWideLogo ? "w-24" : "w-12"} shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-white transition-[transform,box-shadow] duration-200 motion-reduce:group-hover:translate-y-0 group-hover:-translate-y-px`,
     accent ? "app-card-icon shadow-sm" : "",
     !accent && tier === "live"
       ? "motion-reduce:group-hover:shadow-sm group-hover:shadow-[0_0_0_3px_rgba(240,69,47,0.12)] shadow-sm"
@@ -127,7 +128,7 @@ export default function AppCardProduct({ app }) {
                 <img
                   src={app.icon}
                   alt=""
-                  className="h-full w-full object-cover"
+                  className={`h-full w-full ${isWideLogo ? "object-contain p-1.5" : "object-cover"}`}
                   loading="lazy"
                 />
               ) : (

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import appsData from "@/data/apps.json";
 
-const LIVE_APP_IDS = ["adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket"];
+const LIVE_APP_IDS = ["adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
 const DEV_APP_IDS = ["rehabpath", "apex-twin", "assumezero"];
 const DISPLAY_OVERRIDES = {
   "apex-twin": { name: "Apex State" },
@@ -49,7 +49,14 @@ const statusLabel = {
 };
 
 function AppLogo({ app, large = false }) {
-  const size = large ? "h-24 w-24 sm:h-28 sm:w-28" : "h-16 w-16";
+  const isWideLogo = app.id === "dialled-mtb";
+  const size = isWideLogo
+    ? large
+      ? "h-24 w-48 sm:h-28 sm:w-56"
+      : "h-14 w-28"
+    : large
+      ? "h-24 w-24 sm:h-28 sm:w-28"
+      : "h-16 w-16";
   const isSvg = app.icon?.endsWith(".svg");
 
   if (!app.icon) {
@@ -70,7 +77,7 @@ function AppLogo({ app, large = false }) {
         src={app.icon}
         alt={`${app.name} logo`}
         loading="eager"
-        className={`h-full w-full ${isSvg ? "object-contain p-2" : "object-cover"}`}
+        className={`h-full w-full ${isSvg || isWideLogo ? "object-contain p-2" : "object-cover"}`}
       />
     </span>
   );
@@ -216,7 +223,6 @@ export default function ArcturusRefreshHome() {
         <div className="mx-auto flex min-h-[56vh] max-w-7xl flex-col justify-between gap-8">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#1c1c1a]/50 pb-4 font-mono text-xs uppercase tracking-[0.14em]">
             <span>Arcturus Digital Consulting</span>
-            <span className="text-[#f0452f]">Open for work · Nottingham, UK</span>
           </div>
 
           <div className="grid items-end gap-10 lg:grid-cols-[1.45fr_0.55fr]">
@@ -251,7 +257,7 @@ export default function ArcturusRefreshHome() {
             </div>
           </div>
 
-          <div className="grid border border-[#1c1c1a] bg-[#e3dcc9]/80 sm:grid-cols-3">
+          <div className="grid border border-[#1c1c1a] bg-[#e3dcc9]/80 sm:grid-cols-2">
             {[
               ["Live apps", String(liveApps.length).padStart(2, "0")],
               ["Catalogue", String(liveApps.length + upcomingApps.length).padStart(2, "0")],

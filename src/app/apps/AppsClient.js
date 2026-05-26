@@ -17,12 +17,27 @@ const SECTIONS = [
 ];
 
 const PAGE_GUTTER = "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
+const DISPLAY_APP_IDS = [
+  "adhd-acclaim",
+  "unload",
+  "toume",
+  "dialled-mtb",
+  "sprocket",
+  "mandrake",
+  "rehabpath",
+  "apex-twin",
+  "assumezero",
+];
 
 export default function AppsClient({ apps }) {
+  const visibleApps = DISPLAY_APP_IDS
+    .map((id) => apps.find((app) => app.id === id))
+    .filter(Boolean);
+
   return (
     <div className="space-y-14 sm:space-y-16 lg:space-y-20">
       {SECTIONS.map(({ status, title, intro }) => {
-        const list = apps.filter((a) => a.status === status);
+        const list = visibleApps.filter((a) => a.status === status);
         if (!list.length) return null;
 
         const cols =
