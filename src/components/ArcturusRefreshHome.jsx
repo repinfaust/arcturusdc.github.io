@@ -48,6 +48,16 @@ const statusLabel = {
   development: "In development",
 };
 
+function platformLabel(app) {
+  if (app.availability?.length) {
+    return app.availability
+      .map((platform) => (platform === "ios" ? "iOS" : platform.charAt(0).toUpperCase() + platform.slice(1)))
+      .join(" / ");
+  }
+
+  return app.appStoreUrl ? "iOS" : "Web";
+}
+
 function AppLogo({ app, large = false }) {
   const isWideLogo = app.id === "dialled-mtb";
   const size = isWideLogo
@@ -93,6 +103,8 @@ function StatusDot({ live }) {
 }
 
 function AppFeature({ app, index }) {
+  const hasStoreLinks = Boolean(app.appStoreUrl || app.googlePlayUrl);
+
   return (
     <article className="grid border-b border-[#1c1c1a] bg-[#ece6d8] lg:grid-cols-[0.72fr_1.28fr_0.75fr]">
       <Link
@@ -132,22 +144,43 @@ function AppFeature({ app, index }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {app.appStoreUrl ? (
-            <Link
-              href={app.appStoreUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex border border-[#1c1c1a] bg-[#1c1c1a] px-3 py-2 text-white transition-colors hover:bg-[#f0452f]"
-              aria-label={`Download ${app.name} on the App Store`}
-            >
-              <Image
-                src="/assets/badges/download-on-the-app-store.svg"
-                alt="Download on the App Store"
-                width={120}
-                height={40}
-                className="h-9 w-auto invert"
-              />
-            </Link>
+          {hasStoreLinks ? (
+            <div className="flex flex-wrap items-center gap-3">
+              {app.appStoreUrl ? (
+                <Link
+                  href={app.appStoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex border border-[#1c1c1a] bg-[#1c1c1a] px-3 py-2 text-white transition-colors hover:bg-[#f0452f]"
+                  aria-label={`Download ${app.name} on the App Store`}
+                >
+                  <Image
+                    src="/assets/badges/download-on-the-app-store.svg"
+                    alt="Download on the App Store"
+                    width={120}
+                    height={40}
+                    className="h-9 w-auto invert"
+                  />
+                </Link>
+              ) : null}
+              {app.googlePlayUrl ? (
+                <Link
+                  href={app.googlePlayUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex border border-[#1c1c1a] bg-[#1c1c1a] px-3 py-2 transition-colors hover:bg-[#f0452f]"
+                  aria-label={`Get ${app.name} on Google Play`}
+                >
+                  <Image
+                    src="/assets/badges/google-play-badge.png"
+                    alt="Get it on Google Play"
+                    width={135}
+                    height={40}
+                    className="h-9 w-auto"
+                  />
+                </Link>
+              ) : null}
+            </div>
           ) : null}
           <Link
             href={app.link || `/apps/${app.id}`}
@@ -170,7 +203,7 @@ function AppFeature({ app, index }) {
           </div>
           <div className="flex justify-between gap-4 border-b border-dashed border-[#1c1c1a]/25 pb-3">
             <dt className="text-[#1c1c1a]/45">Platform</dt>
-            <dd className="text-right">{app.appStoreUrl ? "iOS" : "Web / iOS"}</dd>
+            <dd className="text-right">{platformLabel(app)}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-dashed border-[#1c1c1a]/25 pb-3">
             <dt className="text-[#1c1c1a]/45">Privacy</dt>

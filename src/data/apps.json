@@ -12,6 +12,8 @@
     "desc": "Voice-first support for reminders, admin tasks, and difficult messages.",
     "link": "/apps/sprocket",
     "appStoreUrl": "https://apps.apple.com/us/app/sprocket-calm-phone-helper/id6759454436",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.sprockethelper.app",
+    "availability": ["android", "ios"],
     "icon": "/img/sprocket-logo.png",
     "bg": "/img/sprocket-hero-bg.svg"
   },
@@ -28,6 +30,8 @@
     "desc": "A voice-first way to set things down and feel lighter.",
     "link": "/apps/unload",
     "appStoreUrl": "https://apps.apple.com/us/app/unload-app/id6758965862",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.arcturusdc.unloadapp",
+    "availability": ["android", "ios"],
     "icon": "/img/unload-logo.svg",
     "bg": "/img/unload-hero-bg.svg"
   },
@@ -44,6 +48,8 @@
     "desc": "Gamified rewards to celebrate wins and encourage progress.",
     "link": "/apps/adhd-acclaim",
     "appStoreUrl": "https://apps.apple.com/us/app/adhdacclaim/id6754703402",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.adhdacclaim.app",
+    "availability": ["android", "ios"],
     "icon": "/img/adhdacclaim_logo_1024x1024.png",
     "bg": "/img/adhdacclaim-card-background.png"
   },
@@ -55,6 +61,8 @@
     "summary": "Tou.me is a shared-care organiser for families and support circles. It simplifies coordination between parents, relatives, and carers with lightweight scheduling and clear roles. Built to reduce friction and keep everyone on the same page, Tou.me helps households focus more on connection, less on admin.",
     "desc": "For you, for me, for them.",
     "link": "/apps/toume",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.arcturusdc.toumecoparent",
+    "availability": ["android"],
     "icon": "/img/tou.me_logo.jpeg",
     "bg": "/img/toume-card-background.png",
     "policies": [
@@ -76,8 +84,11 @@
     "summary": "Dialled MTB is a maintenance and setup app for mountain bikers, combining passive Strava ride sync, structured service tracking, setup calculations, and contextual AI support.",
     "desc": "Maintenance tracking, setup guidance, and AI support for MTB riders.",
     "link": "/apps/dialled-mtb",
+    "appStoreUrl": "https://apps.apple.com/us/app/dialled-mtb/id6760664613",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.arcturusdc.dialledmtb",
+    "availability": ["android", "ios"],
     "icon": "/img/dialled-mtb-logo-wordmark.png",
-    "bg": "/img/dialled-mtb-card-background.svg"
+    "bg": null
   },
   {
     "id": "mandrake",
@@ -87,6 +98,8 @@
     "summary": "Mandrake helps you self-manage urges with awareness and choice, turning each one into practice instead of pressure. With a breath and a move, you redirect the pull and record it in seconds, building a repertoire that strengthens your form. Over time, the shadow stops being just a test — it becomes the trainer that sharpens your rhythm and restores your balance.",
     "desc": "Private urge logging, quick tactics, and pattern insights.",
     "link": "/apps/mandrake",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.repinfaust.mandrake",
+    "availability": ["android"],
     "icon": "/img/mandrake-app-logo.png",
     "bg": "/img/mandrake-card-background.png"
   },

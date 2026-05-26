@@ -22,6 +22,16 @@ export function defaultCta(status) {
   }
 }
 
+function platformLabel(app) {
+  if (app.availability?.length) {
+    return app.availability
+      .map((platform) => (platform === "ios" ? "iOS" : platform.charAt(0).toUpperCase() + platform.slice(1)))
+      .join(" / ");
+  }
+
+  return app.appStoreUrl ? "iOS" : "Web";
+}
+
 export default function AppCardProduct({ app }) {
   const href = app.link || `/apps/${app.id}`;
   const strap = app.strap || app.desc || "";
@@ -30,6 +40,7 @@ export default function AppCardProduct({ app }) {
   const cta = app.ctaLabel || defaultCta(status);
   const accent = app.cardAccent;
   const isWideLogo = app.id === "dialled-mtb";
+  const hasStoreLinks = Boolean(app.appStoreUrl || app.googlePlayUrl);
 
   const tier =
     status === "live"
@@ -78,10 +89,10 @@ export default function AppCardProduct({ app }) {
       style={articleStyle}
       className={`group relative flex h-full flex-col overflow-hidden rounded-2xl transition-[transform,box-shadow,border-color] duration-200 ease-out ${cardClass} ${
         tier === "live"
-          ? app.appStoreUrl
+          ? hasStoreLinks
             ? "min-h-0 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             : "min-h-[280px] sm:min-h-[300px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
-          : app.appStoreUrl
+          : hasStoreLinks
             ? "min-h-0 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
             : "min-h-[260px] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
       }`}
@@ -117,7 +128,7 @@ export default function AppCardProduct({ app }) {
 
       <div
         className={`relative flex h-full flex-col ${
-          app.appStoreUrl ? "p-4 pb-4 sm:p-5 sm:pb-5" : "p-5 sm:p-6"
+          hasStoreLinks ? "p-4 pb-4 sm:p-5 sm:pb-5" : "p-5 sm:p-6"
         }`}
       >
         <div className="flex items-start justify-between gap-3">
@@ -167,40 +178,63 @@ export default function AppCardProduct({ app }) {
         {strap ? (
           <p
             className={`text-sm sm:text-[0.9375rem] leading-relaxed text-[#555] ${
-              app.appStoreUrl
+              hasStoreLinks
                 ? "mt-3"
                 : "mt-4 flex-1"
             }`}
           >
             {strap}
           </p>
-        ) : !app.appStoreUrl ? (
+        ) : !hasStoreLinks ? (
           <div className="flex-1" />
         ) : null}
 
-        {app.appStoreUrl ? (
-          <div className="mt-3 flex justify-center sm:mt-3.5">
-            <Link
-              href={app.appStoreUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex max-w-full rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/30 focus-visible:ring-offset-2"
-              aria-label={`Download ${app.name} on the App Store (opens in a new tab)`}
-            >
-              <Image
-                src="/assets/badges/download-on-the-app-store.svg"
-                width={120}
-                height={40}
-                alt="Download on the App Store"
-                className="h-auto w-full max-w-[118px] sm:max-w-[120px]"
-              />
-            </Link>
+        <p className="mt-3 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-[#777]">
+          {platformLabel(app)}
+        </p>
+
+        {hasStoreLinks ? (
+          <div className="mt-3 flex flex-wrap justify-center gap-2 sm:mt-3.5">
+            {app.appStoreUrl ? (
+              <Link
+                href={app.appStoreUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex max-w-full rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/30 focus-visible:ring-offset-2"
+                aria-label={`Download ${app.name} on the App Store (opens in a new tab)`}
+              >
+                <Image
+                  src="/assets/badges/download-on-the-app-store.svg"
+                  width={120}
+                  height={40}
+                  alt="Download on the App Store"
+                  className="h-auto w-full max-w-[118px] sm:max-w-[120px]"
+                />
+              </Link>
+            ) : null}
+            {app.googlePlayUrl ? (
+              <Link
+                href={app.googlePlayUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex max-w-full rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800/30 focus-visible:ring-offset-2"
+                aria-label={`Get ${app.name} on Google Play (opens in a new tab)`}
+              >
+                <Image
+                  src="/assets/badges/google-play-badge.png"
+                  width={135}
+                  height={40}
+                  alt="Get it on Google Play"
+                  className="h-auto w-full max-w-[128px] sm:max-w-[135px]"
+                />
+              </Link>
+            ) : null}
           </div>
         ) : null}
 
         <div
           className={
-            app.appStoreUrl
+            hasStoreLinks
               ? "mt-3 border-t border-black/[0.04] sm:mt-3.5"
               : "mt-5 border-t border-black/[0.04] pt-4"
           }
@@ -212,7 +246,7 @@ export default function AppCardProduct({ app }) {
               : undefined
           }
         >
-          {!app.appStoreUrl ? (
+          {!hasStoreLinks ? (
             <Link href={href} className={ctaLinkClass}>
               {cta}
               <span className="ml-1 transition-transform duration-200 motion-reduce:group-hover:translate-x-0 group-hover:translate-x-0.5">
