@@ -138,7 +138,7 @@ function WalkthroughVideo() {
     <section className="grid gap-8 border-b border-[#DDE4DE] py-14 sm:py-16 lg:grid-cols-[260px_1fr]">
       <SectionHeading eyebrow="Walkthrough" title="Patient experience on iPhone" />
       <div>
-        <div className="w-full max-w-[340px]">
+        <div className="mx-auto w-full max-w-[340px] lg:mx-0">
           <PhoneVideo />
         </div>
         <p className="mt-3 text-sm text-[#667570]">
@@ -266,7 +266,7 @@ function PilotProgramme() {
         </p>
         <div className="mt-7">
           <Link
-            href="mailto:hello@arcturusdc.com?subject=RehabPath%20pilot"
+            href="mailto:info@arcturusdc.com?subject=RehabPath%20pilot"
             className="inline-flex rounded-lg border border-[#AEBDB5] bg-white px-5 py-3 text-sm font-semibold text-[#17211E] hover:border-[#7E9288] hover:bg-[#F3F6F4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4B6F68]/35 focus-visible:ring-offset-2"
           >
             Contact ArcturusDC about the pilot
