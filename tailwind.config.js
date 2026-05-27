@@ -14,6 +14,13 @@ module.exports = {
         ink: '#1C1C1C',
         muted: '#6A6A6A',
         paper: '#F8F4EE',
+        // Dialled MTB design tokens
+        dialled: {
+          bg: '#121214',
+          accent: '#E8196E',
+          text: '#C8C8D8',
+          border: '#4A1A2D',
+        },
         // ApexTwin Design System
         apex: {
           carbon: '#0B0B0C',

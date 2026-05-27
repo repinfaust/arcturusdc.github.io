@@ -10,7 +10,7 @@ export default function DialledMtb() {
   return (
     <main className="pb-10">
       <div className="card p-4 flex items-start gap-3 mt-2">
-        <div className="rounded-2xl border border-black/10 bg-[#121214] p-2 flex items-center justify-center" style={{ width: 64, height: 64 }}>
+        <div className="rounded-2xl border border-black/10 bg-dialled-bg p-2 flex items-center justify-center" style={{ width: 64, height: 64 }}>
           <Image
             src="/img/dialled-mtb-logo.svg"
             width={48}
@@ -20,7 +20,7 @@ export default function DialledMtb() {
           />
         </div>
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-[#121214]">DIALLED MTB</h1>
+          <h1 className="text-2xl font-black tracking-tight text-dialled-bg">DIALLED MTB</h1>
           <div className="text-muted text-sm">Keep your bike dialled. Know when to service it. Set it up right.</div>
           <p className="mt-2 text-sm text-neutral-700">
             Dialled MTB is the complete tool kit for mountain bikers who take their riding seriously —
@@ -32,8 +32,8 @@ export default function DialledMtb() {
       <section className="relative mt-3 overflow-hidden rounded-2xl border border-black/10">
         <div className="absolute inset-0 -z-10">
           <Image src="/img/dialled-mtb-card-background.svg" alt="" fill className="object-cover" priority />
-          <div className="absolute inset-0 bg-[#121214]/60" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#E8196E]/10 via-transparent to-[#121214]/40" />
+          <div className="absolute inset-0 bg-dialled-bg/60" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-dialled-accent/10 via-transparent to-dialled-bg/40" />
         </div>
 
         <div className="p-6 md:p-10">
@@ -41,7 +41,7 @@ export default function DialledMtb() {
             <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
               Inside Dialled MTB
             </h2>
-            <p className="mt-3 text-[#C8C8D8] max-w-2xl mx-auto">
+            <p className="mt-3 text-dialled-text max-w-2xl mx-auto">
               Built for trail riders, enduro racers, and everyone in between.
             </p>
           </div>
@@ -50,11 +50,11 @@ export default function DialledMtb() {
             <div className="relative max-w-4xl mx-auto flex justify-center">
               <div
                 className="w-full aspect-video rounded-xl border overflow-hidden flex flex-col items-center justify-center gap-4"
-                style={{ borderColor: '#4A1A2D', background: 'linear-gradient(180deg, rgba(232,25,110,0.12), rgba(18,18,20,0.92))' }}
+                style={{ borderColor: '#4A1A2D', background: 'linear-gradient(180deg, rgb(232 25 110 / 0.12), rgb(18 18 20 / 0.92))' }}
               >
                 <DialledMark size={56} />
                 <div className="text-center">
-                  <p className="text-xs font-black uppercase tracking-[0.24em]" style={{ color: '#E8196E' }}>
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-dialled-accent">
                     Coming Soon
                   </p>
                   <p className="mt-2 text-base font-semibold text-white">Product walkthrough video in production</p>
@@ -161,12 +161,12 @@ export default function DialledMtb() {
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
         <ul className="space-y-2 text-sm">
           <li>
-            <Link href="/apps/dialled-mtb/privacy-policy" className="text-[#E8196E] hover:underline">
+            <Link href="/apps/dialled-mtb/privacy-policy" className="text-dialled-accent hover:underline">
               Privacy Policy
             </Link>
           </li>
           <li>
-            <Link href="/apps/dialled-mtb/terms-of-use" className="text-[#E8196E] hover:underline">
+            <Link href="/apps/dialled-mtb/terms-of-use" className="text-dialled-accent hover:underline">
               Terms of Use
             </Link>
           </li>
@@ -230,12 +230,12 @@ function Feature({ title, desc, icon = 'dot' }) {
 
   return (
     <div className="flex items-start gap-3">
-      <span className="shrink-0 mt-1 grid place-items-center rounded-lg border p-2 shadow-sm" style={{ borderColor: '#4A1A2D', background: 'rgba(232,25,110,0.12)', color: '#E8196E' }}>
+      <span className="shrink-0 mt-1 grid place-items-center rounded-lg border border-dialled-border p-2 shadow-sm text-dialled-accent" style={{ background: 'rgb(232 25 110 / 0.12)' }}>
         {icons[icon]}
       </span>
       <div>
         <h4 className="font-semibold text-white">{title}</h4>
-        <p className="text-[#C8C8D8] text-sm">{desc}</p>
+        <p className="text-dialled-text text-sm">{desc}</p>
       </div>
     </div>
   );
@@ -248,7 +248,7 @@ function AccordionItem({ question, children }) {
         <span className="text-base font-semibold select-none">{question}</span>
         <Chevron />
       </summary>
-      <div className="px-4 pb-4 pt-0 text-[#C8C8D8] text-sm leading-relaxed">{children}</div>
+      <div className="px-4 pb-4 pt-0 text-dialled-text text-sm leading-relaxed">{children}</div>
     </details>
   );
 }
