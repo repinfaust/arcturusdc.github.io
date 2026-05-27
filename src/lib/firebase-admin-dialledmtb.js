@@ -19,12 +19,20 @@ function parseServiceAccount() {
   // value into literal newlines, breaking JSON.parse. Re-escape them.
   try {
     return JSON.parse(trimmed);
-  } catch {
-    const sanitized = trimmed.replace(
-      /("private_key"\s*:\s*")([\s\S]*?)(")/,
-      (_, prefix, key, suffix) => prefix + key.replace(/\n/g, '\\n') + suffix,
-    );
-    return JSON.parse(sanitized);
+  } catch (firstErr) {
+    let sanitized;
+    try {
+      sanitized = trimmed.replace(
+        /("private_key"\s*:\s*")([\s\S]*?)(")/,
+        (_, prefix, key, suffix) => prefix + key.replace(/\n/g, '\\n') + suffix,
+      );
+      return JSON.parse(sanitized);
+    } catch (secondErr) {
+      console.error('[firebase-admin-dialledmtb] JSON parse failed after newline fix:', secondErr.message);
+      console.error('[firebase-admin-dialledmtb] original error:', firstErr.message);
+      console.error('[firebase-admin-dialledmtb] env var length:', trimmed.length, 'starts with:', trimmed.slice(0, 30));
+      throw secondErr;
+    }
   }
 }
 

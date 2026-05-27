@@ -97,7 +97,7 @@ export default function DialledMTBRidersPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load feature flags');
-      setFeatureFlags(data.flags ?? { labsEnabled: false, nfcBikeSwitchEnabled: false });
+      setFeatureFlags(data.flags ?? { labsEnabled: false, nfcBikeSwitchEnabled: false, coach_mode_v1: false });
       setFeatureNotes(data.flags?.featureNotes ?? '');
     } catch (err) {
       setFlagError(err.message);
@@ -334,6 +334,14 @@ export default function DialledMTBRidersPage() {
                   enabled={featureFlags.nfcBikeSwitchEnabled}
                   onEnable={() => handleToggleFlag('nfcBikeSwitchEnabled', true)}
                   onDisable={() => handleToggleFlag('nfcBikeSwitchEnabled', false)}
+                  disabled={flagsLoading}
+                />
+                <FlagRow
+                  label="Coach Mode"
+                  description="Enables Coach Mode inside Labs — allows rider to create timed share links for coaches and mechanics."
+                  enabled={featureFlags.coach_mode_v1}
+                  onEnable={() => handleToggleFlag('coach_mode_v1', true)}
+                  onDisable={() => handleToggleFlag('coach_mode_v1', false)}
                   disabled={flagsLoading}
                 />
               </div>
