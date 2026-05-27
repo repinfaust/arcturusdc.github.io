@@ -1,8 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const video = {
+const heroPreview = {
   src: "/vid/rehabpath-demo.gif",
+};
+
+const walkthroughVideo = {
+  src: "/vid/rehabpath-demo.mp4",
+  poster: "/img/rehabpath/onboarding.png",
 };
 
 const screenshots = [
@@ -134,7 +139,7 @@ function WalkthroughVideo() {
       <SectionHeading eyebrow="Walkthrough" title="Patient experience on iPhone" />
       <div>
         <div className="w-full max-w-[340px]">
-          <PhoneGif />
+          <PhoneVideo />
         </div>
         <p className="mt-3 text-sm text-[#667570]">
           60-second walkthrough of the patient experience on iPhone
@@ -288,12 +293,27 @@ function PhoneGif({ priority = false }) {
     <div className="overflow-hidden rounded-[28px] border border-[#D3DDD6] bg-white p-3 shadow-soft">
       <Image
         className="aspect-[295/640] w-full rounded-[20px] object-cover"
-        src={video.src}
+        src={heroPreview.src}
         width={295}
         height={640}
         alt="Animated RehabPath patient walkthrough on iPhone"
         priority={priority}
         unoptimized
+      />
+    </div>
+  );
+}
+
+function PhoneVideo() {
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-[#D3DDD6] bg-white p-3 shadow-soft">
+      <video
+        className="aspect-[295/640] w-full rounded-[20px] bg-[#F7F8F6] object-cover"
+        src={walkthroughVideo.src}
+        poster={walkthroughVideo.poster}
+        controls
+        preload="metadata"
+        playsInline
       />
     </div>
   );
