@@ -2,40 +2,39 @@ import Image from "next/image";
 import Link from "next/link";
 
 const video = {
-  src: "/vid/rehabpath-demo.mp4",
-  poster: "/img/rehabpath-card-background.png",
+  src: "/vid/rehabpath-demo.gif",
 };
 
 const screenshots = [
   {
-    src: "/img/rehabpath-card-background.png",
-    alt: "RehabPath welcome screen on iPhone",
+    src: "/img/rehabpath/onboarding.png",
+    alt: "RehabPath onboarding screen on iPhone",
     caption: "Onboarding — clear recovery guidance before use",
   },
   {
-    src: "/img/rehabpath-card-background.png",
-    alt: "RehabPath daily activity log screen placeholder",
+    src: "/img/rehabpath/activity-log.png",
+    alt: "RehabPath daily activity log screen on iPhone",
     caption: "Daily activity log — split between ADL and exercise",
   },
   {
-    src: "/img/rehabpath-card-background.png",
-    alt: "RehabPath symptom tracking screen placeholder",
+    src: "/img/rehabpath/symptom-log.png",
+    alt: "RehabPath symptom tracking screen on iPhone",
     caption: "Symptom tracking — pain, stiffness and DOMS on a 0-10 scale",
   },
   {
-    src: "/img/rehabpath-card-background.png",
-    alt: "RehabPath progress overlay screen placeholder",
+    src: "/img/rehabpath/progress-summary.png",
+    alt: "RehabPath progress summary screen on iPhone",
     caption: "Progress overlay — activity volume against symptom trend",
   },
   {
-    src: "/img/rehabpath-card-background.png",
-    alt: "RehabPath milestone progress screen placeholder",
+    src: "/img/rehabpath/milestones.png",
+    alt: "RehabPath milestone progress screen on iPhone",
     caption: "Milestones — visible progress through the recovery path",
   },
   {
-    src: "/img/rehabpath-card-background.png",
-    alt: "RehabPath adherence screen placeholder",
-    caption: "Exercise adherence — simple completion without clinician monitoring",
+    src: "/img/rehabpath/exercise-detail.png",
+    alt: "RehabPath exercise detail screen on iPhone",
+    caption: "Exercise detail — steps, safety note and completion action",
   },
 ];
 
@@ -144,13 +143,13 @@ function WalkthroughVideo() {
       <SectionHeading eyebrow="Walkthrough" title="Patient experience on iPhone" />
       <div>
         <div className="overflow-hidden rounded-lg border border-[#D3DDD6] bg-[#111817]">
-          <video
-            className="aspect-video w-full bg-[#111817] object-contain"
+          <Image
+            className="mx-auto aspect-[295/640] max-h-[720px] w-auto bg-[#111817] object-contain"
             src={video.src}
-            poster={video.poster}
-            controls
-            preload="metadata"
-            playsInline
+            width={295}
+            height={640}
+            alt="Animated RehabPath patient walkthrough on iPhone"
+            unoptimized
           />
         </div>
         <p className="mt-3 text-sm text-[#667570]">
