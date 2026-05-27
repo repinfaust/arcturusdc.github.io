@@ -176,17 +176,12 @@ function DueStateBadge({ state }) {
 }
 
 // ---------------------------------------------------------------------------
-// Dialled wordmark
+// Dialled logo
 // ---------------------------------------------------------------------------
 
 function DialledMark({ size = 48 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 60 60" fill="none" aria-hidden="true">
-      <polygon points="30,7 54,51 6,51" stroke="#E8ECF0" strokeWidth="2.2" fill="none" strokeLinejoin="round" />
-      <polygon points="30,20 42,42 18,42" fill="#E8196E" opacity="0.95" />
-      <circle cx="30" cy="7" r="2.5" fill="#E8ECF0" />
-    </svg>
-  );
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/img/dialled-mtb-logo.svg" width={size} height={size} alt="Dialled MTB" />;
 }
 
 // ---------------------------------------------------------------------------

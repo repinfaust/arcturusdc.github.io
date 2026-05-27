@@ -16,9 +16,14 @@ function functionsBase() {
 export async function GET(_req, { params }) {
   const { token } = params;
 
+  let base;
+  try { base = functionsBase(); } catch {
+    return NextResponse.json({ status: 'error' }, { status: 502 });
+  }
+
   let upstream;
   try {
-    upstream = await fetch(`${functionsBase()}/getSnapshot?token=${encodeURIComponent(token)}`, {
+    upstream = await fetch(`${base}/getSnapshot?token=${encodeURIComponent(token)}`, {
       headers: { 'Cache-Control': 'no-store' },
       cache: 'no-store',
     });
