@@ -181,7 +181,7 @@ function DueStateBadge({ state }) {
 
 function DialledMark({ size = 48 }) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src="/img/dialled-mtb-logo.svg" width={size} height={size} alt="Dialled MTB" />;
+  return <img src="/img/dialled-mtb-logo-wordmark-transparent.png" height={size} alt="Dialled MTB" style={{ width: 'auto', maxWidth: size * 4 }} />;
 }
 
 // ---------------------------------------------------------------------------
