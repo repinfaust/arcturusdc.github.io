@@ -164,6 +164,27 @@ export default function RehabPath() {
           </div>
         </div>
       </section>
+
+      <section className="card p-6 mt-4">
+        <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
+        <ul className="space-y-2 text-sm">
+          <li>
+            <Link href="/apps/rehabpath/privacy-policy" className="text-blue-600 hover:underline">
+              Privacy Policy (HTML)
+            </Link>
+          </li>
+          <li>
+            <Link href="/apps/rehabpath/terms-of-use" className="text-blue-600 hover:underline">
+              Terms of Use (HTML)
+            </Link>
+          </li>
+          <li>
+            <Link href="/apps/rehabpath/delete-account" className="text-blue-600 hover:underline">
+              Delete account or data
+            </Link>
+          </li>
+        </ul>
+      </section>
     </main>
   );
 }
