@@ -96,16 +96,7 @@ function Hero() {
         </div>
 
         <div className="mx-auto w-full max-w-[320px] lg:mr-0">
-          <div className="overflow-hidden rounded-[28px] border border-[#D3DDD6] bg-white p-3 shadow-soft">
-            <Image
-              src="/img/rehabpath-card-background.png"
-              width={640}
-              height={640}
-              alt="RehabPath app visual"
-              priority
-              className="aspect-[9/16] w-full rounded-[20px] object-cover"
-            />
-          </div>
+          <PhoneGif priority />
         </div>
       </div>
     </section>
@@ -142,15 +133,8 @@ function WalkthroughVideo() {
     <section className="grid gap-8 border-b border-[#DDE4DE] py-14 sm:py-16 lg:grid-cols-[260px_1fr]">
       <SectionHeading eyebrow="Walkthrough" title="Patient experience on iPhone" />
       <div>
-        <div className="overflow-hidden rounded-lg border border-[#D3DDD6] bg-[#111817]">
-          <Image
-            className="mx-auto aspect-[295/640] max-h-[720px] w-auto bg-[#111817] object-contain"
-            src={video.src}
-            width={295}
-            height={640}
-            alt="Animated RehabPath patient walkthrough on iPhone"
-            unoptimized
-          />
+        <div className="w-full max-w-[340px]">
+          <PhoneGif />
         </div>
         <p className="mt-3 text-sm text-[#667570]">
           60-second walkthrough of the patient experience on iPhone
@@ -295,6 +279,22 @@ function SectionHeading({ eyebrow, title }) {
       <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[#17211E] sm:text-3xl">
         {title}
       </h2>
+    </div>
+  );
+}
+
+function PhoneGif({ priority = false }) {
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-[#D3DDD6] bg-white p-3 shadow-soft">
+      <Image
+        className="aspect-[295/640] w-full rounded-[20px] object-cover"
+        src={video.src}
+        width={295}
+        height={640}
+        alt="Animated RehabPath patient walkthrough on iPhone"
+        priority={priority}
+        unoptimized
+      />
     </div>
   );
 }
