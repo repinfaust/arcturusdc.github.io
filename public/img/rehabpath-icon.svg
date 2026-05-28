@@ -1,0 +1,13 @@
+<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="500" height="500" fill="white"/>
+  <!-- Chevron 1: dark teal/blue -->
+  <polygon points="102,121 250,76 398,121 392,142 250,98 108,142" fill="#1A9EC9"/>
+  <!-- Chevron 2: light blue -->
+  <polygon points="132,194 250,149 368,194 361,215 250,170 139,215" fill="#63C5DC"/>
+  <!-- Oval dot: dark green -->
+  <ellipse cx="250" cy="240" rx="28" ry="18" fill="#2D9E44"/>
+  <!-- Chevron 3: light green -->
+  <polygon points="132,331 250,286 368,331 361,352 250,307 139,352" fill="#6DC98A"/>
+  <!-- Chevron 4: dark green -->
+  <polygon points="102,404 250,359 398,404 392,425 250,380 108,425" fill="#27AD48"/>
+</svg>

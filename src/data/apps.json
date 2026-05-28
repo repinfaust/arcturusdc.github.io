@@ -144,7 +144,7 @@
     "summary": "RehabPath is a structured recovery companion for people working through injury rehab. It provides clear, phase-based programmes, step-by-step exercise guidance, and visible progress tracking—all stored privately on your device. No accounts, no tracking, no complexity. Just a calm, focused tool to help you stay on course and see your improvement.",
     "desc": "Structured rehab programmes, simple exercise guidance, and private progress tracking.",
     "link": "/apps/rehabpath",
-    "icon": "/img/rehabpath-card-background.png",
+    "icon": "/img/rehabpath-icon.svg",
     "bg": "/img/rehabpath-card-background.png"
   }
 ]
