@@ -2,8 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import appsData from "@/data/apps.json";
 
-const LIVE_APP_IDS = ["adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
-const DEV_APP_IDS = ["rehabpath", "apex-state", "assumezero"];
+const LIVE_APP_IDS    = ["adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
+const DEV_APP_IDS     = ["rehabpath", "apex-state", "assumezero"];
+const FLAGSHIP_IDS    = ["dialled-mtb", "sprocket", "toume"];
 const DISPLAY_OVERRIDES = {
   "apex-state": { name: "Apex State" },
   assumezero: { name: "Assume Zero" },
@@ -21,8 +22,9 @@ const withDisplay = (id, status) => {
   };
 };
 
-const liveApps = LIVE_APP_IDS.map((id) => withDisplay(id, "live")).filter(Boolean);
+const liveApps     = LIVE_APP_IDS.map((id) => withDisplay(id, "live")).filter(Boolean);
 const upcomingApps = DEV_APP_IDS.map((id) => withDisplay(id, "development")).filter(Boolean);
+const flagshipApps = FLAGSHIP_IDS.map((id) => withDisplay(id, "live")).filter(Boolean);
 
 const capabilityRows = [
   {
@@ -231,6 +233,47 @@ function AppTile({ app }) {
   );
 }
 
+function AppTeaser({ app }) {
+  const isWide = app.id === "dialled-mtb";
+  const isSvg  = app.icon?.endsWith(".svg");
+  return (
+    <Link
+      href={app.link || `/apps/${app.id}`}
+      className="group relative flex min-h-[320px] flex-col justify-between overflow-hidden bg-[#1c1c1a] p-6 sm:p-8"
+      aria-label={`View ${app.name}`}
+    >
+      {app.bg ? (
+        <Image
+          src={app.bg}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 33vw, 100vw"
+          className="object-cover opacity-[0.28] transition-opacity duration-500 group-hover:opacity-[0.42]"
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1c1c1a]/20 via-transparent to-[#1c1c1a]/85" />
+
+      <span className={`relative z-10 block overflow-hidden border border-white/15 bg-white/5 ${isWide ? "h-14 w-28" : "h-16 w-16"}`}>
+        {app.icon ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={app.icon} alt="" className={`h-full w-full ${isSvg || isWide ? "object-contain p-2" : "object-cover"}`} />
+        ) : null}
+      </span>
+
+      <div className="relative z-10">
+        <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-[#f0452f]">Live</p>
+        <h3 className="text-3xl font-black leading-none tracking-tight text-white sm:text-4xl">
+          {app.name}<span className="text-[#f0452f]">.</span>
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-white/55">{app.desc || app.strap}</p>
+        <p className="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-white/30 transition-colors duration-200 group-hover:text-[#f0452f]">
+          Case file →
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 export default function ArcturusRefreshHome() {
   return (
     <div className="w-screen -ml-[calc(50vw-50%)] bg-[#ece6d8] text-[#1c1c1a]">
@@ -322,7 +365,7 @@ export default function ArcturusRefreshHome() {
       </section>
 
       <section id="apps" className="border-b-2 border-[#1c1c1a]">
-        <div className="flex flex-col justify-between gap-5 border-b-2 border-[#1c1c1a] p-6 sm:p-8 lg:flex-row lg:items-end lg:p-10">
+        <div className="flex flex-col justify-between gap-5 border-b border-[#1c1c1a] p-6 sm:p-8 lg:flex-row lg:items-end lg:p-10">
           <div>
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.16em] text-[#f0452f]">
               /Apps · actual product identities
@@ -337,9 +380,23 @@ export default function ArcturusRefreshHome() {
           </p>
         </div>
 
-        {liveApps.map((app, index) => (
-          <AppFeature key={app.id} app={app} index={index} />
-        ))}
+        <div className="grid divide-y divide-[#1c1c1a] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          {flagshipApps.map((app) => (
+            <AppTeaser key={app.id} app={app} />
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-[#1c1c1a] px-6 py-4 sm:px-8 lg:px-10">
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-[#1c1c1a]/45">
+            {liveApps.length} live &nbsp;·&nbsp; {upcomingApps.length} in development
+          </p>
+          <Link
+            href="/apps"
+            className="font-mono text-xs uppercase tracking-[0.12em] text-[#1c1c1a] underline decoration-[#f0452f] underline-offset-4 hover:text-[#f0452f]"
+          >
+            All units →
+          </Link>
+        </div>
       </section>
 
       <section className="border-b-2 border-[#1c1c1a] bg-[#e3dcc9] p-6 sm:p-8 lg:p-10">
