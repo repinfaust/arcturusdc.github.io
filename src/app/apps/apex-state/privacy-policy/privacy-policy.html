@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apex State – Privacy Policy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0A0A0A;
+      --surface:   #141414;
+      --surface-2: #1E1E1E;
+      --border:    #2A2A2A;
+      --text:      #F0F0F0;
+      --muted:     #A3A3A3;
+      --accent:    #FF4B1F;
+      --accent-dim:#1A0C08;
+      --link:      #FF4B1F;
+    }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* NAV */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      gap: 14px;
+    }
+    .nav-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-icon { display: block; }
+    .nav-wordmark {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .nav-wordmark sup { color: var(--accent); font-size: 0.65em; vertical-align: super; }
+    nav .divider { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+    nav a.nav-link { font-size: 13px; color: var(--muted); text-decoration: none; }
+    nav a.nav-link:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero .meta { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+    /* SUMMARY */
+    .summary {
+      background: var(--accent-dim);
+      border-bottom: 1px solid #2a1208;
+      padding: 20px 24px;
+    }
+    .summary-box { max-width: 740px; margin: 0 auto; }
+    .summary-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .summary-box p { font-size: 15px; color: #c8c0b8; line-height: 1.6; }
+
+    /* CONTENT */
+    .content {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 40px 24px 72px;
+    }
+    .content h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 40px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: -0.01em;
+    }
+    .content h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 24px;
+      margin-bottom: 6px;
+    }
+    .content p { margin-bottom: 14px; color: #c0bab5; font-size: 15px; }
+    .content ul { list-style: none; margin: 10px 0 14px; padding: 0; }
+    .content ul li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 6px;
+      font-size: 15px;
+      color: #c0bab5;
+    }
+    .content ul li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    a { color: var(--link); }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text); font-weight: 600; }
+
+    .contact-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-top: 12px;
+    }
+    .contact-box p { margin: 4px 0; font-size: 15px; }
+
+    .provider-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 14px 0;
+    }
+    .provider-box strong { display: block; margin-bottom: 4px; font-size: 15px; }
+    .provider-box p { margin: 0; font-size: 14px; color: var(--muted); }
+
+    .fine {
+      margin-top: 32px;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-mark" href="/apps/apex-state">
+      <svg class="nav-icon" width="28" height="28" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#0A0A0A" rx="22"/>
+        <path d="M 23 77 L 50 30 L 77 77" fill="none" stroke="#FFFFFF" stroke-width="8.3" stroke-linejoin="miter" stroke-miterlimit="4"/>
+        <rect x="39" y="58" width="23" height="4.6" fill="#FFFFFF"/>
+        <rect x="80.7" y="22" width="3.1" height="14" fill="#FF4B1F"/>
+        <rect x="75" y="27.5" width="14" height="3.1" fill="#FF4B1F"/>
+      </svg>
+      <span class="nav-wordmark">apex state<sup>+</sup></span>
+    </a>
+    <div class="divider"></div>
+    <a class="nav-link" href="/apps/apex-state">Home</a>
+  </nav>
+
+  <div class="hero">
+    <h1><span>Privacy</span> Policy</h1>
+    <p class="meta">Effective Date: 28 May 2026 &nbsp;&middot;&nbsp; Apex State iOS &amp; Android</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-box">
+      <div class="summary-label">The short version</div>
+      <p>Apex State collects only what it needs to provide your track-day setup and session features. Your setup data is private by default. AI assistant queries are processed by OpenAI. Authentication is handled by Apple or Google — we never see your payment details. We do not sell your data.</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2>1. Who We Are</h2>
+    <p>Apex State (&ldquo;the App&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;) is operated by <strong>ARCTURUS DIGITAL CONSULTING LIMITED</strong>.</p>
+    <div class="contact-box">
+      <p><strong>Email:</strong> <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a></p>
+    </div>
+
+    <h2>2. What Apex State Does</h2>
+    <p>Apex State is a motorcycle track setup and riding companion application that allows riders to:</p>
+    <ul>
+      <li>Log bike setup data</li>
+      <li>Record track sessions</li>
+      <li>Store tyre pressures and suspension settings</li>
+      <li>Compare previous setups</li>
+      <li>Share limited anonymised paddock data</li>
+      <li>Use AI-powered setup assistance features</li>
+    </ul>
+
+    <h2>3. Information We Collect</h2>
+
+    <h3>Account Information</h3>
+    <p>When you sign in using Apple or Google Sign-In, we may collect:</p>
+    <ul>
+      <li>Name</li>
+      <li>Email address</li>
+      <li>Authentication identifier</li>
+      <li>Profile image (if provided by your provider)</li>
+    </ul>
+    <p>Authentication is handled securely through Firebase Authentication.</p>
+
+    <h3>Rider &amp; Setup Data</h3>
+    <p>You may voluntarily provide:</p>
+    <ul>
+      <li>Bike information</li>
+      <li>Track session details</li>
+      <li>Tyre pressures</li>
+      <li>Suspension settings</li>
+      <li>Electronics settings</li>
+      <li>Notes and riding feedback</li>
+      <li>Lap times and performance information</li>
+    </ul>
+
+    <h3>Technical &amp; Usage Data</h3>
+    <p>We may collect:</p>
+    <ul>
+      <li>Device type</li>
+      <li>App version</li>
+      <li>Crash diagnostics</li>
+      <li>Basic analytics events</li>
+      <li>Authentication activity</li>
+    </ul>
+
+    <h3>AI Assistant Interactions</h3>
+    <p>If you use AI-powered assistant features, the prompts and related context you submit may be securely processed by OpenAI APIs in order to generate responses.</p>
+    <p>Do not submit sensitive personal, medical, financial, or confidential information into AI prompts.</p>
+
+    <h2>4. How We Use Your Information</h2>
+    <p>We use your information to:</p>
+    <ul>
+      <li>Provide and maintain the App</li>
+      <li>Store and sync your riding and setup data</li>
+      <li>Authenticate users</li>
+      <li>Improve features and reliability</li>
+      <li>Provide AI-generated setup assistance</li>
+      <li>Support paddock comparison features</li>
+      <li>Diagnose bugs and crashes</li>
+      <li>Improve user experience</li>
+    </ul>
+
+    <h2>5. Paddock Sharing &amp; Visibility</h2>
+    <p>Certain setup and session data may be visible to other authenticated users through community or paddock-style comparison features. This may include:</p>
+    <ul>
+      <li>Bike make and model</li>
+      <li>Track name</li>
+      <li>Tyre compounds</li>
+      <li>Tyre pressures</li>
+      <li>Lap times</li>
+      <li>Limited setup information</li>
+    </ul>
+    <p>We do not intentionally expose your email address or private account information to other users. Future versions of the App may include additional privacy controls and opt-out settings.</p>
+
+    <h2>6. Third-Party Services</h2>
+
+    <div class="provider-box">
+      <strong>Firebase (Google)</strong>
+      <p>Used for authentication, Cloud Firestore database, hosting, analytics, and crash reporting.</p>
+      <p><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a></p>
+    </div>
+
+    <div class="provider-box">
+      <strong>OpenAI</strong>
+      <p>Used for AI-powered paddock and setup assistant features.</p>
+      <p><a href="https://openai.com/privacy" target="_blank" rel="noopener">openai.com/privacy</a></p>
+    </div>
+
+    <div class="provider-box">
+      <strong>Apple Sign-In</strong>
+      <p><a href="https://www.apple.com/legal/privacy/en-ww/" target="_blank" rel="noopener">apple.com/legal/privacy</a></p>
+    </div>
+
+    <div class="provider-box">
+      <strong>Google Sign-In</strong>
+      <p><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a></p>
+    </div>
+
+    <h2>7. Data Storage &amp; Security</h2>
+    <p>Your data is stored using cloud infrastructure provided by Firebase/Google Cloud. We take reasonable technical and organisational measures to protect your information, but no online service can guarantee absolute security.</p>
+
+    <h2>8. Data Retention</h2>
+    <p>We retain your data while your account remains active or as needed to provide the service. You may request deletion of your account and associated data by contacting <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>.</p>
+    <p>Some anonymised analytics or diagnostic information may remain in backups or aggregated systems for a limited period.</p>
+
+    <h2>9. Your Rights</h2>
+    <p>Depending on your jurisdiction, you may have rights to:</p>
+    <ul>
+      <li>Access your data</li>
+      <li>Correct inaccurate data</li>
+      <li>Request deletion</li>
+      <li>Restrict processing</li>
+      <li>Object to processing</li>
+      <li>Receive a copy of your data</li>
+    </ul>
+    <p>To make a request, contact: <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a></p>
+
+    <h2>10. Children&rsquo;s Privacy</h2>
+    <p>Apex State is not intended for children under 13 years old. We do not knowingly collect personal information from children.</p>
+
+    <h2>11. Motorsport &amp; Safety Disclaimer</h2>
+    <p>Apex State provides informational tools only. Any setup information, AI suggestions, or rider comparisons are provided for general informational purposes and must not replace professional mechanical inspection, coaching, or rider judgment.</p>
+    <p>You remain solely responsible for:</p>
+    <ul>
+      <li>Motorcycle safety</li>
+      <li>Mechanical condition</li>
+      <li>Riding decisions</li>
+      <li>Track safety compliance</li>
+    </ul>
+
+    <h2>12. International Transfers</h2>
+    <p>Your information may be processed in countries outside your own jurisdiction where our service providers operate. By using the App, you consent to such transfers where legally permitted.</p>
+
+    <h2>13. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy periodically. Updated versions will be posted within the App or associated websites. Continued use of the App after updates constitutes acceptance of the revised policy.</p>
+
+    <h2>14. Contact</h2>
+    <div class="contact-box">
+      <p><strong>ARCTURUS DIGITAL CONSULTING LIMITED</strong></p>
+      <p><a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a></p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Arcturus Digital Consulting &nbsp;&middot;&nbsp;
+      <a href="/apps/apex-state/privacy-policy">Privacy</a> &nbsp;&middot;&nbsp;
+      <a href="/apps/apex-state/terms-of-use">Terms</a> &nbsp;&middot;&nbsp;
+      <a href="/apps/apex-state/delete-account">Delete Account</a>
+    </p>
+  </footer>
+
+</body>
+</html>

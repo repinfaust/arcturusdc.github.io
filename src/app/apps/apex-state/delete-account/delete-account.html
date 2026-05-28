@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apex State – Delete Account or Data</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0A0A0A;
+      --surface:   #141414;
+      --surface-2: #1E1E1E;
+      --border:    #2A2A2A;
+      --text:      #F0F0F0;
+      --muted:     #A3A3A3;
+      --accent:    #FF4B1F;
+      --accent-dim:#1A0C08;
+      --link:      #FF4B1F;
+    }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      gap: 14px;
+    }
+    .nav-mark { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-icon { display: block; }
+    .nav-wordmark { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+    .nav-wordmark sup { color: var(--accent); font-size: 0.65em; vertical-align: super; }
+    nav .divider { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+    nav a.nav-link { font-size: 13px; color: var(--muted); text-decoration: none; }
+    nav a.nav-link:hover { color: var(--text); }
+
+    .hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 800; letter-spacing: -0.03em; color: var(--text); }
+    .hero h1 span { color: var(--accent); }
+    .hero .meta { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+    .summary { background: var(--accent-dim); border-bottom: 1px solid #2a1208; padding: 20px 24px; }
+    .summary-box { max-width: 760px; margin: 0 auto; }
+    .summary-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 8px; }
+    .summary-box p { font-size: 15px; color: #c8c0b8; line-height: 1.6; }
+
+    .content { max-width: 760px; margin: 0 auto; padding: 40px 24px 72px; }
+    .content h2 { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 40px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); letter-spacing: -0.01em; }
+    .content p { margin-bottom: 14px; color: #c0bab5; font-size: 15px; }
+    .content ul { margin: 10px 0 18px 22px; color: #c0bab5; }
+    .content li { margin-bottom: 8px; font-size: 15px; }
+    a { color: var(--link); }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text); font-weight: 600; }
+
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin: 14px 0;
+    }
+    .step-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .step-card p { margin: 0; color: #c0bab5; font-size: 15px; }
+
+    .keep-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-top: 16px;
+    }
+    .keep-box h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .keep-box p { margin-bottom: 8px; color: #c0bab5; font-size: 15px; }
+    .keep-box p:last-child { margin-bottom: 0; }
+
+    .contact-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin-top: 12px; }
+    .contact-box p { margin: 4px 0; font-size: 15px; }
+
+    footer { border-top: 1px solid var(--border); padding: 24px; text-align: center; font-size: 13px; color: var(--muted); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-mark" href="/apps/apex-state">
+      <svg class="nav-icon" width="28" height="28" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#0A0A0A" rx="22"/>
+        <path d="M 23 77 L 50 30 L 77 77" fill="none" stroke="#FFFFFF" stroke-width="8.3" stroke-linejoin="miter" stroke-miterlimit="4"/>
+        <rect x="39" y="58" width="23" height="4.6" fill="#FFFFFF"/>
+        <rect x="80.7" y="22" width="3.1" height="14" fill="#FF4B1F"/>
+        <rect x="75" y="27.5" width="14" height="3.1" fill="#FF4B1F"/>
+      </svg>
+      <span class="nav-wordmark">apex state<sup>+</sup></span>
+    </a>
+    <div class="divider"></div>
+    <a class="nav-link" href="/apps/apex-state">Home</a>
+  </nav>
+
+  <div class="hero">
+    <h1><span>Delete</span> Account or Data</h1>
+    <p class="meta">Apex State account deletion and data removal</p>
+  </div>
+
+  <div class="summary">
+    <div class="summary-box">
+      <div class="summary-label">What this page covers</div>
+      <p>This page explains how to request full account deletion or ask for some or all stored data to be deleted without deleting your account. It also covers what is deleted, retention periods, and what to do about any active subscription.</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2>How to delete your account</h2>
+    <p>Apex State account deletion is handled inside the app.</p>
+
+    <div class="step-card">
+      <div class="step-label">Step 1</div>
+      <p>Open Apex State and sign in to the account you want to delete.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">Step 2</div>
+      <p>Go to <strong>Settings</strong>.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-label">Step 3</div>
+      <p>Select <strong>Delete Account</strong> and confirm the deletion request.</p>
+    </div>
+
+    <h2>How to request deletion of data without deleting your account</h2>
+    <p>If you want some or all Apex State data removed but want to keep your account active, email <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a> from the address linked to your account.</p>
+
+    <div class="step-card">
+      <div class="step-label">Email request</div>
+      <p>Include the subject line <strong>Apex State data deletion request</strong> and tell us what you want removed.</p>
+    </div>
+
+    <p>You can request deletion of:</p>
+    <ul>
+      <li>Specific bike profiles and setup records</li>
+      <li>Track session data</li>
+      <li>Tyre and suspension history</li>
+      <li>Notes and feedback entries</li>
+      <li>All app-stored data while keeping the account shell active</li>
+    </ul>
+
+    <p>We may need to verify account ownership before processing a deletion request.</p>
+
+    <h2>What is deleted</h2>
+    <ul>
+      <li>Your Apex State account record</li>
+      <li>Your saved bike profiles</li>
+      <li>Your track session records</li>
+      <li>Your tyre pressures and suspension settings history</li>
+      <li>Your notes and riding feedback</li>
+      <li>Any data you contributed to Paddock View</li>
+    </ul>
+
+    <h2>Retention period</h2>
+    <div class="keep-box">
+      <h3>Deletion window</h3>
+      <p>Account data is permanently deleted within <strong>30 days</strong> of the deletion request.</p>
+      <p>Selective data-deletion requests are also processed within <strong>30 days</strong> of verification.</p>
+      <p>Anonymised analytics data cannot be linked back to a deleted account.</p>
+    </div>
+
+    <h2>Important notes</h2>
+    <ul>
+      <li>Deleting your Apex State account does <strong>not</strong> automatically cancel an Apple App Store or Google Play subscription.</li>
+      <li>If you have an active subscription, cancel it separately in your Apple or Google subscription settings before deleting your account.</li>
+    </ul>
+
+    <h2>Need help?</h2>
+    <p>If you cannot access the app or need help deleting your account, contact us:</p>
+    <div class="contact-box">
+      <p><strong>Email:</strong> <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a></p>
+      <p><strong>Privacy policy:</strong> <a href="/apps/apex-state/privacy-policy">/apps/apex-state/privacy-policy</a></p>
+      <p><strong>Terms of use:</strong> <a href="/apps/apex-state/terms-of-use">/apps/apex-state/terms-of-use</a></p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Arcturus Digital Consulting &nbsp;&middot;&nbsp;
+      <a href="/apps/apex-state/privacy-policy">Privacy</a> &nbsp;&middot;&nbsp;
+      <a href="/apps/apex-state/terms-of-use">Terms</a> &nbsp;&middot;&nbsp;
+      <a href="/apps/apex-state/delete-account">Delete Account</a>
+    </p>
+  </footer>
+
+</body>
+</html>

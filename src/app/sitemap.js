@@ -28,7 +28,10 @@ export default function sitemap() {
     '/apps/rehabpath/terms-of-use',
     '/apps/rehabpath/delete-account',
     '/apps/assumezero',
-    '/apps/apex-twin',
+    '/apps/apex-state',
+    '/apps/apex-state/privacy-policy',
+    '/apps/apex-state/terms-of-use',
+    '/apps/apex-state/delete-account',
     '/apps/familygrill',
   ];
 

@@ -3,9 +3,9 @@ import Link from "next/link";
 import appsData from "@/data/apps.json";
 
 const LIVE_APP_IDS = ["adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
-const DEV_APP_IDS = ["rehabpath", "apex-twin", "assumezero"];
+const DEV_APP_IDS = ["rehabpath", "apex-state", "assumezero"];
 const DISPLAY_OVERRIDES = {
-  "apex-twin": { name: "Apex State" },
+  "apex-state": { name: "Apex State" },
   assumezero: { name: "Assume Zero" },
   rehabpath: { name: "Rehab Path" },
 };

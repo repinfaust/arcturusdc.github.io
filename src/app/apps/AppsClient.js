@@ -25,7 +25,7 @@ const DISPLAY_APP_IDS = [
   "sprocket",
   "mandrake",
   "rehabpath",
-  "apex-twin",
+  "apex-state",
   "assumezero",
 ];
 
