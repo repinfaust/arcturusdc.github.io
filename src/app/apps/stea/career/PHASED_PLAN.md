@@ -55,12 +55,22 @@ Goal: working Analyse Role end-to-end for a logged-in user.
 - [ ] Terrie logs in, uploads his real data, runs his first analysis
 
 ### Phase 2 — "It remembers and tailors"
-- [ ] Persist each analysis (History tab; fix the 404 route)
+- [ ] Persist each analysis (History/pipeline; analysed roles saved per tenant)
 - [ ] Wire CV Tailoring to a real Anthropic call using the evidence library
-- [ ] Cover-note drafter wired to real output
+
+### Phase 2b — "Apply loop: tailored CV library" (NEW — David's idea, NOT in original brief, 2026-05-31)
+The product loop: analyse role → user decides to APPLY → generate a tailored/tweaked
+CV for THAT specific role → save it to the user's library, linked to the chosen role →
+user can download it and the role moves to an "applying/applied" state.
+- [ ] "Proceed to apply" action on an analysed role
+- [ ] Generate role-tailored CV (Anthropic, grounded in evidence library, no invented facts)
+- [ ] Persist the tailored CV in Firestore, linked to the role (per-tenant CV library)
+- [ ] Library view: list of {role, tailored CV, status, date}; download/export
+- [ ] (Counter-ATS: apply the Tier-1 honest keyword alignment from the CLI ats-tactics doc)
 
 ### Phase 3 — "It finds roles for him"
 - [ ] Live Scans / discovery wired to a real source, or a batch "paste many JDs" flow
+- [ ] Cover-note drafter wired to real output
 - [ ] The counter-AI-screening surface: surfacing good-fit roles, not just scoring found ones
 
 ## Test checklist (Phase 1 validation)
