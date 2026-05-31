@@ -431,14 +431,18 @@ export async function POST(request) {
             const data = await reedRes.json();
             sourcesTried.push('reed');
             for (const j of data.results || []) {
+              // Reed field casing varies; fall back across variants and build the
+              // job URL from jobId if no explicit url is returned.
+              const jobId = j.jobId ?? j.JobId;
+              const url = j.jobUrl || j.JobUrl || j.url || (jobId ? `https://www.reed.co.uk/jobs/${jobId}` : '');
               results.push({
                 source: 'Reed',
-                title: j.jobTitle,
-                company: j.employerName || '',
-                location: j.locationName || '',
+                title: j.jobTitle || j.JobTitle || 'Untitled role',
+                company: j.employerName || j.EmployerName || '',
+                location: j.locationName || j.LocationName || '',
                 salary: (j.minimumSalary || j.maximumSalary) ? `£${j.minimumSalary || ''}${j.maximumSalary ? '–£' + j.maximumSalary : ''}` : '',
-                url: j.jobUrl,
-                description: j.jobDescription || '',
+                url,
+                description: j.jobDescription || j.JobDescription || '',
               });
             }
           }
