@@ -296,28 +296,32 @@ function VerdictPanel({ score, evaluation }) {
   );
 }
 
+// Deliberately small/secondary: an LLM fit score is a rough estimate, not a
+// precise verdict. The reasoning (VerdictPanel + narrative) is the real signal.
 const FitGauge = ({ score }) => {
   const percentage = (score / 5) * 100;
-  const strokeDasharray = 552.92;
+  const strokeDasharray = 333; // for r=53
   const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
-
   return (
-    <div className="relative h-48 w-48 mx-auto py-6">
-      <svg className="h-full w-full transform -rotate-90">
-        <circle className="text-slate-100" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" strokeWidth="8"></circle>
-        <circle cx="96" cy="96" fill="transparent" r="88" stroke="url(#gradient-success)" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} strokeLinecap="round" strokeWidth="8"></circle>
-        <defs>
-          <linearGradient id="gradient-success" x1="0%" x2="100%" y1="0%" y2="0%">
-            <stop offset="0%" stopColor="#006C50"></stop>
-            <stop offset="100%" stopColor="#82d7b5"></stop>
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-extrabold text-[#10294D]">{score.toFixed(1)}</span>
-        <span className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest mt-1">
-          {score >= 4.5 ? 'Aggressive Pursuit' : score >= 4.0 ? 'Strong Match' : score >= 3.5 ? 'Selective' : 'Archive'}
-        </span>
+    <div className="flex items-center gap-3">
+      <div className="relative h-28 w-28 shrink-0">
+        <svg className="h-full w-full transform -rotate-90">
+          <circle className="text-slate-100" cx="56" cy="56" fill="transparent" r="53" stroke="currentColor" strokeWidth="6"></circle>
+          <circle cx="56" cy="56" fill="transparent" r="53" stroke="url(#gradient-success)" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} strokeLinecap="round" strokeWidth="6"></circle>
+          <defs>
+            <linearGradient id="gradient-success" x1="0%" x2="100%" y1="0%" y2="0%">
+              <stop offset="0%" stopColor="#006C50"></stop>
+              <stop offset="100%" stopColor="#82d7b5"></stop>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-extrabold text-[#10294D]">{score.toFixed(1)}</span>
+          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">/ 5</span>
+        </div>
+      </div>
+      <div className="text-[11px] text-slate-500 leading-relaxed">
+        <span className="font-bold text-[#10294D]">Rough fit estimate.</span> This is an AI's opinion to help you triage — read the reasoning below, don't take the number as gospel.
       </div>
     </div>
   );
@@ -1151,30 +1155,32 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {activeTab === 'pipeline' && results && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200 flex flex-col shadow-sm">
-            <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Fit Diagnostic</h3>
+            {/* The verdict (reasoning-led) is the primary signal. */}
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">The verdict</h3>
+            <VerdictPanel score={results.score} evaluation={results.evaluation} />
+
+            {/* Secondary: the rough numeric estimate, clearly framed as such. */}
+            <div className="mt-5 pt-5 border-t border-slate-100">
               <FitGauge score={typeof results.score === 'number' ? results.score : 0} />
             </div>
-
-            {/* RAG go/no-go verdict — fills the column, surfaces the decision */}
-            <VerdictPanel score={results.score} evaluation={results.evaluation} />
 
             <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
               <span className="text-red-500 font-bold">!</span>
               <div>
-                <h4 className="text-xs font-bold text-red-900">Risk Signal</h4>
+                <h4 className="text-xs font-bold text-red-900">Watch-out</h4>
                 <p className="text-[11px] text-red-700/80 mt-1 leading-relaxed">
-                  {results.evaluation?.match(/Risk Signal:(.*)/i)?.[1] || 'Potential level misalignment detected based on core responsibilities.'}
+                  {results.evaluation?.match(/Risk Signal:(.*)/i)?.[1] || 'Check the gaps in the reasoning before applying.'}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="lg:col-span-8 bg-slate-50 rounded-2xl p-8 border border-slate-100 flex flex-col shadow-inner">
-            <div className="flex justify-between items-start mb-6">
-              <h3 className="text-2xl font-bold text-[#10294D] italic tracking-tight">"The Fit Narrative"</h3>
-              <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest">AI Prediction</div>
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-2xl font-bold text-[#10294D] italic tracking-tight">The reasoning</h3>
+              <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest" title="An AI's structured opinion — the strength is in the reasoning, not the precision of the number.">AI assessment</div>
             </div>
+            <p className="text-xs text-slate-400 mb-5">This is where the real value is — the why behind the score. The number above is just a quick triage signal.</p>
             <CollapsibleNarrative markdown={results.evaluation} openCount={2} />
 
             {/* Proceed-to-apply: generate a role-tailored CV */}
