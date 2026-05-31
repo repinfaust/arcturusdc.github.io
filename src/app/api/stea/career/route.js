@@ -262,10 +262,82 @@ export async function POST(request) {
         maxTokens: 3000,
       });
 
+      const parsedJd = JSON.parse(jdData);
+
+      // Pull the overall score from the evaluation markdown (e.g. "3.05 / 5.0",
+      // "OVERALL SCORE: 4.2", "**4.2/5**"). Best-effort; null if not found.
+      const scoreMatch =
+        evaluation.match(/overall[^0-9]*([0-5](?:\.\d+)?)\s*\/\s*5/i) ||
+        evaluation.match(/\b([0-5](?:\.\d+)?)\s*\/\s*5(?:\.0)?\b/);
+      const score = scoreMatch ? parseFloat(scoreMatch[1]) : null;
+
+      // Persist the analysed role so it survives reload and populates the pipeline.
+      let analysisId = null;
+      try {
+        const { db } = getFirebaseAdmin();
+        const ref = await db
+          .collection('tenants').doc(tenantId)
+          .collection('career_ops_analyses')
+          .add({
+            company: parsedJd.company_name || 'Unknown company',
+            role: parsedJd.role_title || 'Unknown role',
+            level: parsedJd.level || '',
+            location: parsedJd.location || '',
+            score,
+            status: 'Evaluated',
+            jd_data: parsedJd,
+            evaluation,
+            source_url: isUrl((jd_text || '').trim()) ? (jd_text || '').trim() : (url || ''),
+            createdAt: new Date(),
+          });
+        analysisId = ref.id;
+      } catch (e) {
+        // Don't fail the analysis if persistence has an issue — just log it.
+        console.error('Failed to persist analysis', e);
+      }
+
       return NextResponse.json({
-        jd_data: JSON.parse(jdData),
+        id: analysisId,
+        score,
+        jd_data: parsedJd,
         evaluation
       });
+    }
+
+    if (action === 'list_analyses') {
+      const { db } = getFirebaseAdmin();
+      const snap = await db
+        .collection('tenants').doc(tenantId)
+        .collection('career_ops_analyses')
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
+      const analyses = snap.docs.map((d) => {
+        const v = d.data();
+        return {
+          id: d.id,
+          company: v.company,
+          role: v.role,
+          level: v.level || '',
+          score: v.score ?? null,
+          status: v.status || 'Evaluated',
+          source_url: v.source_url || '',
+          createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toISOString() : null,
+        };
+      });
+      return NextResponse.json({ analyses });
+    }
+
+    if (action === 'get_analysis') {
+      const { id } = body;
+      if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+      const { db } = getFirebaseAdmin();
+      const doc = await db
+        .collection('tenants').doc(tenantId)
+        .collection('career_ops_analyses').doc(id).get();
+      if (!doc.exists) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      const v = doc.data();
+      return NextResponse.json({ id: doc.id, ...v, createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toISOString() : null });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

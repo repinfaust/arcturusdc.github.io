@@ -440,14 +440,50 @@ export default function CareerOpsDashboard() {
   const [weightsData, setWeightsData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Pipeline rows populate as roles are analysed. No placeholder/demo data.
-  const mockPipeline = [];
+  // Analysed roles, loaded from Firestore. No placeholder/demo data.
+  const [pipeline, setPipeline] = useState([]);
 
   useEffect(() => {
     if (currentTenant?.id) {
       checkConfig();
+      loadAnalyses();
     }
   }, [currentTenant]);
+
+  async function loadAnalyses() {
+    if (!currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list_analyses', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.analyses)) setPipeline(data.analyses);
+    } catch (err) {
+      console.error('Failed to load analyses', err);
+    }
+  }
+
+  // Re-open a saved analysis: load it and show its evaluation in the results view.
+  async function openAnalysis(id) {
+    if (!currentTenant?.id || !id) return;
+    setActiveTab('pipeline');
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_analysis', tenantId: currentTenant.id, id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResults({ jd_data: data.jd_data, evaluation: data.evaluation, score: data.score });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (err) {
+      console.error('Failed to open analysis', err);
+    }
+  }
 
   async function checkConfig() {
     try {
@@ -532,6 +568,7 @@ export default function CareerOpsDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Analyse failed');
       setResults(data);
+      loadAnalyses(); // refresh the pipeline with the newly-saved role
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -643,7 +680,7 @@ export default function CareerOpsDashboard() {
           <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200 flex flex-col justify-between shadow-sm">
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Fit Diagnostic</h3>
-              <FitGauge score={results.jd_data?.score || 4.2} />
+              <FitGauge score={typeof results.score === 'number' ? results.score : 0} />
             </div>
             <div className="mt-8 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
               <span className="text-red-500 font-bold">!</span>
@@ -682,24 +719,24 @@ export default function CareerOpsDashboard() {
                   <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Company / Role</th>
                   <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Score</th>
                   <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Timeline</th>
+                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Analysed</th>
                   <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {mockPipeline.length === 0 && (
+                {pipeline.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
                       No roles analysed yet. Paste a job description above and run an analysis to populate your pipeline.
                     </td>
                   </tr>
                 )}
-                {mockPipeline.map((item, i) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                {pipeline.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => openAnalysis(item.id)}>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
-                          {item.company[0]}
+                          {(item.company || '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <p className="font-bold text-[#10294D] text-sm">{item.company}</p>
@@ -708,21 +745,21 @@ export default function CareerOpsDashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <span className="font-mono font-bold text-[#006C50]">{item.score.toFixed(1)}</span>
+                      <span className="font-mono font-bold text-[#006C50]">{typeof item.score === 'number' ? item.score.toFixed(1) : '—'}</span>
                     </td>
                     <td className="px-6 py-5">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                        item.status === 'Interviewing' ? 'bg-green-100 text-green-700' : 
+                        item.status === 'Interview' ? 'bg-green-100 text-green-700' :
                         item.status === 'Applied' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {item.status}
                       </span>
                     </td>
                     <td className="px-6 py-5">
-                      <p className="text-xs font-semibold text-slate-600">{item.timeline}</p>
+                      <p className="text-xs font-semibold text-slate-600">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <button className="text-slate-300 hover:text-slate-600 transition-colors">•••</button>
+                      <button className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline" onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}>View</button>
                     </td>
                   </tr>
                 ))}

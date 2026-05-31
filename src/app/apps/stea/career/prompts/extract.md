@@ -1,9 +1,9 @@
 # JD Extraction Prompt
-Task: Extract structured information from the following Product Manager Job Description.
+Task: Extract structured information from the following Product Owner / Product Manager job description.
 
 Target Candidate Profile:
-- Senior/Lead/Principal PM
-- Focus: Platform, Data, Regulated SaaS, Billing, Payments, Compliance
+- Product Owner / Senior Product Owner / Product Manager / Technical Product Manager
+- Focus: Energy, Utilities, Billing, PAYG, Metering, Regulated SaaS, Operations & Delivery
 
 Extract the following fields in JSON format:
 1. role_title: The official title
