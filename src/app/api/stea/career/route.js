@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { db } from '@/lib/firebaseAdmin';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 // David's workspace ID (ArcturusDC primary tenant or his specific one)
 const DAVID_TENANT_ID = 'KovW8P7K5O2537V8I3H1'; 
@@ -18,6 +18,7 @@ async function getWorkspaceConfig(tenantId, configName) {
   }
 
   // Otherwise, load from Firestore
+  const { db } = getFirebaseAdmin();
   const configDoc = await db.collection('tenants').doc(tenantId).collection('career_ops').doc('config').get();
   if (configDoc.exists) {
     return configDoc.data()[configName] || '';
@@ -54,6 +55,7 @@ export async function POST(request) {
 
     if (action === 'save_config') {
       const { profile, evidence, weights } = body;
+      const { db } = getFirebaseAdmin();
       await db.collection('tenants').doc(tenantId).collection('career_ops').doc('config').set({
         candidate_profile: profile,
         evidence_library: evidence,
