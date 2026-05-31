@@ -2,6 +2,38 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+/* ---------------- Markdown renderer for the AI fit narrative ---------------- */
+function FitNarrative({ markdown }) {
+  return (
+    <div className="career-md text-sm text-slate-700 leading-relaxed">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: (p) => <h1 className="text-xl font-bold text-[#10294D] mt-6 mb-3 first:mt-0" {...p} />,
+          h2: (p) => <h2 className="text-base font-bold text-[#10294D] mt-6 mb-2 pb-1 border-b border-slate-200" {...p} />,
+          h3: (p) => <h3 className="text-sm font-bold text-[#006C50] uppercase tracking-wide mt-4 mb-2" {...p} />,
+          p:  (p) => <p className="my-2" {...p} />,
+          ul: (p) => <ul className="list-disc pl-5 my-2 space-y-1" {...p} />,
+          ol: (p) => <ol className="list-decimal pl-5 my-2 space-y-1" {...p} />,
+          strong: (p) => <strong className="font-bold text-[#10294D]" {...p} />,
+          blockquote: (p) => <blockquote className="border-l-4 border-[#006C50] bg-teal-50/50 pl-4 py-2 my-3 rounded-r text-[#10294D]" {...p} />,
+          code: (p) => <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[13px] font-mono" {...p} />,
+          table: (p) => <div className="overflow-x-auto my-4"><table className="w-full text-xs border-collapse" {...p} /></div>,
+          thead: (p) => <thead className="bg-slate-100" {...p} />,
+          th: (p) => <th className="border border-slate-200 px-3 py-2 text-left font-bold text-[#10294D]" {...p} />,
+          td: (p) => <td className="border border-slate-200 px-3 py-2 align-top" {...p} />,
+          hr: () => <hr className="my-5 border-slate-200" />,
+          a:  (p) => <a className="text-[#006C50] underline" target="_blank" rel="noreferrer" {...p} />,
+        }}
+      >
+        {markdown || ''}
+      </ReactMarkdown>
+    </div>
+  );
+}
 
 /* ---------------- UI Components ---------------- */
 
@@ -611,9 +643,7 @@ export default function CareerOpsDashboard() {
               <h3 className="text-2xl font-bold text-[#10294D] italic tracking-tight">"The Fit Narrative"</h3>
               <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest">AI Prediction</div>
             </div>
-            <div className="text-slate-600 text-base leading-relaxed font-medium whitespace-pre-wrap">
-              {results.evaluation}
-            </div>
+            <FitNarrative markdown={results.evaluation} />
           </div>
         </div>
       )}

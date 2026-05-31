@@ -254,8 +254,12 @@ export async function POST(request) {
         .replace('{{evidence_library}}', evidenceLibrary);
 
       const evaluation = await callAnthropic({
-        system: 'You are a career coach for Senior Product Managers.',
+        system: 'You are a career coach for Product Owners and Product Managers. ' +
+          'Format your response as clean GitHub-flavored Markdown: use ## headings, ' +
+          '"|"-delimited tables, bullet lists and **bold**. Do NOT use LaTeX or "$$" math ' +
+          'notation — write any calculations as plain text. Keep it scannable.',
         prompt: evaluatePrompt,
+        maxTokens: 3000,
       });
 
       return NextResponse.json({
