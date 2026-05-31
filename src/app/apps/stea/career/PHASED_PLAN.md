@@ -63,24 +63,43 @@ Setup is done via the existing super-admin UI at `/apps/stea/admin`:
 - Note: his workspace reads Firestore (empty) — the Tom Granger YAML is ONLY in David's tenant.
 - App scope: all STEa apps visible in his workspace is fine for now (not locked to Career Ops).
 
-### Phase 2 — "It remembers and tailors"
-- [ ] Persist each analysis (History/pipeline; analysed roles saved per tenant)
-- [ ] Wire CV Tailoring to a real Anthropic call using the evidence library
+### Phase 2 — "It remembers and tailors" ✅ DONE (2026-05-31)
+- [x] Persist each analysis (analysed roles saved per tenant; pipeline shows them)
+- [x] Real score gauge (was hardcoded 4.2) + clickable rows to re-open analyses
+- [x] Markdown rendering + collapsible sections for the long fit narrative
+- [x] RAG go/no-go verdict panel under the score
 
-### Phase 2b — "Apply loop: tailored CV library" (NEW — David's idea, NOT in original brief, 2026-05-31)
-The product loop: analyse role → user decides to APPLY → generate a tailored/tweaked
-CV for THAT specific role → save it to the user's library, linked to the chosen role →
-user can download it and the role moves to an "applying/applied" state.
-- [ ] "Proceed to apply" action on an analysed role
-- [ ] Generate role-tailored CV (Anthropic, grounded in evidence library, no invented facts)
-- [ ] Persist the tailored CV in Firestore, linked to the role (per-tenant CV library)
-- [ ] Library view: list of {role, tailored CV, status, date}; download/export
-- [ ] (Counter-ATS: apply the Tier-1 honest keyword alignment from the CLI ats-tactics doc)
+### Phase 2b — "Apply loop: tailored CV library" ✅ DONE (2026-05-31)
+- [x] "Proceed to Apply" → role-tailored CV (Anthropic, grounded in evidence, no invented facts)
+- [x] Persist tailored CV linked to the role; status → 'Applying'
+- [x] CV Tailoring tab = real library (replaced fake mockups)
+- [x] PDF export (print-to-PDF, ATS-safe selectable text)
 
-### Phase 3 — "It finds roles for him"
-- [ ] Live Scans / discovery wired to a real source, or a batch "paste many JDs" flow
-- [ ] Cover-note drafter wired to real output
-- [ ] The counter-AI-screening surface: surfacing good-fit roles, not just scoring found ones
+### Phase 3 — "It finds roles for him" (the big one — IN PROGRESS)
+Design done 2026-05-31. Most boards block scraping; viable legit free APIs:
+- **Reed API** (`REED_API_KEY`, basic auth) — UK-native; keywords/location/salary/contract
+- **Adzuna API** (`ADZUNA_APP_ID` + `ADZUNA_APP_KEY`) — aggregates many boards
+- LinkedIn/Indeed direct: no usable API → avoid (ToS + blocked)
+- [ ] **3a (building):** `search_jobs` action querying Reed + Adzuna, normalise + dedupe; Live Scans
+      tab search UI (defaults from profile: target roles / £ floor / location); results list with
+      "Analyse" buttons feeding the existing score+persist pipeline
+- [ ] 3b: "Analyse top N" batch — open the app to a ranked list of real roles by fit
+- [ ] 3c: saved searches that auto-run + notify (counter-screening end-state)
+
+## PARKED — Workspace & multi-user (Option B, revisit when Career Ops is a real product)
+Deferred 2026-05-31. Current model: each Career Ops user = their own **solo workspace**
+(hard isolation, zero code). Terrie's "Terrie Goulbourne Career Ops" solo workspace created
+2026-05-31. The following are NOT needed for early access but will be for a scaled product:
+- [ ] **Per-user data within a shared workspace (Option B):** re-key career data from
+      `tenants/{tid}/career_ops*` to `tenants/{tid}/career_ops_users/{uid}/*` so one workspace
+      can hold many isolated users. Requires migrating existing data + adding uid to every read/write.
+- [ ] **App-scoping per workspace:** lock a Career-Ops workspace to only the Career Ops app
+      (currently all STEa apps show; fine for now).
+- [ ] **Self-serve onboarding/invite:** a Career-Ops-specific signup/invite flow instead of the
+      super-admin admin page (so users can be added without David doing it manually).
+- [ ] **Billing/plan enforcement:** solo vs team plan limits actually enforced for Career Ops.
+- [ ] **Privacy hardening:** confirm Firestore security rules prevent cross-tenant career-data reads
+      (admin SDK bypasses rules server-side, but client paths should be locked down).
 
 ## Test checklist (Phase 1 validation)
 1. Config tab → fill profile → Save Profile
