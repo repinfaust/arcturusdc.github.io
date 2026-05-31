@@ -49,10 +49,19 @@ Goal: working Analyse Role end-to-end for a logged-in user.
       + a real energy-PO JD returns a sensible score.
 - [ ] Seed text for Tom Granger evidence anchors: provided in session.
 
-### Phase 1b — Career Ops workspace + Terrie (NEXT SESSION)
-- [ ] Create a "Career Ops" workspace (tenant)
-- [ ] Add Terrie as a member (`tenant_members`)
-- [ ] Terrie logs in, uploads his real data, runs his first analysis
+### Phase 1b — Per-person workspace for Terrie (early access)
+ISOLATION DECISION (2026-05-31): Career Ops data keys on tenant ONLY
+(`tenants/{tid}/career_ops*`), so workspace members SHARE a career dataset —
+wrong for private career data. Chosen: **A now, B later**.
+- A (now): one **solo workspace per person**. Hard isolation, zero code.
+- B (later, when multi-user product): re-key career data by uid
+  (`career_ops_users/{uid}`) so one workspace holds many isolated users.
+Setup is done via the existing super-admin UI at `/apps/stea/admin`:
+- [ ] Create solo workspace "Terrie Goulbourne — Career Ops" (plan: solo-*), ownerEmail = his real email
+- [ ] Ensure he's a member (non-super-admin owners auto-add; else Add Member, role admin)
+- [ ] Terrie logs in (same email) → Config → enters HIS real profile/evidence → runs analysis
+- Note: his workspace reads Firestore (empty) — the Tom Granger YAML is ONLY in David's tenant.
+- App scope: all STEa apps visible in his workspace is fine for now (not locked to Career Ops).
 
 ### Phase 2 — "It remembers and tailors"
 - [ ] Persist each analysis (History/pipeline; analysed roles saved per tenant)
