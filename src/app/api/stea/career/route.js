@@ -65,8 +65,37 @@ export async function POST(request) {
     }
 
     if (action === 'analyse') {
-      const apiKey = process.env.OPENAI_API_KEY;
-      const model = process.env.OPENAI_MODEL || 'gpt-4o';
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      // Mirrors the SORR control-UI convention (env override + claude-3-5-sonnet default).
+      const model = process.env.CAREER_ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
+
+      if (!apiKey) {
+        return NextResponse.json({ error: 'Missing ANTHROPIC_API_KEY on server. Add it in Vercel project environment variables.' }, { status: 500 });
+      }
+
+      // Calls the Anthropic Messages API and returns the assistant text.
+      // `system` is a top-level param (not a message) and `max_tokens` is required.
+      const callAnthropic = async ({ system, prompt, maxTokens = 2000 }) => {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: maxTokens,
+            system,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+        });
+        const payload = await res.json();
+        if (!res.ok) {
+          throw new Error(`Anthropic API error: ${payload?.error?.message || res.statusText}`);
+        }
+        return payload.content?.[0]?.text ?? '';
+      };
 
       // Load workspace-specific config
       const candidateProfile = await getWorkspaceConfig(tenantId, 'candidate_profile');
@@ -81,26 +110,15 @@ export async function POST(request) {
       const evaluatePromptTemplate = await loadPrompt('evaluate.md');
 
       // 1. Extract JD Data
+      // Anthropic has no JSON response-format flag, so ask for raw JSON and strip
+      // any ```json fences before parsing.
       const extractPrompt = extractPromptTemplate.replace('{{jd_text}}', jd_text || url);
-      
-      const extractRes = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: 'You are an expert recruiter for Senior PM roles.' },
-            { role: 'user', content: extractPrompt }
-          ],
-          response_format: { type: 'json_object' }
-        }),
-      });
 
-      const extractPayload = await extractRes.json();
-      const jdData = extractPayload.choices[0].message.content;
+      const rawJdData = await callAnthropic({
+        system: 'You are an expert recruiter for Senior PM roles. Respond with ONLY valid JSON — no markdown, no code fences, no commentary.',
+        prompt: extractPrompt,
+      });
+      const jdData = rawJdData.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
 
       // 2. Evaluate against profile
       const evaluatePrompt = evaluatePromptTemplate
@@ -108,23 +126,10 @@ export async function POST(request) {
         .replace('{{jd_data}}', jdData)
         .replace('{{evidence_library}}', evidenceLibrary);
 
-      const evaluateRes = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: 'You are a career coach for Senior Product Managers.' },
-            { role: 'user', content: evaluatePrompt }
-          ]
-        }),
+      const evaluation = await callAnthropic({
+        system: 'You are a career coach for Senior Product Managers.',
+        prompt: evaluatePrompt,
       });
-
-      const evaluatePayload = await evaluateRes.json();
-      const evaluation = evaluatePayload.choices[0].message.content;
 
       return NextResponse.json({
         jd_data: JSON.parse(jdData),
