@@ -679,6 +679,39 @@ export async function POST(request) {
       return NextResponse.json({ id, cover_letter: coverLetter });
     }
 
+    // Draft the common application free-text answers for a role (A3).
+    if (action === 'apply_answers') {
+      await assertActionAvailable(tenantId);
+      const { id } = body;
+      if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+      const { db } = getFirebaseAdmin();
+      const docRef = db.collection('tenants').doc(tenantId).collection('career_ops_analyses').doc(id);
+      const doc = await docRef.get();
+      if (!doc.exists) return NextResponse.json({ error: 'Analysis not found' }, { status: 404 });
+      const analysis = doc.data();
+
+      const candidateProfile = configToText(await getWorkspaceConfig(tenantId, 'candidate_profile'));
+      const evidenceLibrary = configToText(await getWorkspaceConfig(tenantId, 'evidence_library'));
+      const cachedContext = `## Candidate Profile:\n${candidateProfile}\n\n## Evidence Library:\n${evidenceLibrary}`;
+
+      const raw = await callAnthropic({
+        system: 'You draft application form answers for a job candidate. Ground everything in their real evidence — never invent. Respond with ONLY a JSON array.',
+        cachedContext,
+        prompt: `For this role:\n${JSON.stringify(analysis.jd_data || {}, null, 2)}\n\n` +
+          `Draft concise, specific answers (2-4 sentences each, first person, no clichés) to the common application questions. ` +
+          `Return ONLY a JSON array of {"q": "<question>", "a": "<answer>"} for: ` +
+          `"Why are you interested in this role?", "Why do you want to work here?", "What makes you a good fit?", "What is your relevant experience?".`,
+        maxTokens: 1500,
+      });
+      const cleaned = raw.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+      let answers = [];
+      try { answers = JSON.parse(cleaned); } catch { answers = [{ q: 'Draft answers', a: cleaned }]; }
+
+      await docRef.set({ apply_answers: answers, apply_answers_at: new Date() }, { merge: true });
+      await incrementUsage(tenantId);
+      return NextResponse.json({ id, apply_answers: answers });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     // Out-of-actions is a normal state, not a server error — return 402 + usage

@@ -862,9 +862,29 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       setCoverLoading(false);
     }
   }
-  // When the selected role changes, load any saved cover letter for it.
+  // Common application answers (A3).
+  const [applyAnswers, setApplyAnswers] = useState([]);
+  const [answersLoading, setAnswersLoading] = useState(false);
+  async function handleApplyAnswers() {
+    if (!currentTenant?.id || !applyRoleId) { alert('Select a role first.'); return; }
+    setAnswersLoading(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'apply_answers', tenantId: currentTenant.id, id: applyRoleId }),
+      });
+      const data = await res.json();
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setApplyAnswers(data.apply_answers || []);
+      loadUsage();
+    } catch (err) { alert(err.message); } finally { setAnswersLoading(false); }
+  }
+
+  // When the selected role changes, load any saved cover letter + answers for it.
   useEffect(() => {
     setCoverLetter('');
+    setApplyAnswers([]);
     if (!currentTenant?.id || !applyRoleId) return;
     (async () => {
       try {
@@ -873,7 +893,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           body: JSON.stringify({ action: 'get_analysis', tenantId: currentTenant.id, id: applyRoleId }),
         });
         const data = await res.json();
-        if (res.ok && data.cover_letter) setCoverLetter(data.cover_letter);
+        if (res.ok) {
+          if (data.cover_letter) setCoverLetter(data.cover_letter);
+          if (Array.isArray(data.apply_answers)) setApplyAnswers(data.apply_answers);
+        }
       } catch {}
     })();
   }, [applyRoleId, currentTenant]);
@@ -1599,6 +1622,34 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   </button>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-2">Each revision uses one action. Always review before sending.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Common application answers (A3) */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">quiz</span>Common application answers</h4>
+              {applyAnswers.length > 0 && applyRoleId && (
+                <button onClick={handleApplyAnswers} disabled={answersLoading} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Regenerate</button>
+              )}
+            </div>
+            {!applyRoleId ? (
+              <p className="text-sm text-slate-400 py-6 text-center">Select a role above to draft answers to the usual "why this role / why us / good fit" questions.</p>
+            ) : applyAnswers.length === 0 ? (
+              <div className="py-6 text-center">
+                <p className="text-sm text-slate-500 mb-4">Draft the common free-text answers for this role. Each is copyable. Uses one action.</p>
+                <button onClick={handleApplyAnswers} disabled={answersLoading}
+                  className={`h-12 px-6 bg-[#006C50] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#005840] transition-colors ${answersLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                  {answersLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined">quiz</span>Draft answers</>)}
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {applyAnswers.map((qa, i) => (
+                  <CopyField key={i} label={qa.q} value={qa.a} multiline />
+                ))}
+                <p className="text-[10px] text-slate-400">Drafts only — personalise before submitting.</p>
               </div>
             )}
           </div>
