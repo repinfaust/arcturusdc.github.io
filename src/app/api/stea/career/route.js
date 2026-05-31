@@ -411,7 +411,7 @@ export async function POST(request) {
 
     // Search real job boards (Reed + Adzuna) and return normalised, deduped roles.
     if (action === 'search_jobs') {
-      const { keywords = '', location = '', salary_min } = body;
+      const { keywords = '', location = '', salary_min, exclude_employer = '' } = body;
       const results = [];
       const sourcesTried = [];
       const sourcesAvailable = [];
@@ -499,34 +499,28 @@ export async function POST(request) {
         return true;
       });
 
-      // --- Stage 1: cheap title filter from the candidate's targets ---
-      // Reed/Adzuna keyword search is loose, so drop obvious mismatches by title
-      // before spending any tokens. Positive words come from the profile's
-      // target roles + keywords; negatives are common wrong disciplines.
+      // --- Stage 1: cheap NEGATIVE-only title filter ---
+      // Only drop obvious wrong-discipline titles; let everything else through to
+      // the LLM ranker (the smart filter). A positive word-match was too strict
+      // and dropped good roles with slightly different titles.
       const profileRaw = await getWorkspaceConfig(tenantId, 'candidate_profile');
       let targetRoles = [];
       try {
         const p = typeof profileRaw === 'string' ? null : profileRaw;
         if (p && Array.isArray(p.target_roles)) targetRoles = p.target_roles;
       } catch {}
-      const positiveWords = new Set(
-        [...targetRoles, keywords]
-          .join(' ')
-          .toLowerCase()
-          .split(/[^a-z]+/)
-          .filter((w) => w.length > 2 && !['the', 'and', 'for', 'senior', 'lead'].includes(w))
-      );
-      const NEGATIVE = ['engineer', 'developer', 'scientist', 'architect', 'sdet', 'tester',
-        'accountant', 'finance director', 'sales', 'nurse', 'teacher', 'driver', 'solicitor',
-        'designer', 'devops', 'sysadmin', 'consultant surgeon'];
-      const titleFiltered = deduped.filter((r) => {
+      const NEGATIVE = ['software engineer', 'backend developer', 'frontend developer',
+        'full stack', 'data scientist', 'sdet', 'qa tester', 'accountant', 'nurse',
+        'teacher', 'driver', 'solicitor', 'graphic designer', 'sysadmin', 'electrician',
+        'plumber', 'chef', 'warehouse', 'cleaner', 'security officer'];
+      const excludeCo = (exclude_employer || '').toLowerCase().trim();
+      const stage1 = deduped.filter((r) => {
         const t = (r.title || '').toLowerCase();
         if (NEGATIVE.some((n) => t.includes(n))) return false;
-        // keep if any positive target word appears in the title
-        return [...positiveWords].some((w) => t.includes(w));
+        // Exclude the candidate's current/most-recent employer if requested.
+        if (excludeCo && (r.company || '').toLowerCase().includes(excludeCo)) return false;
+        return true;
       });
-      // If the filter is too aggressive and kills everything, fall back to deduped.
-      const stage1 = titleFiltered.length > 0 ? titleFiltered : deduped;
 
       // --- Stage 2: LLM relevance ranking of the survivors ---
       let ranked = stage1;

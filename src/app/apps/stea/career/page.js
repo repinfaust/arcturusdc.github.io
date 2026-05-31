@@ -628,6 +628,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searchTotalRaw, setSearchTotalRaw] = useState(0);
   const [searchPrefilled, setSearchPrefilled] = useState(false);
+  const [excludeCurrentEmployer, setExcludeCurrentEmployer] = useState(true);
+  // Current/most-recent employer = first evidence anchor's company (anchors are
+  // most-recent-first). Strip qualifiers like "(current)" for matching.
+  const currentEmployer = useMemo(() => {
+    const c = Array.isArray(anchorsData) && anchorsData[0]?.company ? anchorsData[0].company : '';
+    return c.replace(/\s*\(current\)\s*/i, '').replace(/\s*—.*$/, '').trim();
+  }, [anchorsData]);
 
   useEffect(() => {
     if (!tailoring) { setTailorStage(0); return; }
@@ -756,7 +763,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         const firstRole = Array.isArray(p.target_roles) ? p.target_roles[0] : (p.current_role || '');
         if (firstRole) setSearchKeywords(firstRole);
         if (p.location) setSearchLocation(String(p.location).split(',')[0].trim());
-        if (p.min_salary) setSearchSalary(String(p.min_salary));
+        // Deliberately do NOT prefill salary — a salary floor makes Reed/Adzuna
+        // exclude all jobs that don't list a salary (most of them).
         setSearchPrefilled(true);
       }
     } catch (err) {
@@ -842,12 +850,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     setSearchResults([]);
     const keywords = searchKeywords.trim() || (Array.isArray(profileData?.target_roles) ? profileData.target_roles[0] : '') || profileData?.current_role || '';
     const location = searchLocation.trim();
-    const salary_min = searchSalary || profileData?.min_salary || undefined;
+    // Only send salary if the user explicitly typed one — a floor excludes all
+    // jobs with no listed salary, which is most of them.
+    const salary_min = searchSalary ? Number(searchSalary) : undefined;
+    const exclude_employer = excludeCurrentEmployer ? currentEmployer : '';
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'search_jobs', tenantId: currentTenant.id, keywords, location, salary_min }),
+        body: JSON.stringify({ action: 'search_jobs', tenantId: currentTenant.id, keywords, location, salary_min, exclude_employer }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Search failed');
@@ -1164,12 +1175,18 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Min salary (£)</label>
-                <input type="number" value={searchSalary} onChange={(e) => setSearchSalary(e.target.value)} placeholder="60000" step={5000} min={0}
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Min salary (£) — optional</label>
+                <input type="number" value={searchSalary} onChange={(e) => setSearchSalary(e.target.value)} placeholder="leave blank" step={5000} min={0}
                   className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+                <p className="text-[10px] text-slate-400 mt-1 ml-1">Setting this hides jobs with no listed salary (most of them). Leave blank for the widest results.</p>
               </div>
             </div>
-            <div className="flex justify-end mt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
+              <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+                <input type="checkbox" checked={excludeCurrentEmployer} onChange={(e) => setExcludeCurrentEmployer(e.target.checked)}
+                  className="w-4 h-4 text-[#006C50] border-slate-300 rounded focus:ring-[#006C50]" />
+                Exclude my current / most recent employer{currentEmployer ? ` (${currentEmployer})` : ''}
+              </label>
               <button onClick={handleSearchJobs} disabled={searching}
                 className={`min-w-[160px] h-12 bg-[#10294D] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#001432] transition-all ${searching ? 'opacity-60 cursor-not-allowed' : ''}`}>
                 {searching ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Searching…</>) : (<><span className="material-symbols-outlined">search</span>Search</>)}
