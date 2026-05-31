@@ -787,6 +787,85 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     } catch (err) { console.error('Failed to dismiss onboarding', err); }
   }
 
+  async function loadCvUploads() {
+    if (!currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list_cv_uploads', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.cvs)) setCvUploads(data.cvs);
+    } catch (err) { console.error('Failed to load CV uploads', err); }
+  }
+
+  async function saveCvAndExtract(label, cvText) {
+    if (!cvText?.trim()) { alert('No text found in that file. Try another file or paste the text.'); return; }
+    setCvBusy(true);
+    try {
+      const saveRes = await fetch('/api/stea/career', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_cv', tenantId: currentTenant.id, label, cv_text: cvText, make_active: true }),
+      });
+      const saved = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saved.error || 'Save failed');
+      await loadCvUploads();
+      if (window.confirm('CV saved & set as active. Auto-fill your profile and evidence from it now? (uses one action — you can review and edit before saving)')) {
+        const exRes = await fetch('/api/stea/career', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'extract_from_cv', tenantId: currentTenant.id, id: saved.id }),
+        });
+        const ex = await exRes.json();
+        if (handleLimit(exRes, ex)) return;
+        if (!exRes.ok) throw new Error(ex.error || 'Extraction failed');
+        if (ex.profile) setProfileData((p) => ({ ...p, ...ex.profile }));
+        if (Array.isArray(ex.evidence) && ex.evidence.length) setAnchorsData(ex.evidence);
+        loadUsage();
+        setActiveTab('settings');
+        alert('Profile & evidence filled from your CV. Review them and hit Save.');
+      }
+    } catch (err) { alert(err.message); }
+    finally { setCvBusy(false); }
+  }
+
+  async function handleCvFile(file) {
+    if (!file || !currentTenant?.id) return;
+    setCvBusy(true);
+    try {
+      const text = await extractCvText(file);
+      const label = file.name.replace(/\.(pdf|docx|txt)$/i, '');
+      await saveCvAndExtract(label, text);
+    } catch (err) { alert(err.message); }
+    finally { setCvBusy(false); }
+  }
+
+  async function setActiveCv(id) {
+    try {
+      await fetch('/api/stea/career', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_active_cv', tenantId: currentTenant.id, id }),
+      });
+      loadCvUploads();
+    } catch (err) { alert(err.message); }
+  }
+  async function relabelCv(id, current) {
+    const label = window.prompt('Label for this CV:', current || '');
+    if (label == null) return;
+    await fetch('/api/stea/career', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'relabel_cv', tenantId: currentTenant.id, id, label }),
+    });
+    loadCvUploads();
+  }
+  async function deleteCv(id) {
+    if (!window.confirm('Delete this CV from your library?')) return;
+    await fetch('/api/stea/career', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_cv', tenantId: currentTenant.id, id }),
+    });
+    loadCvUploads();
+  }
+
   async function loadApplyExtras() {
     if (!currentTenant?.id) return;
     try {
@@ -1738,6 +1817,93 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                <span>Your details stay in your own private Arcturus DC workspace. We never sell or share your personal data — it's only sent to the AI and job-board services needed to run your search, then stored securely here.</span>
              </div>
            </header>
+           
+           {/* CV Library — upload your CV; the active one is the reference for analyse & search */}
+           
+           <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm mb-8">
+           
+             <h3 className="font-bold text-[#10294D] text-lg tracking-tight flex items-center gap-2 mb-1">
+           
+               <span className="material-symbols-outlined text-[#006C50]">description</span> Your CV
+           
+             </h3>
+           
+             <p className="text-sm text-slate-500 mb-4">Upload your CV (PDF or DOCX). The <span className="font-bold">active</span> CV is the reference Career Ops uses to analyse roles, search, and tailor — and we&apos;ll auto-fill your profile &amp; evidence from it.</p>
+           
+             <div className="flex flex-wrap gap-3 items-center">
+           
+               <label className={`inline-flex items-center gap-2 h-11 px-5 rounded-xl font-bold text-sm cursor-pointer transition-colors ${cvBusy ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#006C50] text-white hover:bg-[#005840]'}`}>
+           
+                 {cvBusy ? <span className="material-symbols-outlined animate-spin text-base">progress_activity</span> : <span className="material-symbols-outlined text-base">upload_file</span>}
+           
+                 {cvBusy ? 'Reading…' : 'Upload CV (PDF/DOCX)'}
+           
+                 <input type="file" accept=".pdf,.docx,.txt,application/pdf" className="hidden" disabled={cvBusy}
+           
+                   onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) handleCvFile(file); }} />
+           
+               </label>
+           
+               <button onClick={() => setCvPasteOpen((o) => !o)} className="h-11 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50">or paste text</button>
+           
+             </div>
+           
+             {cvPasteOpen && (
+           
+               <div className="mt-4 space-y-2">
+           
+                 <input value={cvPasteLabel} onChange={(e) => setCvPasteLabel(e.target.value)} placeholder="Label (e.g. Energy PO version)" className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+           
+                 <textarea value={cvPasteText} onChange={(e) => setCvPasteText(e.target.value)} placeholder="Paste your full CV text here…" className="w-full h-40 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100 resize-none" />
+           
+                 <button onClick={async () => { await saveCvAndExtract(cvPasteLabel || 'My CV', cvPasteText); setCvPasteText(''); setCvPasteLabel(''); setCvPasteOpen(false); }} disabled={cvBusy || !cvPasteText.trim()} className={`h-11 px-5 rounded-xl font-bold text-sm ${(cvBusy || !cvPasteText.trim()) ? 'bg-slate-100 text-slate-400' : 'bg-[#10294D] text-white hover:bg-[#001432]'}`}>Save CV</button>
+           
+               </div>
+           
+             )}
+           
+             {cvUploads.length > 0 && (
+           
+               <div className="mt-5 space-y-2">
+           
+                 {cvUploads.map((cv) => (
+           
+                   <div key={cv.id} className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${cv.active ? 'border-[#006C50] bg-teal-50/40' : 'border-slate-200'}`}>
+           
+                     <div className="min-w-0">
+           
+                       <div className="flex items-center gap-2">
+           
+                         <p className="font-bold text-[#10294D] text-sm truncate">{cv.label}</p>
+           
+                         {cv.active && <span className="text-[9px] font-bold uppercase tracking-widest bg-[#006C50] text-white px-1.5 py-0.5 rounded">Active</span>}
+           
+                       </div>
+           
+                       <p className="text-xs text-slate-400 truncate">{cv.preview}…</p>
+           
+                     </div>
+           
+                     <div className="flex items-center gap-3 shrink-0">
+           
+                       {!cv.active && <button onClick={() => setActiveCv(cv.id)} className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline">Set active</button>}
+           
+                       <button onClick={() => relabelCv(cv.id, cv.label)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Rename</button>
+           
+                       <button onClick={() => deleteCv(cv.id)} className="text-slate-300 hover:text-red-500"><span className="material-symbols-outlined text-sm">delete</span></button>
+           
+                     </div>
+           
+                   </div>
+           
+                 ))}
+           
+               </div>
+           
+             )}
+           
+           </div>
+
            
            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-8">
               <div className="col-span-12 lg:col-span-5 flex flex-col">
