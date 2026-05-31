@@ -629,6 +629,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [searchTotalRaw, setSearchTotalRaw] = useState(0);
   const [searchPrefilled, setSearchPrefilled] = useState(false);
   const [excludeCurrentEmployer, setExcludeCurrentEmployer] = useState(true);
+  const [usage, setUsage] = useState(null); // { used, granted, remaining }
+  const [showPaywall, setShowPaywall] = useState(false);
   // Current/most-recent employer = first evidence anchor's company (anchors are
   // most-recent-first). Strip qualifiers like "(current)" for matching.
   const currentEmployer = useMemo(() => {
@@ -667,6 +669,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       checkConfig();
       loadAnalyses();
       loadCvs();
+      loadUsage();
     }
   }, [currentTenant]);
 
@@ -696,10 +699,12 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         body: JSON.stringify({ action: 'tailor_cv', tenantId: currentTenant.id, id }),
       });
       const data = await res.json();
+      if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Tailoring failed');
       setResults((r) => ({ ...r, tailored_cv: data.tailored_cv }));
       loadAnalyses();
       loadCvs();
+      loadUsage();
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -721,6 +726,54 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     } catch (err) {
       console.error('Failed to load CV library', err);
     }
+  }
+
+  // Start a £5 one-time Stripe checkout for a top-up (uses the shared
+  // create-checkout-session route in mode:payment). Needs the Career Ops
+  // coffee price id in env (CAREER_COFFEE_PRICE_ID).
+  async function handleBuyCoffee() {
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: 'CAREER_COFFEE',
+          mode: 'payment',
+          planName: 'Career Ops coffee top-up',
+          metadata: { kind: 'career_coffee', tenantId: currentTenant?.id },
+        }),
+      });
+      const data = await res.json();
+      if (data?.url) { window.location.href = data.url; return; }
+      alert(data?.error || 'Coffee checkout is not configured yet. (Stripe price pending.)');
+    } catch (err) {
+      alert('Could not start checkout: ' + err.message);
+    }
+  }
+
+  async function loadUsage() {
+    if (!currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_usage', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      if (res.ok) setUsage(data);
+    } catch (err) {
+      console.error('Failed to load usage', err);
+    }
+  }
+
+  // Returns true if a response was the usage limit (402); shows the paywall.
+  function handleLimit(res, data) {
+    if (res.status === 402 || data?.limit_reached) {
+      if (data?.usage) setUsage((u) => ({ ...(u || {}), ...data.usage }));
+      setShowPaywall(true);
+      return true;
+    }
+    return false;
   }
 
   // Re-open a saved analysis: load it and show its evaluation in the results view.
@@ -832,9 +885,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         body: JSON.stringify({ action: 'analyse', jd_text: input, tenantId: currentTenant.id }),
       });
       const data = await res.json();
+      if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Analyse failed');
       setResults(data);
       loadAnalyses(); // refresh the pipeline with the newly-saved role
+      loadUsage();
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -861,9 +916,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         body: JSON.stringify({ action: 'search_jobs', tenantId: currentTenant.id, keywords, location, salary_min, exclude_employer }),
       });
       const data = await res.json();
+      if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Search failed');
       setSearchResults(data.jobs || []);
       setSearchTotalRaw(data.total_raw || (data.jobs || []).length);
+      loadUsage();
       if ((data.jobs || []).length === 0) alert('No relevant roles found. Try broader keywords or a different location.');
     } catch (err) {
       console.error(err);
@@ -888,23 +945,34 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
   return (
     <div className="flex flex-col gap-10">
-      {/* Tab navigation (in-page state — no routes, no 404 prefetch) */}
-      <nav className="bg-slate-100/70 rounded-2xl p-1.5 flex flex-wrap gap-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
-              activeTab === tab.id
-                ? 'bg-white text-[#10294D] shadow-sm'
-                : 'text-slate-500 hover:text-[#10294D]'
-            }`}
-          >
-            <span>{tab.icon}</span>
-            {tab.label}
+      {/* Tab navigation + usage meter */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <nav className="bg-slate-100/70 rounded-2xl p-1.5 flex flex-wrap gap-1 flex-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                activeTab === tab.id
+                  ? 'bg-white text-[#10294D] shadow-sm'
+                  : 'text-slate-500 hover:text-[#10294D]'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+        {usage && (
+          <button onClick={() => setShowPaywall(true)} title="Analyses, CV tailoring and searches each use one action"
+            className={`shrink-0 text-xs font-bold px-3 py-2 rounded-xl border transition-colors ${
+              usage.remaining <= 0 ? 'bg-amber-50 border-amber-200 text-amber-800' :
+              usage.remaining <= 3 ? 'bg-amber-50 border-amber-100 text-amber-700' :
+              'bg-white border-slate-200 text-slate-500'}`}>
+            {usage.remaining > 0 ? `${usage.remaining} actions left` : 'No actions left — buy a coffee'} ☕
           </button>
-        ))}
-      </nav>
+        )}
+      </div>
 
       {/* Onboarding Alert */}
       {!configStatus.has_config && activeTab !== 'settings' && (
@@ -1342,6 +1410,31 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
            <CvPreviewer />
         </section>
+      )}
+
+      {/* Buy-a-coffee paywall */}
+      {showPaywall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowPaywall(false)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="text-4xl mb-3">☕</div>
+            <h3 className="text-xl font-bold text-[#10294D]">{usage?.remaining > 0 ? 'Enjoying Career Ops?' : "You've used your free actions"}</h3>
+            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+              Career Ops is free for your first {usage?.free_actions || 20} actions (analyses, CV tailoring and searches).
+              {usage?.remaining > 0 ? ` You have ${usage.remaining} left.` : ' To keep going, buy us a coffee.'}
+            </p>
+            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+              This isn't about profit — it just covers the AI costs of running your job search. A £5 coffee unlocks another {usage?.bundle || 50} actions.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => handleBuyCoffee()} className="flex-1 h-12 bg-[#006C50] text-white rounded-xl font-bold hover:bg-[#005840] transition-colors flex items-center justify-center gap-2">
+                <span>☕</span> Buy a coffee — £5
+              </button>
+              <button onClick={() => setShowPaywall(false)} className="px-5 h-12 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

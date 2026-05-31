@@ -138,6 +138,42 @@ async function callAnthropic({ system, prompt, maxTokens = 2000, cachedContext }
   return payload.content?.[0]?.text ?? '';
 }
 
+// --- Usage metering (combined action pool: analyse + tailor + search) ---
+const FREE_ACTIONS = 20;            // free allowance per tenant
+const COFFEE_BUNDLE = 50;           // actions granted per £5 top-up
+const USAGE_DOC = (db, tenantId) =>
+  db.collection('tenants').doc(tenantId).collection('career_ops').doc('usage');
+
+async function getUsage(tenantId) {
+  const { db } = getFirebaseAdmin();
+  const snap = await USAGE_DOC(db, tenantId).get();
+  const v = snap.exists ? snap.data() : {};
+  const used = v.actions_used || 0;
+  const granted = (v.actions_granted ?? FREE_ACTIONS);
+  return { used, granted, remaining: Math.max(0, granted - used) };
+}
+
+// Throws a structured limit error if the tenant is out of actions.
+async function assertActionAvailable(tenantId) {
+  const u = await getUsage(tenantId);
+  if (u.remaining <= 0) {
+    const err = new Error('You have used all your free Career Ops actions. Buy a coffee to keep going.');
+    err.code = 'LIMIT_REACHED';
+    err.usage = u;
+    throw err;
+  }
+  return u;
+}
+
+async function incrementUsage(tenantId) {
+  const { db } = getFirebaseAdmin();
+  const FieldValueMod = (await import('firebase-admin/firestore')).FieldValue;
+  await USAGE_DOC(db, tenantId).set(
+    { actions_used: FieldValueMod.increment(1), updated_at: new Date() },
+    { merge: true }
+  );
+}
+
 // Normalise config (string YAML or object/array) to readable text for prompts.
 function configToText(v) {
   if (v == null) return '';
@@ -200,6 +236,7 @@ export async function POST(request) {
     }
 
     if (action === 'analyse') {
+      await assertActionAvailable(tenantId);
       // Uses the module-level callAnthropic (claude-sonnet-4-6, ANTHROPIC_API_KEY).
       const candidateProfileRaw = await getWorkspaceConfig(tenantId, 'candidate_profile');
       const evidenceLibraryRaw = await getWorkspaceConfig(tenantId, 'evidence_library');
@@ -265,6 +302,8 @@ export async function POST(request) {
         prompt: evaluatePrompt,
         maxTokens: 3000,
       });
+
+      await incrementUsage(tenantId); // one analyse = one action
 
       const parsedJd = JSON.parse(jdData);
 
@@ -356,6 +395,7 @@ export async function POST(request) {
     // Generate a role-tailored CV for an analysed role and save it against that
     // role (the "proceed to apply" loop → per-tenant CV library).
     if (action === 'tailor_cv') {
+      await assertActionAvailable(tenantId);
       const { id } = body;
       if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
       const { db } = getFirebaseAdmin();
@@ -393,6 +433,8 @@ export async function POST(request) {
         status: 'Applying',
       }, { merge: true });
 
+      await incrementUsage(tenantId); // one tailor = one action
+
       return NextResponse.json({ id, tailored_cv: tailoredCv, status: 'Applying' });
     }
 
@@ -427,6 +469,7 @@ export async function POST(request) {
 
     // Search real job boards (Reed + Adzuna) and return normalised, deduped roles.
     if (action === 'search_jobs') {
+      await assertActionAvailable(tenantId);
       const { keywords = '', location = '', salary_min, exclude_employer = '' } = body;
       const results = [];
       const sourcesTried = [];
@@ -566,11 +609,23 @@ export async function POST(request) {
         console.error('LLM ranking failed, returning title-filtered list', e?.message);
       }
 
+      await incrementUsage(tenantId); // one search = one action
+
       return NextResponse.json({ jobs: ranked, sources: sourcesTried, total_raw: deduped.length });
+    }
+
+    if (action === 'get_usage') {
+      const u = await getUsage(tenantId);
+      return NextResponse.json({ ...u, free_actions: FREE_ACTIONS, bundle: COFFEE_BUNDLE });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
+    // Out-of-actions is a normal state, not a server error — return 402 + usage
+    // so the UI can show the "buy a coffee" prompt.
+    if (error?.code === 'LIMIT_REACHED') {
+      return NextResponse.json({ error: error.message, limit_reached: true, usage: error.usage }, { status: 402 });
+    }
     console.error('Career Ops Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
