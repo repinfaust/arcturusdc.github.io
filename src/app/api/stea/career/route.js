@@ -499,7 +499,64 @@ export async function POST(request) {
         return true;
       });
 
-      return NextResponse.json({ jobs: deduped, sources: sourcesTried });
+      // --- Stage 1: cheap title filter from the candidate's targets ---
+      // Reed/Adzuna keyword search is loose, so drop obvious mismatches by title
+      // before spending any tokens. Positive words come from the profile's
+      // target roles + keywords; negatives are common wrong disciplines.
+      const profileRaw = await getWorkspaceConfig(tenantId, 'candidate_profile');
+      let targetRoles = [];
+      try {
+        const p = typeof profileRaw === 'string' ? null : profileRaw;
+        if (p && Array.isArray(p.target_roles)) targetRoles = p.target_roles;
+      } catch {}
+      const positiveWords = new Set(
+        [...targetRoles, keywords]
+          .join(' ')
+          .toLowerCase()
+          .split(/[^a-z]+/)
+          .filter((w) => w.length > 2 && !['the', 'and', 'for', 'senior', 'lead'].includes(w))
+      );
+      const NEGATIVE = ['engineer', 'developer', 'scientist', 'architect', 'sdet', 'tester',
+        'accountant', 'finance director', 'sales', 'nurse', 'teacher', 'driver', 'solicitor',
+        'designer', 'devops', 'sysadmin', 'consultant surgeon'];
+      const titleFiltered = deduped.filter((r) => {
+        const t = (r.title || '').toLowerCase();
+        if (NEGATIVE.some((n) => t.includes(n))) return false;
+        // keep if any positive target word appears in the title
+        return [...positiveWords].some((w) => t.includes(w));
+      });
+      // If the filter is too aggressive and kills everything, fall back to deduped.
+      const stage1 = titleFiltered.length > 0 ? titleFiltered : deduped;
+
+      // --- Stage 2: LLM relevance ranking of the survivors ---
+      let ranked = stage1;
+      try {
+        if (process.env.ANTHROPIC_API_KEY && stage1.length > 0) {
+          const list = stage1.slice(0, 40).map((r, i) => `${i}. ${r.title} @ ${r.company} (${r.location})`).join('\n');
+          const rankPrompt =
+            `Candidate target roles: ${targetRoles.join(', ') || keywords}.\n\n` +
+            `Here are job listings (index. title @ company):\n${list}\n\n` +
+            `Return ONLY a JSON array of objects {"i": <index>, "score": <0-100 relevance to the target roles>} ` +
+            `for the listings that are a plausible match (score >= 50). Omit clear mismatches. No prose, no code fences.`;
+          const raw = await callAnthropic({
+            system: 'You rank job listings by relevance to a candidate. Respond with ONLY a JSON array.',
+            prompt: rankPrompt,
+            maxTokens: 1200,
+          });
+          const cleaned = raw.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+          const scores = JSON.parse(cleaned);
+          if (Array.isArray(scores) && scores.length) {
+            ranked = scores
+              .filter((s) => stage1[s.i])
+              .sort((a, b) => (b.score || 0) - (a.score || 0))
+              .map((s) => ({ ...stage1[s.i], relevance: s.score }));
+          }
+        }
+      } catch (e) {
+        console.error('LLM ranking failed, returning title-filtered list', e?.message);
+      }
+
+      return NextResponse.json({ jobs: ranked, sources: sourcesTried, total_raw: deduped.length });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

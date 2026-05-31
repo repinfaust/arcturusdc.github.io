@@ -608,6 +608,7 @@ export default function CareerOpsDashboard() {
   const [searchSalary, setSearchSalary] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
+  const [searchTotalRaw, setSearchTotalRaw] = useState(0);
   const [searchPrefilled, setSearchPrefilled] = useState(false);
 
   useEffect(() => {
@@ -816,7 +817,8 @@ export default function CareerOpsDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Search failed');
       setSearchResults(data.jobs || []);
-      if ((data.jobs || []).length === 0) alert('No roles found. Try broader keywords or a different location.');
+      setSearchTotalRaw(data.total_raw || (data.jobs || []).length);
+      if ((data.jobs || []).length === 0) alert('No relevant roles found. Try broader keywords or a different location.');
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -1143,15 +1145,26 @@ export default function CareerOpsDashboard() {
           {/* Results */}
           {searchResults.length > 0 && (
             <div className="space-y-3">
-              <p className="text-xs text-slate-500">{searchResults.length} roles found. Click "Analyse" to score one against your profile.</p>
+              <p className="text-xs text-slate-500">
+                {searchResults.length} relevant {searchResults.length === 1 ? 'role' : 'roles'}
+                {searchTotalRaw > searchResults.length ? ` (filtered from ${searchTotalRaw}, ranked by relevance to your targets)` : ''}. Click "Analyse" to score one against your profile.
+              </p>
               {searchResults.map((job, i) => (
                 <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-[#10294D] text-sm truncate">{job.title}</p>
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{job.source}</span>
+                  <div className="min-w-0 flex items-center gap-3">
+                    {typeof job.relevance === 'number' && (
+                      <div className={`shrink-0 w-11 h-11 rounded-lg flex flex-col items-center justify-center font-bold ${job.relevance >= 75 ? 'bg-green-50 text-green-700' : job.relevance >= 60 ? 'bg-teal-50 text-[#006C50]' : 'bg-amber-50 text-amber-700'}`}>
+                        <span className="text-sm leading-none">{job.relevance}</span>
+                        <span className="text-[7px] uppercase tracking-widest mt-0.5">match</span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-[#10294D] text-sm truncate">{job.title}</p>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{job.source}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}</p>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5 truncate">{job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {job.url && <a href={job.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">View</a>}
