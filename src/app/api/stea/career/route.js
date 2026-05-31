@@ -82,8 +82,9 @@ export async function POST(request) {
 
     if (action === 'analyse') {
       const apiKey = process.env.ANTHROPIC_API_KEY;
-      // Mirrors the SORR control-UI convention (env override + claude-3-5-sonnet default).
-      const model = process.env.CAREER_ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
+      // Pinned, broadly-available model ID. Override via CAREER_ANTHROPIC_MODEL
+      // in Vercel if needed. (The "-latest" alias is rejected by some keys.)
+      const model = process.env.CAREER_ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
 
       if (!apiKey) {
         return NextResponse.json({ error: 'Missing ANTHROPIC_API_KEY on server. Add it in Vercel project environment variables.' }, { status: 500 });
@@ -108,7 +109,11 @@ export async function POST(request) {
         });
         const payload = await res.json();
         if (!res.ok) {
-          throw new Error(`Anthropic API error: ${payload?.error?.message || res.statusText}`);
+          // Surface the real Anthropic error (status + type + message) so failures
+          // are unambiguous instead of just echoing the model name.
+          const detail = payload?.error?.message || res.statusText;
+          const type = payload?.error?.type ? ` (${payload.error.type})` : '';
+          throw new Error(`Anthropic API ${res.status}${type}: ${detail} [model=${model}]`);
         }
         return payload.content?.[0]?.text ?? '';
       };
