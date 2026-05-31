@@ -100,6 +100,41 @@ async function getWorkspaceConfig(tenantId, configName) {
   return '';
 }
 
+// Anthropic config + a shared call helper used by analyse and tailor_cv.
+const ANTHROPIC_MODEL = process.env.CAREER_ANTHROPIC_MODEL || 'claude-sonnet-4-6';
+async function callAnthropic({ system, prompt, maxTokens = 2000 }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY on server. Add it in Vercel project environment variables.');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+  const payload = await res.json();
+  if (!res.ok) {
+    const detail = payload?.error?.message || res.statusText;
+    const type = payload?.error?.type ? ` (${payload.error.type})` : '';
+    throw new Error(`Anthropic API ${res.status}${type}: ${detail} [model=${ANTHROPIC_MODEL}]`);
+  }
+  return payload.content?.[0]?.text ?? '';
+}
+
+// Normalise config (string YAML or object/array) to readable text for prompts.
+function configToText(v) {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  try { return JSON.stringify(v, null, 2); } catch { return String(v); }
+}
+
 async function loadPrompt(fileName) {
   const filePath = path.join(process.cwd(), 'src/app/apps/stea/career/prompts', fileName);
   return await readFile(filePath, 'utf8');
@@ -155,56 +190,11 @@ export async function POST(request) {
     }
 
     if (action === 'analyse') {
-      const apiKey = process.env.ANTHROPIC_API_KEY;
-      // Current Sonnet (dateless pinned id, per Anthropic model docs 2026).
-      // The old claude-3-5-sonnet-* ids are retired and 404. Override with
-      // CAREER_ANTHROPIC_MODEL if you want a different available model.
-      const model = process.env.CAREER_ANTHROPIC_MODEL || 'claude-sonnet-4-6';
-
-      if (!apiKey) {
-        return NextResponse.json({ error: 'Missing ANTHROPIC_API_KEY on server. Add it in Vercel project environment variables.' }, { status: 500 });
-      }
-
-      // Calls the Anthropic Messages API and returns the assistant text.
-      // `system` is a top-level param (not a message) and `max_tokens` is required.
-      const callAnthropic = async ({ system, prompt, maxTokens = 2000 }) => {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model,
-            max_tokens: maxTokens,
-            system,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-        });
-        const payload = await res.json();
-        if (!res.ok) {
-          // Surface the real Anthropic error (status + type + message) so failures
-          // are unambiguous instead of just echoing the model name.
-          const detail = payload?.error?.message || res.statusText;
-          const type = payload?.error?.type ? ` (${payload.error.type})` : '';
-          throw new Error(`Anthropic API ${res.status}${type}: ${detail} [model=${model}]`);
-        }
-        return payload.content?.[0]?.text ?? '';
-      };
-
-      // Load workspace-specific config. This can be a string (YAML, local tenant)
-      // or an object/array (Firestore tenant). Normalise to readable text for the
-      // prompt — a raw object would stringify to "[object Object]".
-      const toText = (v) => {
-        if (v == null) return '';
-        if (typeof v === 'string') return v;
-        try { return JSON.stringify(v, null, 2); } catch { return String(v); }
-      };
+      // Uses the module-level callAnthropic (claude-sonnet-4-6, ANTHROPIC_API_KEY).
       const candidateProfileRaw = await getWorkspaceConfig(tenantId, 'candidate_profile');
       const evidenceLibraryRaw = await getWorkspaceConfig(tenantId, 'evidence_library');
-      const candidateProfile = toText(candidateProfileRaw);
-      const evidenceLibrary = toText(evidenceLibraryRaw);
+      const candidateProfile = configToText(candidateProfileRaw);
+      const evidenceLibrary = configToText(evidenceLibraryRaw);
 
       if (!candidateProfile.trim() || !evidenceLibrary.trim()) {
         return NextResponse.json({ error: 'Workspace configuration is incomplete. Please set up your profile and evidence library first.' }, { status: 400 });
@@ -338,6 +328,70 @@ export async function POST(request) {
       if (!doc.exists) return NextResponse.json({ error: 'Not found' }, { status: 404 });
       const v = doc.data();
       return NextResponse.json({ id: doc.id, ...v, createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toISOString() : null });
+    }
+
+    // Generate a role-tailored CV for an analysed role and save it against that
+    // role (the "proceed to apply" loop → per-tenant CV library).
+    if (action === 'tailor_cv') {
+      const { id } = body;
+      if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+      const { db } = getFirebaseAdmin();
+      const docRef = db.collection('tenants').doc(tenantId).collection('career_ops_analyses').doc(id);
+      const doc = await docRef.get();
+      if (!doc.exists) return NextResponse.json({ error: 'Analysis not found' }, { status: 404 });
+      const analysis = doc.data();
+
+      const candidateProfile = configToText(await getWorkspaceConfig(tenantId, 'candidate_profile'));
+      const evidenceLibrary = configToText(await getWorkspaceConfig(tenantId, 'evidence_library'));
+      if (!candidateProfile.trim() || !evidenceLibrary.trim()) {
+        return NextResponse.json({ error: 'Set up your profile and evidence library before tailoring a CV.' }, { status: 400 });
+      }
+
+      const tailorTemplate = await loadPrompt('cv_tailor.md');
+      const tailorPrompt = tailorTemplate
+        .replace('{{jd_summary}}', JSON.stringify(analysis.jd_data || {}, null, 2))
+        .replace('{{evidence_library}}', evidenceLibrary)
+        .replace('{{candidate_profile}}', candidateProfile);
+
+      const tailoredCv = await callAnthropic({
+        system: 'You are an expert CV writer for Product Owners / Product Managers in energy & billing. ' +
+          'Output clean GitHub-flavored Markdown. NEVER invent metrics, roles, dates or skills — only ' +
+          'reuse and re-emphasise what is in the Evidence Library and Candidate Profile. Produce: ' +
+          '(1) a full tailored CV, (2) a 150-220 word cover note, (3) a short rationale of changes.',
+        prompt: tailorPrompt,
+        maxTokens: 4000,
+      });
+
+      await docRef.set({
+        tailored_cv: tailoredCv,
+        tailored_cv_at: new Date(),
+        status: 'Applying',
+      }, { merge: true });
+
+      return NextResponse.json({ id, tailored_cv: tailoredCv, status: 'Applying' });
+    }
+
+    // List saved tailored CVs (the library): analyses that have a tailored CV.
+    if (action === 'list_cvs') {
+      const { db } = getFirebaseAdmin();
+      const snap = await db
+        .collection('tenants').doc(tenantId)
+        .collection('career_ops_analyses')
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
+      const cvs = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((v) => v.tailored_cv)
+        .map((v) => ({
+          id: v.id,
+          company: v.company,
+          role: v.role,
+          status: v.status || 'Applying',
+          tailored_cv: v.tailored_cv,
+          tailored_cv_at: v.tailored_cv_at?.toDate ? v.tailored_cv_at.toDate().toISOString() : null,
+        }));
+      return NextResponse.json({ cvs });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

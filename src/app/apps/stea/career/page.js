@@ -440,13 +440,16 @@ export default function CareerOpsDashboard() {
   const [weightsData, setWeightsData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Analysed roles, loaded from Firestore. No placeholder/demo data.
+  // Analysed roles + tailored CV library, loaded from Firestore. No demo data.
   const [pipeline, setPipeline] = useState([]);
+  const [cvLibrary, setCvLibrary] = useState([]);
+  const [tailoring, setTailoring] = useState(false);
 
   useEffect(() => {
     if (currentTenant?.id) {
       checkConfig();
       loadAnalyses();
+      loadCvs();
     }
   }, [currentTenant]);
 
@@ -462,6 +465,44 @@ export default function CareerOpsDashboard() {
       if (res.ok && Array.isArray(data.analyses)) setPipeline(data.analyses);
     } catch (err) {
       console.error('Failed to load analyses', err);
+    }
+  }
+
+  // Generate a role-tailored CV for an analysed role, save it, and show it.
+  async function handleTailorCv(id) {
+    if (!currentTenant?.id || !id) return;
+    setTailoring(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'tailor_cv', tenantId: currentTenant.id, id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Tailoring failed');
+      setResults((r) => ({ ...r, tailored_cv: data.tailored_cv }));
+      loadAnalyses();
+      loadCvs();
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setTailoring(false);
+    }
+  }
+
+  async function loadCvs() {
+    if (!currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list_cvs', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.cvs)) setCvLibrary(data.cvs);
+    } catch (err) {
+      console.error('Failed to load CV library', err);
     }
   }
 
@@ -699,6 +740,50 @@ export default function CareerOpsDashboard() {
               <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest">AI Prediction</div>
             </div>
             <FitNarrative markdown={results.evaluation} />
+
+            {/* Proceed-to-apply: generate a role-tailored CV */}
+            {results.id && (
+              <div className="mt-8 pt-6 border-t border-slate-200">
+                {!results.tailored_cv ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-[#10294D] text-sm">Decided to apply for this role?</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Generate a CV tailored to this job, grounded in your real evidence. It's saved to your CV library.</p>
+                    </div>
+                    <button
+                      onClick={() => handleTailorCv(results.id)}
+                      disabled={tailoring}
+                      className={`min-w-[190px] h-12 bg-[#006C50] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#005840] transition-all ${tailoring ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {tailoring ? (
+                        <><span className="material-symbols-outlined animate-spin">progress_activity</span>Tailoring CV…</>
+                      ) : (
+                        <><span className="material-symbols-outlined">description</span>Proceed to Apply</>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-bold text-[#10294D] flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#006C50]">description</span>
+                        Tailored CV
+                      </h4>
+                      <button
+                        onClick={() => navigator.clipboard?.writeText(results.tailored_cv)}
+                        className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 border border-slate-200">
+                      <FitNarrative markdown={results.tailored_cv} />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-3">Saved to your CV library (CV Tailoring tab). Review and edit before sending — never submit unchecked.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -796,57 +881,45 @@ export default function CareerOpsDashboard() {
 
       {/* CVs Tab */}
       {activeTab === 'cvs' && (
-        <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-500">
-          <div className="col-span-12 lg:col-span-8 space-y-8">
-            <CvComparisonView />
-            <CoverNoteDrafter />
+        <section className="space-y-6 animate-in fade-in duration-300">
+          <div>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">CV Library</h3>
+            <p className="text-sm text-slate-500 mt-1">Role-tailored CVs you've generated. Analyse a role and choose "Proceed to Apply" to add one.</p>
           </div>
 
-          <aside className="col-span-12 lg:col-span-4 space-y-8">
-            <div className="bg-[#10294D] rounded-2xl overflow-hidden shadow-xl">
-              <div className="px-6 py-4 flex items-center justify-between border-b border-white/10">
-                <h3 className="text-white/50 font-bold text-[10px] uppercase tracking-widest">Portal Metadata</h3>
-                <span className="text-[10px] bg-[#006C50] text-white px-2 py-0.5 rounded-full font-bold">READY</span>
-              </div>
-              <div className="p-6">
-                <div className="bg-[#001432] rounded-xl p-4 font-mono text-[10px] text-blue-200 leading-relaxed overflow-x-auto no-scrollbar">
-                  <pre>{JSON.stringify({
-                    "application_id": "STEA-2026-PO",
-                    "expected_salary": "£75,000",
-                    "notice_period": "30_days",
-                    "location": "Hybrid / Remote UK",
-                    "key_anchors": ["PAYG Billing", "Metering & Settlements", "AI Discovery"]
-                  }, null, 2)}</pre>
-                </div>
-                <button className="w-full mt-4 text-blue-100 text-[10px] font-bold flex items-center justify-center gap-2 py-2 hover:text-white transition-colors uppercase tracking-widest">
-                  <span className="material-symbols-outlined text-sm">content_copy</span>
-                  Copy Metadata
-                </button>
-              </div>
+          {cvLibrary.length === 0 ? (
+            <div className="bg-slate-50 rounded-2xl p-12 border border-slate-100 text-center text-sm text-slate-400">
+              No tailored CVs yet. Analyse a role in the Pipeline tab, then click "Proceed to Apply" to generate one.
             </div>
-
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-              <h3 className="font-bold text-[#10294D] mb-4 text-sm">Final Polish Checklist</h3>
-              <div className="space-y-4">
-                {[
-                  { label: 'ATS Keyword Check', sub: '92% Match with "Product Operations"' },
-                  { label: 'Tone Analysis', sub: 'Confidence: High | Sentiment: Professional' },
-                  { label: 'Formatting Export', sub: 'A4 Standard - 2 Pages' }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="mt-0.5 w-5 h-5 rounded bg-white border border-slate-200 flex items-center justify-center text-[#006C50]">
-                      <span className="material-symbols-outlined text-xs font-bold">check</span>
+          ) : (
+            <div className="space-y-4">
+              {cvLibrary.map((cv) => (
+                <details key={cv.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden group">
+                  <summary className="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-slate-50 list-none">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-teal-50 flex items-center justify-center text-[#006C50]">
+                        <span className="material-symbols-outlined">description</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-[#10294D] text-sm">{cv.role}</p>
+                        <p className="text-xs text-slate-400">{cv.company} · {cv.tailored_cv_at ? new Date(cv.tailored_cv_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#10294D]">{item.label}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{item.sub}</p>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700">{cv.status}</span>
+                  </summary>
+                  <div className="px-6 pb-6 pt-2 border-t border-slate-100">
+                    <div className="flex justify-end mb-3">
+                      <button onClick={() => navigator.clipboard?.writeText(cv.tailored_cv)} className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline">Copy CV</button>
+                    </div>
+                    <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                      <FitNarrative markdown={cv.tailored_cv} />
                     </div>
                   </div>
-                ))}
-              </div>
+                </details>
+              ))}
             </div>
-          </aside>
-        </div>
+          )}
+        </section>
       )}
 
       {/* Config Tab View */}
