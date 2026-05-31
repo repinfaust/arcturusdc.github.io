@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { extractCvText } from './_components/cvParse';
 import { useTenant } from '@/contexts/TenantContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -601,87 +602,6 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [cvPasteOpen, setCvPasteOpen] = useState(false);
   const [cvPasteText, setCvPasteText] = useState('');
   const [cvPasteLabel, setCvPasteLabel] = useState('');
-
-  async function loadCvUploads() {
-    if (!currentTenant?.id) return;
-    try {
-      const res = await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'list_cv_uploads', tenantId: currentTenant.id }),
-      });
-      const data = await res.json();
-      if (res.ok && Array.isArray(data.cvs)) setCvUploads(data.cvs);
-    } catch (err) { console.error('Failed to load CV uploads', err); }
-  }
-
-  // Save a CV (text), make it active, then offer to extract profile + evidence.
-  async function saveCvAndExtract(label, cvText) {
-    if (!cvText?.trim()) { alert('No text found in that file. Try another file or paste the text.'); return; }
-    setCvBusy(true);
-    try {
-      const saveRes = await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'save_cv', tenantId: currentTenant.id, label, cv_text: cvText, make_active: true }),
-      });
-      const saved = await saveRes.json();
-      if (!saveRes.ok) throw new Error(saved.error || 'Save failed');
-      await loadCvUploads();
-
-      if (window.confirm('CV saved & set as active. Auto-fill your profile and evidence from it now? (uses one action — you can review and edit before saving)')) {
-        const exRes = await fetch('/api/stea/career', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'extract_from_cv', tenantId: currentTenant.id, id: saved.id }),
-        });
-        const ex = await exRes.json();
-        if (handleLimit(exRes, ex)) return;
-        if (!exRes.ok) throw new Error(ex.error || 'Extraction failed');
-        if (ex.profile) setProfileData((p) => ({ ...p, ...ex.profile }));
-        if (Array.isArray(ex.evidence) && ex.evidence.length) setAnchorsData(ex.evidence);
-        loadUsage();
-        setActiveTab('settings');
-        alert('Profile & evidence filled from your CV. Review them and hit Save.');
-      }
-    } catch (err) { alert(err.message); }
-    finally { setCvBusy(false); }
-  }
-
-  async function handleCvFile(file) {
-    if (!file || !currentTenant?.id) return;
-    setCvBusy(true);
-    try {
-      const text = await extractCvText(file);
-      const label = file.name.replace(/\.(pdf|docx|txt)$/i, '');
-      await saveCvAndExtract(label, text);
-    } catch (err) { alert(err.message); }
-    finally { setCvBusy(false); }
-  }
-
-  async function setActiveCv(id) {
-    try {
-      await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set_active_cv', tenantId: currentTenant.id, id }),
-      });
-      loadCvUploads();
-    } catch (err) { alert(err.message); }
-  }
-  async function relabelCv(id, current) {
-    const label = window.prompt('Label for this CV:', current || '');
-    if (label == null) return;
-    await fetch('/api/stea/career', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'relabel_cv', tenantId: currentTenant.id, id, label }),
-    });
-    loadCvUploads();
-  }
-  async function deleteCv(id) {
-    if (!window.confirm('Delete this CV from your library?')) return;
-    await fetch('/api/stea/career', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete_cv', tenantId: currentTenant.id, id }),
-    });
-    loadCvUploads();
-  }
   // Current/most-recent employer = first evidence anchor's company (anchors are
   // most-recent-first). Strip qualifiers like "(current)" for matching.
   const currentEmployer = useMemo(() => {
