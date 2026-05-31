@@ -1,9 +1,16 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+// Tab <-> URL path mapping for deep-linkable sub-pages.
+// NOTE: the config TAB uses the /setup path because career/config/ holds the
+// YAML config files (a route there would collide / confuse).
+const TAB_BASE = '/apps/stea/career';
+const TAB_TO_PATH = { pipeline: TAB_BASE, scans: `${TAB_BASE}/scans`, cvs: `${TAB_BASE}/cvs`, settings: `${TAB_BASE}/setup` };
 
 /* ---------------- Markdown renderer for the AI fit narrative ---------------- */
 function FitNarrative({ markdown }) {
@@ -555,9 +562,18 @@ Energy-billing specialist with **16 years** in UK utilities, owning PAYG & B2B b
 
 /* ---------------- Main Dashboard ---------------- */
 
-export default function CareerOpsDashboard() {
+export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const { currentTenant, loading: tenantLoading } = useTenant();
-  const [activeTab, setActiveTab] = useState('pipeline');
+  const router = useRouter();
+  const [activeTab, setActiveTabState] = useState(initialTab);
+  // Switch tab AND update the URL so sub-pages are deep-linkable / bookmarkable.
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    const path = TAB_TO_PATH[tab] || TAB_BASE;
+    if (typeof window !== 'undefined' && window.location.pathname !== path) {
+      router.push(path, { scroll: false });
+    }
+  };
   const [jdText, setJdText] = useState('');
   const [loading, setLoading] = useState(false);
   const [progressStage, setProgressStage] = useState(0);
