@@ -4,7 +4,81 @@ import path from 'path';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 // David's workspace ID (ArcturusDC primary tenant or his specific one)
-const DAVID_TENANT_ID = 'KovW8P7K5O2537V8I3H1'; 
+const DAVID_TENANT_ID = 'KovW8P7K5O2537V8I3H1';
+
+const isUrl = (s) => /^https?:\/\//i.test((s || '').trim());
+
+// Strip HTML tags/entities to readable plain text.
+function htmlToText(html) {
+  return (html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#39;|&rsquo;|&lsquo;/gi, "'")
+    .replace(/&quot;|&ldquo;|&rdquo;/gi, '"')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n\s*\n+/g, '\n\n')
+    .trim();
+}
+
+// Pull a JobPosting description out of a page's JSON-LD blocks, if present.
+function extractJobPostingFromJsonLd(html) {
+  const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+  for (const m of blocks) {
+    let data;
+    try { data = JSON.parse(m[1].trim()); } catch { continue; }
+    const candidates = Array.isArray(data) ? data : (data['@graph'] || [data]);
+    for (const node of candidates) {
+      const type = node && node['@type'];
+      const isJob = type === 'JobPosting' || (Array.isArray(type) && type.includes('JobPosting'));
+      if (isJob && node.description) {
+        const title = node.title ? `${node.title}\n\n` : '';
+        const company = node.hiringOrganization?.name ? `Company: ${node.hiringOrganization.name}\n` : '';
+        const loc = node.jobLocation?.address?.addressLocality ? `Location: ${node.jobLocation.address.addressLocality}\n` : '';
+        const salary = node.baseSalary?.value?.minValue ? `Salary: ${node.baseSalary.value.minValue}-${node.baseSalary.value.maxValue || ''} ${node.baseSalary.currency || ''}\n` : '';
+        return htmlToText(`${title}${company}${loc}${salary}\n${node.description}`);
+      }
+    }
+  }
+  return null;
+}
+
+// Fetch a job-ad URL and return the best plain-text JD we can extract.
+// Returns null if the page can't be fetched or yields no usable description.
+async function fetchJdFromUrl(url) {
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+      },
+      redirect: 'follow',
+    });
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+  const html = await res.text();
+
+  // 1) Prefer structured JobPosting JSON-LD (Reed, Indeed, Greenhouse, etc.)
+  const fromJsonLd = extractJobPostingFromJsonLd(html);
+  if (fromJsonLd && fromJsonLd.length > 200) return fromJsonLd;
+
+  // 2) Fallback: og:description / meta description (short, but better than the URL)
+  const meta =
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1];
+  if (meta && meta.length > 120) return htmlToText(meta);
+
+  return null;
+}
 
 async function loadLocalConfig(fileName) {
   const filePath = path.join(process.cwd(), 'src/app/apps/stea/career/config', fileName);
@@ -136,6 +210,28 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Workspace configuration is incomplete. Please set up your profile and evidence library first.' }, { status: 400 });
       }
 
+      // Resolve the actual JD text. If the user pasted a URL (not full text),
+      // fetch the page server-side and extract the real job description — the
+      // LLM can't browse, so passing a bare URL would only score the title.
+      let resolvedJd = (jd_text || '').trim();
+      const looksLikeUrlOnly = isUrl(resolvedJd) && resolvedJd.length < 300 && !resolvedJd.includes('\n');
+      if (!resolvedJd || looksLikeUrlOnly) {
+        const target = looksLikeUrlOnly ? resolvedJd : (url || '');
+        if (isUrl(target)) {
+          const fetched = await fetchJdFromUrl(target);
+          if (fetched) {
+            resolvedJd = fetched;
+          } else {
+            return NextResponse.json({
+              error: "Couldn't read the job description from that link (the site may block automated access or require login). Please copy the full job description text and paste it into the box instead — that gives the most accurate analysis.",
+            }, { status: 422 });
+          }
+        }
+      }
+      if (!resolvedJd) {
+        return NextResponse.json({ error: 'Please paste a job description or a job-ad URL to analyse.' }, { status: 400 });
+      }
+
       // Load generic prompts
       const extractPromptTemplate = await loadPrompt('extract.md');
       const evaluatePromptTemplate = await loadPrompt('evaluate.md');
@@ -143,7 +239,7 @@ export async function POST(request) {
       // 1. Extract JD Data
       // Anthropic has no JSON response-format flag, so ask for raw JSON and strip
       // any ```json fences before parsing.
-      const extractPrompt = extractPromptTemplate.replace('{{jd_text}}', jd_text || url);
+      const extractPrompt = extractPromptTemplate.replace('{{jd_text}}', resolvedJd);
 
       const rawJdData = await callAnthropic({
         system: 'You are an expert recruiter for Senior PM roles. Respond with ONLY valid JSON — no markdown, no code fences, no commentary.',
