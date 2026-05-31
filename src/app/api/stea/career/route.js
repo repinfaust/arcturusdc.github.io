@@ -102,9 +102,19 @@ async function getWorkspaceConfig(tenantId, configName) {
 
 // Anthropic config + a shared call helper used by analyse and tailor_cv.
 const ANTHROPIC_MODEL = process.env.CAREER_ANTHROPIC_MODEL || 'claude-sonnet-4-6';
-async function callAnthropic({ system, prompt, maxTokens = 2000 }) {
+// `cachedContext` is a large, reusable text block (candidate profile + evidence)
+// that is identical across calls — marked with cache_control so repeated input
+// tokens bill at ~10% within the 5-minute cache window.
+async function callAnthropic({ system, prompt, maxTokens = 2000, cachedContext }) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('Missing ANTHROPIC_API_KEY on server. Add it in Vercel project environment variables.');
+
+  const content = [];
+  if (cachedContext) {
+    content.push({ type: 'text', text: cachedContext, cache_control: { type: 'ephemeral' } });
+  }
+  content.push({ type: 'text', text: prompt });
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -116,7 +126,7 @@ async function callAnthropic({ system, prompt, maxTokens = 2000 }) {
       model: ANTHROPIC_MODEL,
       max_tokens: maxTokens,
       system,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content }],
     }),
   });
   const payload = await res.json();
@@ -237,17 +247,21 @@ export async function POST(request) {
       });
       const jdData = rawJdData.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
 
-      // 2. Evaluate against profile
+      // 2. Evaluate against profile. The candidate profile + evidence library are
+      // identical across calls, so they go in cachedContext (cache_control) and
+      // only the JD-specific instruction goes in the per-call prompt.
+      const cachedContext = `## Candidate Profile:\n${candidateProfile}\n\n## Evidence Library:\n${evidenceLibrary}`;
       const evaluatePrompt = evaluatePromptTemplate
-        .replace('{{candidate_profile}}', candidateProfile)
+        .replace('{{candidate_profile}}', '(see cached Candidate Profile above)')
         .replace('{{jd_data}}', jdData)
-        .replace('{{evidence_library}}', evidenceLibrary);
+        .replace('{{evidence_library}}', '(see cached Evidence Library above)');
 
       const evaluation = await callAnthropic({
         system: 'You are a career coach for Product Owners and Product Managers. ' +
           'Format your response as clean GitHub-flavored Markdown: use ## headings, ' +
           '"|"-delimited tables, bullet lists and **bold**. Do NOT use LaTeX or "$$" math ' +
           'notation — write any calculations as plain text. Keep it scannable.',
+        cachedContext,
         prompt: evaluatePrompt,
         maxTokens: 3000,
       });
@@ -356,17 +370,19 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Set up your profile and evidence library before tailoring a CV.' }, { status: 400 });
       }
 
+      const tailorCachedContext = `## Candidate Profile:\n${candidateProfile}\n\n## Evidence Library:\n${evidenceLibrary}`;
       const tailorTemplate = await loadPrompt('cv_tailor.md');
       const tailorPrompt = tailorTemplate
         .replace('{{jd_summary}}', JSON.stringify(analysis.jd_data || {}, null, 2))
-        .replace('{{evidence_library}}', evidenceLibrary)
-        .replace('{{candidate_profile}}', candidateProfile);
+        .replace('{{evidence_library}}', '(see cached Evidence Library above)')
+        .replace('{{candidate_profile}}', '(see cached Candidate Profile above)');
 
       const tailoredCv = await callAnthropic({
         system: 'You are an expert CV writer for Product Owners / Product Managers in energy & billing. ' +
           'Output clean GitHub-flavored Markdown. NEVER invent metrics, roles, dates or skills — only ' +
           'reuse and re-emphasise what is in the Evidence Library and Candidate Profile. Produce: ' +
           '(1) a full tailored CV, (2) a 150-220 word cover note, (3) a short rationale of changes.',
+        cachedContext: tailorCachedContext,
         prompt: tailorPrompt,
         maxTokens: 4000,
       });
