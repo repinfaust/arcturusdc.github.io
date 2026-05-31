@@ -44,9 +44,20 @@ export async function POST(request) {
       const profile = await getWorkspaceConfig(tenantId, 'candidate_profile');
       const evidence = await getWorkspaceConfig(tenantId, 'evidence_library');
       const weights = await getWorkspaceConfig(tenantId, 'scoring_weights');
-      
+
+      // Evidence is "present" only if there's at least one anchor with content.
+      const hasEvidence = Array.isArray(evidence)
+        ? evidence.some((a) => a && (a.company || (a.bullets && a.bullets.some(Boolean))))
+        : !!evidence;
+      const hasProfile = profile && (profile.name || profile.current_role || profile.min_salary);
+
       return NextResponse.json({
-        has_config: !!profile && !!evidence,
+        has_config: !!hasProfile && !!hasEvidence,
+        // Return under both the object keys the page reads and the plain keys, so
+        // the form re-populates correctly after load.
+        profile_obj: profile || null,
+        evidence_obj: evidence || null,
+        weights_obj: weights || null,
         profile,
         evidence,
         weights
@@ -54,7 +65,10 @@ export async function POST(request) {
     }
 
     if (action === 'save_config') {
-      const { profile, evidence, weights } = body;
+      // The page sends *_obj keys; accept both for safety.
+      const profile = body.profile_obj ?? body.profile ?? null;
+      const evidence = body.evidence_obj ?? body.evidence ?? null;
+      const weights = body.weights_obj ?? body.weights ?? null;
       const { db } = getFirebaseAdmin();
       await db.collection('tenants').doc(tenantId).collection('career_ops').doc('config').set({
         candidate_profile: profile,
@@ -62,7 +76,7 @@ export async function POST(request) {
         scoring_weights: weights,
         updated_at: new Date()
       }, { merge: true });
-      
+
       return NextResponse.json({ success: true });
     }
 
@@ -99,11 +113,20 @@ export async function POST(request) {
         return payload.content?.[0]?.text ?? '';
       };
 
-      // Load workspace-specific config
-      const candidateProfile = await getWorkspaceConfig(tenantId, 'candidate_profile');
-      const evidenceLibrary = await getWorkspaceConfig(tenantId, 'evidence_library');
+      // Load workspace-specific config. This can be a string (YAML, local tenant)
+      // or an object/array (Firestore tenant). Normalise to readable text for the
+      // prompt — a raw object would stringify to "[object Object]".
+      const toText = (v) => {
+        if (v == null) return '';
+        if (typeof v === 'string') return v;
+        try { return JSON.stringify(v, null, 2); } catch { return String(v); }
+      };
+      const candidateProfileRaw = await getWorkspaceConfig(tenantId, 'candidate_profile');
+      const evidenceLibraryRaw = await getWorkspaceConfig(tenantId, 'evidence_library');
+      const candidateProfile = toText(candidateProfileRaw);
+      const evidenceLibrary = toText(evidenceLibraryRaw);
 
-      if (!candidateProfile || !evidenceLibrary) {
+      if (!candidateProfile.trim() || !evidenceLibrary.trim()) {
         return NextResponse.json({ error: 'Workspace configuration is incomplete. Please set up your profile and evidence library first.' }, { status: 400 });
       }
 
