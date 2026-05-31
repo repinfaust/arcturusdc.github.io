@@ -380,9 +380,11 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Salary Floor (£)</label>
-          <input 
-            type="number" 
-            value={data?.min_salary || ''} 
+          <input
+            type="number"
+            step={5000}
+            min={0}
+            value={data?.min_salary || ''}
             onChange={(e) => onChange({...data, min_salary: e.target.value})}
             className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
             placeholder="e.g. 65000"
@@ -1163,7 +1165,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Min salary (£)</label>
-                <input type="number" value={searchSalary} onChange={(e) => setSearchSalary(e.target.value)} placeholder="60000"
+                <input type="number" value={searchSalary} onChange={(e) => setSearchSalary(e.target.value)} placeholder="60000" step={5000} min={0}
                   className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
               </div>
             </div>
