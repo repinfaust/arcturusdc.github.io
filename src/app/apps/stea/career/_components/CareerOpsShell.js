@@ -34,22 +34,20 @@ export default function CareerOpsShell({ activeTab, title, subtitle, children })
   };
 
   return (
-    <div style={{ maxWidth: 1160, margin: '24px auto', background: TOKENS.surface, borderRadius: 22, padding: 24, boxShadow: '0 26px 86px rgba(0,20,50,0.18)' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{ color: TOKENS.secondary, fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>
-              Career Ops {currentTenant ? `| ${currentTenant.name}` : ''}
-            </div>
+    <div className="max-w-[1160px] mx-auto my-4 sm:my-6 p-4 sm:p-6 rounded-2xl" style={{ background: TOKENS.surface, boxShadow: '0 26px 86px rgba(0,20,50,0.18)' }}>
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] tracking-[0.1em] uppercase font-bold mb-2" style={{ color: TOKENS.secondary }}>
+            Career Ops {currentTenant ? `| ${currentTenant.name}` : ''}
           </div>
-          <h1 style={{ margin: '6px 0 0', color: TOKENS.primary, fontFamily: 'var(--font-controlui-display)', fontSize: 54, lineHeight: '56px' }}>
+          <h1 className="text-3xl sm:text-5xl leading-tight" style={{ margin: '6px 0 0', color: TOKENS.primary, fontFamily: 'var(--font-controlui-display)' }}>
             {title}
           </h1>
-          <p style={{ margin: '8px 0 0', color: TOKENS.textSoft, fontSize: 17, maxWidth: 860 }}>{subtitle}</p>
+          <p className="text-sm sm:text-[17px] mt-2 max-w-[860px]" style={{ color: TOKENS.textSoft }}>{subtitle}</p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="flex flex-col items-start sm:items-end gap-3 shrink-0 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2">
             <SteaAppsDropdown />
             <TenantSwitcher />
             <button
@@ -86,7 +84,7 @@ export default function CareerOpsShell({ activeTab, title, subtitle, children })
       {/* Tab navigation is handled inside the page (in-page state), so no nav here.
           The previous <Link> nav pointed at /cvs /config /history routes that
           don't exist and produced 404 prefetches. */}
-      <section style={{ marginTop: 24 }}>{children}</section>
+      <section className="mt-6">{children}</section>
     </div>
   );
 }

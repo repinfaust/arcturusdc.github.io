@@ -244,7 +244,7 @@ function OnboardingModal({ onClose, onDismiss, onCta }) {
   const last = i === ONBOARDING_CARDS.length - 1;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start">
           <div className="text-4xl mb-3">{card.icon}</div>
           <button onClick={onClose} className="text-slate-300 hover:text-slate-500"><span className="material-symbols-outlined">close</span></button>
@@ -343,7 +343,7 @@ const FitGauge = ({ score }) => {
 /* ---------------- Configuration & Onboarding Components ---------------- */
 
 const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
-  <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
+  <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-[#10294D]">account_circle</span>
@@ -410,7 +410,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
 );
 
 const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving }) => (
-  <section className="bg-slate-50 rounded-2xl p-8 border border-slate-100 flex flex-col gap-6">
+  <section className="bg-slate-50 rounded-2xl p-5 sm:p-8 border border-slate-100 flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-lg tracking-tight">
         <span className="material-symbols-outlined text-[#10294D]">deployed_code</span>
@@ -474,7 +474,7 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
 );
 
 const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
-  <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
+  <section className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-lg tracking-tight">
         <span className="material-symbols-outlined text-[#10294D]">tune</span>
@@ -1125,7 +1125,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
       {/* Role Input Terminal — Pipeline tab only */}
       {activeTab === 'pipeline' && (
-      <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm">
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-2 text-slate-400">
             <span className="material-symbols-outlined text-sm">terminal</span>
@@ -1185,7 +1185,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* Analysis Results View — Pipeline tab only */}
       {activeTab === 'pipeline' && results && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200 flex flex-col shadow-sm">
+          <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 flex flex-col shadow-sm">
             {/* The verdict (reasoning-led) is the primary signal. */}
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">The verdict</h3>
             <VerdictPanel score={results.score} evaluation={results.evaluation} />
@@ -1206,7 +1206,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </div>
           </div>
 
-          <div className="lg:col-span-8 bg-slate-50 rounded-2xl p-8 border border-slate-100 flex flex-col shadow-inner">
+          <div className="lg:col-span-8 bg-slate-50 rounded-2xl p-5 sm:p-8 border border-slate-100 flex flex-col shadow-inner">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-2xl font-bold text-[#10294D] italic tracking-tight">The reasoning</h3>
               <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest" title="An AI's structured opinion — the strength is in the reasoning, not the precision of the number.">AI assessment</div>
@@ -1299,15 +1299,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               <button className="px-4 py-2 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors">Filter</button>
             </div>
           </div>
-          <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-            <table className="w-full text-left">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+            <table className="w-full text-left min-w-[640px]">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Company / Role</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Score</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Analysed</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase text-slate-400 text-right">Actions</th>
+                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Company / Role</th>
+                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Score</th>
+                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Status</th>
+                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Analysed</th>
+                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -1320,7 +1320,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 )}
                 {pipeline.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => openAnalysis(item.id)}>
-                    <td className="px-6 py-5">
+                    <td className="px-4 sm:px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
                           {(item.company || '?').charAt(0).toUpperCase()}
@@ -1331,10 +1331,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-4 sm:px-6 py-5">
                       <span className="font-mono font-bold text-[#006C50]">{typeof item.score === 'number' ? item.score.toFixed(1) : '—'}</span>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-4 sm:px-6 py-5">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                         item.status === 'Interview' ? 'bg-green-100 text-green-700' :
                         item.status === 'Applied' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
@@ -1342,10 +1342,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         {item.status}
                       </span>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-4 sm:px-6 py-5">
                       <p className="text-xs font-semibold text-slate-600">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
                     </td>
-                    <td className="px-6 py-5 text-right whitespace-nowrap">
+                    <td className="px-4 sm:px-6 py-5 text-right whitespace-nowrap">
                       <button className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline mr-4" onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}>View</button>
                       <button className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline" onClick={(e) => { e.stopPropagation(); openApplyAssist(item.id); }}>Apply</button>
                     </td>
@@ -1730,7 +1730,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
              </div>
            </header>
            
-           <div className="grid grid-cols-12 gap-8 mb-8">
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-8">
               <div className="col-span-12 lg:col-span-5 flex flex-col">
                 <ProfileForm 
                   data={profileData} 
@@ -1772,7 +1772,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* Buy-a-coffee paywall */}
       {showPaywall && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowPaywall(false)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="text-4xl mb-3">☕</div>
             <h3 className="text-xl font-bold text-[#10294D]">{usage?.remaining > 0 ? 'Enjoying Career Ops?' : "You've used your free actions"}</h3>
             <p className="text-sm text-slate-600 mt-2 leading-relaxed">
