@@ -381,7 +381,27 @@ export default function CareerOpsDashboard() {
   const [activeTab, setActiveTab] = useState('pipeline');
   const [jdText, setJdText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [progressStage, setProgressStage] = useState(0);
   const [results, setResults] = useState(null);
+
+  // While analysing, advance a staged progress indicator so the ~15-30s
+  // two-call LLM round trip doesn't look like a hang. These are timed UX
+  // stages (no true server progress), capped just short of "done".
+  const ANALYSE_STAGES = [
+    'Reading the role…',
+    'Extracting requirements…',
+    'Scoring against your profile…',
+    'Mapping your evidence…',
+    'Writing the fit narrative…',
+  ];
+  useEffect(() => {
+    if (!loading) { setProgressStage(0); return; }
+    setProgressStage(0);
+    const id = setInterval(() => {
+      setProgressStage((s) => Math.min(s + 1, ANALYSE_STAGES.length - 1));
+    }, 4000);
+    return () => clearInterval(id);
+  }, [loading]);
   const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
   const [profileData, setProfileData] = useState({ name: '', current_role: '', min_salary: 0, target_roles: [] });
   const [anchorsData, setAnchorsData] = useState([]);
@@ -525,15 +545,45 @@ export default function CareerOpsDashboard() {
               placeholder="Paste Job Description text or a LinkedIn URL to begin high-precision AI analysis..."
               disabled={!configStatus.has_config}
             />
-            <button 
+            <button
               onClick={handleAnalyse}
               disabled={loading || !configStatus.has_config}
               className={`min-w-[180px] h-14 bg-[#10294D] text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-[#001432] transition-all shadow-xl shadow-blue-900/10 group ${(!configStatus.has_config || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {loading ? 'Analysing...' : 'Analyse Role'}
-              <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
+              {loading ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  Analysing…
+                </>
+              ) : (
+                <>
+                  Analyse Role
+                  <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
+                </>
+              )}
             </button>
           </div>
+
+          {loading && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-[#10294D] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#006C50] animate-pulse"></span>
+                  {ANALYSE_STAGES[progressStage]}
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Step {progressStage + 1} / {ANALYSE_STAGES.length}
+                </span>
+              </div>
+              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#006C50] to-[#53FDC7] rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${((progressStage + 1) / ANALYSE_STAGES.length) * 100}%` }}
+                ></div>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1.5">This usually takes 15–30 seconds. The AI is reading the role and scoring it against your profile.</p>
+            </div>
+          )}
         </div>
       </section>
 
