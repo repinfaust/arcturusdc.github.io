@@ -192,6 +192,74 @@ function CopyField({ label, value, editable, onChange, multiline }) {
   );
 }
 
+/* First-run onboarding walkthrough. */
+const ONBOARDING_CARDS = [
+  {
+    icon: '🧭', title: 'Welcome to Career Ops',
+    body: "Your AI job-search command centre: find roles that actually fit, get an honest assessment, tailor your CV, and breeze through application forms. Here's the 60-second tour.",
+  },
+  {
+    icon: '⚙️', title: 'First: set up your profile',
+    body: "Head to Config and add two things the system needs:\n\n• Candidate Profile — your name, target roles, location, salary floor.\n• Evidence Anchors — your real roles and achievements with metrics.\n\nThese ground everything — the AI only ever uses your real evidence, never invents. Scoring weights are optional (sensible defaults apply).",
+    cta: { label: 'Go to Config', tab: 'settings' },
+  },
+  {
+    icon: '🔎', title: 'Two ways to start',
+    body: "• No role in mind yet? Use Live Scans to search real UK job boards (Reed + Adzuna) — results are ranked by relevance to your targets.\n\n• Already found a job? Paste its link or text on the Pipeline tab and hit Analyse.",
+  },
+  {
+    icon: '🎯', title: "You'll get an honest verdict",
+    body: "Every role is scored across 12 factors with a clear GO / proceed-with-care / NO-GO call — strengths and gaps, no false hope. The point is to spend effort only where there's a genuine match.",
+  },
+  {
+    icon: '🚀', title: 'Then take action',
+    body: "Decided to apply? Career Ops will:\n• Tailor your CV to that exact role (download a clean ATS-friendly PDF).\n• Write a cover letter you can refine in plain English.\n• Pre-fill your details + draft the usual form answers in Apply Assist — copy field-by-field into any clunky application form.",
+  },
+  {
+    icon: '☕', title: 'Fair by design',
+    body: "Your first 20 actions are free. After that, a £5 coffee unlocks 50 more — just enough to cover the AI costs. We don't profit from people looking for work.\n\nSo: buy us a coffee if you can. And if you can't — remember us when you're the new CPO. 😉 Good luck out there.",
+  },
+];
+
+function OnboardingModal({ onClose, onDismiss, onCta }) {
+  const [i, setI] = useState(0);
+  const card = ONBOARDING_CARDS[i];
+  const last = i === ONBOARDING_CARDS.length - 1;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-start">
+          <div className="text-4xl mb-3">{card.icon}</div>
+          <button onClick={onClose} className="text-slate-300 hover:text-slate-500"><span className="material-symbols-outlined">close</span></button>
+        </div>
+        <h3 className="text-xl font-bold text-[#10294D]">{card.title}</h3>
+        <p className="text-sm text-slate-600 mt-3 leading-relaxed whitespace-pre-line min-h-[150px]">{card.body}</p>
+        {card.cta && (
+          <button onClick={() => onCta(card.cta.tab)} className="mt-1 mb-2 text-sm font-bold text-[#006C50] hover:underline inline-flex items-center gap-1">
+            {card.cta.label} <span className="material-symbols-outlined text-base">arrow_forward</span>
+          </button>
+        )}
+        <div className="flex items-center justify-center gap-1.5 my-5">
+          {ONBOARDING_CARDS.map((_, n) => (
+            <span key={n} className={`h-1.5 rounded-full transition-all ${n === i ? 'w-6 bg-[#006C50]' : 'w-1.5 bg-slate-200'}`}></span>
+          ))}
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <button onClick={onDismiss} className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Don't show again</button>
+          <div className="flex gap-2">
+            {i > 0 && <button onClick={() => setI(i - 1)} className="px-4 h-10 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm">Back</button>}
+            {last ? (
+              <button onClick={onClose} className="px-5 h-10 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] text-sm">Get started</button>
+            ) : (
+              <button onClick={() => setI(i + 1)} className="px-5 h-10 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] text-sm">Next</button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- UI Components ---------------- */
 
 // RAG go/no-go verdict derived from score + the evaluation's recommendation.
@@ -499,6 +567,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [searchMode, setSearchMode] = useState('both'); // location | remote | both
   const [usage, setUsage] = useState(null); // { used, granted, remaining }
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
   // Apply Assist: extra application fields (persisted) + the role being applied to.
   const [applyExtras, setApplyExtras] = useState({});
   const [applyExtrasDirty, setApplyExtrasDirty] = useState(false);
@@ -543,6 +613,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       loadCvs();
       loadUsage();
       loadApplyExtras();
+      loadOnboarding();
       // Returning from a successful coffee purchase: refresh usage (webhook may
       // lag a moment) and clean the URL.
       if (typeof window !== 'undefined' && window.location.search.includes('coffee=success')) {
@@ -639,6 +710,33 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     } catch (err) {
       console.error('Failed to load usage', err);
     }
+  }
+
+  // Onboarding: show once on first visit unless dismissed (Firestore).
+  async function loadOnboarding() {
+    if (!currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_onboarding', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      if (res.ok && !data.onboarding_dismissed) setShowOnboarding(true);
+    } catch (err) {
+      console.error('Failed to load onboarding state', err);
+    } finally {
+      setOnboardingChecked(true);
+    }
+  }
+  async function dismissOnboarding() {
+    setShowOnboarding(false);
+    if (!currentTenant?.id) return;
+    try {
+      await fetch('/api/stea/career', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss_onboarding', tenantId: currentTenant.id }),
+      });
+    } catch (err) { console.error('Failed to dismiss onboarding', err); }
   }
 
   async function loadApplyExtras() {
@@ -955,6 +1053,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         {usage?.unlimited && (
           <span className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl border bg-white border-slate-200 text-slate-400">Unlimited (admin)</span>
         )}
+        <button onClick={() => setShowOnboarding(true)} title="How it works"
+          className="shrink-0 w-9 h-9 rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-[#10294D] flex items-center justify-center">
+          <span className="material-symbols-outlined text-base">help</span>
+        </button>
       </div>
 
       {/* Onboarding Alert */}
@@ -1597,6 +1699,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            </div>
 
         </section>
+      )}
+
+      {/* First-run onboarding walkthrough */}
+      {showOnboarding && (
+        <OnboardingModal
+          onClose={() => setShowOnboarding(false)}
+          onDismiss={dismissOnboarding}
+          onCta={(tab) => { setShowOnboarding(false); setActiveTab(tab); }}
+        />
       )}
 
       {/* Buy-a-coffee paywall */}

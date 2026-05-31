@@ -685,6 +685,19 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    // First-run onboarding dismissal (per workspace).
+    if (action === 'get_onboarding') {
+      const { db } = getFirebaseAdmin();
+      const snap = await db.collection('tenants').doc(tenantId).collection('career_ops').doc('prefs').get();
+      return NextResponse.json({ onboarding_dismissed: !!(snap.exists && snap.data().onboarding_dismissed) });
+    }
+    if (action === 'dismiss_onboarding') {
+      const { db } = getFirebaseAdmin();
+      await db.collection('tenants').doc(tenantId).collection('career_ops').doc('prefs')
+        .set({ onboarding_dismissed: true, updated_at: new Date() }, { merge: true });
+      return NextResponse.json({ success: true });
+    }
+
     // Generate (or revise) a tailored cover letter for an analysed role.
     if (action === 'cover_letter') {
       await assertActionAvailable(tenantId);
