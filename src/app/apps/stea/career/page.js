@@ -192,11 +192,24 @@ function CopyField({ label, value, editable, onChange, multiline }) {
   );
 }
 
+/* Prominent reminder that AI output must be checked before it's used — an
+   invented line on someone's CV is a reputational risk, not a UX nit. */
+function AiReviewWarning({ what = 'document' }) {
+  return (
+    <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+      <span className="material-symbols-outlined text-amber-600 text-lg">warning</span>
+      <p className="text-xs text-amber-900 leading-relaxed">
+        <span className="font-bold">Check this before you use it.</span> AI can get details wrong or overstate things. Read every line of this {what} and make sure it's accurate and genuinely yours before sending it anywhere.
+      </p>
+    </div>
+  );
+}
+
 /* First-run onboarding walkthrough. */
 const ONBOARDING_CARDS = [
   {
     icon: '🧭', title: 'Welcome to Career Ops',
-    body: "Your AI job-search command centre: find roles that actually fit, get an honest assessment, tailor your CV, and breeze through application forms. Here's the 60-second tour.",
+    body: "Job hunting is exhausting and the algorithms don't help — they bury you in mismatches and nudge you back toward the very people who just let you go.\n\nCareer Ops is the opposite: honest triage. It finds roles that genuinely fit, tells you straight which ones aren't worth your time, won't surface your current employer, and takes the grind out of applying. Here's the 60-second tour.",
   },
   {
     icon: '🔒', title: 'Your data stays yours',
@@ -689,6 +702,24 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   // Start a £5 one-time Stripe checkout for a top-up (uses the shared
   // create-checkout-session route in mode:payment). Needs the Career Ops
   // coffee price id in env (CAREER_COFFEE_PRICE_ID).
+  async function handleRedeemCode() {
+    const code = window.prompt('Enter your access code:');
+    if (!code || !currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'redeem_code', tenantId: currentTenant.id, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Invalid code');
+      setShowPaywall(false);
+      loadUsage();
+      alert('Code accepted — you\'re all set. Enjoy.');
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   async function handleBuyCoffee() {
     if (!currentTenant?.id) return;
     try {
@@ -1246,10 +1277,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     <div className="bg-white rounded-xl p-6 border border-slate-200">
                       <CollapsibleNarrative markdown={results.tailored_cv} openCount={1} />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-3">
+                    <AiReviewWarning what="CV" />
+                    <p className="text-[11px] text-slate-400 mt-2">
                       Saved to your{' '}
-                      <button onClick={() => setActiveTab('cvs')} className="text-[#006C50] font-bold underline hover:no-underline">CV library</button>
-                      {' '}— review and edit before sending; never submit unchecked.
+                      <button onClick={() => setActiveTab('cvs')} className="text-[#006C50] font-bold underline hover:no-underline">CV library</button>.
                     </p>
                   </div>
                 )}
@@ -1332,6 +1363,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Find Roles</h3>
             <p className="text-sm text-slate-500 mt-1">Search live UK job boards (Reed + Adzuna), then analyse any role against your profile.</p>
+            <p className="text-xs text-slate-400 mt-1.5 flex items-start gap-1.5">
+              <span className="material-symbols-outlined text-sm">info</span>
+              We search Reed + Adzuna — a good slice of UK roles, but not all (direct-employer and some boards aren't covered). Found a job elsewhere? Paste it on the Pipeline tab and Analyse it directly.
+            </p>
           </div>
 
           {/* Search form */}
@@ -1627,6 +1662,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             ) : (
               <div className="mt-3">
                 <div className="bg-slate-50 rounded-xl p-5 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{coverLetter}</div>
+                <AiReviewWarning what="cover letter" />
                 <div className="mt-4 flex flex-col sm:flex-row gap-2">
                   <input value={coverEdit} onChange={(e) => setCoverEdit(e.target.value)} placeholder='Suggest an edit, e.g. "make it shorter" or "emphasise the 50% metric"'
                     className="flex-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
@@ -1635,7 +1671,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     {coverLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2">Each revision uses one action. Always review before sending.</p>
+                <p className="text-[10px] text-slate-400 mt-2">Each revision uses one action.</p>
               </div>
             )}
           </div>
@@ -1663,7 +1699,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 {applyAnswers.map((qa, i) => (
                   <CopyField key={i} label={qa.q} value={qa.a} multiline />
                 ))}
-                <p className="text-[10px] text-slate-400">Drafts only — personalise before submitting.</p>
+                <AiReviewWarning what="answer" />
               </div>
             )}
           </div>
@@ -1754,6 +1790,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 Maybe later
               </button>
             </div>
+            <button onClick={handleRedeemCode} className="mt-4 w-full text-center text-xs text-slate-400 hover:text-slate-600 underline">
+              Have an access code? Enter it here
+            </button>
           </div>
         </div>
       )}

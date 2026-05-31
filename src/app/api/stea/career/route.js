@@ -698,6 +698,22 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    // Friendlies access code → unlimited actions for this workspace (no payment).
+    // Rotate via CAREER_ACCESS_CODE env; default code below for the inner circle.
+    if (action === 'redeem_code') {
+      const { code = '' } = body;
+      const valid = (process.env.CAREER_ACCESS_CODE || 'FRIENDS2026');
+      if ((code || '').trim().toUpperCase() !== valid.toUpperCase()) {
+        return NextResponse.json({ error: 'That code isn\'t valid.' }, { status: 400 });
+      }
+      const { db } = getFirebaseAdmin();
+      await USAGE_DOC(db, tenantId).set(
+        { unlimited_code: true, actions_granted: 100000, updated_at: new Date() },
+        { merge: true }
+      );
+      return NextResponse.json({ success: true });
+    }
+
     // Generate (or revise) a tailored cover letter for an analysed role.
     if (action === 'cover_letter') {
       await assertActionAvailable(tenantId);
