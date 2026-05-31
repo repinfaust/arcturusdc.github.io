@@ -77,6 +77,36 @@ function CollapsibleNarrative({ markdown, openCount = 2 }) {
 
 /* ---------------- UI Components ---------------- */
 
+// RAG go/no-go verdict derived from score + the evaluation's recommendation.
+function VerdictPanel({ score, evaluation }) {
+  const s = typeof score === 'number' ? score : 0;
+  let rag;
+  if (s >= 4.0) rag = { label: 'GO — Strong fit', cls: 'bg-green-50 border-green-200 text-green-800', dot: 'bg-green-500', sub: 'Apply — tailor and submit.' };
+  else if (s >= 3.0) rag = { label: 'PROCEED WITH CARE', cls: 'bg-amber-50 border-amber-200 text-amber-800', dot: 'bg-amber-500', sub: 'Selective — apply only with a strong tailored narrative.' };
+  else rag = { label: 'NO-GO — Weak fit', cls: 'bg-red-50 border-red-200 text-red-800', dot: 'bg-red-500', sub: 'Skip unless you have a specific reason.' };
+
+  // Pull the model's own recommended action / one-line verdict if present.
+  const action =
+    evaluation?.match(/Recommended action:\s*\*{0,2}\s*(.+?)(?:\n|$)/i)?.[1] ||
+    evaluation?.match(/Fit Recommendation[^\n]*\n+>?\s*#{0,3}\s*([^\n]+)/i)?.[1] ||
+    null;
+
+  return (
+    <div className={`mt-6 rounded-xl border p-4 ${rag.cls}`}>
+      <div className="flex items-center gap-2">
+        <span className={`w-2.5 h-2.5 rounded-full ${rag.dot}`}></span>
+        <span className="text-sm font-bold uppercase tracking-wide">{rag.label}</span>
+      </div>
+      <p className="text-xs mt-2 opacity-90">{rag.sub}</p>
+      {action && (
+        <p className="text-[11px] mt-3 pt-3 border-t border-current/10 leading-relaxed opacity-90">
+          <span className="font-bold">Recommendation: </span>{action.replace(/\*\*/g, '')}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const FitGauge = ({ score }) => {
   const percentage = (score / 5) * 100;
   const strokeDasharray = 552.92;
@@ -779,12 +809,16 @@ export default function CareerOpsDashboard() {
       {/* Analysis Results View — Pipeline tab only */}
       {activeTab === 'pipeline' && results && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200 flex flex-col justify-between shadow-sm">
+          <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200 flex flex-col shadow-sm">
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4">Fit Diagnostic</h3>
               <FitGauge score={typeof results.score === 'number' ? results.score : 0} />
             </div>
-            <div className="mt-8 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
+
+            {/* RAG go/no-go verdict — fills the column, surfaces the decision */}
+            <VerdictPanel score={results.score} evaluation={results.evaluation} />
+
+            <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
               <span className="text-red-500 font-bold">!</span>
               <div>
                 <h4 className="text-xs font-bold text-red-900">Risk Signal</h4>
