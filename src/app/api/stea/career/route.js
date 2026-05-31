@@ -427,6 +427,9 @@ export async function POST(request) {
           const reedRes = await fetch(`https://www.reed.co.uk/api/1.0/search?${params}`, {
             headers: { Authorization: 'Basic ' + Buffer.from(`${reedKey}:`).toString('base64') },
           });
+          if (!reedRes.ok) {
+            console.error('Reed search non-OK', reedRes.status, (await reedRes.text()).slice(0, 200));
+          }
           if (reedRes.ok) {
             const data = await reedRes.json();
             sourcesTried.push('reed');
@@ -462,6 +465,9 @@ export async function POST(request) {
           if (location) params.set('where', location);
           if (salary_min) params.set('salary_min', String(salary_min));
           const adzRes = await fetch(`https://api.adzuna.com/v1/api/jobs/gb/search/1?${params}`);
+          if (!adzRes.ok) {
+            console.error('Adzuna search non-OK', adzRes.status, (await adzRes.text()).slice(0, 200));
+          }
           if (adzRes.ok) {
             const data = await adzRes.json();
             sourcesTried.push('adzuna');
