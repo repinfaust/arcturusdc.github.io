@@ -546,6 +546,24 @@ export default function CareerOpsDashboard() {
 
   return (
     <div className="flex flex-col gap-10">
+      {/* Tab navigation (in-page state — no routes, no 404 prefetch) */}
+      <nav className="bg-slate-100/70 rounded-2xl p-1.5 flex flex-wrap gap-1">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+              activeTab === tab.id
+                ? 'bg-white text-[#10294D] shadow-sm'
+                : 'text-slate-500 hover:text-[#10294D]'
+            }`}
+          >
+            <span>{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
       {/* Onboarding Alert */}
       {!configStatus.has_config && activeTab !== 'settings' && (
         <div className="bg-[#FFF7ED] border border-[#FED7AA] rounded-2xl p-6 flex justify-between items-center shadow-sm">
