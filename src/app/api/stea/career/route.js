@@ -192,6 +192,18 @@ async function loadPrompt(fileName) {
   return await readFile(filePath, 'utf8');
 }
 
+// The user's active uploaded CV (full text) — the primary reference for
+// analyse/search/tailor. Empty string if none uploaded yet.
+async function getActiveCvText(tenantId) {
+  try {
+    const { db } = getFirebaseAdmin();
+    const snap = await db.collection('tenants').doc(tenantId)
+      .collection('career_ops_cv_uploads').where('active', '==', true).limit(1).get();
+    if (!snap.empty) return snap.docs[0].data().cv_text || '';
+  } catch (e) { console.error('getActiveCvText failed', e?.message); }
+  return '';
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -248,6 +260,7 @@ export async function POST(request) {
       const evidenceLibraryRaw = await getWorkspaceConfig(tenantId, 'evidence_library');
       const candidateProfile = configToText(candidateProfileRaw);
       const evidenceLibrary = configToText(evidenceLibraryRaw);
+      const activeCv = await getActiveCvText(tenantId);
 
       if (!candidateProfile.trim() || !evidenceLibrary.trim()) {
         return NextResponse.json({ error: 'Workspace configuration is incomplete. Please set up your profile and evidence library first.' }, { status: 400 });
@@ -416,7 +429,9 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Set up your profile and evidence library before tailoring a CV.' }, { status: 400 });
       }
 
-      const tailorCachedContext = `## Candidate Profile:\n${candidateProfile}\n\n## Evidence Library:\n${evidenceLibrary}`;
+      const tailorCv = await getActiveCvText(tenantId);
+      const tailorCvBlock = tailorCv ? `\n\n## Candidate's CV (primary reference):\n${tailorCv.slice(0, 12000)}` : '';
+      const tailorCachedContext = `## Candidate Profile:\n${candidateProfile}\n\n## Evidence Library:\n${evidenceLibrary}${tailorCvBlock}`;
       const tailorTemplate = await loadPrompt('cv_tailor.md');
       const tailorPrompt = tailorTemplate
         .replace('{{jd_summary}}', JSON.stringify(analysis.jd_data || {}, null, 2))
@@ -660,6 +675,104 @@ export async function POST(request) {
       await incrementUsage(tenantId); // one search = one action
 
       return NextResponse.json({ jobs: ranked, sources: [...sourcesTried], total_raw: deduped.length, excluded_terms: HARD_EXCLUDE, debug });
+    }
+
+    // --- CV library (uploaded CVs; the source of truth for the candidate) ---
+    if (action === 'save_cv') {
+      const { label = 'My CV', cv_text = '', make_active = true } = body;
+      if (!cv_text.trim()) return NextResponse.json({ error: 'No CV text provided.' }, { status: 400 });
+      const { db } = getFirebaseAdmin();
+      const col = db.collection('tenants').doc(tenantId).collection('career_ops_cv_uploads');
+      if (make_active) {
+        // clear existing active flags
+        const existing = await col.where('active', '==', true).get();
+        const batch = db.batch();
+        existing.docs.forEach((d) => batch.update(d.ref, { active: false }));
+        await batch.commit();
+      }
+      const ref = await col.add({
+        label: label.trim() || 'My CV',
+        cv_text,
+        active: !!make_active,
+        createdAt: new Date(),
+      });
+      return NextResponse.json({ id: ref.id });
+    }
+
+    if (action === 'list_cv_uploads') {
+      const { db } = getFirebaseAdmin();
+      const col = db.collection('tenants').doc(tenantId).collection('career_ops_cv_uploads');
+      let snap;
+      try { snap = await col.orderBy('createdAt', 'desc').limit(50).get(); }
+      catch { snap = await col.limit(50).get(); }
+      const cvs = snap.docs.map((d) => {
+        const v = d.data();
+        return {
+          id: d.id, label: v.label, active: !!v.active,
+          preview: (v.cv_text || '').slice(0, 160),
+          createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toISOString() : null,
+        };
+      }).sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));
+      return NextResponse.json({ cvs });
+    }
+
+    if (action === 'set_active_cv') {
+      const { id, label } = body;
+      const { db } = getFirebaseAdmin();
+      const col = db.collection('tenants').doc(tenantId).collection('career_ops_cv_uploads');
+      if (id) {
+        const existing = await col.where('active', '==', true).get();
+        const batch = db.batch();
+        existing.docs.forEach((d) => batch.update(d.ref, { active: false }));
+        const update = { active: true };
+        if (typeof label === 'string') update.label = label.trim() || 'My CV';
+        batch.set(col.doc(id), update, { merge: true });
+        await batch.commit();
+      } else if (typeof label === 'string' && body.relabel_id) {
+        await col.doc(body.relabel_id).set({ label: label.trim() || 'My CV' }, { merge: true });
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'relabel_cv') {
+      const { id, label } = body;
+      if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+      const { db } = getFirebaseAdmin();
+      await db.collection('tenants').doc(tenantId).collection('career_ops_cv_uploads').doc(id)
+        .set({ label: (label || 'My CV').trim() }, { merge: true });
+      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'delete_cv') {
+      const { id } = body;
+      if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+      const { db } = getFirebaseAdmin();
+      await db.collection('tenants').doc(tenantId).collection('career_ops_cv_uploads').doc(id).delete();
+      return NextResponse.json({ success: true });
+    }
+
+    // AI-extract profile + evidence anchors from an uploaded CV (one action).
+    if (action === 'extract_from_cv') {
+      await assertActionAvailable(tenantId);
+      const { id } = body;
+      const { db } = getFirebaseAdmin();
+      let cvText = body.cv_text || '';
+      if (!cvText && id) {
+        const doc = await db.collection('tenants').doc(tenantId).collection('career_ops_cv_uploads').doc(id).get();
+        cvText = doc.exists ? (doc.data().cv_text || '') : '';
+      }
+      if (!cvText.trim()) return NextResponse.json({ error: 'No CV text to extract from.' }, { status: 400 });
+
+      const raw = await callAnthropic({
+        system: 'You extract structured career data from a CV. Use ONLY what is in the CV — never invent. Respond with ONLY valid JSON.',
+        prompt: `From this CV, extract JSON:\n{\n  "profile": {"name": "", "current_role": "", "location": "", "target_roles": ["",""], "min_salary": null},\n  "evidence": [{"company": "", "period": "", "bullets": ["",""]}]\n}\nFor target_roles, infer 2-4 sensible targets from their experience. For min_salary use a number if stated, else null. For evidence, one entry per role (most recent first), bullets = their real achievements.\n\nCV:\n${cvText.slice(0, 12000)}`,
+        maxTokens: 2500,
+      });
+      const cleaned = raw.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+      let extracted;
+      try { extracted = JSON.parse(cleaned); } catch { return NextResponse.json({ error: 'Could not parse the CV. Try pasting the text, or fill the form manually.' }, { status: 422 }); }
+      await incrementUsage(tenantId);
+      return NextResponse.json({ profile: extracted.profile || {}, evidence: extracted.evidence || [] });
     }
 
     if (action === 'get_usage') {
