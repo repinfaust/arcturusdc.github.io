@@ -492,6 +492,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [searchTotalRaw, setSearchTotalRaw] = useState(0);
+  const [searchDebug, setSearchDebug] = useState(null);
   const [searchPrefilled, setSearchPrefilled] = useState(false);
   const [excludeCurrentEmployer, setExcludeCurrentEmployer] = useState(true);
   const [usage, setUsage] = useState(null); // { used, granted, remaining }
@@ -895,6 +896,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       if (!res.ok) throw new Error(data.error || 'Search failed');
       setSearchResults(data.jobs || []);
       setSearchTotalRaw(data.total_raw || (data.jobs || []).length);
+      setSearchDebug(data.debug || null);
       loadUsage();
       if ((data.jobs || []).length === 0) alert('No relevant roles found. Try broader keywords or a different location.');
     } catch (err) {
@@ -1256,6 +1258,36 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             )}
           </div>
 
+          {/* Search debug — "why these results?" thought process */}
+          {searchDebug && (
+            <details className="bg-slate-50 rounded-xl border border-slate-200 text-xs">
+              <summary className="cursor-pointer px-4 py-3 font-bold text-[#10294D] list-none flex items-center justify-between">
+                <span>Why these results? ({searchDebug.ranked_count} of {searchDebug.raw_count} raw)</span>
+                <span className="material-symbols-outlined text-slate-400">expand_more</span>
+              </summary>
+              <div className="px-4 pb-4 space-y-2 text-slate-600">
+                <div className="font-mono text-[11px] bg-white rounded-lg p-3 border border-slate-100 space-y-0.5">
+                  <div>query: <b>{searchDebug.query?.keywords}</b> · loc <b>{searchDebug.query?.location}</b> · min£ <b>{searchDebug.query?.salary_min}</b></div>
+                  <div>sources: {Object.entries(searchDebug.source_counts || {}).map(([s, n]) => `${s}=${n}`).join(' · ') || 'none returned'}</div>
+                  <div>funnel: {searchDebug.raw_count} raw → {searchDebug.deduped_count} deduped → {searchDebug.after_negative_filter} after filter → {searchDebug.ranked_count} shown</div>
+                  <div>ranker: {searchDebug.ranker}{searchDebug.threshold ? ` (keep ≥ ${searchDebug.threshold})` : ''}</div>
+                  {searchDebug.dropped_by_negative_filter?.length > 0 && <div>dropped (wrong discipline): {searchDebug.dropped_by_negative_filter.join(', ')}</div>}
+                </div>
+                {searchDebug.scores?.length > 0 && (
+                  <div className="bg-white rounded-lg p-3 border border-slate-100">
+                    <div className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mb-1">Relevance scores (all candidates)</div>
+                    {searchDebug.scores.map((s, i) => (
+                      <div key={i} className="flex justify-between gap-3 py-0.5 border-b border-slate-50 last:border-0">
+                        <span className="truncate">{s.title}</span>
+                        <span className="shrink-0 font-mono"><b>{s.score}</b>{s.why ? ` · ${s.why}` : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
+
           {/* Results */}
           {searchResults.length > 0 && (
             <div className="space-y-3">
@@ -1343,21 +1375,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* Apply Assist Tab */}
       {activeTab === 'apply' && (
         <section className="space-y-6 animate-in fade-in duration-300">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-            <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Apply Assist</h3>
-              <p className="text-sm text-slate-500 mt-1">Your details, ready to copy field-by-field into any application form. Fill the extras once — they're saved for next time.</p>
-            </div>
-            {pipeline.length > 0 && (
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Applying for</label>
-                <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)}
-                  className="block mt-1 bg-white border border-slate-200 rounded-xl p-2.5 text-sm text-[#10294D] min-w-[240px]">
-                  <option value="">— select a role (optional) —</option>
-                  {pipeline.map((r) => <option key={r.id} value={r.id}>{r.role} @ {r.company}</option>)}
-                </select>
-              </div>
-            )}
+          <div>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Apply Assist</h3>
+            <p className="text-sm text-slate-500 mt-1">Your details, ready to copy field-by-field into any application form. Fill the extras once — they're saved for next time.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1420,6 +1440,20 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </div>
             </div>
           )}
+
+          {/* Role picker — applies only to the cover letter + common answers below */}
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Applying for — pick a role to draft a cover letter &amp; answers</label>
+            {pipeline.length > 0 ? (
+              <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)}
+                className="block w-full mt-1 bg-white border border-slate-200 rounded-xl p-3 text-sm text-[#10294D]">
+                <option value="">— select a role —</option>
+                {pipeline.map((r) => <option key={r.id} value={r.id}>{r.role} @ {r.company}</option>)}
+              </select>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1">Analyse a role first (Pipeline or Live Scans) — then pick it here to generate a cover letter and answers.</p>
+            )}
+          </div>
 
           {/* Cover letter (A2) — needs a selected role */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">

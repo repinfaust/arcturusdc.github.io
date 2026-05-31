@@ -480,6 +480,7 @@ export async function POST(request) {
       const results = [];
       const sourcesTried = [];
       const sourcesAvailable = [];
+      const sourceCounts = {}; // per-source raw result counts (debug)
 
       // --- Reed ---
       const reedKey = process.env.REED_API_KEY;
@@ -498,6 +499,7 @@ export async function POST(request) {
           if (reedRes.ok) {
             const data = await reedRes.json();
             sourcesTried.push('reed');
+            sourceCounts.reed = (data.results || []).length;
             for (const j of data.results || []) {
               // Reed field casing varies; fall back across variants and build the
               // job URL from jobId if no explicit url is returned.
@@ -536,6 +538,7 @@ export async function POST(request) {
           if (adzRes.ok) {
             const data = await adzRes.json();
             sourcesTried.push('adzuna');
+            sourceCounts.adzuna = (data.results || []).length;
             for (const j of data.results || []) {
               results.push({
                 source: 'Adzuna',
@@ -587,37 +590,69 @@ export async function POST(request) {
         return true;
       });
 
+      // Debug trace so the UI can show *why* the result set is what it is.
+      const debug = {
+        query: { keywords, location: location || '(any)', salary_min: salary_min || '(none)' },
+        sources_tried: sourcesTried,
+        source_counts: sourceCounts,
+        raw_count: results.length,
+        deduped_count: deduped.length,
+        after_negative_filter: stage1.length,
+        dropped_by_negative_filter: deduped
+          .filter((r) => NEGATIVE.some((n) => (r.title || '').toLowerCase().includes(n)))
+          .map((r) => r.title),
+        target_roles_used: targetRoles.length ? targetRoles : [keywords],
+        threshold: 40,
+        ranked_count: 0,
+        ranker: 'skipped',
+        scores: [],
+      };
+
       // --- Stage 2: LLM relevance ranking of the survivors ---
-      let ranked = stage1;
+      let ranked = stage1.map((r) => ({ ...r })); // default if ranker fails
       try {
         if (process.env.ANTHROPIC_API_KEY && stage1.length > 0) {
           const list = stage1.slice(0, 40).map((r, i) => `${i}. ${r.title} @ ${r.company} (${r.location})`).join('\n');
           const rankPrompt =
-            `Candidate target roles: ${targetRoles.join(', ') || keywords}.\n\n` +
-            `Here are job listings (index. title @ company):\n${list}\n\n` +
-            `Return ONLY a JSON array of objects {"i": <index>, "score": <0-100 relevance to the target roles>} ` +
-            `for the listings that are a plausible match (score >= 50). Omit clear mismatches. No prose, no code fences.`;
+            `The candidate is targeting these roles: ${targetRoles.join(', ') || keywords}.\n` +
+            `Their background: Product Owner / Product Manager / Operations & Delivery in energy & billing.\n\n` +
+            `Score each listing 0-100 for how well its TITLE matches the candidate's target roles. ` +
+            `Be generous to product/ownership/delivery/operations roles even if worded differently ` +
+            `(e.g. "Digital Product Lead", "Delivery Manager", "Product Specialist" all score high). ` +
+            `Score clearly-different disciplines low (pure engineering, sales, finance, etc.).\n\n` +
+            `Listings:\n${list}\n\n` +
+            `Return ONLY a JSON array of {"i": <index>, "score": <0-100>, "why": "<6 words max>"} for EVERY listing.`;
           const raw = await callAnthropic({
-            system: 'You rank job listings by relevance to a candidate. Respond with ONLY a JSON array.',
+            system: 'You rank job listings by title relevance to a candidate. Respond with ONLY a JSON array.',
             prompt: rankPrompt,
-            maxTokens: 1200,
+            maxTokens: 2000,
           });
           const cleaned = raw.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
           const scores = JSON.parse(cleaned);
           if (Array.isArray(scores) && scores.length) {
-            ranked = scores
+            debug.ranker = 'ok';
+            debug.scores = scores
               .filter((s) => stage1[s.i])
+              .map((s) => ({ title: stage1[s.i].title, score: s.score, why: s.why || '' }))
+              .sort((a, b) => (b.score || 0) - (a.score || 0));
+            // Keep score >= 40 (more inclusive than before). If that empties the
+            // list, fall back to the top 10 by score so the user always sees something.
+            let kept = scores.filter((s) => stage1[s.i] && (s.score ?? 0) >= 40);
+            if (kept.length === 0) kept = scores.filter((s) => stage1[s.i]).sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 10);
+            ranked = kept
               .sort((a, b) => (b.score || 0) - (a.score || 0))
               .map((s) => ({ ...stage1[s.i], relevance: s.score }));
           }
         }
       } catch (e) {
+        debug.ranker = `failed: ${e?.message}`;
         console.error('LLM ranking failed, returning title-filtered list', e?.message);
       }
+      debug.ranked_count = ranked.length;
 
       await incrementUsage(tenantId); // one search = one action
 
-      return NextResponse.json({ jobs: ranked, sources: sourcesTried, total_raw: deduped.length });
+      return NextResponse.json({ jobs: ranked, sources: sourcesTried, total_raw: deduped.length, debug });
     }
 
     if (action === 'get_usage') {
