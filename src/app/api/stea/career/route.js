@@ -629,6 +629,20 @@ export async function POST(request) {
       return NextResponse.json({ ...safe, free_actions: FREE_ACTIONS, bundle: COFFEE_BUNDLE });
     }
 
+    // --- Apply Assist: extra application fields the user fills once and reuses ---
+    if (action === 'get_apply_profile') {
+      const { db } = getFirebaseAdmin();
+      const snap = await db.collection('tenants').doc(tenantId).collection('career_ops').doc('apply_profile').get();
+      return NextResponse.json({ apply_profile: snap.exists ? snap.data() : {} });
+    }
+    if (action === 'save_apply_profile') {
+      const { apply_profile = {} } = body;
+      const { db } = getFirebaseAdmin();
+      await db.collection('tenants').doc(tenantId).collection('career_ops').doc('apply_profile')
+        .set({ ...apply_profile, updated_at: new Date() }, { merge: true });
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     // Out-of-actions is a normal state, not a server error — return 402 + usage

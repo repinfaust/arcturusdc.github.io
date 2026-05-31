@@ -10,7 +10,7 @@ import remarkGfm from 'remark-gfm';
 // NOTE: the config TAB uses the /setup path because career/config/ holds the
 // YAML config files (a route there would collide / confuse).
 const TAB_BASE = '/apps/stea/career';
-const TAB_TO_PATH = { pipeline: TAB_BASE, scans: `${TAB_BASE}/scans`, cvs: `${TAB_BASE}/cvs`, settings: `${TAB_BASE}/setup` };
+const TAB_TO_PATH = { pipeline: TAB_BASE, scans: `${TAB_BASE}/scans`, cvs: `${TAB_BASE}/cvs`, apply: `${TAB_BASE}/apply`, settings: `${TAB_BASE}/setup` };
 
 /* ---------------- Markdown renderer for the AI fit narrative ---------------- */
 function FitNarrative({ markdown }) {
@@ -157,6 +157,39 @@ function printCvAsPdf({ name = 'Candidate', role = 'Role', cvMarkdown = '' }) {
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
   </body></html>`);
   w.document.close();
+}
+
+/* A labelled value with a one-click copy button (Apply Assist). */
+function CopyField({ label, value, editable, onChange, multiline }) {
+  const [copied, setCopied] = useState(false);
+  const doCopy = () => {
+    if (!value) return;
+    navigator.clipboard?.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  };
+  return (
+    <div className="flex items-start gap-2">
+      <div className="flex-1 min-w-0">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{label}</label>
+        {editable ? (
+          multiline ? (
+            <textarea value={value || ''} onChange={(e) => onChange(e.target.value)}
+              className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100 resize-none h-20" />
+          ) : (
+            <input value={value || ''} onChange={(e) => onChange(e.target.value)}
+              className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+          )
+        ) : (
+          <div className="mt-1 bg-slate-50 rounded-xl p-3 text-sm text-[#10294D] min-h-[44px] break-words whitespace-pre-wrap">{value || <span className="text-slate-300">—</span>}</div>
+        )}
+      </div>
+      <button onClick={doCopy} disabled={!value} title="Copy"
+        className={`mt-6 shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${value ? 'bg-teal-50 text-[#006C50] hover:bg-[#006C50] hover:text-white' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}>
+        <span className="material-symbols-outlined text-base">{copied ? 'check' : 'content_copy'}</span>
+      </button>
+    </div>
+  );
 }
 
 /* ---------------- UI Components ---------------- */
@@ -631,6 +664,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [excludeCurrentEmployer, setExcludeCurrentEmployer] = useState(true);
   const [usage, setUsage] = useState(null); // { used, granted, remaining }
   const [showPaywall, setShowPaywall] = useState(false);
+  // Apply Assist: extra application fields (persisted) + the role being applied to.
+  const [applyExtras, setApplyExtras] = useState({});
+  const [applyExtrasDirty, setApplyExtrasDirty] = useState(false);
+  const [applyRoleId, setApplyRoleId] = useState('');
   // Current/most-recent employer = first evidence anchor's company (anchors are
   // most-recent-first). Strip qualifiers like "(current)" for matching.
   const currentEmployer = useMemo(() => {
@@ -670,6 +707,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       loadAnalyses();
       loadCvs();
       loadUsage();
+      loadApplyExtras();
       // Returning from a successful coffee purchase: refresh usage (webhook may
       // lag a moment) and clean the URL.
       if (typeof window !== 'undefined' && window.location.search.includes('coffee=success')) {
@@ -766,6 +804,44 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     } catch (err) {
       console.error('Failed to load usage', err);
     }
+  }
+
+  async function loadApplyExtras() {
+    if (!currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_apply_profile', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.apply_profile) setApplyExtras(data.apply_profile);
+    } catch (err) {
+      console.error('Failed to load apply profile', err);
+    }
+  }
+
+  async function saveApplyExtras() {
+    if (!currentTenant?.id) return;
+    try {
+      await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_apply_profile', tenantId: currentTenant.id, apply_profile: applyExtras }),
+      });
+      setApplyExtrasDirty(false);
+    } catch (err) {
+      alert('Could not save: ' + err.message);
+    }
+  }
+
+  const setExtra = (key, val) => { setApplyExtras((e) => ({ ...e, [key]: val })); setApplyExtrasDirty(true); };
+
+  // Open Apply Assist for a specific role (from the pipeline button).
+  function openApplyAssist(roleId) {
+    setApplyRoleId(roleId || '');
+    setActiveTab('apply');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // Returns true if a response was the usage limit (402); shows the paywall.
@@ -872,6 +948,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     { id: 'pipeline', label: 'Pipeline', icon: '📋' },
     { id: 'scans', label: 'Live Scans', icon: '📡' },
     { id: 'cvs', label: 'CV Tailoring', icon: '📄' },
+    { id: 'apply', label: 'Apply Assist', icon: '✍️' },
     { id: 'settings', label: 'Config', icon: '⚙️' },
   ];
 
@@ -1215,8 +1292,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     <td className="px-6 py-5">
                       <p className="text-xs font-semibold text-slate-600">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
                     </td>
-                    <td className="px-6 py-5 text-right">
-                      <button className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline" onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}>View</button>
+                    <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <button className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline mr-4" onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}>View</button>
+                      <button className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline" onClick={(e) => { e.stopPropagation(); openApplyAssist(item.id); }}>Apply</button>
                     </td>
                   </tr>
                 ))}
@@ -1361,6 +1439,89 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   </div>
                 </details>
               ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Apply Assist Tab */}
+      {activeTab === 'apply' && (
+        <section className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Apply Assist</h3>
+              <p className="text-sm text-slate-500 mt-1">Your details, ready to copy field-by-field into any application form. Fill the extras once — they're saved for next time.</p>
+            </div>
+            {pipeline.length > 0 && (
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Applying for</label>
+                <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)}
+                  className="block mt-1 bg-white border border-slate-200 rounded-xl p-2.5 text-sm text-[#10294D] min-w-[240px]">
+                  <option value="">— select a role (optional) —</option>
+                  {pipeline.map((r) => <option key={r.id} value={r.id}>{r.role} @ {r.company}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Standard fields from profile + CV */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">badge</span>Standard fields</h4>
+              <CopyField label="Full name" value={profileData?.name} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <CopyField label="Email" value={profileData?.email} />
+                <CopyField label="Phone" value={profileData?.phone || applyExtras.phone} editable onChange={(v) => setExtra('phone', v)} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <CopyField label="Location" value={profileData?.location} />
+                <CopyField label="Current role" value={profileData?.current_role} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <CopyField label="Expected salary (£)" value={profileData?.min_salary ? String(profileData.min_salary) : ''} />
+                <CopyField label="Remote / work pattern" value={applyExtras.work_pattern} editable onChange={(v) => setExtra('work_pattern', v)} />
+              </div>
+              <CopyField label="LinkedIn" value={profileData?.linkedin || applyExtras.linkedin} editable onChange={(v) => setExtra('linkedin', v)} />
+            </div>
+
+            {/* User-filled extras (persisted) */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">edit_note</span>Your extras</h4>
+                <button onClick={saveApplyExtras} disabled={!applyExtrasDirty}
+                  className={`text-[10px] font-bold uppercase tracking-widest ${applyExtrasDirty ? 'text-[#006C50] hover:underline' : 'text-slate-300 cursor-default'}`}>
+                  {applyExtrasDirty ? 'Save' : 'Saved'}
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <CopyField label="Address line 1" value={applyExtras.address1} editable onChange={(v) => setExtra('address1', v)} />
+                <CopyField label="Address line 2" value={applyExtras.address2} editable onChange={(v) => setExtra('address2', v)} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <CopyField label="Town / city" value={applyExtras.town} editable onChange={(v) => setExtra('town', v)} />
+                <CopyField label="Postcode" value={applyExtras.postcode} editable onChange={(v) => setExtra('postcode', v)} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <CopyField label="Notice period" value={applyExtras.notice} editable onChange={(v) => setExtra('notice', v)} />
+                <CopyField label="Right to work" value={applyExtras.right_to_work} editable onChange={(v) => setExtra('right_to_work', v)} />
+              </div>
+              <CopyField label="How did you hear about us?" value={applyExtras.referral} editable onChange={(v) => setExtra('referral', v)} />
+            </div>
+          </div>
+
+          {/* Recent roles from evidence anchors */}
+          {Array.isArray(anchorsData) && anchorsData.length > 0 && (
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2 mb-4"><span className="material-symbols-outlined text-[#006C50]">work_history</span>Recent roles (for employment-history fields)</h4>
+              <div className="space-y-4">
+                {anchorsData.slice(0, 4).map((a, i) => (
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-4 border-b border-slate-50 last:border-0 last:pb-0">
+                    <CopyField label="Employer" value={a.company} />
+                    <CopyField label="Period" value={a.period} />
+                    <CopyField label="Summary" value={Array.isArray(a.bullets) ? a.bullets.filter(Boolean)[0] : ''} multiline />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
