@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useTenant } from '@/contexts/TenantContext';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 import TenantSwitcher from '@/components/TenantSwitcher';
@@ -19,13 +18,6 @@ const TOKENS = {
   secondary: '#006C50',
   secondarySoft: '#53FDC7',
 };
-
-const TABS = [
-  { href: '/apps/stea/career', label: 'Live Pipeline' },
-  { href: '/apps/stea/career/cvs', label: 'CV Tailoring' },
-  { href: '/apps/stea/career/config', label: 'Config & Personalisation' },
-  { href: '/apps/stea/career/history', label: 'History' },
-];
 
 export default function CareerOpsShell({ activeTab, title, subtitle, children }) {
   const { currentTenant } = useTenant();
@@ -91,27 +83,9 @@ export default function CareerOpsShell({ activeTab, title, subtitle, children })
         </div>
       </header>
 
-      <nav style={{ marginTop: 24, background: TOKENS.surfaceLow, borderRadius: 14, padding: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {TABS.map((tab) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            style={{
-              textDecoration: 'none',
-              borderRadius: 10,
-              padding: '9px 16px',
-              background: activeTab === tab.href ? TOKENS.surfaceCard : 'transparent',
-              color: activeTab === tab.href ? TOKENS.primary : TOKENS.textSoft,
-              fontSize: 14,
-              fontWeight: activeTab === tab.href ? 700 : 500,
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
-
+      {/* Tab navigation is handled inside the page (in-page state), so no nav here.
+          The previous <Link> nav pointed at /cvs /config /history routes that
+          don't exist and produced 404 prefetches. */}
       <section style={{ marginTop: 24 }}>{children}</section>
     </div>
   );

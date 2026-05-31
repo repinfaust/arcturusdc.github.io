@@ -82,9 +82,13 @@ export async function POST(request) {
 
     if (action === 'analyse') {
       const apiKey = process.env.ANTHROPIC_API_KEY;
-      // Pinned, broadly-available model ID. Override via CAREER_ANTHROPIC_MODEL
-      // in Vercel if needed. (The "-latest" alias is rejected by some keys.)
-      const model = process.env.CAREER_ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022';
+      // Reuse SORR's known-working model env var as the fallback, since that
+      // route is already configured against this key in Vercel. Final fallback
+      // is a pinned Sonnet id. Override explicitly with CAREER_ANTHROPIC_MODEL.
+      const model =
+        process.env.CAREER_ANTHROPIC_MODEL ||
+        process.env.SORR_ANTHROPIC_MODEL ||
+        'claude-3-5-sonnet-20241022';
 
       if (!apiKey) {
         return NextResponse.json({ error: 'Missing ANTHROPIC_API_KEY on server. Add it in Vercel project environment variables.' }, { status: 500 });
