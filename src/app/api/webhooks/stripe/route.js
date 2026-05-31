@@ -80,9 +80,28 @@ export async function POST(request) {
             amount: session.amount_total,
             currency: session.currency,
             paymentStatus: 'succeeded',
+            kind: session.metadata?.kind || null,
+            tenantId: session.metadata?.tenantId || null,
             createdAt: new Date(),
             updatedAt: new Date(),
           });
+
+          // Career Ops "buy a coffee" top-up → grant +50 actions to the tenant.
+          // Transaction so the grant is added to the free baseline (20), not 0,
+          // when the usage doc doesn't exist yet.
+          if (session.metadata?.kind === 'career_coffee' && session.metadata?.tenantId) {
+            const FREE_ACTIONS = 20;
+            const COFFEE_BUNDLE = 50;
+            const usageRef = adminDb
+              .collection('tenants').doc(session.metadata.tenantId)
+              .collection('career_ops').doc('usage');
+            await adminDb.runTransaction(async (tx) => {
+              const snap = await tx.get(usageRef);
+              const current = snap.exists ? (snap.data().actions_granted ?? FREE_ACTIONS) : FREE_ACTIONS;
+              tx.set(usageRef, { actions_granted: current + COFFEE_BUNDLE, updated_at: new Date() }, { merge: true });
+            });
+            console.log(`Granted ${COFFEE_BUNDLE} Career Ops actions to tenant ${session.metadata.tenantId}`);
+          }
         } else {
           // Subscription - create pending workspace if we have the required fields
           // Note: This works even with 100% discount codes (amount_total will be 0)

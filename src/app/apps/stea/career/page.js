@@ -670,6 +670,12 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       loadAnalyses();
       loadCvs();
       loadUsage();
+      // Returning from a successful coffee purchase: refresh usage (webhook may
+      // lag a moment) and clean the URL.
+      if (typeof window !== 'undefined' && window.location.search.includes('coffee=success')) {
+        setTimeout(loadUsage, 1500);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     }
   }, [currentTenant]);
 
@@ -732,20 +738,16 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   // create-checkout-session route in mode:payment). Needs the Career Ops
   // coffee price id in env (CAREER_COFFEE_PRICE_ID).
   async function handleBuyCoffee() {
+    if (!currentTenant?.id) return;
     try {
-      const res = await fetch('/api/create-checkout-session', {
+      const res = await fetch('/api/stea/career/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId: 'CAREER_COFFEE',
-          mode: 'payment',
-          planName: 'Career Ops coffee top-up',
-          metadata: { kind: 'career_coffee', tenantId: currentTenant?.id },
-        }),
+        body: JSON.stringify({ tenantId: currentTenant.id }),
       });
       const data = await res.json();
       if (data?.url) { window.location.href = data.url; return; }
-      alert(data?.error || 'Coffee checkout is not configured yet. (Stripe price pending.)');
+      alert(data?.error || 'Could not start checkout.');
     } catch (err) {
       alert('Could not start checkout: ' + err.message);
     }
@@ -963,7 +965,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </button>
           ))}
         </nav>
-        {usage && (
+        {usage && !usage.unlimited && (
           <button onClick={() => setShowPaywall(true)} title="Analyses, CV tailoring and searches each use one action"
             className={`shrink-0 text-xs font-bold px-3 py-2 rounded-xl border transition-colors ${
               usage.remaining <= 0 ? 'bg-amber-50 border-amber-200 text-amber-800' :
@@ -971,6 +973,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               'bg-white border-slate-200 text-slate-500'}`}>
             {usage.remaining > 0 ? `${usage.remaining} actions left` : 'No actions left — buy a coffee'} ☕
           </button>
+        )}
+        {usage?.unlimited && (
+          <span className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl border bg-white border-slate-200 text-slate-400">Unlimited (admin)</span>
         )}
       </div>
 

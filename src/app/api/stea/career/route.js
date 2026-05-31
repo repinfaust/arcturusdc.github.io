@@ -141,10 +141,15 @@ async function callAnthropic({ system, prompt, maxTokens = 2000, cachedContext }
 // --- Usage metering (combined action pool: analyse + tailor + search) ---
 const FREE_ACTIONS = 20;            // free allowance per tenant
 const COFFEE_BUNDLE = 50;           // actions granted per £5 top-up
+// Tenants exempt from the cap (super-admin / internal testing).
+const UNLIMITED_TENANTS = new Set([DAVID_TENANT_ID]);
 const USAGE_DOC = (db, tenantId) =>
   db.collection('tenants').doc(tenantId).collection('career_ops').doc('usage');
 
 async function getUsage(tenantId) {
+  if (UNLIMITED_TENANTS.has(tenantId)) {
+    return { used: 0, granted: Infinity, remaining: Infinity, unlimited: true };
+  }
   const { db } = getFirebaseAdmin();
   const snap = await USAGE_DOC(db, tenantId).get();
   const v = snap.exists ? snap.data() : {};
@@ -166,6 +171,7 @@ async function assertActionAvailable(tenantId) {
 }
 
 async function incrementUsage(tenantId) {
+  if (UNLIMITED_TENANTS.has(tenantId)) return; // exempt tenants aren't metered
   const { db } = getFirebaseAdmin();
   const FieldValueMod = (await import('firebase-admin/firestore')).FieldValue;
   await USAGE_DOC(db, tenantId).set(
@@ -616,7 +622,11 @@ export async function POST(request) {
 
     if (action === 'get_usage') {
       const u = await getUsage(tenantId);
-      return NextResponse.json({ ...u, free_actions: FREE_ACTIONS, bundle: COFFEE_BUNDLE });
+      // Infinity isn't JSON; send null + unlimited flag for exempt tenants.
+      const safe = u.unlimited
+        ? { used: 0, granted: null, remaining: null, unlimited: true }
+        : u;
+      return NextResponse.json({ ...safe, free_actions: FREE_ACTIONS, bundle: COFFEE_BUNDLE });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
