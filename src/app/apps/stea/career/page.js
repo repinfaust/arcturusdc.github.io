@@ -620,6 +620,23 @@ export default function CareerOpsDashboard() {
     return () => clearInterval(id);
   }, [tailoring]);
 
+  // Staged progress for job search (Reed + Adzuna fetch, then LLM relevance rank).
+  const [searchStage, setSearchStage] = useState(0);
+  const SEARCH_STAGES = [
+    'Searching Reed & Adzuna…',
+    'Merging and de-duplicating…',
+    'Filtering by your target roles…',
+    'Ranking by relevance…',
+  ];
+  useEffect(() => {
+    if (!searching) { setSearchStage(0); return; }
+    setSearchStage(0);
+    const id = setInterval(() => {
+      setSearchStage((s) => Math.min(s + 1, SEARCH_STAGES.length - 1));
+    }, 3000);
+    return () => clearInterval(id);
+  }, [searching]);
+
   useEffect(() => {
     if (currentTenant?.id) {
       checkConfig();
@@ -1140,6 +1157,21 @@ export default function CareerOpsDashboard() {
                 {searching ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Searching…</>) : (<><span className="material-symbols-outlined">search</span>Search</>)}
               </button>
             </div>
+
+            {searching && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-[#10294D] flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#006C50] animate-pulse"></span>
+                    {SEARCH_STAGES[searchStage]}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Step {searchStage + 1} / {SEARCH_STAGES.length}</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#006C50] to-[#53FDC7] rounded-full transition-all duration-700 ease-out" style={{ width: `${((searchStage + 1) / SEARCH_STAGES.length) * 100}%` }}></div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Results */}
