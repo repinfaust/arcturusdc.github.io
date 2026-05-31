@@ -26,7 +26,7 @@ factors:
   ai_governance_relevance:
     weight: 0.3
     type: "positive"
-    description: "Opportunity to leverage SoRR / AI workflow thinking"
+    description: "Opportunity to apply AI-assisted discovery / prototyping in product work"
   remote_feasibility:
     weight: 0.5
     type: "constraint"

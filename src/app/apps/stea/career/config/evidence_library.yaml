@@ -1,37 +1,37 @@
 anchors:
-  - id: "ensek_bg"
-    company: "ENSEK / British Gas"
+  - id: "energy_saas_po"
+    company: "UK Energy SaaS Provider (current)"
     outcomes:
-      - "Payment Adequacy engine ownership"
-      - "Debt recovery automation"
-      - "Regulatory alignment across UK energy market"
-      - "Roadmap ownership for core billing systems"
-      - "Architecture/Business/Client coordination"
-    tags: ["billing", "payments", "compliance", "stakeholder-influence"]
+      - "Product Owner for PAYG & B2B billing product areas"
+      - "Initiated cross-functional incident-triage model with Service Desk, cutting average P3/P4 resolution times by 50%"
+      - "Backlog prioritisation by business value, operational efficiency and customer impact"
+      - "Represents product in programme- and client-level strategic discussions"
+      - "Applies AI tooling (M365 Copilot, Claude) to accelerate discovery and prototyping"
+    tags: ["billing", "payg", "product-ownership", "stakeholder-influence", "ai-discovery"]
 
-  - id: "experian"
-    company: "Experian"
+  - id: "energy_billing_mgr"
+    company: "UK Energy SaaS Provider — Billing Management"
     outcomes:
-      - "MarTech and analytics ownership"
-      - "AWS migration for legacy data stacks"
-      - "Score Boost product launch"
-      - "GDPR-safe data strategy and implementation"
-      - "Data standardisation across business units"
-    tags: ["analytics", "data", "compliance", "platform"]
+      - "Led a team of 7 billing analysts across I&C and SME portfolios"
+      - "Sustained billing performance at <1% failed bills"
+      - "Designed, monitored and reported customer SLAs and operational KPIs"
+      - "Led process-improvement initiatives across the team"
+    tags: ["billing", "leadership", "sla-kpi", "process-improvement"]
 
-  - id: "arcturus"
-    company: "Arcturus Digital"
+  - id: "energy_supplier_settlements"
+    company: "UK Energy Supplier — Billing, Metering & Settlements"
     outcomes:
-      - "Independent product development"
-      - "React Native/Firebase/OpenAI prototyping"
-      - "Validation speed and rapid experimentation"
-      - "Shipped multiple real-world apps"
-    tags: ["ai-prototyping", "systems-thinking", "experimentation"]
+      - "Managed billing, metering and settlements back-office team incl. budgets"
+      - "Delivered <1% failed bills outstanding and 99%+ HH settlements performance"
+      - "Designed SLAs and performance frameworks across operational teams"
+      - "Managed AMR metering deployment across the commercial portfolio"
+    tags: ["metering", "settlements", "billing", "sla-kpi", "operations"]
 
-  - id: "sorr"
-    company: "SoRR (Personal Intellectual Property)"
+  - id: "energy_supplier_pricing"
+    company: "UK Energy Supplier — Billing & Pricing"
     outcomes:
-      - "AI governance and structured reasoning framework"
-      - "AI-assisted product and engineering workflows"
-      - "Context-efficient LLM orchestration"
-    tags: ["ai-governance", "ai-prototyping", "systems-thinking"]
+      - "Built and maintained commercial pricing and quoting tools"
+      - "Bespoke tariff creation across HH, NHH and UMS portfolios"
+      - "Competitor pricing analysis and market reviews"
+      - "Forecast non-commodity costs and assessed industry-change impacts"
+    tags: ["pricing", "tariffs", "analysis", "commercial"]

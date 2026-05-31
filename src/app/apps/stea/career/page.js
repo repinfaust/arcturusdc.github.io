@@ -257,7 +257,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
           value={data?.name || ''} 
           onChange={(e) => onChange({...data, name: e.target.value})}
           className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
-          placeholder="e.g. David Loake"
+          placeholder="e.g. Tom Granger"
         />
       </div>
       
@@ -412,19 +412,19 @@ const CvPreviewer = () => (
         <span className="material-symbols-outlined text-slate-400 text-sm">edit_note</span>
       </div>
       <div className="flex-1 p-6 font-mono text-xs text-slate-600 overflow-auto custom-scrollbar bg-white">
-        <pre># David Loake
-## Senior Product Manager
+        <pre>{`# Tom Granger
+## Product Owner — Energy & Billing
 
-Systems-focused Product Manager with **10+ years** experience...
+Energy-billing specialist with **16 years** in UK utilities, owning PAYG & B2B billing product...
 
 ### Key Anchors
-- Payment Adequacy Engine @ ENSEK
-- Score Boost @ Experian
-- SoRR Framework
+- 50% cut in P3/P4 incident resolution
+- <1% failed bills (sustained)
+- 99%+ HH settlements performance
 
 ### Strengths
-`FinTech` `Platform` `Compliance` `AI`
-</pre>
+\`Billing\` \`PAYG\` \`Metering\` \`SLAs\` \`AI Discovery\`
+`}</pre>
       </div>
     </div>
     <div className="w-full md:w-1/2 flex flex-col bg-slate-50/30">
@@ -437,15 +437,15 @@ Systems-focused Product Manager with **10+ years** experience...
       </div>
       <div className="flex-1 p-8 overflow-auto custom-scrollbar">
         <div className="max-w-md mx-auto bg-white p-8 shadow-xl border border-slate-100 rounded min-h-full">
-          <h1 className="text-2xl font-bold text-[#10294D] border-b-2 border-[#10294D] pb-2 mb-4 tracking-tighter uppercase">David Loake</h1>
-          <p className="text-[#006C50] font-bold text-[10px] tracking-widest mb-6 uppercase">Senior Product Manager</p>
+          <h1 className="text-2xl font-bold text-[#10294D] border-b-2 border-[#10294D] pb-2 mb-4 tracking-tighter uppercase">Tom Granger</h1>
+          <p className="text-[#006C50] font-bold text-[10px] tracking-widest mb-6 uppercase">Product Owner — Energy &amp; Billing</p>
           <h3 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Experience</h3>
           <div className="mb-6">
             <div className="flex justify-between items-baseline mb-1">
-              <p className="font-bold text-xs text-[#10294D]">ENSEK</p>
-              <p className="text-[8px] text-slate-400 italic">2021 — Present</p>
+              <p className="font-bold text-xs text-[#10294D]">Product Owner — UK Energy SaaS</p>
+              <p className="text-[8px] text-slate-400 italic">2024 — Present</p>
             </div>
-            <p className="text-[10px] text-slate-500 leading-relaxed">Pioneered event-driven architectural patterns across the billing core, ensuring 100% regulatory compliance...</p>
+            <p className="text-[10px] text-slate-500 leading-relaxed">Owns PAYG &amp; B2B billing product; initiated a cross-functional triage model that cut average P3/P4 resolution times by 50%...</p>
           </div>
         </div>
       </div>
@@ -752,11 +752,11 @@ export default function CareerOpsDashboard() {
               <div className="p-6">
                 <div className="bg-[#001432] rounded-xl p-4 font-mono text-[10px] text-blue-200 leading-relaxed overflow-x-auto no-scrollbar">
                   <pre>{JSON.stringify({
-                    "application_id": "STEA-2026-PM",
-                    "expected_salary": "£125,000",
+                    "application_id": "STEA-2026-PO",
+                    "expected_salary": "£75,000",
                     "notice_period": "30_days",
-                    "location": "Remote / UK",
-                    "key_anchors": ["ENSEK", "Experian", "SoRR"]
+                    "location": "Hybrid / Remote UK",
+                    "key_anchors": ["PAYG Billing", "Metering & Settlements", "AI Discovery"]
                   }, null, 2)}</pre>
                 </div>
                 <button className="w-full mt-4 text-blue-100 text-[10px] font-bold flex items-center justify-center gap-2 py-2 hover:text-white transition-colors uppercase tracking-widest">

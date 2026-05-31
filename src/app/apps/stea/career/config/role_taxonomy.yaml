@@ -1,20 +1,23 @@
 levels:
-  - id: "senior"
-    label: "Senior Product Manager"
+  - id: "product_owner"
+    label: "Product Owner"
+    min_years: 3
+  - id: "senior_product_owner"
+    label: "Senior Product Owner"
     min_years: 5
-  - id: "lead"
-    label: "Lead Product Manager"
-    min_years: 8
-  - id: "principal"
-    label: "Principal Product Manager"
-    min_years: 10
+  - id: "product_manager"
+    label: "Product Manager"
+    min_years: 5
+  - id: "senior_product_manager"
+    label: "Senior Product Manager"
+    min_years: 7
 
 archetypes:
-  - id: "platform"
-    focus: ["Internal Tools", "Infrastructure", "Developer Experience", "APIs"]
-  - id: "data"
-    focus: ["Analytics", "ML", "Experimentation", "Data Governance"]
+  - id: "energy_billing"
+    focus: ["Energy", "Utilities", "Billing", "PAYG", "Metering", "Settlements"]
   - id: "regulated"
-    focus: ["FinTech", "Energy", "Compliance", "Payments"]
-  - id: "systems"
-    focus: ["Workflow Systems", "Complex Logic", "Architecture-adjacent"]
+    focus: ["Ofgem-regulated", "Compliance", "Payments", "Debt"]
+  - id: "platform"
+    focus: ["Billing Platforms", "Internal Tools", "APIs", "Systems"]
+  - id: "delivery"
+    focus: ["Backlog Ownership", "Cross-functional Delivery", "SLA/KPI", "Stakeholder Orchestration"]

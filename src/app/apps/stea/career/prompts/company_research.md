@@ -1,5 +1,5 @@
 # Company Research Prompt
-Task: Research the following company and provide a concise report for David Loake (PM Candidate).
+Task: Research the following company and provide a concise report for the candidate (a Product Owner / Product Manager — energy & billing specialist).
 
 ## Company:
 {{company_name}}
@@ -16,5 +16,5 @@ Task: Research the following company and provide a concise report for David Loak
 
 ## Output:
 - Concise markdown report.
-- Risk/Opportunity assessment for a Senior/Lead PM.
-- "Why David?" pitch based on company research.
+- Risk/Opportunity assessment for a Product Owner / Product Manager candidate.
+- "Why this candidate?" pitch based on company research.

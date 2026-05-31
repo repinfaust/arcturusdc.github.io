@@ -1,29 +1,28 @@
-name: "David Loake"
-location: "UK (Remote Preferred)"
-current_role: "Senior Product Manager"
+name: "Tom Granger"
+location: "Nottingham, UK (Hybrid / Remote)"
+current_role: "Product Owner"
 target_roles:
-  - "Senior Product Manager"
-  - "Lead Product Manager"
-  - "Principal Product Manager"
-  - "Platform Product Manager"
-  - "Data Product Manager"
-  - "Regulated SaaS Product Manager"
+  - "Product Owner"
+  - "Senior Product Owner"
+  - "Product Manager"
+  - "Technical Product Manager"
+  - "Product Manager (Energy / Billing)"
 
 core_strengths:
-  - "Billing Platforms"
-  - "Payments & Debt Recovery"
-  - "Regulatory Compliance"
-  - "Data Analytics & Experimentation"
-  - "Stakeholder Orchestration"
-  - "AI-enabled Prototyping (SoRR)"
-  - "Systems Thinking"
+  - "Energy Billing Platforms (B2B & PAYG)"
+  - "Backlog Ownership & Prioritisation"
+  - "Metering & Settlements (HH / NHH / UMS)"
+  - "SLA & KPI Design and Reporting"
+  - "Cross-functional Delivery (Product / Engineering / Service Desk)"
+  - "Stakeholder Engagement"
+  - "AI-enabled Discovery (M365 Copilot, Claude)"
 
 preferences:
   remote: true
-  min_salary: 95000
+  min_salary: 65000
   currency: "GBP"
   industries:
-    - "FinTech"
     - "Energy Tech"
+    - "Utilities"
     - "Regulated SaaS"
-    - "Enterprise Infrastructure"
+    - "FinTech / Payments"
