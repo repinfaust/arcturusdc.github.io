@@ -493,6 +493,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searchTotalRaw, setSearchTotalRaw] = useState(0);
   const [searchDebug, setSearchDebug] = useState(null);
+  const [excludedTerms, setExcludedTerms] = useState([]);
   const [searchPrefilled, setSearchPrefilled] = useState(false);
   const [excludeCurrentEmployer, setExcludeCurrentEmployer] = useState(true);
   const [searchMode, setSearchMode] = useState('both'); // location | remote | both
@@ -898,6 +899,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       setSearchResults(data.jobs || []);
       setSearchTotalRaw(data.total_raw || (data.jobs || []).length);
       setSearchDebug(data.debug || null);
+      if (Array.isArray(data.excluded_terms)) setExcludedTerms(data.excluded_terms);
       loadUsage();
       if ((data.jobs || []).length === 0) alert('No relevant roles found. Try broader keywords or a different location.');
     } catch (err) {
@@ -1268,6 +1270,20 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </div>
             )}
           </div>
+
+          {/* What's excluded — transparency (read-only) */}
+          {excludedTerms.length > 0 && (
+            <details className="text-[11px] text-slate-400">
+              <summary className="cursor-pointer list-none hover:text-slate-600 inline-flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm">info</span>
+                Some role types are excluded from results — what's filtered out?
+              </summary>
+              <p className="mt-2 leading-relaxed">
+                To keep results relevant, job titles containing these terms are automatically hidden (they're never product, operations or delivery roles):
+              </p>
+              <p className="mt-1.5 leading-relaxed text-slate-500">{excludedTerms.join(' · ')}</p>
+            </details>
+          )}
 
           {/* Search debug — "why these results?" thought process */}
           {searchDebug && (

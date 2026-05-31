@@ -659,7 +659,7 @@ export async function POST(request) {
 
       await incrementUsage(tenantId); // one search = one action
 
-      return NextResponse.json({ jobs: ranked, sources: [...sourcesTried], total_raw: deduped.length, debug });
+      return NextResponse.json({ jobs: ranked, sources: [...sourcesTried], total_raw: deduped.length, excluded_terms: HARD_EXCLUDE, debug });
     }
 
     if (action === 'get_usage') {
