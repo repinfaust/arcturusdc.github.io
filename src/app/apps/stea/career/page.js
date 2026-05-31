@@ -495,6 +495,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [searchDebug, setSearchDebug] = useState(null);
   const [searchPrefilled, setSearchPrefilled] = useState(false);
   const [excludeCurrentEmployer, setExcludeCurrentEmployer] = useState(true);
+  const [searchMode, setSearchMode] = useState('both'); // location | remote | both
   const [usage, setUsage] = useState(null); // { used, granted, remaining }
   const [showPaywall, setShowPaywall] = useState(false);
   // Apply Assist: extra application fields (persisted) + the role being applied to.
@@ -889,7 +890,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'search_jobs', tenantId: currentTenant.id, keywords, location, salary_min, exclude_employer }),
+        body: JSON.stringify({ action: 'search_jobs', tenantId: currentTenant.id, keywords, location, salary_min, exclude_employer, mode: searchMode }),
       });
       const data = await res.json();
       if (handleLimit(res, data)) return;
@@ -1231,11 +1232,21 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
-              <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
-                <input type="checkbox" checked={excludeCurrentEmployer} onChange={(e) => setExcludeCurrentEmployer(e.target.checked)}
-                  className="w-4 h-4 text-[#006C50] border-slate-300 rounded focus:ring-[#006C50]" />
-                Exclude my current / most recent employer{currentEmployer ? ` (${currentEmployer})` : ''}
-              </label>
+              <div className="flex flex-col gap-2">
+                <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-bold self-start">
+                  {[['both', 'Local + Remote'], ['location', 'Local only'], ['remote', 'Remote only']].map(([m, label]) => (
+                    <button key={m} onClick={() => setSearchMode(m)}
+                      className={`px-3 py-1.5 rounded-md transition-colors ${searchMode === m ? 'bg-white text-[#10294D] shadow-sm' : 'text-slate-500 hover:text-[#10294D]'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+                  <input type="checkbox" checked={excludeCurrentEmployer} onChange={(e) => setExcludeCurrentEmployer(e.target.checked)}
+                    className="w-4 h-4 text-[#006C50] border-slate-300 rounded focus:ring-[#006C50]" />
+                  Exclude my current / most recent employer{currentEmployer ? ` (${currentEmployer})` : ''}
+                </label>
+              </div>
               <button onClick={handleSearchJobs} disabled={searching}
                 className={`min-w-[160px] h-12 bg-[#10294D] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#001432] transition-all ${searching ? 'opacity-60 cursor-not-allowed' : ''}`}>
                 {searching ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Searching…</>) : (<><span className="material-symbols-outlined">search</span>Search</>)}
@@ -1267,7 +1278,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </summary>
               <div className="px-4 pb-4 space-y-2 text-slate-600">
                 <div className="font-mono text-[11px] bg-white rounded-lg p-3 border border-slate-100 space-y-0.5">
-                  <div>query: <b>{searchDebug.query?.keywords}</b> · loc <b>{searchDebug.query?.location}</b> · min£ <b>{searchDebug.query?.salary_min}</b></div>
+                  <div>queries: <b>{(searchDebug.query?.terms || []).join(', ')}</b> · loc <b>{searchDebug.query?.location}</b> · mode <b>{searchDebug.query?.mode}</b> · min£ <b>{searchDebug.query?.salary_min}</b></div>
                   <div>sources: {Object.entries(searchDebug.source_counts || {}).map(([s, n]) => `${s}=${n}`).join(' · ') || 'none returned'}</div>
                   <div>funnel: {searchDebug.raw_count} raw → {searchDebug.deduped_count} deduped → {searchDebug.after_negative_filter} after filter → {searchDebug.ranked_count} shown</div>
                   <div>ranker: {searchDebug.ranker}{searchDebug.threshold ? ` (keep ≥ ${searchDebug.threshold})` : ''}</div>

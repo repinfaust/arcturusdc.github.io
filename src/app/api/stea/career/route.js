@@ -476,87 +476,96 @@ export async function POST(request) {
     // Search real job boards (Reed + Adzuna) and return normalised, deduped roles.
     if (action === 'search_jobs') {
       await assertActionAvailable(tenantId);
-      const { keywords = '', location = '', salary_min, exclude_employer = '' } = body;
+      // mode: 'location' (default) | 'remote' | 'both'
+      const { keywords = '', location = '', salary_min, exclude_employer = '', mode = 'both' } = body;
       const results = [];
-      const sourcesTried = [];
-      const sourcesAvailable = [];
-      const sourceCounts = {}; // per-source raw result counts (debug)
+      const sourcesTried = new Set();
+      const sourceCounts = {};
 
-      // --- Reed ---
       const reedKey = process.env.REED_API_KEY;
-      if (reedKey) {
-        sourcesAvailable.push('reed');
-        try {
-          const params = new URLSearchParams({ keywords: keywords || '', resultsToTake: '50' });
-          if (location) params.set('locationName', location);
-          if (salary_min) params.set('minimumSalary', String(salary_min));
-          const reedRes = await fetch(`https://www.reed.co.uk/api/1.0/search?${params}`, {
-            headers: { Authorization: 'Basic ' + Buffer.from(`${reedKey}:`).toString('base64') },
-          });
-          if (!reedRes.ok) {
-            console.error('Reed search non-OK', reedRes.status, (await reedRes.text()).slice(0, 200));
-          }
-          if (reedRes.ok) {
-            const data = await reedRes.json();
-            sourcesTried.push('reed');
-            sourceCounts.reed = (data.results || []).length;
-            for (const j of data.results || []) {
-              // Reed field casing varies; fall back across variants and build the
-              // job URL from jobId if no explicit url is returned.
-              const jobId = j.jobId ?? j.JobId;
-              const url = j.jobUrl || j.JobUrl || j.url || (jobId ? `https://www.reed.co.uk/jobs/${jobId}` : '');
-              results.push({
-                source: 'Reed',
-                title: j.jobTitle || j.JobTitle || 'Untitled role',
-                company: j.employerName || j.EmployerName || '',
-                location: j.locationName || j.LocationName || '',
-                salary: (j.minimumSalary || j.maximumSalary) ? `£${j.minimumSalary || ''}${j.maximumSalary ? '–£' + j.maximumSalary : ''}` : '',
-                url,
-                description: j.jobDescription || j.JobDescription || '',
-              });
-            }
-          }
-        } catch (e) { console.error('Reed search failed', e?.message); }
-      }
-
-      // --- Adzuna ---
       const adzId = process.env.ADZUNA_APP_ID;
       const adzKey = process.env.ADZUNA_APP_KEY;
-      if (adzId && adzKey) {
-        sourcesAvailable.push('adzuna');
-        try {
-          const params = new URLSearchParams({
-            app_id: adzId, app_key: adzKey, results_per_page: '50',
-            what: keywords || '', 'content-type': 'application/json',
-          });
-          if (location) params.set('where', location);
-          if (salary_min) params.set('salary_min', String(salary_min));
-          const adzRes = await fetch(`https://api.adzuna.com/v1/api/jobs/gb/search/1?${params}`);
-          if (!adzRes.ok) {
-            console.error('Adzuna search non-OK', adzRes.status, (await adzRes.text()).slice(0, 200));
-          }
-          if (adzRes.ok) {
-            const data = await adzRes.json();
-            sourcesTried.push('adzuna');
-            sourceCounts.adzuna = (data.results || []).length;
-            for (const j of data.results || []) {
-              results.push({
-                source: 'Adzuna',
-                title: j.title,
-                company: j.company?.display_name || '',
-                location: j.location?.display_name || '',
-                salary: (j.salary_min || j.salary_max) ? `£${Math.round(j.salary_min || 0)}${j.salary_max ? '–£' + Math.round(j.salary_max) : ''}` : '',
-                url: j.redirect_url,
-                description: j.description || '',
-              });
-            }
-          }
-        } catch (e) { console.error('Adzuna search failed', e?.message); }
-      }
-
-      if (sourcesAvailable.length === 0) {
+      if (!reedKey && !(adzId && adzKey)) {
         return NextResponse.json({ error: 'No job-search sources configured. Add REED_API_KEY and/or ADZUNA_APP_ID + ADZUNA_APP_KEY in Vercel.' }, { status: 400 });
       }
+
+      // One query against Reed; loc='' means UK-wide (used for remote).
+      async function fetchReed(query, loc) {
+        if (!reedKey) return;
+        try {
+          const params = new URLSearchParams({ keywords: query, resultsToTake: '50', distanceFromLocation: '30' });
+          if (loc) params.set('locationName', loc);
+          if (salary_min) params.set('minimumSalary', String(salary_min));
+          const res = await fetch(`https://www.reed.co.uk/api/1.0/search?${params}`, {
+            headers: { Authorization: 'Basic ' + Buffer.from(`${reedKey}:`).toString('base64') },
+          });
+          if (!res.ok) { console.error('Reed non-OK', res.status); return; }
+          const data = await res.json();
+          sourcesTried.add('reed');
+          sourceCounts.reed = (sourceCounts.reed || 0) + (data.results || []).length;
+          for (const j of data.results || []) {
+            const jobId = j.jobId ?? j.JobId;
+            const url = j.jobUrl || j.JobUrl || j.url || (jobId ? `https://www.reed.co.uk/jobs/${jobId}` : '');
+            results.push({
+              source: 'Reed',
+              title: j.jobTitle || j.JobTitle || 'Untitled role',
+              company: j.employerName || j.EmployerName || '',
+              location: j.locationName || j.LocationName || '',
+              salary: (j.minimumSalary || j.maximumSalary) ? `£${j.minimumSalary || ''}${j.maximumSalary ? '–£' + j.maximumSalary : ''}` : '',
+              url,
+              description: j.jobDescription || j.JobDescription || '',
+            });
+          }
+        } catch (e) { console.error('Reed failed', e?.message); }
+      }
+
+      async function fetchAdzuna(query, loc) {
+        if (!(adzId && adzKey)) return;
+        try {
+          const params = new URLSearchParams({ app_id: adzId, app_key: adzKey, results_per_page: '50', what: query, distance: '48', 'content-type': 'application/json' });
+          if (loc) params.set('where', loc);
+          if (salary_min) params.set('salary_min', String(salary_min));
+          const res = await fetch(`https://api.adzuna.com/v1/api/jobs/gb/search/1?${params}`);
+          if (!res.ok) { console.error('Adzuna non-OK', res.status); return; }
+          const data = await res.json();
+          sourcesTried.add('adzuna');
+          sourceCounts.adzuna = (sourceCounts.adzuna || 0) + (data.results || []).length;
+          for (const j of data.results || []) {
+            results.push({
+              source: 'Adzuna',
+              title: j.title,
+              company: j.company?.display_name || '',
+              location: j.location?.display_name || '',
+              salary: (j.salary_min || j.salary_max) ? `£${Math.round(j.salary_min || 0)}${j.salary_max ? '–£' + Math.round(j.salary_max) : ''}` : '',
+              url: j.redirect_url,
+              description: j.description || '',
+            });
+          }
+        } catch (e) { console.error('Adzuna failed', e?.message); }
+      }
+
+      // Build the role-family query terms from the candidate's target roles +
+      // whatever they typed. De-dupe to a handful of distinct searches.
+      const profileForQuery = await getWorkspaceConfig(tenantId, 'candidate_profile');
+      let targetRolesQ = [];
+      try { if (profileForQuery && typeof profileForQuery !== 'string' && Array.isArray(profileForQuery.target_roles)) targetRolesQ = profileForQuery.target_roles; } catch {}
+      const queryTerms = [...new Set([keywords, ...targetRolesQ].map((s) => (s || '').trim()).filter(Boolean))].slice(0, 5);
+      if (queryTerms.length === 0) queryTerms.push('product');
+
+      // Run location searches and/or remote searches per the mode.
+      const tasks = [];
+      for (const term of queryTerms) {
+        if (mode === 'location' || mode === 'both') {
+          tasks.push(fetchReed(term, location));
+          tasks.push(fetchAdzuna(term, location));
+        }
+        if (mode === 'remote' || mode === 'both') {
+          // Reed: include "remote" in keywords; Adzuna: where=remote.
+          tasks.push(fetchReed(`${term} remote`, ''));
+          tasks.push(fetchAdzuna(term, 'remote'));
+        }
+      }
+      await Promise.all(tasks);
 
       // Dedupe by normalised title+company.
       const seen = new Set();
@@ -567,39 +576,36 @@ export async function POST(request) {
         return true;
       });
 
-      // --- Stage 1: cheap NEGATIVE-only title filter ---
-      // Only drop obvious wrong-discipline titles; let everything else through to
-      // the LLM ranker (the smart filter). A positive word-match was too strict
-      // and dropped good roles with slightly different titles.
-      const profileRaw = await getWorkspaceConfig(tenantId, 'candidate_profile');
-      let targetRoles = [];
-      try {
-        const p = typeof profileRaw === 'string' ? null : profileRaw;
-        if (p && Array.isArray(p.target_roles)) targetRoles = p.target_roles;
-      } catch {}
-      const NEGATIVE = ['software engineer', 'backend developer', 'frontend developer',
-        'full stack', 'data scientist', 'sdet', 'qa tester', 'accountant', 'nurse',
-        'teacher', 'driver', 'solicitor', 'graphic designer', 'sysadmin', 'electrician',
-        'plumber', 'chef', 'warehouse', 'cleaner', 'security officer'];
+      // --- Stage 1: cheap, OBVIOUS-ONLY exclusions (deterministic culling only) ---
+      // These are categories that are NEVER a product/ops/delivery role — pure
+      // mechanical cuts to save tokens, NOT relevance judgement (the LLM ranker
+      // makes all the judgement calls on what survives).
+      const targetRoles = targetRolesQ;
+      const HARD_EXCLUDE = ['warehouse', 'forklift', 'hgv', 'lorry', 'van driver', 'delivery driver',
+        'cleaner', 'cleaning', 'security officer', 'nurse', 'carer', 'care assistant', 'teacher',
+        'teaching assistant', 'chef', 'cook', 'kitchen', 'waiter', 'waitress', 'bartender',
+        'electrician', 'plumber', 'labourer', 'mechanic', 'welder', 'painter', 'retail assistant',
+        'shop assistant', 'cashier', 'receptionist', 'hairdresser', 'beautician', 'dental',
+        'pharmacist', 'phlebotomist', 'social worker', 'sales executive', 'sales representative',
+        'telesales', 'estate agent', 'recruitment consultant'];
       const excludeCo = (exclude_employer || '').toLowerCase().trim();
       const stage1 = deduped.filter((r) => {
         const t = (r.title || '').toLowerCase();
-        if (NEGATIVE.some((n) => t.includes(n))) return false;
-        // Exclude the candidate's current/most-recent employer if requested.
+        if (HARD_EXCLUDE.some((n) => t.includes(n))) return false;
         if (excludeCo && (r.company || '').toLowerCase().includes(excludeCo)) return false;
         return true;
       });
 
       // Debug trace so the UI can show *why* the result set is what it is.
       const debug = {
-        query: { keywords, location: location || '(any)', salary_min: salary_min || '(none)' },
-        sources_tried: sourcesTried,
+        query: { terms: queryTerms, location: location || '(any)', mode, salary_min: salary_min || '(none)' },
+        sources_tried: [...sourcesTried],
         source_counts: sourceCounts,
         raw_count: results.length,
         deduped_count: deduped.length,
         after_negative_filter: stage1.length,
         dropped_by_negative_filter: deduped
-          .filter((r) => NEGATIVE.some((n) => (r.title || '').toLowerCase().includes(n)))
+          .filter((r) => HARD_EXCLUDE.some((n) => (r.title || '').toLowerCase().includes(n)))
           .map((r) => r.title),
         target_roles_used: targetRoles.length ? targetRoles : [keywords],
         threshold: 40,
@@ -612,7 +618,8 @@ export async function POST(request) {
       let ranked = stage1.map((r) => ({ ...r })); // default if ranker fails
       try {
         if (process.env.ANTHROPIC_API_KEY && stage1.length > 0) {
-          const list = stage1.slice(0, 40).map((r, i) => `${i}. ${r.title} @ ${r.company} (${r.location})`).join('\n');
+          const rankable = stage1.slice(0, 60);
+          const list = rankable.map((r, i) => `${i}. ${r.title} @ ${r.company} (${r.location})`).join('\n');
           const rankPrompt =
             `The candidate is targeting these roles: ${targetRoles.join(', ') || keywords}.\n` +
             `Their background: Product Owner / Product Manager / Operations & Delivery in energy & billing.\n\n` +
@@ -652,7 +659,7 @@ export async function POST(request) {
 
       await incrementUsage(tenantId); // one search = one action
 
-      return NextResponse.json({ jobs: ranked, sources: sourcesTried, total_raw: deduped.length, debug });
+      return NextResponse.json({ jobs: ranked, sources: [...sourcesTried], total_raw: deduped.length, debug });
     }
 
     if (action === 'get_usage') {
