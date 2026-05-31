@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth, googleProvider, microsoftProvider } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 export default function ClaimWorkspacePage() {
@@ -60,14 +60,14 @@ export default function ClaimWorkspacePage() {
     return () => unsubscribe();
   }, []);
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (provider = googleProvider, label = 'Google') => {
     setError('');
     setSigningIn(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, provider);
     } catch (err) {
-      console.error('Google sign-in failed', err);
-      setError(err?.message || 'Google sign-in failed. Please try again.');
+      console.error(`${label} sign-in failed`, err);
+      setError(err?.message || `${label} sign-in failed. Please try again.`);
     } finally {
       setSigningIn(false);
     }
@@ -203,7 +203,7 @@ export default function ClaimWorkspacePage() {
               )}
             </p>
             <button
-              onClick={handleSignIn}
+              onClick={() => handleSignIn(googleProvider, 'Google')}
               disabled={signingIn}
               className="w-full inline-flex items-center justify-center gap-3 rounded-full bg-neutral-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
             >
@@ -211,6 +211,17 @@ export default function ClaimWorkspacePage() {
                 G
               </span>
               {signingIn ? 'Signing in...' : 'Sign in with Google'}
+            </button>
+            <button
+              onClick={() => handleSignIn(microsoftProvider, 'Microsoft')}
+              disabled={signingIn}
+              className="mt-3 w-full inline-flex items-center justify-center gap-3 rounded-full border border-neutral-300 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <span className="grid grid-cols-2 gap-px h-4 w-4">
+                <span className="bg-[#F25022]"></span><span className="bg-[#7FBA00]"></span>
+                <span className="bg-[#00A4EF]"></span><span className="bg-[#FFB900]"></span>
+              </span>
+              Sign in with Microsoft
             </button>
           </div>
         ) : (

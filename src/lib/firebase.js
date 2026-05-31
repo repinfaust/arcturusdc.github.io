@@ -1,6 +1,6 @@
 // src/lib/firebase.js
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
 import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -22,6 +22,7 @@ let auth = null;
 let db = null;
 let storage = null;
 let googleProvider = null;
+let microsoftProvider = null;
 
 if (typeof window !== 'undefined') {
   const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
@@ -29,6 +30,10 @@ if (typeof window !== 'undefined') {
   auth = getAuth(app);
   storage = getStorage(app);
   googleProvider = new GoogleAuthProvider();
+
+  // Microsoft sign-in (personal hotmail/outlook + org accounts).
+  microsoftProvider = new OAuthProvider('microsoft.com');
+  microsoftProvider.setCustomParameters({ prompt: 'select_account' });
 
   try {
     db = initializeFirestore(app, {
@@ -40,4 +45,4 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export { auth, db, storage, googleProvider };
+export { auth, db, storage, googleProvider, microsoftProvider };

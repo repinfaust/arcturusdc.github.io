@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth, googleProvider, microsoftProvider } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
@@ -192,14 +192,14 @@ export default function SteaAccessPage() {
     return () => unsubscribe();
   }, [destination, ensureSessionCookie, router]);
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (provider = googleProvider, label = 'Google') => {
     setError('');
     setSigningIn(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, provider);
     } catch (err) {
-      console.error('Google sign-in failed', err);
-      setError(err?.message || 'Google sign-in failed. Please try again or contact Arcturus.');
+      console.error(`${label} sign-in failed`, err);
+      setError(err?.message || `${label} sign-in failed. Please try again or contact Arcturus.`);
     } finally {
       setSigningIn(false);
     }
@@ -281,7 +281,7 @@ export default function SteaAccessPage() {
           )}
 
           <button
-            onClick={handleSignIn}
+            onClick={() => handleSignIn(googleProvider, 'Google')}
             disabled={busy}
             className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-full bg-neutral-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/40 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
           >
@@ -291,8 +291,22 @@ export default function SteaAccessPage() {
             {busy ? 'Preparing your workspace…' : 'Sign in with Google'}
           </button>
 
+          <button
+            onClick={() => handleSignIn(microsoftProvider, 'Microsoft')}
+            disabled={busy}
+            className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-full border border-neutral-300 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <span className="inline-flex h-5 w-5 items-center justify-center">
+              <span className="grid grid-cols-2 gap-px h-4 w-4">
+                <span className="bg-[#F25022]"></span><span className="bg-[#7FBA00]"></span>
+                <span className="bg-[#00A4EF]"></span><span className="bg-[#FFB900]"></span>
+              </span>
+            </span>
+            Sign in with Microsoft
+          </button>
+
           <div className="mt-4 text-xs text-neutral-500">
-            You may be asked to share your email so we can confirm you belong to the STEa workspace.
+            Works with Google or Microsoft (including personal Outlook/Hotmail). You may be asked to share your email so we can confirm your STEa workspace.
           </div>
         </div>
 
