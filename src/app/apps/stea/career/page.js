@@ -50,39 +50,9 @@ const CvComparisonView = () => (
         <span className="material-symbols-outlined text-blue-600 text-lg">compare_arrows</span>
         Strategic Reordering
       </h2>
-      <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold text-slate-500 uppercase tracking-wider">4 CHANGES DETECTED</span>
     </div>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-slate-200">
-      <div className="bg-white p-6">
-        <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Master CV (Base)
-        </h3>
-        <div className="space-y-4">
-          <div className="p-3 border-l-2 border-slate-100 opacity-40 italic text-xs leading-relaxed text-slate-500">
-            Led a cross-functional team of 15 designers to launch the 2.0 version of the flagship platform.
-          </div>
-          <div className="p-3 border-l-2 border-[#10294D] bg-slate-50 rounded-r text-xs font-medium text-[#10294D] leading-relaxed">
-            Pioneered AI-driven analytics feature that increased user retention by 34% within the first quarter.
-          </div>
-        </div>
-      </div>
-      <div className="bg-white p-6">
-        <h3 className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest mb-4 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#006C50]"></span> Tailored Version
-        </h3>
-        <div className="space-y-4">
-          <div className="p-3 border-l-2 border-[#006C50] bg-teal-50/50 rounded-r relative text-xs leading-relaxed">
-            <div className="absolute -left-2 top-3 bg-[#006C50] text-white rounded-full w-4 h-4 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[8px]" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_upward</span>
-            </div>
-            <p className="font-bold text-[#006C50]">Pioneered AI-driven analytics feature that increased user retention by 34% within the first quarter.</p>
-            <span className="text-[9px] text-[#006C50]/70 font-bold mt-1 block uppercase tracking-tighter">RANKED #1 - HIGH KEYWORD MATCH</span>
-          </div>
-          <div className="p-3 border-l-2 border-slate-100 text-xs leading-relaxed text-slate-600">
-            Led a cross-functional team of 15 designers to launch the 2.0 version of the flagship platform.
-          </div>
-        </div>
-      </div>
+    <div className="bg-white p-10 text-center text-sm text-slate-400">
+      Analyse a role to generate a tailored CV comparison against your master CV.
     </div>
   </div>
 );
@@ -92,25 +62,11 @@ const CoverNoteDrafter = () => (
     <div className="flex items-center justify-between mb-6">
       <div>
         <h2 className="font-bold text-[#10294D] text-lg tracking-tight">Cover Note Drafter</h2>
-        <p className="text-xs text-slate-400 mt-0.5">AI-generated focus: <span className="font-bold text-slate-600">Strategic Leadership</span></p>
-      </div>
-      <div className="flex gap-2">
-        <button className="p-2 hover:bg-slate-50 text-slate-400 rounded-lg transition-colors">
-          <span className="material-symbols-outlined text-xl">autorenew</span>
-        </button>
-        <button className="p-2 hover:bg-slate-50 text-slate-400 rounded-lg transition-colors">
-          <span className="material-symbols-outlined text-xl">content_copy</span>
-        </button>
+        <p className="text-xs text-slate-400 mt-0.5">Generated from your evidence library once a role is analysed.</p>
       </div>
     </div>
-    <div className="bg-slate-50 rounded-xl p-6 text-sm text-slate-600 leading-relaxed font-medium">
-      <p className="mb-4">Dear Hiring Manager,</p>
-      <p className="mb-4 italic">"I was immediately drawn to the Senior Product Lead role. My experience pioneering AI-driven analytics features—which directly resulted in a 34% increase in user retention—aligns perfectly with your mission to redefine data interpretation through automated intelligence..."</p>
-      <p>I look forward to discussing how my background can contribute to your continued success.</p>
-    </div>
-    <div className="mt-6 flex justify-end gap-3">
-      <button className="px-5 py-2 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors text-xs">Regenerate</button>
-      <button className="px-5 py-2 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] transition-colors text-xs">Copy Note</button>
+    <div className="bg-slate-50 rounded-xl p-10 text-sm text-slate-400 leading-relaxed text-center">
+      No cover note yet. Analyse a role to draft a tailored cover note grounded in your real evidence.
     </div>
   </div>
 );
@@ -162,17 +118,13 @@ const TerminalOutput = () => (
       <div className="w-10"></div>
     </div>
     <div className="p-6 font-mono text-[11px] text-blue-100/80 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
-      <p><span className="text-[#53FDC7] opacity-70">info</span> [14:02:11] Initialising Discovery session...</p>
-      <p><span className="text-[#53FDC7] opacity-70">info</span> [14:02:12] Authenticated via OAuth 2.0 (Token: Arct_***_91)</p>
-      <p><span className="text-[#53FDC7] opacity-70">info</span> [14:02:15] Scanning keywords: "Platform PM", "Lead Product", "FinTech"</p>
-      <p><span className="text-orange-300">warn</span> [14:02:22] Rate limit approaching (78/100). Throttling enabled.</p>
-      <p className="text-white font-bold"><span className="text-[#53FDC7]">find</span> [14:02:28] Matched Role: Senior Infrastructure Lead @ Vercel (Score: 4.8)</p>
-      <p className="text-white font-bold"><span className="text-[#53FDC7]">find</span> [14:02:31] Matched Role: Principal PM @ Stripe (Score: 4.6)</p>
+      <p><span className="text-[#53FDC7] opacity-70">info</span> Discovery session idle.</p>
+      <p><span className="text-blue-300/60">No active scan. Paste a job description in the pipeline tab to analyse a role.</span></p>
       <p><span className="text-blue-300 animate-pulse">_</span></p>
     </div>
     <div className="px-6 py-2 bg-[#10294D]/30 border-t border-white/5 flex items-center gap-2">
-      <span className="w-1.5 h-1.5 bg-[#53FDC7] rounded-full animate-ping"></span>
-      <span className="text-[9px] font-mono text-blue-300 uppercase font-bold tracking-widest">SCANNING PORT 8080 - 1.2MB/s</span>
+      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+      <span className="text-[9px] font-mono text-blue-300 uppercase font-bold tracking-widest">Idle</span>
     </div>
   </div>
 );
@@ -192,41 +144,9 @@ const DiscoveryInbox = () => (
       </div>
     </div>
     <div className="space-y-3">
-      {[
-        { company: 'Linear', role: 'Senior Product Engineer', match: '94%', time: '2m ago', logo: 'L' },
-        { company: 'Retool', role: 'Head of Infrastructure', match: '88%', time: '14m ago', logo: 'R' },
-        { company: 'Datadog', role: 'Distributed Systems Lead', match: '81%', time: '45m ago', logo: 'D' },
-      ].map((job, i) => (
-        <div key={i} className={`group bg-white p-4 rounded-xl flex items-center justify-between border border-transparent hover:border-[#006C50]/20 transition-all cursor-pointer shadow-sm ${i === 2 ? 'opacity-60' : ''}`}>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center font-bold text-slate-400 text-sm">
-              {job.logo}
-            </div>
-            <div>
-              <h4 className="font-bold text-sm text-[#10294D] group-hover:text-[#006C50] transition-colors">{job.role}</h4>
-              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                <span>{job.company}</span>
-                <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                <span>Remote (UK)</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-right">
-              <div className="text-[10px] font-bold text-[#006C50] uppercase tracking-tighter">{job.match} Match</div>
-              <div className="text-[9px] text-slate-300 font-bold uppercase tracking-widest">{job.time}</div>
-            </div>
-            <div className="flex gap-2">
-              <button className="p-2 bg-slate-50 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors text-slate-400">
-                <span className="material-symbols-outlined text-sm">close</span>
-              </button>
-              <button className="p-2 bg-teal-50 text-[#006C50] hover:bg-[#006C50] hover:text-white rounded-lg transition-colors">
-                <span className="material-symbols-outlined text-sm">bolt</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
+      <div className="bg-white p-8 rounded-xl border border-slate-100 text-center text-sm text-slate-400">
+        No discovered roles yet. Analysed roles will appear here.
+      </div>
     </div>
   </div>
 );
@@ -269,7 +189,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
             value={data?.current_role || ''} 
             onChange={(e) => onChange({...data, current_role: e.target.value})}
             className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
-            placeholder="e.g. Senior Product Manager"
+            placeholder="e.g. Product Owner"
           />
         </div>
         <div className="space-y-2">
@@ -279,18 +199,19 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
             value={data?.min_salary || ''} 
             onChange={(e) => onChange({...data, min_salary: e.target.value})}
             className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
-            placeholder="e.g. 125000"
+            placeholder="e.g. 65000"
           />
         </div>
       </div>
 
       <div className="space-y-2">
         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Target Roles (Comma separated)</label>
-        <textarea 
-          value={data?.target_roles?.join(', ') || ''} 
-          onChange={(e) => onChange({...data, target_roles: e.target.value.split(',').map(s => s.trim())})}
+        <textarea
+          value={Array.isArray(data?.target_roles) ? data.target_roles.join(',') : (data?.target_roles || '')}
+          onChange={(e) => onChange({...data, target_roles: e.target.value.split(',')})}
+          onBlur={(e) => onChange({...data, target_roles: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
           className="w-full h-24 bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100 resize-none"
-          placeholder="e.g. Lead Product Manager, Principal PM, Platform PM"
+          placeholder="e.g. Product Owner, Senior Product Owner, Product Manager"
         />
       </div>
     </div>
@@ -467,12 +388,8 @@ export default function CareerOpsDashboard() {
   const [weightsData, setWeightsData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Mock data for initial view/demo
-  const mockPipeline = [
-    { company: 'Nebula Systems', role: 'Principal PM, Platform', score: 4.8, status: 'Interviewing', timeline: 'Round 3: System Design' },
-    { company: 'Veridian Finance', role: 'Head of Product, Payments', score: 4.2, status: 'Applied', timeline: 'Pending Review' },
-    { company: 'Stellar AI', role: 'Senior PM, Data Governance', score: 3.9, status: 'Shortlisted', timeline: 'Awaiting Feedback' },
-  ];
+  // Pipeline rows populate as roles are analysed. No placeholder/demo data.
+  const mockPipeline = [];
 
   useEffect(() => {
     if (currentTenant?.id) {
@@ -672,6 +589,13 @@ export default function CareerOpsDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
+                {mockPipeline.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
+                      No roles analysed yet. Paste a job description above and run an analysis to populate your pipeline.
+                    </td>
+                  </tr>
+                )}
                 {mockPipeline.map((item, i) => (
                   <tr key={i} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                     <td className="px-6 py-5">
@@ -718,11 +642,11 @@ export default function CareerOpsDashboard() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-teal-50 p-4 rounded-2xl border border-teal-100">
-                <div className="text-[#006C50] font-bold text-2xl tracking-tighter">482</div>
+                <div className="text-[#006C50] font-bold text-2xl tracking-tighter">0</div>
                 <div className="text-[9px] font-bold uppercase tracking-widest text-[#006C50]/70">Roles Analysed</div>
               </div>
               <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                <div className="text-[#10294D] font-bold text-2xl tracking-tighter">14</div>
+                <div className="text-[#10294D] font-bold text-2xl tracking-tighter">0</div>
                 <div className="text-[9px] font-bold uppercase tracking-widest text-[#10294D]/70">Top Matches</div>
               </div>
             </div>
