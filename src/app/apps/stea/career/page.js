@@ -602,6 +602,14 @@ export default function CareerOpsDashboard() {
   const [cvLibrary, setCvLibrary] = useState([]);
   const [tailoring, setTailoring] = useState(false);
 
+  // Job search (Live Scans tab).
+  const [searchKeywords, setSearchKeywords] = useState('');
+  const [searchLocation, setSearchLocation] = useState('');
+  const [searchSalary, setSearchSalary] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchPrefilled, setSearchPrefilled] = useState(false);
+
   useEffect(() => {
     if (!tailoring) { setTailorStage(0); return; }
     setTailorStage(0);
@@ -705,6 +713,16 @@ export default function CareerOpsDashboard() {
       if (data.profile_obj) setProfileData(data.profile_obj);
       if (data.evidence_obj) setAnchorsData(data.evidence_obj);
       if (data.weights_obj) setWeightsData(data.weights_obj);
+
+      // Prefill the job-search form from the profile (once, if untouched).
+      const p = data.profile_obj;
+      if (p && !searchPrefilled) {
+        const firstRole = Array.isArray(p.target_roles) ? p.target_roles[0] : (p.current_role || '');
+        if (firstRole) setSearchKeywords(firstRole);
+        if (p.location) setSearchLocation(String(p.location).split(',')[0].trim());
+        if (p.min_salary) setSearchSalary(String(p.min_salary));
+        setSearchPrefilled(true);
+      }
     } catch (err) {
       console.error('Failed to check config', err);
       setConfigStatus({ loading: false, has_config: false });
@@ -758,19 +776,16 @@ export default function CareerOpsDashboard() {
     { id: 'settings', label: 'Config', icon: '⚙️' },
   ];
 
-  async function handleAnalyse() {
-    if (!jdText.trim() || !currentTenant?.id) return;
+  async function handleAnalyse(overrideText) {
+    const input = (typeof overrideText === 'string' ? overrideText : jdText).trim();
+    if (!input || !currentTenant?.id) return;
     setLoading(true);
     setResults(null);
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'analyse', 
-          jd_text: jdText,
-          tenantId: currentTenant.id 
-        }),
+        body: JSON.stringify({ action: 'analyse', jd_text: input, tenantId: currentTenant.id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Analyse failed');
@@ -782,6 +797,41 @@ export default function CareerOpsDashboard() {
     } finally {
       setLoading(false);
     }
+  }
+
+  // Search live job boards via the API, defaulting from the saved profile.
+  async function handleSearchJobs() {
+    if (!currentTenant?.id) return;
+    setSearching(true);
+    setSearchResults([]);
+    const keywords = searchKeywords.trim() || (Array.isArray(profileData?.target_roles) ? profileData.target_roles[0] : '') || profileData?.current_role || '';
+    const location = searchLocation.trim();
+    const salary_min = searchSalary || profileData?.min_salary || undefined;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'search_jobs', tenantId: currentTenant.id, keywords, location, salary_min }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Search failed');
+      setSearchResults(data.jobs || []);
+      if ((data.jobs || []).length === 0) alert('No roles found. Try broader keywords or a different location.');
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  // Analyse a role found in search: feed its URL to the analyse pipeline.
+  function analyseFromSearch(job) {
+    if (!job?.url) { alert('This listing has no link to analyse. Open it and paste the description instead.'); return; }
+    setActiveTab('pipeline');
+    setJdText(job.url);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    handleAnalyse(job.url);
   }
 
   if (tenantLoading || configStatus.loading) {
@@ -1057,27 +1107,64 @@ export default function CareerOpsDashboard() {
 
       {/* Scans Tab */}
       {activeTab === 'scans' && (
-        <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-500">
-          <div className="col-span-12 lg:col-span-4 space-y-8">
-            <ScanControlPanel />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-teal-50 p-4 rounded-2xl border border-teal-100">
-                <div className="text-[#006C50] font-bold text-2xl tracking-tighter">0</div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[#006C50]/70">Roles Analysed</div>
+        <section className="space-y-6 animate-in fade-in duration-300">
+          <div>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Find Roles</h3>
+            <p className="text-sm text-slate-500 mt-1">Search live UK job boards (Reed + Adzuna), then analyse any role against your profile.</p>
+          </div>
+
+          {/* Search form */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Keywords</label>
+                <input value={searchKeywords} onChange={(e) => setSearchKeywords(e.target.value)} placeholder="e.g. Product Owner energy billing"
+                  className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
               </div>
-              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                <div className="text-[#10294D] font-bold text-2xl tracking-tighter">0</div>
-                <div className="text-[9px] font-bold uppercase tracking-widest text-[#10294D]/70">Top Matches</div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
+                <input value={searchLocation} onChange={(e) => setSearchLocation(e.target.value)} placeholder="e.g. Nottingham"
+                  className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
               </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Min salary (£)</label>
+                <input type="number" value={searchSalary} onChange={(e) => setSearchSalary(e.target.value)} placeholder="60000"
+                  className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+              </div>
+            </div>
+            <div className="flex justify-end mt-4">
+              <button onClick={handleSearchJobs} disabled={searching}
+                className={`min-w-[160px] h-12 bg-[#10294D] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#001432] transition-all ${searching ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                {searching ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Searching…</>) : (<><span className="material-symbols-outlined">search</span>Search</>)}
+              </button>
             </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-8 space-y-8">
-            <TerminalOutput />
-            <DiscoveryInbox />
-          </div>
-        </div>
+          {/* Results */}
+          {searchResults.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">{searchResults.length} roles found. Click "Analyse" to score one against your profile.</p>
+              {searchResults.map((job, i) => (
+                <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-[#10294D] text-sm truncate">{job.title}</p>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{job.source}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 truncate">{job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}</p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {job.url && <a href={job.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">View</a>}
+                    <button onClick={() => analyseFromSearch(job)} disabled={loading}
+                      className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">bolt</span>Analyse
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* CVs Tab */}

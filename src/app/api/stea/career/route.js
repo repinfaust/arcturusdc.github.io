@@ -409,6 +409,89 @@ export async function POST(request) {
       return NextResponse.json({ cvs });
     }
 
+    // Search real job boards (Reed + Adzuna) and return normalised, deduped roles.
+    if (action === 'search_jobs') {
+      const { keywords = '', location = '', salary_min } = body;
+      const results = [];
+      const sourcesTried = [];
+      const sourcesAvailable = [];
+
+      // --- Reed ---
+      const reedKey = process.env.REED_API_KEY;
+      if (reedKey) {
+        sourcesAvailable.push('reed');
+        try {
+          const params = new URLSearchParams({ keywords: keywords || '', resultsToTake: '50' });
+          if (location) params.set('locationName', location);
+          if (salary_min) params.set('minimumSalary', String(salary_min));
+          const reedRes = await fetch(`https://www.reed.co.uk/api/1.0/search?${params}`, {
+            headers: { Authorization: 'Basic ' + Buffer.from(`${reedKey}:`).toString('base64') },
+          });
+          if (reedRes.ok) {
+            const data = await reedRes.json();
+            sourcesTried.push('reed');
+            for (const j of data.results || []) {
+              results.push({
+                source: 'Reed',
+                title: j.jobTitle,
+                company: j.employerName || '',
+                location: j.locationName || '',
+                salary: (j.minimumSalary || j.maximumSalary) ? `£${j.minimumSalary || ''}${j.maximumSalary ? '–£' + j.maximumSalary : ''}` : '',
+                url: j.jobUrl,
+                description: j.jobDescription || '',
+              });
+            }
+          }
+        } catch (e) { console.error('Reed search failed', e?.message); }
+      }
+
+      // --- Adzuna ---
+      const adzId = process.env.ADZUNA_APP_ID;
+      const adzKey = process.env.ADZUNA_APP_KEY;
+      if (adzId && adzKey) {
+        sourcesAvailable.push('adzuna');
+        try {
+          const params = new URLSearchParams({
+            app_id: adzId, app_key: adzKey, results_per_page: '50',
+            what: keywords || '', 'content-type': 'application/json',
+          });
+          if (location) params.set('where', location);
+          if (salary_min) params.set('salary_min', String(salary_min));
+          const adzRes = await fetch(`https://api.adzuna.com/v1/api/jobs/gb/search/1?${params}`);
+          if (adzRes.ok) {
+            const data = await adzRes.json();
+            sourcesTried.push('adzuna');
+            for (const j of data.results || []) {
+              results.push({
+                source: 'Adzuna',
+                title: j.title,
+                company: j.company?.display_name || '',
+                location: j.location?.display_name || '',
+                salary: (j.salary_min || j.salary_max) ? `£${Math.round(j.salary_min || 0)}${j.salary_max ? '–£' + Math.round(j.salary_max) : ''}` : '',
+                url: j.redirect_url,
+                description: j.description || '',
+              });
+            }
+          }
+        } catch (e) { console.error('Adzuna search failed', e?.message); }
+      }
+
+      if (sourcesAvailable.length === 0) {
+        return NextResponse.json({ error: 'No job-search sources configured. Add REED_API_KEY and/or ADZUNA_APP_ID + ADZUNA_APP_KEY in Vercel.' }, { status: 400 });
+      }
+
+      // Dedupe by normalised title+company.
+      const seen = new Set();
+      const deduped = results.filter((r) => {
+        const key = `${(r.title || '').toLowerCase().trim()}|${(r.company || '').toLowerCase().trim()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      return NextResponse.json({ jobs: deduped, sources: sourcesTried });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Career Ops Error:', error);
