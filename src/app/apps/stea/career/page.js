@@ -251,125 +251,6 @@ const FitGauge = ({ score }) => {
   );
 };
 
-const FactorCard = ({ label, isFit }) => (
-  <div className={`p-4 bg-white border-l-4 ${isFit ? 'border-[#006C50]' : 'border-[#ba1a1a]'} rounded-lg shadow-sm flex justify-between items-center`}>
-    <span className="text-sm font-medium text-[#10294D]">{label}</span>
-    <span className={`text-sm font-bold ${isFit ? 'text-[#006C50]' : 'text-[#ba1a1a]'}`}>
-      {isFit ? '✓' : '✕'}
-    </span>
-  </div>
-);
-
-/* ---------------- CV Tailoring Components ---------------- */
-
-const CvComparisonView = () => (
-  <div className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200">
-    <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100">
-      <h2 className="font-bold text-[#10294D] flex items-center gap-2 text-sm">
-        <span className="material-symbols-outlined text-blue-600 text-lg">compare_arrows</span>
-        Strategic Reordering
-      </h2>
-    </div>
-    <div className="bg-white p-10 text-center text-sm text-slate-400">
-      Analyse a role to generate a tailored CV comparison against your master CV.
-    </div>
-  </div>
-);
-
-const CoverNoteDrafter = () => (
-  <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h2 className="font-bold text-[#10294D] text-lg tracking-tight">Cover Note Drafter</h2>
-        <p className="text-xs text-slate-400 mt-0.5">Generated from your evidence library once a role is analysed.</p>
-      </div>
-    </div>
-    <div className="bg-slate-50 rounded-xl p-10 text-sm text-slate-400 leading-relaxed text-center">
-      No cover note yet. Analyse a role to draft a tailored cover note grounded in your real evidence.
-    </div>
-  </div>
-);
-
-/* ---------------- Search & Discovery Components ---------------- */
-
-const ScanControlPanel = () => (
-  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-    <h3 className="font-bold text-[#10294D] text-base mb-6 flex items-center gap-2">
-      <span className="material-symbols-outlined text-[#10294D]">tune</span>
-      Scan Control Panel
-    </h3>
-    <div className="space-y-3">
-      {['LinkedIn Recruiter', 'Greenhouse API', 'Ashby Portal'].map((source, i) => (
-        <label key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-slate-400 group-hover:text-[#10294D] text-lg">
-              {i === 0 ? 'link' : i === 1 ? 'hub' : 'analytics'}
-            </span>
-            <span className="font-bold text-slate-600 text-xs tracking-tight">{source}</span>
-          </div>
-          <input type="checkbox" defaultChecked={i < 2} className="w-4 h-4 text-[#006C50] border-slate-300 rounded focus:ring-[#006C50]" />
-        </label>
-      ))}
-    </div>
-    <div className="mt-8 pt-6 border-t border-slate-100">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scan Depth</span>
-        <span className="text-[10px] font-bold text-[#10294D] px-2 py-0.5 bg-blue-50 rounded uppercase">Deep</span>
-      </div>
-      <input type="range" className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#10294D]" />
-    </div>
-    <button className="w-full mt-8 py-4 bg-gradient-to-br from-[#10294D] to-[#001432] text-white rounded-xl font-bold text-sm shadow-xl shadow-blue-900/10 flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform">
-      <span className="material-symbols-outlined text-lg">play_circle</span>
-      Start Live Scan
-    </button>
-  </div>
-);
-
-const TerminalOutput = () => (
-  <div className="bg-[#001432] rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[300px]">
-    <div className="bg-[#10294D] px-4 py-2 flex items-center justify-between border-b border-white/5">
-      <div className="flex gap-1.5">
-        <div className="w-2 h-2 rounded-full bg-[#FF5F56]"></div>
-        <div className="w-2 h-2 rounded-full bg-[#FFBD2E]"></div>
-        <div className="w-2 h-2 rounded-full bg-[#27C93F]"></div>
-      </div>
-      <div className="text-[9px] font-mono text-blue-200 uppercase tracking-widest font-bold">Arcturus-Discovery v4.2</div>
-      <div className="w-10"></div>
-    </div>
-    <div className="p-6 font-mono text-[11px] text-blue-100/80 space-y-1.5 overflow-y-auto flex-1 custom-scrollbar">
-      <p><span className="text-[#53FDC7] opacity-70">info</span> Discovery session idle.</p>
-      <p><span className="text-blue-300/60">No active scan. Paste a job description in the pipeline tab to analyse a role.</span></p>
-      <p><span className="text-blue-300 animate-pulse">_</span></p>
-    </div>
-    <div className="px-6 py-2 bg-[#10294D]/30 border-t border-white/5 flex items-center gap-2">
-      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
-      <span className="text-[9px] font-mono text-blue-300 uppercase font-bold tracking-widest">Idle</span>
-    </div>
-  </div>
-);
-
-const DiscoveryInbox = () => (
-  <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="font-bold text-base text-[#10294D] flex items-center gap-2 tracking-tight">
-        <span className="material-symbols-outlined text-[#006C50]" style={{ fontVariationSettings: "'FILL' 1" }}>inbox</span>
-        Discovery Inbox
-      </h3>
-      <div className="flex items-center gap-3">
-        <button className="text-[10px] font-bold text-slate-400 hover:text-[#10294D] transition-colors uppercase tracking-widest">Clear All</button>
-        <button className="px-3 py-1 bg-white rounded-lg text-[10px] font-bold border border-slate-200 flex items-center gap-1 text-slate-600 uppercase tracking-widest">
-          <span className="material-symbols-outlined text-xs">filter_list</span> Filter
-        </button>
-      </div>
-    </div>
-    <div className="space-y-3">
-      <div className="bg-white p-8 rounded-xl border border-slate-100 text-center text-sm text-slate-400">
-        No discovered roles yet. Analysed roles will appear here.
-      </div>
-    </div>
-  </div>
-);
-
 /* ---------------- Configuration & Onboarding Components ---------------- */
 
 const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
@@ -542,55 +423,6 @@ const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
           />
         </div>
       ))}
-    </div>
-  </section>
-);
-
-const CvPreviewer = () => (
-  <section className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex flex-col md:flex-row h-[500px]">
-    <div className="w-full md:w-1/2 flex flex-col border-r border-slate-100">
-      <div className="px-6 py-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Markdown Source</span>
-        <span className="material-symbols-outlined text-slate-400 text-sm">edit_note</span>
-      </div>
-      <div className="flex-1 p-6 font-mono text-xs text-slate-600 overflow-auto custom-scrollbar bg-white">
-        <pre>{`# Tom Granger
-## Product Owner — Energy & Billing
-
-Energy-billing specialist with **16 years** in UK utilities, owning PAYG & B2B billing product...
-
-### Key Anchors
-- 50% cut in P3/P4 incident resolution
-- <1% failed bills (sustained)
-- 99%+ HH settlements performance
-
-### Strengths
-\`Billing\` \`PAYG\` \`Metering\` \`SLAs\` \`AI Discovery\`
-`}</pre>
-      </div>
-    </div>
-    <div className="w-full md:w-1/2 flex flex-col bg-slate-50/30">
-      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <span className="text-[10px] font-bold text-[#10294D] uppercase tracking-widest">Engine Preview (PDF Gen)</span>
-        <div className="flex gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#006C50]"></div>
-          <div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
-        </div>
-      </div>
-      <div className="flex-1 p-8 overflow-auto custom-scrollbar">
-        <div className="max-w-md mx-auto bg-white p-8 shadow-xl border border-slate-100 rounded min-h-full">
-          <h1 className="text-2xl font-bold text-[#10294D] border-b-2 border-[#10294D] pb-2 mb-4 tracking-tighter uppercase">Tom Granger</h1>
-          <p className="text-[#006C50] font-bold text-[10px] tracking-widest mb-6 uppercase">Product Owner — Energy &amp; Billing</p>
-          <h3 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Experience</h3>
-          <div className="mb-6">
-            <div className="flex justify-between items-baseline mb-1">
-              <p className="font-bold text-xs text-[#10294D]">Product Owner — UK Energy SaaS</p>
-              <p className="text-[8px] text-slate-400 italic">2024 — Present</p>
-            </div>
-            <p className="text-[10px] text-slate-500 leading-relaxed">Owns PAYG &amp; B2B billing product; initiated a cross-functional triage model that cut average P3/P4 resolution times by 50%...</p>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 );
@@ -1703,7 +1535,6 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </div>
            </div>
 
-           <CvPreviewer />
         </section>
       )}
 
