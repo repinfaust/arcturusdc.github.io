@@ -199,6 +199,10 @@ const ONBOARDING_CARDS = [
     body: "Your AI job-search command centre: find roles that actually fit, get an honest assessment, tailor your CV, and breeze through application forms. Here's the 60-second tour.",
   },
   {
+    icon: '🔒', title: 'Your data stays yours',
+    body: "Before you add anything, the important bit:\n\n• Everything you enter lives in your own private, isolated Arcturus DC workspace — no one else can see it.\n• We never sell or share your personal details for marketing — ever.\n• Your CV and job details are only sent to the AI and job-board services needed to do the analysis, then stored securely in your workspace.\n\nIt's your job search. We just help you run it.",
+  },
+  {
     icon: '⚙️', title: 'First: set up your profile',
     body: "Head to Config and add two things the system needs:\n\n• Candidate Profile — your name, target roles, location, salary floor.\n• Evidence Anchors — your real roles and achievements with metrics.\n\nThese ground everything — the AI only ever uses your real evidence, never invents. Scoring weights are optional (sensible defaults apply).",
     cta: { label: 'Go to Config', tab: 'settings' },
@@ -1059,6 +1063,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         </button>
       </div>
 
+      {/* Privacy reassurance (home / pipeline tab) */}
+      {activeTab === 'pipeline' && (
+        <p className="-mt-4 text-[11px] text-slate-400 flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm text-[#006C50]">lock</span>
+          Private to your Arcturus DC workspace · we never sell or share your data ·{' '}
+          <button onClick={() => setShowOnboarding(true)} className="underline hover:text-slate-600">how it works</button>
+        </p>
+      )}
+
       {/* Onboarding Alert */}
       {!configStatus.has_config && activeTab !== 'settings' && (
         <div className="bg-[#FFF7ED] border border-[#FED7AA] rounded-2xl p-6 flex justify-between items-center shadow-sm">
@@ -1669,6 +1682,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            <header className="mb-10">
              <h3 className="text-3xl font-bold text-[#10294D] tracking-tight">Onboarding & Configuration.</h3>
              <p className="text-slate-500 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
+             <div className="mt-3 inline-flex items-start gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 max-w-2xl">
+               <span className="material-symbols-outlined text-[#006C50] text-base">lock</span>
+               <span>Your details stay in your own private Arcturus DC workspace. We never sell or share your personal data — it's only sent to the AI and job-board services needed to run your search, then stored securely here.</span>
+             </div>
            </header>
            
            <div className="grid grid-cols-12 gap-8 mb-8">
