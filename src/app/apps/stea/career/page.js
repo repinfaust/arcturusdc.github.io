@@ -35,6 +35,46 @@ function FitNarrative({ markdown }) {
   );
 }
 
+/* Splits a long markdown doc at "## " headings into collapsible sections so the
+   page isn't one giant scroll. The first `openCount` sections start expanded. */
+function CollapsibleNarrative({ markdown, openCount = 2 }) {
+  const md = markdown || '';
+  // Preserve any content before the first "## " as an always-shown intro.
+  const parts = md.split(/\n(?=##\s)/g);
+  const intro = parts[0] && !/^##\s/.test(parts[0]) ? parts.shift() : null;
+
+  if (parts.length <= 1) {
+    return <FitNarrative markdown={md} />;
+  }
+
+  const sectionTitle = (block) => {
+    const m = block.match(/^##\s+(.+)/);
+    return m ? m[1].replace(/[#*`]/g, '').trim() : 'Section';
+  };
+  const sectionBody = (block) => block.replace(/^##\s+.+\n?/, '');
+
+  return (
+    <div className="space-y-2">
+      {intro && intro.trim() && <FitNarrative markdown={intro} />}
+      {parts.map((block, i) => (
+        <details
+          key={i}
+          open={i < openCount}
+          className="group border border-slate-200 rounded-xl bg-white overflow-hidden"
+        >
+          <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between hover:bg-slate-50 font-bold text-[#10294D] text-sm">
+            <span>{sectionTitle(block)}</span>
+            <span className="material-symbols-outlined text-slate-400 transition-transform group-open:rotate-180">expand_more</span>
+          </summary>
+          <div className="px-4 pb-4 pt-1 border-t border-slate-100">
+            <FitNarrative markdown={sectionBody(block)} />
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
 /* ---------------- UI Components ---------------- */
 
 const FitGauge = ({ score }) => {
@@ -434,6 +474,16 @@ export default function CareerOpsDashboard() {
     }, 4000);
     return () => clearInterval(id);
   }, [loading]);
+
+  // Staged progress for CV tailoring (same idea as analyse).
+  const [tailorStage, setTailorStage] = useState(0);
+  const TAILOR_STAGES = [
+    'Reading the role requirements…',
+    'Matching your evidence…',
+    'Reordering and re-emphasising…',
+    'Writing the tailored CV…',
+    'Drafting the cover note…',
+  ];
   const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
   const [profileData, setProfileData] = useState({ name: '', current_role: '', min_salary: 0, target_roles: [] });
   const [anchorsData, setAnchorsData] = useState([]);
@@ -444,6 +494,15 @@ export default function CareerOpsDashboard() {
   const [pipeline, setPipeline] = useState([]);
   const [cvLibrary, setCvLibrary] = useState([]);
   const [tailoring, setTailoring] = useState(false);
+
+  useEffect(() => {
+    if (!tailoring) { setTailorStage(0); return; }
+    setTailorStage(0);
+    const id = setInterval(() => {
+      setTailorStage((s) => Math.min(s + 1, TAILOR_STAGES.length - 1));
+    }, 5000);
+    return () => clearInterval(id);
+  }, [tailoring]);
 
   useEffect(() => {
     if (currentTenant?.id) {
@@ -658,7 +717,8 @@ export default function CareerOpsDashboard() {
         </div>
       )}
 
-      {/* Role Input Terminal */}
+      {/* Role Input Terminal — Pipeline tab only */}
+      {activeTab === 'pipeline' && (
       <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-2 text-slate-400">
@@ -714,9 +774,10 @@ export default function CareerOpsDashboard() {
           )}
         </div>
       </section>
+      )}
 
-      {/* Analysis Results View */}
-      {results && (
+      {/* Analysis Results View — Pipeline tab only */}
+      {activeTab === 'pipeline' && results && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="lg:col-span-4 bg-white rounded-2xl p-8 border border-slate-200 flex flex-col justify-between shadow-sm">
             <div>
@@ -739,12 +800,13 @@ export default function CareerOpsDashboard() {
               <h3 className="text-2xl font-bold text-[#10294D] italic tracking-tight">"The Fit Narrative"</h3>
               <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest">AI Prediction</div>
             </div>
-            <FitNarrative markdown={results.evaluation} />
+            <CollapsibleNarrative markdown={results.evaluation} openCount={2} />
 
             {/* Proceed-to-apply: generate a role-tailored CV */}
             {results.id && (
               <div className="mt-8 pt-6 border-t border-slate-200">
                 {!results.tailored_cv ? (
+                  <>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <p className="font-bold text-[#10294D] text-sm">Decided to apply for this role?</p>
@@ -762,6 +824,22 @@ export default function CareerOpsDashboard() {
                       )}
                     </button>
                   </div>
+                  {tailoring && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-[#10294D] flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#006C50] animate-pulse"></span>
+                          {TAILOR_STAGES[tailorStage]}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Step {tailorStage + 1} / {TAILOR_STAGES.length}</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-[#006C50] to-[#53FDC7] rounded-full transition-all duration-700 ease-out" style={{ width: `${((tailorStage + 1) / TAILOR_STAGES.length) * 100}%` }}></div>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1.5">Writing a CV tailored to this role from your real evidence. Usually 20–40 seconds.</p>
+                    </div>
+                  )}
+                  </>
                 ) : (
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -777,9 +855,13 @@ export default function CareerOpsDashboard() {
                       </button>
                     </div>
                     <div className="bg-white rounded-xl p-6 border border-slate-200">
-                      <FitNarrative markdown={results.tailored_cv} />
+                      <CollapsibleNarrative markdown={results.tailored_cv} openCount={1} />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-3">Saved to your CV library (CV Tailoring tab). Review and edit before sending — never submit unchecked.</p>
+                    <p className="text-[11px] text-slate-400 mt-3">
+                      Saved to your{' '}
+                      <button onClick={() => setActiveTab('cvs')} className="text-[#006C50] font-bold underline hover:no-underline">CV library</button>
+                      {' '}— review and edit before sending; never submit unchecked.
+                    </p>
                   </div>
                 )}
               </div>

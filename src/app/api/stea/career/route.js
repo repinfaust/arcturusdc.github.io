@@ -232,7 +232,7 @@ export async function POST(request) {
       const extractPrompt = extractPromptTemplate.replace('{{jd_text}}', resolvedJd);
 
       const rawJdData = await callAnthropic({
-        system: 'You are an expert recruiter for Senior PM roles. Respond with ONLY valid JSON — no markdown, no code fences, no commentary.',
+        system: 'You are an expert recruiter for Product Owner, Product Manager, and Operations & Delivery roles. Respond with ONLY valid JSON — no markdown, no code fences, no commentary.',
         prompt: extractPrompt,
       });
       const jdData = rawJdData.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
@@ -296,25 +296,34 @@ export async function POST(request) {
 
     if (action === 'list_analyses') {
       const { db } = getFirebaseAdmin();
-      const snap = await db
-        .collection('tenants').doc(tenantId)
-        .collection('career_ops_analyses')
-        .orderBy('createdAt', 'desc')
-        .limit(50)
-        .get();
-      const analyses = snap.docs.map((d) => {
-        const v = d.data();
-        return {
-          id: d.id,
-          company: v.company,
-          role: v.role,
-          level: v.level || '',
-          score: v.score ?? null,
-          status: v.status || 'Evaluated',
-          source_url: v.source_url || '',
-          createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toISOString() : null,
-        };
-      });
+      const col = db.collection('tenants').doc(tenantId).collection('career_ops_analyses');
+      // Try ordered query; if Firestore needs an index it would throw, so fall
+      // back to an unordered fetch + in-memory sort. Saved roles always show.
+      let snap;
+      try {
+        snap = await col.orderBy('createdAt', 'desc').limit(50).get();
+      } catch (e) {
+        console.error('list_analyses orderBy failed, falling back', e?.message);
+        snap = await col.limit(50).get();
+      }
+      const toMs = (v) => (v?.toDate ? v.toDate().getTime() : (v?._seconds ? v._seconds * 1000 : 0));
+      const analyses = snap.docs
+        .map((d) => {
+          const v = d.data();
+          return {
+            id: d.id,
+            company: v.company,
+            role: v.role,
+            level: v.level || '',
+            score: v.score ?? null,
+            status: v.status || 'Evaluated',
+            source_url: v.source_url || '',
+            _ms: toMs(v.createdAt),
+            createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toISOString() : null,
+          };
+        })
+        .sort((a, b) => b._ms - a._ms)
+        .map(({ _ms, ...rest }) => rest);
       return NextResponse.json({ analyses });
     }
 
@@ -374,12 +383,15 @@ export async function POST(request) {
     // List saved tailored CVs (the library): analyses that have a tailored CV.
     if (action === 'list_cvs') {
       const { db } = getFirebaseAdmin();
-      const snap = await db
-        .collection('tenants').doc(tenantId)
-        .collection('career_ops_analyses')
-        .orderBy('createdAt', 'desc')
-        .limit(50)
-        .get();
+      const col = db.collection('tenants').doc(tenantId).collection('career_ops_analyses');
+      let snap;
+      try {
+        snap = await col.orderBy('createdAt', 'desc').limit(50).get();
+      } catch (e) {
+        console.error('list_cvs orderBy failed, falling back', e?.message);
+        snap = await col.limit(50).get();
+      }
+      const toMs = (v) => (v?.toDate ? v.toDate().getTime() : (v?._seconds ? v._seconds * 1000 : 0));
       const cvs = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .filter((v) => v.tailored_cv)
@@ -389,8 +401,11 @@ export async function POST(request) {
           role: v.role,
           status: v.status || 'Applying',
           tailored_cv: v.tailored_cv,
+          _ms: toMs(v.tailored_cv_at),
           tailored_cv_at: v.tailored_cv_at?.toDate ? v.tailored_cv_at.toDate().toISOString() : null,
-        }));
+        }))
+        .sort((a, b) => b._ms - a._ms)
+        .map(({ _ms, ...rest }) => rest);
       return NextResponse.json({ cvs });
     }
 

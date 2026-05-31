@@ -1,5 +1,5 @@
-# PM Role Evaluation Prompt
-Evaluate this Job Description against the candidate's profile (see Candidate Profile Summary below) using the 12-factor scoring framework.
+# Role Evaluation Prompt
+Evaluate this Job Description against the candidate's profile (see Candidate Profile Summary below) using the 12-factor scoring framework. The candidate targets Product Owner, Product Manager, and Operations & Delivery roles — judge fit accordingly, not against PM roles specifically.
 
 ## Candidate Profile Summary:
 {{candidate_profile}}
