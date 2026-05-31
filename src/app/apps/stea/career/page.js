@@ -837,6 +837,47 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
   const setExtra = (key, val) => { setApplyExtras((e) => ({ ...e, [key]: val })); setApplyExtrasDirty(true); };
 
+  // Cover letter (A2): generate or revise for the selected apply role.
+  const [coverLetter, setCoverLetter] = useState('');
+  const [coverLoading, setCoverLoading] = useState(false);
+  const [coverEdit, setCoverEdit] = useState('');
+  async function handleCoverLetter(editInstruction) {
+    if (!currentTenant?.id || !applyRoleId) { alert('Select a role first.'); return; }
+    setCoverLoading(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cover_letter', tenantId: currentTenant.id, id: applyRoleId, edit_instruction: editInstruction || '' }),
+      });
+      const data = await res.json();
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Cover letter failed');
+      setCoverLetter(data.cover_letter || '');
+      setCoverEdit('');
+      loadUsage();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setCoverLoading(false);
+    }
+  }
+  // When the selected role changes, load any saved cover letter for it.
+  useEffect(() => {
+    setCoverLetter('');
+    if (!currentTenant?.id || !applyRoleId) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/stea/career', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_analysis', tenantId: currentTenant.id, id: applyRoleId }),
+        });
+        const data = await res.json();
+        if (res.ok && data.cover_letter) setCoverLetter(data.cover_letter);
+      } catch {}
+    })();
+  }, [applyRoleId, currentTenant]);
+
   // Open Apply Assist for a specific role (from the pipeline button).
   function openApplyAssist(roleId) {
     setApplyRoleId(roleId || '');
@@ -1524,6 +1565,43 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </div>
             </div>
           )}
+
+          {/* Cover letter (A2) — needs a selected role */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">mail</span>Cover letter</h4>
+              {coverLetter && (
+                <div className="flex items-center gap-3">
+                  <button onClick={() => navigator.clipboard?.writeText(coverLetter)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Copy</button>
+                  <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: pipeline.find(r => r.id === applyRoleId)?.role || 'Cover letter', cvMarkdown: coverLetter })} className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>PDF</button>
+                </div>
+              )}
+            </div>
+            {!applyRoleId ? (
+              <p className="text-sm text-slate-400 py-6 text-center">Select a role above to generate a tailored cover letter (grounded in your real evidence).</p>
+            ) : !coverLetter ? (
+              <div className="py-6 text-center">
+                <p className="text-sm text-slate-500 mb-4">Generate a cover letter tailored to this role from your CV and evidence. Uses one action.</p>
+                <button onClick={() => handleCoverLetter()} disabled={coverLoading}
+                  className={`h-12 px-6 bg-[#006C50] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#005840] transition-colors ${coverLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                  {coverLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Writing…</>) : (<><span className="material-symbols-outlined">mail</span>Generate cover letter</>)}
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3">
+                <div className="bg-slate-50 rounded-xl p-5 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{coverLetter}</div>
+                <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                  <input value={coverEdit} onChange={(e) => setCoverEdit(e.target.value)} placeholder='Suggest an edit, e.g. "make it shorter" or "emphasise the 50% metric"'
+                    className="flex-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+                  <button onClick={() => handleCoverLetter(coverEdit)} disabled={coverLoading || !coverEdit.trim()}
+                    className={`h-11 px-5 bg-[#10294D] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#001432] transition-colors ${(coverLoading || !coverEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    {coverLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">Each revision uses one action. Always review before sending.</p>
+              </div>
+            )}
+          </div>
         </section>
       )}
 

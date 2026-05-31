@@ -643,6 +643,42 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    // Generate (or revise) a tailored cover letter for an analysed role.
+    if (action === 'cover_letter') {
+      await assertActionAvailable(tenantId);
+      const { id, edit_instruction = '' } = body;
+      if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
+      const { db } = getFirebaseAdmin();
+      const docRef = db.collection('tenants').doc(tenantId).collection('career_ops_analyses').doc(id);
+      const doc = await docRef.get();
+      if (!doc.exists) return NextResponse.json({ error: 'Analysis not found' }, { status: 404 });
+      const analysis = doc.data();
+
+      const candidateProfile = configToText(await getWorkspaceConfig(tenantId, 'candidate_profile'));
+      const evidenceLibrary = configToText(await getWorkspaceConfig(tenantId, 'evidence_library'));
+      if (!candidateProfile.trim() || !evidenceLibrary.trim()) {
+        return NextResponse.json({ error: 'Set up your profile and evidence library first.' }, { status: 400 });
+      }
+
+      const cachedContext = `## Candidate Profile:\n${candidateProfile}\n\n## Evidence Library:\n${evidenceLibrary}`;
+      const jd = JSON.stringify(analysis.jd_data || {}, null, 2);
+      const existing = analysis.cover_letter || '';
+      const prompt = edit_instruction && existing
+        ? `Here is the current cover letter:\n\n${existing}\n\nRevise it per this instruction: "${edit_instruction}". Keep it grounded in the candidate's real evidence — do not invent anything. Return ONLY the revised cover letter.`
+        : `Write a tailored cover letter for this role:\n\n${jd}\n\nGround every claim in the candidate's profile and evidence above. 250-350 words, professional but human, no clichés, address it "Dear Hiring Manager,". Return ONLY the cover letter.`;
+
+      const coverLetter = await callAnthropic({
+        system: 'You write concise, specific, honest cover letters for Product Owner / Product Manager / Operations & Delivery candidates. Never invent facts, metrics, or experience.',
+        cachedContext,
+        prompt,
+        maxTokens: 1500,
+      });
+
+      await docRef.set({ cover_letter: coverLetter, cover_letter_at: new Date() }, { merge: true });
+      await incrementUsage(tenantId);
+      return NextResponse.json({ id, cover_letter: coverLetter });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     // Out-of-actions is a normal state, not a server error — return 402 + usage
