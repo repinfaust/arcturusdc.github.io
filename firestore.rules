@@ -165,6 +165,18 @@ service cloud.firestore {
     }
 
     /* ==========================================================
+       STEa Companion — raw captures (jots). Tenant-scoped; jots
+       always carry a tenantId (no legacy-data exception). Companion
+       writes go through the Admin API, but this guards any direct
+       client access. (D-COMP-001)
+       ========================================================== */
+    match /stea_jots/{jotId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow create: if authed() && canAccessTenant(request.resource.data.tenantId);
+      allow update, delete: if authed() && canAccessTenant(resource.data.tenantId);
+    }
+
+    /* ==========================================================
        Ruby Documentation (migration-friendly)
        ========================================================== */
     match /stea_doc_spaces/{spaceId} {
