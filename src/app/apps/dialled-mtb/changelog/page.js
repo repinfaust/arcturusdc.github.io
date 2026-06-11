@@ -1,5 +1,8 @@
+import Link from 'next/link';
+
 import ChangelogShell from '@/components/dialled-changelog/ChangelogShell';
 import TechTree from '@/components/dialled-changelog/TechTree';
+import styles from '@/components/dialled-changelog/techtree.module.css';
 import { buildPublicView } from '@/lib/dialled-changelog/views';
 
 export const metadata = {
@@ -17,6 +20,11 @@ export default function ChangelogPage() {
         docSub="Changelog · Arcturus Digital Consulting"
         latest={view.latest}
       >
+        <div className={styles.tlNav}>
+          <Link href="/apps/dialled-mtb/changelog/timeline" className={styles.detailLink}>
+            Timeline view
+          </Link>
+        </div>
         <TechTree view={view} basePath="/apps/dialled-mtb/changelog" />
       </ChangelogShell>
     </main>

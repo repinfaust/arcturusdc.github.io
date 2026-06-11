@@ -24,6 +24,7 @@ export default function sitemap() {
     '/apps/sprocket',
     '/apps/dialled-mtb',
     '/apps/dialled-mtb/changelog',
+    '/apps/dialled-mtb/changelog/timeline',
     '/apps/rehabpath',
     '/apps/rehabpath/privacy-policy',
     '/apps/rehabpath/terms-of-use',

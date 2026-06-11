@@ -347,6 +347,22 @@
 .footer { display: flex; justify-content: space-between; align-items: center; }
 .footer div { font-size: 10px; color: var(--muted2); line-height: 1.9; }
 
+/* TIMELINE (Phase 2) — second lens on the same releases; time as the primary
+   axis. Same vocabulary: lane colours, rel* metadata rows, dtag pills. */
+.tlNav { margin-bottom: 18px; }
+.timeline { max-width: 640px; }
+.tlMonth {
+  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted2); font-weight: 700; margin: 28px 0 12px;
+}
+.tlMonth:first-child { margin-top: 4px; }
+.tlEntry {
+  border-left: 2px solid var(--border-strong);
+  padding: 2px 0 18px 16px;
+}
+.tlEntry:last-child { padding-bottom: 6px; }
+.tlFeatures { margin-top: 6px; }
+
 /* PERMALINK PAGES (feature/release) — same vocabulary, simple article layout */
 .articleBack { font-size: 10.5px; color: var(--muted); text-decoration: none; line-height: 1.7; display: inline-block; margin-bottom: 18px; }
 .articleBack:hover { color: var(--accent); }

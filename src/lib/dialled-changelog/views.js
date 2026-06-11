@@ -146,6 +146,35 @@ export function buildInternalView() {
   };
 }
 
+// Timeline (Phase 2) — the same public releases, grouped by month, newest
+// first, each entry carrying the public feature node(s) it advances.
+export function buildTimeline() {
+  const view = buildPublicView();
+  const featuresById = Object.fromEntries(view.features.map((f) => [f.id, f]));
+
+  const months = [];
+  let current = null;
+  for (const r of publicReleases()) {
+    const key = r.date.slice(0, 7); // YYYY-MM
+    if (!current || current.key !== key) {
+      current = {
+        key,
+        label: new Date(r.date + 'T00:00:00Z').toLocaleDateString('en-GB', {
+          month: 'long', year: 'numeric', timeZone: 'UTC',
+        }),
+        entries: [],
+      };
+      months.push(current);
+    }
+    const features = r.featureIds
+      .filter((id) => featuresById[id])
+      .map((id) => ({ id, title: featuresById[id].title, lane: featuresById[id].lane }));
+    current.entries.push({ ...serialiseRelease(r), features });
+  }
+
+  return { months, latest: view.latest, labels: view.labels };
+}
+
 // Helpers for the permalink pages
 export function getPublicFeature(id) {
   return buildPublicView().features.find((f) => f.id === id) || null;
