@@ -16,12 +16,17 @@ export default function RehabPath() {
         />
         <div>
           <div className="font-extrabold">RehabPath</div>
-          <div className="text-muted text-sm">Your guided path to recovery.</div>
+          <div className="text-muted text-sm">Your recovery plan, organised.</div>
           <p className="mt-2 text-sm text-neutral-700">
-            RehabPath is a structured recovery companion for people working through injury rehab.
-            It provides clear, phase-based programmes, step-by-step exercise guidance, and visible
-            progress tracking—all stored privately on your device. No accounts, no tracking, no complexity.
-            Just a calm, focused tool to help you stay on course and see your improvement.
+            RehabPath helps you keep your rehabilitation plan, daily activity, symptoms, notes, and
+            progress in one calm place. It is built for people following guidance from a physio,
+            clinician, or therapist, with privacy-first local storage and optional reviewed AI tools
+            for importing a plan or preparing a clinician summary.
+          </p>
+          <p className="mt-2 text-sm text-neutral-700">
+            No RehabPath account. No cloud sync. No analytics. Your recovery records stay on your
+            device by default, and optional AI features only send reviewed, redacted content when
+            you choose to use them.
           </p>
         </div>
       </div>
@@ -48,8 +53,8 @@ export default function RehabPath() {
               Inside RehabPath
             </h1>
             <p className="mt-3 text-white/85 max-w-2xl mx-auto">
-              Structured rehab programmes, simple exercise guidance, and private progress tracking—designed
-              to support your recovery without the friction.
+              Follow your own rehab plan, log how recovery is going, and create clear progress
+              packs for appointments.
             </p>
           </div>
 
@@ -83,34 +88,44 @@ export default function RehabPath() {
             </h2>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-white">
               <Feature
-                title="Structured Programmes"
-                desc="Multi-phase recovery plans with daily exercises, clear progressions, and realistic timelines. Pick your injury, follow the path."
+                title="Custom Plans"
+                desc="Create your own rehab plan manually or import a selectable-text PDF from your clinician. RehabPath reads the PDF text on your device, redacts detected personal details, and shows you exactly what will be sent before AI structures it into a plan."
                 icon="programme"
               />
               <Feature
-                title="Exercise Guidance"
-                desc="Each exercise includes form cues, reps, sets, and safety notes. Written for real people, not clinicians."
+                title="Daily Recovery View"
+                desc="See today's exercises and activities in one place. Mark items complete, skip difficult days with context, and keep your routine visible without streak pressure."
                 icon="guidance"
               />
               <Feature
-                title="Progress Tracking"
-                desc="Mark exercises complete and watch your recovery take shape. Visual milestones show how far you've come."
+                title="Symptom & Activity Logging"
+                desc="Record activity, pain, stiffness, fatigue, mood, sleep, confidence, and notes over time. Keep the day-to-day detail that is easy to forget between appointments."
                 icon="progress"
               />
               <Feature
-                title="Privacy-First"
-                desc="No accounts. No cloud. No tracking. Your data stays on your device—nothing leaves."
+                title="Progress Overview"
+                desc="Review recent activity, symptom trends, milestone status, and recovery patterns in a simple timeline-style view."
+                icon="phases"
+              />
+              <Feature
+                title="Clinician Progress Pack"
+                desc="Export a patient-generated PDF summary for your physio or clinician. Choose the date range and sections to include, such as activity summary, symptom trends, milestones, notes, and activity log."
+                icon="guidance"
+              />
+              <Feature
+                title="Optional AI Summary"
+                desc="Generate a plain-English summary for your clinician pack from structured app metrics. Your written notes are not sent to the AI summary feature, and you review and edit the summary before it is included."
+                icon="programme"
+              />
+              <Feature
+                title="Encrypted Backup"
+                desc="Create an encrypted backup file when you choose. RehabPath does not receive the backup file and cannot recover your passphrase if it is lost."
                 icon="privacy"
               />
               <Feature
-                title="Nutrition Tips"
-                desc="Programme-specific guidance on foods that support tissue repair, hydration, and recovery nutrition."
-                icon="nutrition"
-              />
-              <Feature
-                title="Phase-Based Recovery"
-                desc="Work through Early Mobility, Stability & Control, and Load & Return at your own pace. Each phase builds on the last."
-                icon="phases"
+                title="Privacy-First"
+                desc="RehabPath stores your recovery data locally by default. There are no RehabPath accounts, no cloud sync, no analytics, and no advertising trackers. Optional AI features require an internet connection and send only reviewed, redacted content for the selected task."
+                icon="privacy"
               />
             </div>
 
@@ -122,41 +137,45 @@ export default function RehabPath() {
               <div className="mt-5 space-y-3">
                 <AccordionItem question="Is RehabPath a replacement for physio?">
                   <p>
-                    No. RehabPath is a support tool, not medical advice. Always consult your physio or GP
-                    before starting any rehab programme. Use RehabPath to stay organised and track the exercises
-                    they've recommended.
+                    No. RehabPath is a self-guided logging and organisation tool. It does not
+                    provide medical advice, diagnosis, treatment recommendations, clinical decision
+                    support, or emergency help. Always follow the guidance of your clinician or
+                    therapist.
                   </p>
                 </AccordionItem>
-                <AccordionItem question="What injuries does RehabPath cover?">
+                <AccordionItem question="Can I use my own plan?">
                   <p>
-                    RehabPath includes programmes for common injuries like ACL recovery, rotator cuff rehab,
-                    ankle sprains, lower back pain, and more. Each programme is phase-based and includes
-                    exercises with clear form guidance.
+                    Yes. RehabPath is currently focused on custom plans. You can enter your plan
+                    manually or import a selectable-text PDF and review the structured result before
+                    saving it.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="Does PDF import work with scans or photos?">
+                  <p>
+                    Not yet. The current import feature supports PDFs with selectable text. Scanned
+                    documents, photos, and handwritten-note OCR are not supported in this release.
                   </p>
                 </AccordionItem>
                 <AccordionItem question="Where is my data stored?">
                   <p>
-                    All your data stays on your device. RehabPath doesn't require an account, doesn't sync to
-                    the cloud, and doesn't track your activity. Your recovery progress is completely private.
+                    Your app data is stored locally on your device by default. Optional encrypted
+                    backups and clinician pack PDFs are exported only when you choose. Optional AI
+                    features send limited, reviewed, redacted content through RehabPath's AI gateway
+                    and OpenAI for the selected task.
                   </p>
                 </AccordionItem>
-                <AccordionItem question="Can I customise the programmes?">
+                <AccordionItem question="Does RehabPath send my notes to AI?">
                   <p>
-                    Yes. While RehabPath provides structured programmes, you can adjust reps, sets, and rest days
-                    to match your physio's recommendations. You're in control of your recovery timeline.
-                  </p>
-                </AccordionItem>
-                <AccordionItem question="What are the three recovery phases?">
-                  <p>
-                    Most programmes follow a three-phase structure: Early Mobility (reduce pain, restore range),
-                    Stability & Control (build strength, improve form), and Load & Return (progressive loading,
-                    return to activity). Each phase unlocks when you're ready.
+                    For plan import, you review the redacted PDF text before it is sent for
+                    structuring. For AI clinician summaries, written notes are not sent to the AI
+                    summary feature; the summary is generated from structured metrics such as
+                    activity counts, symptom scores, and milestones.
                   </p>
                 </AccordionItem>
                 <AccordionItem question="Is there a cost?">
                   <p>
-                    RehabPath offers a free tier with core programmes. Premium programmes and advanced tracking
-                    features are available through a one-time purchase—no subscriptions.
+                    For the current trial build, custom plan use is free. Paid programme paths are
+                    not part of this launch experience.
                   </p>
                 </AccordionItem>
               </div>

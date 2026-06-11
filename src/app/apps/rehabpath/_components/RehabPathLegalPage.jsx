@@ -40,8 +40,8 @@ export function ContactBlock({ terms = false }) {
   return (
     <p>
       For {terms ? "questions about these Terms" : "privacy questions"}, contact:{" "}
-      <a className={linkClass} href="mailto:info@arcturusdc.com">
-        info@arcturusdc.com
+      <a className={linkClass} href="mailto:repinfaust@arcturusdc.com">
+        repinfaust@arcturusdc.com
       </a>
     </p>
   );
