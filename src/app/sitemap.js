@@ -23,6 +23,7 @@ export default function sitemap() {
     '/apps/unload',
     '/apps/sprocket',
     '/apps/dialled-mtb',
+    '/apps/dialled-mtb/changelog',
     '/apps/rehabpath',
     '/apps/rehabpath/privacy-policy',
     '/apps/rehabpath/terms-of-use',
