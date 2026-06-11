@@ -14,48 +14,48 @@ const screenshots = [
   {
     src: "/img/rehabpath/onboarding.png",
     alt: "RehabPath onboarding screen on iPhone",
-    caption: "Onboarding — clear recovery guidance before use",
+    caption: "Onboarding — clear privacy and medical-use boundaries before use",
   },
   {
     src: "/img/rehabpath/activity-log.png",
     alt: "RehabPath daily activity log screen on iPhone",
-    caption: "Daily activity log — split between ADL and exercise",
+    caption: "Daily recovery view — activity and exercise context in one place",
   },
   {
     src: "/img/rehabpath/symptom-log.png",
     alt: "RehabPath symptom tracking screen on iPhone",
-    caption: "Symptom tracking — pain, stiffness and DOMS on a 0-10 scale",
+    caption: "Symptom tracking — pain, stiffness, fatigue and notes over time",
   },
   {
     src: "/img/rehabpath/progress-summary.png",
     alt: "RehabPath progress summary screen on iPhone",
-    caption: "Progress overlay — activity volume against symptom trend",
+    caption: "Progress overview — recent activity, symptoms and recovery patterns",
   },
   {
     src: "/img/rehabpath/milestones.png",
     alt: "RehabPath milestone progress screen on iPhone",
-    caption: "Milestones — visible progress through the recovery path",
+    caption: "Milestones — patient-visible status across the custom plan",
   },
   {
     src: "/img/rehabpath/exercise-detail.png",
     alt: "RehabPath exercise detail screen on iPhone",
-    caption: "Exercise detail — steps, safety note and completion action",
+    caption: "Exercise detail — plan item, context and completion action",
   },
 ];
 
 const records = [
-  ["Activity logs (ADL and exercise)", "Stored on device only", "Nothing leaves the device"],
-  ["Symptom scores (joint pain, muscle pain, stiffness, DOMS)", "Stored on device only", "Nothing leaves the device"],
-  ["Motivation", "Stored on device only", "Nothing leaves the device"],
-  ["Mood", "Stored on device only", "Nothing leaves the device"],
-  ["Milestone progress", "Stored on device only", "Nothing leaves the device"],
-  ["Exercise adherence", "Stored on device only", "Nothing leaves the device"],
+  ["Custom plan details", "Stored locally on device", "Reviewed, redacted PDF text only if AI import is used"],
+  ["Activity and exercise logs", "Stored locally on device", "Included only in exports or selected AI summary metrics"],
+  ["Symptom scores and recovery ratings", "Stored locally on device", "Included only in exports or selected AI summary metrics"],
+  ["Written notes", "Stored locally on device", "Not sent to the AI clinician summary feature"],
+  ["Milestone progress", "Stored locally on device", "Included only in exports or selected AI summary metrics"],
+  ["Clinician progress pack PDF", "Generated on device", "Leaves the device only through the share destination the user chooses"],
 ];
 
 export const metadata = {
   title: "RehabPath Demo | Arcturus Digital Consulting",
   description:
-    "A clinician-facing demo page for RehabPath, a structured, privacy-first recovery companion currently in pilot with selected physiotherapists.",
+    "A clinician-facing demo page for RehabPath, a privacy-first recovery plan organiser with custom plans, progress packs, and optional reviewed AI tools.",
   robots: {
     index: false,
     follow: false,
@@ -89,14 +89,15 @@ function Hero() {
             RehabPath demo
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-[#17211E] sm:text-5xl lg:text-6xl">
-            RehabPath — a structured, privacy-first recovery companion
+            RehabPath — your recovery plan, organised
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-[#4C5D58] sm:text-xl">
-            Built for people transitioning from clinical care back to independent rehabilitation at
-            home.
+            Built for people following guidance from a physio, clinician, or therapist, with custom
+            plans, daily logging, clinician progress packs, and optional reviewed AI support.
           </p>
           <p className="mt-5 text-sm font-medium text-[#62726D]">
-            Currently in pilot with selected physiotherapists.
+            Current trial build: custom plans are free, data stays local by default, and videos will
+            be updated as the AI import and summary flows settle.
           </p>
         </div>
 
@@ -111,22 +112,22 @@ function Hero() {
 function WhatItIs() {
   return (
     <section className="grid gap-8 border-b border-[#DDE4DE] py-14 sm:py-16 lg:grid-cols-[260px_1fr]">
-      <SectionHeading eyebrow="What it is" title="A practical recovery workbook for the home phase" />
+      <SectionHeading eyebrow="What it is" title="A private recovery workbook for custom plans" />
       <div className="max-w-3xl space-y-5 text-base leading-8 text-[#41514C] sm:text-lg">
         <p>
-          Home recovery is often fragmented. Patients leave structured clinical care with exercises,
-          advice and good intentions, but progress can become invisible once daily life takes over.
-          It is easy to lose the rhythm of rehabilitation or miss the small signals that recovery is
-          moving in the right direction.
+          Rehab can become fragmented once the appointment ends. People may have a PDF, a few notes,
+          a list of exercises, daily symptoms, and questions for the next appointment — but no simple
+          place to keep the whole recovery picture together.
         </p>
         <p>
-          RehabPath provides structured daily guidance, visible milestones and gentle accountability:
-          a recovery workbook that lives in your pocket. It helps people log activity, symptoms,
-          motivation and adherence in a calm routine they can understand and return to.
+          RehabPath is focused on patient-held custom plans. Users can enter their plan manually or
+          import a selectable-text PDF, review the redacted text before AI structures it, and edit the
+          resulting plan before saving it.
         </p>
         <p>
           It is deliberately not telehealth, not a wearable, not AI diagnostics and not a community
-          app. RehabPath is a private, patient-held support tool for the space between appointments.
+          app. RehabPath is a private organisation and logging tool for the space between
+          appointments.
         </p>
       </div>
     </section>
@@ -136,13 +137,14 @@ function WhatItIs() {
 function WalkthroughVideo() {
   return (
     <section className="grid gap-8 border-b border-[#DDE4DE] py-14 sm:py-16 lg:grid-cols-[260px_1fr]">
-      <SectionHeading eyebrow="Walkthrough" title="Patient experience on iPhone" />
+      <SectionHeading eyebrow="Walkthrough" title="Current app walkthrough" />
       <div>
         <div className="mx-auto w-full max-w-[340px] lg:mx-0">
           <PhoneVideo />
         </div>
         <p className="mt-3 text-sm text-[#667570]">
-          60-second walkthrough of the patient experience on iPhone
+          Current iPhone walkthrough. New footage for PDF import, clinician packs and AI summary is
+          planned.
         </p>
       </div>
     </section>
@@ -153,7 +155,7 @@ function ScreenshotsGallery() {
   return (
     <section className="border-b border-[#DDE4DE] py-14 sm:py-16">
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <SectionHeading eyebrow="Screenshots" title="Core recovery flows" />
+        <SectionHeading eyebrow="Screenshots" title="Core recovery surfaces" />
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {screenshots.map((screenshot) => (
             <figure
@@ -213,8 +215,8 @@ function WhatTheAppRecords() {
           </table>
         </div>
         <p className="mt-4 text-sm leading-6 text-[#667570]">
-          Future versions may include patient-initiated export (e.g. PDF recovery snapshot the
-          patient shares with their clinician). Any sharing will always be patient-controlled.
+          Optional AI features require an internet connection and are user-initiated. RehabPath shows
+          the user what will be sent or included, and AI outputs are reviewed and editable before use.
         </p>
       </div>
     </section>
@@ -223,11 +225,12 @@ function WhatTheAppRecords() {
 
 function PrivacyFirst() {
   const points = [
-    "No accounts",
+    "No RehabPath account",
     "No cloud sync",
     "No analytics",
-    "No third-party tracking",
-    "All data stored locally",
+    "No advertising trackers",
+    "Local storage by default",
+    "Reviewed AI input only",
   ];
 
   return (
@@ -235,9 +238,10 @@ function PrivacyFirst() {
       <SectionHeading eyebrow="Privacy-first" title="Control without a data relationship" />
       <div className="max-w-3xl">
         <p className="text-lg leading-8 text-[#41514C]">
-          In early recovery, people want clarity and control — not a data relationship. RehabPath is
-          designed around that principle: no accounts, no cloud sync, no analytics and no
-          third-party tracking. Recovery data is stored locally on the patient&rsquo;s device.
+          In recovery, people need clarity and control — not an unnecessary data relationship.
+          RehabPath stores recovery records locally by default. Optional AI features only send
+          limited, reviewed, redacted content for the selected task, such as structuring a PDF plan
+          or drafting a clinician-pack summary from structured metrics.
         </p>
         <ul className="mt-7 grid gap-3 sm:grid-cols-2">
           {points.map((point) => (
@@ -258,18 +262,19 @@ function PrivacyFirst() {
 function PilotProgramme() {
   return (
     <section className="grid gap-8 py-14 sm:py-16 lg:grid-cols-[260px_1fr]">
-      <SectionHeading eyebrow="Clinician pilot" title="Pilot programme" />
+      <SectionHeading eyebrow="Trial build" title="Custom plans and clinician packs" />
       <div className="max-w-3xl">
         <p className="text-lg leading-8 text-[#41514C]">
-          We&rsquo;re currently piloting RehabPath with a small number of physiotherapists in the UK. If
-          you&rsquo;re interested in trialling it with clients and providing feedback, get in touch.
+          RehabPath is currently focused on custom plan use. The trial build is free for custom
+          plans, with paid programme paths outside the current launch experience. Clinician packs are
+          patient-generated PDFs intended to support discussion with a qualified clinician.
         </p>
         <div className="mt-7">
           <Link
-            href="mailto:info@arcturusdc.com?subject=RehabPath%20pilot"
+            href="mailto:repinfaust@arcturusdc.com?subject=RehabPath%20trial"
             className="inline-flex rounded-lg border border-[#AEBDB5] bg-white px-5 py-3 text-sm font-semibold text-[#17211E] hover:border-[#7E9288] hover:bg-[#F3F6F4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4B6F68]/35 focus-visible:ring-offset-2"
           >
-            Contact ArcturusDC about the pilot
+            Contact ArcturusDC about RehabPath
           </Link>
         </div>
       </div>
