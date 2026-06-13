@@ -157,6 +157,7 @@ export async function POST(request) {
   const rawText = clean(body?.rawText);
   const workspaceName = clean(body?.workspaceName, 'STEa');
   const app = clean(body?.app, workspaceName);
+  const requestedPriorityBand = PRIORITY_BANDS.has(body?.priorityBand) ? body.priorityBand : null;
 
   if (!tenantId) return NextResponse.json({ error: 'Workspace is required.' }, { status: 400 });
   if (!rawText) return NextResponse.json({ error: 'Capture text is required.' }, { status: 400 });
@@ -167,6 +168,9 @@ export async function POST(request) {
   try {
     const { db, FieldValue } = getFirebaseAdmin();
     const plan = await classifyCapture({ rawText, workspaceName });
+    if (requestedPriorityBand) {
+      plan.priorityBand = requestedPriorityBand;
+    }
 
     const epicRef = await findOrCreateEpic(db, FieldValue, { tenantId, app, plan, user: auth.user });
     const epicId = epicRef.id;

@@ -50,7 +50,7 @@ export async function POST(request) {
   const priorityBand =
     typeof body?.priorityBand === 'string' && body.priorityBand.trim()
       ? body.priorityBand.trim()
-      : null;
+      : 'next';
 
   if (!tenantId) {
     return NextResponse.json({ error: 'Workspace is required.' }, { status: 400 });
@@ -96,10 +96,8 @@ export async function POST(request) {
       createdBy: auth.user.uid,
       createdByEmail: auth.user.email,
     };
-    if (priorityBand) {
-      payload.priorityBand = priorityBand;
-      payload.companionOrder = Date.now();
-    }
+    payload.priorityBand = priorityBand;
+    payload.companionOrder = Date.now();
 
     const ref = await db.collection(JOTS_COLLECTION).add(payload);
     return NextResponse.json(

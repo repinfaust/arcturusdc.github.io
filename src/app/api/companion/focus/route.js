@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { verifyCompanionUser, listAccessibleTenants } from '@/lib/companion/companionAuth';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
-import { COMPANION_ITEM_COLLECTIONS, NOW_WIP_LIMIT } from '@/lib/companion/companionModel';
+import {
+  COMPANION_ITEM_COLLECTIONS,
+  JOTS_COLLECTION,
+  NOW_WIP_LIMIT,
+} from '@/lib/companion/companionModel';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,6 +46,29 @@ async function readBand(db, band, allowedTenantIds, tenantNames) {
   );
 
   const items = results.flat();
+  if (band === 'next') {
+    const unbandedJots = await db.collection(JOTS_COLLECTION).where('status', '==', 'captured').get();
+    unbandedJots.docs
+      .filter((d) => {
+        const data = d.data();
+        return allowed.has(data.tenantId) && !data.priorityBand;
+      })
+      .forEach((d) => {
+        const data = d.data();
+        items.push({
+          id: d.id,
+          itemType: 'jot',
+          collection: JOTS_COLLECTION,
+          title: data.rawText || 'Untitled',
+          app: data.app || null,
+          tenantId: data.tenantId,
+          workspace: tenantNames.get(data.tenantId) || null,
+          activityState: data.activityState || null,
+          priorityBand: band,
+          companionOrder: typeof data.companionOrder === 'number' ? data.companionOrder : null,
+        });
+      });
+  }
   items.sort((a, b) => {
     const ao = a.companionOrder ?? Number.MAX_SAFE_INTEGER;
     const bo = b.companionOrder ?? Number.MAX_SAFE_INTEGER;
