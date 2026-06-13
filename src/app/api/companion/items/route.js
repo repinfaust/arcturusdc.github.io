@@ -23,6 +23,15 @@ function parseItemId(value) {
   return { collection, docId };
 }
 
+function parseTarget(body) {
+  const collection = clean(body?.collection);
+  const docId = clean(body?.docId || body?.id || body?.itemId);
+  if (collection && docId && ALLOWED_COLLECTIONS.has(collection)) {
+    return { collection, docId };
+  }
+  return parseItemId(body?.itemId);
+}
+
 async function moveNestedToDone(db, FieldValue, collection, docId, basePayload) {
   if (collection === 'stea_epics') {
     const [features, cards] = await Promise.all([
@@ -49,8 +58,9 @@ export async function PATCH(request) {
     return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  const target = parseItemId(body?.itemId);
+  const target = parseTarget(body);
   const action = clean(body?.action);
+  const requestedTenantId = clean(body?.tenantId);
 
   if (!target) {
     return NextResponse.json({ error: 'Valid itemId is required.' }, { status: 400 });
@@ -61,6 +71,46 @@ export async function PATCH(request) {
 
   try {
     const { db, FieldValue } = getFirebaseAdmin();
+    if (requestedTenantId) {
+      const auth = await requireTenantAccess(request, requestedTenantId);
+      if (!auth.ok) {
+        return NextResponse.json({ error: auth.error }, { status: auth.status });
+      }
+
+      const ref = db.collection(target.collection).doc(target.docId);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        return NextResponse.json({ error: 'Item not found.' }, { status: 404 });
+      }
+
+      const data = snap.data() || {};
+      if (clean(data.tenantId) !== requestedTenantId) {
+        return NextResponse.json({ error: 'Workspace access required.' }, { status: 403 });
+      }
+
+      const donePayload = {
+        priorityBand: 'done',
+        activityState: 'done',
+        updatedAt: FieldValue.serverTimestamp(),
+        completedAt: FieldValue.serverTimestamp(),
+        completedBy: auth.user.email,
+      };
+      if (target.collection !== JOTS_COLLECTION) {
+        donePayload.statusColumn = 'Done';
+      }
+
+      await ref.update(donePayload);
+      await moveNestedToDone(db, FieldValue, target.collection, target.docId, donePayload);
+
+      return NextResponse.json({
+        item: {
+          id: target.docId,
+          collection: target.collection,
+          priorityBand: 'done',
+        },
+      });
+    }
+
     const ref = db.collection(target.collection).doc(target.docId);
     const snap = await ref.get();
     if (!snap.exists) {
