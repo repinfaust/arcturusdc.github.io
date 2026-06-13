@@ -93,6 +93,60 @@ async function updateTarget(db, FieldValue, target, authUser, action) {
   return NOW_BAND;
 }
 
+async function reorderTarget(db, target, tenantId, direction, currentBand) {
+  if (!currentBand) {
+    return null;
+  }
+
+  const snapshots = await Promise.all(
+    Object.values(COMPANION_ITEM_COLLECTIONS).map(async (collection) => {
+      const snap = await db.collection(collection).where('priorityBand', '==', currentBand).get();
+      return snap.docs
+        .filter((doc) => clean(doc.data()?.tenantId) === tenantId)
+        .map((doc) => ({
+          id: doc.id,
+          collection,
+          ref: doc.ref,
+          data: doc.data() || {},
+        }));
+    })
+  );
+
+  const baseOrder = Date.now();
+  const items = snapshots
+    .flat()
+    .map((item, index) => ({
+      ...item,
+      order: typeof item.data.companionOrder === 'number' ? item.data.companionOrder : baseOrder + index,
+      title: clean(item.data.title || item.data.name || item.data.rawText || ''),
+    }))
+    .sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.title.localeCompare(b.title);
+    });
+
+  const currentIndex = items.findIndex(
+    (item) => item.collection === target.collection && item.id === target.docId
+  );
+  if (currentIndex < 0) {
+    return null;
+  }
+
+  const targetIndex = direction === 'move_up' ? currentIndex - 1 : currentIndex + 1;
+  if (targetIndex < 0 || targetIndex >= items.length) {
+    return currentBand;
+  }
+
+  const current = items[currentIndex];
+  const adjacent = items[targetIndex];
+  await Promise.all([
+    current.ref.update({ companionOrder: adjacent.order }),
+    adjacent.ref.update({ companionOrder: current.order }),
+  ]);
+
+  return currentBand;
+}
+
 export async function PATCH(request) {
   let body;
   try {
@@ -108,7 +162,7 @@ export async function PATCH(request) {
   if (!target) {
     return NextResponse.json({ error: 'Valid itemId is required.' }, { status: 400 });
   }
-  if (action !== 'done' && action !== 'now') {
+  if (!['done', 'now', 'move_up', 'move_down'].includes(action)) {
     return NextResponse.json({ error: 'Unsupported companion item action.' }, { status: 400 });
   }
 
@@ -129,6 +183,19 @@ export async function PATCH(request) {
       const data = snap.data() || {};
       if (clean(data.tenantId) !== requestedTenantId) {
         return NextResponse.json({ error: 'Workspace access required.' }, { status: 403 });
+      }
+      if (action === 'move_up' || action === 'move_down') {
+        const priorityBand = await reorderTarget(db, target, requestedTenantId, action, data.priorityBand);
+        if (!priorityBand) {
+          return NextResponse.json({ error: 'Item not found in ordered band.' }, { status: 404 });
+        }
+        return NextResponse.json({
+          item: {
+            id: target.docId,
+            collection: target.collection,
+            priorityBand,
+          },
+        });
       }
       if (action === 'now' && data.priorityBand !== NOW_BAND) {
         const nowCount = await countNowItems(db, requestedTenantId);
@@ -162,6 +229,20 @@ export async function PATCH(request) {
     const auth = await requireTenantAccess(request, tenantId);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    if (action === 'move_up' || action === 'move_down') {
+      const priorityBand = await reorderTarget(db, target, tenantId, action, data.priorityBand);
+      if (!priorityBand) {
+        return NextResponse.json({ error: 'Item not found in ordered band.' }, { status: 404 });
+      }
+      return NextResponse.json({
+        item: {
+          id: target.docId,
+          collection: target.collection,
+          priorityBand,
+        },
+      });
     }
 
     if (action === 'now' && data.priorityBand !== NOW_BAND) {
