@@ -4,6 +4,8 @@ import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import {
   COMPANION_ITEM_COLLECTIONS,
   JOTS_COLLECTION,
+  NOW_BAND,
+  NOW_WIP_LIMIT,
 } from '@/lib/companion/companionModel';
 
 export const runtime = 'nodejs';
@@ -50,6 +52,47 @@ async function moveNestedToDone(db, FieldValue, collection, docId, basePayload) 
   }
 }
 
+async function countNowItems(db, tenantId) {
+  const counts = await Promise.all(
+    Object.values(COMPANION_ITEM_COLLECTIONS).map(async (collection) => {
+      const snap = await db.collection(collection).where('priorityBand', '==', NOW_BAND).get();
+      return snap.docs.filter((doc) => clean(doc.data()?.tenantId) === tenantId).length;
+    })
+  );
+  return counts.reduce((total, count) => total + count, 0);
+}
+
+async function updateTarget(db, FieldValue, target, authUser, action) {
+  const ref = db.collection(target.collection).doc(target.docId);
+  const now = FieldValue.serverTimestamp();
+
+  if (action === 'done') {
+    const payload = {
+      priorityBand: 'done',
+      activityState: 'done',
+      updatedAt: now,
+      completedAt: now,
+      completedBy: authUser.email,
+    };
+    if (target.collection !== JOTS_COLLECTION) {
+      payload.statusColumn = 'Done';
+    }
+    await ref.update(payload);
+    await moveNestedToDone(db, FieldValue, target.collection, target.docId, payload);
+    return 'done';
+  }
+
+  const payload = {
+    priorityBand: NOW_BAND,
+    companionOrder: Date.now(),
+    updatedAt: now,
+    movedToNowAt: now,
+    movedToNowBy: authUser.email,
+  };
+  await ref.update(payload);
+  return NOW_BAND;
+}
+
 export async function PATCH(request) {
   let body;
   try {
@@ -65,7 +108,7 @@ export async function PATCH(request) {
   if (!target) {
     return NextResponse.json({ error: 'Valid itemId is required.' }, { status: 400 });
   }
-  if (action !== 'done') {
+  if (action !== 'done' && action !== 'now') {
     return NextResponse.json({ error: 'Unsupported companion item action.' }, { status: 400 });
   }
 
@@ -87,26 +130,23 @@ export async function PATCH(request) {
       if (clean(data.tenantId) !== requestedTenantId) {
         return NextResponse.json({ error: 'Workspace access required.' }, { status: 403 });
       }
-
-      const donePayload = {
-        priorityBand: 'done',
-        activityState: 'done',
-        updatedAt: FieldValue.serverTimestamp(),
-        completedAt: FieldValue.serverTimestamp(),
-        completedBy: auth.user.email,
-      };
-      if (target.collection !== JOTS_COLLECTION) {
-        donePayload.statusColumn = 'Done';
+      if (action === 'now' && data.priorityBand !== NOW_BAND) {
+        const nowCount = await countNowItems(db, requestedTenantId);
+        if (nowCount >= NOW_WIP_LIMIT) {
+          return NextResponse.json(
+            { error: 'NOW is full. Move something out of NOW before adding another item.' },
+            { status: 409 }
+          );
+        }
       }
 
-      await ref.update(donePayload);
-      await moveNestedToDone(db, FieldValue, target.collection, target.docId, donePayload);
+      const priorityBand = await updateTarget(db, FieldValue, target, auth.user, action);
 
       return NextResponse.json({
         item: {
           id: target.docId,
           collection: target.collection,
-          priorityBand: 'done',
+          priorityBand,
         },
       });
     }
@@ -124,25 +164,23 @@ export async function PATCH(request) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const donePayload = {
-      priorityBand: 'done',
-      activityState: 'done',
-      updatedAt: FieldValue.serverTimestamp(),
-      completedAt: FieldValue.serverTimestamp(),
-      completedBy: auth.user.email,
-    };
-    if (target.collection !== JOTS_COLLECTION) {
-      donePayload.statusColumn = 'Done';
+    if (action === 'now' && data.priorityBand !== NOW_BAND) {
+      const nowCount = await countNowItems(db, tenantId);
+      if (nowCount >= NOW_WIP_LIMIT) {
+        return NextResponse.json(
+          { error: 'NOW is full. Move something out of NOW before adding another item.' },
+          { status: 409 }
+        );
+      }
     }
 
-    await ref.update(donePayload);
-    await moveNestedToDone(db, FieldValue, target.collection, target.docId, donePayload);
+    const priorityBand = await updateTarget(db, FieldValue, target, auth.user, action);
 
     return NextResponse.json({
       item: {
         id: target.docId,
         collection: target.collection,
-        priorityBand: 'done',
+        priorityBand,
       },
     });
   } catch (error) {
