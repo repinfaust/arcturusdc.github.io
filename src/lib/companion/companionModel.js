@@ -27,6 +27,8 @@ export const JOT_STATUSES = ['captured', 'converted', 'parked', 'discarded'];
 
 export const CONVERT_TARGETS = ['task', 'card', 'feature', 'epic', 'idea', 'note'];
 
+export const JOTS_COLLECTION = 'stea_jots';
+
 // Bands that count as "active work" for the NOW WIP limit (AC4).
 export const NOW_BAND = 'now';
 export const NOW_WIP_LIMIT = 3;
@@ -44,6 +46,5 @@ export const COMPANION_ITEM_COLLECTIONS = {
   epic: 'stea_epics',
   feature: 'stea_features',
   card: 'stea_cards',
+  jot: JOTS_COLLECTION,
 };
-
-export const JOTS_COLLECTION = 'stea_jots';

@@ -29,7 +29,7 @@ async function readBand(db, band, allowedTenantIds, tenantNames) {
             id: d.id,
             itemType,
             collection,
-            title: data.title || data.name || 'Untitled',
+            title: data.title || data.name || data.rawText || 'Untitled',
             app: data.app || null,
             tenantId: data.tenantId,
             workspace: tenantNames.get(data.tenantId) || null,

@@ -59,7 +59,7 @@ export async function GET(request) {
                   id: d.id,
                   itemType,
                   collection,
-                  title: data.title || data.name || 'Untitled',
+                  title: data.title || data.name || data.rawText || 'Untitled',
                   app: data.app || null,
                   tenantId: data.tenantId,
                   workspace: tenantNames.get(data.tenantId) || null,
