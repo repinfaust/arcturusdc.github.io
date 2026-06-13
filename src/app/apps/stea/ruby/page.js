@@ -38,6 +38,30 @@ const DOC_TYPES = [
   { value: 'meeting', label: 'Meeting Notes', emoji: '🗓️', color: 'green' },
 ];
 
+const IMAGE_PREVIEW_EXTENSIONS = new Set(['avif', 'gif', 'jpg', 'jpeg', 'png', 'svg', 'webp']);
+const VIDEO_PREVIEW_EXTENSIONS = new Set(['m4v', 'mov', 'mp4', 'ogv', 'webm']);
+
+function uploadedFileExtension(doc) {
+  return (doc.fileType || doc.fileName?.split('.').pop() || '').toLowerCase();
+}
+
+function uploadedFilePreviewKind(doc) {
+  if (!doc?.fileUrl) return null;
+
+  const mime = (doc.fileMime || '').toLowerCase();
+  const extension = uploadedFileExtension(doc);
+
+  if (mime.startsWith('image/') || IMAGE_PREVIEW_EXTENSIONS.has(extension)) {
+    return 'image';
+  }
+
+  if (mime.startsWith('video/') || VIDEO_PREVIEW_EXTENSIONS.has(extension)) {
+    return 'video';
+  }
+
+  return null;
+}
+
 export default function RubyPage() {
   const router = useRouter();
   const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
@@ -494,7 +518,7 @@ export default function RubyPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     <p className="text-sm font-semibold text-rose-700">Drop to import</p>
-                    <p className="mt-1 text-xs text-rose-500">md · txt · html · docx · xlsx · pdf · json · csv · png · jpg · code files</p>
+                    <p className="mt-1 text-xs text-rose-500">md · txt · html · docx · xlsx · pdf · json · csv · png · jpg · gif · mp4 · mov · code files</p>
                   </div>
                 </div>
               )}
@@ -537,7 +561,7 @@ export default function RubyPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={importing}
-                  title="Import: .md .txt .html .docx .json .csv .png .jpg .gif .webp and code files (images up to 10 MB)"
+                  title="Import: .md .txt .html .docx .json .csv .png .jpg .gif .webp .mp4 .mov .webm and code files"
                   className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-rose-400 hover:text-rose-700 disabled:opacity-60"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -582,10 +606,13 @@ export default function RubyPage() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredDocuments.map((doc) => {
                     const typeInfo = getDocTypeInfo(doc.type);
+                    const previewKind = uploadedFilePreviewKind(doc);
+                    const fileExtension = uploadedFileExtension(doc);
+                    const fileLabel = fileExtension ? `.${fileExtension}` : 'file';
                     return (
                       <div
                         key={doc.id}
-                        className="group relative rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+                        className="group relative overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm transition hover:shadow-md"
                       >
                         <button
                           onClick={() => {
@@ -594,20 +621,59 @@ export default function RubyPage() {
                           }}
                           className="w-full text-left"
                         >
-                          <div className="mb-2 flex items-start justify-between gap-2">
-                            <span className="text-2xl">{doc.fileType ? '📎' : typeInfo.emoji}</span>
-                            {doc.fileType ? (
-                              <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-mono font-medium text-neutral-600 uppercase">.{doc.fileType}</span>
-                            ) : (
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium bg-${typeInfo.color}-100 text-${typeInfo.color}-800`}>{typeInfo.label}</span>
+                          {previewKind ? (
+                            <div className="relative aspect-[16/7] w-full overflow-hidden border-b border-neutral-200 bg-neutral-100">
+                              {previewKind === 'image' ? (
+                                <img
+                                  src={doc.fileUrl}
+                                  alt={doc.fileName || doc.title || 'Uploaded file preview'}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <video
+                                  src={doc.fileUrl}
+                                  aria-label={doc.fileName || doc.title || 'Uploaded video preview'}
+                                  className="h-full w-full object-cover"
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                  onMouseEnter={(event) => event.currentTarget.play().catch(() => {})}
+                                  onMouseLeave={(event) => {
+                                    event.currentTarget.pause();
+                                    event.currentTarget.currentTime = 0;
+                                  }}
+                                />
+                              )}
+                              <span className="absolute right-12 top-3 rounded-full bg-white/90 px-2 py-0.5 text-xs font-mono font-medium uppercase text-neutral-700 shadow-sm backdrop-blur">
+                                {fileLabel}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="mb-2 flex items-start justify-between gap-2 px-4 pt-4">
+                              <span className="text-2xl">{doc.fileType ? '📎' : typeInfo.emoji}</span>
+                              {doc.fileType ? (
+                                <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-mono font-medium uppercase text-neutral-600">{fileLabel}</span>
+                              ) : (
+                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium bg-${typeInfo.color}-100 text-${typeInfo.color}-800`}>{typeInfo.label}</span>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="p-4">
+                            {previewKind && (
+                              <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                {previewKind === 'video' ? 'Video upload' : 'Image upload'}
+                              </div>
                             )}
+                            <h3 className="mb-1 line-clamp-2 font-semibold text-neutral-900">
+                              {doc.title}
+                            </h3>
+                            <p className="text-xs text-neutral-500">
+                              Updated {doc.updatedAt?.toDate?.()?.toLocaleDateString() || 'recently'}
+                            </p>
                           </div>
-                          <h3 className="mb-1 font-semibold text-neutral-900 line-clamp-2">
-                            {doc.title}
-                          </h3>
-                          <p className="text-xs text-neutral-500">
-                            Updated {doc.updatedAt?.toDate?.()?.toLocaleDateString() || 'recently'}
-                          </p>
                         </button>
 
                         <button
