@@ -44,6 +44,7 @@ export async function middleware(req) {
     '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
     '/apps/stea/toume',
     '/apps/stea/dialledmtb-riders',
+    '/apps/stea/fof',
     '/stea/admin',
     '/stea/automatedtestsdashboard',
     '/stea/autoproduct',
@@ -53,6 +54,7 @@ export async function middleware(req) {
     '/stea/orbit/poc',
     '/stea/orbit/AI-Act-Technical-DocumentationBundle',
     '/stea/toume',
+    '/stea/fof',
   ];
 
   // True if request path exactly matches or is a child of a protected path
