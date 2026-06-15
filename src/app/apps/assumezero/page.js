@@ -2,10 +2,10 @@ import Script from "next/script";
 
 export const metadata = {
   title: 'Little Fibbing · A Game by Arcturus Digital Consulting',
-  description: 'Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically.',
+  description: 'Little Fibbing is a game that teaches KS2 children to question what they read, spot manipulation, and think critically — built to sit alongside what schools already do. KS3+ in development.',
   openGraph: {
     title: 'Little Fibbing · A Game by Arcturus Digital Consulting',
-    description: 'Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically.',
+    description: 'Little Fibbing is a game that teaches KS2 children to question what they read, spot manipulation, and think critically — built to sit alongside what schools already do. KS3+ in development.',
     url: 'https://www.arcturusdc.com/apps/assumezero',
     siteName: 'Arcturus Digital Consulting',
     images: [
@@ -21,7 +21,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Little Fibbing · A Game by Arcturus Digital Consulting',
-    description: 'Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically.',
+    description: 'Little Fibbing is a game that teaches KS2 children to question what they read, spot manipulation, and think critically — built to sit alongside what schools already do. KS3+ in development.',
     images: ['https://www.arcturusdc.com/img/little-fibbing/mayor-grinwell.png'],
   },
 };
@@ -464,11 +464,21 @@ section { position: relative; }
   max-width: 700px;
   margin-bottom: 16px;
 }
+.stats-caption {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--warm-grey);
+  margin-top: 48px;
+  margin-bottom: 12px;
+}
 .stats-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin-top: 48px;
+  margin-top: 0;
   border: 2px solid var(--dark-text);
 }
 @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } }
@@ -774,7 +784,9 @@ section { position: relative; }
   gap: 24px;
   margin-bottom: 48px;
 }
-@media (max-width: 768px) { .phone-frames { grid-template-columns: 1fr; max-width: 300px; margin: 0 auto 48px; } }
+.phone-frames.four { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 980px) { .phone-frames.four { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .phone-frames, .phone-frames.four { grid-template-columns: 1fr; max-width: 300px; margin: 0 auto 48px; } }
 .phone-frame {
   background: #111;
   border-radius: 24px;
@@ -1249,9 +1261,9 @@ footer {
     <div class="gazette-above">Est. 2025 · A Game by Arcturus Digital Consulting</div>
     <div class="gazette-title">The Little Fibbing Gazette</div>
     <div class="gazette-below">
-      <span>KS2 &amp; KS3+ EDITION</span>
-      <span>IN DEVELOPMENT · 2026</span>
-      <span>PILOT SCHOOLS WELCOME</span>
+      <span>KS2 EDITION IN DEVELOPMENT</span>
+      <span>KS3+ TO FOLLOW</span>
+      <span>2026 PILOT SCHOOLS WELCOME</span>
     </div>
     <div class="crt-intrusion">
       <div class="crt-label">TRUTHNET SIGNAL //</div>
@@ -1265,7 +1277,8 @@ footer {
     <div class="marquee-track">
       <span>LITTLE FIBBING</span><span>·</span>
       <span>A GAME BY ARCTURUS DC</span><span>·</span>
-      <span>KS2 &amp; KS3+</span><span>·</span>
+      <span>KS2</span><span>·</span>
+      <span>KS3+ TO FOLLOW</span><span>·</span>
       <span>IN DEVELOPMENT</span><span>·</span>
       <span>FREE PILOT FOR SCHOOLS</span><span>·</span>
       <span>EDUCATORS WELCOME</span><span>·</span>
@@ -1273,7 +1286,8 @@ footer {
       <span>ASK THE QUESTION</span><span>·</span>
       <span>LITTLE FIBBING</span><span>·</span>
       <span>A GAME BY ARCTURUS DC</span><span>·</span>
-      <span>KS2 &amp; KS3+</span><span>·</span>
+      <span>KS2</span><span>·</span>
+      <span>KS3+ TO FOLLOW</span><span>·</span>
       <span>IN DEVELOPMENT</span><span>·</span>
       <span>FREE PILOT FOR SCHOOLS</span><span>·</span>
       <span>EDUCATORS WELCOME</span><span>·</span>
@@ -1285,11 +1299,10 @@ footer {
   <div class="hero-body">
     <div>
       <h1 class="hero-headline">Can your child tell<br>when they're being<br>fibbed to?</h1>
-      <p class="hero-standfirst">Little Fibbing is a mobile game that teaches children aged 8–16 to question what they read, spot manipulation, and think critically — before the real world demands it of them.</p>
+      <p class="hero-standfirst">Little Fibbing is a game that teaches KS2 children to question what they read, spot manipulation, and think for themselves — before the wider world demands it of them. A KS3+ edition is in development.</p>
       <div>
         <span class="hero-tag">KS2</span>
-        <span class="hero-tag">KS3+</span>
-        <span class="hero-tag">In Development</span>
+        <span class="hero-tag">KS3+ in development</span>
         <span class="hero-tag">Pilot Schools Welcome</span>
       </div>
       <div style="margin-top: 24px;">
@@ -1313,13 +1326,14 @@ footer {
 <section class="problem-section paper reveal">
   <div class="section-label warm">THE PROBLEM //</div>
   <blockquote class="pull-quote">
-    "The information environment children are growing up in is unlike anything that came before it. The tools we give them to navigate it are PDF printouts from 2009."
+    "Children are growing up in an information environment unlike anything that came before — and a lot of what we hand them to navigate it still assumes the internet looks the way it did in 2009."
   </blockquote>
-  <p class="body-copy">AI-generated content is now indistinguishable from real photography, video, and writing. Social feeds are engineered to trigger emotional responses before rational ones. The average child encounters hundreds of information claims every day before they've finished breakfast.</p>
-  <p class="body-copy">The current school response — well-meaning PDFs, charity worksheets, occasional PSHE lessons — was built for a different world. It assumes children have time to deliberate, access to experts, and the motivation to engage with material that looks like homework. They don't.</p>
-  <p class="body-copy">Little Fibbing is built on a different premise: teach critical thinking through a mechanic children will voluntarily play, on a device they already have, in the time they already spend on it.</p>
+  <p class="body-copy">AI-generated content is increasingly hard to tell apart from real photography, video, and writing. Social feeds are engineered to trigger an emotional response before a rational one. A child meets hundreds of information claims a day before they've finished breakfast.</p>
+  <p class="body-copy">Most digital-literacy provision was designed for a slower environment — one where children had time to deliberate, access to someone to ask, and the patience to sit with material that looks like homework. The environment moved faster than the format could.</p>
+  <p class="body-copy">Little Fibbing starts from a different premise: teach critical thinking through something children will <em>choose</em> to play, on a device they already have, in time they already spend — and design it to sit alongside the PSHE and RSHE teaching schools already do.</p>
 
-  <div class="stats-row">
+  <div class="stats-caption">The environment they're inheriting</div>
+  <div class="stats-row" style="grid-template-columns:repeat(2,1fr);">
     <div class="stat-cell">
       <div class="stat-number">41%</div>
       <div class="stat-label">of UK adults regularly encounter misinformation online</div>
@@ -1327,12 +1341,7 @@ footer {
     </div>
     <div class="stat-cell">
       <div class="stat-number">59%</div>
-      <div class="stat-label">use online intermediaries as their primary news source</div>
-      <div class="stat-source">Source: Ofcom, 2025</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-number">97%</div>
-      <div class="stat-label">of UK online adults visit a news service monthly</div>
+      <div class="stat-label">use online intermediaries as their main route to news</div>
       <div class="stat-source">Source: Ofcom, 2025</div>
     </div>
   </div>
@@ -1356,14 +1365,14 @@ footer {
         <img src="/img/little-fibbing/screenshot-v02-church.png" alt="Little Fibbing — Reverend Pemble at the churchyard">
       </div>
       <div class="mechanic-title">Encounter</div>
-      <p class="mechanic-body" style="color: var(--warm-grey);">Every character interaction triggers a rumour. Some are plausible. Some are obviously wrong. Some are completely reasonable until you think about them for four seconds. The Gazette is not helping.</p>
+      <p class="mechanic-body" style="color: var(--warm-grey);">Every conversation surfaces a rumour. Some are plausible. Some are obviously wrong. Some sound completely reasonable until you think about them for four seconds. The Gazette is not helping.</p>
     </div>
     <div class="mechanic-cell cold crt">
       <div class="mechanic-screenshot">
         <img src="/img/little-fibbing/screenshot-v02-runner.png" alt="Little Fibbing runner mini-game — LIKELY / CAN'T TELL / UNLIKELY">
       </div>
       <div class="mechanic-title">Decide</div>
-      <p class="mechanic-body">Mini-games fire at pressure points: the runner, the Exagga-rometer, the headline sorter. LIKELY · CAN'T TELL · UNLIKELY. The mechanic is always the same. The disguise keeps changing.</p>
+      <p class="mechanic-body">Mini-games fire at the pressure points — the runner, the Exagga-rometer, the headline sorter. LIKELY · CAN'T TELL · UNLIKELY. The judgment is always the same. The disguise keeps changing.</p>
     </div>
   </div>
 
@@ -1394,14 +1403,7 @@ footer {
       <div class="act-dot-label">Wake Up</div>
     </div>
   </div>
-  <div class="timeline-note">&gt; The visual shift from folk warmth to digital interference <span>IS the media literacy lesson</span>.</div>
-
-  <div class="mode-pills">
-    <div class="mode-pill">Fake or Real?</div>
-    <div class="mode-pill">Bias Alert</div>
-    <div class="mode-pill">Evidence Run</div>
-    <div class="mode-pill">Fallacy Dash</div>
-  </div>
+  <div class="timeline-note">&gt; The shift from folk warmth to digital interference <span>IS the media-literacy lesson</span>.</div>
 </section>
 
 <!-- MARKET -->
@@ -1411,31 +1413,31 @@ footer {
 
   <div class="market-grid">
     <div>
-      <p class="market-body">The dominant format for digital literacy education in UK primary and secondary schools is still largely static — PDFs, lesson plans, and web resources that were built for a different information environment and a different kind of child attention.</p>
+      <p class="market-body">The dominant format for digital-literacy education in UK schools is still largely static — lesson plans, worksheets, and web resources built for an earlier information environment and a different kind of attention.</p>
       <br>
-      <p class="market-body">Teachers are doing their best with what exists. The problem isn't effort — it's that the tools haven't kept pace with the threat. Little Fibbing is built to sit alongside what schools already do, not replace it. Ten minutes, no prep, no procurement.</p>
+      <p class="market-body">Teachers are doing their best with what exists. The problem isn't effort — it's that the format hasn't kept pace with the threat. Little Fibbing is built to sit alongside what schools already do, not replace it. Ten minutes, no prep, no procurement.</p>
       <br>
-      <p class="market-body">The Online Safety Act has created statutory pull toward exactly this kind of provision — without anyone yet delivering something children will voluntarily engage with. That's the gap.</p>
+      <p class="market-body">The Online Safety Act has created statutory pull toward exactly this kind of provision — and there isn't yet much that children will voluntarily engage with. That's the gap Little Fibbing is built for.</p>
     </div>
     <div>
       <div class="comparison-card existing">
-        <div class="comparison-card-header">WHAT EXISTS NOW</div>
+        <div class="comparison-card-header">WHAT SCHOOLS USE NOW</div>
         <div class="comparison-card-body">
-          <p class="comparison-item">○ &nbsp;Charity worksheets &amp; PDFs (free)</p>
-          <p class="comparison-item">○ &nbsp;PSHE lesson plans (static, dated)</p>
-          <p class="comparison-item">○ &nbsp;Oak National / BBC Bitesize</p>
-          <p class="comparison-item">○ &nbsp;Think U Know (CEOP) — better, still web-only</p>
-          <p class="comparison-item">○ &nbsp;No engaging game mechanic anywhere in category</p>
+          <p class="comparison-item">○ &nbsp;Charity worksheets and PDFs</p>
+          <p class="comparison-item">○ &nbsp;PSHE lesson plans</p>
+          <p class="comparison-item">○ &nbsp;Oak National Academy · BBC Bitesize</p>
+          <p class="comparison-item">○ &nbsp;ThinkUKnow (CEOP) — trusted, well-made, web-based</p>
+          <p class="comparison-item" style="font-style:italic;opacity:0.85;">The common thread: it's read, not played.</p>
         </div>
       </div>
       <div class="comparison-card lf">
-        <div class="comparison-card-header">WHERE LITTLE FIBBING SITS</div>
+        <div class="comparison-card-header">WHERE LITTLE FIBBING FITS</div>
         <div class="comparison-card-body">
-          <p class="comparison-item">✓ &nbsp;Game mechanic, not worksheet</p>
-          <p class="comparison-item">✓ &nbsp;Voluntary engagement on existing devices</p>
-          <p class="comparison-item">✓ &nbsp;School-endorsed, home-played via ClassDojo</p>
+          <p class="comparison-item">✓ &nbsp;A game children choose to play, not a worksheet</p>
+          <p class="comparison-item">✓ &nbsp;Voluntary engagement on devices they already use</p>
+          <p class="comparison-item">✓ &nbsp;Designed to sit alongside PSHE / RSHE, not replace it</p>
           <p class="comparison-item">✓ &nbsp;KS2 &amp; KS3 curriculum-aligned</p>
-          <p class="comparison-item">✓ &nbsp;Uncertainty-first — no false certainty</p>
+          <p class="comparison-item">✓ &nbsp;Uncertainty-first — it teaches "I can't tell yet," not false certainty</p>
         </div>
       </div>
     </div>
@@ -1453,7 +1455,7 @@ footer {
   <h2 class="section-headline cold" style="font-size: clamp(24px, 4vw, 42px); text-align:center; margin-bottom: 16px;">Two worlds. One lesson.</h2>
   <p class="lookfeel-sub" style="margin: 0 auto 48px; text-align:center;">The warm Little Fibbing world and the sharp AssumeZero identity aren't two visual styles — they're the same mechanic in two registers. The screenshots below are from the v0.2 build. This is what it looks like right now.</p>
 
-  <div class="phone-frames">
+  <div class="phone-frames four">
     <div>
       <div class="phone-frame warm">
         <div class="phone-notch"><div class="phone-notch-bar"></div></div>
@@ -1485,6 +1487,17 @@ footer {
         <div class="phone-footer"><div class="phone-footer-bar"></div></div>
       </div>
       <div class="phone-caption" style="color:var(--phosphor)">RUNNER MINI-GAME · v0.2<br>Chase Keith. Call it.</div>
+    </div>
+
+    <div>
+      <div class="phone-frame digital">
+        <div class="phone-notch"><div class="phone-notch-bar"></div></div>
+        <div class="phone-screen">
+          <img src="/img/little-fibbing/screenshot-v02-adbreak.png" alt="Little Fibbing v0.2 — Exagga-rometer ad break with the FACT / HYPE slider">
+        </div>
+        <div class="phone-footer"><div class="phone-footer-bar"></div></div>
+      </div>
+      <div class="phone-caption" style="color:var(--phosphor)">EXAGGA-ROMETER · v0.2<br>Drag the hype out. What's left?</div>
     </div>
   </div>
 
@@ -1569,7 +1582,7 @@ footer {
   <div style="max-width:1200px;margin:0 auto;position:relative;z-index:2;">
     <div class="section-label cold">FIRST BUILD — v0.2 //</div>
     <h2 class="section-headline cold" style="font-size:clamp(24px,4vw,40px);">This exists. Right now. In a browser.</h2>
-    <p style="font-family:'Lora',serif;font-size:16px;font-style:italic;color:var(--warm-grey);max-width:620px;line-height:1.75;margin-bottom:48px;">Built using Codex. The village is walkable. Characters talk. The pothole is a genuine pothole. The runner mini-game fires with real LIKELY / CAN'T TELL / UNLIKELY buttons. v0.2 proves the concept is buildable at this level without a game studio.</p>
+    <p style="font-family:'Lora',serif;font-size:16px;font-style:italic;color:var(--warm-grey);max-width:620px;line-height:1.75;margin-bottom:48px;">Built using Codex. The village is walkable. Characters talk. The pothole is a genuine pothole. The runner fires with real LIKELY / CAN'T TELL / UNLIKELY judgments, the Exagga-rometer strips an advert back to what it actually says, and Truthnet closes each thread with the plain version. v0.2 proves the concept is buildable at this level without a game studio.</p>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:auto auto;gap:12px;max-width:960px;margin:0 auto 32px;">
       <div style="grid-column:1/3;border-radius:8px;overflow:hidden;border:2px solid rgba(212,135,58,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6);">
@@ -1584,23 +1597,26 @@ footer {
       <div style="border-radius:8px;overflow:hidden;border:2px solid rgba(61,110,110,0.5);box-shadow:0 16px 40px rgba(0,0,0,0.6);">
         <img src="/img/little-fibbing/screenshot-v02-church.png" alt="Reverend Pemble at the churchyard" style="width:100%;height:100%;object-fit:cover;display:block;">
       </div>
-      <div style="grid-column:2/4;border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
+      <div style="border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
         <img src="/img/little-fibbing/screenshot-v02-runner.png" alt="Runner mini-game — LIKELY / CAN'T TELL / UNLIKELY" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+      <div style="grid-column:1/4;border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
+        <img src="/img/little-fibbing/screenshot-v02-adbreak.png" alt="Exagga-rometer ad break — drag the hype out" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block;">
       </div>
     </div>
 
     <div style="max-width:960px;margin:0 auto;display:flex;gap:24px;flex-wrap:wrap;">
       <div style="flex:1;min-width:200px;background:rgba(212,135,58,0.08);border:1px solid rgba(212,135,58,0.3);border-radius:6px;padding:20px 24px;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--mustard);margin-bottom:8px;">WORKING MECHANICS</div>
-        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Village exploration · NPC dialogue system · Runner mini-game · LIKELY / CAN'T TELL / UNLIKELY judgment loop</p>
+        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Village exploration · NPC dialogue · Runner mini-game (LIKELY / CAN'T TELL / UNLIKELY) · Exagga-rometer ad break (three-state) · Truthnet resolution cards</p>
       </div>
       <div style="flex:1;min-width:200px;background:rgba(61,110,110,0.08);border:1px solid rgba(61,110,110,0.3);border-radius:6px;padding:20px 24px;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--teal);margin-bottom:8px;">CHARACTERS IN v0.2</div>
         <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Lin (postwoman) · Mrs Crumb (baker) · Reverend Pemble (vicar) · Keith (tortoise, unavailable for comment)</p>
       </div>
       <div style="flex:1;min-width:200px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:6px;padding:20px 24px;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--phosphor);margin-bottom:8px;">WHAT'S STILL NEEDED</div>
-        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Truthnet layer · Exagga-rometer mini-game · Score / feedback system · Additional NPCs · Mobile optimisation</p>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--phosphor);margin-bottom:8px;">WHAT'S NEXT</div>
+        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Score / feedback tuning · Additional NPCs and chapters · Mobile optimisation · Playtest-driven refinement</p>
       </div>
     </div>
 
@@ -1613,7 +1629,7 @@ footer {
 <!-- STATUS -->
 <section class="status-section crt reveal">
   <div class="section-label cold">CURRENT STATUS //</div>
-  <div class="status-timestamp">&gt; last updated: May 2026</div>
+  <div class="status-timestamp">&gt; last updated: June 2026</div>
   <h2 class="section-headline cold" style="font-size: clamp(22px, 3vw, 34px); position:relative; z-index:2;">Where we are. What's next.</h2>
 
   <div class="status-timeline">
@@ -1635,7 +1651,7 @@ footer {
       <div class="status-dot complete">✓</div>
       <div class="status-content">
         <div class="status-title">COMPLETE — v0.2 POC (web, Codex)</div>
-        <div class="status-desc">Working browser prototype with explorable village, NPC dialogue system (Lin, Mrs Crumb, Reverend Pemble), runner mini-game with full LIKELY / CAN'T TELL / UNLIKELY judgment loop, and Keith the tortoise being unhelpful throughout. Screenshots above are real.</div>
+        <div class="status-desc">Working browser prototype: explorable village, NPC dialogue (Lin, Mrs Crumb, Reverend Pemble), the full LIKELY / CAN'T TELL / UNLIKELY runner loop, the three-state Exagga-rometer ad break, Truthnet resolution cards, and Keith the tortoise being unhelpful throughout. Screenshots above are real.</div>
       </div>
     </div>
     <div class="status-item">
@@ -1649,7 +1665,7 @@ footer {
       <div class="status-dot upcoming">○</div>
       <div class="status-content">
         <div class="status-title">UPCOMING — School Pilot Conversations</div>
-        <div class="status-desc">Seeking 2–3 UK primary schools for initial endorsement and ClassDojo distribution pilot. No procurement required at this stage — we're asking heads to look at something and tell us honestly what they think.</div>
+        <div class="status-desc">Seeking 2–3 UK primary schools for initial endorsement and a home-play distribution pilot (intended route: ClassDojo). No procurement required at this stage — we're asking heads to look at something and tell us honestly what they think.</div>
       </div>
     </div>
     <div class="status-item">
@@ -1670,7 +1686,7 @@ footer {
     <div class="ask-card">
       <div class="ask-icon">🏫</div>
       <div class="ask-title">EDUCATORS</div>
-      <p class="ask-body">Are you a KS2 or KS3 teacher, PSHE lead, or headteacher? I'm looking for listening conversations — 30 minutes, no commitment — and 1–2 schools willing to endorse a pilot via ClassDojo.</p>
+      <p class="ask-body">Are you a KS2 or KS3 teacher, PSHE lead, or headteacher? I'm looking for listening conversations — 30 minutes, no commitment — and 1–2 schools willing to endorse a pilot.</p>
       <a href="/contact" class="ask-btn">GET IN TOUCH →</a>
     </div>
     <div class="ask-card">
@@ -1682,7 +1698,7 @@ footer {
     <div class="ask-card">
       <div class="ask-icon">💷</div>
       <div class="ask-title">FUNDING</div>
-      <p class="ask-body">Pre-seed. Looking for individuals or small funds who understand the edtech and consumer opportunity in media literacy for children. The market gap is real and documented. Happy to share research.</p>
+      <p class="ask-body">Pre-seed. Looking for individuals or small funds who understand the edtech and consumer opportunity in children's media literacy. The market gap is real and documented. Happy to share research.</p>
       <a href="/contact" class="ask-btn">LET'S TALK →</a>
     </div>
   </div>
@@ -1703,7 +1719,7 @@ footer {
     <div>
       <div class="about-body">
         <p>I'm David, a product manager and app developer based in the UK. <em>Arcturus Digital Consulting</em> is where I build products that sit at the intersection of technology and everyday life.</p>
-        <p>Little Fibbing grew out of a question I couldn't stop asking: if the information environment is genuinely dangerous for children, why does every educational response to it look like it was made on a Sunday afternoon with a printer?</p>
+        <p>Little Fibbing grew out of a question I couldn't stop asking: if the information environment is genuinely this demanding for children, why does so much of what we give them to cope with it still assume the internet looks the way it did fifteen years ago?</p>
         <p>My son Felix, 9, is my first tester, harshest critic, and Chief Testing Officer. He has access to other 9-year-olds. This is considered an asset.</p>
         <p>Background in digital product, analytics, and mobile development. Previous work includes Sprocket (calm admin support for anxious users) and STEa.</p>
         <p>Little Fibbing is the most ambitious thing I've attempted. I think the timing is right.</p>
