@@ -1333,16 +1333,21 @@ footer {
   <p class="body-copy">Little Fibbing starts from a different premise: teach critical thinking through something children will <em>choose</em> to play, on a device they already have, in time they already spend — and design it to sit alongside the PSHE and RSHE teaching schools already do.</p>
 
   <div class="stats-caption">The environment they're inheriting</div>
-  <div class="stats-row" style="grid-template-columns:repeat(2,1fr);">
+  <div class="stats-row">
     <div class="stat-cell">
-      <div class="stat-number">41%</div>
-      <div class="stat-label">of UK adults regularly encounter misinformation online</div>
-      <div class="stat-source">Source: Ofcom, 2025</div>
+      <div class="stat-number">68%</div>
+      <div class="stat-label">of online 13–17s, shown a celebrity's product post, both felt confident spotting online ads <em>and</em> correctly identified it as influencer marketing — so nearly a third didn't.</div>
+      <div class="stat-source">Source: Ofcom, Children and Parents: Media Use and Attitudes, 2025</div>
     </div>
     <div class="stat-cell">
-      <div class="stat-number">59%</div>
-      <div class="stat-label">use online intermediaries as their main route to news</div>
-      <div class="stat-source">Source: Ofcom, 2025</div>
+      <div class="stat-number">Half</div>
+      <div class="stat-label">of online 8–17s now use AI tools — often for learning and schoolwork.</div>
+      <div class="stat-source">Source: Ofcom, Children and Parents: Media Use and Attitudes, 2025</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-number">92%</div>
+      <div class="stat-label">of 8–17s recall at least one online-safety lesson at school.</div>
+      <div class="stat-source">Source: Ofcom, Children and Parents: Media Use and Attitudes, 2025</div>
     </div>
   </div>
 </section>
