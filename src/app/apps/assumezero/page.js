@@ -1349,7 +1349,7 @@ footer {
         <img src="/img/little-fibbing/screenshot-v02-village.png" alt="Little Fibbing village square — v0.2">
       </div>
       <div class="mechanic-title">Explore</div>
-      <p class="mechanic-body" style="color: var(--warm-grey);">Nan's tortoise has gone missing again. Wander Little Fibbing — a cosy 1950s English village — talking to locals: Edie the postwoman, Mrs Crumb the baker, the vicar. Everyone has a theory. None of them agree.</p>
+      <p class="mechanic-body" style="color: var(--warm-grey);">Nan's tortoise has gone missing again. Wander Little Fibbing — a cosy English village with a curiously modern feed — talking to locals: Lin the postwoman, Mrs Crumb the baker, the vicar. Everyone has a theory. None of them agree.</p>
     </div>
     <div class="mechanic-cell warm">
       <div class="mechanic-screenshot">
@@ -1596,7 +1596,7 @@ footer {
       </div>
       <div style="flex:1;min-width:200px;background:rgba(61,110,110,0.08);border:1px solid rgba(61,110,110,0.3);border-radius:6px;padding:20px 24px;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--teal);margin-bottom:8px;">CHARACTERS IN v0.2</div>
-        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Edie Pratchett (postwoman) · Mrs Crumb (baker) · Reverend Pemble (vicar) · Keith (tortoise, unavailable for comment)</p>
+        <p style="font-family:'Lora',serif;font-size:14px;color:var(--off-white);line-height:1.6;opacity:0.85;">Lin (postwoman) · Mrs Crumb (baker) · Reverend Pemble (vicar) · Keith (tortoise, unavailable for comment)</p>
       </div>
       <div style="flex:1;min-width:200px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:6px;padding:20px 24px;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--phosphor);margin-bottom:8px;">WHAT'S STILL NEEDED</div>
@@ -1635,7 +1635,7 @@ footer {
       <div class="status-dot complete">✓</div>
       <div class="status-content">
         <div class="status-title">COMPLETE — v0.2 POC (web, Codex)</div>
-        <div class="status-desc">Working browser prototype with explorable village, NPC dialogue system (Edie, Mrs Crumb, Reverend Pemble), runner mini-game with full LIKELY / CAN'T TELL / UNLIKELY judgment loop, and Keith the tortoise being unhelpful throughout. Screenshots above are real.</div>
+        <div class="status-desc">Working browser prototype with explorable village, NPC dialogue system (Lin, Mrs Crumb, Reverend Pemble), runner mini-game with full LIKELY / CAN'T TELL / UNLIKELY judgment loop, and Keith the tortoise being unhelpful throughout. Screenshots above are real.</div>
       </div>
     </div>
     <div class="status-item">
