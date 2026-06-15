@@ -211,7 +211,7 @@ body:has(#lf-game-page) { overflow: hidden !important; }
     <h1>Little Fibbing</h1>
     <p class="gp-sub">The Pothole Incident · a Truthnet game</p>
 
-    <p>A cosy 1950s English village where not everything you read is true. You're
+    <p>A cosy English village where not everything you read is true. You're
     spending the weekend at Nan's — and her tortoise, Keith, has made a break for
     it. Ask around, follow the rumours, and decide what to believe.</p>
 
