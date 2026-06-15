@@ -785,8 +785,10 @@ section { position: relative; }
   margin-bottom: 48px;
 }
 .phone-frames.four { grid-template-columns: repeat(4, 1fr); }
-@media (max-width: 980px) { .phone-frames.four { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 768px) { .phone-frames, .phone-frames.four { grid-template-columns: 1fr; max-width: 300px; margin: 0 auto 48px; } }
+.phone-frames.five { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 1180px) { .phone-frames.five { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 980px) { .phone-frames.four, .phone-frames.five { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .phone-frames, .phone-frames.four, .phone-frames.five { grid-template-columns: 1fr; max-width: 300px; margin: 0 auto 48px; } }
 .phone-frame {
   background: #111;
   border-radius: 24px;
@@ -1460,7 +1462,7 @@ footer {
   <h2 class="section-headline cold" style="font-size: clamp(24px, 4vw, 42px); text-align:center; margin-bottom: 16px;">Two worlds. One lesson.</h2>
   <p class="lookfeel-sub" style="margin: 0 auto 48px; text-align:center;">The warm Little Fibbing world and the sharp AssumeZero identity aren't two visual styles — they're the same mechanic in two registers. The screenshots below are from the v0.2 build. This is what it looks like right now.</p>
 
-  <div class="phone-frames four">
+  <div class="phone-frames five">
     <div>
       <div class="phone-frame warm">
         <div class="phone-notch"><div class="phone-notch-bar"></div></div>
@@ -1503,6 +1505,17 @@ footer {
         <div class="phone-footer"><div class="phone-footer-bar"></div></div>
       </div>
       <div class="phone-caption" style="color:var(--phosphor)">EXAGGA-ROMETER · v0.2<br>Drag the hype out. What's left?</div>
+    </div>
+
+    <div>
+      <div class="phone-frame digital">
+        <div class="phone-notch"><div class="phone-notch-bar"></div></div>
+        <div class="phone-screen">
+          <img src="/img/little-fibbing/screenshot-v02-truthnet.png" alt="Little Fibbing v0.2 — Truthnet resolution card: the plain, verifiable version">
+        </div>
+        <div class="phone-footer"><div class="phone-footer-bar"></div></div>
+      </div>
+      <div class="phone-caption" style="color:var(--phosphor)">TRUTHNET · v0.2<br>The plain, verifiable version</div>
     </div>
   </div>
 
@@ -1605,8 +1618,11 @@ footer {
       <div style="border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
         <img src="/img/little-fibbing/screenshot-v02-runner.png" alt="Runner mini-game — LIKELY / CAN'T TELL / UNLIKELY" style="width:100%;height:100%;object-fit:cover;display:block;">
       </div>
-      <div style="grid-column:1/4;border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
+      <div style="grid-column:1/3;border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
         <img src="/img/little-fibbing/screenshot-v02-adbreak.png" alt="Exagga-rometer ad break — drag the hype out" style="width:100%;height:100%;object-fit:cover;object-position:top;display:block;">
+      </div>
+      <div style="border-radius:8px;overflow:hidden;border:2px solid rgba(0,255,136,0.4);box-shadow:0 16px 40px rgba(0,0,0,0.6),0 0 24px rgba(0,255,136,0.12);">
+        <img src="/img/little-fibbing/screenshot-v02-truthnet.png" alt="Truthnet resolution card — the plain, verifiable version" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
       </div>
     </div>
 
