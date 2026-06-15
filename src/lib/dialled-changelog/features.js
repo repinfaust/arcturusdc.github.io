@@ -80,6 +80,48 @@ export const FEATURES = [
     deps: ['health_mileage'],
   },
 
+  /* MAINTENANCE TRACKING v1 (core lane, col 3-4) — maintenance_tracking_v1_build_spec.md */
+  {
+    id: 'maint_catalogue', lane: 'core', col: 3, row: 0, title: 'Component Catalogue', lifecycle: 'next',
+    visibility: 'public',
+    publicSummary: 'A config-driven catalogue of trackable components and their default service intervals — extendable without an app update.',
+    desc: 'app_config/maintenance_catalogue, seeded from the parts service guide CSV. Component types + default intervals are Firestore-tunable, mirroring app_config/tyre_deltas. Adding a component type is a config edit, not a release.',
+    why: 'The principled answer to "we can’t have a drop-down for every part": the list is data. Ship a sensible default set, grow it without rebuilds. Spec §3.',
+    deps: ['core_loop'],
+  },
+  {
+    id: 'component_tracking', lane: 'core', col: 3, row: 1, title: 'Component-Level Tracking', lifecycle: 'next',
+    visibility: 'public',
+    publicSummary: 'Register the serviceable parts on your bike — fork, shock, brakes, drivetrain, dropper, bearings, tyres — each with its own service interval, so reminders fire per component, not per bike.',
+    desc: 'TrackedComponent[] (embedded map per §13.1, pending bike-doc-size check) carrying per-action ServiceSpecs with counters. Per-component due derivation is a pure function over the existing counter + stored interval — deterministic, free-tier, offline. Brake bleed interval is config-derived brand→fluid, never LLM. DueState kept separate from fitConfidence. Spec §2–§5.',
+    why: 'Turns the per-bike maintenance loop into a per-component one — the upgrade riders actually feel. Stays deterministic so the free/offline spine holds.',
+    deps: ['core_loop', 'default_intervals'],
+  },
+  {
+    id: 'service_logging', lane: 'core', col: 3, row: 2, title: 'Service Logging & History', lifecycle: 'next',
+    visibility: 'public',
+    publicSummary: 'Log a service (DIY or shop), tick what was done to reset the right counters, and keep a running service history per bike. Free.',
+    desc: 'applyServiceEvent mirrors applyAdvisorProposal’s atomic batch: writes a ServiceEvent to the bikes/{id}/serviceEvents subcollection, resets the touched components’ counters, bumps stateVersion once. serviceEvents render reverse-chron as the retention surface. DIY log + photo attach are free; only AI parse is gated. Spec §6, §8.',
+    why: 'The reset path that makes counters mean something, and the reason to open the app between rides. One engine, two entry points (DIY here, receipt parse in Scan & Store).',
+    deps: ['component_tracking'],
+  },
+  {
+    id: 'interval_advisor', lane: 'core', col: 4, row: 1, title: 'Advisor Interval Suggestions', lifecycle: 'open', cats: ['utility'],
+    visibility: 'public',
+    publicSummary: 'For Premium riders: the Advisor can suggest a sensible service interval for a specific component — you confirm or edit before it’s stored.',
+    desc: 'suggestServiceInterval Cloud Function (sibling to generateRideInsight). Parametric suggestion → confirm card → stored with source:"advisor". Called at most once per component-add; the reminder loop it feeds is free and offline. Safety-critical intervals (brakes) may shorten but never lengthen the category default. Premium. Spec §4.3, §4.4.',
+    why: 'The "third source" of intervals — refinement, not the spine. Propose-confirm-store discipline means an AI guess never silently becomes a stored fact.',
+    deps: ['component_tracking', 'advisor'],
+  },
+  {
+    id: 'scan_store', lane: 'core', col: 4, row: 2, title: 'Scan & Store', lifecycle: 'open', cats: ['utility'],
+    visibility: 'public',
+    publicSummary: 'For Premium riders: attach a workshop receipt and let the Advisor read off what was serviced — you confirm the line items before any counter resets.',
+    desc: 'parseServiceReceipt Cloud Function (lifts the Rehab Path document-parse pattern). Parse → confirm card (high-confidence rows default on) → confirmed set becomes the ServiceEvent and routes through the same applyServiceEvent. Never auto-commits. Tier labels (Bronze/Gold) are display metadata, never a reset trigger. Receipts never enter a coach snapshot. Premium. Spec §7.',
+    why: 'Path B of the same service-event engine: a data-entry assistant for paid services, not a separate subsystem. The confirm gate is mandatory — a misparsed "brake inspection"→"bleed" would be safety-adjacent.',
+    deps: ['service_logging', 'advisor'],
+  },
+
   /* SETUP (rows 3-7) */
   {
     id: 'calculators', lane: 'setup', col: 0, row: 4, title: 'Setup Calculators', lifecycle: 'shipped',
