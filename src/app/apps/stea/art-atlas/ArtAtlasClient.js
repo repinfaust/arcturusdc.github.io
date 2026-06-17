@@ -512,8 +512,13 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     camera.position.set(0, 1.72, 4.8);
     camera.rotation.order = 'YXZ';
 
-    const corridorLength = Math.max(28, works.length * 3.2 + 8);
-    const centerZ = 3 - corridorLength / 2;
+    const paintingSpacing = 3.05;
+    const firstPaintingZ = 1.2;
+    const lastPaintingZ = works.length > 0 ? firstPaintingZ - (works.length - 1) * paintingSpacing : firstPaintingZ;
+    const backWallZ = Math.min(-18, lastPaintingZ - 4.4);
+    const corridorLength = 3 - backWallZ;
+    const centerZ = (3 + backWallZ) / 2;
+    const lightingStationCount = Math.max(works.length, Math.ceil((firstPaintingZ - backWallZ - 1.1) / paintingSpacing));
     const paintingMeshes = [];
     const keys = new Set();
     const pointer = { down: false, x: 0, y: 0, moved: 0 };
@@ -550,7 +555,7 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     addBox(scene, [8.2, 0.08, corridorLength], [0, -0.04, centerZ], floorMaterial);
     addBox(scene, [0.14, 4.2, corridorLength], [-4.1, 2.05, centerZ], wallMaterial);
     addBox(scene, [0.14, 4.2, corridorLength], [4.1, 2.05, centerZ], wallMaterial);
-    addBox(scene, [8.2, 4.2, 0.14], [0, 2.05, 3 - corridorLength], wallMaterial);
+    addBox(scene, [8.2, 4.2, 0.14], [0, 2.05, backWallZ], wallMaterial);
     addBox(scene, [3.2, 0.1, corridorLength], [-2.55, 4.1, centerZ], ceilingMaterial);
     addBox(scene, [3.2, 0.1, corridorLength], [2.55, 4.1, centerZ], ceilingMaterial);
     addBox(scene, [8.3, 0.12, 0.12], [0, 0.08, centerZ + corridorLength / 2 - 0.4], trimMaterial);
@@ -564,7 +569,7 @@ function GalleryCanvas({ museum, entered, onInspect }) {
       new THREE.PlaneGeometry(3.2, 0.82),
       new THREE.MeshBasicMaterial({ map: wallTitleTexture, transparent: true })
     );
-    wallTitle.position.set(0, 2.34, 3 - corridorLength + 0.08);
+    wallTitle.position.set(0, 2.34, backWallZ + 0.08);
     scene.add(wallTitle);
 
     const skylight = addBox(
@@ -575,8 +580,8 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     );
     skylight.userData.skipRaycast = true;
 
-    for (let i = 0; i < Math.max(works.length, 8); i += 1) {
-      const z = 1.2 - i * 3.05;
+    for (let i = 0; i < lightingStationCount; i += 1) {
+      const z = firstPaintingZ - i * paintingSpacing;
       const x = i % 2 === 0 ? -3.98 : 3.98;
       const light = new THREE.SpotLight(0xfff0d0, 2.4, 8.6, Math.PI / 5, 0.42, 1.2);
       light.position.set(x > 0 ? 2.5 : -2.5, 3.6, z + 0.2);
@@ -593,7 +598,7 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     loader.setCrossOrigin('anonymous');
     works.forEach((work, index) => {
       const side = index % 2 === 0 ? -1 : 1;
-      const z = 1.2 - index * 3.05;
+      const z = firstPaintingZ - index * paintingSpacing;
       const width = index % 3 === 0 ? 1.65 : 1.34;
       const height = index % 3 === 0 ? 1.16 : 1.42;
       const group = new THREE.Group();
@@ -709,13 +714,11 @@ function GalleryCanvas({ museum, entered, onInspect }) {
       if (enteredRef.current) {
         const forwardIntent = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0);
         const strafeIntent = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
-        const forward = new THREE.Vector3(Math.sin(cameraState.yaw), 0, -Math.cos(cameraState.yaw));
-        const right = new THREE.Vector3(Math.cos(cameraState.yaw), 0, Math.sin(cameraState.yaw));
         const speed = 3.2 * dt;
-        camera.position.addScaledVector(forward, forwardIntent * speed);
-        camera.position.addScaledVector(right, strafeIntent * speed);
+        camera.position.z -= forwardIntent * speed;
+        camera.position.x += strafeIntent * speed;
         camera.position.x = clamp(camera.position.x, -2.9, 2.9);
-        camera.position.z = clamp(camera.position.z, 3 - corridorLength + 2.4, 4.8);
+        camera.position.z = clamp(camera.position.z, backWallZ + 2.4, 4.8);
       }
       camera.rotation.y = cameraState.yaw;
       camera.rotation.x = cameraState.pitch;
@@ -725,13 +728,19 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     const renderState = () => JSON.stringify({
       mode: 'art-atlas-gallery',
       artist: museum.artist.name,
-      coordinateSystem: 'Three.js world coordinates; x left/right, y height, z corridor depth; camera faces negative z at entry.',
+      coordinateSystem: 'Three.js world coordinates; x left/right, y height, z corridor depth; movement follows gallery axes; yaw changes look direction only.',
+      movementMode: 'gallery-axis',
       entered: enteredRef.current,
       camera: {
         x: Number(camera.position.x.toFixed(2)),
         y: Number(camera.position.y.toFixed(2)),
         z: Number(camera.position.z.toFixed(2)),
         yaw: Number(cameraState.yaw.toFixed(2)),
+      },
+      bounds: {
+        backWallZ: Number(backWallZ.toFixed(2)),
+        lastPaintingZ: Number(lastPaintingZ.toFixed(2)),
+        corridorLength: Number(corridorLength.toFixed(2)),
       },
       worksVisible: works.length,
       lastInspected: lastInspected?.title || null,
