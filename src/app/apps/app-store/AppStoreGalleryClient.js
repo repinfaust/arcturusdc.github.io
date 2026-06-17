@@ -253,7 +253,9 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.03;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x817464);
@@ -278,24 +280,59 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
     let lastHovered = null;
     let lastSelected = null;
 
-    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x17130e, roughness: 0.32, metalness: 0.12 });
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xd7ccbb, roughness: 0.58 });
-    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x806f5b, roughness: 0.7 });
+    const floorTexture = makeFloorTexture();
+    floorTexture.wrapS = THREE.RepeatWrapping;
+    floorTexture.wrapT = THREE.RepeatWrapping;
+    floorTexture.repeat.set(2.5, Math.max(5, corridorLength / 3.2));
+    floorTexture.colorSpace = THREE.SRGBColorSpace;
+
+    const wallTexture = makePlasterTexture();
+    wallTexture.wrapS = THREE.RepeatWrapping;
+    wallTexture.wrapT = THREE.RepeatWrapping;
+    wallTexture.repeat.set(2.2, Math.max(3, corridorLength / 5.5));
+    wallTexture.colorSpace = THREE.SRGBColorSpace;
+
+    const frameTexture = makeWoodTexture();
+    frameTexture.wrapS = THREE.RepeatWrapping;
+    frameTexture.wrapT = THREE.RepeatWrapping;
+    frameTexture.colorSpace = THREE.SRGBColorSpace;
+
+    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1711, map: floorTexture, roughness: 0.44, metalness: 0.08 });
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xd8cdbd, map: wallTexture, roughness: 0.74 });
+    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x81705d, roughness: 0.76 });
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x725127, map: frameTexture, roughness: 0.46, metalness: 0.12 });
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.13,
+      roughness: 0.08,
+      metalness: 0,
+      clearcoat: 1,
+      clearcoatRoughness: 0.18,
+      depthWrite: false,
+    });
     const trimMaterial = new THREE.MeshStandardMaterial({ color: 0x0d0b09, roughness: 0.5 });
 
     scene.add(new THREE.HemisphereLight(0xfff3df, 0x2c2016, 2.35));
     const keyLight = new THREE.DirectionalLight(0xfff0d6, 1.25);
     keyLight.position.set(0, 6, 4);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
     scene.add(keyLight);
-    addBox(scene, [8.7, 0.08, corridorLength], [0, -0.04, centerZ], floorMaterial);
+    addBox(scene, [8.7, 0.08, corridorLength], [0, -0.04, centerZ], floorMaterial, { receiveShadow: true });
     addBox(scene, [0.14, 4.45, corridorLength], [-4.28, 2.12, centerZ], wallMaterial);
     addBox(scene, [0.14, 4.45, corridorLength], [4.28, 2.12, centerZ], wallMaterial);
     addBox(scene, [8.7, 4.45, 0.14], [0, 2.12, farZ], wallMaterial);
     addBox(scene, [3.35, 0.1, corridorLength], [-2.65, 4.25, centerZ], ceilingMaterial);
     addBox(scene, [3.35, 0.1, corridorLength], [2.65, 4.25, centerZ], ceilingMaterial);
-    addBox(scene, [1.7, 0.04, corridorLength - 1.5], [0, 4.3, centerZ + 0.1], new THREE.MeshBasicMaterial({ color: 0xf3eee6 }));
-    addBox(scene, [0.96, 0.34, 3.0], [0, 0.22, -8.5], new THREE.MeshStandardMaterial({ color: 0x5d442b, roughness: 0.42 }));
-    addBox(scene, [0.58, 0.42, 0.9], [0, 0.02, -8.5], new THREE.MeshStandardMaterial({ color: 0x120f0c, roughness: 0.5 }));
+    addBox(scene, [1.7, 0.04, corridorLength - 1.5], [0, 4.3, centerZ + 0.1], new THREE.MeshBasicMaterial({ color: 0xf3eee6 }), { castShadow: false, receiveShadow: false });
+    addBox(scene, [0.12, 0.18, corridorLength], [-4.18, 0.09, centerZ], trimMaterial, { castShadow: false, receiveShadow: true });
+    addBox(scene, [0.12, 0.18, corridorLength], [4.18, 0.09, centerZ], trimMaterial, { castShadow: false, receiveShadow: true });
+    addBox(scene, [8.48, 0.18, 0.12], [0, 0.09, farZ + 0.08], trimMaterial, { castShadow: false, receiveShadow: true });
+    addBox(scene, [0.06, 0.06, corridorLength - 2], [-2.18, 3.98, centerZ], trimMaterial, { castShadow: true, receiveShadow: false });
+    addBox(scene, [0.06, 0.06, corridorLength - 2], [2.18, 3.98, centerZ], trimMaterial, { castShadow: true, receiveShadow: false });
+    addBox(scene, [0.96, 0.34, 3.0], [0, 0.22, -8.5], new THREE.MeshStandardMaterial({ color: 0x5d442b, map: frameTexture, roughness: 0.5 }), { castShadow: true, receiveShadow: true });
+    addBox(scene, [0.58, 0.42, 0.9], [0, 0.02, -8.5], new THREE.MeshStandardMaterial({ color: 0x120f0c, roughness: 0.5 }), { castShadow: true, receiveShadow: true });
 
     addEndWall(scene, farZ + 0.08);
 
@@ -309,16 +346,24 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
 
       const frame = new THREE.Mesh(
         new THREE.BoxGeometry(1.68, 2.36, 0.14),
-        new THREE.MeshStandardMaterial({ color: 0x6c4c25, roughness: 0.35, metalness: 0.18 })
+        frameMaterial
       );
+      frame.castShadow = true;
+      frame.receiveShadow = true;
       group.add(frame);
 
       const mat = new THREE.MeshStandardMaterial({ color: 0xede5d3, roughness: 0.58 });
       const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.42, 2.08), mat);
       poster.position.z = 0.078;
+      poster.receiveShadow = true;
       poster.userData.app = app;
       poster.userData.baseOpacity = 1;
       group.add(poster);
+
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.42, 2.08), glassMaterial);
+      glass.position.z = 0.083;
+      glass.renderOrder = 2;
+      group.add(glass);
       posterMeshes.push(poster);
       scene.add(group);
 
@@ -331,6 +376,8 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
       const spot = new THREE.SpotLight(0xffefd5, 2.8, 7, Math.PI / 5.8, 0.44, 1.2);
       spot.position.set(side * 2.65, 3.74, z + 0.14);
       spot.target.position.set(side * 4.16, 1.86, z);
+      spot.castShadow = true;
+      spot.shadow.mapSize.set(512, 512);
       scene.add(spot);
       scene.add(spot.target);
       addBox(scene, [0.12, 0.12, 1.0], [side * 3.62, 3.72, z + 0.1], trimMaterial);
@@ -516,9 +563,11 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
   return <canvas ref={canvasRef} className={styles.storeCanvas} aria-label="ArcturusDC App Store 3D gallery" />;
 }
 
-function addBox(scene, size, position, material) {
+function addBox(scene, size, position, material, options = {}) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]), material);
   mesh.position.set(position[0], position[1], position[2]);
+  mesh.castShadow = options.castShadow ?? false;
+  mesh.receiveShadow = options.receiveShadow ?? true;
   scene.add(mesh);
   return mesh;
 }
@@ -527,34 +576,49 @@ function addEndWall(scene, z) {
   const texture = new THREE.CanvasTexture(drawEndWallCanvas());
   texture.colorSpace = THREE.SRGBColorSpace;
   const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.8, 1.2),
-    new THREE.MeshStandardMaterial({ map: texture, roughness: 0.58 })
+    new THREE.PlaneGeometry(4.8, 2.42),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false })
   );
-  mesh.position.set(0, 2.2, z);
+  mesh.position.set(0, 2.25, z);
+  mesh.renderOrder = 3;
   scene.add(mesh);
+
+  loadImage('/img/arcturus-logo-transparent.png').then((logo) => {
+    texture.image = drawEndWallCanvas(logo);
+    texture.needsUpdate = true;
+  }).catch(() => {});
 }
 
-function drawEndWallCanvas() {
+function drawEndWallCanvas(logo) {
   const canvas = document.createElement('canvas');
-  canvas.width = 1200;
-  canvas.height = 420;
+  canvas.width = 1600;
+  canvas.height = 820;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#c8bcaa';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(28,28,26,0.42)';
-  ctx.font = '24px monospace';
+
+  if (logo) {
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    const fit = containRect(logo.width, logo.height, 900, 900);
+    ctx.drawImage(logo, 350 + fit.x, -20 + fit.y, fit.width, fit.height);
+    ctx.restore();
+  } else {
+    drawFallbackStar(ctx, 800, 400, 360);
+  }
+
+  ctx.fillStyle = 'rgba(28,28,26,0.46)';
+  ctx.font = '700 24px ui-monospace, SFMono-Regular, Menlo, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('WELCOME TO', 600, 145);
+  ctx.fillText('WELCOME TO', 800, 352);
   ctx.fillStyle = '#1c1c1a';
-  ctx.font = '700 58px Arial';
+  ctx.font = '700 72px Arial';
   ctx.letterSpacing = '8px';
-  ctx.fillText('ARCTURUSDC', 600, 220);
+  ctx.fillText('ARCTURUSDC', 800, 446);
   ctx.fillStyle = '#1c1c1a';
-  ctx.font = '22px monospace';
-  ctx.fillText('APP STORE', 600, 270);
+  ctx.font = '700 26px ui-monospace, SFMono-Regular, Menlo, monospace';
+  ctx.fillText('APP STORE', 800, 505);
   ctx.fillStyle = '#f0452f';
   ctx.beginPath();
-  ctx.arc(755, 210, 5, 0, Math.PI * 2);
+  ctx.arc(1012, 430, 7, 0, Math.PI * 2);
   ctx.fill();
   return canvas;
 }
@@ -566,26 +630,42 @@ async function makePosterTexture(app) {
   const ctx = canvas.getContext('2d');
   drawPoster(ctx, app);
 
-  if (app.icon) {
-    try {
-      const image = await loadImage(app.icon);
-      drawPoster(ctx, app, image);
-    } catch {
-      drawPoster(ctx, app);
-    }
-  }
+  const [iconResult, appStoreResult, googlePlayResult] = await Promise.allSettled([
+    app.icon ? loadImage(app.icon) : Promise.resolve(null),
+    app.appStoreUrl ? loadImage('/assets/badges/download-on-the-app-store.svg') : Promise.resolve(null),
+    app.googlePlayUrl ? loadImage('/assets/badges/google-play-badge.png') : Promise.resolve(null),
+  ]);
+
+  drawPoster(ctx, app, {
+    icon: iconResult.status === 'fulfilled' ? iconResult.value : null,
+    appStoreBadge: appStoreResult.status === 'fulfilled' ? appStoreResult.value : null,
+    googlePlayBadge: googlePlayResult.status === 'fulfilled' ? googlePlayResult.value : null,
+  });
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.anisotropy = 4;
+  texture.anisotropy = 8;
   return texture;
 }
 
-function drawPoster(ctx, app, image) {
+function drawPoster(ctx, app, assets = {}) {
+  const image = assets.icon;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.fillStyle = '#efe7d8';
   ctx.fillRect(0, 0, 900, 1320);
+  drawPaperGrain(ctx, 900, 1320, 720);
+
+  const vignette = ctx.createRadialGradient(450, 560, 120, 450, 560, 720);
+  vignette.addColorStop(0, 'rgba(255,255,255,0.22)');
+  vignette.addColorStop(1, 'rgba(112,84,48,0.1)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, 900, 1320);
+
   ctx.strokeStyle = 'rgba(28,28,26,0.12)';
   ctx.lineWidth = 2;
   ctx.strokeRect(46, 46, 808, 1228);
+  ctx.strokeStyle = 'rgba(255,255,255,0.48)';
+  ctx.strokeRect(58, 58, 784, 1204);
 
   ctx.fillStyle = '#1c1c1a';
   ctx.font = '900 86px Arial';
@@ -605,7 +685,7 @@ function drawPoster(ctx, app, image) {
   ctx.fill();
 
   if (image) {
-    const fit = containRect(image.width, image.height, 300, 300);
+    const fit = containRect(image.naturalWidth || image.width, image.naturalHeight || image.height, 300, 300);
     ctx.drawImage(image, 300 + fit.x, 600 + fit.y, fit.width, fit.height);
   } else {
     ctx.fillStyle = '#1c1c1a';
@@ -618,11 +698,19 @@ function drawPoster(ctx, app, image) {
   const badgeY = 1110;
   let badgeX = 84;
   if (app.appStoreUrl) {
-    drawBadge(ctx, badgeX, badgeY, 'Download on the', 'App Store');
+    if (assets.appStoreBadge) {
+      drawStoreBadgeImage(ctx, assets.appStoreBadge, badgeX, badgeY, 218, 74);
+    } else {
+      drawBadge(ctx, badgeX, badgeY, 'Download on the', 'App Store');
+    }
     badgeX += 250;
   }
   if (app.googlePlayUrl) {
-    drawBadge(ctx, badgeX, badgeY, 'Get it on', 'Google Play');
+    if (assets.googlePlayBadge) {
+      drawStoreBadgeImage(ctx, assets.googlePlayBadge, badgeX, badgeY, 238, 74);
+    } else {
+      drawBadge(ctx, badgeX, badgeY, 'Get it on', 'Google Play');
+    }
   }
 
   ctx.fillStyle = '#f0452f';
@@ -644,6 +732,125 @@ function drawBadge(ctx, x, y, top, bottom) {
   ctx.beginPath();
   ctx.arc(x + 28, y + 37, 10, 0, Math.PI * 2);
   ctx.fill();
+}
+
+function drawStoreBadgeImage(ctx, image, x, y, width, height) {
+  ctx.save();
+  ctx.fillStyle = '#090908';
+  roundRect(ctx, x, y, width, height, 8);
+  ctx.fill();
+  ctx.clip();
+  const fit = containRect(image.naturalWidth || image.width, image.naturalHeight || image.height, width - 4, height - 4);
+  ctx.drawImage(image, x + 2 + fit.x, y + 2 + fit.y, fit.width, fit.height);
+  ctx.restore();
+}
+
+function drawPaperGrain(ctx, width, height, count) {
+  ctx.save();
+  for (let i = 0; i < count; i += 1) {
+    const shade = i % 2 === 0 ? '255,255,255' : '72,54,34';
+    ctx.fillStyle = `rgba(${shade},${0.018 + Math.random() * 0.025})`;
+    ctx.fillRect(Math.random() * width, Math.random() * height, 1 + Math.random() * 2, 1 + Math.random() * 2);
+  }
+  ctx.restore();
+}
+
+function drawFallbackStar(ctx, cx, cy, radius) {
+  ctx.save();
+  ctx.globalAlpha = 0.13;
+  ctx.fillStyle = '#f0452f';
+  ctx.beginPath();
+  for (let i = 0; i < 32; i += 1) {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * i) / 32;
+    const spike = i % 4 === 0 ? radius : i % 2 === 0 ? radius * 0.23 : radius * 0.42;
+    const x = cx + Math.cos(angle) * spike;
+    const y = cy + Math.sin(angle) * spike;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function makeFloorTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+  gradient.addColorStop(0, '#1b160f');
+  gradient.addColorStop(0.54, '#0f0d0a');
+  gradient.addColorStop(1, '#221a12');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 512, 512);
+
+  for (let y = 42; y < 512; y += 58) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, y + Math.sin(y) * 2);
+    ctx.lineTo(512, y + Math.cos(y) * 2);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 900; i += 1) {
+    ctx.fillStyle = `rgba(255,235,200,${Math.random() * 0.025})`;
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+  }
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+function makePlasterTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#d8cdbd';
+  ctx.fillRect(0, 0, 512, 512);
+
+  const glow = ctx.createRadialGradient(180, 110, 20, 220, 180, 480);
+  glow.addColorStop(0, 'rgba(255,255,255,0.22)');
+  glow.addColorStop(1, 'rgba(92,71,48,0.08)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, 512, 512);
+
+  for (let i = 0; i < 1200; i += 1) {
+    const warm = i % 3 === 0 ? '255,255,255' : '95,74,52';
+    ctx.fillStyle = `rgba(${warm},${0.015 + Math.random() * 0.025})`;
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1 + Math.random() * 2, 1 + Math.random() * 2);
+  }
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+function makeWoodTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 512, 0);
+  gradient.addColorStop(0, '#533616');
+  gradient.addColorStop(0.35, '#79552a');
+  gradient.addColorStop(0.7, '#66431d');
+  gradient.addColorStop(1, '#8a6538');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 512, 256);
+
+  for (let y = 12; y < 256; y += 14) {
+    ctx.strokeStyle = `rgba(31,19,8,${0.13 + Math.random() * 0.08})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 0; x <= 512; x += 32) {
+      const wave = Math.sin((x + y) * 0.035) * 4;
+      if (x === 0) ctx.moveTo(x, y + wave);
+      else ctx.lineTo(x, y + wave);
+    }
+    ctx.stroke();
+  }
+
+  return new THREE.CanvasTexture(canvas);
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 4) {
