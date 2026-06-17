@@ -461,7 +461,7 @@ function GalleryView({ artist, onBack }) {
           <img className={styles.inspectImage} src={inspectedWork.image} alt="" />
           <div className={styles.inspectCopy}>
             <h2>{inspectedWork.title}</h2>
-            <p>{inspectedWork.year ? inspectedWork.year : 'Undated in the returned Wikidata record'}</p>
+            <p>{inspectedWork.year ? inspectedWork.year : undatedSourceLabel(inspectedWork)}</p>
             <p>{inspectedWork.story}</p>
             <p>{inspectedWork.fact}</p>
             <div className={styles.inspectActions}>
@@ -476,6 +476,12 @@ function GalleryView({ artist, onBack }) {
       )}
     </main>
   );
+}
+
+function undatedSourceLabel(work) {
+  return work?.sourceType === 'commons'
+    ? 'Undated in the Commons file record'
+    : 'Undated in the returned Wikidata record';
 }
 
 function GalleryCanvas({ museum, entered, onInspect }) {

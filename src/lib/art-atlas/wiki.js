@@ -11,7 +11,98 @@ const SPARQL_HEADERS = {
   'User-Agent': 'ArtAtlasPrototype/1.0 (https://www.arcturusdc.com)',
 };
 
+const COMMONS_CATEGORY_FALLBACKS_BY_ARTIST = {
+  Q7836: ['Category:La Trahison des images', 'Category:Le Thérapeute'],
+  Q160149: ['Category:Rothko Chapel'],
+  Q132305: ['Category:Paintings by Willem de Kooning', 'Category:Sculptures by Willem de Kooning'],
+  Q5603: ["Category:Campbell's Soup Cans", 'Category:BMW M1 Art Car by Andy Warhol'],
+  Q231121: ['Category:Artworks by Yayoi Kusama'],
+};
+
 const FEATURED_WORKS_BY_ARTIST = {
+  Q5588: [
+    commonsWork({
+      id: 'commons-frida-kahlo-broken-column',
+      title: 'The Broken Column',
+      year: '1944',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/La%20Columna%20Rota%2C%20Frida%20Kahlo%2C%20Museo%20Dolores%20Olmedo.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:La_Columna_Rota,_Frida_Kahlo,_Museo_Dolores_Olmedo.jpg',
+    }),
+    commonsWork({
+      id: 'commons-frida-kahlo-self-portrait-small-monkey',
+      title: 'Self-Portrait with Small Monkey',
+      year: '1945',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Autorretrato%20con%20Changuito%2C%20Frida%2C%20Museo%20Dolores%20Olmedo.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Autorretrato_con_Changuito,_Frida,_Museo_Dolores_Olmedo.jpg',
+    }),
+    commonsWork({
+      id: 'commons-frida-kahlo-a-few-small-nips',
+      title: 'A Few Small Nips',
+      year: '1935',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Unos%20cuantos%20piquetitos%2C%20Frida%2C%20Museo%20Dolores%20Olmedo.webp',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Unos_cuantos_piquetitos,_Frida,_Museo_Dolores_Olmedo.webp',
+    }),
+    commonsWork({
+      id: 'commons-frida-kahlo-urban-landscape',
+      title: 'Urban Landscape',
+      year: '1925',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Frida%20Kahlo%2C%20Paisaje%20urbano%2C%201925.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Frida_Kahlo,_Paisaje_urbano,_1925.jpg',
+    }),
+    commonsWork({
+      id: 'commons-frida-kahlo-tree-of-hope',
+      title: 'Tree of Hope, Remain Strong',
+      year: '1946',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Arbol%20de%20la%20Esperanza%2C%20Mantente%20Firme%20%28Tree%20of%20Hope%2C%20Remain%20Strong%29%20by%20Frida%20Kahlo%2C%20created%20in%201946.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Arbol_de_la_Esperanza,_Mantente_Firme_(Tree_of_Hope,_Remain_Strong)_by_Frida_Kahlo,_created_in_1946.jpg',
+    }),
+  ],
+  Q37571: [
+    commonsWork({
+      id: 'commons-jackson-pollock-peddler',
+      title: 'Peddler',
+      year: '1935',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Peddler%20by%20Jackson%20Pollock.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Peddler_by_Jackson_Pollock.jpg',
+    }),
+    commonsWork({
+      id: 'commons-jackson-pollock-circle',
+      title: 'Circle',
+      year: '1941',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Circle%20by%20Jackson%20Pollock.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Circle_by_Jackson_Pollock.jpg',
+    }),
+  ],
+  Q159907: [
+    commonsWork({
+      id: 'commons-hockney-bmw-art-car',
+      title: 'BMW 850 CSi Art Car',
+      year: '1995',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/BMW%20Art%20Car%20no.%2014%2C%20850CSi%20David%20Hockney%20%281995%29.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:BMW_Art_Car_no._14,_850CSi_David_Hockney_(1995).jpg',
+    }),
+    commonsWork({
+      id: 'commons-hockney-bmw-art-car-detail',
+      title: 'BMW 850 CSi Art Car, door detail',
+      year: '1995',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/1995%20BMW%20850%20CSi%20by%20David%20Hockney%20-%20door%20closeup.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:1995_BMW_850_CSi_by_David_Hockney_-_door_closeup.jpg',
+    }),
+    commonsWork({
+      id: 'commons-hockney-queen-elizabeth-window',
+      title: 'Queen Elizabeth II Window',
+      year: '',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/View%20of%20a%20stained%20glass%20window%20in%20Westminster%20Abbey%20-%20geograph.org.uk%20-%206879744.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:View_of_a_stained_glass_window_in_Westminster_Abbey_-_geograph.org.uk_-_6879744.jpg',
+    }),
+    commonsWork({
+      id: 'commons-hockney-queen-elizabeth-window-view',
+      title: 'Queen Elizabeth II Window, Westminster Abbey',
+      year: '',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Westminster%20Abbey%20-%2051370500850.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Westminster_Abbey_-_51370500850.jpg',
+    }),
+  ],
   Q130531: [
     featuredWork({
       id: 'Q321303',
@@ -172,7 +263,11 @@ export async function buildArtistMuseum(wikidataId) {
     years: baseArtist.periodYears,
     color: baseArtist.periodColor,
   });
-  const works = mergeArtistWorks(wikidataId, await fetchWikidataWorks(wikidataId));
+  const [wikidataWorks, commonsFallbackWorks] = await Promise.all([
+    fetchWikidataWorks(wikidataId),
+    fetchCommonsFallbackWorks(wikidataId),
+  ]);
+  const works = mergeArtistWorks(wikidataId, [...wikidataWorks, ...commonsFallbackWorks]);
 
   return {
     version: ART_ATLAS_VERSION,
@@ -181,7 +276,7 @@ export async function buildArtistMuseum(wikidataId) {
     artist,
     works,
     attribution: {
-      text: 'Work titles, years, and image URLs come from Wikidata claims and Wikimedia Commons file paths.',
+      text: 'Work titles, years, and image URLs come from Wikidata claims and Wikimedia Commons file/category records.',
       wikidata: artist.wikidataUrl,
       wikipedia: artist.wikipediaUrl,
       commons: 'https://commons.wikimedia.org/',
@@ -232,7 +327,8 @@ async function fetchWikidataWorks(wikidataId) {
       }
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
     }
-    LIMIT 24
+    ORDER BY DESC(BOUND(?article)) ?workLabel
+    LIMIT 96
   `;
   const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
 
@@ -244,25 +340,72 @@ async function fetchWikidataWorks(wikidataId) {
     if (!response.ok) return [];
     const data = await response.json();
     return dedupeWorks(
-      data.results.bindings.map((binding) => ({
-        id: binding.work.value.split('/').pop(),
-        title: binding.workLabel.value,
-        year: binding.inception?.value?.slice(0, 4) || '',
-        image: proxiedImageUrl(binding.image.value),
-        imageSource: normalizeImageUrl(binding.image.value),
-        sourceUrl: binding.article?.value || binding.work.value,
-        wikidataUrl: binding.work.value,
-        story: binding.article?.value
-          ? 'This work has a linked Wikipedia article and a Wikimedia image record.'
-          : 'This work is listed on Wikidata with a Wikimedia Commons image claim.',
-        fact: binding.inception?.value
-          ? `Wikidata records the work date as ${binding.inception.value.slice(0, 10)}.`
-          : 'Wikidata has not supplied a precise date for this image-backed record.',
-      }))
+      data.results.bindings.map((binding) => {
+        const year = formatWikidataYear(binding.inception?.value);
+        return {
+          id: binding.work.value.split('/').pop(),
+          title: binding.workLabel.value,
+          year,
+          image: proxiedImageUrl(binding.image.value),
+          imageSource: normalizeImageUrl(binding.image.value),
+          sourceUrl: binding.article?.value || binding.work.value,
+          wikidataUrl: binding.work.value,
+          sourceType: 'wikidata',
+          story: binding.article?.value
+            ? 'This work has a linked Wikipedia article and a Wikimedia image record.'
+            : 'This work is listed on Wikidata with a Wikimedia Commons image claim.',
+          fact: year
+            ? `Wikidata records the work date as ${year}.`
+            : 'Wikidata has not supplied a precise date for this image-backed record.',
+        };
+      })
     );
   } catch (error) {
     return [];
   }
+}
+
+async function fetchCommonsFallbackWorks(wikidataId) {
+  const categories = COMMONS_CATEGORY_FALLBACKS_BY_ARTIST[wikidataId] || [];
+  if (categories.length === 0) return [];
+
+  const results = await Promise.all(
+    categories.map(async (category) => {
+      const url = new URL('https://commons.wikimedia.org/w/api.php');
+      url.searchParams.set('action', 'query');
+      url.searchParams.set('generator', 'categorymembers');
+      url.searchParams.set('gcmtitle', category);
+      url.searchParams.set('gcmnamespace', '6');
+      url.searchParams.set('gcmlimit', '24');
+      url.searchParams.set('prop', 'imageinfo');
+      url.searchParams.set('iiprop', 'url|mime|extmetadata');
+      url.searchParams.set('format', 'json');
+
+      try {
+        const response = await fetch(url, {
+          headers: WIKI_HEADERS,
+          next: { revalidate: 60 * 60 * 24 * 7 },
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Object.values(data?.query?.pages || {})
+          .map((page) => commonsCategoryWork(page, category))
+          .filter(Boolean);
+      } catch {
+        return [];
+      }
+    })
+  );
+
+  return dedupeWorks(results.flat());
+}
+
+function formatWikidataYear(value) {
+  const match = String(value || '').match(/^[+-]?\d{1,4}/);
+  if (!match) return '';
+  const raw = match[0].replace(/^\+/, '');
+  if (raw.startsWith('-')) return raw;
+  return raw.padStart(4, '0');
 }
 
 function compactExtract(text) {
@@ -296,11 +439,94 @@ function featuredWork({ id, title, year, image, sourceUrl }) {
     imageSource,
     sourceUrl,
     wikidataUrl: `https://www.wikidata.org/wiki/${id}`,
+    sourceType: 'wikidata',
     story: 'This work is included from a Wikidata work record with a Wikimedia Commons image file.',
     fact: year
       ? `Wikidata records the work date as ${year}.`
       : 'Wikidata has not supplied a precise date for this image-backed record.',
   };
+}
+
+function commonsWork({ id, title, year, image, sourceUrl, category }) {
+  const imageSource = normalizeImageUrl(image);
+  return {
+    id,
+    title,
+    year,
+    image: proxiedImageUrl(imageSource),
+    imageSource,
+    sourceUrl,
+    wikidataUrl: sourceUrl,
+    sourceType: 'commons',
+    story: 'This source-backed work is included from a Wikimedia Commons file record where Wikidata does not expose a creator-image work entry.',
+    fact: year
+      ? `Wikimedia Commons records the source date as ${year}.`
+      : category
+        ? `Wikimedia Commons source category: ${category.replace(/^Category:/, '')}.`
+      : 'Wikimedia Commons has not supplied a precise source date for this file record.',
+  };
+}
+
+function commonsCategoryWork(page, category) {
+  const imageInfo = page?.imageinfo?.[0];
+  if (!imageInfo?.url || !imageInfo?.mime?.startsWith('image/')) return null;
+
+  const rawTitle = cleanCommonsText(imageInfo.extmetadata?.ObjectName?.value) || commonsTitleFromPage(page.title);
+  const title = simplifyCommonsTitle(rawTitle);
+  if (!isUsableCommonsTitle(title)) return null;
+
+  return commonsWork({
+    id: `commons-${page.pageid}`,
+    title,
+    year: formatCommonsYear(title),
+    image: commonsSpecialFilePath(page.title),
+    sourceUrl: imageInfo.descriptionurl || commonsFilePageUrl(page.title),
+    category,
+  });
+}
+
+function cleanCommonsText(value) {
+  return String(value || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/title QS:.+$/i, '')
+    .replace(/label QS:.+$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function commonsTitleFromPage(title) {
+  return String(title || '')
+    .replace(/^File:/, '')
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/_/g, ' ');
+}
+
+function simplifyCommonsTitle(title) {
+  return title
+    .replace(/\s+-\s+geograph\.org\.uk.*$/i, '')
+    .replace(/\s+\([0-9]+\)$/g, '')
+    .replace(/\s+\([0-9a-f-]{8,}\)$/gi, '')
+    .trim();
+}
+
+function isUsableCommonsTitle(title) {
+  if (!title || /^Q\d+$/.test(title)) return false;
+  if (/^ame\d+/i.test(title)) return false;
+  return !/\b(signature|sign|admin|welcome house|gravestone|grave|poster|cartel|dall-?e|stable diffusion|ai art|pater sparrow|tmoca 19|rsawarhol|plaque|statue|obelisk|museum|museo|exhibition|exposition|udstilling|tentoonstelling|special edition|national gallery|bestanddeelnr)\b/i.test(title);
+}
+
+function formatCommonsYear(value) {
+  const match = String(value || '').match(/\b(1[4-9]\d{2}|20\d{2})\b/);
+  return match ? match[1] : '';
+}
+
+function commonsFilePageUrl(title) {
+  return `https://commons.wikimedia.org/wiki/${encodeURI(String(title || '').replaceAll(' ', '_'))}`;
+}
+
+function commonsSpecialFilePath(title) {
+  const fileName = String(title || '').replace(/^File:/, '');
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
 }
 
 function mergeArtistWorks(wikidataId, works) {
@@ -321,10 +547,23 @@ function withProxiedWorkImage(work) {
 
 function dedupeWorks(works) {
   const seen = new Set();
+  const seenTitles = new Set();
   return works.filter((work) => {
-    const key = `${work.title}-${work.imageSource || work.image}`;
+    if (/^Q\d+$/.test(work.title || '')) return false;
+    const titleKey = normalizeWorkTitle(work.title);
+    if (work.sourceType === 'commons' && seenTitles.has(titleKey)) return false;
+    const key = work.id || `${work.title}-${work.imageSource || work.image}`;
     if (seen.has(key)) return false;
     seen.add(key);
+    seenTitles.add(titleKey);
     return Boolean(work.image && work.title);
   });
+}
+
+function normalizeWorkTitle(title) {
+  return String(title || '')
+    .replace(/\s+by\s+[A-Za-zÀ-ÖØ-öø-ÿ\s.'-]+$/i, '')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toLowerCase();
 }
