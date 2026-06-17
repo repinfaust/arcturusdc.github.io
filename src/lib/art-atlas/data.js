@@ -199,6 +199,10 @@ export const ARTIST_LOOKUP = Object.fromEntries(
 );
 
 function artist(slug, name, wikidataId, birth, death, dx, dy) {
+  const aliases = {
+    Q130531: ['Hieronymous Bosch', 'Jheronimus Bosch'],
+  };
+
   return {
     slug,
     name,
@@ -207,6 +211,7 @@ function artist(slug, name, wikidataId, birth, death, dx, dy) {
     birth,
     death,
     offset: { x: dx, y: dy },
+    searchAliases: aliases[wikidataId] || [],
     wikipediaUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(name.replaceAll(' ', '_'))}`,
     wikidataUrl: `https://www.wikidata.org/wiki/${wikidataId}`,
   };

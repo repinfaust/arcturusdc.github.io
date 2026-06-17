@@ -14,6 +14,7 @@ Original prompt: create a new web app within /apps/stea called art-atlas. Attach
 - `npm run build` passes; postbuild changelog leak test passes. Local browser verification confirmed protected-route handoff and explicit Firebase config failure handling. Direct API checks returned 15 periods, 45 artists, and 12 image-backed Degas works.
 - User reported “no art”; attached browser log showed CORS failures loading Wikimedia Commons `Special:FilePath` redirects in Three.js textures. Fix in progress: preserve original Wikimedia URL as `imageSource`, serve `image` via a restricted same-origin `/api/art-atlas/image` proxy, and keep source links visible in the inspect panel.
 - CORS fix verified locally: Degas API returns proxied same-origin artwork URLs, the image endpoint returns `200 image/jpeg`, Wikimedia originals are requested at `width=1400`, upstream image fetch uses `cache: no-store` to avoid Next data-cache >2MB errors, and `npm run build` / postbuild leak test pass.
+- Added a preferred Hieronymus Bosch work overlay sourced from Wikidata/Wikimedia IDs and file paths. Bosch now returns a stable 12-work gallery including Garden of Earthly Delights, The Haywain Triptych, Temptation of St. Anthony, The Last Judgment, Ship of Fools, Death and the Miser, Seven Deadly Sins, Adoration of the Magi, Cutting the Stone, The Wayfarer, St. John on Patmos, and The Tree-Man. Added search aliases for "Hieronymous Bosch" and "Jheronimus Bosch".
 
 ## TODO
 

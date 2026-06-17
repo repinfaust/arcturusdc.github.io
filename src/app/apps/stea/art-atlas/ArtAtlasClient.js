@@ -116,7 +116,7 @@ function ArtAtlasExperience() {
         ...period,
         artists: period.artists.filter((artist) => {
           if (!search) return true;
-          return `${artist.name} ${period.name}`.toLowerCase().includes(search);
+          return `${artist.name} ${artist.searchAliases?.join(' ') || ''} ${period.name}`.toLowerCase().includes(search);
         }),
       }))
       .filter((period) => period.artists.length > 0 || !search);

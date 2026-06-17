@@ -11,6 +11,95 @@ const SPARQL_HEADERS = {
   'User-Agent': 'ArtAtlasPrototype/1.0 (https://www.arcturusdc.com)',
 };
 
+const FEATURED_WORKS_BY_ARTIST = {
+  Q130531: [
+    featuredWork({
+      id: 'Q321303',
+      title: 'The Garden of Earthly Delights',
+      year: '1490',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/The%20Garden%20of%20Earthly%20Delights%20by%20Bosch%20High%20Resolution%202.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/The_Garden_of_Earthly_Delights',
+    }),
+    featuredWork({
+      id: 'Q2213811',
+      title: 'The Haywain Triptych',
+      year: '1510',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Jheronimus%20Bosch%20-%20De%20hooiwagen%20%28c.1516%2C%20Prado%29.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/The_Haywain_Triptych',
+    }),
+    featuredWork({
+      id: 'Q1217288',
+      title: 'Triptych of the Temptation of St. Anthony',
+      year: '1501',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Temptation%20of%20Saint%20Anthony.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/Triptych_of_the_Temptation_of_St._Anthony',
+    }),
+    featuredWork({
+      id: 'Q1387483',
+      title: 'The Last Judgment',
+      year: '1506',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Last%20judgement%20Bosch.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/The_Last_Judgment_(Bosch,_Vienna)',
+    }),
+    featuredWork({
+      id: 'Q405814',
+      title: 'Ship of Fools',
+      year: '1500',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Jheronimus%20Bosch%20011.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/Ship_of_Fools_(painting)',
+    }),
+    featuredWork({
+      id: 'Q2203011',
+      title: 'Death and the Miser',
+      year: '1500',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Jheronimus%20Bosch%20050.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/Death_and_the_Miser',
+    }),
+    featuredWork({
+      id: 'Q2304870',
+      title: 'The Seven Deadly Sins and the Four Last Things',
+      year: '1500',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Hieronymus%20Bosch-%20The%20Seven%20Deadly%20Sins%20and%20the%20Four%20Last%20Things.JPG',
+      sourceUrl: 'https://en.wikipedia.org/wiki/The_Seven_Deadly_Sins_and_the_Four_Last_Things',
+    }),
+    featuredWork({
+      id: 'Q2276130',
+      title: 'Adoration of the Magi',
+      year: '1494',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Hieronymus%20Bosch%20-%20Triptych%20of%20the%20Adoration%20of%20the%20Magi%20-%20WGA2606.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/Adoration_of_the_Magi_(Bosch,_Madrid)',
+    }),
+    featuredWork({
+      id: 'Q2270768',
+      title: 'Cutting the Stone',
+      year: '1503',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Cutting%20the%20Stone%20%28Bosch%29.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/Cutting_the_Stone',
+    }),
+    featuredWork({
+      id: 'Q2400652',
+      title: 'The Wayfarer',
+      year: '1500',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Jheronimus%20Bosch%20-%20The%20Pedlar%20-%20Google%20Art%20Project.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/The_Wayfarer_(painting)',
+    }),
+    featuredWork({
+      id: 'Q2390197',
+      title: 'St. John the Evangelist on Patmos',
+      year: '1489',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Johannes%20op%20Patmos%20Saint%20John%20on%20Patmos%20Berlin%2C%20Staatlichen%20Museen%20zu%20Berlin%2C%20Gemaldegalerie%20HR.jpg',
+      sourceUrl: 'https://en.wikipedia.org/wiki/St._John_the_Evangelist_on_Patmos',
+    }),
+    featuredWork({
+      id: 'Q1968805',
+      title: 'The Tree-Man',
+      year: '1510',
+      image: 'http://commons.wikimedia.org/wiki/Special:FilePath/Hieronymus%20Bosch%20-%20The%20Tree-Man%2C%20c.%201505%20-%20Google%20Art%20Project.jpg',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q1968805',
+    }),
+  ],
+};
+
 export async function readFirebaseCatalog() {
   try {
     const { db } = getFirebaseAdmin();
@@ -37,7 +126,7 @@ export async function readFirebaseArtist(wikidataId) {
     if (!data?.artist || !Array.isArray(data?.works)) return null;
     return {
       ...data,
-      works: data.works.map(withProxiedWorkImage),
+      works: mergeArtistWorks(wikidataId, data.works),
       sourceMode: 'firebase',
     };
   } catch (error) {
@@ -83,7 +172,7 @@ export async function buildArtistMuseum(wikidataId) {
     years: baseArtist.periodYears,
     color: baseArtist.periodColor,
   });
-  const works = await fetchWikidataWorks(wikidataId);
+  const works = mergeArtistWorks(wikidataId, await fetchWikidataWorks(wikidataId));
 
   return {
     version: ART_ATLAS_VERSION,
@@ -143,7 +232,7 @@ async function fetchWikidataWorks(wikidataId) {
       }
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
     }
-    LIMIT 16
+    LIMIT 24
   `;
   const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
 
@@ -170,7 +259,7 @@ async function fetchWikidataWorks(wikidataId) {
           ? `Wikidata records the work date as ${binding.inception.value.slice(0, 10)}.`
           : 'Wikidata has not supplied a precise date for this image-backed record.',
       }))
-    ).slice(0, 12);
+    );
   } catch (error) {
     return [];
   }
@@ -195,6 +284,30 @@ function proxiedImageUrl(url) {
   if (!normalized) return '';
   if (normalized.startsWith('/api/art-atlas/image?')) return normalized;
   return `/api/art-atlas/image?url=${encodeURIComponent(normalized)}`;
+}
+
+function featuredWork({ id, title, year, image, sourceUrl }) {
+  const imageSource = normalizeImageUrl(image);
+  return {
+    id,
+    title,
+    year,
+    image: proxiedImageUrl(imageSource),
+    imageSource,
+    sourceUrl,
+    wikidataUrl: `https://www.wikidata.org/wiki/${id}`,
+    story: 'This work is included from a Wikidata work record with a Wikimedia Commons image file.',
+    fact: year
+      ? `Wikidata records the work date as ${year}.`
+      : 'Wikidata has not supplied a precise date for this image-backed record.',
+  };
+}
+
+function mergeArtistWorks(wikidataId, works) {
+  return dedupeWorks([
+    ...(FEATURED_WORKS_BY_ARTIST[wikidataId] || []),
+    ...works.map(withProxiedWorkImage),
+  ]).slice(0, 12);
 }
 
 function withProxiedWorkImage(work) {
