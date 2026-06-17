@@ -292,6 +292,12 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
     wallTexture.repeat.set(2.2, Math.max(3, corridorLength / 5.5));
     wallTexture.colorSpace = THREE.SRGBColorSpace;
 
+    const backWallTexture = makePlasterTexture();
+    backWallTexture.wrapS = THREE.RepeatWrapping;
+    backWallTexture.wrapT = THREE.RepeatWrapping;
+    backWallTexture.repeat.set(1.15, 1.05);
+    backWallTexture.colorSpace = THREE.SRGBColorSpace;
+
     const frameTexture = makeWoodTexture();
     frameTexture.wrapS = THREE.RepeatWrapping;
     frameTexture.wrapT = THREE.RepeatWrapping;
@@ -299,6 +305,7 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
 
     const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1711, map: floorTexture, roughness: 0.44, metalness: 0.08 });
     const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xd8cdbd, map: wallTexture, roughness: 0.74 });
+    const backWallMaterial = new THREE.MeshStandardMaterial({ color: 0xd9cebe, map: backWallTexture, roughness: 0.78 });
     const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x81705d, roughness: 0.76 });
     const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x725127, map: frameTexture, roughness: 0.46, metalness: 0.12 });
     const glassMaterial = new THREE.MeshPhysicalMaterial({
@@ -322,7 +329,7 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
     addBox(scene, [8.7, 0.08, corridorLength], [0, -0.04, centerZ], floorMaterial, { receiveShadow: true });
     addBox(scene, [0.14, 4.45, corridorLength], [-4.28, 2.12, centerZ], wallMaterial);
     addBox(scene, [0.14, 4.45, corridorLength], [4.28, 2.12, centerZ], wallMaterial);
-    addBox(scene, [8.7, 4.45, 0.14], [0, 2.12, farZ], wallMaterial);
+    addBox(scene, [8.7, 4.45, 0.14], [0, 2.12, farZ], backWallMaterial);
     addBox(scene, [3.35, 0.1, corridorLength], [-2.65, 4.25, centerZ], ceilingMaterial);
     addBox(scene, [3.35, 0.1, corridorLength], [2.65, 4.25, centerZ], ceilingMaterial);
     addBox(scene, [1.7, 0.04, corridorLength - 1.5], [0, 4.3, centerZ + 0.1], new THREE.MeshBasicMaterial({ color: 0xf3eee6 }), { castShadow: false, receiveShadow: false });
@@ -576,10 +583,10 @@ function addEndWall(scene, z) {
   const texture = new THREE.CanvasTexture(drawEndWallCanvas());
   texture.colorSpace = THREE.SRGBColorSpace;
   const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(4.8, 2.42),
+    new THREE.PlaneGeometry(6.4, 3.26),
     new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false })
   );
-  mesh.position.set(0, 2.25, z);
+  mesh.position.set(0, 2.32, z);
   mesh.renderOrder = 3;
   scene.add(mesh);
 
@@ -597,28 +604,29 @@ function drawEndWallCanvas(logo) {
 
   if (logo) {
     ctx.save();
-    ctx.globalAlpha = 0.18;
-    const fit = containRect(logo.width, logo.height, 900, 900);
-    ctx.drawImage(logo, 350 + fit.x, -20 + fit.y, fit.width, fit.height);
+    ctx.globalAlpha = 0.27;
+    const fit = containRect(logo.width, logo.height, 1160, 1160);
+    ctx.drawImage(logo, 220 + fit.x, -165 + fit.y, fit.width, fit.height);
     ctx.restore();
+    drawFallbackStar(ctx, 800, 405, 430, 0.16);
   } else {
-    drawFallbackStar(ctx, 800, 400, 360);
+    drawFallbackStar(ctx, 800, 390, 470, 0.18);
   }
 
   ctx.fillStyle = 'rgba(28,28,26,0.46)';
-  ctx.font = '700 24px ui-monospace, SFMono-Regular, Menlo, monospace';
+  ctx.font = '700 28px ui-monospace, SFMono-Regular, Menlo, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('WELCOME TO', 800, 352);
+  ctx.fillText('WELCOME TO', 800, 338);
   ctx.fillStyle = '#1c1c1a';
-  ctx.font = '700 72px Arial';
+  ctx.font = '700 92px Arial';
   ctx.letterSpacing = '8px';
-  ctx.fillText('ARCTURUSDC', 800, 446);
+  ctx.fillText('ARCTURUSDC', 800, 452);
   ctx.fillStyle = '#1c1c1a';
-  ctx.font = '700 26px ui-monospace, SFMono-Regular, Menlo, monospace';
-  ctx.fillText('APP STORE', 800, 505);
+  ctx.font = '700 30px ui-monospace, SFMono-Regular, Menlo, monospace';
+  ctx.fillText('APP STORE', 800, 520);
   ctx.fillStyle = '#f0452f';
   ctx.beginPath();
-  ctx.arc(1012, 430, 7, 0, Math.PI * 2);
+  ctx.arc(1076, 430, 8, 0, Math.PI * 2);
   ctx.fill();
   return canvas;
 }
@@ -755,9 +763,9 @@ function drawPaperGrain(ctx, width, height, count) {
   ctx.restore();
 }
 
-function drawFallbackStar(ctx, cx, cy, radius) {
+function drawFallbackStar(ctx, cx, cy, radius, alpha = 0.13) {
   ctx.save();
-  ctx.globalAlpha = 0.13;
+  ctx.globalAlpha = alpha;
   ctx.fillStyle = '#f0452f';
   ctx.beginPath();
   for (let i = 0; i < 32; i += 1) {
