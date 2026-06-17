@@ -37,9 +37,10 @@ export function TenantProvider({ children }) {
 
   // Load user's tenants from tenant_members collection
   const loadTenants = useCallback(async (userEmail) => {
-    if (!userEmail) {
+    if (!userEmail || !db) {
       setAvailableTenants([]);
       setCurrentTenant(null);
+      setLoading(false);
       return;
     }
 
@@ -137,6 +138,16 @@ export function TenantProvider({ children }) {
 
   // Listen to auth state changes
   useEffect(() => {
+    if (!auth) {
+      setUser(null);
+      setAvailableTenants([]);
+      setCurrentTenant(null);
+      setIsSuperAdmin(false);
+      setIsWorkspaceAdmin(false);
+      setLoading(false);
+      return undefined;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser?.email) {
@@ -162,7 +173,7 @@ export function TenantProvider({ children }) {
   // Check if user is admin of current tenant
   useEffect(() => {
     const checkWorkspaceAdmin = async () => {
-      if (!user?.email || !currentTenant?.id || isSuperAdmin) {
+      if (!db || !user?.email || !currentTenant?.id || isSuperAdmin) {
         setIsWorkspaceAdmin(false);
         return;
       }

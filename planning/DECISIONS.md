@@ -81,3 +81,11 @@ Phase 2 of D-SITE-001, approved by David 2026-06-11 (month grouping chosen).
 - **Visuals:** locked tech-tree vocabulary only — entry spine takes the lane colour of the first feature the release advances; metadata rows/pills/lightbox reuse existing module classes. No new motion.
 - **Navigation:** quiet cross-links between tree and timeline views; timeline added to sitemap. Public/internal leak posture unchanged (postbuild leak test covers the new route automatically).
 - This closes the scope agreed for the changelog feature; no further phases planned.
+
+## 2026-06-17 — Art Atlas route and source-cache approach
+- Added `/apps/stea/art-atlas` as a browser-based interactive art-history atlas and walkable museum prototype.
+- User selected timeline direction **B: Cosmos** (constellation-style historical atlas) after the required A/B/C check-in.
+- **Data storage decision:** use the existing integrated Firebase/Admin stack as an optional read-through catalogue cache if populated later; do not add Neo Postgres for this route. The app must also ship with a source-attributed local fallback catalogue so it runs without database provisioning.
+- **Source constraint:** artist summaries, dates, portraits, and artwork references must be sourced from Wikipedia/Wikidata/Wikimedia Commons. Do not invent artwork facts; source URLs remain visible in the data layer and UI attribution.
+- **Auth/privacy:** no new authentication model, no anonymous auth, and no user data collection. The route is read-only from the visitor's perspective.
+- **Infrastructure boundary:** no new external infrastructure. Three.js is allowed as an app dependency for the required 3D museum scene.

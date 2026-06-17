@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth, googleProvider, microsoftProvider } from '@/lib/firebase';
+import { auth, firebaseInitError, googleProvider, microsoftProvider } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
@@ -88,6 +88,14 @@ const IN_SESSION_DESTINATIONS = [
     excludeForTenants: [APEXTWIN_TENANT_ID],
   },
   {
+    label: 'Art Atlas',
+    href: '/apps/stea/art-atlas',
+    description: 'Constellation art-history atlas with Wikipedia-sourced artist cards and walkable Wikimedia galleries.',
+    gradient: 'from-stone-950/95 to-neutral-900/95',
+    borderColor: 'border-amber-500/40',
+    textLight: true,
+  },
+  {
     label: 'ApexTwin',
     href: '/apps/stea/apextwin-poc',
     description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',
@@ -164,6 +172,17 @@ export default function SteaAccessPage() {
   }, []);
 
   useEffect(() => {
+    if (!auth) {
+      setUser(null);
+      setAuthReady(true);
+      setError(
+        firebaseInitError
+          ? 'STEa sign-in is unavailable because Firebase client configuration is invalid in this environment.'
+          : 'STEa sign-in is unavailable in this environment.'
+      );
+      return undefined;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       setAuthReady(true);
@@ -194,6 +213,11 @@ export default function SteaAccessPage() {
 
   const handleSignIn = async (provider = googleProvider, label = 'Google') => {
     setError('');
+    if (!auth || !provider) {
+      setError('STEa sign-in is unavailable because Firebase client configuration is not ready.');
+      return;
+    }
+
     setSigningIn(true);
     try {
       await signInWithPopup(auth, provider);
@@ -215,7 +239,9 @@ export default function SteaAccessPage() {
     }
 
     try {
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
       cookieUidRef.current = null;
       router.replace('/apps/stea');
     } catch (err) {
@@ -238,6 +264,7 @@ export default function SteaAccessPage() {
 
   if (!user) {
     const busy = signingIn || sessionSyncing;
+    const signInDisabled = busy || !auth;
 
     return (
       <div className="relative mx-auto flex min-h-[70vh] max-w-5xl flex-col items-center justify-center gap-10 px-4 py-16 text-center">
@@ -282,18 +309,18 @@ export default function SteaAccessPage() {
 
           <button
             onClick={() => handleSignIn(googleProvider, 'Google')}
-            disabled={busy}
+            disabled={signInDisabled}
             className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-full bg-neutral-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/40 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
           >
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-neutral-900">
               G
             </span>
-            {busy ? 'Preparing your workspace…' : 'Sign in with Google'}
+            {!auth ? 'Sign-in unavailable' : busy ? 'Preparing your workspace…' : 'Sign in with Google'}
           </button>
 
           <button
             onClick={() => handleSignIn(microsoftProvider, 'Microsoft')}
-            disabled={busy}
+            disabled={signInDisabled}
             className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-full border border-neutral-300 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
           >
             <span className="inline-flex h-5 w-5 items-center justify-center">
@@ -427,4 +454,3 @@ export default function SteaAccessPage() {
     </div>
   );
 }
-
