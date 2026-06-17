@@ -37,6 +37,7 @@ export async function readFirebaseArtist(wikidataId) {
     if (!data?.artist || !Array.isArray(data?.works)) return null;
     return {
       ...data,
+      works: data.works.map(withProxiedWorkImage),
       sourceMode: 'firebase',
     };
   } catch (error) {
@@ -158,7 +159,8 @@ async function fetchWikidataWorks(wikidataId) {
         id: binding.work.value.split('/').pop(),
         title: binding.workLabel.value,
         year: binding.inception?.value?.slice(0, 4) || '',
-        image: normalizeImageUrl(binding.image.value),
+        image: proxiedImageUrl(binding.image.value),
+        imageSource: normalizeImageUrl(binding.image.value),
         sourceUrl: binding.article?.value || binding.work.value,
         wikidataUrl: binding.work.value,
         story: binding.article?.value
@@ -188,10 +190,26 @@ function normalizeImageUrl(url) {
   return url.replace(/^http:\/\//, 'https://');
 }
 
+function proxiedImageUrl(url) {
+  const normalized = normalizeImageUrl(url);
+  if (!normalized) return '';
+  if (normalized.startsWith('/api/art-atlas/image?')) return normalized;
+  return `/api/art-atlas/image?url=${encodeURIComponent(normalized)}`;
+}
+
+function withProxiedWorkImage(work) {
+  const source = normalizeImageUrl(work.imageSource || work.image || '');
+  return {
+    ...work,
+    imageSource: source,
+    image: proxiedImageUrl(source),
+  };
+}
+
 function dedupeWorks(works) {
   const seen = new Set();
   return works.filter((work) => {
-    const key = `${work.title}-${work.image}`;
+    const key = `${work.title}-${work.imageSource || work.image}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return Boolean(work.image && work.title);

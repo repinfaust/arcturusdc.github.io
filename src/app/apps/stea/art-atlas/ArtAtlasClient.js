@@ -466,6 +466,7 @@ function GalleryView({ artist, onBack }) {
             <p>{inspectedWork.fact}</p>
             <div className={styles.inspectActions}>
               <a href={inspectedWork.sourceUrl}>Source record</a>
+              {inspectedWork.imageSource && <a href={inspectedWork.imageSource}>Image file</a>}
               <button className={styles.galleryBack} type="button" onClick={() => setInspectedWork(null)}>
                 Close
               </button>

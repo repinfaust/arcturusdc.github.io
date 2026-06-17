@@ -12,6 +12,8 @@ Original prompt: create a new web app within /apps/stea called art-atlas. Attach
 - Added an unrestricted Art Atlas card to the STEa launcher and a route-local access gate that allows any signed-in STEa member or super-admin, regardless of selected workspace.
 - Improved gallery polish with shadows, bench/baseboards, back-wall artist title, glazing, movement help, and stable `render_game_to_text` / `advanceTime` hooks for timeline and gallery verification.
 - `npm run build` passes; postbuild changelog leak test passes. Local browser verification confirmed protected-route handoff and explicit Firebase config failure handling. Direct API checks returned 15 periods, 45 artists, and 12 image-backed Degas works.
+- User reported “no art”; attached browser log showed CORS failures loading Wikimedia Commons `Special:FilePath` redirects in Three.js textures. Fix in progress: preserve original Wikimedia URL as `imageSource`, serve `image` via a restricted same-origin `/api/art-atlas/image` proxy, and keep source links visible in the inspect panel.
+- CORS fix verified locally: Degas API returns proxied same-origin artwork URLs, the image endpoint returns `200 image/jpeg`, Wikimedia originals are requested at `width=1400`, upstream image fetch uses `cache: no-store` to avoid Next data-cache >2MB errors, and `npm run build` / postbuild leak test pass.
 
 ## TODO
 
