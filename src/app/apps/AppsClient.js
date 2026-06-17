@@ -190,10 +190,18 @@ export default function AppsClient({ apps }) {
                 Apps<span className="text-[#f0452f]">.</span>
               </h1>
             </div>
-            <p className="max-w-lg text-base leading-7 text-[#1c1c1a]/70 lg:text-lg lg:pb-2">
-              Focused products with clear identities, live routes, readable policies, and
-              product pages that make the job of each app obvious.
-            </p>
+            <div className="max-w-lg lg:pb-2">
+              <p className="text-base leading-7 text-[#1c1c1a]/70 lg:text-lg">
+                Focused products with clear identities, live routes, readable policies, and
+                product pages that make the job of each app obvious.
+              </p>
+              <Link
+                href="/apps/app-store"
+                className="mt-5 inline-flex border border-[#1c1c1a] bg-[#1c1c1a] px-5 py-3 font-mono text-xs uppercase tracking-[0.14em] text-[#ece6d8] transition-colors hover:bg-[#f0452f]"
+              >
+                Walk through the App Store
+              </Link>
+            </div>
           </div>
 
           <div className="mt-10 grid border border-[#1c1c1a] bg-[#e3dcc9]/80 sm:grid-cols-3">
