@@ -10,12 +10,101 @@ const YEAR_MAX = 2026;
 const WORLD_START = 280;
 const WORLD_WIDTH = 4240;
 
+const ZOOM_MIN = 0.26;
+const ZOOM_MAX = 2.6;
+// Below this zoom we show the constellation (dots); above it portraits resolve in.
+const PORTRAIT_ZOOM = 0.62;
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
 function yearToX(year) {
   return WORLD_START + ((year - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * WORLD_WIDTH;
+}
+
+function artistAnchorYear(artist) {
+  const birth = artist.birth || YEAR_MIN;
+  const death = artist.death || YEAR_MAX;
+  // Anchor the node at the artist's creative midpoint so the timeline reads chronologically.
+  return birth + (death - birth) * 0.45;
+}
+
+/**
+ * Lay out every artist node across the whole timeline and relax overlaps.
+ *
+ * Each node gets a base x from its anchor year and a base y from a vertical lane
+ * (alternating above/below the rail per period so clusters read as constellations).
+ * A few iterations of pairwise repulsion then push apart any nodes that collide,
+ * so portraits never stack regardless of how densely artists cluster in time.
+ *
+ * `spread` scales the collision radius: when zoomed out nodes draw tight (a single
+ * glowing constellation); as you zoom in they ease apart and stop touching.
+ */
+function layoutNodes(periods, spread) {
+  const RAIL_Y = 590;
+  const nodes = [];
+
+  periods.forEach((period, periodIndex) => {
+    const above = periodIndex % 2 === 0;
+    const laneBase = above ? RAIL_Y - 150 : RAIL_Y + 150;
+    period.artists.forEach((artist, artistIndex) => {
+      const baseX = yearToX(artistAnchorYear(artist));
+      // Stagger lanes within a period so same-year artists start separated.
+      const laneOffset = (artistIndex - (period.artists.length - 1) / 2) * 64;
+      const baseY = laneBase + (above ? -1 : 1) * Math.abs(laneOffset) * 0.4 + laneOffset * 0.25;
+      nodes.push({
+        artist,
+        period,
+        homeX: baseX,
+        homeY: baseY,
+        x: baseX,
+        y: baseY,
+      });
+    });
+  });
+
+  // Collision radius grows as you zoom in so nodes separate; tighter when zoomed out.
+  const radius = lerp(44, 124, clamp(spread, 0, 1));
+  const minDist = radius * 2;
+  const iterations = 60;
+
+  for (let pass = 0; pass < iterations; pass += 1) {
+    for (let i = 0; i < nodes.length; i += 1) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nodes.length; j += 1) {
+        const b = nodes[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy);
+        if (dist === 0) {
+          dx = (Math.random() - 0.5) * 0.01;
+          dy = (Math.random() - 0.5) * 0.01;
+          dist = Math.hypot(dx, dy) || 0.0001;
+        }
+        if (dist < minDist) {
+          const push = (minDist - dist) / 2;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          a.x -= nx * push;
+          a.y -= ny * push;
+          b.x += nx * push;
+          b.y += ny * push;
+        }
+      }
+    }
+    // Gentle pull back toward the chronological home so x stays year-true.
+    for (const node of nodes) {
+      node.x = lerp(node.x, node.homeX, 0.06);
+      node.y = lerp(node.y, node.homeY, 0.03);
+    }
+  }
+
+  return nodes;
 }
 
 function yearsLabel(years) {
@@ -79,11 +168,14 @@ function ArtAtlasExperience() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [periodFilter, setPeriodFilter] = useState('all');
   const [query, setQuery] = useState('');
-  const [zoom, setZoom] = useState(0.3);
+  const [zoom, setZoom] = useState(0.34);
   const [pan, setPan] = useState({ x: 0, y: 16 });
   const [dragging, setDragging] = useState(false);
   const [view, setView] = useState('timeline');
   const dragRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  // Smooth zoom: wheel sets a target, an rAF loop eases the live value toward it.
+  const targetZoomRef = useRef(0.34);
+  const zoomRafRef = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -127,6 +219,18 @@ function ArtAtlasExperience() {
     return { periods: periods.length, artists: artistCount };
   }, [periods]);
 
+  // Quantise zoom so the (cheap but non-trivial) relaxation only recomputes on
+  // meaningful steps, not every eased frame. Nodes spread as you zoom in.
+  const spread = clamp((zoom - ZOOM_MIN) / (1.4 - ZOOM_MIN), 0, 1);
+  const spreadStep = Math.round(spread * 10) / 10;
+  const laidOutNodes = useMemo(
+    () => layoutNodes(filteredPeriods, spreadStep),
+    [filteredPeriods, spreadStep]
+  );
+
+  // Constellation → portrait crossfade. Dots dominate when zoomed out.
+  const portraitReveal = clamp((zoom - PORTRAIT_ZOOM) / 0.4, 0, 1);
+
   useEffect(() => {
     const renderTimelineState = () => JSON.stringify({
       mode: 'art-atlas-timeline',
@@ -153,8 +257,29 @@ function ArtAtlasExperience() {
 
   const handleWheel = useCallback((event) => {
     event.preventDefault();
-    const factor = event.deltaY > 0 ? 0.88 : 1.14;
-    setZoom((current) => clamp(current * factor, 0.22, 2.35));
+    // Gentle, frame-rate-independent step; normalise across mouse-wheel vs trackpad deltas.
+    const intensity = clamp(Math.abs(event.deltaY) / 100, 0.2, 1.6);
+    const factor = event.deltaY > 0 ? 1 - 0.08 * intensity : 1 + 0.08 * intensity;
+    targetZoomRef.current = clamp(targetZoomRef.current * factor, ZOOM_MIN, ZOOM_MAX);
+
+    if (zoomRafRef.current) return;
+    const tick = () => {
+      setZoom((current) => {
+        const target = targetZoomRef.current;
+        const next = lerp(current, target, 0.18);
+        if (Math.abs(next - target) < 0.001) {
+          zoomRafRef.current = 0;
+          return target;
+        }
+        zoomRafRef.current = window.requestAnimationFrame(tick);
+        return next;
+      });
+    };
+    zoomRafRef.current = window.requestAnimationFrame(tick);
+  }, []);
+
+  useEffect(() => () => {
+    if (zoomRafRef.current) window.cancelAnimationFrame(zoomRafRef.current);
   }, []);
 
   const handlePointerDown = useCallback((event) => {
@@ -279,54 +404,61 @@ function ArtAtlasExperience() {
               </div>
             ))}
 
+            <ConstellationLines nodes={laidOutNodes} reveal={portraitReveal} />
+
             {filteredPeriods.map((period, index) => {
-              const centerYear = (period.years[0] + period.years[1]) / 2;
-              const left = yearToX(centerYear);
-              const top = 590 + period.orbit;
+              const periodNodes = laidOutNodes.filter((node) => node.period.id === period.id);
+              if (periodNodes.length === 0) return null;
+              const cx = periodNodes.reduce((sum, node) => sum + node.x, 0) / periodNodes.length;
+              const above = index % 2 === 0;
+              const labelY = above
+                ? Math.min(...periodNodes.map((node) => node.y)) - 78
+                : Math.max(...periodNodes.map((node) => node.y)) + 64;
               return (
                 <div
                   key={period.id}
-                  className={styles.cluster}
+                  className={styles.clusterLabel}
+                  style={{ left: cx, top: labelY, '--period-color': period.color }}
+                >
+                  <strong>{period.name}</strong>
+                  <span>{yearsLabel(period.years)}</span>
+                </div>
+              );
+            })}
+
+            {laidOutNodes.map((node) => {
+              const { artist, period } = node;
+              return (
+                <button
+                  key={artist.wikidataId}
+                  className={styles.artistNode}
+                  type="button"
                   style={{
-                    left,
-                    top,
+                    left: node.x,
+                    top: node.y,
                     '--period-color': period.color,
-                    '--line-angle': `${index % 2 === 0 ? -13 : 17}deg`,
+                    '--portrait-reveal': portraitReveal,
+                  }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setSelectedArtist(artist);
                   }}
                 >
-                  <div className={styles.clusterLabel}>
-                    <strong>{period.name}</strong>
-                    <span>{yearsLabel(period.years)}</span>
-                  </div>
-                  {period.artists.map((artist) => (
-                    <button
-                      key={artist.wikidataId}
-                      className={styles.artistNode}
-                      type="button"
-                      style={{
-                        left: 130 + artist.offset.x,
-                        top: 96 + artist.offset.y,
-                        '--period-color': period.color,
-                      }}
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setSelectedArtist(artist);
-                      }}
-                    >
-                      <span className={styles.portraitShell}>
-                        {artist.portrait ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={artist.portrait} alt="" loading="lazy" />
-                        ) : (
-                          <span className={styles.nodeFallback}>{artist.name.charAt(0)}</span>
-                        )}
-                      </span>
-                      <strong>{artist.name}</strong>
-                      <span className={styles.artistDateLabel}>{artistDates(artist)}</span>
-                    </button>
-                  ))}
-                </div>
+                  <span className={styles.nodeStar} aria-hidden />
+                  <span className={styles.portraitShell}>
+                    {artist.portrait ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={artist.portrait} alt="" loading="lazy" />
+                    ) : (
+                      <span className={styles.nodeFallback}>{artist.name.charAt(0)}</span>
+                    )}
+                  </span>
+                  <span className={styles.nodeLabel}>
+                    <strong>{artist.name}</strong>
+                    <span className={styles.artistDateLabel}>{artistDates(artist)}</span>
+                  </span>
+                </button>
               );
             })}
           </div>
@@ -350,6 +482,51 @@ function ArtAtlasExperience() {
         />
       )}
     </main>
+  );
+}
+
+function ConstellationLines({ nodes, reveal }) {
+  // Draw a connecting line between consecutive artists of each period so clusters
+  // read as constellations. Lines fade out as portraits resolve in on zoom.
+  const segments = useMemo(() => {
+    const byPeriod = new Map();
+    nodes.forEach((node) => {
+      const list = byPeriod.get(node.period.id) || [];
+      list.push(node);
+      byPeriod.set(node.period.id, list);
+    });
+    const lines = [];
+    byPeriod.forEach((list, periodId) => {
+      const ordered = [...list].sort((a, b) => a.homeX - b.homeX);
+      for (let i = 0; i < ordered.length - 1; i += 1) {
+        lines.push({
+          key: `${periodId}-${i}`,
+          x1: ordered[i].x,
+          y1: ordered[i].y,
+          x2: ordered[i + 1].x,
+          y2: ordered[i + 1].y,
+          color: ordered[i].period.color,
+        });
+      }
+    });
+    return lines;
+  }, [nodes]);
+
+  return (
+    <svg className={styles.constellationLayer} style={{ opacity: 0.85 - reveal * 0.55 }} aria-hidden>
+      {segments.map((segment) => (
+        <line
+          key={segment.key}
+          x1={segment.x1}
+          y1={segment.y1}
+          x2={segment.x2}
+          y2={segment.y2}
+          stroke={segment.color}
+          strokeWidth={1}
+          strokeOpacity={0.5}
+        />
+      ))}
+    </svg>
   );
 }
 
@@ -506,7 +683,7 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.96;
+    renderer.toneMappingExposure = 1.05;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -518,13 +695,17 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     camera.position.set(0, 1.72, 4.8);
     camera.rotation.order = 'YXZ';
 
-    const paintingSpacing = 3.05;
-    const firstPaintingZ = 1.2;
-    const lastPaintingZ = works.length > 0 ? firstPaintingZ - (works.length - 1) * paintingSpacing : firstPaintingZ;
-    const backWallZ = Math.min(-18, lastPaintingZ - 4.4);
+    // Paintings alternate walls, so each wall only holds half the works — spacing is
+    // per-side. Tighter spacing keeps the room intimate rather than a long tunnel.
+    const paintingSpacing = 2.35;
+    const firstPaintingZ = 1.0;
+    const perSideCount = Math.ceil(works.length / 2);
+    const lastPaintingZ = works.length > 0 ? firstPaintingZ - (perSideCount - 1) * paintingSpacing : firstPaintingZ;
+    // Back wall sits just past the last painting — corridor length follows content,
+    // no fixed minimum that leaves an empty void at the end.
+    const backWallZ = lastPaintingZ - 3.2;
     const corridorLength = 3 - backWallZ;
     const centerZ = (3 + backWallZ) / 2;
-    const lightingStationCount = Math.max(works.length, Math.ceil((firstPaintingZ - backWallZ - 1.1) / paintingSpacing));
     const paintingMeshes = [];
     const keys = new Set();
     const pointer = { down: false, x: 0, y: 0, moved: 0 };
@@ -533,20 +714,25 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     let previousTime = performance.now();
     let lastInspected = null;
 
-    scene.add(new THREE.AmbientLight(0xf2dfbd, 0.82));
+    // Low ambient lets the per-painting spotlights carry the drama (real-gallery look)
+    // rather than the flat, evenly-lit "Three.js demo" feel.
+    scene.add(new THREE.AmbientLight(0xb8c4d6, 0.34));
+    // Cool fill from the skylight keeps shadows from going pure black.
+    const skyFill = new THREE.HemisphereLight(0xdfe6f0, 0x1a140d, 0.42);
+    scene.add(skyFill);
 
     const floorMaterial = new THREE.MeshStandardMaterial({
-      color: 0x120d08,
-      roughness: 0.24,
-      metalness: 0.18,
+      color: 0x1a130c,
+      roughness: 0.32,
+      metalness: 0.32,
     });
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: 0xd4d0c6,
-      roughness: 0.64,
+      color: 0xe6e2d8,
+      roughness: 0.92,
     });
     const ceilingMaterial = new THREE.MeshStandardMaterial({
-      color: 0x7b674c,
-      roughness: 0.72,
+      color: 0x8a7355,
+      roughness: 0.85,
     });
     const trimMaterial = new THREE.MeshStandardMaterial({
       color: 0x050403,
@@ -586,25 +772,19 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     );
     skylight.userData.skipRaycast = true;
 
-    for (let i = 0; i < lightingStationCount; i += 1) {
-      const z = firstPaintingZ - i * paintingSpacing;
-      const x = i % 2 === 0 ? -3.98 : 3.98;
-      const light = new THREE.SpotLight(0xfff0d0, 2.4, 8.6, Math.PI / 5, 0.42, 1.2);
-      light.position.set(x > 0 ? 2.5 : -2.5, 3.6, z + 0.2);
-      light.target.position.set(x, 1.92, z);
-      light.castShadow = true;
-      light.shadow.mapSize.width = 512;
-      light.shadow.mapSize.height = 512;
-      scene.add(light);
-      scene.add(light.target);
-      addBox(scene, [0.12, 0.12, 1.2], [x > 0 ? 3.55 : -3.55, 3.58, z + 0.2], trimMaterial);
-    }
+    // Continuous track-lighting rails along each side of the skylight.
+    addBox(scene, [0.08, 0.08, corridorLength - 1], [-1.0, 4.02, centerZ], trimMaterial);
+    addBox(scene, [0.08, 0.08, corridorLength - 1], [1.0, 4.02, centerZ], trimMaterial);
 
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin('anonymous');
     works.forEach((work, index) => {
       const side = index % 2 === 0 ? -1 : 1;
-      const z = firstPaintingZ - index * paintingSpacing;
+      // Step per wall: paintings on the same side are one spacing apart; opposite
+      // walls are staggered by half a step so the room doesn't read as rigid rows.
+      const sideIndex = Math.floor(index / 2);
+      const stagger = side > 0 ? paintingSpacing * 0.5 : 0;
+      const z = firstPaintingZ - sideIndex * paintingSpacing - stagger;
       const width = index % 3 === 0 ? 1.65 : 1.34;
       const height = index % 3 === 0 ? 1.16 : 1.42;
       const group = new THREE.Group();
@@ -617,7 +797,7 @@ function GalleryCanvas({ museum, entered, onInspect }) {
       );
       group.add(frame);
 
-      const mat = new THREE.MeshStandardMaterial({ color: 0xe9dfca, roughness: 0.48 });
+      const mat = new THREE.MeshStandardMaterial({ color: 0xe9dfca, roughness: 0.52, emissive: 0x000000 });
       const image = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
       image.position.z = 0.065;
       image.userData.work = work;
@@ -632,18 +812,37 @@ function GalleryCanvas({ museum, entered, onInspect }) {
           roughness: 0.08,
           metalness: 0,
           transparent: true,
-          opacity: 0.1,
+          opacity: 0.08,
         })
       );
       glazing.position.z = 0.071;
       glazing.userData.skipRaycast = true;
       group.add(glazing);
 
+      // A dedicated warm spotlight per painting, aimed at the canvas centre. This is
+      // what gives each work the lit-from-above pooled highlight of a real gallery.
+      const spot = new THREE.SpotLight(0xffe9c2, 9.5, 7.5, Math.PI / 7, 0.5, 1.4);
+      spot.position.set(side * 2.4, 3.55, z);
+      spot.target.position.set(side * 3.95, 1.84, z);
+      spot.castShadow = true;
+      spot.shadow.mapSize.width = 512;
+      spot.shadow.mapSize.height = 512;
+      spot.shadow.bias = -0.0005;
+      scene.add(spot);
+      scene.add(spot.target);
+      // Visible track-light fixture above the painting.
+      addBox(scene, [0.16, 0.12, 0.16], [side * 1.0, 3.98, z], trimMaterial);
+
       loader.load(
         work.image,
         (texture) => {
           texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy?.() || 1, 8);
           mat.map = texture;
+          // Faint self-illumination so canvases stay legible between spotlight pools.
+          mat.emissive = new THREE.Color(0xffffff);
+          mat.emissiveMap = texture;
+          mat.emissiveIntensity = 0.16;
           mat.needsUpdate = true;
         },
         undefined,
