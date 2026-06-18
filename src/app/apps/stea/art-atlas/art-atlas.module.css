@@ -292,6 +292,8 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
+  transform-origin: 24px 0;
+  transform: scale(var(--inv-zoom, 1));
 }
 
 .constellationLayer {
@@ -307,9 +309,11 @@
 
 .clusterLabel {
   position: absolute;
-  transform: translateX(-50%);
   width: 260px;
   margin-left: -130px;
+  /* Counter the world zoom so period labels stay readable, not gigantic, when zoomed in. */
+  transform-origin: 130px 0;
+  transform: scale(var(--inv-zoom, 1));
   text-align: center;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
   pointer-events: none;
@@ -353,7 +357,10 @@
   position: absolute;
   z-index: 3;
   width: 64px;
-  transform: translate(-32px, -32px);
+  /* Scale around the star (its anchor point) and counter the world zoom so the node
+     keeps a constant screen size while the timeline spreads apart. */
+  transform-origin: 32px 32px;
+  transform: translate(-32px, -32px) scale(var(--inv-zoom, 1));
   border: 0;
   background: transparent;
   color: #fff3dd;

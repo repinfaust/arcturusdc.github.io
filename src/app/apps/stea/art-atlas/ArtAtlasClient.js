@@ -231,6 +231,12 @@ function ArtAtlasExperience() {
   // Constellation → portrait crossfade. Dots dominate when zoomed out.
   const portraitReveal = clamp((zoom - PORTRAIT_ZOOM) / 0.4, 0, 1);
 
+  // Counter-scale node/label content against the world scale so zooming SPREADS the
+  // timeline (more space between artists) without ballooning portraits and text.
+  // Above zoom 1 we fully cancel the world scale; at/below 1 we leave content at its
+  // natural size so the constellation reads small when zoomed out.
+  const invZoom = zoom > 1 ? 1 / zoom : 1;
+
   useEffect(() => {
     const renderTimelineState = () => JSON.stringify({
       mode: 'art-atlas-timeline',
@@ -395,6 +401,7 @@ function ArtAtlasExperience() {
             className={styles.space}
             style={{
               transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`,
+              '--inv-zoom': invZoom,
             }}
           >
             <div className={styles.rail} />
@@ -418,7 +425,7 @@ function ArtAtlasExperience() {
                 <div
                   key={period.id}
                   className={styles.clusterLabel}
-                  style={{ left: cx, top: labelY, '--period-color': period.color }}
+                  style={{ left: cx, top: labelY, '--period-color': period.color, '--inv-zoom': invZoom }}
                 >
                   <strong>{period.name}</strong>
                   <span>{yearsLabel(period.years)}</span>
@@ -438,6 +445,7 @@ function ArtAtlasExperience() {
                     top: node.y,
                     '--period-color': period.color,
                     '--portrait-reveal': portraitReveal,
+                    '--inv-zoom': invZoom,
                   }}
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => {
@@ -688,8 +696,9 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x070604);
-    scene.fog = new THREE.Fog(0x070604, 12, 42);
+    // Bright, soft daylight room (National Gallery / Tate Britain), not a dark void.
+    scene.background = new THREE.Color(0xb9bcc0);
+    scene.fog = new THREE.Fog(0xb9bcc0, 22, 60);
 
     const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 100);
     camera.position.set(0, 1.72, 4.8);
@@ -714,47 +723,82 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     let previousTime = performance.now();
     let lastInspected = null;
 
-    // Low ambient lets the per-painting spotlights carry the drama (real-gallery look)
-    // rather than the flat, evenly-lit "Three.js demo" feel.
-    scene.add(new THREE.AmbientLight(0xb8c4d6, 0.34));
-    // Cool fill from the skylight keeps shadows from going pure black.
-    const skyFill = new THREE.HemisphereLight(0xdfe6f0, 0x1a140d, 0.42);
+    // Bright, even daylight: a strong cool sky from the glazed roof plus soft ambient.
+    // The per-painting spots then add a gentle accent rather than carrying the whole room.
+    scene.add(new THREE.AmbientLight(0xeef0f2, 0.62));
+    const skyFill = new THREE.HemisphereLight(0xf2f4f7, 0xb9a884, 0.95);
     scene.add(skyFill);
+    // Broad overhead daylight pouring through the skylight, lightly shadowing.
+    const daylight = new THREE.DirectionalLight(0xf3f1ec, 0.55);
+    daylight.position.set(0.5, 9, centerZ + 3);
+    daylight.target.position.set(0, 1, centerZ);
+    daylight.castShadow = true;
+    daylight.shadow.mapSize.set(1024, 1024);
+    daylight.shadow.camera.near = 1;
+    daylight.shadow.camera.far = 40;
+    daylight.shadow.camera.left = -6;
+    daylight.shadow.camera.right = 6;
+    daylight.shadow.camera.top = 6;
+    daylight.shadow.camera.bottom = -6;
+    daylight.shadow.bias = -0.0006;
+    scene.add(daylight);
+    scene.add(daylight.target);
 
+    // Light oak parquet floor.
     const floorMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1a130c,
-      roughness: 0.32,
-      metalness: 0.32,
+      color: 0xc89a5e,
+      roughness: 0.62,
+      metalness: 0.04,
     });
+    // Muted blue-grey gallery walls (Tate Britain / National Gallery palette).
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe6e2d8,
-      roughness: 0.92,
+      color: 0x6f7e88,
+      roughness: 0.96,
     });
+    // Pale cream ceiling/cove.
     const ceilingMaterial = new THREE.MeshStandardMaterial({
-      color: 0x8a7355,
-      roughness: 0.85,
+      color: 0xe9e6dd,
+      roughness: 0.95,
+    });
+    // Dark green-grey marble dado running along the wall base.
+    const dadoMaterial = new THREE.MeshStandardMaterial({
+      color: 0x33403c,
+      roughness: 0.35,
+      metalness: 0.22,
     });
     const trimMaterial = new THREE.MeshStandardMaterial({
-      color: 0x050403,
-      roughness: 0.42,
+      color: 0x1c1c1e,
+      roughness: 0.5,
     });
     const benchMaterial = new THREE.MeshStandardMaterial({
-      color: 0x5e4528,
-      roughness: 0.34,
-      metalness: 0.05,
+      color: 0x7a5a33,
+      roughness: 0.5,
+      metalness: 0.04,
     });
 
+    // Floor + structure.
     addBox(scene, [8.2, 0.08, corridorLength], [0, -0.04, centerZ], floorMaterial);
     addBox(scene, [0.14, 4.2, corridorLength], [-4.1, 2.05, centerZ], wallMaterial);
     addBox(scene, [0.14, 4.2, corridorLength], [4.1, 2.05, centerZ], wallMaterial);
     addBox(scene, [8.2, 4.2, 0.14], [0, 2.05, backWallZ], wallMaterial);
+    // Pale cove/ceiling either side of the skylight.
     addBox(scene, [3.2, 0.1, corridorLength], [-2.55, 4.1, centerZ], ceilingMaterial);
     addBox(scene, [3.2, 0.1, corridorLength], [2.55, 4.1, centerZ], ceilingMaterial);
-    addBox(scene, [8.3, 0.12, 0.12], [0, 0.08, centerZ + corridorLength / 2 - 0.4], trimMaterial);
-    addBox(scene, [0.16, 0.18, corridorLength], [-4.02, 0.18, centerZ], trimMaterial);
-    addBox(scene, [0.16, 0.18, corridorLength], [4.02, 0.18, centerZ], trimMaterial);
-    addBox(scene, [1.08, 0.18, 3.25], [0, 0.42, centerZ + 2.2], benchMaterial);
-    addBox(scene, [0.58, 0.42, 2.08], [0, 0.18, centerZ + 2.2], trimMaterial);
+
+    // Marble dado band along the base of each wall.
+    const dadoHeight = 0.62;
+    addBox(scene, [0.16, dadoHeight, corridorLength], [-4.04, dadoHeight / 2, centerZ], dadoMaterial);
+    addBox(scene, [0.16, dadoHeight, corridorLength], [4.04, dadoHeight / 2, centerZ], dadoMaterial);
+    addBox(scene, [8.2, dadoHeight, 0.16], [0, dadoHeight / 2, backWallZ + 0.05], dadoMaterial);
+    // Thin dark cap line on top of the dado.
+    addBox(scene, [0.18, 0.03, corridorLength], [-4.02, dadoHeight, centerZ], trimMaterial);
+    addBox(scene, [0.18, 0.03, corridorLength], [4.02, dadoHeight, centerZ], trimMaterial);
+    addBox(scene, [8.2, 0.03, 0.18], [0, dadoHeight, backWallZ + 0.05], trimMaterial);
+
+    // Oak benches down the centre.
+    addBox(scene, [1.1, 0.12, 2.4], [0, 0.46, centerZ + 1.4], benchMaterial);
+    addBox(scene, [0.9, 0.46, 0.16], [0, 0.23, centerZ + 0.3], benchMaterial);
+    addBox(scene, [0.9, 0.46, 0.16], [0, 0.23, centerZ + 2.5], benchMaterial);
 
     const wallTitleTexture = makeWallTextTexture(museum.artist);
     const wallTitle = new THREE.Mesh(
@@ -764,17 +808,23 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     wallTitle.position.set(0, 2.34, backWallZ + 0.08);
     scene.add(wallTitle);
 
+    // Bright glazed skylight panel running the length of the roof.
     const skylight = addBox(
       scene,
-      [1.5, 0.04, corridorLength - 2],
-      [0, 4.12, centerZ],
-      new THREE.MeshBasicMaterial({ color: 0xf3eee5 })
+      [2.4, 0.04, corridorLength - 1.4],
+      [0, 4.14, centerZ],
+      new THREE.MeshBasicMaterial({ color: 0xf7f6f2 })
     );
     skylight.userData.skipRaycast = true;
+    // Faint mullion bars across the glazing for the gridded-roof look.
+    for (let z = centerZ - (corridorLength - 1.4) / 2 + 0.6; z < centerZ + (corridorLength - 1.4) / 2; z += 1.1) {
+      const bar = addBox(scene, [2.4, 0.05, 0.04], [0, 4.16, z], ceilingMaterial);
+      bar.userData.skipRaycast = true;
+    }
 
     // Continuous track-lighting rails along each side of the skylight.
-    addBox(scene, [0.08, 0.08, corridorLength - 1], [-1.0, 4.02, centerZ], trimMaterial);
-    addBox(scene, [0.08, 0.08, corridorLength - 1], [1.0, 4.02, centerZ], trimMaterial);
+    addBox(scene, [0.06, 0.06, corridorLength - 1], [-1.3, 4.0, centerZ], trimMaterial);
+    addBox(scene, [0.06, 0.06, corridorLength - 1], [1.3, 4.0, centerZ], trimMaterial);
 
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin('anonymous');
@@ -791,11 +841,19 @@ function GalleryCanvas({ museum, entered, onInspect }) {
       group.position.set(side * 3.96, 1.88, z);
       group.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
 
+      // Restrained aged-gold frame with a cream mount inside it.
       const frame = new THREE.Mesh(
-        new THREE.BoxGeometry(width + 0.28, height + 0.28, 0.11),
-        new THREE.MeshStandardMaterial({ color: 0x6f5328, roughness: 0.38, metalness: 0.28 })
+        new THREE.BoxGeometry(width + 0.3, height + 0.3, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0x9c7a3c, roughness: 0.44, metalness: 0.45 })
       );
       group.add(frame);
+      const mount = new THREE.Mesh(
+        new THREE.PlaneGeometry(width + 0.12, height + 0.12),
+        new THREE.MeshStandardMaterial({ color: 0xf2ece0, roughness: 0.9 })
+      );
+      mount.position.z = 0.061;
+      mount.userData.skipRaycast = true;
+      group.add(mount);
 
       const mat = new THREE.MeshStandardMaterial({ color: 0xe9dfca, roughness: 0.52, emissive: 0x000000 });
       const image = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
@@ -819,19 +877,15 @@ function GalleryCanvas({ museum, entered, onInspect }) {
       glazing.userData.skipRaycast = true;
       group.add(glazing);
 
-      // A dedicated warm spotlight per painting, aimed at the canvas centre. This is
-      // what gives each work the lit-from-above pooled highlight of a real gallery.
-      const spot = new THREE.SpotLight(0xffe9c2, 9.5, 7.5, Math.PI / 7, 0.5, 1.4);
-      spot.position.set(side * 2.4, 3.55, z);
+      // A soft warm accent spot per painting — gentle in the already-bright daylight
+      // room, just enough to lift each canvas off the coloured wall.
+      const spot = new THREE.SpotLight(0xfff2da, 3.6, 7.5, Math.PI / 6.5, 0.6, 1.2);
+      spot.position.set(side * 2.6, 3.5, z);
       spot.target.position.set(side * 3.95, 1.84, z);
-      spot.castShadow = true;
-      spot.shadow.mapSize.width = 512;
-      spot.shadow.mapSize.height = 512;
-      spot.shadow.bias = -0.0005;
       scene.add(spot);
       scene.add(spot.target);
       // Visible track-light fixture above the painting.
-      addBox(scene, [0.16, 0.12, 0.16], [side * 1.0, 3.98, z], trimMaterial);
+      addBox(scene, [0.14, 0.1, 0.14], [side * 1.3, 3.96, z], trimMaterial);
 
       loader.load(
         work.image,
