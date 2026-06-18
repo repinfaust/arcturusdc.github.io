@@ -585,9 +585,17 @@
   /* fixed (not absolute) so it's positioned against the viewport and can never
      reflow or shift the zoomed/panned timeline behind it. Above the sticky site
      header (z-50) so the card overlays the whole viewport. */
+  /* Re-declare the atlas tokens here: this is portalled to <body>, outside .shell,
+     so it can't inherit them — without this the card loses its cream paper colour. */
+  --atlas-ink: #f4eee0;
+  --atlas-muted: rgba(244, 238, 224, 0.62);
+  --atlas-gold: #d8b875;
+  --atlas-paper: #f4ecdd;
   position: fixed;
   z-index: 80;
   inset: 0;
+  color: var(--atlas-ink);
+  font-family: Georgia, "Times New Roman", serif;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -848,10 +856,13 @@
    matching the original concept. fixed = positioned to the viewport so it always
    centres regardless of where the camera or canvas is. */
 .inspectScrim {
-  /* Portalled to <body>, so fixed + inset:0 reliably fills the real viewport. */
+  /* Portalled to <body>, so fixed + inset:0 reliably fills the real viewport.
+     Re-declare tokens here since this is outside .shell and can't inherit them. */
+  --atlas-gold: #d8b875;
   position: fixed;
   z-index: 80;
   inset: 0;
+  font-family: Georgia, "Times New Roman", serif;
   display: flex;
   align-items: center;
   justify-content: center;
