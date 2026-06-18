@@ -657,7 +657,12 @@ function GalleryView({ artist, onBack }) {
       {error && <div className={styles.error}>{error}</div>}
       {museum && (
         <>
-          <GalleryCanvas museum={museum} entered={entered} onInspect={setInspectedWork} />
+          <GalleryCanvas
+            museum={museum}
+            entered={entered}
+            inspecting={Boolean(inspectedWork)}
+            onInspect={setInspectedWork}
+          />
           {entered && (
             <div className={styles.galleryHelp}>
               WASD / arrows to walk · drag to look · click a work to inspect
@@ -740,10 +745,11 @@ function InspectLightbox({ work, onClose }) {
   );
 }
 
-function GalleryCanvas({ museum, entered, onInspect }) {
+function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
   const canvasRef = useRef(null);
   const enteredRef = useRef(entered);
   const inspectRef = useRef(onInspect);
+  const inspectingRef = useRef(inspecting);
 
   useEffect(() => {
     enteredRef.current = entered;
@@ -752,6 +758,10 @@ function GalleryCanvas({ museum, entered, onInspect }) {
   useEffect(() => {
     inspectRef.current = onInspect;
   }, [onInspect]);
+
+  useEffect(() => {
+    inspectingRef.current = inspecting;
+  }, [inspecting]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -790,6 +800,14 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     const keys = new Set();
     const pointer = { down: false, x: 0, y: 0, moved: 0 };
     const cameraState = { yaw: 0, pitch: 0 };
+    // When a painting is inspected we ease the camera to face it straight-on, then
+    // ease back to exactly where the visitor was standing once the lightbox closes.
+    const viewTransition = {
+      active: false, // currently easing toward a pose
+      saved: null, // the pose to return to on close
+      target: null, // the pose we're easing toward
+    };
+    let wasInspecting = false;
     let frameId = 0;
     let previousTime = performance.now();
     let lastInspected = null;
@@ -1029,7 +1047,8 @@ function GalleryCanvas({ museum, entered, onInspect }) {
       pointer.moved = 0;
     };
     const onPointerMove = (event) => {
-      if (!pointer.down || !enteredRef.current) return;
+      // No look-around while a painting is being inspected (the view is framed for you).
+      if (!pointer.down || !enteredRef.current || inspectingRef.current) return;
       const dx = event.clientX - pointer.x;
       const dy = event.clientY - pointer.y;
       pointer.x = event.clientX;
@@ -1053,6 +1072,24 @@ function GalleryCanvas({ museum, entered, onInspect }) {
       const hit = raycaster.intersectObjects(paintingMeshes, false)[0];
       if (hit?.object?.userData?.work) {
         lastInspected = hit.object.userData.work;
+        // Snapshot the current standing pose, then frame the clicked painting
+        // straight-on so the blurred backdrop behind the lightbox reads cleanly.
+        const paintingPos = new THREE.Vector3();
+        hit.object.getWorldPosition(paintingPos);
+        const side = paintingPos.x < 0 ? -1 : 1;
+        viewTransition.saved = {
+          x: camera.position.x,
+          z: camera.position.z,
+          yaw: cameraState.yaw,
+          pitch: cameraState.pitch,
+        };
+        viewTransition.target = {
+          x: side * 1.7,
+          z: clamp(paintingPos.z, backWallZ + 2.4, 4.8),
+          yaw: side < 0 ? Math.PI / 2 : -Math.PI / 2,
+          pitch: 0,
+        };
+        viewTransition.active = true;
         inspectRef.current?.(hit.object.userData.work);
       }
     };
@@ -1065,8 +1102,45 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     canvas.addEventListener('pointerleave', onPointerUp);
     canvas.addEventListener('click', onClick);
 
+    function easeAngle(current, target, t) {
+      // Shortest-path angular ease so yaw doesn't spin the long way round.
+      let delta = target - current;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      return current + delta * t;
+    }
+
     function step(dt) {
-      if (enteredRef.current) {
+      const isInspecting = inspectingRef.current;
+
+      // Detect the close edge: was inspecting, now not — ease back to the saved pose.
+      if (wasInspecting && !isInspecting && viewTransition.saved) {
+        viewTransition.target = viewTransition.saved;
+        viewTransition.saved = null;
+        viewTransition.active = true;
+      }
+      wasInspecting = isInspecting;
+
+      if (viewTransition.active && viewTransition.target) {
+        // Frame-rate-independent ease toward the target pose.
+        const t = 1 - Math.pow(0.0001, dt);
+        const tgt = viewTransition.target;
+        camera.position.x = lerp(camera.position.x, tgt.x, t);
+        camera.position.z = lerp(camera.position.z, tgt.z, t);
+        cameraState.yaw = easeAngle(cameraState.yaw, tgt.yaw, t);
+        cameraState.pitch = lerp(cameraState.pitch, tgt.pitch, t);
+        const done =
+          Math.abs(camera.position.x - tgt.x) < 0.01 &&
+          Math.abs(camera.position.z - tgt.z) < 0.01 &&
+          Math.abs(cameraState.pitch - tgt.pitch) < 0.01;
+        // Once we've settled on a return (not inspecting), stop transitioning so the
+        // visitor regains free control exactly where they left off.
+        if (done && !isInspecting) {
+          viewTransition.active = false;
+          viewTransition.target = null;
+        }
+      } else if (enteredRef.current && !isInspecting) {
+        // Free walk — only when not inspecting.
         const forwardIntent = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0);
         const strafeIntent = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
         const speed = 3.2 * dt;
@@ -1075,6 +1149,7 @@ function GalleryCanvas({ museum, entered, onInspect }) {
         camera.position.x = clamp(camera.position.x, -2.9, 2.9);
         camera.position.z = clamp(camera.position.z, backWallZ + 2.4, 4.8);
       }
+
       camera.rotation.y = cameraState.yaw;
       camera.rotation.x = cameraState.pitch;
       renderer.render(scene, camera);
