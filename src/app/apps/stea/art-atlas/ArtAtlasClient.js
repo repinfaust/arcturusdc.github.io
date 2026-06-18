@@ -176,6 +176,7 @@ function ArtAtlasExperience() {
   // Smooth zoom: wheel sets a target, an rAF loop eases the live value toward it.
   const targetZoomRef = useRef(0.34);
   const zoomRafRef = useRef(0);
+  const focusRafRef = useRef(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -286,6 +287,46 @@ function ArtAtlasExperience() {
 
   useEffect(() => () => {
     if (zoomRafRef.current) window.cancelAnimationFrame(zoomRafRef.current);
+  }, []);
+
+  // Glide the timeline so a chosen artist node sits centred (just above middle, clear
+  // of the bio card) before its placard opens. Eases pan and a comfortable zoom.
+  const centerOnNode = useCallback((node) => {
+    if (!node) return;
+    // World centre of the .space layer (width 4800, rail at y 590).
+    const SPACE_CX = 2400;
+    const SPACE_CY = 590;
+    const targetZoom = clamp(Math.max(zoom, 0.85), ZOOM_MIN, ZOOM_MAX);
+    // Lift the node above centre so the card (lower-centre) doesn't cover it.
+    const yBias = 150;
+    const startZoom = zoom;
+    const startPan = { x: pan.x, y: pan.y };
+    const start = performance.now();
+    const duration = 520;
+
+    if (focusRafRef.current) window.cancelAnimationFrame(focusRafRef.current);
+    targetZoomRef.current = targetZoom;
+
+    const animate = (now) => {
+      const t = clamp((now - start) / duration, 0, 1);
+      const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      const z = lerp(startZoom, targetZoom, ease);
+      // pan that centres (nx,ny) at the viewport middle for zoom z.
+      const goalPanX = -(node.x - SPACE_CX) * z;
+      const goalPanY = -(node.y - SPACE_CY) * z + yBias;
+      setZoom(z);
+      setPan({ x: lerp(startPan.x, goalPanX, ease), y: lerp(startPan.y, goalPanY, ease) });
+      if (t < 1) {
+        focusRafRef.current = window.requestAnimationFrame(animate);
+      } else {
+        focusRafRef.current = 0;
+      }
+    };
+    focusRafRef.current = window.requestAnimationFrame(animate);
+  }, [pan.x, pan.y, zoom]);
+
+  useEffect(() => () => {
+    if (focusRafRef.current) window.cancelAnimationFrame(focusRafRef.current);
   }, []);
 
   const handlePointerDown = useCallback((event) => {
@@ -450,7 +491,9 @@ function ArtAtlasExperience() {
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => {
                     event.stopPropagation();
-                    setSelectedArtist(artist);
+                    centerOnNode(node);
+                    // Let the glide play briefly, then reveal the card over the centred node.
+                    window.setTimeout(() => setSelectedArtist(artist), 360);
                   }}
                 >
                   <span className={styles.nodeStar} aria-hidden />

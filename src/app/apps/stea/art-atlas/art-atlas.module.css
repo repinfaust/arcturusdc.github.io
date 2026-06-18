@@ -761,9 +761,15 @@
   /* Above the site's sticky header (z-50) so the lightbox truly covers the viewport. */
   z-index: 80;
   inset: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: clamp(20px, 4vw, 56px);
+  /* Hard-cap to the viewport so the stage can never extend past the screen edges. */
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: rgba(6, 7, 9, 0);
   backdrop-filter: blur(0px);
   opacity: 0;
@@ -783,7 +789,8 @@
   gap: clamp(24px, 4vw, 64px);
   width: min(1240px, 100%);
   max-width: 100%;
-  /* Never taller than the viewport (minus scrim padding) so the page never scrolls. */
+  /* Fill, but never exceed, the scrim's content box (already capped to the viewport). */
+  height: 100%;
   max-height: 100%;
   min-height: 0;
   opacity: 0;
@@ -801,16 +808,19 @@
   margin: 0;
   min-width: 0;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 
 .inspectImage {
   display: block;
-  /* Bound by BOTH the grid column width and the available height so a landscape
-     painting can never overflow the screen or push the page into scrolling. */
+  /* Bound by BOTH the column width and the stage height so a landscape painting
+     can never overflow the screen. The stage is already capped to the viewport. */
   max-width: 100%;
-  max-height: min(72vh, 640px);
+  max-height: 100%;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -822,7 +832,7 @@
 .inspectCopy {
   color: #f3ecdd;
   min-width: 0;
-  max-height: min(72vh, 640px);
+  max-height: 100%;
   overflow-y: auto;
 }
 
