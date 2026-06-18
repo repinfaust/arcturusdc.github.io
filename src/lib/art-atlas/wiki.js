@@ -246,6 +246,8 @@ export async function readFirebaseArtist(wikidataId) {
     if (!snapshot.exists) return null;
     const data = snapshot.data();
     if (!data?.artist || !Array.isArray(data?.works)) return null;
+    // Reject caches from an older schema so enriched work descriptions take effect.
+    if (data.version !== ART_ATLAS_VERSION) return null;
     return {
       ...data,
       works: mergeArtistWorks(wikidataId, data.works),
@@ -298,7 +300,11 @@ export async function buildArtistMuseum(wikidataId) {
     fetchWikidataWorks(wikidataId),
     fetchCommonsFallbackWorks(wikidataId),
   ]);
-  const works = mergeArtistWorks(wikidataId, [...wikidataWorks, ...commonsFallbackWorks]);
+  const mergedWorks = mergeArtistWorks(wikidataId, [...wikidataWorks, ...commonsFallbackWorks]);
+  // Pull a real gallery-label description for each work from its linked Wikipedia
+  // article, so the inspect card reads like a museum wall text rather than a
+  // generic "this work has a record" placeholder.
+  const works = await Promise.all(mergedWorks.map((work) => enrichWorkDescription(work, artist)));
 
   return {
     version: ART_ATLAS_VERSION,
@@ -330,6 +336,48 @@ async function enrichArtistSummary(artist, period) {
     wikipediaUrl: summary?.content_urls?.desktop?.page || artist.wikipediaUrl,
     sourceTitle: summary?.title || artist.wikipediaTitle,
   };
+}
+
+function wikipediaTitleFromUrl(url) {
+  if (!url) return null;
+  const match = /https?:\/\/en\.wikipedia\.org\/wiki\/([^?#]+)/.exec(url);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch (error) {
+    return match[1];
+  }
+}
+
+// Replace the placeholder `story` with the artwork's own Wikipedia lead paragraph
+// (a few sentences), the way a gallery prints a wall label beside the piece.
+async function enrichWorkDescription(work, artist) {
+  const title = wikipediaTitleFromUrl(work.sourceUrl);
+  if (!title) return work;
+
+  const summary = await fetchWikipediaSummary(title);
+  const extract = wallLabelExtract(summary?.extract || '');
+  if (!extract) return work;
+
+  // Prefer the article's display title, but strip a trailing disambiguation
+  // parenthetical (e.g. "(J. M. W. Turner)", "(painting)") for a clean wall label.
+  const normalized = summary?.titles?.normalized || work.title;
+  const cleanTitle = normalized.replace(/\s*\([^)]*\)\s*$/, '').trim() || work.title;
+
+  return {
+    ...work,
+    title: cleanTitle,
+    story: extract,
+    fact: work.year ? `${artist.name} · ${work.year}` : artist.name,
+  };
+}
+
+// A touch longer than the artist blurb — up to ~4 sentences — for a label feel.
+function wallLabelExtract(text) {
+  const compact = text.replace(/\s+/g, ' ').trim();
+  if (!compact) return '';
+  const sentences = compact.split(/(?<=\.)\s+/).slice(0, 4).join(' ');
+  return sentences;
 }
 
 async function fetchWikipediaSummary(title) {

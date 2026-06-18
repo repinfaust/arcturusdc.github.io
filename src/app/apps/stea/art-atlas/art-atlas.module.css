@@ -741,6 +741,77 @@
   min-width: 210px;
 }
 
+.exitCard {
+  width: min(520px, 100%);
+  border: 1px solid rgba(78, 56, 24, 0.38);
+  border-radius: 10px;
+  background: var(--atlas-paper);
+  color: #241c12;
+  padding: 34px;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(16px) scale(0.97);
+  transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.exitCard h2 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.exitLede {
+  margin: 16px 0 0;
+  color: #3c3124;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.exitActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.exitButtonPrimary,
+.exitButtonGhost {
+  flex: 1 1 200px;
+  min-height: 46px;
+  border-radius: 8px;
+  padding: 0 18px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.exitButtonPrimary {
+  border: 1px solid #241c12;
+  background: #241c12;
+  color: #f4ecdd;
+}
+
+.exitButtonPrimary:hover {
+  transform: translateY(-1px);
+  background: #34291a;
+}
+
+.exitButtonGhost {
+  border: 1px solid rgba(82, 58, 24, 0.4);
+  background: transparent;
+  color: #5a4326;
+}
+
+.exitButtonGhost:hover {
+  border-color: rgba(82, 58, 24, 0.8);
+  background: rgba(82, 58, 24, 0.06);
+}
+
 .closeButton {
   position: absolute;
   top: 22px;

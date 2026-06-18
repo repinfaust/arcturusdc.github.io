@@ -385,6 +385,13 @@ function ArtAtlasExperience() {
           setView('timeline');
           setSelectedArtist(null);
         }}
+        onRandom={() => {
+          const all = periods.flatMap((period) => period.artists);
+          if (all.length === 0) return;
+          const others = all.filter((a) => a.wikidataId !== selectedArtist.wikidataId);
+          const pool = others.length > 0 ? others : all;
+          setSelectedArtist(pool[Math.floor(Math.random() * pool.length)]);
+        }}
       />
     );
   }
@@ -792,12 +799,13 @@ function ArtistPlacard({ artist, onClose, onEnter }) {
   );
 }
 
-function GalleryView({ artist, onBack }) {
+function GalleryView({ artist, onBack, onRandom }) {
   const [museum, setMuseum] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [entered, setEntered] = useState(false);
   const [inspectedWork, setInspectedWork] = useState(null);
+  const [exitOpen, setExitOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -821,6 +829,13 @@ function GalleryView({ artist, onBack }) {
     return () => controller.abort();
   }, [artist.wikidataId]);
 
+  // Reset per-gallery state when the artist changes (e.g. "surprise me").
+  useEffect(() => {
+    setEntered(false);
+    setInspectedWork(null);
+    setExitOpen(false);
+  }, [artist.wikidataId]);
+
   return (
     <main className={styles.galleryShell}>
       <div className={styles.galleryHud}>
@@ -840,12 +855,13 @@ function GalleryView({ artist, onBack }) {
           <GalleryCanvas
             museum={museum}
             entered={entered}
-            inspecting={Boolean(inspectedWork)}
+            inspecting={Boolean(inspectedWork) || exitOpen}
             onInspect={setInspectedWork}
+            onExit={() => setExitOpen(true)}
           />
           {entered && (
             <div className={styles.galleryHelp}>
-              WASD / arrows to walk · drag to look · click a work to inspect
+              WASD / arrows to walk · drag to look · click a work to inspect · click the doors to leave
             </div>
           )}
           {!entered && (
@@ -868,7 +884,62 @@ function GalleryView({ artist, onBack }) {
           <InspectLightbox work={inspectedWork} onClose={() => setInspectedWork(null)} />
         </BodyPortal>
       )}
+
+      {exitOpen && (
+        <BodyPortal>
+          <ExitChoice
+            onClose={() => setExitOpen(false)}
+            onTimeline={onBack}
+            onRandom={onRandom}
+          />
+        </BodyPortal>
+      )}
     </main>
+  );
+}
+
+function ExitChoice({ onClose, onTimeline, onRandom }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className={`${styles.modalScrim} ${mounted ? styles.modalScrimIn : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Leave the gallery"
+      onClick={onClose}
+    >
+      <button className={styles.closeButton} type="button" onClick={onClose} aria-label="Stay in the gallery">
+        <span className={styles.materialSymbol} aria-hidden>close</span>
+      </button>
+      <article
+        className={`${styles.exitCard} ${mounted ? styles.placardIn : ''}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p className={styles.placardKicker}>Leaving the gallery</p>
+        <h2>Where to next?</h2>
+        <p className={styles.exitLede}>Step back out to the constellation, or let the atlas pick another artist for you.</p>
+        <div className={styles.exitActions}>
+          <button type="button" className={styles.exitButtonPrimary} onClick={onTimeline}>
+            Back to the timeline
+          </button>
+          <button type="button" className={styles.exitButtonGhost} onClick={onRandom}>
+            Surprise me — random gallery
+          </button>
+        </div>
+      </article>
+    </div>
   );
 }
 
@@ -927,11 +998,12 @@ function InspectLightbox({ work, onClose }) {
   );
 }
 
-function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
+function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
   const canvasRef = useRef(null);
   const enteredRef = useRef(entered);
   const inspectRef = useRef(onInspect);
   const inspectingRef = useRef(inspecting);
+  const exitRef = useRef(onExit);
 
   useEffect(() => {
     enteredRef.current = entered;
@@ -944,6 +1016,10 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
   useEffect(() => {
     inspectingRef.current = inspecting;
   }, [inspecting]);
+
+  useEffect(() => {
+    exitRef.current = onExit;
+  }, [onExit]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -964,7 +1040,8 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
     scene.fog = new THREE.Fog(0xb9bcc0, 22, 60);
 
     const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 100);
-    camera.position.set(0, 1.72, 4.8);
+    // Start just inside the room, facing down the corridor so the doors are behind you.
+    camera.position.set(0, 1.72, 2.4);
     camera.rotation.order = 'YXZ';
 
     // Paintings alternate walls, so each wall only holds half the works — spacing is
@@ -1095,6 +1172,69 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
     addBox(scene, [1.1, 0.12, 2.4], [0, 0.46, centerZ + 1.4], benchMaterial);
     addBox(scene, [0.9, 0.46, 0.16], [0, 0.23, centerZ + 0.3], benchMaterial);
     addBox(scene, [0.9, 0.46, 0.16], [0, 0.23, centerZ + 2.5], benchMaterial);
+
+    // ---- Entrance wall behind the visitor, with elegant oak double doors. ----
+    const frontWallZ = 3.0;
+    const doorWidth = 1.05; // each leaf
+    const doorHeight = 2.7;
+    const doorGap = doorWidth * 2;
+    // Wall in the same blue-grey as the other three, with a doorway gap in the middle.
+    const sidePanelWidth = (8.2 - doorGap) / 2;
+    addBox(scene, [sidePanelWidth, 4.2, 0.14], [-(doorGap / 2 + sidePanelWidth / 2), 2.05, frontWallZ], wallMaterial);
+    addBox(scene, [sidePanelWidth, 4.2, 0.14], [doorGap / 2 + sidePanelWidth / 2, 2.05, frontWallZ], wallMaterial);
+    // Lintel above the doorway.
+    addBox(scene, [doorGap + 0.4, 4.2 - doorHeight - 0.2, 0.14], [0, doorHeight + 0.2 + (4.2 - doorHeight - 0.2) / 2, frontWallZ], wallMaterial);
+    // Dado continues across the side panels.
+    addBox(scene, [sidePanelWidth, dadoHeight, 0.16], [-(doorGap / 2 + sidePanelWidth / 2), dadoHeight / 2, frontWallZ - 0.05], dadoMaterial);
+    addBox(scene, [sidePanelWidth, dadoHeight, 0.16], [doorGap / 2 + sidePanelWidth / 2, dadoHeight / 2, frontWallZ - 0.05], dadoMaterial);
+
+    // Oak door frame surround.
+    const doorFrameMat = new THREE.MeshStandardMaterial({ map: benchTex, roughness: 0.4, metalness: 0.05 });
+    addBox(scene, [0.18, doorHeight + 0.3, 0.2], [-(doorGap / 2 + 0.09), (doorHeight + 0.3) / 2, frontWallZ - 0.04], doorFrameMat);
+    addBox(scene, [0.18, doorHeight + 0.3, 0.2], [doorGap / 2 + 0.09, (doorHeight + 0.3) / 2, frontWallZ - 0.04], doorFrameMat);
+    addBox(scene, [doorGap + 0.36, 0.2, 0.2], [0, doorHeight + 0.2, frontWallZ - 0.04], doorFrameMat);
+
+    const exitMeshes = [];
+    // Two oak-panelled door leaves.
+    [-1, 1].forEach((side) => {
+      const leaf = new THREE.Group();
+      leaf.position.set(side * doorWidth / 2, doorHeight / 2, frontWallZ - 0.12);
+      // Door slab.
+      const slab = new THREE.Mesh(
+        new THREE.BoxGeometry(doorWidth - 0.04, doorHeight - 0.04, 0.08),
+        new THREE.MeshStandardMaterial({ map: benchTex, roughness: 0.42, metalness: 0.06 })
+      );
+      slab.userData.exit = true;
+      slab.castShadow = true;
+      leaf.add(slab);
+      // Recessed raised panels (two per leaf) for the panelled look.
+      const panelMat = new THREE.MeshStandardMaterial({ color: 0x5b4226, roughness: 0.5 });
+      [0.62, -0.62].forEach((py) => {
+        const panel = new THREE.Mesh(new THREE.PlaneGeometry(doorWidth - 0.34, doorHeight / 2 - 0.34), panelMat);
+        panel.position.set(0, py, 0.045);
+        panel.userData.exit = true;
+        leaf.add(panel);
+      });
+      // Brass handle near the central meeting stiles.
+      const handle = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xc9a84a, roughness: 0.25, metalness: 0.85 })
+      );
+      handle.position.set(-side * (doorWidth / 2 - 0.16), 0, 0.07);
+      handle.userData.exit = true;
+      leaf.add(handle);
+      leaf.traverse((obj) => { if (obj.isMesh) exitMeshes.push(obj); });
+      scene.add(leaf);
+    });
+
+    // "EXIT" placard above the doors.
+    const exitSignTexture = makeExitSignTexture();
+    const exitSign = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.6, 0.34),
+      new THREE.MeshBasicMaterial({ map: exitSignTexture, transparent: true })
+    );
+    exitSign.position.set(0, doorHeight + 0.55, frontWallZ - 0.06);
+    scene.add(exitSign);
 
     const wallTitleTexture = makeWallTextTexture(museum.artist);
     const wallTitle = new THREE.Mesh(
@@ -1251,6 +1391,14 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
       );
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, camera);
+
+      // Clicking the exit doors offers the visitor a way out.
+      const exitHit = raycaster.intersectObjects(exitMeshes, false)[0];
+      if (exitHit) {
+        exitRef.current?.();
+        return;
+      }
+
       const hit = raycaster.intersectObjects(paintingMeshes, false)[0];
       if (hit?.object?.userData?.work) {
         lastInspected = hit.object.userData.work;
@@ -1267,7 +1415,7 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
         };
         viewTransition.target = {
           x: side * 1.7,
-          z: clamp(paintingPos.z, backWallZ + 2.4, 4.8),
+          z: clamp(paintingPos.z, backWallZ + 2.4, 2.5),
           yaw: side < 0 ? Math.PI / 2 : -Math.PI / 2,
           pitch: 0,
         };
@@ -1329,7 +1477,7 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
         camera.position.z -= forwardIntent * speed;
         camera.position.x += strafeIntent * speed;
         camera.position.x = clamp(camera.position.x, -2.9, 2.9);
-        camera.position.z = clamp(camera.position.z, backWallZ + 2.4, 4.8);
+        camera.position.z = clamp(camera.position.z, backWallZ + 2.4, 2.5);
       }
 
       camera.rotation.y = cameraState.yaw;
@@ -1402,6 +1550,7 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect }) {
         }
       });
       wallTitleTexture.dispose();
+      exitSignTexture.dispose();
       disposableTextures.forEach((texture) => texture.dispose());
       if (window.render_game_to_text === renderState) delete window.render_game_to_text;
       if (window.advanceTime === advanceTime) delete window.advanceTime;
@@ -1581,6 +1730,23 @@ function makeWallTextTexture(artist) {
   context.font = '27px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
   context.fillText(`${artist.birth || ''} - ${artist.death || 'present'}`, 512, 220);
 
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function makeExitSignTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 768;
+  canvas.height = 160;
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'rgba(232, 226, 216, 0.92)';
+  context.font = '40px Georgia, Times New Roman, serif';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText('E X I T  ·  T O  T H E  T I M E L I N E', 384, 80);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 4;
