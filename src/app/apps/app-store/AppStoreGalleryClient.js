@@ -253,13 +253,14 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 1.05;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x817464);
-    scene.fog = new THREE.Fog(0x817464, 24, 58);
+    // National Gallery / Tate Britain daylight room — matches the Art Atlas galleries.
+    scene.background = new THREE.Color(0xb9bcc0);
+    scene.fog = new THREE.Fog(0xb9bcc0, 22, 60);
 
     const camera = new THREE.PerspectiveCamera(64, 1, 0.1, 100);
     camera.position.set(0, 1.78, 1.6);
@@ -280,66 +281,91 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
     let lastHovered = null;
     let lastSelected = null;
 
-    const floorTexture = makeFloorTexture();
+    // Oak parquet floor (matches Art Atlas).
+    const floorTexture = makeParquetTexture();
     floorTexture.wrapS = THREE.RepeatWrapping;
     floorTexture.wrapT = THREE.RepeatWrapping;
-    floorTexture.repeat.set(2.5, Math.max(5, corridorLength / 3.2));
+    floorTexture.repeat.set(Math.max(2, Math.round(corridorLength / 2)), Math.max(3, Math.round(corridorLength / 1.6)));
+    floorTexture.anisotropy = renderer.capabilities.getMaxAnisotropy?.() || 4;
     floorTexture.colorSpace = THREE.SRGBColorSpace;
 
-    const wallTexture = makePlasterTexture();
+    // Blue-grey painted walls with faint damask/plaster grain.
+    const wallTexture = makeWallTexture();
     wallTexture.wrapS = THREE.RepeatWrapping;
     wallTexture.wrapT = THREE.RepeatWrapping;
-    wallTexture.repeat.set(2.2, Math.max(3, corridorLength / 5.5));
+    wallTexture.repeat.set(2, 2);
     wallTexture.colorSpace = THREE.SRGBColorSpace;
 
-    const backWallTexture = makePlasterTexture();
-    backWallTexture.wrapS = THREE.RepeatWrapping;
-    backWallTexture.wrapT = THREE.RepeatWrapping;
-    backWallTexture.repeat.set(1.15, 1.05);
-    backWallTexture.colorSpace = THREE.SRGBColorSpace;
+    // Veined marble dado.
+    const dadoTexture = makeMarbleTexture();
+    dadoTexture.wrapS = THREE.RepeatWrapping;
+    dadoTexture.wrapT = THREE.RepeatWrapping;
+    dadoTexture.repeat.set(Math.max(2, Math.round(corridorLength / 3)), 1);
+    dadoTexture.colorSpace = THREE.SRGBColorSpace;
 
-    const frameTexture = makeWoodTexture();
+    const frameTexture = makeOakTexture();
     frameTexture.wrapS = THREE.RepeatWrapping;
     frameTexture.wrapT = THREE.RepeatWrapping;
     frameTexture.colorSpace = THREE.SRGBColorSpace;
 
-    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1711, map: floorTexture, roughness: 0.44, metalness: 0.08 });
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xd8cdbd, map: wallTexture, roughness: 0.74 });
-    const backWallMaterial = new THREE.MeshStandardMaterial({ color: 0xd9cebe, map: backWallTexture, roughness: 0.78 });
-    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x81705d, roughness: 0.76 });
-    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x725127, map: frameTexture, roughness: 0.46, metalness: 0.12 });
+    const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.5, metalness: 0.05 });
+    const wallMaterial = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.95 });
+    const backWallMaterial = new THREE.MeshStandardMaterial({ map: wallTexture, roughness: 0.95 });
+    const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xe9e6dd, roughness: 0.95 });
+    const dadoMaterial = new THREE.MeshStandardMaterial({ map: dadoTexture, roughness: 0.3, metalness: 0.18 });
+    // Restrained aged-gold frame.
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x9c7a3c, roughness: 0.44, metalness: 0.45 });
     const glassMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.13,
+      opacity: 0.08,
       roughness: 0.08,
       metalness: 0,
       clearcoat: 1,
       clearcoatRoughness: 0.18,
       depthWrite: false,
     });
-    const trimMaterial = new THREE.MeshStandardMaterial({ color: 0x0d0b09, roughness: 0.5 });
+    const trimMaterial = new THREE.MeshStandardMaterial({ color: 0x161617, roughness: 0.45 });
 
-    scene.add(new THREE.HemisphereLight(0xfff3df, 0x2c2016, 2.35));
-    const keyLight = new THREE.DirectionalLight(0xfff0d6, 1.25);
-    keyLight.position.set(0, 6, 4);
+    // Bright, even daylight (matches Art Atlas): soft ambient + warm sky + overhead.
+    scene.add(new THREE.AmbientLight(0xeef0f2, 0.62));
+    scene.add(new THREE.HemisphereLight(0xf2f4f7, 0xb9a884, 0.95));
+    const keyLight = new THREE.DirectionalLight(0xf3f1ec, 0.55);
+    keyLight.position.set(0.5, 9, centerZ + 3);
+    keyLight.target.position.set(0, 1, centerZ);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 40;
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.bias = -0.0006;
     scene.add(keyLight);
+    scene.add(keyLight.target);
+
     addBox(scene, [8.7, 0.08, corridorLength], [0, -0.04, centerZ], floorMaterial, { receiveShadow: true });
     addBox(scene, [0.14, 4.45, corridorLength], [-4.28, 2.12, centerZ], wallMaterial);
     addBox(scene, [0.14, 4.45, corridorLength], [4.28, 2.12, centerZ], wallMaterial);
     addBox(scene, [8.7, 4.45, 0.14], [0, 2.12, farZ], backWallMaterial);
     addBox(scene, [3.35, 0.1, corridorLength], [-2.65, 4.25, centerZ], ceilingMaterial);
     addBox(scene, [3.35, 0.1, corridorLength], [2.65, 4.25, centerZ], ceilingMaterial);
-    addBox(scene, [1.7, 0.04, corridorLength - 1.5], [0, 4.3, centerZ + 0.1], new THREE.MeshBasicMaterial({ color: 0xf3eee6 }), { castShadow: false, receiveShadow: false });
-    addBox(scene, [0.12, 0.18, corridorLength], [-4.18, 0.09, centerZ], trimMaterial, { castShadow: false, receiveShadow: true });
-    addBox(scene, [0.12, 0.18, corridorLength], [4.18, 0.09, centerZ], trimMaterial, { castShadow: false, receiveShadow: true });
-    addBox(scene, [8.48, 0.18, 0.12], [0, 0.09, farZ + 0.08], trimMaterial, { castShadow: false, receiveShadow: true });
-    addBox(scene, [0.06, 0.06, corridorLength - 2], [-2.18, 3.98, centerZ], trimMaterial, { castShadow: true, receiveShadow: false });
-    addBox(scene, [0.06, 0.06, corridorLength - 2], [2.18, 3.98, centerZ], trimMaterial, { castShadow: true, receiveShadow: false });
-    addBox(scene, [0.96, 0.34, 3.0], [0, 0.22, -8.5], new THREE.MeshStandardMaterial({ color: 0x5d442b, map: frameTexture, roughness: 0.5 }), { castShadow: true, receiveShadow: true });
-    addBox(scene, [0.58, 0.42, 0.9], [0, 0.02, -8.5], new THREE.MeshStandardMaterial({ color: 0x120f0c, roughness: 0.5 }), { castShadow: true, receiveShadow: true });
+    // Glazed skylight strip.
+    addBox(scene, [2.4, 0.04, corridorLength - 1.5], [0, 4.3, centerZ + 0.1], new THREE.MeshBasicMaterial({ color: 0xf7f6f2 }), { castShadow: false, receiveShadow: false });
+
+    // Marble dado band along the base of each wall.
+    const dadoHeight = 0.62;
+    addBox(scene, [0.16, dadoHeight, corridorLength], [-4.22, dadoHeight / 2, centerZ], dadoMaterial, { receiveShadow: true });
+    addBox(scene, [0.16, dadoHeight, corridorLength], [4.22, dadoHeight / 2, centerZ], dadoMaterial, { receiveShadow: true });
+    addBox(scene, [8.7, dadoHeight, 0.16], [0, dadoHeight / 2, farZ + 0.05], dadoMaterial, { receiveShadow: true });
+    // Dark cap line on top of the dado.
+    addBox(scene, [0.18, 0.03, corridorLength], [-4.2, dadoHeight, centerZ], trimMaterial);
+    addBox(scene, [0.18, 0.03, corridorLength], [4.2, dadoHeight, centerZ], trimMaterial);
+    addBox(scene, [8.7, 0.03, 0.18], [0, dadoHeight, farZ + 0.05], trimMaterial);
+    // Skylight track rails.
+    addBox(scene, [0.06, 0.06, corridorLength - 2], [-1.3, 4.0, centerZ], trimMaterial, { castShadow: true, receiveShadow: false });
+    addBox(scene, [0.06, 0.06, corridorLength - 2], [1.3, 4.0, centerZ], trimMaterial, { castShadow: true, receiveShadow: false });
 
     addEndWall(scene, farZ + 0.08);
 
@@ -502,18 +528,16 @@ function AppStoreScene({ apps, activeCategory, onHover, onSelect, onPosition }) 
     function step(dt) {
       const forwardIntent = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0);
       const strafeIntent = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
-      camera.rotation.y = cameraState.yaw;
-      camera.rotation.x = cameraState.pitch;
-      const forward = new THREE.Vector3();
-      camera.getWorldDirection(forward);
-      forward.y = 0;
-      forward.normalize();
-      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+      // Gallery-axis movement (matches Art Atlas guardrails): WASD moves along the
+      // corridor/world axes regardless of look direction, so you never drift or
+      // wander off into a wall. Yaw/pitch only change where you're looking.
       const speed = 3.4 * dt;
-      camera.position.addScaledVector(forward, forwardIntent * speed);
-      camera.position.addScaledVector(right, strafeIntent * speed);
+      camera.position.z -= forwardIntent * speed;
+      camera.position.x += strafeIntent * speed;
       camera.position.x = clamp(camera.position.x, -2.65, 2.65);
       camera.position.z = clamp(camera.position.z, farZ + 2.1, 2.2);
+      camera.rotation.y = cameraState.yaw;
+      camera.rotation.x = cameraState.pitch;
 
       const category = categoryRef.current;
       posterMeshes.forEach((mesh) => {
@@ -781,83 +805,132 @@ function drawFallbackStar(ctx, cx, cy, radius, alpha = 0.13) {
   ctx.restore();
 }
 
-function makeFloorTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-  gradient.addColorStop(0, '#1b160f');
-  gradient.addColorStop(0.54, '#0f0d0a');
-  gradient.addColorStop(1, '#221a12');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 512, 512);
+// ---- Procedural materials shared with the Art Atlas galleries ----
 
-  for (let y = 42; y < 512; y += 58) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-    ctx.lineWidth = 1;
+function makeCanvas(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  return canvas;
+}
+
+// Herringbone oak parquet.
+function makeParquetTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#b9893f';
+  ctx.fillRect(0, 0, size, size);
+  const plankL = 120;
+  const plankW = 30;
+  const tones = ['#c89a52', '#bd8c45', '#b07e3a', '#c79248', '#a9763a'];
+  let t = 0;
+  for (let row = -1; row < size / plankW + 2; row += 1) {
+    for (let col = -1; col < size / plankW + 2; col += 1) {
+      const angle = (row + col) % 2 === 0 ? Math.PI / 4 : -Math.PI / 4;
+      const cx = col * plankW * 1.4;
+      const cy = row * plankW * 1.4;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.fillStyle = tones[t % tones.length];
+      t += 1;
+      ctx.fillRect(-plankL / 2, -plankW / 2, plankL, plankW);
+      ctx.strokeStyle = 'rgba(80, 52, 24, 0.22)';
+      ctx.lineWidth = 1;
+      for (let g = 0; g < 4; g += 1) {
+        const gy = -plankW / 2 + (g + 1) * (plankW / 5);
+        ctx.beginPath();
+        ctx.moveTo(-plankL / 2, gy + Math.sin(g) * 1.5);
+        ctx.lineTo(plankL / 2, gy - Math.sin(g) * 1.5);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(60, 40, 18, 0.5)';
+      ctx.strokeRect(-plankL / 2, -plankW / 2, plankL, plankW);
+      ctx.restore();
+    }
+  }
+  return new THREE.CanvasTexture(canvas);
+}
+
+// Blue-grey painted wall with faint damask weave and plaster mottle.
+function makeWallTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#6f7e88';
+  ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < 1400; i += 1) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const r = Math.random() * 3 + 0.5;
+    const shade = Math.random() > 0.5 ? 255 : 0;
+    ctx.fillStyle = `rgba(${shade},${shade},${shade},0.025)`;
     ctx.beginPath();
-    ctx.moveTo(0, y + Math.sin(y) * 2);
-    ctx.lineTo(512, y + Math.cos(y) * 2);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+  ctx.lineWidth = 1;
+  const stepW = 64;
+  for (let x = -size; x < size * 2; x += stepW) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + size, size);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + size, 0);
+    ctx.lineTo(x, size);
     ctx.stroke();
   }
-
-  for (let i = 0; i < 900; i += 1) {
-    ctx.fillStyle = `rgba(255,235,200,${Math.random() * 0.025})`;
-    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
-  }
-
   return new THREE.CanvasTexture(canvas);
 }
 
-function makePlasterTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
+// Dark green-grey veined marble for the dado.
+function makeMarbleTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#d8cdbd';
-  ctx.fillRect(0, 0, 512, 512);
-
-  const glow = ctx.createRadialGradient(180, 110, 20, 220, 180, 480);
-  glow.addColorStop(0, 'rgba(255,255,255,0.22)');
-  glow.addColorStop(1, 'rgba(92,71,48,0.08)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, 512, 512);
-
-  for (let i = 0; i < 1200; i += 1) {
-    const warm = i % 3 === 0 ? '255,255,255' : '95,74,52';
-    ctx.fillStyle = `rgba(${warm},${0.015 + Math.random() * 0.025})`;
-    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1 + Math.random() * 2, 1 + Math.random() * 2);
-  }
-
-  return new THREE.CanvasTexture(canvas);
-}
-
-function makeWoodTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 512, 0);
-  gradient.addColorStop(0, '#533616');
-  gradient.addColorStop(0.35, '#79552a');
-  gradient.addColorStop(0.7, '#66431d');
-  gradient.addColorStop(1, '#8a6538');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 512, 256);
-
-  for (let y = 12; y < 256; y += 14) {
-    ctx.strokeStyle = `rgba(31,19,8,${0.13 + Math.random() * 0.08})`;
-    ctx.lineWidth = 1;
+  const grad = ctx.createLinearGradient(0, 0, size, size);
+  grad.addColorStop(0, '#2c3833');
+  grad.addColorStop(0.5, '#384541');
+  grad.addColorStop(1, '#2a352f');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < 26; i += 1) {
+    ctx.strokeStyle = `rgba(${190 + Math.random() * 40},${200 + Math.random() * 30},${195 + Math.random() * 30},${0.08 + Math.random() * 0.12})`;
+    ctx.lineWidth = Math.random() * 1.6 + 0.3;
     ctx.beginPath();
-    for (let x = 0; x <= 512; x += 32) {
-      const wave = Math.sin((x + y) * 0.035) * 4;
-      if (x === 0) ctx.moveTo(x, y + wave);
-      else ctx.lineTo(x, y + wave);
+    let x = Math.random() * size;
+    let y = Math.random() * size;
+    ctx.moveTo(x, y);
+    for (let s = 0; s < 6; s += 1) {
+      x += (Math.random() - 0.5) * 140;
+      y += (Math.random() - 0.5) * 140;
+      ctx.lineTo(x, y);
     }
     ctx.stroke();
   }
+  return new THREE.CanvasTexture(canvas);
+}
 
+// Warm oak grain for frames.
+function makeOakTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#8a6536';
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = 'rgba(60, 40, 20, 0.3)';
+  ctx.lineWidth = 1.4;
+  for (let y = 6; y < size; y += 14) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= size; x += 16) {
+      ctx.lineTo(x, y + Math.sin(x / 40 + y) * 3);
+    }
+    ctx.stroke();
+  }
   return new THREE.CanvasTexture(canvas);
 }
 
