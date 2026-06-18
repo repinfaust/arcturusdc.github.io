@@ -1,4 +1,4 @@
-export const ART_ATLAS_VERSION = '2026-06-18-cosmos-v2-bacon';
+export const ART_ATLAS_VERSION = '2026-06-18-cosmos-v3-labels';
 
 export const ART_PERIODS = [
   {
