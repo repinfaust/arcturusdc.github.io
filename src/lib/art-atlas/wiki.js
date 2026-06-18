@@ -20,32 +20,18 @@ const COMMONS_CATEGORY_FALLBACKS_BY_ARTIST = {
 };
 
 const FEATURED_WORKS_BY_ARTIST = {
+  // Bacon's major paintings are still in copyright and not freely licensed on
+  // Commons; the only genuine artwork images available are these two views of his
+  // 1929 painted screen. (The Tate "Capturing the Moment" photos turned out to be
+  // shots of the wall labels, not the paintings, so they are deliberately excluded.)
   Q154340: [
-    commonsWork({
-      id: 'commons-bacon-study-pope-vi',
-      title: 'Study for a Pope VI',
-      year: '1961',
-      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francis%20Bacon%2C%20%22Estudo%20para%20um%20Papa%20VI%22%2C%20Capturing%20The%20Moment%2C%20Tate%20Modern%2002.jpg',
-      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Francis_Bacon,_%22Estudo_para_um_Papa_VI%22,_Capturing_The_Moment,_Tate_Modern_02.jpg',
-      story: 'One of Bacon\'s celebrated "screaming pope" paintings, derived obsessively from Velázquez\'s 1650 Portrait of Pope Innocent X. Bacon never saw the original, working instead from reproductions, and dissolved the seated pontiff into a cage of vertical brushstrokes — the open mouth a scream that became the defining image of post-war anxiety. Photographed here in the Capturing the Moment exhibition at Tate Modern.',
-      fact: 'Francis Bacon · oil on canvas · after Velázquez',
-    }),
-    commonsWork({
-      id: 'commons-bacon-three-studies-lucian-freud',
-      title: 'Three Studies for a Portrait of Lucian Freud',
-      year: '1964',
-      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francis%20Bacon%2C%20%22Tr%C3%AAs%20Estudos%20para%20o%20Retrato%20de%20Lucien%20Freud%22%2C%20Capturing%20The%20Moment%2C%20Tate%20Modern%2001.jpg',
-      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Francis_Bacon,_%22Tr%C3%AAs_Estudos_para_o_Retrato_de_Lucien_Freud%22,_Capturing_The_Moment,_Tate_Modern_01.jpg',
-      story: 'A triptych portrait of the painter Lucian Freud, Bacon\'s close friend and rival. Across three panels Bacon twists and smears Freud\'s features, seating him on a tubular frame against flat colour — the fragmentation that became Bacon\'s signature way of conveying a living, restless presence rather than a fixed likeness. Photographed in the Capturing the Moment exhibition at Tate Modern.',
-      fact: 'Francis Bacon · triptych · oil on canvas',
-    }),
     commonsWork({
       id: 'commons-bacon-painted-screen-a',
       title: 'Painted Screen',
       year: '1929',
       image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francis%20bacon%2C%20paravento%20dipinto%2C%201929%20ca.%2001.jpg',
       sourceUrl: 'https://commons.wikimedia.org/wiki/File:Francis_bacon,_paravento_dipinto,_1929_ca._01.jpg',
-      story: 'A rare survival from Bacon\'s earliest period, when — before turning to painting full time — he worked as a furniture and interior designer in London. This folding screen shows the flattened, Cubist-influenced forms of his late-1920s output, years before the visceral figurative style that would make his name.',
+      story: 'A rare survival from Bacon\'s earliest period, when — before turning to painting full time — he worked as a furniture and interior designer in London. This folding screen shows the flattened, Cubist-influenced forms of his late-1920s output, years before the visceral, screaming figures that would make his name. His mature masterpieces remain in copyright and are not freely reproducible here.',
       fact: 'Francis Bacon · painted folding screen · early work',
     }),
     commonsWork({
