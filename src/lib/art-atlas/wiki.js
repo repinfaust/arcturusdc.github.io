@@ -17,9 +17,40 @@ const COMMONS_CATEGORY_FALLBACKS_BY_ARTIST = {
   Q132305: ['Category:Paintings by Willem de Kooning', 'Category:Sculptures by Willem de Kooning'],
   Q5603: ["Category:Campbell's Soup Cans", 'Category:BMW M1 Art Car by Andy Warhol'],
   Q231121: ['Category:Artworks by Yayoi Kusama'],
+  Q154340: ['Category:Works by Francis Bacon (artist)'],
 };
 
 const FEATURED_WORKS_BY_ARTIST = {
+  Q154340: [
+    commonsWork({
+      id: 'commons-bacon-study-pope-vi',
+      title: 'Study for a Pope VI',
+      year: '1961',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francis%20Bacon%2C%20%22Estudo%20para%20um%20Papa%20VI%22%2C%20Capturing%20The%20Moment%2C%20Tate%20Modern%2002.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Francis_Bacon,_%22Estudo_para_um_Papa_VI%22,_Capturing_The_Moment,_Tate_Modern_02.jpg',
+    }),
+    commonsWork({
+      id: 'commons-bacon-three-studies-lucian-freud',
+      title: 'Three Studies for a Portrait of Lucian Freud',
+      year: '1964',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francis%20Bacon%2C%20%22Tr%C3%AAs%20Estudos%20para%20o%20Retrato%20de%20Lucien%20Freud%22%2C%20Capturing%20The%20Moment%2C%20Tate%20Modern%2001.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Francis_Bacon,_%22Tr%C3%AAs_Estudos_para_o_Retrato_de_Lucien_Freud%22,_Capturing_The_Moment,_Tate_Modern_01.jpg',
+    }),
+    commonsWork({
+      id: 'commons-bacon-painted-screen-a',
+      title: 'Painted Screen (early work)',
+      year: '1929',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francis%20bacon%2C%20paravento%20dipinto%2C%201929%20ca.%2001.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Francis_bacon,_paravento_dipinto,_1929_ca._01.jpg',
+    }),
+    commonsWork({
+      id: 'commons-bacon-painted-screen-b',
+      title: 'Painted Screen, detail (early work)',
+      year: '1929',
+      image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francis%20bacon%2C%20paravento%20dipinto%2C%201929%20ca.%2002.jpg',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Francis_bacon,_paravento_dipinto,_1929_ca._02.jpg',
+    }),
+  ],
   Q5588: [
     commonsWork({
       id: 'commons-frida-kahlo-broken-column',

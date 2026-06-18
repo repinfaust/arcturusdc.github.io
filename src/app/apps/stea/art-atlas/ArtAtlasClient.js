@@ -1,9 +1,28 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as THREE from 'three';
 import { useTenant } from '@/contexts/TenantContext';
+import { KNOWN_ARTWORKS } from '@/lib/art-atlas/data';
 import styles from './art-atlas.module.css';
+
+// Render modals straight to <body> so no transformed/filtered ancestor can become
+// the containing block for our position:fixed overlays (which was pushing the
+// lightbox and bio card off-screen and causing the page to scroll).
+function BodyPortal({ children }) {
+  const [host, setHost] = useState(null);
+  useEffect(() => {
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+    setHost(el);
+    return () => {
+      document.body.removeChild(el);
+    };
+  }, []);
+  if (!host) return null;
+  return createPortal(children, host);
+}
 
 const YEAR_MIN = 500;
 const YEAR_MAX = 2026;
@@ -379,6 +398,13 @@ function ArtAtlasExperience() {
         </div>
 
         <div className={styles.tools}>
+          <TimelineSearch
+            nodes={laidOutNodes}
+            onPick={(node) => {
+              centerOnNode(node);
+              window.setTimeout(() => setSelectedArtist(node.artist), 360);
+            }}
+          />
           <button
             className={styles.toolButton}
             type="button"
@@ -526,13 +552,124 @@ function ArtAtlasExperience() {
       </div>
 
       {selectedArtist && view === 'timeline' && (
-        <ArtistPlacard
-          artist={selectedArtist}
-          onClose={() => setSelectedArtist(null)}
-          onEnter={() => enterGallery(selectedArtist)}
-        />
+        <BodyPortal>
+          <ArtistPlacard
+            artist={selectedArtist}
+            onClose={() => setSelectedArtist(null)}
+            onEnter={() => enterGallery(selectedArtist)}
+          />
+        </BodyPortal>
       )}
     </main>
+  );
+}
+
+function TimelineSearch({ nodes, onPick }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const wrapRef = useRef(null);
+
+  // Map each known artwork title to its artist node (if that artist is on the timeline).
+  const artworkByArtist = useMemo(() => {
+    const map = new Map();
+    KNOWN_ARTWORKS.forEach(([title, wikidataId]) => {
+      const list = map.get(wikidataId) || [];
+      list.push(title);
+      map.set(wikidataId, list);
+    });
+    return map;
+  }, []);
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const out = [];
+    nodes.forEach((node) => {
+      const { artist } = node;
+      const nameHit = `${artist.name} ${artist.searchAliases?.join(' ') || ''}`.toLowerCase().includes(q);
+      const works = artworkByArtist.get(artist.wikidataId) || [];
+      const workHit = works.find((title) => title.toLowerCase().includes(q));
+      if (nameHit) {
+        out.push({ node, label: artist.name, sub: artist.periodName });
+      } else if (workHit) {
+        out.push({ node, label: workHit, sub: `${artist.name} · ${artist.periodName}` });
+      }
+    });
+    return out.slice(0, 8);
+  }, [query, nodes, artworkByArtist]);
+
+  useEffect(() => {
+    setActive(0);
+    setOpen(query.trim().length > 0);
+  }, [query]);
+
+  useEffect(() => {
+    const onDocClick = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  const pick = (result) => {
+    if (!result) return;
+    onPick(result.node);
+    setQuery('');
+    setOpen(false);
+  };
+
+  const onKeyDown = (event) => {
+    if (!open || results.length === 0) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActive((i) => (i + 1) % results.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActive((i) => (i - 1 + results.length) % results.length);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      pick(results[active]);
+    } else if (event.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className={styles.searchWrap} ref={wrapRef}>
+      <span className={styles.materialSymbol} aria-hidden>search</span>
+      <input
+        className={styles.searchInput}
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={onKeyDown}
+        onFocus={() => setOpen(query.trim().length > 0)}
+        placeholder="Search artist or artwork"
+        aria-label="Search artist or artwork"
+      />
+      {open && results.length > 0 && (
+        <ul className={styles.searchResults} role="listbox">
+          {results.map((result, index) => (
+            <li key={`${result.node.artist.wikidataId}-${result.label}`} role="option" aria-selected={index === active}>
+              <button
+                type="button"
+                className={`${styles.searchResult} ${index === active ? styles.searchResultActive : ''}`}
+                onMouseEnter={() => setActive(index)}
+                onClick={() => pick(result)}
+              >
+                <strong>{result.label}</strong>
+                <span>{result.sub}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {open && query.trim() && results.length === 0 && (
+        <ul className={styles.searchResults}>
+          <li><span className={styles.searchEmpty}>No matches on the timeline</span></li>
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -727,7 +864,9 @@ function GalleryView({ artist, onBack }) {
       )}
 
       {inspectedWork && (
-        <InspectLightbox work={inspectedWork} onClose={() => setInspectedWork(null)} />
+        <BodyPortal>
+          <InspectLightbox work={inspectedWork} onClose={() => setInspectedWork(null)} />
+        </BodyPortal>
       )}
     </main>
   );

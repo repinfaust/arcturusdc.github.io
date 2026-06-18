@@ -176,9 +176,10 @@ export const ART_PERIODS = [
     color: '#8fbd9b',
     orbit: -34,
     artists: [
-      artist('Andy Warhol', 'Andy Warhol', 'Q5603', 1928, 1987, -76, -48),
-      artist('Yayoi Kusama', 'Yayoi Kusama', 'Q231121', 1929, null, 18, -78),
-      artist('David Hockney', 'David Hockney', 'Q159907', 1937, 2026, 72, 48),
+      artist('Francis Bacon', 'Francis Bacon', 'Q154340', 1909, 1992, -82, -30),
+      artist('Andy Warhol', 'Andy Warhol', 'Q5603', 1928, 1987, -40, -68),
+      artist('Yayoi Kusama', 'Yayoi Kusama', 'Q231121', 1929, null, 32, -78),
+      artist('David Hockney', 'David Hockney', 'Q159907', 1937, 2026, 74, 44),
     ],
   },
 ];
@@ -198,21 +199,73 @@ export const ARTIST_LOOKUP = Object.fromEntries(
   )
 );
 
+// Famous-artwork → artist index so a search for a painting title (not just an
+// artist name) jumps to the right artist. Curated; not exhaustive.
+export const KNOWN_ARTWORKS = [
+  ['Mona Lisa', 'Q762'],
+  ['The Last Supper', 'Q762'],
+  ['Vitruvian Man', 'Q762'],
+  ['The Creation of Adam', 'Q5592'],
+  ['David', 'Q5592'],
+  ['Sistine Chapel ceiling', 'Q5592'],
+  ['The School of Athens', 'Q5597'],
+  ['The Birth of Venus', 'Q5669'],
+  ['Primavera', 'Q5669'],
+  ['The Garden of Earthly Delights', 'Q130531'],
+  ['The Haywain Triptych', 'Q130531'],
+  ['The Arnolfini Portrait', 'Q102272'],
+  ['Ghent Altarpiece', 'Q102272'],
+  ['The Calling of Saint Matthew', 'Q42207'],
+  ['The Night Watch', 'Q5598'],
+  ['The Third of May 1808', 'Q5432'],
+  ['Saturn Devouring His Son', 'Q5432'],
+  ['The Fighting Temeraire', 'Q159758'],
+  ['Wanderer above the Sea of Fog', 'Q104884'],
+  ['Impression, Sunrise', 'Q296'],
+  ['Water Lilies', 'Q296'],
+  ['The Ballet Class', 'Q46373'],
+  ['Starry Night', 'Q5582'],
+  ['The Starry Night', 'Q5582'],
+  ['Sunflowers', 'Q5582'],
+  ['The Card Players', 'Q35548'],
+  ['Mont Sainte-Victoire', 'Q35548'],
+  ['Les Demoiselles d’Avignon', 'Q5593'],
+  ['Guernica', 'Q5593'],
+  ['The Persistence of Memory', 'Q5577'],
+  ['The Two Fridas', 'Q5588'],
+  ['The Broken Column', 'Q5588'],
+  ['The Treachery of Images', 'Q7836'],
+  ['The Son of Man', 'Q7836'],
+  ['Campbell’s Soup Cans', 'Q5603'],
+  ['Marilyn Diptych', 'Q5603'],
+  ['Three Studies for Figures at the Base of a Crucifixion', 'Q154340'],
+  ['Three Studies for a Portrait of Lucian Freud', 'Q154340'],
+  ['Study for a Pope', 'Q154340'],
+  ['A Bigger Splash', 'Q159907'],
+];
+
 function artist(slug, name, wikidataId, birth, death, dx, dy) {
   const aliases = {
     Q130531: ['Hieronymous Bosch', 'Jheronimus Bosch'],
   };
 
+  // Some artists need a disambiguated Wikipedia title that differs from the clean
+  // display name (e.g. Francis Bacon, the painter, vs the philosopher).
+  const titleOverrides = {
+    Q154340: 'Francis Bacon (artist)',
+  };
+  const wikipediaTitle = titleOverrides[wikidataId] || name;
+
   return {
     slug,
     name,
     wikidataId,
-    wikipediaTitle: name,
+    wikipediaTitle,
     birth,
     death,
     offset: { x: dx, y: dy },
     searchAliases: aliases[wikidataId] || [],
-    wikipediaUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(name.replaceAll(' ', '_'))}`,
+    wikipediaUrl: `https://en.wikipedia.org/wiki/${encodeURIComponent(wikipediaTitle.replaceAll(' ', '_'))}`,
     wikidataUrl: `https://www.wikidata.org/wiki/${wikidataId}`,
   };
 }
