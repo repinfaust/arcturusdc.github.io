@@ -539,28 +539,66 @@ function ConstellationLines({ nodes, reveal }) {
 }
 
 function ArtistPlacard({ artist, onClose, onEnter }) {
+  // Two-stage entrance: the card eases in first, then its contents stagger in.
+  // `mounted` flips on the next frame so the CSS opening transition actually runs;
+  // `contentIn` follows shortly after so text reveals once the card has settled.
+  const [mounted, setMounted] = useState(false);
+  const [contentIn, setContentIn] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    const contentTimer = setTimeout(() => setContentIn(true), 220);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(contentTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const contentClass = `${styles.placardContent} ${contentIn ? styles.placardContentIn : ''}`;
+
   return (
-    <div className={styles.modalScrim} role="dialog" aria-modal="true" aria-labelledby="artist-placard-title">
+    <div
+      className={`${styles.modalScrim} ${mounted ? styles.modalScrimIn : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="artist-placard-title"
+      onClick={onClose}
+    >
       <button className={styles.closeButton} type="button" onClick={onClose} aria-label="Close artist card">
         <span className={styles.materialSymbol} aria-hidden>close</span>
       </button>
-      <article className={styles.placard}>
+      <article
+        className={`${styles.placard} ${mounted ? styles.placardIn : ''}`}
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className={styles.placardBody}>
-          {artist.portrait ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className={styles.placardPortrait} src={artist.portrait} alt="" />
-          ) : (
-            <div className={styles.placardPortrait} aria-hidden />
-          )}
+          <div className={`${contentClass} ${styles.placardPortraitWrap}`} style={{ '--stagger': 0 }}>
+            {artist.portrait ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className={styles.placardPortrait} src={artist.portrait} alt="" />
+            ) : (
+              <div className={styles.placardPortrait} aria-hidden />
+            )}
+          </div>
           <div>
-            <p className={styles.placardKicker}>{artist.periodName}</p>
-            <h2 id="artist-placard-title">{artist.name}</h2>
-            <div className={styles.lifeDates}>{artistDates(artist)}</div>
-            <div className={styles.rule} />
-            <p className={styles.placardSummary}>{artist.summary}</p>
+            <p className={contentClass} style={{ '--stagger': 1 }}>
+              <span className={styles.placardKicker}>{artist.periodName}</span>
+            </p>
+            <h2 id="artist-placard-title" className={contentClass} style={{ '--stagger': 2 }}>{artist.name}</h2>
+            <div className={`${styles.lifeDates} ${contentClass}`} style={{ '--stagger': 3 }}>{artistDates(artist)}</div>
+            <div className={`${styles.rule} ${contentClass}`} style={{ '--stagger': 4 }} />
+            <p className={`${styles.placardSummary} ${contentClass}`} style={{ '--stagger': 5 }}>{artist.summary}</p>
           </div>
         </div>
-        <footer className={styles.placardFooter}>
+        <footer className={`${styles.placardFooter} ${contentClass}`} style={{ '--stagger': 6 }}>
           <div>
             <p className={styles.metaLine}>Wikimedia records on view</p>
             <a href={artist.wikipediaUrl}>Wikipedia source</a>
@@ -641,23 +679,7 @@ function GalleryView({ artist, onBack }) {
       )}
 
       {inspectedWork && (
-        <aside className={styles.inspectPanel}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className={styles.inspectImage} src={inspectedWork.image} alt="" />
-          <div className={styles.inspectCopy}>
-            <h2>{inspectedWork.title}</h2>
-            <p>{inspectedWork.year ? inspectedWork.year : undatedSourceLabel(inspectedWork)}</p>
-            <p>{inspectedWork.story}</p>
-            <p>{inspectedWork.fact}</p>
-            <div className={styles.inspectActions}>
-              <a href={inspectedWork.sourceUrl}>Source record</a>
-              {inspectedWork.imageSource && <a href={inspectedWork.imageSource}>Image file</a>}
-              <button className={styles.galleryBack} type="button" onClick={() => setInspectedWork(null)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </aside>
+        <InspectLightbox work={inspectedWork} onClose={() => setInspectedWork(null)} />
       )}
     </main>
   );
@@ -667,6 +689,55 @@ function undatedSourceLabel(work) {
   return work?.sourceType === 'commons'
     ? 'Undated in the Commons file record'
     : 'Undated in the returned Wikidata record';
+}
+
+function InspectLightbox({ work, onClose }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className={`${styles.inspectScrim} ${mounted ? styles.inspectScrimIn : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${work.title} — inspect`}
+      onClick={onClose}
+    >
+      <button className={styles.inspectClose} type="button" onClick={onClose} aria-label="Close inspect view">
+        <span className={styles.materialSymbol} aria-hidden>close</span>
+      </button>
+      <div
+        className={`${styles.inspectStage} ${mounted ? styles.inspectStageIn : ''}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <figure className={styles.inspectFigure}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className={styles.inspectImage} src={work.image} alt={work.title} />
+        </figure>
+        <aside className={styles.inspectCopy}>
+          <p className={styles.inspectYear}>{work.year ? work.year : undatedSourceLabel(work)}</p>
+          <h2>{work.title}</h2>
+          {work.story && <p className={styles.inspectStory}>{work.story}</p>}
+          {work.fact && <p className={styles.inspectFact}>{work.fact}</p>}
+          <div className={styles.inspectActions}>
+            <a href={work.sourceUrl} target="_blank" rel="noreferrer">Source record</a>
+            {work.imageSource && <a href={work.imageSource} target="_blank" rel="noreferrer">Image file</a>}
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
 }
 
 function GalleryCanvas({ museum, entered, onInspect }) {
@@ -744,35 +815,60 @@ function GalleryCanvas({ museum, entered, onInspect }) {
     scene.add(daylight);
     scene.add(daylight.target);
 
-    // Light oak parquet floor.
+    // Procedural materials — generated on canvases so the room reads as real wood,
+    // painted plaster and veined marble rather than flat blocks of colour.
+    const disposableTextures = [];
+    const registerTexture = (texture) => {
+      if (texture) disposableTextures.push(texture);
+      return texture;
+    };
+
+    // Light oak parquet floor (herringbone planks + grain).
+    const floorTex = registerTexture(makeParquetTexture());
+    floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
+    floorTex.repeat.set(Math.max(2, Math.round(corridorLength / 2)), Math.max(3, Math.round(corridorLength / 1.6)));
+    floorTex.anisotropy = renderer.capabilities.getMaxAnisotropy?.() || 4;
     const floorMaterial = new THREE.MeshStandardMaterial({
-      color: 0xc89a5e,
-      roughness: 0.62,
-      metalness: 0.04,
+      map: floorTex,
+      roughness: 0.5,
+      metalness: 0.05,
     });
-    // Muted blue-grey gallery walls (Tate Britain / National Gallery palette).
+
+    // Muted blue-grey gallery walls with a faint damask/plaster grain.
+    const wallTex = registerTexture(makeWallTexture());
+    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping;
+    wallTex.repeat.set(2, 2);
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: 0x6f7e88,
-      roughness: 0.96,
+      map: wallTex,
+      roughness: 0.95,
     });
+
     // Pale cream ceiling/cove.
     const ceilingMaterial = new THREE.MeshStandardMaterial({
       color: 0xe9e6dd,
       roughness: 0.95,
     });
-    // Dark green-grey marble dado running along the wall base.
+
+    // Dark green-grey veined marble dado running along the wall base.
+    const dadoTex = registerTexture(makeMarbleTexture());
+    dadoTex.wrapS = dadoTex.wrapT = THREE.RepeatWrapping;
+    dadoTex.repeat.set(Math.max(2, Math.round(corridorLength / 3)), 1);
     const dadoMaterial = new THREE.MeshStandardMaterial({
-      color: 0x33403c,
-      roughness: 0.35,
-      metalness: 0.22,
+      map: dadoTex,
+      roughness: 0.3,
+      metalness: 0.18,
     });
     const trimMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1c1c1e,
-      roughness: 0.5,
+      color: 0x161617,
+      roughness: 0.45,
     });
+    // Warm oak bench with grain.
+    const benchTex = registerTexture(makeOakTexture());
+    benchTex.wrapS = benchTex.wrapT = THREE.RepeatWrapping;
+    benchTex.repeat.set(3, 1);
     const benchMaterial = new THREE.MeshStandardMaterial({
-      color: 0x7a5a33,
-      roughness: 0.5,
+      map: benchTex,
+      roughness: 0.45,
       metalness: 0.04,
     });
 
@@ -1049,6 +1145,7 @@ function GalleryCanvas({ museum, entered, onInspect }) {
         }
       });
       wallTitleTexture.dispose();
+      disposableTextures.forEach((texture) => texture.dispose());
       if (window.render_game_to_text === renderState) delete window.render_game_to_text;
       if (window.advanceTime === advanceTime) delete window.advanceTime;
       delete window.__ART_ATLAS_STATE__;
@@ -1065,6 +1162,148 @@ function addBox(scene, size, position, material) {
   mesh.receiveShadow = true;
   scene.add(mesh);
   return mesh;
+}
+
+function makeCanvas(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  return canvas;
+}
+
+// Herringbone oak parquet — the characteristic National Gallery / Tate floor.
+function makeParquetTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#b9893f';
+  ctx.fillRect(0, 0, size, size);
+
+  const plankL = 120;
+  const plankW = 30;
+  const tones = ['#c89a52', '#bd8c45', '#b07e3a', '#c79248', '#a9763a'];
+  let t = 0;
+  // Lay planks at +/-45° in a herringbone weave.
+  for (let row = -1; row < size / plankW + 2; row += 1) {
+    for (let col = -1; col < size / plankW + 2; col += 1) {
+      const angle = (row + col) % 2 === 0 ? Math.PI / 4 : -Math.PI / 4;
+      const cx = col * plankW * 1.4;
+      const cy = row * plankW * 1.4;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.fillStyle = tones[t % tones.length];
+      t += 1;
+      ctx.fillRect(-plankL / 2, -plankW / 2, plankL, plankW);
+      // Grain streaks.
+      ctx.strokeStyle = 'rgba(80, 52, 24, 0.22)';
+      ctx.lineWidth = 1;
+      for (let g = 0; g < 4; g += 1) {
+        const gy = -plankW / 2 + (g + 1) * (plankW / 5);
+        ctx.beginPath();
+        ctx.moveTo(-plankL / 2, gy + Math.sin(g) * 1.5);
+        ctx.lineTo(plankL / 2, gy - Math.sin(g) * 1.5);
+        ctx.stroke();
+      }
+      // Plank edge.
+      ctx.strokeStyle = 'rgba(60, 40, 18, 0.5)';
+      ctx.strokeRect(-plankL / 2, -plankW / 2, plankL, plankW);
+      ctx.restore();
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Blue-grey painted wall with a faint damask weave and plaster mottle.
+function makeWallTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#6f7e88';
+  ctx.fillRect(0, 0, size, size);
+  // Soft mottle for hand-painted plaster.
+  for (let i = 0; i < 1400; i += 1) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const r = Math.random() * 3 + 0.5;
+    const shade = Math.random() > 0.5 ? 255 : 0;
+    ctx.fillStyle = `rgba(${shade},${shade},${shade},0.025)`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Very faint damask diamond lattice.
+  ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+  ctx.lineWidth = 1;
+  const step = 64;
+  for (let x = -size; x < size * 2; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + size, size);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + size, 0);
+    ctx.lineTo(x, size);
+    ctx.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Dark green-grey veined marble for the dado.
+function makeMarbleTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, size, size);
+  grad.addColorStop(0, '#2c3833');
+  grad.addColorStop(0.5, '#384541');
+  grad.addColorStop(1, '#2a352f');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  // Veins.
+  for (let i = 0; i < 26; i += 1) {
+    ctx.strokeStyle = `rgba(${190 + Math.random() * 40},${200 + Math.random() * 30},${195 + Math.random() * 30},${0.08 + Math.random() * 0.12})`;
+    ctx.lineWidth = Math.random() * 1.6 + 0.3;
+    ctx.beginPath();
+    let x = Math.random() * size;
+    let y = Math.random() * size;
+    ctx.moveTo(x, y);
+    for (let s = 0; s < 6; s += 1) {
+      x += (Math.random() - 0.5) * 140;
+      y += (Math.random() - 0.5) * 140;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Warm oak grain for benches.
+function makeOakTexture() {
+  const size = 512;
+  const canvas = makeCanvas(size);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#8a6536';
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = 'rgba(60, 40, 20, 0.3)';
+  ctx.lineWidth = 1.4;
+  for (let y = 6; y < size; y += 14) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= size; x += 16) {
+      ctx.lineTo(x, y + Math.sin(x / 40 + y) * 3);
+    }
+    ctx.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 function makeWallTextTexture(artist) {
