@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import styles from './wc26.module.css';
 import {
   buildMatch,
@@ -44,6 +46,78 @@ function saveJSON(key, value) {
   } catch {
     /* quota / private mode — ignore */
   }
+}
+function removeJSON(key) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    /* storage unavailable — ignore */
+  }
+}
+function hasLocalJSON(key) {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(key) !== null;
+  } catch {
+    return false;
+  }
+}
+
+async function loadWorkspaceModelData() {
+  if (!db) {
+    throw new Error('Firebase client database is unavailable in this environment.');
+  }
+
+  const tenantFilter = where('tenantId', '==', ARCTURUSDC_TENANT_ID);
+  const [teamsSnap, fixturesSnap, resultsSnap] = await Promise.all([
+    getDocs(query(collection(db, 'wc26_teams'), tenantFilter)),
+    getDocs(query(collection(db, 'wc26_fixtures'), tenantFilter)),
+    getDocs(query(collection(db, 'wc26_results'), tenantFilter)),
+  ]);
+
+  const remoteRatings = {};
+  teamsSnap.forEach((doc) => {
+    const data = doc.data();
+    if (!data?.name || typeof data.atk !== 'number' || typeof data.dfn !== 'number') return;
+    remoteRatings[data.name] = {
+      atk: data.atk,
+      dfn: data.dfn,
+      tier: data.tier || 'Custom',
+    };
+  });
+
+  const remoteFixtures = fixturesSnap.docs
+    .map((doc) => doc.data())
+    .filter((fixture) => fixture?.home && fixture?.away && fixture.status !== 'final')
+    .map((fixture) => ({
+      home: fixture.home,
+      away: fixture.away,
+      neutral: fixture.neutral !== false,
+      odds: fixture.odds || {},
+    }));
+
+  const remoteResults = resultsSnap.docs
+    .map((doc) => doc.data())
+    .filter((result) => (
+      result?.home &&
+      result?.away &&
+      typeof result.g1 === 'number' &&
+      typeof result.g2 === 'number'
+    ))
+    .map((result) => ({
+      home: result.home,
+      away: result.away,
+      g1: result.g1,
+      g2: result.g2,
+      neutral: result.neutral !== false,
+    }));
+
+  return {
+    ratings: Object.keys(remoteRatings).length ? remoteRatings : null,
+    fixtures: remoteFixtures.length ? remoteFixtures : null,
+    results: remoteResults.length ? remoteResults : null,
+  };
 }
 
 export default function WC26Client() {
@@ -98,14 +172,62 @@ function Wc26AccessGate({ children }) {
 function WC26Experience() {
   /* --- shared model state --- */
   const [ratings, setRatings] = useState(seedRatings);
+  const [fixtures, setFixtures] = useState(seedFixtures);
+  const [results, setResults] = useState(seedResults);
   const [baseGoals, setBaseGoals] = useState(DEFAULTS.baseGoals);
   const [hydrated, setHydrated] = useState(false);
+  const [hasLocalRatings, setHasLocalRatings] = useState(false);
+  const [dataStatus, setDataStatus] = useState({
+    tone: 'local',
+    text: 'Using committed fallback data until Firestore workspace data is available.',
+  });
 
   useEffect(() => {
+    const localRatingsExist = hasLocalJSON(LS_RATINGS);
+    setHasLocalRatings(localRatingsExist);
     setRatings(loadJSON(LS_RATINGS, seedRatings));
     setBaseGoals(loadJSON(LS_BASE, DEFAULTS.baseGoals));
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (!hydrated) return undefined;
+
+    let active = true;
+    async function loadRemote() {
+      setDataStatus({ tone: 'loading', text: 'Loading ArcturusDC workspace data from Firestore...' });
+      try {
+        const remote = await loadWorkspaceModelData();
+        if (!active) return;
+
+        if (remote.fixtures) setFixtures(remote.fixtures);
+        if (remote.results) setResults(remote.results);
+        if (remote.ratings && !hasLocalRatings) setRatings(remote.ratings);
+
+        const parts = [
+          remote.ratings ? `${Object.keys(remote.ratings).length} teams` : 'fallback teams',
+          remote.fixtures ? `${remote.fixtures.length} fixtures` : 'fallback fixtures',
+          remote.results ? `${remote.results.length} results` : 'fallback results',
+        ];
+        setDataStatus({
+          tone: hasLocalRatings ? 'local' : 'live',
+          text: `Workspace Firestore sync loaded: ${parts.join(' · ')}.${hasLocalRatings ? ' Local rating overrides are active.' : ''}`,
+        });
+      } catch (err) {
+        console.error('[WC26] Firestore workspace sync failed', err);
+        if (!active) return;
+        setDataStatus({
+          tone: 'error',
+          text: `Firestore sync unavailable: ${err.message || 'unknown error'}. Using committed fallback data.`,
+        });
+      }
+    }
+
+    loadRemote();
+    return () => {
+      active = false;
+    };
+  }, [hydrated, hasLocalRatings]);
 
   const opts = useMemo(() => ({ baseGoals }), [baseGoals]);
 
@@ -114,18 +236,28 @@ function WC26Experience() {
       <div className={styles.inner}>
         <Header />
         <BaseGoalsControl baseGoals={baseGoals} setBaseGoals={(v) => { setBaseGoals(v); saveJSON(LS_BASE, v); }} />
-        <Recommendation ratings={ratings} opts={opts} />
+        <DataStatus status={dataStatus} />
+        <Recommendation ratings={ratings} fixtures={fixtures} opts={opts} />
         <MatchPricer ratings={ratings} opts={opts} />
         <ValueCalculator ratings={ratings} opts={opts} hydrated={hydrated} />
-        <TrackRecord ratings={ratings} opts={opts} />
+        <TrackRecord ratings={ratings} results={results} opts={opts} />
         <RatingsEditor
           ratings={ratings}
-          setRatings={(r) => { setRatings(r); saveJSON(LS_RATINGS, r); }}
-          resetRatings={() => { setRatings(seedRatings); saveJSON(LS_RATINGS, seedRatings); }}
+          setRatings={(r) => { setRatings(r); setHasLocalRatings(true); saveJSON(LS_RATINGS, r); }}
+          resetRatings={() => { setRatings(seedRatings); setHasLocalRatings(false); removeJSON(LS_RATINGS); }}
         />
         <Footer />
       </div>
     </div>
+  );
+}
+
+function DataStatus({ status }) {
+  return (
+    <section className={`${styles.statusCard} ${styles[`status_${status.tone}`] || ''}`}>
+      <span>Data source</span>
+      <p>{status.text}</p>
+    </section>
   );
 }
 
@@ -181,9 +313,9 @@ function tagClass(flag) {
   return styles.tagNeutral;
 }
 
-function Recommendation({ ratings, opts }) {
-  const top = useMemo(() => topRecommendation(seedFixtures, ratings, opts), [ratings, opts]);
-  const ranked = useMemo(() => recommend(seedFixtures, ratings, opts), [ratings, opts]);
+function Recommendation({ ratings, fixtures, opts }) {
+  const top = useMemo(() => topRecommendation(fixtures, ratings, opts), [fixtures, ratings, opts]);
+  const ranked = useMemo(() => recommend(fixtures, ratings, opts), [fixtures, ratings, opts]);
 
   return (
     <section className={styles.card}>
@@ -544,8 +676,8 @@ function ValueCalculator({ ratings, opts, hydrated }) {
 }
 
 /* ------------------------------------------------------------ track record */
-function TrackRecord({ ratings, opts }) {
-  const graded = useMemo(() => gradeHistory(seedResults, ratings, opts), [ratings, opts]);
+function TrackRecord({ ratings, results, opts }) {
+  const graded = useMemo(() => gradeHistory(results, ratings, opts), [results, ratings, opts]);
   const s = graded.summary;
 
   return (

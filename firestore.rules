@@ -177,6 +177,36 @@ service cloud.firestore {
     }
 
     /* ==========================================================
+       WC26 value engine. Shared model data is tenant-scoped to
+       ArcturusDC via tenantId and written only by Cloud Functions.
+       User bet logs remain local-only unless separately approved.
+       ========================================================== */
+    match /wc26_teams/{teamId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /wc26_fixtures/{fixtureId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /wc26_results/{resultId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /wc26_predictions/{predictionId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /wc26_meta/{docId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    /* ==========================================================
        Ruby Documentation (migration-friendly)
        ========================================================== */
     match /stea_doc_spaces/{spaceId} {

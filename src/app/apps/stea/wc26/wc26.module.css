@@ -79,6 +79,33 @@
 }
 .accessButton:hover { background: rgba(61, 220, 151, 0.24); }
 
+/* data status */
+.statusCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  background: var(--wc-panel-2);
+  border: 1px solid var(--wc-line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--wc-muted);
+  font-size: 13px;
+}
+.statusCard span {
+  color: var(--wc-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.statusCard p { margin: 0; line-height: 1.45; }
+.status_live { border-color: rgba(61, 220, 151, 0.28); }
+.status_loading { border-color: rgba(255, 209, 102, 0.22); }
+.status_local { border-color: rgba(255, 255, 255, 0.12); }
+.status_error { border-color: rgba(255, 107, 107, 0.35); }
+.status_error span { color: #ff9a9a; }
+
 /* card */
 .card {
   background: var(--wc-panel);
