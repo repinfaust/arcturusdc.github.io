@@ -6,9 +6,38 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const wc26 = require('./wc26/service');
 
 admin.initializeApp();
 const db = admin.firestore();
+
+// ─── WC26 Value Engine: deterministic Firestore sync/refit ─────────────────
+
+exports.seedWc26Data = functions.https.onCall(wc26.seedWc26Data);
+
+exports.refitWc26RatingsNow = functions.https.onCall(wc26.refitWc26RatingsNow);
+
+exports.refitWc26Ratings = functions.pubsub
+  .schedule('every 24 hours')
+  .timeZone('Europe/London')
+  .onRun(wc26.refitWc26RatingsScheduled);
+
+exports.syncWc26PredictionsNow = functions.https.onCall(
+  wc26.syncWc26PredictionsNow,
+);
+
+exports.syncWc26Predictions = functions.pubsub
+  .schedule('every 6 hours')
+  .timeZone('Europe/London')
+  .onRun(wc26.syncWc26PredictionsScheduled);
+
+exports.gradeWc26PredictionsNow = functions.https.onCall(
+  wc26.gradeWc26PredictionsNow,
+);
+
+exports.onWc26ResultFinalized = functions.firestore
+  .document('wc26_results/{id}')
+  .onWrite(wc26.onWc26ResultFinalized);
 
 /**
  * Aggregate build progress metrics for a tenant

@@ -97,3 +97,12 @@ Phase 2 of D-SITE-001, approved by David 2026-06-11 (month grouping chosen).
 - **Data/sync:** the web mirror uses the existing `repinfaust` Firebase project, Firestore collections, and callable Functions in `europe-west2`. Android and web share the same `profile/state`, sessions/messages, contacts, chain map, friction, litmus, comparison, export, and delete state. No separate sync layer or new database is introduced.
 - **Infrastructure boundary:** no new backend infrastructure in this site repo. The route uses a named Firebase client app with the existing public Repinfaust Firebase config baked in and optional `NEXT_PUBLIC_REPINFAUST_FIREBASE_*` overrides; it calls the already-deployed Repinfaust Firebase Functions broker.
 - **Safety:** Anthropic remains server-side only through the Repinfaust Functions broker. The web client never calls model providers directly.
+
+## 2026-06-20 — WC26 value engine route and adaptive Firebase layer
+- Added `/apps/stea/wc26` with short alias `/wc26` as an ArcturusDC-workspace tool for deterministic World Cup 2026 pricing and value checks.
+- **Access:** WC26 is available to members of the existing ArcturusDC tenant (`FqhckqMaorJMAQ6B29mP`) and super admins through the existing STEa Google/Firebase session and tenant membership model. No anonymous auth and no new auth model are introduced.
+- **Phase 1:** the page ships with committed JSON fallback data and the verified JS port of the Python Dixon-Coles/xG engine. User rating edits and bet/CLV logs remain in `localStorage`.
+- **Phase 2 backend exception:** user approved continuing with the existing Firestore + Cloud Functions stack to make the WC26 data adaptive. This uses new tenant-scoped WC26 collections only; it does not add new external infrastructure.
+- **Backend boundary:** Cloud Functions may seed/sync teams, fixtures, results, pre-kickoff predictions, and aggregate grading metrics for the ArcturusDC workspace. Client access is read-only for shared model data; workspace members do not write prediction data directly.
+- **Safety:** no LLM is allowed in prediction, rating refit, probability, staking, or recommendation paths. If data ingestion is added later, any LLM use must be extractor-only behind deterministic validation before data reaches the engine.
+- **Privacy:** backend user bet logging is deferred. Personal bet logs stay local-only unless a separate tenant-scoped data collection decision is recorded.

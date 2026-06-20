@@ -4,6 +4,14 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: '/wc26',
+        destination: '/apps/stea/wc26',
+      },
+      {
+        source: '/wc26/:path*',
+        destination: '/apps/stea/wc26/:path*',
+      },
+      {
         source: '/stea/:path*',
         destination: '/apps/stea/:path*',
       },
