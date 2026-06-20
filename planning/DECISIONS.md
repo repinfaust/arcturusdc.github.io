@@ -93,7 +93,7 @@ Phase 2 of D-SITE-001, approved by David 2026-06-11 (month grouping chosen).
 ## 2026-06-20 — Repinfaust single-user web mirror
 - Added `/apps/stea/repinfaust` as a single-user web mirror of the existing Repinfaust Android app.
 - **Scope:** this is not a new STEa tenant product and not a public app page. It is a private browser surface for David only, matching the source app's single-user model.
-- **Auth:** Google sign-in only, hard-gated to verified `repinfaust@gmail.com` in the client; the existing Repinfaust Firebase project also enforces the owner email in Firestore rules and callable Functions.
+- **Auth:** Google sign-in only, hard-gated to verified `repinfaust@gmail.com` in the client; the existing Repinfaust Firebase project also enforces the owner email in Firestore rules and callable Functions. Firebase Auth authorized domains for this project include `www.arcturusdc.com` and `arcturusdc.com` for the web mirror.
 - **Data/sync:** the web mirror uses the existing `repinfaust` Firebase project, Firestore collections, and callable Functions in `europe-west2`. Android and web share the same `profile/state`, sessions/messages, contacts, chain map, friction, litmus, comparison, export, and delete state. No separate sync layer or new database is introduced.
 - **Infrastructure boundary:** no new backend infrastructure in this site repo. The route uses a named Firebase client app with the existing public Repinfaust Firebase config baked in and optional `NEXT_PUBLIC_REPINFAUST_FIREBASE_*` overrides; it calls the already-deployed Repinfaust Firebase Functions broker.
 - **Safety:** Anthropic remains server-side only through the Repinfaust Functions broker. The web client never calls model providers directly.
