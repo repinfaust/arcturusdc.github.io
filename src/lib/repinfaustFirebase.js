@@ -6,13 +6,28 @@ import { getFirestore, initializeFirestore } from 'firebase/firestore';
 const REPINFAUST_APP_NAME = 'repinfaust';
 const REPINFAUST_REGION = 'europe-west2';
 
+// Firebase client config is public by design; Firestore rules and callable
+// Functions enforce the single verified owner account. Env vars can override
+// these defaults, but the web mirror should not fail because Vercel rebuilt
+// before public config variables were present.
+const defaultFirebaseConfig = {
+  apiKey: 'AIzaSyAna2KHwREcEQCnWuO109cdiPH63ghGHKc',
+  authDomain: 'repinfaust.firebaseapp.com',
+  projectId: 'repinfaust',
+  storageBucket: 'repinfaust.firebasestorage.app',
+  messagingSenderId: '695189923882',
+  appId: '1:695189923882:web:648e603e0e2737f1fdbb53',
+};
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_API_KEY || defaultFirebaseConfig.apiKey,
+  authDomain: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_AUTH_DOMAIN || defaultFirebaseConfig.authDomain,
+  projectId: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_PROJECT_ID || defaultFirebaseConfig.projectId,
+  storageBucket: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_STORAGE_BUCKET || defaultFirebaseConfig.storageBucket,
+  messagingSenderId:
+    process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_MESSAGING_SENDER_ID ||
+    defaultFirebaseConfig.messagingSenderId,
+  appId: process.env.NEXT_PUBLIC_REPINFAUST_FIREBASE_APP_ID || defaultFirebaseConfig.appId,
 };
 
 export const repinfaustRequiredEnv = [
