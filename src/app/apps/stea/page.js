@@ -96,6 +96,15 @@ const IN_SESSION_DESTINATIONS = [
     textLight: true,
   },
   {
+    label: 'Repinfaust',
+    href: '/apps/stea/repinfaust',
+    description: 'Single-user interruption aid web mirror synced with the Repinfaust Android app.',
+    gradient: 'from-neutral-950/95 to-stone-900/95',
+    borderColor: 'border-stone-500/50',
+    textLight: true,
+    onlyForEmails: ['repinfaust@gmail.com'],
+  },
+  {
     label: 'ApexTwin',
     href: '/apps/stea/apextwin-poc',
     description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',

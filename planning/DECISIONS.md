@@ -89,3 +89,11 @@ Phase 2 of D-SITE-001, approved by David 2026-06-11 (month grouping chosen).
 - **Source constraint:** artist summaries, dates, portraits, and artwork references must be sourced from Wikipedia/Wikidata/Wikimedia Commons. Do not invent artwork facts; source URLs remain visible in the data layer and UI attribution.
 - **Auth/privacy:** no new authentication model, no anonymous auth, and no user data collection. The route is read-only from the visitor's perspective.
 - **Infrastructure boundary:** no new external infrastructure. Three.js is allowed as an app dependency for the required 3D museum scene.
+
+## 2026-06-20 — Repinfaust single-user web mirror
+- Added `/apps/stea/repinfaust` as a single-user web mirror of the existing Repinfaust Android app.
+- **Scope:** this is not a new STEa tenant product and not a public app page. It is a private browser surface for David only, matching the source app's single-user model.
+- **Auth:** Google sign-in only, hard-gated to verified `repinfaust@gmail.com` in the client; the existing Repinfaust Firebase project also enforces the owner email in Firestore rules and callable Functions.
+- **Data/sync:** the web mirror uses the existing `repinfaust` Firebase project, Firestore collections, and callable Functions in `europe-west2`. Android and web share the same `profile/state`, sessions/messages, contacts, chain map, friction, litmus, comparison, export, and delete state. No separate sync layer or new database is introduced.
+- **Infrastructure boundary:** no new backend infrastructure in this site repo. The route uses a named Firebase client app configured by `NEXT_PUBLIC_REPINFAUST_FIREBASE_*` variables and calls the already-deployed Repinfaust Firebase Functions broker.
+- **Safety:** Anthropic remains server-side only through the Repinfaust Functions broker. The web client never calls model providers directly.
