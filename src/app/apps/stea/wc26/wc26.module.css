@@ -153,6 +153,17 @@
 .tagDanger { background: rgba(255, 209, 102, 0.16); color: var(--wc-warn); }
 .tagNeutral { background: rgba(255, 255, 255, 0.08); color: var(--wc-muted); }
 
+/* confidence badges */
+.confBadge {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap; cursor: help;
+  border: 1px solid transparent;
+}
+.confHigh { background: rgba(61, 220, 151, 0.16); color: var(--wc-pos); border-color: rgba(61, 220, 151, 0.3); }
+.confMid  { background: rgba(255, 209, 102, 0.14); color: var(--wc-warn); border-color: rgba(255, 209, 102, 0.28); }
+.confLow  { background: rgba(255, 107, 107, 0.14); color: #ff9a9a; border-color: rgba(255, 107, 107, 0.3); }
+.confFade { background: rgba(180, 160, 255, 0.16); color: #c4b5ff; border-color: rgba(180, 160, 255, 0.3); }
+
 /* tables */
 .tableWrap { overflow-x: auto; margin-top: 12px; }
 .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
