@@ -291,7 +291,7 @@ function Wc26AccessGate({ children }) {
             This page is available to any signed-in STEa member, independent of the selected workspace.
             {tenantError ? ` Access lookup returned: ${tenantError}` : ' Sign in with an authorised account to continue.'}
           </p>
-          <a className={styles.accessButton} href="/apps/stea?next=/wc26">
+          <a className={styles.accessButton} href="/apps/stea?next=/apps/stea/wc26">
             Open STEa sign-in
           </a>
         </main>

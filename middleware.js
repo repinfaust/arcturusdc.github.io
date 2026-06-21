@@ -65,7 +65,6 @@ export async function middleware(req) {
     '/stea/toume',
     '/stea/fof',
     '/stea/wc26',
-    '/wc26',
   ];
 
   // True if request path exactly matches or is a child of a protected path
