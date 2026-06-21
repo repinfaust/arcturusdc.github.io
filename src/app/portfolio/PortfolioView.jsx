@@ -118,7 +118,7 @@ function PortfolioItem({ item, index }) {
           href={item.href}
           className="inline-flex justify-center border border-[#1c1c1a] bg-[#1c1c1a] px-4 py-3 text-center font-mono text-xs uppercase tracking-[0.12em] text-[#ece6d8] transition-colors hover:bg-[#f0452f]"
         >
-          {item.requiresAuth ? 'Open gate' : 'View'}
+          {item.requiresAuth ? 'Open' : 'View'}
         </Link>
         {item.secondaryLinks?.slice(0, 3).map((link) => (
           <Link
@@ -227,17 +227,11 @@ export default function PortfolioView({ viewKey = 'portfolio' }) {
       </section>
 
       <section className="border-b-2 border-[#1c1c1a] bg-[#1c1c1a] px-6 py-6 text-[#ece6d8] sm:px-8 lg:px-10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto max-w-7xl">
           <p className="max-w-4xl text-sm leading-6 text-[#ece6d8]/75">
-            Private owner-only tools are deliberately excluded from these public and CV views. Authenticated entries open the existing
-            Google/Firebase workspace gate and do not expose workspace data on the portfolio page.
+            Private owner-only and internal tools are deliberately excluded from these public portfolio views. Protected entries do not
+            expose private data on the portfolio page.
           </p>
-          <Link
-            href="/apps/stea"
-            className="inline-flex shrink-0 border border-[#ece6d8]/40 px-4 py-3 font-mono text-xs uppercase tracking-[0.12em] text-[#ece6d8] transition-colors hover:border-[#f0452f] hover:text-[#f0452f]"
-          >
-            Workspace sign-in
-          </Link>
         </div>
       </section>
 

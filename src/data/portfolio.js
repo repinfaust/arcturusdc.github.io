@@ -2,7 +2,7 @@ import apps from './apps.json';
 
 const appById = new Map(apps.map((app) => [app.id, app]));
 
-export const portfolioViewOrder = ['portfolio', 'ai', 'cv', 'b2b'];
+export const portfolioViewOrder = ['portfolio', 'ai', 'b2b'];
 
 export const portfolioViews = {
   portfolio: {
@@ -11,8 +11,8 @@ export const portfolioViews = {
     title: 'Tiered portfolio',
     eyebrow: '/Portfolio',
     summary:
-      'A public map of consumer apps, B2B product systems, controlled demos, and authenticated workspaces built under ArcturusDC.',
-    primaryCta: { label: 'Open CV view', href: '/portfolio/cv' },
+      'A public map of consumer apps, B2B product systems, controlled demos, and selected other projects built under ArcturusDC.',
+    primaryCta: { label: 'Contact', href: '/contact' },
     secondaryCta: { label: 'Applied AI view', href: '/portfolio/ai' },
   },
   ai: {
@@ -22,26 +22,16 @@ export const portfolioViews = {
     eyebrow: '/Portfolio / AI',
     summary:
       'Projects that show practical AI use: bounded assistance, traceable decisions, auditability, validation, and clear limits on automation.',
-    primaryCta: { label: 'Open CV view', href: '/portfolio/cv' },
+    primaryCta: { label: 'Full portfolio', href: '/portfolio' },
     secondaryCta: { label: 'B2B systems', href: '/portfolio/b2b' },
-  },
-  cv: {
-    slug: 'cv',
-    navLabel: 'CV',
-    title: 'CV portfolio',
-    eyebrow: '/Portfolio / CV',
-    summary:
-      'A concise portfolio page for job applications and recruiter review. It excludes private owner-only tools and keeps workspace data behind auth.',
-    primaryCta: { label: 'Contact', href: '/contact' },
-    secondaryCta: { label: 'Full portfolio', href: '/portfolio' },
   },
   b2b: {
     slug: 'b2b',
     navLabel: 'B2B',
-    title: 'B2B systems and workspaces',
+    title: 'B2B systems and products',
     eyebrow: '/Portfolio / B2B',
     summary:
-      'Public product concepts and controlled workspaces for structured delivery, evidence, governance, testing, and operational decision support.',
+      'Public product concepts and controlled demos for structured delivery, evidence, governance, testing, and operational decision support.',
     primaryCta: { label: 'Applied AI view', href: '/portfolio/ai' },
     secondaryCta: { label: 'Full portfolio', href: '/portfolio' },
   },
@@ -56,7 +46,7 @@ export const portfolioTiers = [
   {
     id: 'public-systems',
     label: 'Public B2B systems',
-    description: 'Sanitised product concepts and frameworks that can be shared without workspace access.',
+    description: 'Sanitised product concepts and frameworks that can be shared without internal access.',
   },
   {
     id: 'controlled-demos',
@@ -64,9 +54,9 @@ export const portfolioTiers = [
     description: 'Invite, magic-link, or demo surfaces where the page can be shown but operational data remains controlled.',
   },
   {
-    id: 'authenticated-workspaces',
-    label: 'Authenticated workspaces',
-    description: 'Working tools behind Firebase sign-in, session cookies, tenant membership, and role checks.',
+    id: 'other-projects',
+    label: 'Other projects',
+    description: 'Selected project surfaces that are not consumer apps, public B2B systems, or controlled demos.',
   },
 ];
 
@@ -85,39 +75,40 @@ function appPortfolioItem(appId, overrides = {}) {
     href: app.link || `/apps/${app.id}`,
     icon: app.icon,
     tags: [app.category, ...(app.availability || []).map((item) => item.toUpperCase())].filter(Boolean),
-    views: ['portfolio', 'cv'],
+    views: ['portfolio'],
     ...overrides,
   };
 }
 
 export const portfolioItems = [
   appPortfolioItem('dialled-mtb', {
-    emphasis: 'Flagship consumer app with public changelog and an internal feedback workspace.',
+    emphasis: 'Uses contextual support to help riders make better setup choices and maintain their bikes with more confidence.',
     secondaryLinks: [
       { label: 'Public changelog', href: '/apps/dialled-mtb/changelog' },
       { label: 'Timeline', href: '/apps/dialled-mtb/changelog/timeline' },
     ],
-    views: ['portfolio', 'cv'],
+    views: ['portfolio', 'ai'],
   }),
   appPortfolioItem('sprocket', {
     emphasis: 'Consumer AI-support pattern for making difficult messages easier to understand.',
-    views: ['portfolio', 'cv', 'ai'],
+    views: ['portfolio', 'ai'],
   }),
   appPortfolioItem('unload'),
   appPortfolioItem('toume', {
-    views: ['portfolio', 'cv'],
+    views: ['portfolio'],
   }),
   appPortfolioItem('adhd-acclaim'),
   appPortfolioItem('mandrake'),
   appPortfolioItem('rehabpath', {
-    views: ['portfolio', 'cv'],
+    emphasis: 'Uses AI to ingest physio plans and produce clinician-friendly summaries.',
+    views: ['portfolio', 'ai'],
   }),
   appPortfolioItem('assumezero', {
     emphasis: 'Media literacy game concept for claim checking and critical thinking.',
-    views: ['portfolio', 'cv', 'ai'],
+    views: ['portfolio'],
   }),
   appPortfolioItem('apex-state', {
-    views: ['portfolio', 'cv'],
+    views: ['portfolio'],
   }),
   appPortfolioItem('syncfit'),
   {
@@ -127,13 +118,13 @@ export const portfolioItems = [
     exposure: 'Public brief',
     status: 'Product system',
     summary:
-      'A closed-loop product workspace for discovery, backlog structure, testing, documentation, release context, and Ruby product intelligence.',
+      'A closed-loop product system for discovery, backlog structure, testing, documentation, release context, and Ruby product intelligence.',
     emphasis: 'Shows how product, delivery, testing, and docs can work as one traceable operating system.',
     proof: ['Harls discovery', 'Filo board', 'Hans testing', 'Ruby product intelligence'],
     href: '/apps/stea/explore',
     icon: '/img/stea-logo.png',
     tags: ['Product systems', 'Delivery', 'Traceability'],
-    views: ['portfolio', 'ai', 'cv', 'b2b'],
+    views: ['portfolio', 'ai', 'b2b'],
   },
   {
     id: 'orbit-accountability',
@@ -152,7 +143,7 @@ export const portfolioItems = [
       { label: 'GrapheneOS POC', href: '/apps/stea/orbit-grapheneos' },
     ],
     tags: ['AI governance', 'Compliance', 'Auditability'],
-    views: ['portfolio', 'ai', 'cv', 'b2b'],
+    views: ['portfolio', 'ai', 'b2b'],
   },
   {
     id: 'sorr-framework',
@@ -167,7 +158,7 @@ export const portfolioItems = [
     href: '/apps/sorr',
     secondaryLinks: [{ label: 'STEa control entry', href: '/apps/stea/sorr' }],
     tags: ['AI delivery', 'Reasoning', 'Governance'],
-    views: ['portfolio', 'ai', 'cv', 'b2b'],
+    views: ['portfolio', 'ai', 'b2b'],
   },
   {
     id: 'paygo-demo',
@@ -181,58 +172,13 @@ export const portfolioItems = [
     proof: ['Fictional seed data', 'Regional variants', 'Demo notes', 'No real customer data'],
     href: '/apps/stea/paygo',
     tags: ['B2B demo', 'Energy', 'Product adaptation'],
-    views: ['portfolio', 'cv', 'b2b'],
-  },
-  {
-    id: 'stea-workspace',
-    title: 'STEa authenticated workspace',
-    tier: 'authenticated-workspaces',
-    exposure: 'Google workspace',
-    status: 'Workspace',
-    summary:
-      'The live internal workspace hub for product planning, boards, test management, docs, automation, and tenant-specific tools.',
-    emphasis: 'This is working product, not just a portfolio page. Access is intentionally gated.',
-    proof: ['Tenant switcher', 'Role-aware destinations', 'Workspace pulse', 'Session-cookie protected routes'],
-    href: '/apps/stea',
-    tags: ['Workspace', 'Firebase Auth', 'Tenant access'],
-    views: ['portfolio', 'cv', 'b2b'],
-    requiresAuth: true,
-  },
-  {
-    id: 'ruby-product-intelligence',
-    title: 'Ruby',
-    tier: 'authenticated-workspaces',
-    exposure: 'Google workspace',
-    status: 'Product intelligence',
-    summary:
-      'A documentation and product-intelligence repository for living notes, build specs, release context, templates, and share links.',
-    emphasis: 'Shows the portfolio as a system of connected product memory rather than disconnected demos.',
-    proof: ['TipTap editor', 'Doc spaces', 'Templates', 'Tokenised share links'],
-    href: '/apps/stea/ruby',
-    tags: ['Documentation', 'Knowledge graph', 'Share links'],
-    views: ['portfolio', 'cv', 'b2b'],
-    requiresAuth: true,
-  },
-  {
-    id: 'dialled-feedback-workspace',
-    title: 'Dialled MTB workspace',
-    tier: 'authenticated-workspaces',
-    exposure: 'Workspace-gated',
-    status: 'Internal tool',
-    summary:
-      'An internal User Feedback tool for triaging rider feedback and screenshots from the Dialled MTB mobile app.',
-    emphasis: 'Good evidence of the public app -> operational workspace pattern.',
-    proof: ['Feedback triage', 'Admin notes', 'Status and priority workflow', 'Signed screenshot access'],
-    href: '/apps/stea/dialled-mtb',
-    tags: ['Internal operations', 'Feedback', 'Firebase Admin'],
-    views: ['portfolio', 'cv', 'b2b'],
-    requiresAuth: true,
+    views: ['portfolio', 'b2b'],
   },
   {
     id: 'wc26-value-engine',
     title: 'WC26 value engine',
-    tier: 'authenticated-workspaces',
-    exposure: 'ArcturusDC workspace',
+    tier: 'other-projects',
+    exposure: 'Other project',
     status: 'Deterministic tool',
     summary:
       'A World Cup 2026 pricing and value engine with deterministic ratings, real-source ingestion, and explicit anti-fabrication rules.',
@@ -240,14 +186,14 @@ export const portfolioItems = [
     proof: ['Pinned structured data', 'Deterministic model', 'Forward record', 'No fabricated fixtures'],
     href: '/wc26',
     tags: ['Deterministic model', 'Data integrity', 'ArcturusDC'],
-    views: ['portfolio', 'cv', 'b2b'],
+    views: ['portfolio'],
     requiresAuth: true,
   },
   {
     id: 'art-atlas',
     title: 'Art Atlas',
-    tier: 'authenticated-workspaces',
-    exposure: 'STEa workspace',
+    tier: 'other-projects',
+    exposure: 'Other project',
     status: 'Prototype',
     summary:
       'A source-attributed art-history atlas and walkable museum prototype using Wikipedia, Wikidata, Wikimedia Commons, and Three.js.',
@@ -255,22 +201,7 @@ export const portfolioItems = [
     proof: ['Source attribution', '3D gallery', 'Local fallback catalogue', 'No user data collection'],
     href: '/apps/stea/art-atlas',
     tags: ['Prototype', 'Sources', 'Three.js'],
-    views: ['portfolio', 'cv'],
-    requiresAuth: true,
-  },
-  {
-    id: 'apextwin-workspace',
-    title: 'ApexTwin workspace',
-    tier: 'authenticated-workspaces',
-    exposure: 'Tenant workspace',
-    status: 'POC workspace',
-    summary:
-      'A tenant-specific track-day setup workspace for bike setup, events, sessions, strategy, and paddock workflows.',
-    emphasis: 'Shows the same workspace model applied to a different operational domain.',
-    proof: ['Tenant-specific access', 'Session workflow', 'Garage and paddock views'],
-    href: '/apps/stea/apextwin-poc',
-    tags: ['Tenant workspace', 'Motorsport', 'Operational tool'],
-    views: ['portfolio', 'cv', 'b2b'],
+    views: ['portfolio'],
     requiresAuth: true,
   },
 ];

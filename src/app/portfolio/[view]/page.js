@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import PortfolioView from '../PortfolioView';
 import { getPortfolioView, portfolioViewOrder } from '@/data/portfolio';
 
@@ -21,7 +21,12 @@ export function generateMetadata({ params }) {
   };
 }
 
-export default function PortfolioSubviewPage({ params }) {
+export default function PortfolioSubviewPage({ params, searchParams }) {
+  if (params.view === 'cv') {
+    const query = new URLSearchParams(searchParams || {}).toString();
+    redirect(query ? `/portfolio?${query}` : '/portfolio');
+  }
+
   const view = getPortfolioView(params.view);
   if (!view || params.view === 'portfolio') notFound();
 

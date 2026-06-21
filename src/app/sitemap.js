@@ -8,7 +8,6 @@ export default function sitemap() {
     '',
     '/portfolio',
     '/portfolio/ai',
-    '/portfolio/cv',
     '/portfolio/b2b',
     '/apps',
     '/apps/stea',
