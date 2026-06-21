@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>TruthNet — Feed Frenzy mockup</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --line:#2a313c;
+    --green:#2ecc71; --red:#ff5c6c; --cyan:#22d3ee; --gold:#ffd34e;
+    --txt:#eef2f6; --dim:#9aa6b2;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0; background:radial-gradient(circle at 50% 0%, #1b2330, #0e1116 60%); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; display:flex; justify-content:center; min-height:100vh}
+  .phone{width:100%; max-width:420px; padding:14px 14px 28px; display:flex; flex-direction:column; min-height:100vh}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:6px 4px 14px}
+  .brand{display:flex; align-items:center; gap:8px; font-weight:800; letter-spacing:.5px}
+  .dot{width:11px; height:11px; border-radius:50%; background:var(--cyan); box-shadow:0 0 12px var(--cyan)}
+  .stats{display:flex; gap:14px; font-weight:700; font-size:14px}
+  .stats .tok{color:var(--gold)} .stats .strk{color:var(--cyan)}
+
+  .stage{position:relative; flex:1; display:flex; align-items:center; justify-content:center}
+
+  .card{position:absolute; width:100%; background:var(--panel); border:1px solid var(--line);
+    border-radius:22px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5);
+    transition:transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s}
+  .media{height:300px; display:flex; align-items:center; justify-content:center; position:relative;
+    background:linear-gradient(135deg,#223047,#16202e); overflow:hidden}
+  .media .photo{width:100%; height:100%; object-fit:cover; display:block}
+  .media .tag{position:absolute; top:12px; left:12px; background:rgba(0,0,0,.55); padding:4px 10px; border-radius:20px;
+    font-size:12px; font-weight:700; color:var(--dim); letter-spacing:.4px}
+  .cap{padding:14px 16px; font-size:15px; line-height:1.4}
+  .cap .handle{color:var(--cyan); font-weight:700}
+  .meta{padding:0 16px 16px; color:var(--dim); font-size:12px; display:flex; gap:14px}
+
+  /* perfect/over-rendered look for the trap card */
+  .glow .media{background:linear-gradient(135deg,#2b1f4a,#3a2a63); filter:saturate(1.4) brightness(1.08)}
+
+  .controls{display:flex; gap:12px; padding-top:16px}
+  .btn{flex:1; border:none; border-radius:16px; padding:16px; font-size:16px; font-weight:800; letter-spacing:.4px;
+    cursor:pointer; color:#0e1116; transition:transform .08s}
+  .btn:active{transform:scale(.96)}
+  .btn.fake{background:var(--red)} .btn.real{background:var(--green)}
+  .hint{text-align:center; color:var(--dim); font-size:12px; padding-top:10px}
+
+  /* TruthNet reveal overlay */
+  .reveal{position:absolute; inset:0; background:rgba(8,11,16,.92); border-radius:22px; display:none;
+    flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:26px; z-index:5}
+  .reveal.show{display:flex; animation:pop .3s ease}
+  @keyframes pop{from{opacity:0; transform:scale(.94)} to{opacity:1; transform:scale(1)}}
+  .verdict{font-size:22px; font-weight:900; margin-bottom:4px}
+  .verdict.ok{color:var(--green)} .verdict.no{color:var(--red)}
+  .tn{display:flex; align-items:center; gap:7px; color:var(--cyan); font-weight:800; font-size:13px; letter-spacing:1px; margin-bottom:12px}
+  .tn .dot{width:9px;height:9px}
+  .tell{font-size:15px; line-height:1.5; color:var(--txt); max-width:300px}
+  .award{margin-top:14px; font-weight:800; color:var(--gold); font-size:14px; min-height:18px}
+  .next{margin-top:20px; background:var(--cyan); color:#06222a; border:none; border-radius:14px;
+    padding:13px 30px; font-weight:800; font-size:15px; cursor:pointer}
+  .next:active{transform:scale(.96)}
+
+  /* sting / unlock screen */
+  .sting{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex:1; padding:20px}
+  .sting.show{display:flex; animation:pop .35s ease}
+  .sting .reel{width:100%; max-width:340px; aspect-ratio:16/9; border-radius:18px; border:1px solid var(--line);
+    background:#000; display:flex; align-items:center; justify-content:center;
+    margin-bottom:16px; position:relative; overflow:hidden}
+  .sting .reel .stingvid{width:100%; height:100%; object-fit:cover; display:block}
+  .sting h2{margin:.2em 0; font-size:20px} .sting p{color:var(--dim); max-width:300px; line-height:1.5; font-size:14px}
+
+  .end{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex:1; padding:20px}
+  .end.show{display:flex; animation:pop .35s ease}
+  .end .big{font-size:40px; font-weight:900; color:var(--gold)}
+  .restart{margin-top:18px; background:transparent; color:var(--cyan); border:1px solid var(--cyan); border-radius:14px;
+    padding:12px 26px; font-weight:700; cursor:pointer}
+  .swipeflash{position:absolute; inset:0; border-radius:22px; pointer-events:none; opacity:0; transition:opacity .15s; z-index:4}
+
+  /* red arrow pointing at nothing (clickbait framing tell) */
+  .redarrow{position:absolute; right:34px; top:60px; color:var(--red); font-size:64px; font-weight:900;
+    text-shadow:0 2px 8px rgba(0,0,0,.5); transform:rotate(8deg); z-index:2}
+  /* verify / check-source button — rewards slowing down */
+  .verifybtn{margin-left:auto; background:transparent; border:1px solid var(--cyan); color:var(--cyan);
+    border-radius:12px; padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer}
+  .verifybtn.done{border-color:var(--green); color:var(--green)}
+
+  /* Creator Mode */
+  .creator{display:none; flex-direction:column; align-items:center; justify-content:flex-start;
+    text-align:center; flex:1; padding:18px 8px; overflow-y:auto}
+  .creator.show{display:flex; animation:pop .35s ease}
+  .build{width:100%; max-width:340px}
+  .build-card{background:var(--panel); border:1px solid var(--line); border-radius:16px; overflow:hidden; margin-bottom:14px}
+  .build-media{height:150px; display:flex; align-items:center; justify-content:center; position:relative;
+    background:linear-gradient(135deg,#223047,#16202e); overflow:hidden}
+  .build-cap{padding:12px 14px; font-size:14px; line-height:1.4; text-align:left}
+  .build-cap .handle{color:var(--cyan); font-weight:700}
+  .build-meta{padding:0 14px 12px; color:var(--gold); font-size:13px; font-weight:700; text-align:left}
+  .build-step{text-align:left; margin-bottom:12px}
+  .build-label{font-size:12px; color:var(--dim); font-weight:700; margin-bottom:6px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{background:#1c2430; border:1px solid var(--line); color:var(--txt); border-radius:20px;
+    padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; transition:transform .08s}
+  .chip:active{transform:scale(.95)}
+  .chip.sel{background:var(--cyan); color:#06222a; border-color:var(--cyan)}
+  .build-payoff{max-width:340px; font-size:14px; line-height:1.5; color:var(--txt); margin:6px 0 4px; min-height:18px}
+  .build-payoff strong{color:var(--gold)}
+
+  /* booster block on end screen */
+  .booster{margin-top:16px; max-width:300px; font-size:13px; line-height:1.5; color:var(--dim);
+    background:rgba(34,211,238,.08); border:1px solid rgba(34,211,238,.3); border-radius:14px; padding:14px}
+  .booster strong{color:var(--cyan)}
+  .boostbtn{display:block; margin:12px auto 0; background:var(--cyan); color:#06222a; border:none;
+    border-radius:12px; padding:10px 20px; font-weight:800; font-size:14px; cursor:pointer}
+  .boostbtn:active{transform:scale(.96)}
+
+  /* one-tap start screen (front door for the shareable URL) */
+  .start{position:fixed; inset:0; z-index:50; background:radial-gradient(circle at 50% 0%, #1b2330, #0e1116 60%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px}
+  .start.hide{display:none}
+  .start .logo{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:1px; font-size:15px; color:var(--cyan); margin-bottom:22px}
+  .start .logo .dot{width:12px; height:12px; border-radius:50%; background:var(--cyan); box-shadow:0 0 14px var(--cyan)}
+  .start h1{font-size:30px; font-weight:900; letter-spacing:.5px; margin:0 0 12px; max-width:340px; line-height:1.2}
+  .start p{color:var(--dim); font-size:15px; line-height:1.5; max-width:300px; margin:0 0 28px}
+  .start .play{background:var(--cyan); color:#06222a; border:none; border-radius:16px; padding:16px 40px;
+    font-size:17px; font-weight:800; letter-spacing:.5px; cursor:pointer}
+  .start .play:active{transform:scale(.96)}
+  .start .sub{margin-top:18px; font-size:11px; color:var(--dim); letter-spacing:.4px}
+  .start .sub a{color:var(--dim); text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="start" id="start">
+  <div class="logo"><span class="dot"></span> TRUTHNET</div>
+  <h1>Real, or made to fool you?</h1>
+  <p>A quick game about spotting fakes, clickbait and engineered feelings. Swipe, get caught, learn the trick. Then try making one yourself.</p>
+  <button class="play" onclick="start()">▶ PLAY</button>
+  <div class="sub">A demo from AssumeZero · <a href="https://www.arcturusdc.com/contact">educators &amp; funders →</a></div>
+</div>
+<div class="phone">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> TRUTHNET</div>
+    <div class="stats"><span class="tok" id="tok">🪙 0</span><span class="strk" id="strk">🔥 0</span></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <!-- cards injected here -->
+    <div class="sting" id="sting">
+      <div class="reel">
+        <video id="stingvid" class="stingvid" src="feed-assets/sting-giveaway.mp4" muted loop playsinline></video>
+      </div>
+      <h2>🔓 Unlocked: How the giveaway works</h2>
+      <p>Watch his face. Bored between takes — then big and teary the second the camera rolls. The £100,000 is real, but it's the <em>budget</em>, not the point. The "kindness" buys 8 million views, and the views are the payout. The stranger is a prop. Follow the money, not the feeling.</p>
+      <button class="next" onclick="closeSting()">Back to the feed →</button>
+    </div>
+
+    <!-- Creator Mode: thin, menu-based "be the manipulator" build moment -->
+    <div class="creator" id="creator">
+      <div class="tn"><span class="dot"></span> CREATOR MODE · YOUR TURN</div>
+      <h2 style="margin:.2em 0 2px;font-size:20px">Make the lie</h2>
+      <p style="color:var(--dim);max-width:320px;line-height:1.5;font-size:14px;margin:0 0 14px">
+        You've spotted the tricks. Now build one. Pick the pieces and watch what happens.</p>
+
+      <div class="build">
+        <div class="build-card" id="buildcard">
+          <div class="build-media"><img class="photo" src="feed-assets/creator-base-breakfast.png" alt=""><span class="redarrow" id="bArrow" style="display:none">↘</span></div>
+          <div class="build-cap" id="bCap"><span class="handle">@you</span> just a normal photo of breakfast</div>
+          <div class="build-meta">❤️ <span id="bLikes">12</span> likes</div>
+        </div>
+
+        <div class="build-step">
+          <div class="build-label">1 · Bolt on a caption</div>
+          <div class="chips">
+            <button class="chip" onclick="bSetCap(this,'WORST morning of my LIFE 😱 (you won\'t BELIEVE this)')">WORST morning 😱</button>
+            <button class="chip" onclick="bSetCap(this,'this nearly ENDED me 💔 watch till the end')">this ENDED me 💔</button>
+            <button class="chip" onclick="bSetCap(this,'gone HORRIBLY wrong… 🚨 (not clickbait)')">gone WRONG 🚨</button>
+          </div>
+        </div>
+
+        <div class="build-step">
+          <div class="build-label">2 · Add a red arrow pointing at nothing</div>
+          <div class="chips">
+            <button class="chip" id="arrowChip" onclick="bToggleArrow(this)">➕ add red arrow</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="build-payoff" id="bPayoff"></div>
+      <button class="next" id="bDone" onclick="closeCreator()" style="display:none">I see what I did →</button>
+    </div>
+
+    <div class="end" id="end">
+      <div class="big" id="endtok">🪙 0</div>
+      <h2 id="endmsg">Round clear</h2>
+      <p style="color:var(--dim);max-width:300px;line-height:1.5" id="endhook">
+        "Someone's flooding the feed with fakes on purpose. Next time, we find out who."</p>
+      <div class="booster" id="booster">
+        🛡️ Your spotting fades a little every day. Come back tomorrow for a
+        <strong>booster</strong> — fresh fakes, same tricks.
+        <button class="boostbtn" onclick="day2()">▶ Day 2 booster</button>
+      </div>
+      <button class="restart" onclick="restart()">Play again</button>
+    </div>
+  </div>
+
+  <div class="controls" id="controls">
+    <button class="btn fake" onclick="decide('fake')">◀ FAKE</button>
+    <button class="btn real" onclick="decide('real')">REAL ▶</button>
+  </div>
+  <div class="hint" id="hint">Trust your gut. Swipe or tap.</div>
+</div>
+
+<script>
+// tactic: which manipulation tactic the card trains. Drives competence-gating.
+//   'ai'      = AI-generated image tell (level one — visible in 2s)
+//   'framing' = a TRUE image carrying a FALSE story (the KS1→KS2 hinge)
+//   'system'  = the incentive/system level (KS3) — judge the system, not the person
+const cards = [
+  // — Provenance tier (KS1): real camera vs AI machine. —
+  // The FAKE puppy is AI (carries the tell). The REAL puppy MUST be a genuine photo (load-bearing).
+  { img:"feed-assets/card-puppy-fake.png", tag:"@petlolz · 2.1M likes", handle:"@petlolz", tactic:"ai",
+    cap:"you will NOT believe this rare puppy 😍🐾",
+    truth:"fake", question:"Real photo, or made by a computer?",
+    tellOk:"Count the legs — there are more than four. And the grass melts into mush at the edges. No real dog looks like this; a computer drew it.",
+    tellNo:"Count the legs — more than four. The grass melts into mush around the paws too. Classic signs a computer made the picture." },
+
+  { img:"feed-assets/card-puppy-real.png", tag:"@goldenpups · 5.4K likes", handle:"@goldenpups", tactic:"ai",
+    cap:"first proper run in the garden 🐾",
+    truth:"real", question:"Real photo, or made by a computer?",
+    tellOk:"Four legs, real fur, a real blurry background where the camera focused on the puppy. This one's a genuine photo.",
+    tellNo:"This one's real — four legs, natural fur, and the soft out-of-focus background a real camera lens makes. Nothing a computer faked." },
+
+  // — Framing tier (KS2): the photo is REAL-in-spirit, the STORY is bolted on. —
+  { img:"feed-assets/card-cereal-framing.png", tag:"@itsmolly · 402K likes", handle:"@itsmolly", tactic:"framing", arrow:true,
+    cap:"WORST morning of my LIFE 😱 (you won't BELIEVE what happened)",
+    truth:"fake", question:"Is the STORY real?",
+    tellOk:"The photo's just a kid eating cereal. The drama is bolted on to make you click. Real life doesn't come with red arrows.",
+    tellNo:"The picture's ordinary, but the story isn't. The shocked caption and red arrow pointing at nothing are bolted on to make you click. A true picture can carry a false story." },
+
+  { img:"feed-assets/card-bakery-real.png", tag:"@ourlittlebakery · 88 likes", handle:"@ourlittlebakery", tactic:"framing", verify:true,
+    cap:"fresh out the oven this morning 🥖 same as every day",
+    truth:"real", question:"Real, or a story bolted on?",
+    tellOk:"No drama, no arrow, no ALL-CAPS panic. Just a normal post. When nothing's trying to yank your feelings, it's usually just... true.",
+    tellNo:"This one's real and plain. Notice there's nothing trying to grab you — no shock face, no arrow. The absence of bait is itself a signal." },
+
+  // — System tier (KS3): the giveaway trap. The reveal unpacks it, the swipe doesn't resolve it cleanly. —
+  { img:"feed-assets/card-giveaway-system.png", tag:"@bigheartben · 8.7M likes", handle:"@bigheartben", glow:true, tactic:"system", bonus:true,
+    cap:"I gave a stranger £100,000 and changed his life forever ❤️",
+    truth:"fake", question:"Is the FEELING real?",
+    tellOk:"Follow the money. The giving isn't the kindness — it's the footage. The stranger is a prop, the emotion is the product, and 8 million views is the real payout. Ask who profits from you feeling this.",
+    tellNo:"Don't judge the man — judge the system. The giving isn't the kindness, it's the content. The person is a prop and the emotion is the product. The tell isn't in the picture; it's in who profits from you feeling this." },
+];
+
+let i=0, tokens=0, streak=0, unlockedSting=false, creatorDone=false;
+// per-tactic competence: correct calls clocked for each tactic.
+// KS3 system reveals are gated on demonstrated competence, NOT generic tokens.
+const competence = { ai:0, framing:0, system:0 };
+// Must clock the SYSTEM tactic correctly to earn the system sting — tactic-gated, not token-gated.
+// Prototype deck has one system card so the gate is 1; production intent is "a few times" (2–3).
+const SYSTEM_GATE = 1;
+const stage=document.getElementById('stage');
+const tokEl=document.getElementById('tok'), strkEl=document.getElementById('strk');
+const controls=document.getElementById('controls'), hint=document.getElementById('hint');
+
+function renderCard(){
+  document.querySelectorAll('.card').forEach(c=>c.remove());
+  if(i>=cards.length){
+    if(!creatorDone){ showCreator(); return; }
+    showEnd(); return;
+  }
+  const c=cards[i];
+  const el=document.createElement('div');
+  el.className='card'+(c.glow?' glow':'');
+  el.innerHTML=`
+    <div class="media"><span class="tag">${c.tag}</span><img class="photo" src="${c.img}" alt="">${c.arrow?'<span class="redarrow">↘</span>':''}</div>
+    <div class="cap"><span class="handle">${c.handle}</span> ${c.cap}</div>
+    <div class="meta"><span>♡ like</span><span>💬 comment</span><span>↗ share</span>${c.verify?'<button class="verifybtn" id="verifybtn" onclick="verifySource()">🔍 check source</button>':''}</div>
+    <div class="swipeflash" id="flash"></div>
+    <div class="reveal" id="reveal">
+      <div class="verdict" id="verdict"></div>
+      <div class="tn"><span class="dot"></span> TRUTHNET ANALYSIS</div>
+      <div class="tell" id="tell"></div>
+      <div class="award" id="award"></div>
+      <button class="next" onclick="advance()">Next →</button>
+    </div>`;
+  stage.appendChild(el);
+  controls.style.display='flex'; hint.style.display='block';
+  // per-card question reframes the call: picture? framing? feeling?
+  hint.textContent = c.question ? c.question + '  ·  swipe or tap' : 'Trust your gut. Swipe or tap.';
+}
+
+// Guardrail 1: reward verifying over fast thumbs. Checking the source first earns a bonus.
+let verifiedThisCard=false;
+function verifySource(){
+  verifiedThisCard=true;
+  const b=document.getElementById('verifybtn');
+  if(b){ b.textContent='✓ checked'; b.disabled=true; b.classList.add('done'); }
+  hint.textContent='Good — you slowed down to check. Now call it.';
+}
+
+function decide(choice){
+  const c=cards[i];
+  const correct = choice===c.truth;
+  const flash=document.getElementById('flash');
+  flash.style.background = choice==='fake'
+    ? 'linear-gradient(90deg, rgba(255,92,108,.5), transparent)'
+    : 'linear-gradient(270deg, rgba(46,204,113,.5), transparent)';
+  flash.style.opacity=1; setTimeout(()=>flash.style.opacity=0,180);
+
+  const reveal=document.getElementById('reveal');
+  const verdict=document.getElementById('verdict');
+  const tell=document.getElementById('tell');
+  const award=document.getElementById('award');
+
+  if(correct){
+    streak++;
+    competence[c.tactic] = (competence[c.tactic]||0) + 1; // demonstrated competence with THIS tactic
+    let gain = c.bonus?2:1;
+    let verifyBonus = (c.verify && verifiedThisCard) ? 1 : 0; // Guardrail 1: verifying pays
+    tokens += gain + verifyBonus;
+    verdict.textContent='✓ Good call'; verdict.className='verdict ok';
+    tell.textContent=c.tellOk;
+    award.textContent=`+${gain} token${gain>1?'s':''}`
+      + (c.bonus?' · BONUS':'')
+      + (verifyBonus?' · +1 for checking 🔍':'')
+      + `   🔥 streak ${streak}`;
+  } else {
+    streak=0;
+    verdict.textContent='✗ Got you'; verdict.className='verdict no';
+    tell.textContent=c.tellNo;
+    award.textContent='Streak reset — but now you know the tell';
+  }
+  verifiedThisCard=false;
+  tokEl.textContent='🪙 '+tokens; strkEl.textContent='🔥 '+streak;
+  controls.style.display='none'; hint.style.display='none';
+  reveal.classList.add('show');
+}
+
+function advance(){
+  // KS3 system sting is TACTIC-GATED, not streak/token-gated:
+  // you earn "how generosity is engineered" by clocking the system tactic itself.
+  if(!unlockedSting && competence.system >= SYSTEM_GATE){ unlockedSting=true; showSting(); return; }
+  i++;
+  if(i>=cards.length){
+    // Creator Mode: the thin, menu-based Build moment, shown once after the feed.
+    if(!creatorDone){ showCreator(); return; }
+    showEnd(); return;
+  }
+  renderCard();
+}
+
+function showSting(){
+  document.querySelectorAll('.card').forEach(c=>c.remove());
+  controls.style.display='none'; hint.style.display='none';
+  document.getElementById('sting').classList.add('show');
+  const v=document.getElementById('stingvid');
+  if(v){ try{ v.currentTime=0; v.play(); }catch(e){} }
+}
+function closeSting(){
+  const v=document.getElementById('stingvid'); if(v){ v.pause(); }
+  document.getElementById('sting').classList.remove('show');
+  i++; renderCard();
+}
+
+// — Creator Mode: scripted, menu-based. Reusing card components, no free typing. —
+let bHasCap=false, bHasArrow=false;
+function showCreator(){
+  document.querySelectorAll('.card').forEach(c=>c.remove());
+  controls.style.display='none'; hint.style.display='none';
+  document.getElementById('sting').classList.remove('show');
+  document.getElementById('creator').classList.add('show');
+}
+function bSetCap(btn,text){
+  document.querySelectorAll('#creator .build-step:nth-child(2) .chip').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('bCap').innerHTML='<span class="handle">@you</span> '+text;
+  bHasCap=true; bInflate();
+}
+function bToggleArrow(btn){
+  bHasArrow=!bHasArrow;
+  document.getElementById('bArrow').style.display=bHasArrow?'block':'none';
+  btn.classList.toggle('sel',bHasArrow);
+  btn.textContent=bHasArrow?'✓ red arrow added':'➕ add red arrow';
+  bInflate();
+}
+function bInflate(){
+  // the fake engagement number balloons as manipulation is added — the lesson made visible
+  let likes=12; if(bHasCap) likes=486000; if(bHasCap&&bHasArrow) likes=2400000;
+  document.getElementById('bLikes').textContent = likes>=1000 ? (likes/1000000>=1?(likes/1000000).toFixed(1)+'M':Math.round(likes/1000)+'K') : likes;
+  if(bHasCap && bHasArrow){
+    document.getElementById('bPayoff').innerHTML =
+      "<strong>You just made the thumbnail lie.</strong> Same true photo — but the panic caption and an arrow pointing at nothing took it from 12 likes to millions. Nothing real changed. Only the framing did.";
+    document.getElementById('bDone').style.display='inline-block';
+    tokens+=1; tokEl.textContent='🪙 '+tokens; // creator awards a token
+  }
+}
+function closeCreator(){
+  creatorDone=true;
+  document.getElementById('creator').classList.remove('show');
+  showEnd();
+}
+
+function showEnd(){
+  controls.style.display='none'; hint.style.display='none';
+  document.getElementById('endtok').textContent='🪙 '+tokens;
+  document.getElementById('endmsg').textContent = tokens>=4 ? 'Sharp eyes. Round clear.' : 'Round clear — replay to beat your score';
+  document.getElementById('end').classList.add('show');
+}
+function resetState(){
+  i=0; tokens=0; streak=0; unlockedSting=false; creatorDone=false;
+  competence.ai=0; competence.framing=0; competence.system=0;
+  bHasCap=false; bHasArrow=false; verifiedThisCard=false;
+  tokEl.textContent='🪙 0'; strkEl.textContent='🔥 0';
+  document.getElementById('end').classList.remove('show');
+  document.getElementById('sting').classList.remove('show');
+  document.getElementById('creator').classList.remove('show');
+}
+function restart(){ resetState(); renderCard(); }
+
+// Day 2 booster — same tactics, the streak/return loop made legible (prototype only, no real scheduling)
+function day2(){
+  resetState();
+  document.querySelector('.brand').innerHTML='<span class="dot"></span> TRUTHNET · DAY 2';
+  renderCard();
+}
+
+// one-tap front door: don't render the feed until PLAY is tapped
+function start(){
+  document.getElementById('start').classList.add('hide');
+  renderCard();
+}
+</script>
+</body>
+</html>

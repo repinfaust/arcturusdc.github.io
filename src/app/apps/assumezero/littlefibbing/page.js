@@ -202,7 +202,7 @@ body:has(#lf-game-page) { overflow: hidden !important; }
   <a href="/" class="gn-logo"><b>Arcturus</b> Digital Consulting</a>
   <div class="gn-right">
     <div class="gn-badge">v0.2 POC</div>
-    <a href="/apps/assumezero" class="gn-back">← About Little Fibbing</a>
+    <a href="/apps/assumezero" class="gn-back">← About AssumeZero</a>
   </div>
 </div>
 
