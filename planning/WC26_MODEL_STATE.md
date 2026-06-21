@@ -124,16 +124,42 @@ _Diagnostic run 2026-06-21 (cowork's a/b/c/d test):_
   in place: longshots (≥6.0) tagged LOW and sunk; confidence badges. Real fix = reduce
   the probability error itself.
 
-_Next concrete steps for #1 (cheap → structural):_
-1. **Fix the comparison: devig the display book per market before computing edge.**
-   Compare model fair prob to the book's no-vig prob, not the raw price. Correct
-   regardless of cause; removes the free ~6.5% inflation.
-2. **Refit ρ** against the sharp line + completed WC games (cowork to spec). The
-   derived markets (BTTS, low-score CS, team-total tails, draw rate) are *driven* by
-   ρ and the Poisson shape; means are anchored, shape is not. Likely the actual fix.
-3. **(Later) Poisson over-dispersion.** Fitted dispersion / neg-binomial for
-   team-total tails. Shape-error candidate, lower priority.
-4. **base_goals = 1.25** also un-refit; revisit after ρ.
+_ρ-refit attempted 2026-06-21 (cowork's RHO_REFIT_SPEC) — and REJECTED by its own
+acceptance test:_
+- Fit a single global ρ to the sharp devigged 1X2 across 36 fixtures (cross-entropy,
+  golden-section). ρ* = **−0.0487**, interior (passes §5.2)... **but the mean draw
+  error barely moved: 2.58pp → 2.49pp** (spec target was <1pp). The fit has almost no
+  leverage.
+- Why: the per-fixture draw residuals are **scattered and mean-zero** (signed mean
+  −0.28pp; Paraguay/Australia −8pp but Cabo Verde/Saudi +4pp; no correlation with
+  total goals). A *global* ρ moves the *global* draw rate, but there is no global
+  bias to remove. **The error is not ρ-shaped.** (Exactly the §5.2 stop condition.)
+- Root cause found: it's the **50/50 lambda blend, by design.** Pure sharp lambdas
+  reproduce the sharp draw rate to **0.89pp** (< the spec's 1pp target — so the
+  Dixon-Coles shape is already correct, even at the default −0.08). The 2.49pp
+  residual is entirely our independent Elo voice pulling each fixture's draw rate off
+  the sharp line. That dissent is the feature, not a bug.
+- **Decision: do NOT ship a ρ-refit.** It would tune a global constant to mask a
+  per-fixture blend — under-identified and wrong. ρ stays at the −0.08 default.
+
+_What actually fixes the "+30%" artefacts — the §7 display/correctness layer (the
+edges were always small probability errors magnified by long odds, not shape):_
+1. **Devig the display book per market before computing edge** — compare model fair
+   prob to the book's no-vig prob, not the raw vigged price. Removes ~6.5% free vig.
+2. **Rank the value board by absolute probability disagreement `|Δp|`, not EV%**, and
+   auto-flag `|Δp| < 3pp` as "price-magnified — low confidence". This is what kills
+   the longshot artefacts (a 4pp error at odds 9.0 reads as +37% EV but is 4pp on
+   `|Δp|`). Generalises the existing `offered ≥ 6.0` longshot guard to all markets.
+3. **(Future, only if data demands)** Poisson over-dispersion `φ` for team-total
+   tails — per §6, only build if a dispersion-family residual persists after the
+   display fixes. **Possible early signal:** after the §7 fixes, the largest honest
+   |Δp| disagreements (10–14pp) are concentrated in **Over/Under 2.5** (Jordan v
+   Argentina O2.5, Tunisia v Netherlands O2.5, Panama v England O2.5). 1X2/draw
+   artefacts collapsed as expected; totals disagreement persists — exactly cowork's
+   §6 dispersion-family signature. Not yet acting (could be the lambda blend's goal
+   level, not dispersion); the forward record + a totals-residual bucket will tell.
+4. **base_goals = 1.25** stays (anchored per-fixture by the O/U blend); revisit only
+   as a separate group-stage-goals calibration, never co-fit.
 
 **Automation.**
 - Calibration (`marketLambdas`) is currently written by the "Pull live odds" button
