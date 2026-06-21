@@ -146,7 +146,7 @@
     <!-- cards injected here -->
     <div class="sting" id="sting">
       <div class="reel">
-        <video id="stingvid" class="stingvid" src="feed-assets/sting-giveaway.mp4" muted loop playsinline></video>
+        <video id="stingvid" class="stingvid" src="/vid/truthnet-sting-giveaway.mp4" muted loop playsinline></video>
       </div>
       <h2>🔓 Unlocked: How the giveaway works</h2>
       <p>Watch his face. Bored between takes — then big and teary the second the camera rolls. The £100,000 is real, but it's the <em>budget</em>, not the point. The "kindness" buys 8 million views, and the views are the payout. The stranger is a prop. Follow the money, not the feeling.</p>
@@ -162,7 +162,7 @@
 
       <div class="build">
         <div class="build-card" id="buildcard">
-          <div class="build-media"><img class="photo" src="feed-assets/creator-base-breakfast.png" alt=""><span class="redarrow" id="bArrow" style="display:none">↘</span></div>
+          <div class="build-media"><img class="photo" src="/img/assumezero/truthnet/creator-base-breakfast.png" alt=""><span class="redarrow" id="bArrow" style="display:none">↘</span></div>
           <div class="build-cap" id="bCap"><span class="handle">@you</span> just a normal photo of breakfast</div>
           <div class="build-meta">❤️ <span id="bLikes">12</span> likes</div>
         </div>
@@ -217,33 +217,33 @@
 const cards = [
   // — Provenance tier (KS1): real camera vs AI machine. —
   // The FAKE puppy is AI (carries the tell). The REAL puppy MUST be a genuine photo (load-bearing).
-  { img:"feed-assets/card-puppy-fake.png", tag:"@petlolz · 2.1M likes", handle:"@petlolz", tactic:"ai",
+  { img:"/img/assumezero/truthnet/card-puppy-fake.png", tag:"@petlolz · 2.1M likes", handle:"@petlolz", tactic:"ai",
     cap:"you will NOT believe this rare puppy 😍🐾",
     truth:"fake", question:"Real photo, or made by a computer?",
     tellOk:"Count the legs — there are more than four. And the grass melts into mush at the edges. No real dog looks like this; a computer drew it.",
     tellNo:"Count the legs — more than four. The grass melts into mush around the paws too. Classic signs a computer made the picture." },
 
-  { img:"feed-assets/card-puppy-real.png", tag:"@goldenpups · 5.4K likes", handle:"@goldenpups", tactic:"ai",
+  { img:"/img/assumezero/truthnet/card-puppy-real.png", tag:"@goldenpups · 5.4K likes", handle:"@goldenpups", tactic:"ai",
     cap:"first proper run in the garden 🐾",
     truth:"real", question:"Real photo, or made by a computer?",
     tellOk:"Four legs, real fur, a real blurry background where the camera focused on the puppy. This one's a genuine photo.",
     tellNo:"This one's real — four legs, natural fur, and the soft out-of-focus background a real camera lens makes. Nothing a computer faked." },
 
   // — Framing tier (KS2): the photo is REAL-in-spirit, the STORY is bolted on. —
-  { img:"feed-assets/card-cereal-framing.png", tag:"@itsmolly · 402K likes", handle:"@itsmolly", tactic:"framing", arrow:true,
+  { img:"/img/assumezero/truthnet/card-cereal-framing.png", tag:"@itsmolly · 402K likes", handle:"@itsmolly", tactic:"framing", arrow:true,
     cap:"WORST morning of my LIFE 😱 (you won't BELIEVE what happened)",
     truth:"fake", question:"Is the STORY real?",
     tellOk:"The photo's just a kid eating cereal. The drama is bolted on to make you click. Real life doesn't come with red arrows.",
     tellNo:"The picture's ordinary, but the story isn't. The shocked caption and red arrow pointing at nothing are bolted on to make you click. A true picture can carry a false story." },
 
-  { img:"feed-assets/card-bakery-real.png", tag:"@ourlittlebakery · 88 likes", handle:"@ourlittlebakery", tactic:"framing", verify:true,
+  { img:"/img/assumezero/truthnet/card-bakery-real.png", tag:"@ourlittlebakery · 88 likes", handle:"@ourlittlebakery", tactic:"framing", verify:true,
     cap:"fresh out the oven this morning 🥖 same as every day",
     truth:"real", question:"Real, or a story bolted on?",
     tellOk:"No drama, no arrow, no ALL-CAPS panic. Just a normal post. When nothing's trying to yank your feelings, it's usually just... true.",
     tellNo:"This one's real and plain. Notice there's nothing trying to grab you — no shock face, no arrow. The absence of bait is itself a signal." },
 
   // — System tier (KS3): the giveaway trap. The reveal unpacks it, the swipe doesn't resolve it cleanly. —
-  { img:"feed-assets/card-giveaway-system.png", tag:"@bigheartben · 8.7M likes", handle:"@bigheartben", glow:true, tactic:"system", bonus:true,
+  { img:"/img/assumezero/truthnet/card-giveaway-system.png", tag:"@bigheartben · 8.7M likes", handle:"@bigheartben", glow:true, tactic:"system", bonus:true,
     cap:"I gave a stranger £100,000 and changed his life forever ❤️",
     truth:"fake", question:"Is the FEELING real?",
     tellOk:"Follow the money. The giving isn't the kindness — it's the footage. The stranger is a prop, the emotion is the product, and 8 million views is the real payout. Ask who profits from you feeling this.",
