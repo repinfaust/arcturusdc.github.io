@@ -164,6 +164,31 @@
 .confLow  { background: rgba(255, 107, 107, 0.14); color: #ff9a9a; border-color: rgba(255, 107, 107, 0.3); }
 .confFade { background: rgba(180, 160, 255, 0.16); color: #c4b5ff; border-color: rgba(180, 160, 255, 0.3); }
 
+/* confidence info "i" + popover */
+.infoWrap { position: relative; display: inline-block; }
+.infoBtn {
+  width: 18px; height: 18px; line-height: 16px; padding: 0;
+  border-radius: 50%; border: 1px solid var(--wc-line);
+  background: var(--wc-panel-2); color: var(--wc-muted);
+  font-size: 11px; font-style: italic; font-weight: 700; cursor: pointer;
+  vertical-align: middle; margin-left: 6px;
+}
+.infoBtn:hover { color: var(--wc-ink); border-color: var(--wc-accent); }
+.infoPop {
+  position: absolute; z-index: 20; top: 26px; left: 0;
+  width: min(360px, 80vw);
+  background: var(--wc-panel-2); border: 1px solid var(--wc-line);
+  border-radius: 10px; padding: 14px 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--wc-muted);
+}
+.infoPop p { margin: 0 0 8px; }
+.infoPop p:last-child { margin-bottom: 0; }
+.infoPop b { color: var(--wc-ink); }
+.infoPop ul { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.infoPop li { display: flex; gap: 8px; align-items: baseline; }
+.infoPop li .confBadge { flex: none; }
+
 /* tables */
 .tableWrap { overflow-x: auto; margin-top: 12px; }
 .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
