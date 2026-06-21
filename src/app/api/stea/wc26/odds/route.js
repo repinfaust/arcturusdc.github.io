@@ -25,8 +25,8 @@ function json(body, status = 200) {
 /*
  * POST { matchId, odds: { "<selection>": <decimal> } }
  *
- * Deterministic validation gate (the source-agnostic safety boundary — applies
- * whether odds were typed by hand or extracted later by an LLM):
+ * Deterministic validation gate (source-agnostic — applies to hand-typed odds
+ * and to the The Odds API consensus path alike; no LLM is involved):
  *   - selection must be a known engine market key
  *   - decimal odds must be a finite number > 1.0 and < 1000
  * Invalid entries are rejected and reported; only valid ones are written.

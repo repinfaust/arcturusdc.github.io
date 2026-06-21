@@ -82,7 +82,8 @@ export async function GET(request) {
 /*
  * POST — write validated REAL results (and fixtures) to Firestore.
  * Results auto-write (low-ambiguity, the model-learning input).
- * Odds are NOT touched here; they come from the separate (LLM+gate) odds path.
+ * Odds are NOT touched here; they come from the separate odds path
+ * (The Odds API or manual entry — never an LLM).
  */
 export async function POST(request) {
   const access = await verifySteaWorkspaceAccess(request, {
