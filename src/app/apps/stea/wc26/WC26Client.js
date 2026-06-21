@@ -86,6 +86,7 @@ async function loadWorkspaceModelData() {
       atk: data.atk,
       dfn: data.dfn,
       tier: data.tier || 'Custom',
+      gamesPlayed: typeof data.gamesPlayed === 'number' ? data.gamesPlayed : 0,
     };
   });
 
@@ -388,6 +389,59 @@ function tagClass(flag) {
   return styles.tagNeutral;
 }
 
+/*
+ * Honest confidence badge. Confidence is NOT the size of the edge — with coarse
+ * ratings a huge edge just means the model disagrees wildly with the market,
+ * which is a LOW-confidence red flag. The primary driver is how GROUNDED the two
+ * teams' ratings are: a rating shaped by real games is worth more than a tier
+ * guess. Confidence therefore starts low for seed-only teams and BUILDS UP as
+ * games are played (gamesPlayed → shrinkage moves rating from prior to data).
+ *
+ * `ratings` may be undefined (fallback seed) — then we can't read gamesPlayed and
+ * fall back to flag/edge/market signals only.
+ */
+function confidenceBadge(row, ratings) {
+  // Engine flags always dominate.
+  if (row.flag && row.flag.startsWith('LONGSHOT')) {
+    return { label: 'Low', cls: styles.confLow, why: 'Longshot — coarse models over-rate these.' };
+  }
+  if (row.flag && row.flag.startsWith('DANGER')) {
+    return { label: 'Fade', cls: styles.confFade, why: 'Danger-zone favourite — surfaced as a fade, not a follow.' };
+  }
+
+  // How grounded are the ratings behind this pick? Fewest games of the two teams.
+  const [home, away] = (row.match || '').split(' v ');
+  const gh = ratings?.[home]?.gamesPlayed;
+  const ga = ratings?.[away]?.gamesPlayed;
+  const minGames = (typeof gh === 'number' && typeof ga === 'number') ? Math.min(gh, ga) : null;
+
+  // A team with 0 observed games is a pure tier guess — anything involving it is
+  // low confidence regardless of the edge.
+  if (minGames === 0) {
+    return { label: 'Low', cls: styles.confLow, why: 'One team has no played games — its rating is an unverified tier guess.' };
+  }
+
+  // Implausibly large edges signal rating miscalibration, not opportunity.
+  if (row.edge >= 0.25) {
+    return { label: 'Low', cls: styles.confLow, why: 'Edge too large to be real — likely rating miscalibration vs the market.' };
+  }
+  if (row.edge >= 0.12) {
+    return { label: 'Modest', cls: styles.confMid, why: 'Large edge — caution until ratings are better calibrated.' };
+  }
+
+  // Plausible edge. Confidence builds with games behind the ratings; small
+  // markets get a bump (books shade them least).
+  if (minGames !== null && minGames >= 3) {
+    return row.smallMarket
+      ? { label: 'High', cls: styles.confHigh, why: 'Plausible edge, ratings grounded in ≥3 games each, small market.' }
+      : { label: 'Higher', cls: styles.confHigh, why: 'Plausible edge with ratings grounded in ≥3 games each.' };
+  }
+  if (row.smallMarket) {
+    return { label: 'Modest', cls: styles.confMid, why: 'Plausible edge in a small market, but ratings still building (few games).' };
+  }
+  return { label: 'Fair', cls: styles.confMid, why: 'Plausible edge; ratings still building from limited games.' };
+}
+
 function Recommendation({ ratings, fixtures, opts }) {
   const top = useMemo(() => topRecommendation(fixtures, ratings, opts), [fixtures, ratings, opts]);
   const ranked = useMemo(() => recommend(fixtures, ratings, opts), [fixtures, ratings, opts]);
@@ -411,6 +465,7 @@ function Recommendation({ ratings, fixtures, opts }) {
           <div className={styles.heroStats}>
             <span>Model fair <b>{dec(top.fairOdds)}</b></span>
             <span className={styles.edgePos}>edge {signed(top.edge)}</span>
+            {(() => { const c = confidenceBadge(top, ratings); return <span className={`${styles.confBadge} ${c.cls}`} title={c.why}>{c.label} confidence</span>; })()}
             <span>stake <b>{top.stakeUnits}u</b> <em>(¼-Kelly, 100u bank)</em></span>
           </div>
           {top.smallMarket && (
@@ -429,20 +484,24 @@ function Recommendation({ ratings, fixtures, opts }) {
                 <tr>
                   <th>Match</th><th>Market</th><th>Selection</th>
                   <th className={styles.num}>Offered</th><th className={styles.num}>Fair</th>
-                  <th className={styles.num}>Edge</th><th className={styles.num}>Stake</th><th>Flag</th>
+                  <th className={styles.num}>Edge</th><th>Confidence</th><th className={styles.num}>Stake</th><th>Flag</th>
                 </tr>
               </thead>
               <tbody>
-                {ranked.map((r, i) => (
+                {ranked.map((r, i) => {
+                  const c = confidenceBadge(r, ratings);
+                  return (
                   <tr key={i}>
                     <td>{r.match}</td><td className={styles.muted}>{r.group}</td><td>{r.selection}</td>
                     <td className={styles.num}>{dec(r.offered)}</td>
                     <td className={styles.num}>{dec(r.fairOdds)}</td>
                     <td className={`${styles.num} ${styles.edgePos}`}>{signed(r.edge)}</td>
+                    <td><span className={`${styles.confBadge} ${c.cls}`} title={c.why}>{c.label}</span></td>
                     <td className={styles.num}>{r.stakeUnits}u</td>
                     <td>{r.flag && <span className={`${styles.tag} ${tagClass(r.flag)}`}>{r.flag}</span>}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
