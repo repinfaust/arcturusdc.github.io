@@ -58,30 +58,73 @@ function recommendCalibrated(fixtures, ratings, opts = {}) {
     const pm = pricedMatchForFixture(f, ratings, opts);
     if (!pm) continue;
     const priced = priceAll(pm.match);
-    for (const [sel, offered] of Object.entries(f.odds || {})) {
+    const odds = f.odds || {};
+    for (const [sel, offered] of Object.entries(odds)) {
       if (!offered || offered <= 1) continue;
       let modelP = null, group = null;
       for (const [g, mkt] of Object.entries(priced)) if (mkt[sel]) { modelP = mkt[sel][0]; group = g; break; }
       if (modelP == null) continue;
+
+      // Book's NO-VIG probability for this selection (devig against its market
+      // siblings present in the odds map). Compare against this, not the vigged
+      // price — strips the ~6.5% margin that inflated apparent edge.
+      const bookNoVigP = noVigBookProb(sel, odds);
+      // EV is still vs the price you actually take (that's what you're paid).
       const e = ev(modelP, offered);
+      // |Δp| = honest probability disagreement, immune to longshot-odds magnification.
+      const deltaP = bookNoVigP != null ? modelP - bookNoVigP : null;
+
       let thresh, flag = '';
       if (SMALL_MARKETS.has(group)) thresh = edgeSmall;
       else if (offered >= 6.0) { thresh = 0.1; flag = 'LONGSHOT — low confidence'; }
       else thresh = edgeMain;
       if (isDangerZone(offered) && (group === '1X2' || group === 'Asian Handicap')) flag = 'DANGER-ZONE FAV (fade)';
+      // Price-magnified: a tiny probability disagreement dressed up as a big EV by
+      // long odds. Flag regardless of how large the EV% looks.
+      const priceMagnified = deltaP != null && Math.abs(deltaP) < 0.03;
       if (e >= thresh) {
         out.push({
           match: `${f.home} v ${f.away}`, group, selection: sel,
           modelProb: modelP, fairOdds: fair(modelP), offered,
+          bookNoVigP, deltaP, priceMagnified,
           edge: e, stakeUnits: +(kelly(modelP, offered) * bankroll).toFixed(2),
           smallMarket: SMALL_MARKETS.has(group), flag, calibrated: pm.calibrated,
         });
       }
     }
   }
+  // Rank by absolute probability disagreement |Δp|, NOT EV% (EV% is magnified by
+  // long odds). Longshots and missing-Δp rows sink to the bottom.
   const isLongshot = (r) => r.flag.startsWith('LONGSHOT');
-  out.sort((p, q) => (isLongshot(p) - isLongshot(q)) || (q.edge - p.edge));
+  const score = (r) => (r.deltaP == null ? -1 : Math.abs(r.deltaP));
+  out.sort((p, q) => (isLongshot(p) - isLongshot(q)) || (score(q) - score(p)));
   return out;
+}
+
+// Market sibling groups for devig (selection keys must match engine market keys).
+const DEVIG_GROUPS = [
+  ['Home', 'Draw', 'Away'],
+  ['Over 1.5', 'Under 1.5'],
+  ['Over 2.5', 'Under 2.5'],
+  ['Over 3.5', 'Under 3.5'],
+  ['BTTS Yes', 'BTTS No'],
+  ['Home Over 0.5', 'Home Under 0.5'],
+  ['Home Over 1.5', 'Home Under 1.5'],
+  ['Away Over 0.5', 'Away Under 0.5'],
+  ['Away Over 1.5', 'Away Under 1.5'],
+];
+
+/* No-vig book probability for a selection, devigging against whichever siblings
+ * the book actually quotes. Returns null if siblings aren't all present. */
+function noVigBookProb(sel, odds) {
+  const group = DEVIG_GROUPS.find((g) => g.includes(sel));
+  if (!group) return null;
+  const prices = group.map((s) => odds[s]);
+  if (prices.some((p) => !p || p <= 1)) return null;
+  const imp = prices.map((p) => 1 / p);
+  const sum = imp.reduce((a, b) => a + b, 0);
+  const idx = group.indexOf(sel);
+  return imp[idx] / sum;
 }
 import seedRatings from './data/ratings.json';
 import seedResults from './data/results.json';
@@ -505,6 +548,11 @@ function confidenceBadge(row, ratings) {
   if (row.flag && row.flag.startsWith('DANGER')) {
     return { label: 'Fade', cls: styles.confFade, why: 'Danger-zone favourite — surfaced as a fade, not a follow.' };
   }
+  // Price-magnified: |Δp| < 3pp — a rounding-error disagreement dressed up as a big
+  // EV by long odds. Always Low, regardless of headline edge.
+  if (row.priceMagnified) {
+    return { label: 'Low', cls: styles.confLow, why: `Only ${(Math.abs(row.deltaP) * 100).toFixed(1)}pp from the book's no-vig price — the big edge is long-odds magnification, not real disagreement.` };
+  }
 
   // How grounded are the ratings behind this pick? Fewest games of the two teams.
   const [home, away] = (row.match || '').split(' v ');
@@ -609,6 +657,7 @@ function Recommendation({ ratings, fixtures, opts }) {
                 <tr>
                   <th>Match</th><th>Market</th><th>Selection</th>
                   <th className={styles.num}>Offered</th><th className={styles.num}>Fair</th>
+                  <th className={styles.num} title="Absolute probability disagreement vs the book's no-vig price — the honest edge measure">|Δp|</th>
                   <th className={styles.num}>Edge</th><th>Confidence</th><th className={styles.num}>Stake</th><th>Flag</th>
                 </tr>
               </thead>
@@ -620,7 +669,8 @@ function Recommendation({ ratings, fixtures, opts }) {
                     <td>{r.match}</td><td className={styles.muted}>{r.group}</td><td>{r.selection}</td>
                     <td className={styles.num}>{dec(r.offered)}</td>
                     <td className={styles.num}>{dec(r.fairOdds)}</td>
-                    <td className={`${styles.num} ${styles.edgePos}`}>{signed(r.edge)}</td>
+                    <td className={styles.num}>{r.deltaP == null ? '—' : `${(Math.abs(r.deltaP) * 100).toFixed(1)}pp`}</td>
+                    <td className={`${styles.num} ${r.priceMagnified ? styles.muted : styles.edgePos}`}>{signed(r.edge)}</td>
                     <td><span className={`${styles.confBadge} ${c.cls}`} title={c.why}>{c.label}</span></td>
                     <td className={styles.num}>{r.stakeUnits}u</td>
                     <td>{r.flag && <span className={`${styles.tag} ${tagClass(r.flag)}`}>{r.flag}</span>}</td>
