@@ -381,6 +381,36 @@ function BaseGoalsControl({ baseGoals, setBaseGoals }) {
   );
 }
 
+/* Discoverable, touch-friendly explanation of the confidence badges. */
+function ConfidenceInfo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className={styles.infoWrap}>
+      <button
+        type="button"
+        className={styles.infoBtn}
+        aria-label="What do the confidence badges mean?"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        i
+      </button>
+      {open && (
+        <div className={styles.infoPop} role="dialog">
+          <p><b>Confidence is not the size of the edge.</b> With coarse ratings, a huge edge usually means the model disagrees with the market — a red flag, not a tip.</p>
+          <ul>
+            <li><span className={`${styles.confBadge} ${styles.confHigh}`}>High / Higher</span> Plausible edge, both teams&apos; ratings grounded in ≥3 played games (small markets favoured).</li>
+            <li><span className={`${styles.confBadge} ${styles.confMid}`}>Modest / Fair</span> Plausible edge, but ratings still building from few games.</li>
+            <li><span className={`${styles.confBadge} ${styles.confLow}`}>Low</span> A team has 0 played games (unverified tier guess), the edge is implausibly large (likely miscalibration), or it&apos;s a longshot.</li>
+            <li><span className={`${styles.confBadge} ${styles.confFade}`}>Fade</span> Danger-zone favourite — surfaced as a fade, not a follow.</li>
+          </ul>
+          <p className={styles.muted}>Confidence builds as real games are played and ratings calibrate. Hover any badge for its specific reason.</p>
+        </div>
+      )}
+    </span>
+  );
+}
+
 /* -------------------------------------------------------- recommendation */
 function tagClass(flag) {
   if (!flag) return '';
@@ -448,7 +478,7 @@ function Recommendation({ ratings, fixtures, opts }) {
 
   return (
     <section className={styles.card}>
-      <h2 className={styles.h2}>Bet of the day</h2>
+      <h2 className={styles.h2}>Bet of the day <ConfidenceInfo /></h2>
       {!top ? (
         <p className={styles.empty}>
           No value bet to show. Recommendations need book odds against the upcoming fixtures — add
