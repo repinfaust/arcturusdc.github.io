@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase';
 import styles from './wc26.module.css';
 import {
@@ -170,6 +171,7 @@ function Wc26AccessGate({ children }) {
 }
 
 function WC26Experience() {
+  const { isSuperAdmin } = useTenant();
   /* --- shared model state --- */
   const [ratings, setRatings] = useState(seedRatings);
   const [fixtures, setFixtures] = useState(seedFixtures);
@@ -237,6 +239,7 @@ function WC26Experience() {
         <Header />
         <BaseGoalsControl baseGoals={baseGoals} setBaseGoals={(v) => { setBaseGoals(v); saveJSON(LS_BASE, v); }} />
         <DataStatus status={dataStatus} />
+        <RefreshData isSuperAdmin={isSuperAdmin} />
         <Recommendation ratings={ratings} fixtures={fixtures} opts={opts} />
         <MatchPricer ratings={ratings} opts={opts} />
         <ValueCalculator ratings={ratings} opts={opts} hydrated={hydrated} />
@@ -257,6 +260,56 @@ function DataStatus({ status }) {
     <section className={`${styles.statusCard} ${styles[`status_${status.tone}`] || ''}`}>
       <span>Data source</span>
       <p>{status.text}</p>
+    </section>
+  );
+}
+
+/* Super-admin only: pull REAL results/fixtures from the pinned source, then
+ * trigger the deterministic rating refit + prediction sync. No LLM, no odds. */
+function RefreshData({ isSuperAdmin }) {
+  const [busy, setBusy] = useState(false);
+  const [report, setReport] = useState(null);
+
+  if (!isSuperAdmin) return null;
+
+  async function refresh() {
+    setBusy(true);
+    setReport({ tone: 'loading', text: 'Fetching real results/fixtures from openfootball (no LLM)…' });
+    try {
+      const res = await fetch('/api/stea/wc26/ingest', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || `Ingest failed (${res.status})`);
+
+      setReport({ tone: 'loading', text: `Wrote ${data.resultsWritten} results · ${data.fixturesWritten} fixtures. Updating ratings…` });
+      const fns = getFunctions();
+      await httpsCallable(fns, 'refitWc26RatingsNow')({});
+      await httpsCallable(fns, 'syncWc26PredictionsNow')({});
+
+      const missing = data.missingPriorTeams?.length
+        ? ` · ${data.missingPriorTeams.length} team(s) without ratings skipped: ${data.missingPriorTeams.join(', ')}`
+        : '';
+      setReport({
+        tone: 'live',
+        text: `Done. ${data.resultsWritten} results · ${data.fixturesWritten} fixtures written from openfootball; ratings refit + predictions synced. Reload to see updates.${missing}`,
+      });
+    } catch (err) {
+      setReport({ tone: 'error', text: `Refresh failed: ${err.message || 'unknown error'}.` });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className={`${styles.statusCard} ${report ? styles[`status_${report.tone}`] || '' : ''}`}>
+      <span>Admin · live data</span>
+      <p style={{ flex: 1 }}>
+        {report
+          ? report.text
+          : 'Pull real completed results + fixtures from the pinned source (openfootball, CC0) and update the model. Results only — odds are entered separately.'}
+      </p>
+      <button className={styles.ghostBtn} onClick={refresh} disabled={busy}>
+        {busy ? 'Refreshing…' : 'Refresh results & ratings'}
+      </button>
     </section>
   );
 }
