@@ -100,16 +100,40 @@ Firebase project `stea-775cd`, tenant `FqhckqMaorJMAQ6B29mP`.
 
 ## 4. Open questions / next steps
 
-**Calibration quality (highest priority).**
-- After blending, **derived-market edges are still large (up to ~30%)**. The 1X2
-  miscalibration is fixed (Spain v Saudi 88% = sharp line), but secondary outcomes
-  (draw prices, away longshots in lopsided games) still show big gaps vs the **soft**
-  display book. Open question: how much of that is *real* soft-book value (the bias
-  we want to exploit) vs *residual model error* on draw/longshot rates? Needs the
-  forward record to disambiguate. Until then, treat large derived-market edges with
-  the same scepticism as before.
-- The fixed `ρ = −0.08` Dixon-Coles correction and `base_goals = 1.25` are not
-  re-fit from WC data. Could matter for draw/low-score calibration.
+**Calibration quality (THE whole ballgame — per cowork).** Half the signal is the
+market by design (50/50 blend), so the only remaining edge surface is the derived
+markets + updating faster than the line. If the derived edges are model error, there
+is no edge anywhere. So #1 is not "top priority", it is the value proposition.
+
+_Diagnostic run 2026-06-21 (cowork's a/b/c/d test):_
+- **(a) Vig in the comparison — confirmed present, not the main cause.** Stored
+  derived odds are vigged consensus (~6.5% two-way vig on O/U 2.5). Edge is computed
+  vs the vigged price, not the no-vig prob — a real bug to fix. BUT devigging makes
+  the headline edges *larger*, not smaller (model prob sits above book), so vig isn't
+  what's inflating them.
+- **(b) ρ / shape — the likely real cause, but the absolute error is SMALL.** Devig
+  test on the draw: the soft book agrees with the sharp line almost exactly
+  (Algeria/Austria soft 31% = sharp 31%), and **our model is the outlier by only
+  ±2–4pp** (ours 27%), non-directional. So the book is internally consistent; we
+  dissent slightly. That is model error, not value — but small.
+- **The 30% "edges" are small probability errors AMPLIFIED by longshot odds.** The
+  top "edges" are Away/Home/Draw picks at 3.9–9.0 (Curacao Draw @9, Egypt Away @3.9).
+  A 4pp probability error at odds of 9.0 shows as "+37% edge". So the screaming
+  numbers are ρ/shape error magnified by price, not soft-book value.
+- **Verdict:** model error, not value (cowork's prior was right). Mitigations already
+  in place: longshots (≥6.0) tagged LOW and sunk; confidence badges. Real fix = reduce
+  the probability error itself.
+
+_Next concrete steps for #1 (cheap → structural):_
+1. **Fix the comparison: devig the display book per market before computing edge.**
+   Compare model fair prob to the book's no-vig prob, not the raw price. Correct
+   regardless of cause; removes the free ~6.5% inflation.
+2. **Refit ρ** against the sharp line + completed WC games (cowork to spec). The
+   derived markets (BTTS, low-score CS, team-total tails, draw rate) are *driven* by
+   ρ and the Poisson shape; means are anchored, shape is not. Likely the actual fix.
+3. **(Later) Poisson over-dispersion.** Fitted dispersion / neg-binomial for
+   team-total tails. Shape-error candidate, lower priority.
+4. **base_goals = 1.25** also un-refit; revisit after ρ.
 
 **Automation.**
 - Calibration (`marketLambdas`) is currently written by the "Pull live odds" button
