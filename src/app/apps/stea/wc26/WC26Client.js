@@ -13,7 +13,6 @@ import {
   ev,
   kelly,
   recommend,
-  topRecommendation,
   gradeHistory,
   DEFAULTS,
 } from './lib/engine';
@@ -472,19 +471,41 @@ function confidenceBadge(row, ratings) {
   return { label: 'Fair', cls: styles.confMid, why: 'Plausible edge; ratings still building from limited games.' };
 }
 
+// Only these badge labels are trustworthy enough to headline.
+const PLAUSIBLE_LABELS = new Set(['High', 'Higher', 'Modest', 'Fair']);
+
 function Recommendation({ ratings, fixtures, opts }) {
-  const top = useMemo(() => topRecommendation(fixtures, ratings, opts), [fixtures, ratings, opts]);
   const ranked = useMemo(() => recommend(fixtures, ratings, opts), [fixtures, ratings, opts]);
+  const anyOdds = useMemo(
+    () => (fixtures || []).some((f) => f.odds && Object.keys(f.odds).length),
+    [fixtures],
+  );
+  // Headline the best PLAUSIBLE-confidence pick, not the biggest (likely
+  // miscalibrated) edge. Small markets already sort first within the engine.
+  const top = useMemo(
+    () => ranked.find((r) => PLAUSIBLE_LABELS.has(confidenceBadge(r, ratings).label)) || null,
+    [ranked, ratings],
+  );
 
   return (
     <section className={styles.card}>
       <h2 className={styles.h2}>Bet of the day <ConfidenceInfo /></h2>
       {!top ? (
-        <p className={styles.empty}>
-          No value bet to show. Recommendations need book odds against the upcoming fixtures — add
-          them in <b>Enter odds</b> below (no odds = no edge to compute). The model prices every
-          match regardless; it just can&apos;t find <em>value</em> without a price to compare against.
-        </p>
+        !anyOdds ? (
+          <p className={styles.empty}>
+            No value bet to show. Recommendations need book odds against the upcoming fixtures — pull
+            them with <b>Pull live odds</b> or add them in <b>Enter odds</b> below (no odds = no edge
+            to compute). The model prices every match regardless; it just can&apos;t find
+            <em> value</em> without a price to compare against.
+          </p>
+        ) : (
+          <p className={styles.empty}>
+            <b>No confident bet today.</b> Every current edge is Low confidence — the model disagrees
+            with the market by an implausible margin, which means the ratings are miscalibrated, not
+            that there&apos;s value. Better to pass than to back a fantasy edge. The full board is
+            below for transparency; confidence builds as games are played and ratings calibrate.
+          </p>
+        )
       ) : (
         <div className={styles.hero}>
           <div className={styles.heroLine}>
