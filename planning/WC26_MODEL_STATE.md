@@ -183,9 +183,33 @@ edges were always small probability errors magnified by long odds, not shape):_
      but fails the over-correction guard. Both correctly ship nothing. The acceptance
      test catching the even-game/draw damage is the whole point.
 
+   _λ-dependent dispersion `r = φ·λ^a` attempted 2026-06-21 (LAMBDA_DISPERSION_SPEC) —
+   NOT SHIPPED, hit the §6 rabbit-hole bound on identifiability:_
+   - First fit (O/U 2.5 only, the odds we'd stored) drifted to **a=0** — the rejected
+     constant-φ corner. Root cause: we stored only the 2.5 line; `a`'s leverage is in
+     the 1.5/3.5 tail (spec §2). Re-pulled the **full sharp totals ladder** (1.5–3.5,
+     56 lines): fit then found a* ≈ −2.4, φ finite — interior, in the expected range.
+   - **But a stability test killed it.** Refitting across reasonable data choices,
+     a* swings **0 → −2.47** (2.5-only: a=0; full ladder: −2.37; drop-thirds: −1.94 /
+     −2.27 / −2.47; φ* 25→56). The estimate is pinned by *which totals points each book
+     happened to quote*, not by the physics. With ~36 fixtures and mostly one sharp
+     totals point each, **(φ, a) is not identifiable.** The acceptance decomposition was
+     also non-reproducible across baseline constructions.
+   - **Verdict: STOP (spec §6).** The λ-form isn't refuted — it's *unmeasurable* at this
+     data volume. Shipping two structural params fit to 36 noisy points whose answer
+     flips with the subset is the curve-fitting-to-36-games failure the process exists to
+     avoid. **Engine stays Poisson + ρ=−0.08.** Log the favourite-tail O/U residual as a
+     known limitation; the §7 `|Δp|` guard already sinks those picks; the **forward
+     record** is the arbiter. No third shape parameter, no λ-form re-attempt until the
+     sharp-fixture × totals-line count is materially larger (knockouts + a wider ladder).
+
+   - **Tally of structural changes the data declined: ρ (boundary self-reject), global
+     φ (over-correction guard), λ-φ (non-identifiable).** Shipped only what passed its
+     own test: Elo prior, sharp blend, devig, |Δp| ranking. Engine maths unchanged from
+     the verified port. That discipline — three declines, zero forced — is the point.
    - **Interim caution:** the §7 |Δp| reorder leads the board with O/U 2.5 mismatch
-     disagreements — least-trustworthy until a λ-dependent φ lands. Keep O/U 2.5 stakes
-     minimal. (Engine unchanged: still Poisson + ρ=−0.08; only display/ranking improved.)
+     disagreements — least-trustworthy on the page. Keep O/U 2.5 stakes minimal; the
+     forward record will judge whether they were edge or favourite-tail model error.
 4. **base_goals = 1.25** stays (anchored per-fixture by the O/U blend); revisit only
    as a separate group-stage-goals calibration, never co-fit.
 
