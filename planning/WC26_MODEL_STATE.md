@@ -150,14 +150,25 @@ edges were always small probability errors magnified by long odds, not shape):_
    auto-flag `|Δp| < 3pp` as "price-magnified — low confidence". This is what kills
    the longshot artefacts (a 4pp error at odds 9.0 reads as +37% EV but is 4pp on
    `|Δp|`). Generalises the existing `offered ≥ 6.0` longshot guard to all markets.
-3. **(Future, only if data demands)** Poisson over-dispersion `φ` for team-total
-   tails — per §6, only build if a dispersion-family residual persists after the
-   display fixes. **Possible early signal:** after the §7 fixes, the largest honest
-   |Δp| disagreements (10–14pp) are concentrated in **Over/Under 2.5** (Jordan v
-   Argentina O2.5, Tunisia v Netherlands O2.5, Panama v England O2.5). 1X2/draw
-   artefacts collapsed as expected; totals disagreement persists — exactly cowork's
-   §6 dispersion-family signature. Not yet acting (could be the lambda blend's goal
-   level, not dispersion); the forward record + a totals-residual bucket will tell.
+3. **Poisson over-dispersion `φ` — NOW WARRANTED (decomposition run 2026-06-21).**
+   Settled the "level vs shape" question without waiting for a matchday, via cowork's
+   mean/shape decomposition of the O/U 2.5 |Δp|:
+   - Split each fixture's O/U disagreement into MEAN (blend total vs sharp total) and
+     SHAPE (price O/U from the *sharp* lambdas vs the book — means matched, so any gap
+     is pure Poisson shape). Overall MIXED (mean MAE 4.5pp, shape MAE 4.3pp).
+   - **But the shape error is a clean dispersion signature:** even games (supremacy
+     <0.8) shape signed **−0.3pp** (Poisson fine); lopsided games (supremacy ≥1.5)
+     shape signed **+7.5pp** (we systematically over-predict Over); **corr(favourite
+     λ, shape error) = +0.78.** Error grows with the favourite's goal expectation and
+     vanishes in even games — exactly what variance=mean under-dispersion predicts.
+   - **Verdict:** the totals disagreement in mismatches is genuine Poisson shape error,
+     not just Elo level-dissent. A negative-binomial `φ` is the right tool. → Spec the
+     `φ` fit (same disciplined approach as ρ: cross-entropy vs sharp totals ladder,
+     1-D, with a stop-condition). The even-game MEAN component remains Elo dissent that
+     only the forward record can judge — φ does not touch that.
+   - **Interim caution:** the §7 |Δp| reorder now leads the board with these O/U 2.5
+     mismatch disagreements — currently the least-trustworthy picks until φ lands.
+     Keep O/U 2.5 stakes minimal until then.
 4. **base_goals = 1.25** stays (anchored per-fixture by the O/U blend); revisit only
    as a separate group-stage-goals calibration, never co-fit.
 
