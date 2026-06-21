@@ -468,8 +468,29 @@ function OddsEntry({ isSuperAdmin, fixtures }) {
   const [values, setValues] = useState({});
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [pulling, setPulling] = useState(false);
+  const [pullStatus, setPullStatus] = useState(null);
 
   if (!isSuperAdmin) return null;
+
+  async function pullLiveOdds() {
+    setPulling(true);
+    setPullStatus({ tone: 'loading', text: 'Pulling live odds from The Odds API (no LLM)…' });
+    try {
+      const res = await fetch('/api/stea/wc26/odds-api', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || `Failed (${res.status})`);
+      const um = data.unmatched?.length ? ` · ${data.unmatched.length} unmatched fixtures` : '';
+      setPullStatus({
+        tone: 'live',
+        text: `Wrote consensus odds to ${data.written} fixture(s); ${data.rejectedCount} rejected (suspended/in-play)${um}. ${data.requestsRemaining ?? '?'} API requests left this month. Reload to see the value board.`,
+      });
+    } catch (err) {
+      setPullStatus({ tone: 'error', text: `Live odds failed: ${err.message}` });
+    } finally {
+      setPulling(false);
+    }
+  }
 
   const selected = upcoming.find((f) => f.matchId === matchId) || upcoming[0];
   const activeId = selected?.matchId || '';
@@ -504,14 +525,23 @@ function OddsEntry({ isSuperAdmin, fixtures }) {
 
   return (
     <section className={styles.card}>
-      <h2 className={styles.h2}>Enter odds <span className={styles.muted}>· admin — feeds the value board</span></h2>
+      <h2 className={styles.h2}>Odds <span className={styles.muted}>· admin — feeds the value board</span></h2>
       <p className={styles.note}>
-        Type the decimal odds you can see at a book for an upcoming fixture. Recommendations and value
-        only appear once odds exist to compare the model against. Entries are validated (must be a
-        known market, decimal &gt; 1.0) before they&apos;re written — same gate any future automated
-        odds source will pass through. Odds acquisition is manual for now by design (an LLM scraper
-        was shown to fabricate prices).
+        Odds are <b>not a model input</b> — they only let the engine compute <em>value</em> (model
+        fair price vs the book). Pull live consensus odds from The Odds API (a real REST feed for
+        upcoming matches — no LLM, nothing to fabricate; suspended/in-play prices are auto-rejected),
+        or type prices in by hand below. The value board appears once odds exist.
       </p>
+      <div className={styles.editorActions}>
+        <button className={styles.ghostBtn} onClick={pullLiveOdds} disabled={pulling}>
+          {pulling ? 'Pulling…' : 'Pull live odds (The Odds API)'}
+        </button>
+        {pullStatus && (
+          <span className={pullStatus.tone === 'error' ? styles.edgeNeg : styles.muted} style={{ alignSelf: 'center' }}>
+            {pullStatus.text}
+          </span>
+        )}
+      </div>
       {upcoming.length === 0 ? (
         <p className={styles.empty}>No upcoming fixtures loaded.</p>
       ) : (
