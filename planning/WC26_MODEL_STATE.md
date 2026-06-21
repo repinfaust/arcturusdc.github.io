@@ -162,13 +162,30 @@ edges were always small probability errors magnified by long odds, not shape):_
      λ, shape error) = +0.78.** Error grows with the favourite's goal expectation and
      vanishes in even games — exactly what variance=mean under-dispersion predicts.
    - **Verdict:** the totals disagreement in mismatches is genuine Poisson shape error,
-     not just Elo level-dissent. A negative-binomial `φ` is the right tool. → Spec the
-     `φ` fit (same disciplined approach as ρ: cross-entropy vs sharp totals ladder,
-     1-D, with a stop-condition). The even-game MEAN component remains Elo dissent that
-     only the forward record can judge — φ does not touch that.
-   - **Interim caution:** the §7 |Δp| reorder now leads the board with these O/U 2.5
-     mismatch disagreements — currently the least-trustworthy picks until φ lands.
-     Keep O/U 2.5 stakes minimal until then.
+     not just Elo level-dissent. A negative-binomial `φ` is the right tool. The
+     even-game MEAN component remains Elo dissent that only the forward record can judge
+     — φ does not touch that.
+
+   _Global φ fit attempted 2026-06-21 (PHI_REFIT_SPEC) — NOT SHIPPED, fails the §5
+   over-correction guard:_
+   - Fit one global φ on the **sharp** lambdas (NB marginals, cross-entropy vs sharp
+     totals ladder, 1-D over d=1/φ). φ* = **3.49** (d*=0.286), interior — dispersion is
+     genuinely wanted (not Poisson). Acceptance table (Poisson → φ*):
+     - lopsided shape **+7.5pp → +0.0pp** ✓ (favourite tail fixed)
+     - even-game shape **−0.3pp → −2.7pp** ✗ (pushed NEGATIVE — over-dispersed)
+     - corr(fav λ, shape) **0.78 → 0.53** ✗ (only half-killed)
+     - 1X2 draw error **0.92pp → 2.60pp** ✗ (dented the ρ-validated draw calibration)
+   - This is exactly cowork's §6 escalation signature: a constant φ (excess var = μ²/φ)
+     over-disperses the low-λ end while only partly fixing the favourite. **Decision: do
+     NOT ship global φ.** Poisson retained. The data wants a **λ-dependent dispersion**
+     (excess scaling as a different power of μ than μ²) — escalate to that spec.
+   - Discipline note: ρ self-rejected at the boundary; φ passes "is dispersion wanted"
+     but fails the over-correction guard. Both correctly ship nothing. The acceptance
+     test catching the even-game/draw damage is the whole point.
+
+   - **Interim caution:** the §7 |Δp| reorder leads the board with O/U 2.5 mismatch
+     disagreements — least-trustworthy until a λ-dependent φ lands. Keep O/U 2.5 stakes
+     minimal. (Engine unchanged: still Poisson + ρ=−0.08; only display/ranking improved.)
 4. **base_goals = 1.25** stays (anchored per-fixture by the O/U blend); revisit only
    as a separate group-stage-goals calibration, never co-fit.
 
