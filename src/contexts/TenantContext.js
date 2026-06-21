@@ -36,7 +36,9 @@ export function TenantProvider({ children }) {
   const [isWorkspaceAdmin, setIsWorkspaceAdmin] = useState(false);
 
   // Load user's tenants from tenant_members collection
-  const loadTenants = useCallback(async (userEmail) => {
+  const loadTenants = useCallback(async (rawEmail) => {
+    // Normalise email case (harmless; SUPER_ADMINS + tenant_members are lowercase).
+    const userEmail = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
     if (!userEmail || !db) {
       setAvailableTenants([]);
       setCurrentTenant(null);

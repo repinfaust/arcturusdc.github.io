@@ -260,37 +260,39 @@ export default function WC26Client() {
 }
 
 function Wc26AccessGate({ children }) {
+  // Any signed-in STEa member passes — same pattern as Art Atlas and independent
+  // of the *selected* workspace. The WC26 Firestore collections are tenant-scoped
+  // to ArcturusDC and enforced by security rules server-side, so the client gate
+  // does NOT need to require that specific tenant to be the active one. The old
+  // "must be ArcturusDC workspace" check locked out valid members (incl. admins)
+  // whenever isSuperAdmin hadn't resolved or another workspace was selected.
   const { availableTenants, loading: tenantLoading, error: tenantError, isSuperAdmin } = useTenant();
-  const hasArcturusAccess = isSuperAdmin || availableTenants.some((tenant) => {
-    const tenantId = tenant.id || tenant.tenantId;
-    const tenantName = typeof tenant.name === 'string' ? tenant.name.trim().toLowerCase() : '';
-    return tenantId === ARCTURUSDC_TENANT_ID || tenantName === 'arcturusdc';
-  });
+  const hasSteaAccess = isSuperAdmin || availableTenants.length > 0;
 
   if (tenantLoading) {
     return (
       <div className={styles.shell}>
         <main className={styles.accessPanel}>
           <p className={styles.kicker}>STEa Access</p>
-          <h1 className={styles.accessTitle}>Checking workspace access</h1>
-          <p>Confirming ArcturusDC workspace membership before opening WC26.</p>
+          <h1 className={styles.accessTitle}>Checking access</h1>
+          <p>Confirming your STEa membership before opening WC26.</p>
         </main>
       </div>
     );
   }
 
-  if (!hasArcturusAccess) {
+  if (!hasSteaAccess) {
     return (
       <div className={styles.shell}>
         <main className={styles.accessPanel}>
-          <p className={styles.kicker}>ArcturusDC Workspace Required</p>
+          <p className={styles.kicker}>STEa Access Required</p>
           <h1 className={styles.accessTitle}>WC26 xG Value Engine</h1>
           <p>
-            This tool is available to members of the ArcturusDC workspace.
-            {tenantError ? ` Access lookup returned: ${tenantError}` : ' Switch workspace or ask an admin to add your account.'}
+            This page is available to any signed-in STEa member, independent of the selected workspace.
+            {tenantError ? ` Access lookup returned: ${tenantError}` : ' Sign in with an authorised account to continue.'}
           </p>
           <a className={styles.accessButton} href="/apps/stea?next=/wc26">
-            Open STEa workspace
+            Open STEa sign-in
           </a>
         </main>
       </div>
