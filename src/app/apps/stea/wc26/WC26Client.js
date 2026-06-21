@@ -71,10 +71,11 @@ async function loadWorkspaceModelData() {
   }
 
   const tenantFilter = where('tenantId', '==', ARCTURUSDC_TENANT_ID);
-  const [teamsSnap, fixturesSnap, resultsSnap] = await Promise.all([
+  const [teamsSnap, fixturesSnap, resultsSnap, predictionsSnap] = await Promise.all([
     getDocs(query(collection(db, 'wc26_teams'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_fixtures'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_results'), tenantFilter)),
+    getDocs(query(collection(db, 'wc26_predictions'), tenantFilter)),
   ]);
 
   const remoteRatings = {};
@@ -89,12 +90,14 @@ async function loadWorkspaceModelData() {
   });
 
   const remoteFixtures = fixturesSnap.docs
-    .map((doc) => doc.data())
+    .map((doc) => ({ id: doc.id, ...doc.data() }))
     .filter((fixture) => fixture?.home && fixture?.away && fixture.status !== 'final')
     .map((fixture) => ({
+      matchId: fixture.matchId || fixture.id,
       home: fixture.home,
       away: fixture.away,
       neutral: fixture.neutral !== false,
+      date: fixture.date || null,
       odds: fixture.odds || {},
     }));
 
@@ -114,10 +117,26 @@ async function loadWorkspaceModelData() {
       neutral: result.neutral !== false,
     }));
 
+  // Forward track record: ONLY predictions that were logged pre-kickoff and
+  // then graded against the real result. This is the honest scorecard.
+  const gradedPredictions = predictionsSnap.docs
+    .map((doc) => doc.data())
+    .filter((p) => p?.grade && p.locked)
+    .map((p) => ({
+      match: `${p.home} v ${p.away}`,
+      pick: p.grade.pick,
+      pickProb: p.grade.pickProb,
+      actual: p.grade.actual,
+      score: p.grade.score,
+      correct: p.grade.correct,
+      brier1x2: p.grade.brier1x2,
+    }));
+
   return {
     ratings: Object.keys(remoteRatings).length ? remoteRatings : null,
     fixtures: remoteFixtures.length ? remoteFixtures : null,
     results: remoteResults.length ? remoteResults : null,
+    gradedPredictions,
   };
 }
 
@@ -176,6 +195,7 @@ function WC26Experience() {
   const [ratings, setRatings] = useState(seedRatings);
   const [fixtures, setFixtures] = useState(seedFixtures);
   const [results, setResults] = useState(seedResults);
+  const [gradedPredictions, setGradedPredictions] = useState([]);
   const [baseGoals, setBaseGoals] = useState(DEFAULTS.baseGoals);
   const [hydrated, setHydrated] = useState(false);
   const [hasLocalRatings, setHasLocalRatings] = useState(false);
@@ -205,6 +225,7 @@ function WC26Experience() {
         if (remote.fixtures) setFixtures(remote.fixtures);
         if (remote.results) setResults(remote.results);
         if (remote.ratings && !hasLocalRatings) setRatings(remote.ratings);
+        setGradedPredictions(remote.gradedPredictions || []);
 
         const parts = [
           remote.ratings ? `${Object.keys(remote.ratings).length} teams` : 'fallback teams',
@@ -241,9 +262,10 @@ function WC26Experience() {
         <DataStatus status={dataStatus} />
         <RefreshData isSuperAdmin={isSuperAdmin} />
         <Recommendation ratings={ratings} fixtures={fixtures} opts={opts} />
+        <OddsEntry isSuperAdmin={isSuperAdmin} fixtures={fixtures} />
         <MatchPricer ratings={ratings} opts={opts} />
         <ValueCalculator ratings={ratings} opts={opts} hydrated={hydrated} />
-        <TrackRecord ratings={ratings} results={results} opts={opts} />
+        <TrackRecord ratings={ratings} results={results} gradedPredictions={gradedPredictions} opts={opts} />
         <RatingsEditor
           ratings={ratings}
           setRatings={(r) => { setRatings(r); setHasLocalRatings(true); saveJSON(LS_RATINGS, r); }}
@@ -375,8 +397,9 @@ function Recommendation({ ratings, fixtures, opts }) {
       <h2 className={styles.h2}>Bet of the day</h2>
       {!top ? (
         <p className={styles.empty}>
-          No value bet clears the edge thresholds on the current fixtures. (Edit{' '}
-          <code>data/fixtures.json</code> with the odds you can see.)
+          No value bet to show. Recommendations need book odds against the upcoming fixtures — add
+          them in <b>Enter odds</b> below (no odds = no edge to compute). The model prices every
+          match regardless; it just can&apos;t find <em>value</em> without a price to compare against.
         </p>
       ) : (
         <div className={styles.hero}>
@@ -422,6 +445,106 @@ function Recommendation({ ratings, fixtures, opts }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* -------------------------------------------------------- odds entry (admin) */
+const ODDS_FIELDS = [
+  'Home', 'Draw', 'Away',
+  'Over 2.5', 'Under 2.5', 'BTTS Yes', 'BTTS No',
+  'Home Over 1.5', 'Away Over 0.5',
+];
+
+function OddsEntry({ isSuperAdmin, fixtures }) {
+  const upcoming = useMemo(
+    () => (fixtures || []).filter((f) => f.matchId).sort((a, b) => (a.date || '').localeCompare(b.date || '')),
+    [fixtures],
+  );
+  const [matchId, setMatchId] = useState('');
+  const [values, setValues] = useState({});
+  const [status, setStatus] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  if (!isSuperAdmin) return null;
+
+  const selected = upcoming.find((f) => f.matchId === matchId) || upcoming[0];
+  const activeId = selected?.matchId || '';
+
+  async function submit() {
+    if (!activeId) return;
+    const odds = {};
+    for (const [k, v] of Object.entries(values)) {
+      const n = parseFloat(v);
+      if (n > 1) odds[k] = n;
+    }
+    if (!Object.keys(odds).length) { setStatus({ tone: 'error', text: 'Enter at least one decimal odd > 1.0.' }); return; }
+    setBusy(true);
+    setStatus({ tone: 'loading', text: 'Writing odds…' });
+    try {
+      const res = await fetch('/api/stea/wc26/odds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId: activeId, odds, source: 'manual' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || `Failed (${res.status})`);
+      const rej = data.rejected?.length ? ` · ${data.rejected.length} rejected` : '';
+      setStatus({ tone: 'live', text: `Wrote ${data.written} odd(s) for ${activeId}${rej}. Reload to see recommendations update.` });
+      setValues({});
+    } catch (err) {
+      setStatus({ tone: 'error', text: `Failed: ${err.message}` });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className={styles.card}>
+      <h2 className={styles.h2}>Enter odds <span className={styles.muted}>· admin — feeds the value board</span></h2>
+      <p className={styles.note}>
+        Type the decimal odds you can see at a book for an upcoming fixture. Recommendations and value
+        only appear once odds exist to compare the model against. Entries are validated (must be a
+        known market, decimal &gt; 1.0) before they&apos;re written — same gate any future automated
+        odds source will pass through. Odds acquisition is manual for now by design (an LLM scraper
+        was shown to fabricate prices).
+      </p>
+      {upcoming.length === 0 ? (
+        <p className={styles.empty}>No upcoming fixtures loaded.</p>
+      ) : (
+        <>
+          <div className={styles.controls}>
+            <label className={styles.field}>
+              <span>Fixture</span>
+              <select value={activeId} onChange={(e) => { setMatchId(e.target.value); setValues({}); setStatus(null); }}>
+                {upcoming.map((f) => (
+                  <option key={f.matchId} value={f.matchId}>
+                    {f.date ? `${f.date} · ` : ''}{f.home} v {f.away}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className={styles.marketGrid}>
+            {ODDS_FIELDS.map((sel) => (
+              <label key={sel} className={styles.field}>
+                <span>{sel}</span>
+                <input
+                  className={styles.oddsInput} type="number" step="0.01" min="1.01" placeholder="—"
+                  value={values[sel] ?? ''}
+                  onChange={(e) => setValues({ ...values, [sel]: e.target.value })}
+                />
+              </label>
+            ))}
+          </div>
+          <div className={styles.editorActions}>
+            <button className={styles.ghostBtn} onClick={submit} disabled={busy}>
+              {busy ? 'Saving…' : 'Save odds'}
+            </button>
+            {status && <span className={status.tone === 'error' ? styles.edgeNeg : styles.muted} style={{ alignSelf: 'center' }}>{status.text}</span>}
           </div>
         </>
       )}
@@ -729,53 +852,76 @@ function ValueCalculator({ ratings, opts, hydrated }) {
 }
 
 /* ------------------------------------------------------------ track record */
-function TrackRecord({ ratings, results, opts }) {
-  const graded = useMemo(() => gradeHistory(results, ratings, opts), [results, ratings, opts]);
-  const s = graded.summary;
+function TrackRecord({ ratings, results, gradedPredictions, opts }) {
+  // In-sample backtest — honest label: NOT a track record (grades the model on
+  // the same games whose results shaped its ratings).
+  const backtest = useMemo(() => gradeHistory(results, ratings, opts), [results, ratings, opts]);
+  const b = backtest.summary;
+
+  // Forward record — the genuine scorecard: predictions logged BEFORE kickoff,
+  // graded after the real result. Starts empty and grows honestly.
+  const fwd = useMemo(() => {
+    const rows = gradedPredictions || [];
+    const n = rows.length;
+    if (!n) return { n: 0 };
+    const hit1x2 = rows.filter((r) => r.correct).length;
+    const brier = rows.reduce((s, r) => s + (r.brier1x2 ?? 0), 0) / n;
+    return { n, acc1x2: hit1x2 / n, brier, rows };
+  }, [gradedPredictions]);
 
   return (
     <section className={styles.card}>
       <h2 className={styles.h2}>Model track record</h2>
-      <p className={styles.note}>
-        Blind model prediction vs actual result on completed games. This is <b>prediction quality,
-        not profit</b> — a 55% favourite hit rate is roughly what the market itself produces.
-      </p>
-      <div className={styles.clvTiles}>
-        <Tile num={pct(s.acc1x2)} label="1X2 strike rate" />
-        <Tile num={s.brier1x2.toFixed(3)} label="Brier (uniform = 0.667)" />
-        <Tile num={pct(s.accOU)} label="O/U strike rate" />
-        <Tile num={String(s.games)} label="games graded" />
-      </div>
 
+      {/* FORWARD RECORD — the honest one */}
+      <h3 className={styles.h3}>Forward record <span className={styles.muted}>· predictions logged before kickoff, graded after the result</span></h3>
+      {fwd.n === 0 ? (
+        <p className={styles.empty}>
+          <b>No graded forward predictions yet.</b> This is the only honest scorecard — it counts
+          only bets the model called <em>before</em> kickoff, then graded against the real result.
+          It starts at zero and grows as upcoming games complete. (You cannot honestly build a track
+          record from games that have already finished.)
+        </p>
+      ) : (
+        <>
+          <div className={styles.clvTiles}>
+            <Tile num={pct(fwd.acc1x2)} label="1X2 strike rate (forward)" />
+            <Tile num={fwd.brier.toFixed(3)} label="Brier (uniform = 0.667)" />
+            <Tile num={String(fwd.n)} label="predictions graded" />
+          </div>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr><th>Match</th><th>Pre-kickoff pick</th><th className={styles.num}>Conf.</th><th>Result</th><th className={styles.num}>1X2</th></tr>
+              </thead>
+              <tbody>
+                {fwd.rows.map((r, i) => (
+                  <tr key={i}>
+                    <td>{r.match}</td><td>{r.pick}</td>
+                    <td className={styles.num}>{pct(r.pickProb)}</td>
+                    <td className={styles.muted}>{r.score} ({r.actual})</td>
+                    <td className={`${styles.num} ${r.correct ? styles.edgePos : styles.edgeNeg}`}>{r.correct ? '✓' : '✗'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* IN-SAMPLE BACKTEST — clearly demoted */}
+      <h3 className={styles.h3}>In-sample backtest <span className={styles.muted}>· calibration check only — NOT a track record</span></h3>
       <div className={styles.callout}>
-        The model&apos;s wrong calls cluster on <b>draws</b> (group stage is draw-heavy). Equal-rated
-        sides (e.g. Canada/Qatar) make a symmetric match where the 1X2 pick is an arbitrary tie-break
-        — don&apos;t over-read the exact %. <b>Brier and O/U are the more stable metrics.</b> Note the
-        seed-rating gap: Canada is a host and won 6-0 yet is rated equal to Qatar — bump improving
-        teams in the editor below, or use the host-venue toggle.
+        These numbers grade the model on completed games using ratings that were themselves shaped by
+        those same games. That is <b>in-sample</b> — it flatters the model and is <b>not evidence of
+        an edge</b>. Treat it as a sanity check on calibration, never as performance. The forward
+        record above is the real test.
       </div>
-
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Match</th><th>Model pick</th><th className={styles.num}>Conf.</th>
-              <th>Actual</th><th className={styles.num}>1X2</th><th className={styles.num}>O/U</th>
-            </tr>
-          </thead>
-          <tbody>
-            {graded.rows.map((r, i) => (
-              <tr key={i}>
-                <td>{r.match}</td>
-                <td>{r.pick}</td>
-                <td className={styles.num}>{pct(r.pickProb)}</td>
-                <td className={styles.muted}>{r.actual}</td>
-                <td className={`${styles.num} ${r.correct ? styles.edgePos : styles.edgeNeg}`}>{r.correct ? '✓' : '✗'}</td>
-                <td className={`${styles.num} ${r.ouCorrect ? styles.edgePos : styles.edgeNeg}`}>{r.ouCorrect ? '✓' : '✗'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className={styles.clvTiles}>
+        <Tile num={pct(b.acc1x2)} label="1X2 (in-sample)" />
+        <Tile num={b.brier1x2.toFixed(3)} label="Brier (in-sample)" />
+        <Tile num={pct(b.accOU)} label="O/U (in-sample)" />
+        <Tile num={String(b.games)} label="games" />
       </div>
     </section>
   );
