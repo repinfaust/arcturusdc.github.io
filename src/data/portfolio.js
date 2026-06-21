@@ -185,7 +185,7 @@ export const portfolioItems = [
       'A World Cup 2026 pricing and value engine with deterministic ratings, real-source ingestion, and explicit anti-fabrication rules.',
     emphasis: 'Useful for showing rigorous AI boundaries: no LLM in prediction, result, odds, probability, or pick paths.',
     proof: ['Pinned structured data', 'Deterministic model', 'Forward record', 'No fabricated fixtures'],
-    href: '/wc26',
+    href: '/apps/stea/wc26',
     tags: ['Deterministic model', 'Data integrity', 'ArcturusDC'],
     views: ['portfolio'],
     requiresAuth: true,

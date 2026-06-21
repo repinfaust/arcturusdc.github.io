@@ -12,7 +12,6 @@ import WorkspacePulse from '@/components/workspace/WorkspacePulse';
 
 // Tenant ID for ApexTwin-exclusive workspace
 const APEXTWIN_TENANT_ID = 'DL7ScScEhvAcFpAmmS8h';
-const ARCTURUSDC_TENANT_ID = 'FqhckqMaorJMAQ6B29mP';
 
 const IN_SESSION_DESTINATIONS = [
   {
@@ -98,13 +97,11 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'WC26',
-    href: '/wc26',
-    note: 'Also available at /apps/stea/wc26',
+    href: '/apps/stea/wc26',
     description: 'Dixon-Coles/xG World Cup value engine with fair odds, edge checks, and track-record grading.',
     gradient: 'from-emerald-950/95 to-neutral-900/95',
     borderColor: 'border-emerald-500/40',
     textLight: true,
-    onlyForTenants: [ARCTURUSDC_TENANT_ID],
   },
   {
     label: 'Repinfaust',
