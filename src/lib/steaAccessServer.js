@@ -36,13 +36,32 @@ async function verifyRequiredWorkspace(db, tenantId, workspaceNames) {
 
 export async function verifySteaWorkspaceAccess(request, { tenantId, requiredWorkspaceName, allowedWorkspaceNames } = {}) {
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (!sessionCookie) {
+  // Accept a Firebase ID token in the Authorization header as well as the
+  // __session cookie. The cookie has a 12h lifetime and is only minted by the
+  // /apps/stea login flow, so an otherwise-authenticated client (live Firebase
+  // session, e.g. on the WC26 page) could 401 on admin actions once the cookie
+  // lapses. The bearer token lets "if you can use the page, the action works".
+  const authHeader = request.headers.get('authorization') || '';
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+
+  if (!sessionCookie && !bearerToken) {
     return { ok: false, status: 401, error: 'Authentication required.' };
   }
 
   try {
     const { auth, db } = getFirebaseAdmin();
-    const claims = await auth.verifySessionCookie(sessionCookie, true);
+    // Prefer the session cookie; fall back to verifying the bearer ID token.
+    let claims;
+    if (sessionCookie) {
+      try {
+        claims = await auth.verifySessionCookie(sessionCookie, true);
+      } catch (cookieErr) {
+        if (!bearerToken) throw cookieErr;
+      }
+    }
+    if (!claims && bearerToken) {
+      claims = await auth.verifyIdToken(bearerToken, true);
+    }
     const email = normalizeEmail(claims.email);
 
     if (!email) {

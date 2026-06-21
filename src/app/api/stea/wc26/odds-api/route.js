@@ -9,7 +9,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const ARCTURUSDC_TENANT_ID = 'FqhckqMaorJMAQ6B29mP';
-const ALLOWED_WORKSPACES = ['ArcturusDC'];
 
 function json(body, status = 200) {
   return NextResponse.json(body, { status });
@@ -28,10 +27,8 @@ const matchId = (h, a) => `${slug(h)}-v-${slug(a)}`;
  * POST = write accepted consensus odds to wc26_fixtures.odds
  */
 async function run(write, request) {
-  const access = await verifySteaWorkspaceAccess(request, {
-    tenantId: ARCTURUSDC_TENANT_ID,
-    allowedWorkspaceNames: ALLOWED_WORKSPACES,
-  });
+  // Any signed-in STEa member; data is ArcturusDC-scoped by tenantId + rules.
+  const access = await verifySteaWorkspaceAccess(request);
   if (!access.ok) return json({ error: access.error }, access.status || 403);
 
   const apiKey = process.env.WC26_ODDS_API_KEY;

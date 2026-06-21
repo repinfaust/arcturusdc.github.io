@@ -4,7 +4,23 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+
+// Admin API calls authenticate with a fresh Firebase ID token (Authorization
+// header), so they don't depend on the 12h __session cookie being current.
+async function authedFetch(url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  try {
+    const user = auth?.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    /* fall through — server will 401 if neither token nor cookie is valid */
+  }
+  return fetch(url, { ...options, headers });
+}
 import styles from './wc26.module.css';
 import {
   buildMatch,
@@ -411,7 +427,7 @@ function RefreshData({ isSuperAdmin }) {
     setBusy(true);
     setReport({ tone: 'loading', text: 'Fetching real results/fixtures from openfootball (no LLM)…' });
     try {
-      const res = await fetch('/api/stea/wc26/ingest', { method: 'POST' });
+      const res = await authedFetch('/api/stea/wc26/ingest', { method: 'POST' });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || `Ingest failed (${res.status})`);
 
@@ -713,7 +729,7 @@ function OddsEntry({ isSuperAdmin, fixtures }) {
     setPulling(true);
     setPullStatus({ tone: 'loading', text: 'Pulling live odds from The Odds API (no LLM)…' });
     try {
-      const res = await fetch('/api/stea/wc26/odds-api', { method: 'POST' });
+      const res = await authedFetch('/api/stea/wc26/odds-api', { method: 'POST' });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || `Failed (${res.status})`);
       const um = data.unmatched?.length ? ` · ${data.unmatched.length} unmatched fixtures` : '';
@@ -742,7 +758,7 @@ function OddsEntry({ isSuperAdmin, fixtures }) {
     setBusy(true);
     setStatus({ tone: 'loading', text: 'Writing odds…' });
     try {
-      const res = await fetch('/api/stea/wc26/odds', {
+      const res = await authedFetch('/api/stea/wc26/odds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ matchId: activeId, odds, source: 'manual' }),
