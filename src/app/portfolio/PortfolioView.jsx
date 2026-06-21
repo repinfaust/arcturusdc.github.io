@@ -161,6 +161,7 @@ function TierSection({ tier, items }) {
 export default function PortfolioView({ viewKey = 'portfolio' }) {
   const view = portfolioViews[viewKey];
   const items = getPortfolioItems(viewKey);
+  const visibleTiers = portfolioTiers.filter((tier) => tierItems(items, tier.id).length > 0);
   const publicCount = items.filter((item) => !item.requiresAuth).length;
   const gatedCount = items.length - publicCount;
 
@@ -208,8 +209,8 @@ export default function PortfolioView({ viewKey = 'portfolio' }) {
             </div>
           </div>
 
-          <div className="mt-10 grid border border-[#1c1c1a] bg-[#e3dcc9]/80 sm:grid-cols-4">
-            {portfolioTiers.map((tier, index) => {
+          <div className="mt-10 grid border border-[#1c1c1a] bg-[#e3dcc9]/80 sm:grid-cols-2 lg:grid-cols-4">
+            {visibleTiers.map((tier, index) => {
               const count = tierItems(items, tier.id).length;
               return (
                 <div
@@ -240,7 +241,7 @@ export default function PortfolioView({ viewKey = 'portfolio' }) {
         </div>
       </section>
 
-      {portfolioTiers.map((tier) => (
+      {visibleTiers.map((tier) => (
         <TierSection key={tier.id} tier={getPortfolioTier(tier.id)} items={tierItems(items, tier.id)} />
       ))}
     </div>

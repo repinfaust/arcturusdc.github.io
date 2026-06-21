@@ -28,10 +28,10 @@ export const portfolioViews = {
   cv: {
     slug: 'cv',
     navLabel: 'CV',
-    title: 'CV portfolio link',
+    title: 'CV portfolio',
     eyebrow: '/Portfolio / CV',
     summary:
-      'A concise shareable route for job applications and recruiter review. It excludes private owner-only tools and keeps workspace data behind auth.',
+      'A concise portfolio page for job applications and recruiter review. It excludes private owner-only tools and keeps workspace data behind auth.',
     primaryCta: { label: 'Contact', href: '/contact' },
     secondaryCta: { label: 'Full portfolio', href: '/portfolio' },
   },
@@ -97,7 +97,7 @@ export const portfolioItems = [
       { label: 'Public changelog', href: '/apps/dialled-mtb/changelog' },
       { label: 'Timeline', href: '/apps/dialled-mtb/changelog/timeline' },
     ],
-    views: ['portfolio', 'cv', 'b2b'],
+    views: ['portfolio', 'cv'],
   }),
   appPortfolioItem('sprocket', {
     emphasis: 'Consumer AI-support pattern for making difficult messages easier to understand.',
@@ -105,7 +105,7 @@ export const portfolioItems = [
   }),
   appPortfolioItem('unload'),
   appPortfolioItem('toume', {
-    views: ['portfolio', 'cv', 'b2b'],
+    views: ['portfolio', 'cv'],
   }),
   appPortfolioItem('adhd-acclaim'),
   appPortfolioItem('mandrake'),
@@ -127,7 +127,7 @@ export const portfolioItems = [
     exposure: 'Public brief',
     status: 'Product system',
     summary:
-      'A closed-loop product workspace for discovery, backlog structure, testing, documentation, and release context.',
+      'A closed-loop product workspace for discovery, backlog structure, testing, documentation, release context, and Ruby product intelligence.',
     emphasis: 'Shows how product, delivery, testing, and docs can work as one traceable operating system.',
     proof: ['Harls discovery', 'Filo board', 'Hans testing', 'Ruby product intelligence'],
     href: '/apps/stea/explore',
@@ -210,7 +210,7 @@ export const portfolioItems = [
     proof: ['TipTap editor', 'Doc spaces', 'Templates', 'Tokenised share links'],
     href: '/apps/stea/ruby',
     tags: ['Documentation', 'Knowledge graph', 'Share links'],
-    views: ['portfolio', 'ai', 'cv', 'b2b'],
+    views: ['portfolio', 'cv', 'b2b'],
     requiresAuth: true,
   },
   {
@@ -240,7 +240,7 @@ export const portfolioItems = [
     proof: ['Pinned structured data', 'Deterministic model', 'Forward record', 'No fabricated fixtures'],
     href: '/wc26',
     tags: ['Deterministic model', 'Data integrity', 'ArcturusDC'],
-    views: ['portfolio', 'ai', 'cv', 'b2b'],
+    views: ['portfolio', 'cv', 'b2b'],
     requiresAuth: true,
   },
   {
