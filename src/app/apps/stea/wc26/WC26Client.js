@@ -8,14 +8,81 @@ import { db } from '@/lib/firebase';
 import styles from './wc26.module.css';
 import {
   buildMatch,
+  buildMatchFromLambdas,
   priceAll,
+  market1x2,
+  marketDoubleChance,
+  marketBTTS,
+  marketTotals,
+  marketTeamTotals,
+  marketAsianHandicap,
+  marketCorrectScore,
   devigMultiplicative,
   ev,
   kelly,
-  recommend,
   gradeHistory,
   DEFAULTS,
 } from './lib/engine';
+
+const BLEND_WEIGHT = 0.5; // 50/50 Elo-model vs sharp-market lambdas
+
+const SMALL_MARKETS = new Set(['Team Totals', 'BTTS', 'Totals', 'Correct Score']);
+const isDangerZone = (o) => o >= 1.34 && o <= 1.5;
+
+/* Build a priced match for a fixture, blending the Elo-model lambdas 50/50 with
+ * the sharp-market-implied lambdas when available (else pure Elo model). */
+function pricedMatchForFixture(fixture, ratings, opts) {
+  const h = ratings[fixture.home];
+  const a = ratings[fixture.away];
+  if (!h || !a) return null;
+  const model = buildMatch(h, a, { ...opts, neutral: fixture.neutral !== false });
+  const ml = fixture.marketLambdas;
+  if (ml && Number.isFinite(ml.lamHome) && Number.isFinite(ml.lamAway)) {
+    const lamHome = BLEND_WEIGHT * ml.lamHome + (1 - BLEND_WEIGHT) * model.lamHome;
+    const lamAway = BLEND_WEIGHT * ml.lamAway + (1 - BLEND_WEIGHT) * model.lamAway;
+    return { match: buildMatchFromLambdas(lamHome, lamAway, opts), calibrated: true };
+  }
+  return { match: model, calibrated: false };
+}
+
+/* Calibrated value scan — mirrors engine.recommend() but prices each fixture off
+ * the blended (Elo + sharp-market) matrix. Edge therefore comes from divergence
+ * in the DERIVED markets, not from disagreeing with the sharp 1X2 line. */
+function recommendCalibrated(fixtures, ratings, opts = {}) {
+  const edgeMain = 0.03;
+  const edgeSmall = 0.015;
+  const bankroll = 100;
+  const fair = (p) => (p <= 0 ? Infinity : 1 / p);
+  const out = [];
+  for (const f of fixtures || []) {
+    const pm = pricedMatchForFixture(f, ratings, opts);
+    if (!pm) continue;
+    const priced = priceAll(pm.match);
+    for (const [sel, offered] of Object.entries(f.odds || {})) {
+      if (!offered || offered <= 1) continue;
+      let modelP = null, group = null;
+      for (const [g, mkt] of Object.entries(priced)) if (mkt[sel]) { modelP = mkt[sel][0]; group = g; break; }
+      if (modelP == null) continue;
+      const e = ev(modelP, offered);
+      let thresh, flag = '';
+      if (SMALL_MARKETS.has(group)) thresh = edgeSmall;
+      else if (offered >= 6.0) { thresh = 0.1; flag = 'LONGSHOT — low confidence'; }
+      else thresh = edgeMain;
+      if (isDangerZone(offered) && (group === '1X2' || group === 'Asian Handicap')) flag = 'DANGER-ZONE FAV (fade)';
+      if (e >= thresh) {
+        out.push({
+          match: `${f.home} v ${f.away}`, group, selection: sel,
+          modelProb: modelP, fairOdds: fair(modelP), offered,
+          edge: e, stakeUnits: +(kelly(modelP, offered) * bankroll).toFixed(2),
+          smallMarket: SMALL_MARKETS.has(group), flag, calibrated: pm.calibrated,
+        });
+      }
+    }
+  }
+  const isLongshot = (r) => r.flag.startsWith('LONGSHOT');
+  out.sort((p, q) => (isLongshot(p) - isLongshot(q)) || (q.edge - p.edge));
+  return out;
+}
 import seedRatings from './data/ratings.json';
 import seedResults from './data/results.json';
 import seedFixtures from './data/fixtures.json';
@@ -99,6 +166,7 @@ async function loadWorkspaceModelData() {
       neutral: fixture.neutral !== false,
       date: fixture.date || null,
       odds: fixture.odds || {},
+      marketLambdas: fixture.marketLambdas || null,
     }));
 
   const remoteResults = resultsSnap.docs
@@ -450,12 +518,18 @@ function confidenceBadge(row, ratings) {
     return { label: 'Low', cls: styles.confLow, why: 'One team has no played games — its rating is an unverified tier guess.' };
   }
 
-  // Implausibly large edges signal rating miscalibration, not opportunity.
-  if (row.edge >= 0.25) {
-    return { label: 'Low', cls: styles.confLow, why: 'Edge too large to be real — likely rating miscalibration vs the market.' };
+  // Implausibly large edges signal miscalibration, not opportunity. A calibrated
+  // (sharp-market-blended) price earns more trust at a given edge than a pure-Elo
+  // one, but a huge edge is still a red flag either way.
+  const bigEdge = row.calibrated ? 0.15 : 0.12;
+  if (row.edge >= 0.30) {
+    return { label: 'Low', cls: styles.confLow, why: 'Edge too large to be real — likely miscalibration vs the market.' };
   }
-  if (row.edge >= 0.12) {
-    return { label: 'Modest', cls: styles.confMid, why: 'Large edge — caution until ratings are better calibrated.' };
+  if (row.edge >= bigEdge) {
+    return { label: 'Modest', cls: styles.confMid, why: row.calibrated ? 'Sizeable edge vs the sharp line — treat with care.' : 'Large edge but not market-calibrated — caution.' };
+  }
+  if (!row.calibrated) {
+    return { label: 'Modest', cls: styles.confMid, why: 'No sharp-market line to calibrate against — priced off ratings only.' };
   }
 
   // Plausible edge. Confidence builds with games behind the ratings; small
@@ -475,7 +549,7 @@ function confidenceBadge(row, ratings) {
 const PLAUSIBLE_LABELS = new Set(['High', 'Higher', 'Modest', 'Fair']);
 
 function Recommendation({ ratings, fixtures, opts }) {
-  const ranked = useMemo(() => recommend(fixtures, ratings, opts), [fixtures, ratings, opts]);
+  const ranked = useMemo(() => recommendCalibrated(fixtures, ratings, opts), [fixtures, ratings, opts]);
   const anyOdds = useMemo(
     () => (fixtures || []).some((f) => f.odds && Object.keys(f.odds).length),
     [fixtures],

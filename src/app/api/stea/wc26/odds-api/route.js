@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { verifySteaWorkspaceAccess } from '@/lib/steaAccessServer';
 import { fetchWcOdds, parseOddsApi } from '@/lib/wc26/oddsApi';
+import { sharpImpliedForEvent } from '@/lib/wc26/calibrate';
+import { TEAM_ALIASES } from '@/lib/wc26/ingestResults';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,20 +39,40 @@ async function run(write, request) {
     return json({ error: 'WC26_ODDS_API_KEY is not set on the server.' }, 500);
   }
 
-  let fetched;
+  // uk = display odds (consensus shown to user); eu = sharp books for calibration.
+  let fetched, sharp;
   try {
     fetched = await fetchWcOdds(apiKey, { regions: 'uk' });
+    sharp = await fetchWcOdds(apiKey, { regions: 'eu' });
   } catch (err) {
     return json({ error: err.message || 'Odds API fetch failed.' }, 502);
   }
   const { accepted, rejected } = parseOddsApi(fetched.events);
 
+  // Solve sharp-market-implied lambdas per fixture (the calibration anchor).
+  const canon = (n) => TEAM_ALIASES[n] || n;
+  const marketLambdas = {}; // matchId -> { lamHome, lamAway, target }
+  for (const ev of sharp.events || []) {
+    const implied = sharpImpliedForEvent(ev);
+    if (!implied || !implied.lambdas) continue;
+    const id = matchId(canon(implied.home), canon(implied.away));
+    marketLambdas[id] = {
+      lamHome: implied.lambdas.lamHome,
+      lamAway: implied.lambdas.lamAway,
+      sharpHome: +implied.target.home.toFixed(4),
+      sharpDraw: +implied.target.draw.toFixed(4),
+      sharpAway: +implied.target.away.toFixed(4),
+      sharpOver25: implied.target.over != null ? +implied.target.over.toFixed(4) : null,
+    };
+  }
+
   if (!write) {
     return json({
       preview: true,
-      requestsRemaining: fetched.remaining,
+      requestsRemaining: sharp.remaining ?? fetched.remaining,
       acceptedCount: accepted.length,
       rejectedCount: rejected.length,
+      calibratedCount: Object.keys(marketLambdas).length,
       rejected,
       accepted,
     });
@@ -73,12 +95,14 @@ async function run(write, request) {
       unmatched.push(`${row.home} v ${row.away}`);
       continue;
     }
+    const ml = marketLambdas[id] || null;
     batch.set(
       ref,
       {
         odds: { ...(snap.data().odds || {}), ...row.odds },
         oddsSource: 'the-odds-api',
         oddsOverround: row.overround ?? null,
+        marketLambdas: ml, // sharp-market-implied lambdas for the calibration blend
         oddsUpdatedAt: now,
         oddsUpdatedBy: access.user?.email || null,
       },

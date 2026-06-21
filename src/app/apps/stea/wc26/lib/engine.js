@@ -57,6 +57,13 @@ export function buildMatch(home, away, opts = {}) {
   return { lamHome, lamAway, expTotal: lamHome + lamAway, matrix: buildMatrix(lamHome, lamAway, rho) };
 }
 
+/** Build a priced match directly from goal expectations (used for the sharp-
+ *  market calibration blend, where lambdas come from devigged odds, not ratings). */
+export function buildMatchFromLambdas(lamHome, lamAway, opts = {}) {
+  const rho = opts.rho ?? DEFAULTS.rho;
+  return { lamHome, lamAway, expTotal: lamHome + lamAway, matrix: buildMatrix(lamHome, lamAway, rho) };
+}
+
 function prob(M, pred) {
   let t = 0;
   for (let x = 0; x < M.length; x++) for (let y = 0; y < M.length; y++) if (pred(x, y)) t += M[x][y];

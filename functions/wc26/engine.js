@@ -58,6 +58,12 @@ function buildMatch(home, away, opts = {}) {
   return { lamHome, lamAway, expTotal: lamHome + lamAway, matrix: buildMatrix(lamHome, lamAway, rho) };
 }
 
+/** Build a priced match directly from goal expectations (sharp-market blend). */
+function buildMatchFromLambdas(lamHome, lamAway, opts = {}) {
+  const rho = opts.rho ?? DEFAULTS.rho;
+  return { lamHome, lamAway, expTotal: lamHome + lamAway, matrix: buildMatrix(lamHome, lamAway, rho) };
+}
+
 function prob(M, pred) {
   let t = 0;
   for (let x = 0; x < M.length; x++) for (let y = 0; y < M.length; y++) if (pred(x, y)) t += M[x][y];
@@ -232,6 +238,7 @@ function gradeHistory(results, ratings, opts = {}) {
 module.exports = {
   DEFAULTS,
   buildMatch,
+  buildMatchFromLambdas,
   priceAll,
   market1x2,
   marketTotals,
