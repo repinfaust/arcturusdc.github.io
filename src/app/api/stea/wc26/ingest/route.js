@@ -7,7 +7,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const ARCTURUSDC_TENANT_ID = 'FqhckqMaorJMAQ6B29mP';
-const ALLOWED_WORKSPACES = ['ArcturusDC'];
 
 function json(body, status = 200) {
   return NextResponse.json(body, { status });
@@ -40,10 +39,10 @@ async function loadKnownTeams(db) {
 
 /* GET — preview only: fetch + parse, write nothing. Lets an admin see yield first. */
 export async function GET(request) {
-  const access = await verifySteaWorkspaceAccess(request, {
-    tenantId: ARCTURUSDC_TENANT_ID,
-    allowedWorkspaceNames: ALLOWED_WORKSPACES,
-  });
+  // Authenticate any signed-in STEa member (no specific-workspace requirement —
+  // the data is ArcturusDC-scoped by the hardcoded tenantId below + Firestore
+  // rules, matching the page gate). Token or __session cookie both accepted.
+  const access = await verifySteaWorkspaceAccess(request);
   if (!access.ok) return json({ error: access.error }, access.status || 403);
 
   try {
@@ -86,10 +85,10 @@ export async function GET(request) {
  * (The Odds API or manual entry — never an LLM).
  */
 export async function POST(request) {
-  const access = await verifySteaWorkspaceAccess(request, {
-    tenantId: ARCTURUSDC_TENANT_ID,
-    allowedWorkspaceNames: ALLOWED_WORKSPACES,
-  });
+  // Authenticate any signed-in STEa member (no specific-workspace requirement —
+  // the data is ArcturusDC-scoped by the hardcoded tenantId below + Firestore
+  // rules, matching the page gate). Token or __session cookie both accepted.
+  const access = await verifySteaWorkspaceAccess(request);
   if (!access.ok) return json({ error: access.error }, access.status || 403);
 
   try {

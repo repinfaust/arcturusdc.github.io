@@ -6,7 +6,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const ARCTURUSDC_TENANT_ID = 'FqhckqMaorJMAQ6B29mP';
-const ALLOWED_WORKSPACES = ['ArcturusDC'];
 
 /* Engine market-key selections we accept odds for. Keys MUST match engine.js. */
 const VALID_SELECTIONS = new Set([
@@ -33,10 +32,8 @@ function json(body, status = 200) {
  * Odds are MERGED into the fixture (never wipes existing odds unless replaced).
  */
 export async function POST(request) {
-  const access = await verifySteaWorkspaceAccess(request, {
-    tenantId: ARCTURUSDC_TENANT_ID,
-    allowedWorkspaceNames: ALLOWED_WORKSPACES,
-  });
+  // Any signed-in STEa member; data is ArcturusDC-scoped by tenantId + rules.
+  const access = await verifySteaWorkspaceAccess(request);
   if (!access.ok) return json({ error: access.error }, access.status || 403);
 
   let body;
