@@ -6,6 +6,10 @@ export default function sitemap() {
 
   const paths = [
     '',
+    '/portfolio',
+    '/portfolio/ai',
+    '/portfolio/cv',
+    '/portfolio/b2b',
     '/apps',
     '/apps/stea',
     '/apps/stea/explore',

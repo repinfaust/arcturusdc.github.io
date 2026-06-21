@@ -310,10 +310,10 @@ export default function ArcturusRefreshHome() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href="/apps"
+                  href="/portfolio"
                   className="border border-[#1c1c1a] bg-[#1c1c1a] px-4 py-3 font-mono text-xs uppercase tracking-[0.12em] text-[#ece6d8] transition-colors hover:bg-[#f0452f]"
                 >
-                  View work
+                  View portfolio
                 </Link>
                 <Link
                   href="/capabilities"

@@ -32,6 +32,40 @@ function cleanUrlForEvent(href) {
   }
 }
 
+const SAFE_PAGE_PARAMS = new Set([
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+  "adc_ref",
+  "adc_campaign",
+]);
+
+function safeCampaignValue(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 80) return "";
+  if (!/^[a-zA-Z0-9._~-]+$/.test(trimmed)) return "";
+  return trimmed;
+}
+
+function safePageUrl() {
+  const source = new URL(window.location.href);
+  const safe = new URL(source.origin + source.pathname);
+
+  for (const [key, value] of source.searchParams.entries()) {
+    if (!SAFE_PAGE_PARAMS.has(key)) continue;
+    const safeValue = safeCampaignValue(value);
+    if (safeValue) safe.searchParams.set(key, safeValue);
+  }
+
+  return {
+    page_location: safe.toString(),
+    page_path: safe.pathname + safe.search,
+  };
+}
+
 export default function AnalyticsBridge() {
   const pathname = usePathname();
   const search = useSearchParams();
@@ -39,8 +73,7 @@ export default function AnalyticsBridge() {
   // 1) Page views on route change
   useEffect(() => {
     if (!pathname) return;
-    const page_location = window.location.href;
-    const page_path = pathname + (search?.toString() ? `?${search}` : "");
+    const { page_location, page_path } = safePageUrl();
     trackPageView({ page_location, page_path });
   }, [pathname, search]);
 
