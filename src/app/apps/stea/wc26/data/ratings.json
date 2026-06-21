@@ -84,11 +84,6 @@
     "dfn": 0.8,
     "tier": "Strong"
   },
-  "Denmark": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
-  },
   "Mexico": {
     "atk": 1.25,
     "dfn": 0.8,
@@ -198,5 +193,50 @@
     "atk": 0.7,
     "dfn": 1.45,
     "tier": "Weak"
+  },
+  "Austria": {
+    "atk": 1.25,
+    "dfn": 0.8,
+    "tier": "Strong"
+  },
+  "Paraguay": {
+    "atk": 1.25,
+    "dfn": 0.8,
+    "tier": "Strong"
+  },
+  "Algeria": {
+    "atk": 1.05,
+    "dfn": 0.96,
+    "tier": "Upper-mid"
+  },
+  "Ghana": {
+    "atk": 1.05,
+    "dfn": 0.96,
+    "tier": "Upper-mid"
+  },
+  "Uzbekistan": {
+    "atk": 1.05,
+    "dfn": 0.96,
+    "tier": "Upper-mid"
+  },
+  "Panama": {
+    "atk": 0.9,
+    "dfn": 1.12,
+    "tier": "Mid"
+  },
+  "Iraq": {
+    "atk": 0.9,
+    "dfn": 1.12,
+    "tier": "Mid"
+  },
+  "Jordan": {
+    "atk": 0.9,
+    "dfn": 1.12,
+    "tier": "Mid"
+  },
+  "DR Congo": {
+    "atk": 0.9,
+    "dfn": 1.12,
+    "tier": "Mid"
   }
 }
