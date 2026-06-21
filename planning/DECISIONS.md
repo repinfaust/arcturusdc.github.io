@@ -21,6 +21,11 @@
 - Policy links for Sprocket use HTML routes (`/apps/sprocket/privacy-policy`, `/apps/sprocket/terms-of-use`) to meet accessibility and store-readability requirements.
 - Sprocket card metadata is kept in `src/data/apps.json`; hero and branding assets live under `public/img/`.
 
+## 2026-06-21 — Sprocket current portfolio positioning
+- Sprocket is positioned from the live App Store listing (`https://apps.apple.com/us/app/sprocket-calm-phone-helper/id6759454436`) as `Sprocket: Calm Phone Helper`, not the earlier narrow message/letter helper.
+- Public app and portfolio copy should describe the broader current scope: voice/text assistance, plain-language reminders, memory/notes, step-by-step phone help, confusing-message explanations, read-aloud replies, and calm/privacy-first interaction patterns.
+- This is copy/positioning only; no site auth, infrastructure, analytics, or data handling changes are introduced.
+
 ## 2026-03-12 — Orbit GrapheneOS POC v2 route
 - Added a new App Router path at `/apps/stea/orbit-grapheneos/poc` as a separate POC surface, leaving existing Orbit routes unchanged.
 - Implemented the v2 two-tier UX in the new page: public demo tier (seeded demo dataset + demo banner) and magic-link sign-in tier for posting real device events.

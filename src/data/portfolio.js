@@ -90,7 +90,8 @@ export const portfolioItems = [
     views: ['portfolio', 'ai'],
   }),
   appPortfolioItem('sprocket', {
-    emphasis: 'Consumer AI-support pattern for making difficult messages easier to understand.',
+    emphasis:
+      'Consumer AI-support pattern for calm phone help across voice and text assistance, reminders, memory, step-by-step tech guidance, read-aloud replies, and plain-English explanations.',
     views: ['portfolio', 'ai'],
   }),
   appPortfolioItem('unload'),

@@ -26,9 +26,13 @@ export default function Sprocket() {
               priority
             />
           </div>
-          <div className="text-muted text-sm">Struggling to understand a message or letter?</div>
+          <div className="text-muted text-sm">
+            Calm phone help for reminders, memory, tech tasks, and confusing messages.
+          </div>
           <p className="mt-2 text-sm text-neutral-700">
-            If you&rsquo;ve ever looked at a message, email, or official letter and thought &ldquo;what does this actually mean?&rdquo;, Sprocket breaks it down into plain English.
+            Sprocket gives patient, plain-language support by voice or text: set reminders,
+            remember details, follow phone tasks one step at a time, and understand letters,
+            emails, or texts without technical language.
           </p>
 
           <div className="mt-5 flex flex-col items-stretch gap-2 border-t border-[#E0E4DB]/80 pt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
@@ -55,7 +59,8 @@ export default function Sprocket() {
               Inside Sprocket
             </h1>
             <p className="mt-3 text-[#4B5B54] max-w-2xl mx-auto">
-              Calm support through voice or text to make sense of stressful messages and take one safe next step.
+              Plain-language support for everyday phone help, reminders, saved details,
+              confusing messages, and answers you can read or hear.
             </p>
           </div>
 
@@ -90,33 +95,33 @@ export default function Sprocket() {
 
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5 text-[#1A2420]">
               <Feature
-                title="Voice and Text Help"
-                desc="Speak or type to get support without navigating complex menus."
+                title="Voice and Text Assistant"
+                desc="Speak or type everyday questions and get calm, short replies without navigating complex menus."
                 icon="mic"
               />
               <Feature
-                title="Untangle Text"
-                desc="Turn difficult letters or emails into plain meaning, urgency, and one clear next step."
-                icon="untangle"
+                title="Plain-Language Reminders"
+                desc="Set, move, and cancel reminders in normal language, then see them in a simple list."
+                icon="bell"
               />
               <Feature
-                title="Draft Reply Support"
-                desc="Generate short, polite, or firm reply drafts you can copy and edit."
-                icon="reply"
-              />
-              <Feature
-                title="Reminders & Memory"
-                desc="Store reminders and key notes in a simple, low-pressure flow."
+                title="Memory and Notes"
+                desc="Save useful names, places, and details privately, with corrections handled as updates."
                 icon="note"
               />
               <Feature
-                title="Sensitive Data Guardrails"
-                desc="Detects likely sensitive details and offers redaction before save or share."
-                icon="shield"
+                title="Step-by-Step Phone Help"
+                desc="Get guided help for tasks like Wi-Fi, bigger text, updates, photos, and other phone basics."
+                icon="steps"
               />
               <Feature
-                title="Private by Default"
-                desc="No required account and no forced cloud dependency for basic use."
+                title="Confusing Message Explainers"
+                desc="Turn difficult letters, emails, or texts into plain meaning, likely urgency, and a clear next step."
+                icon="untangle"
+              />
+              <Feature
+                title="Read-Aloud and Privacy Controls"
+                desc="Hear replies aloud, use the app without an account, and keep notes and reminders on your phone by default."
                 icon="lock"
               />
             </div>
@@ -128,11 +133,17 @@ export default function Sprocket() {
               <div className="mt-5 space-y-3">
                 <AccordionItem question="Who is Sprocket for?">
                   <p>
-                    Sprocket is for anyone who feels stressed by everyday admin or unclear messages,
-                    especially users who want calm, plain-language guidance.
+                    Sprocket is for anyone who wants a patient phone helper for everyday tasks,
+                    especially users who prefer clear, plain-language support by voice or text.
                   </p>
                 </AccordionItem>
-                <AccordionItem question="What does Untangle Text do?">
+                <AccordionItem question="What can Sprocket help with?">
+                  <p>
+                    It can help with reminders, saved details, step-by-step phone tasks, confusing
+                    messages, read-aloud replies, and everyday questions.
+                  </p>
+                </AccordionItem>
+                <AccordionItem question="What do the message explainers do?">
                   <p>
                     It explains what a message means, whether action is needed, and what to do next,
                     then can suggest a draft reply you control.
@@ -151,8 +162,8 @@ export default function Sprocket() {
                 </AccordionItem>
                 <AccordionItem question="Is my data private?">
                   <p>
-                    Sprocket is designed privacy-first. Sensitive details can be redacted, and raw
-                    message text is not automatically saved by default flows.
+                    Sprocket stores notes and reminders on your phone by default, and warns before
+                    sending likely sensitive content for AI processing.
                   </p>
                 </AccordionItem>
                 <AccordionItem question="Do I have to use voice?">
@@ -246,9 +257,15 @@ function Feature({ title, desc, icon = 'dot' }) {
         <path d="M18 14h-8a3 3 0 1 1 0-6h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
-    reply: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <path d="M8 5L2 10l6 5v-3h3c3 0 5 1 7 4-1-5-3-8-7-8H8V5z" />
+    bell: (
+      <svg width="20" height="20" fill="none" aria-hidden="true">
+        <path
+          d="M5 9a5 5 0 0 1 10 0v4l2 2H3l2-2V9z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path d="M8 17a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
     note: (
@@ -257,9 +274,11 @@ function Feature({ title, desc, icon = 'dot' }) {
         <path d="M7 7h6M7 10h6M7 13h4" stroke="white" strokeWidth="1.5" />
       </svg>
     ),
-    shield: (
-      <svg width="20" height="20" fill="currentColor" aria-hidden="true">
-        <path d="M10 1l8 4v5c0 5-3 8-8 10-5-2-8-5-8-10V5l8-4z" />
+    steps: (
+      <svg width="20" height="20" fill="none" aria-hidden="true">
+        <path d="M4 6h5v4h4v4h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="4" cy="6" r="2" fill="currentColor" />
+        <circle cx="16" cy="14" r="2" fill="currentColor" />
       </svg>
     ),
     lock: (
