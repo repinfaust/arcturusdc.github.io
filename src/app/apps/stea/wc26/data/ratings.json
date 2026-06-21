@@ -1,242 +1,290 @@
 {
   "Spain": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 2.171,
+    "dfn": 0.461,
+    "tier": "Elite",
+    "elo": 2129
   },
   "France": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 1.962,
+    "dfn": 0.51,
+    "tier": "Elite",
+    "elo": 2084
   },
   "Argentina": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 2.166,
+    "dfn": 0.462,
+    "tier": "Elite",
+    "elo": 2128
   },
   "Brazil": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 1.574,
+    "dfn": 0.635,
+    "tier": "Elite",
+    "elo": 1986
   },
   "England": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 1.838,
+    "dfn": 0.544,
+    "tier": "Elite",
+    "elo": 2055
   },
   "Portugal": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 1.508,
+    "dfn": 0.663,
+    "tier": "Elite",
+    "elo": 1967
   },
   "Germany": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 1.464,
+    "dfn": 0.683,
+    "tier": "Elite",
+    "elo": 1954
   },
   "Netherlands": {
-    "atk": 1.6,
-    "dfn": 0.58,
-    "tier": "Elite"
+    "atk": 1.525,
+    "dfn": 0.656,
+    "tier": "Elite",
+    "elo": 1972
   },
   "Belgium": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.237,
+    "dfn": 0.808,
+    "tier": "Strong",
+    "elo": 1879
   },
   "Croatia": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.243,
+    "dfn": 0.805,
+    "tier": "Strong",
+    "elo": 1881
   },
   "Uruguay": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.212,
+    "dfn": 0.825,
+    "tier": "Strong",
+    "elo": 1870
   },
   "Colombia": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.617,
+    "dfn": 0.619,
+    "tier": "Strong",
+    "elo": 1998
   },
   "Morocco": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.201,
+    "dfn": 0.832,
+    "tier": "Strong",
+    "elo": 1866
   },
   "Switzerland": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.254,
+    "dfn": 0.798,
+    "tier": "Strong",
+    "elo": 1885
   },
   "United States": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.083,
+    "dfn": 0.923,
+    "tier": "Strong",
+    "elo": 1820
   },
   "Japan": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.326,
+    "dfn": 0.754,
+    "tier": "Strong",
+    "elo": 1910
   },
   "Senegal": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.131,
+    "dfn": 0.885,
+    "tier": "Strong",
+    "elo": 1839
   },
   "Mexico": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.285,
+    "dfn": 0.778,
+    "tier": "Strong",
+    "elo": 1896
   },
   "Sweden": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.879,
+    "dfn": 1.138,
+    "tier": "Upper-mid",
+    "elo": 1727
   },
   "Ecuador": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 1.268,
+    "dfn": 0.789,
+    "tier": "Upper-mid",
+    "elo": 1890
   },
   "Korea Republic": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.97,
+    "dfn": 1.031,
+    "tier": "Upper-mid",
+    "elo": 1771
   },
   "Iran": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.938,
+    "dfn": 1.066,
+    "tier": "Upper-mid",
+    "elo": 1756
   },
   "Ivory Coast": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.881,
+    "dfn": 1.136,
+    "tier": "Upper-mid",
+    "elo": 1728
   },
   "Egypt": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.848,
+    "dfn": 1.18,
+    "tier": "Upper-mid",
+    "elo": 1711
   },
   "Australia": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 1.033,
+    "dfn": 0.968,
+    "tier": "Upper-mid",
+    "elo": 1799
   },
   "Turkey": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 1.066,
+    "dfn": 0.938,
+    "tier": "Upper-mid",
+    "elo": 1813
   },
   "Norway": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 1.384,
+    "dfn": 0.722,
+    "tier": "Upper-mid",
+    "elo": 1929
   },
   "Scotland": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.964,
+    "dfn": 1.038,
+    "tier": "Mid",
+    "elo": 1768
   },
   "Saudi Arabia": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.657,
+    "dfn": 1.521,
+    "tier": "Mid",
+    "elo": 1598
   },
   "Qatar": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.458,
+    "dfn": 2.185,
+    "tier": "Mid",
+    "elo": 1437
   },
   "Canada": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.983,
+    "dfn": 1.017,
+    "tier": "Mid",
+    "elo": 1777
   },
   "Tunisia": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.638,
+    "dfn": 1.566,
+    "tier": "Mid",
+    "elo": 1585
   },
   "Cabo Verde": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.669,
+    "dfn": 1.494,
+    "tier": "Mid",
+    "elo": 1606
   },
   "Bosnia and Herzegovina": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.654,
+    "dfn": 1.528,
+    "tier": "Mid",
+    "elo": 1596
   },
   "Czechia": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.819,
+    "dfn": 1.22,
+    "tier": "Mid",
+    "elo": 1696
   },
   "South Africa": {
-    "atk": 0.7,
-    "dfn": 1.45,
-    "tier": "Weak"
+    "atk": 0.56,
+    "dfn": 1.785,
+    "tier": "Weak",
+    "elo": 1527
   },
   "New Zealand": {
-    "atk": 0.7,
-    "dfn": 1.45,
-    "tier": "Weak"
+    "atk": 0.628,
+    "dfn": 1.591,
+    "tier": "Weak",
+    "elo": 1578
   },
   "Haiti": {
-    "atk": 0.7,
-    "dfn": 1.45,
-    "tier": "Weak"
+    "atk": 0.562,
+    "dfn": 1.781,
+    "tier": "Weak",
+    "elo": 1528
   },
   "Curacao": {
-    "atk": 0.7,
-    "dfn": 1.45,
-    "tier": "Weak"
+    "atk": 0.447,
+    "dfn": 2.235,
+    "tier": "Weak",
+    "elo": 1427
   },
   "Austria": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.177,
+    "dfn": 0.849,
+    "tier": "Strong",
+    "elo": 1857
   },
   "Paraguay": {
-    "atk": 1.25,
-    "dfn": 0.8,
-    "tier": "Strong"
+    "atk": 1.073,
+    "dfn": 0.932,
+    "tier": "Strong",
+    "elo": 1816
   },
   "Algeria": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.944,
+    "dfn": 1.059,
+    "tier": "Upper-mid",
+    "elo": 1759
   },
   "Ghana": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.599,
+    "dfn": 1.668,
+    "tier": "Upper-mid",
+    "elo": 1557
   },
   "Uzbekistan": {
-    "atk": 1.05,
-    "dfn": 0.96,
-    "tier": "Upper-mid"
+    "atk": 0.823,
+    "dfn": 1.215,
+    "tier": "Upper-mid",
+    "elo": 1698
   },
   "Panama": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.796,
+    "dfn": 1.256,
+    "tier": "Mid",
+    "elo": 1683
   },
   "Iraq": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.649,
+    "dfn": 1.542,
+    "tier": "Mid",
+    "elo": 1592
   },
   "Jordan": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.744,
+    "dfn": 1.344,
+    "tier": "Mid",
+    "elo": 1653
   },
   "DR Congo": {
-    "atk": 0.9,
-    "dfn": 1.12,
-    "tier": "Mid"
+    "atk": 0.78,
+    "dfn": 1.282,
+    "tier": "Mid",
+    "elo": 1674
   }
 }
