@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { auth, db } from '@/lib/firebase';
 
@@ -196,12 +196,15 @@ async function loadWorkspaceModelData() {
   }
 
   const tenantFilter = where('tenantId', '==', ARCTURUSDC_TENANT_ID);
-  const [teamsSnap, fixturesSnap, resultsSnap, predictionsSnap] = await Promise.all([
+  const [teamsSnap, fixturesSnap, resultsSnap, predictionsSnap, ledgerDoc] = await Promise.all([
     getDocs(query(collection(db, 'wc26_teams'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_fixtures'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_results'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_predictions'), tenantFilter)),
+    getDoc(doc(db, 'wc26_meta', 'ledger')),
   ]);
+  // Flagged-picks forward ledger (CLV-first scorecard), computed server-side.
+  const ledger = ledgerDoc.exists() ? ledgerDoc.data() : null;
 
   const remoteRatings = {};
   teamsSnap.forEach((doc) => {
@@ -264,6 +267,7 @@ async function loadWorkspaceModelData() {
     fixtures: remoteFixtures.length ? remoteFixtures : null,
     results: remoteResults.length ? remoteResults : null,
     gradedPredictions,
+    ledger,
   };
 }
 
@@ -325,6 +329,7 @@ function WC26Experience() {
   const [fixtures, setFixtures] = useState(seedFixtures);
   const [results, setResults] = useState(seedResults);
   const [gradedPredictions, setGradedPredictions] = useState([]);
+  const [ledger, setLedger] = useState(null);
   const [baseGoals, setBaseGoals] = useState(DEFAULTS.baseGoals);
   const [hydrated, setHydrated] = useState(false);
   const [hasLocalRatings, setHasLocalRatings] = useState(false);
@@ -355,6 +360,7 @@ function WC26Experience() {
         if (remote.results) setResults(remote.results);
         if (remote.ratings && !hasLocalRatings) setRatings(remote.ratings);
         setGradedPredictions(remote.gradedPredictions || []);
+        setLedger(remote.ledger || null);
 
         const parts = [
           remote.ratings ? `${Object.keys(remote.ratings).length} teams` : 'fallback teams',
@@ -394,7 +400,7 @@ function WC26Experience() {
         <OddsEntry isSuperAdmin={isSuperAdmin} fixtures={fixtures} />
         <MatchPricer ratings={ratings} opts={opts} />
         <ValueCalculator ratings={ratings} opts={opts} hydrated={hydrated} />
-        <TrackRecord ratings={ratings} results={results} gradedPredictions={gradedPredictions} opts={opts} />
+        <TrackRecord ratings={ratings} results={results} gradedPredictions={gradedPredictions} ledger={ledger} opts={opts} />
         <RatingsEditor
           ratings={ratings}
           setRatings={(r) => { setRatings(r); setHasLocalRatings(true); saveJSON(LS_RATINGS, r); }}
@@ -1134,50 +1140,100 @@ function ValueCalculator({ ratings, opts, hydrated }) {
 }
 
 /* ------------------------------------------------------------ track record */
-function TrackRecord({ ratings, results, gradedPredictions, opts }) {
-  // In-sample backtest — honest label: NOT a track record (grades the model on
-  // the same games whose results shaped its ratings).
+const FAMILY_LABEL = {
+  Totals: 'Totals', BTTS: 'BTTS', TeamTotals: 'Team Totals', '1X2/draw-val': '1X2 / draw-value',
+};
+
+function TrackRecord({ ratings, results, gradedPredictions, ledger, opts }) {
+  // In-sample backtest — demoted calibration check.
   const backtest = useMemo(() => gradeHistory(results, ratings, opts), [results, ratings, opts]);
   const b = backtest.summary;
 
-  // Forward record — the genuine scorecard: predictions logged BEFORE kickoff,
-  // graded after the real result. Starts empty and grows honestly.
-  const fwd = useMemo(() => {
+  // 1X2-per-game argmax — demoted "calibration sanity", NOT the strategy.
+  const x1x2 = useMemo(() => {
     const rows = gradedPredictions || [];
-    const n = rows.length;
-    if (!n) return { n: 0 };
-    const hit1x2 = rows.filter((r) => r.correct).length;
-    const brier = rows.reduce((s, r) => s + (r.brier1x2 ?? 0), 0) / n;
-    return { n, acc1x2: hit1x2 / n, brier, rows };
+    if (!rows.length) return { n: 0 };
+    const hit = rows.filter((r) => r.correct).length;
+    return { n: rows.length, acc: hit / rows.length, rows };
   }, [gradedPredictions]);
+
+  const t = ledger?.totals;
+  const fam = ledger?.byFamily || [];
+  const hasPicks = t && t.picks > 0;
 
   return (
     <section className={styles.card}>
-      <h2 className={styles.h2}>Model track record</h2>
+      <h2 className={styles.h2}>Forward record <span className={styles.muted}>· the flagged bets, graded — CLV is the scorecard</span></h2>
 
-      {/* FORWARD RECORD — the honest one */}
-      <h3 className={styles.h3}>Forward record <span className={styles.muted}>· predictions logged before kickoff, graded after the result</span></h3>
-      {fwd.n === 0 ? (
+      {/* FLAGGED-PICKS LEDGER — the only metric that means anything */}
+      {!hasPicks ? (
         <p className={styles.empty}>
-          <b>No graded forward predictions yet.</b> This is the only honest scorecard — it counts
-          only bets the model called <em>before</em> kickoff, then graded against the real result.
-          It starts at zero and grows as upcoming games complete. (You cannot honestly build a track
-          record from games that have already finished.)
+          <b>No flagged value bets graded yet.</b> The forward record counts only the picks the board
+          actually flagged as value (edge cleared threshold pre-kickoff), graded against the real
+          result. Games where the model ≈ the market produced no bet and aren&apos;t counted.
         </p>
       ) : (
         <>
           <div className={styles.clvTiles}>
-            <Tile num={pct(fwd.acc1x2)} label="1X2 strike rate (forward)" />
-            <Tile num={fwd.brier.toFixed(3)} label="Brier (uniform = 0.667)" />
-            <Tile num={String(fwd.n)} label="predictions graded" />
+            <Tile
+              num={t.avgClv == null ? 'n/a' : signed(t.avgClv)}
+              label={`avg CLV${t.avgClv == null ? ' — no closing odds yet' : ''}`}
+            />
+            <Tile num={t.pnl >= 0 ? `+${t.pnl.toFixed(2)}u` : `${t.pnl.toFixed(2)}u`} label="P&L (¼-Kelly)" />
+            <Tile num={signed(t.roi)} label="ROI" />
+            <Tile num={`${Math.round(t.hitRate * t.picks)}/${t.picks}`} label="hit rate (secondary)" />
+          </div>
+
+          <div className={styles.callout}>
+            <b>CLV is the headline</b> because over ~48 games win/loss is noise — closing-line value is
+            the only thing that signals a real edge at this sample size. CLV currently reads
+            <b> n/a</b>: closing odds aren&apos;t yet snapshotted for played picks, so we show P&L
+            honestly and leave CLV blank rather than fabricate a close. <b>{t.picks} graded picks is
+            far too few to mean anything</b> — this is a directional running total, not a verdict.
+          </div>
+
+          <h3 className={styles.h3}>By market family</h3>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Market family</th><th className={styles.num}>Picks</th><th className={styles.num}>Hit rate</th>
+                  <th className={styles.num}>Avg CLV</th><th className={styles.num}>P&L (u)</th><th className={styles.num}>ROI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fam.map((f, i) => (
+                  <tr key={i}>
+                    <td>{FAMILY_LABEL[f.family] || f.family}</td>
+                    <td className={styles.num}>{f.picks}</td>
+                    <td className={styles.num}>{pct(f.hitRate)}</td>
+                    <td className={styles.num}>{f.avgClv == null ? 'n/a' : signed(f.avgClv)}</td>
+                    <td className={`${styles.num} ${f.pnl >= 0 ? styles.edgePos : styles.edgeNeg}`}>{f.pnl >= 0 ? '+' : ''}{f.pnl.toFixed(2)}</td>
+                    <td className={`${styles.num} ${f.roi >= 0 ? styles.edgePos : styles.edgeNeg}`}>{signed(f.roi)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* 1X2-per-game — demoted to calibration sanity */}
+      {x1x2.n > 0 && (
+        <>
+          <h3 className={styles.h3}>1X2 per-game pick <span className={styles.muted}>· calibration sanity — NOT the strategy</span></h3>
+          <div className={styles.callout}>
+            Match-winner argmax. The tournament is draw-heavy and argmax never picks draws, so this is
+            <b> structurally noisy and was never the strategy</b> — shown only as a calibration check,
+            like the backtest below. The flagged-picks ledger above is the scorecard.
           </div>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
-                <tr><th>Match</th><th>Pre-kickoff pick</th><th className={styles.num}>Conf.</th><th>Result</th><th className={styles.num}>1X2</th></tr>
+                <tr><th>Match</th><th>Pick</th><th className={styles.num}>Conf.</th><th>Result</th><th className={styles.num}>✓/✗</th></tr>
               </thead>
               <tbody>
-                {fwd.rows.map((r, i) => (
+                {x1x2.rows.map((r, i) => (
                   <tr key={i}>
                     <td>{r.match}</td><td>{r.pick}</td>
                     <td className={styles.num}>{pct(r.pickProb)}</td>
@@ -1191,13 +1247,11 @@ function TrackRecord({ ratings, results, gradedPredictions, opts }) {
         </>
       )}
 
-      {/* IN-SAMPLE BACKTEST — clearly demoted */}
+      {/* IN-SAMPLE BACKTEST — demoted */}
       <h3 className={styles.h3}>In-sample backtest <span className={styles.muted}>· calibration check only — NOT a track record</span></h3>
       <div className={styles.callout}>
-        These numbers grade the model on completed games using ratings that were themselves shaped by
-        those same games. That is <b>in-sample</b> — it flatters the model and is <b>not evidence of
-        an edge</b>. Treat it as a sanity check on calibration, never as performance. The forward
-        record above is the real test.
+        Grades the model on completed games using ratings shaped by those same games — <b>in-sample</b>,
+        flattering, not evidence of an edge. Calibration sanity only.
       </div>
       <div className={styles.clvTiles}>
         <Tile num={pct(b.acc1x2)} label="1X2 (in-sample)" />
