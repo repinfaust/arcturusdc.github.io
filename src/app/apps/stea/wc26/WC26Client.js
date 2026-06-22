@@ -750,6 +750,24 @@ function OddsEntry({ isSuperAdmin, fixtures }) {
     }
   }
 
+  async function snapshotClosing() {
+    setPulling(true);
+    setPullStatus({ tone: 'loading', text: 'Snapshotting closing line for games near kickoff…' });
+    try {
+      const res = await authedFetch('/api/stea/wc26/snapshot-closing', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || `Failed (${res.status})`);
+      setPullStatus({
+        tone: 'live',
+        text: `Closing line snapshotted for ${data.snapshotted} game(s) within ${data.windowMin ?? ''} min of kickoff (${data.candidates ?? 0} awaiting). CLV will compute when these are graded.`,
+      });
+    } catch (err) {
+      setPullStatus({ tone: 'error', text: `Snapshot failed: ${err.message}` });
+    } finally {
+      setPulling(false);
+    }
+  }
+
   const selected = upcoming.find((f) => f.matchId === matchId) || upcoming[0];
   const activeId = selected?.matchId || '';
 
@@ -791,6 +809,9 @@ function OddsEntry({ isSuperAdmin, fixtures }) {
         or type prices in by hand below. The value board appears once odds exist.
       </p>
       <div className={styles.editorActions}>
+        <button className={styles.ghostBtn} onClick={snapshotClosing} disabled={pulling}>
+          Snapshot closing odds
+        </button>
         <button className={styles.ghostBtn} onClick={pullLiveOdds} disabled={pulling}>
           {pulling ? 'Pulling…' : 'Pull live odds (The Odds API)'}
         </button>
