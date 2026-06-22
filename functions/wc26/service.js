@@ -425,6 +425,7 @@ function gradePrediction(result, prediction) {
 
   // Flagged-picks ledger for THIS game.
   const flagged = Array.isArray(prediction.rankedRecommendations) ? prediction.rankedRecommendations : [];
+  const closing = prediction.closingOdds || null; // devigged closing line, if snapshotted
   const ledger = [];
   for (const r of flagged) {
     const won = settleSelection(r.selection, g1, g2);
@@ -432,13 +433,17 @@ function gradePrediction(result, prediction) {
     const stake = Number(r.stakeUnits) || 0;
     const price = Number(r.offered) || 0;
     const pnl = price > 1 ? (won ? stake * (price - 1) : -stake) : 0;
+    // CLV = price_taken / closing_price − 1, computed only if we snapshotted a
+    // closing price for this exact selection. Never fabricated.
+    const closingPrice = closing && Number(closing[r.selection]) > 1 ? Number(closing[r.selection]) : null;
+    const clvPct = closingPrice && price > 1 ? price / closingPrice - 1 : null;
     ledger.push({
       family: marketFamily(r.group),
       selection: r.selection,
       modelProb: r.modelProb ?? null,
       priceTaken: price || null,
-      closingPrice: null, // no closing snapshot yet -> CLV n/a
-      clvPct: null,
+      closingPrice,
+      clvPct: clvPct == null ? null : +clvPct.toFixed(4),
       edgeAtFlag: r.edge ?? null,
       stakeUnits: stake,
       won,
