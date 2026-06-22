@@ -72,8 +72,9 @@ function closingForEvent(ev) {
  * least one game is in-window (else 0 cost). No LLM.
  */
 async function run(request) {
-  // Vercel cron sends `Authorization: Bearer $CRON_SECRET` when CRON_SECRET is
-  // set; otherwise require an authenticated STEa member (manual button).
+  // Driven by a Firebase scheduled function (Hobby allows only daily Vercel
+  // crons), which sends `Authorization: Bearer $CRON_SECRET`. Otherwise require
+  // an authenticated STEa member (the manual admin button).
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization') || '';
   const isCron = Boolean(cronSecret) && authHeader === `Bearer ${cronSecret}`;
@@ -99,6 +100,30 @@ async function run(request) {
   });
   if (needSnapshot.size === 0) {
     return json({ ok: true, snapshotted: 0, note: 'No ungraded predictions awaiting a closing snapshot.' });
+  }
+
+  // Budget gate: only spend an Odds API call if a NEEDED game is actually within
+  // the kickoff window. Kickoff times come from the fixtures (set by the odds
+  // pull). Without this, an hourly cron would burn the budget on every run while
+  // any future fixture is ungraded.
+  const fixSnap = await db.collection('wc26_fixtures')
+    .where('tenantId', '==', ARCTURUSDC_TENANT_ID).get();
+  let anyInWindow = false;
+  let unknownKickoff = 0;
+  fixSnap.forEach((doc) => {
+    const f = doc.data() || {};
+    const id = f.matchId || doc.id;
+    if (!needSnapshot.has(id)) return;
+    const kt = f.kickoff ? Date.parse(f.kickoff) : NaN;
+    if (!Number.isFinite(kt)) { unknownKickoff += 1; return; }
+    if (Math.abs(kt - now) <= windowMs) anyInWindow = true;
+  });
+  if (!anyInWindow) {
+    return json({
+      ok: true, snapshotted: 0,
+      note: `No needed game within ${WINDOW_MIN} min of kickoff — skipped API call (0 cost).`,
+      unknownKickoff,
+    });
   }
 
   let events;
