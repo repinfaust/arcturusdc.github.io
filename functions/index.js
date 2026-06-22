@@ -1,7 +1,8 @@
 /**
  * Cloud Functions for STEa Workspace
  *
- * Scheduled function to aggregate workspace pulse dashboard metrics
+ * - Scheduled dashboard aggregation
+ * - Email notifications: assignments + Dialled MTB user feedback
  */
 
 const functions = require('firebase-functions');
@@ -38,6 +39,219 @@ exports.gradeWc26PredictionsNow = functions.https.onCall(
 exports.onWc26ResultFinalized = functions.firestore
   .document('wc26_results/{id}')
   .onWrite(wc26.onWc26ResultFinalized);
+
+// Closing-line snapshot driver. Vercel Hobby allows only daily crons, so the
+// schedule lives here (no plan limit) and calls the Vercel route, which is
+// 0-cost unless a game is within its kickoff window. Hourly is safe: the route
+// gates on kickoff time before spending an Odds API call. Needs WC26_SITE_URL
+// and WC26_CRON_SECRET in functions env (secret matches Vercel's CRON_SECRET).
+exports.snapshotWc26ClosingOdds = functions.pubsub
+  .schedule('every 1 hours')
+  .timeZone('Europe/London')
+  .onRun(async () => {
+    const base = process.env.WC26_SITE_URL || 'https://www.arcturusdc.com';
+    const secret = process.env.WC26_CRON_SECRET;
+    if (!secret) {
+      console.warn('[wc26] snapshot skipped: WC26_CRON_SECRET not set');
+      return null;
+    }
+    try {
+      const res = await fetch(`${base}/api/stea/wc26/snapshot-closing`, {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${secret}`},
+      });
+      const body = await res.json().catch(() => ({}));
+      console.log('[wc26] snapshot-closing:', res.status, JSON.stringify(body));
+    } catch (err) {
+      console.error('[wc26] snapshot-closing call failed:', err.message);
+    }
+    return null;
+  });
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const LOGO_URL = 'https://arcturusdc.com/img/stea-logo.png';
+
+function isEmail(val) {
+  return typeof val === 'string' && val.includes('@') && val.includes('.');
+}
+
+function emailHtml(body) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 0;">
+    <tr><td align="center">
+      <table width="540" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;max-width:540px;width:100%;">
+        <tr><td style="background:#1a1a1a;padding:24px;text-align:center;">
+          <img src="${LOGO_URL}" width="40" height="40" alt="STEa" style="display:inline-block;border-radius:6px;">
+          <span style="display:inline-block;vertical-align:middle;margin-left:12px;color:#ffffff;font-size:18px;font-weight:600;letter-spacing:0.02em;">STEa</span>
+        </td></tr>
+        <tr><td style="padding:32px;color:#333333;font-size:15px;line-height:1.6;">
+          ${body}
+        </td></tr>
+        <tr><td style="padding:16px 32px;border-top:1px solid #eeeeee;text-align:center;color:#999999;font-size:12px;">
+          Sent by STEa · <a href="https://arcturusdc.com/apps/stea" style="color:#e03a2f;text-decoration:none;">Open STEa</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+async function sendMail(to, subject, body) {
+  await db.collection('mail').add({ to, message: { subject, html: emailHtml(body) } });
+}
+
+// ─── Assignment: Epics ────────────────────────────────────────────────────────
+
+exports.onEpicAssigned = functions.firestore
+  .document('stea_epics/{id}')
+  .onWrite(async (change) => {
+    const before = change.before.data() || {};
+    const after = change.after.data();
+    if (!after) return;
+    const prev = before.assignee || '';
+    const next = after.assignee || '';
+    if (!next || next === prev || !isEmail(next)) return;
+    await sendMail(
+      next,
+      `[STEa] Epic assigned to you: ${after.title || 'Untitled'}`,
+      `<p>You've been assigned to an epic on STEa.</p>
+       <p><strong>Epic:</strong> ${after.title || 'Untitled'}<br>
+       ${after.app ? `<strong>App:</strong> ${after.app}` : ''}</p>`,
+    );
+  });
+
+// ─── Assignment: Features ─────────────────────────────────────────────────────
+
+exports.onFeatureAssigned = functions.firestore
+  .document('stea_features/{id}')
+  .onWrite(async (change) => {
+    const before = change.before.data() || {};
+    const after = change.after.data();
+    if (!after) return;
+    const prev = before.assignee || '';
+    const next = after.assignee || '';
+    if (!next || next === prev || !isEmail(next)) return;
+    await sendMail(
+      next,
+      `[STEa] Feature assigned to you: ${after.title || 'Untitled'}`,
+      `<p>You've been assigned to a feature on STEa.</p>
+       <p><strong>Feature:</strong> ${after.title || 'Untitled'}<br>
+       ${after.app ? `<strong>App:</strong> ${after.app}` : ''}</p>`,
+    );
+  });
+
+// ─── Assignment: Cards ────────────────────────────────────────────────────────
+
+exports.onCardAssigned = functions.firestore
+  .document('stea_cards/{id}')
+  .onWrite(async (change) => {
+    const before = change.before.data() || {};
+    const after = change.after.data();
+    if (!after) return;
+    const prev = before.assignee || '';
+    const next = after.assignee || '';
+    if (!next || next === prev || !isEmail(next)) return;
+    await sendMail(
+      next,
+      `[STEa] Card assigned to you: ${after.title || 'Untitled'}`,
+      `<p>You've been assigned to a card on STEa.</p>
+       <p><strong>Card:</strong> ${after.title || 'Untitled'}<br>
+       ${after.app ? `<strong>App:</strong> ${after.app}` : ''}</p>`,
+    );
+  });
+
+// ─── Assignment: Test Cases (hans_cases) ─────────────────────────────────────
+
+exports.onTestCaseAssigned = functions.firestore
+  .document('hans_cases/{id}')
+  .onWrite(async (change) => {
+    const before = change.before.data() || {};
+    const after = change.after.data();
+    if (!after) return;
+    const prevUids = before.assignees || [];
+    const nextUids = after.assignees || [];
+    const newUids = nextUids.filter((uid) => !prevUids.includes(uid));
+    if (!newUids.length) return;
+    await Promise.all(newUids.map(async (uid) => {
+      try {
+        const user = await admin.auth().getUser(uid);
+        if (!user.email) return;
+        await sendMail(
+          user.email,
+          `[STEa] Test case assigned to you: ${after.title || 'Untitled'}`,
+          `<p>You've been assigned to a test case on STEa.</p>
+           <p><strong>Test case:</strong> ${after.title || 'Untitled'}</p>`,
+        );
+      } catch (e) {
+        console.warn(`onTestCaseAssigned: could not look up uid ${uid}:`, e.message);
+      }
+    }));
+  });
+
+// ─── Feedback: Dialled MTB (scheduled poll every 5 min) ──────────────────────
+// Cross-project: Cloud Functions SA on stea-775cd has roles/datastore.viewer on
+// dialledmtb-ea850 — no service account key needed, ADC handles auth.
+
+const FEEDBACK_RECIPIENTS = ['repinfaust@gmail.com', 'dialled.app@gmail.com'];
+const FEEDBACK_CURSOR_PATH = 'system/dialledMtbFeedbackCursor';
+
+let dialledDb = null;
+
+function getDialledDb() {
+  if (dialledDb) return dialledDb;
+  const app = admin.apps.find((a) => a.name === 'dialledmtb') ||
+    admin.initializeApp({ projectId: 'dialledmtb-ea850' }, 'dialledmtb');
+  dialledDb = app.firestore();
+  return dialledDb;
+}
+
+exports.pollDialledMtbFeedback = functions.pubsub
+  .schedule('every 5 minutes')
+  .timeZone('Europe/London')
+  .onRun(async () => {
+    const ddb = getDialledDb();
+
+    const cursorSnap = await db.doc(FEEDBACK_CURSOR_PATH).get();
+    const lastChecked = cursorSnap.exists
+      ? cursorSnap.data().lastChecked.toDate()
+      : new Date(Date.now() - 5 * 60 * 1000);
+
+    const snap = await ddb.collection('feedback')
+      .where('createdAt', '>', admin.firestore.Timestamp.fromDate(lastChecked))
+      .orderBy('createdAt', 'asc')
+      .limit(20)
+      .get();
+
+    if (!snap.empty) {
+      await Promise.all(snap.docs.map(async (feedbackDoc) => {
+        const f = feedbackDoc.data();
+        const from = f.displayName || f.email || 'Anonymous';
+        const typeLabel = f.type || 'feedback';
+        const html = `
+          <p>New <strong>${typeLabel}</strong> received from a Dialled MTB user.</p>
+          <table style="border-collapse:collapse;width:100%;font-size:14px;">
+            <tr><td style="padding:6px 0;color:#666;width:90px;">From</td><td style="padding:6px 0;">${from}${f.email ? ` &lt;${f.email}&gt;` : ''}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;">Message</td><td style="padding:6px 0;"><strong>${f.message || '—'}</strong></td></tr>
+            <tr><td style="padding:6px 0;color:#666;">Screen</td><td style="padding:6px 0;">${f.screen || f.routeName || '—'}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;">Platform</td><td style="padding:6px 0;">${f.platform || '—'} · ${f.deviceModel || '—'}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;">Version</td><td style="padding:6px 0;">${f.appVersion || '—'} (build ${f.buildNumber || '—'})</td></tr>
+          </table>
+        `;
+        await sendMail(FEEDBACK_RECIPIENTS, `[Dialled MTB] New ${typeLabel} from ${from}`, html);
+      }));
+    }
+
+    await db.doc(FEEDBACK_CURSOR_PATH).set({
+      lastChecked: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    console.log(`pollDialledMtbFeedback: processed ${snap.size} new feedback items`);
+  });
 
 /**
  * Aggregate build progress metrics for a tenant

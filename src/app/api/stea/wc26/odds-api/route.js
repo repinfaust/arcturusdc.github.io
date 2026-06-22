@@ -48,6 +48,12 @@ async function run(write, request) {
 
   // Solve sharp-market-implied lambdas per fixture (the calibration anchor).
   const canon = (n) => TEAM_ALIASES[n] || n;
+  const kickoff = {}; // matchId -> ISO commence_time (lets the snapshot job gate on time, 0-cost)
+  for (const ev of sharp.events || []) {
+    if (ev.commence_time && ev.home_team && ev.away_team) {
+      kickoff[matchId(canon(ev.home_team), canon(ev.away_team))] = ev.commence_time;
+    }
+  }
   const marketLambdas = {}; // matchId -> { lamHome, lamAway, target }
   for (const ev of sharp.events || []) {
     const implied = sharpImpliedForEvent(ev);
@@ -100,6 +106,7 @@ async function run(write, request) {
         oddsSource: 'the-odds-api',
         oddsOverround: row.overround ?? null,
         marketLambdas: ml, // sharp-market-implied lambdas for the calibration blend
+        kickoff: kickoff[id] || null, // exact UTC kickoff, for the closing-snapshot time gate
         oddsUpdatedAt: now,
         oddsUpdatedBy: access.user?.email || null,
       },
