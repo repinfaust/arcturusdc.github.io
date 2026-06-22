@@ -375,26 +375,87 @@ async function syncWc26PredictionsImpl({force = false} = {}) {
   return {tenantId: ARCTURUSDC_TENANT_ID, written, skipped};
 }
 
+// Settle a single selection against a final score. null = not gradable here.
+function settleSelection(sel, g1, g2) {
+  const t = g1 + g2;
+  const M = {
+    Home: g1 > g2, Draw: g1 === g2, Away: g2 > g1,
+    'Over 1.5': t > 1.5, 'Under 1.5': t < 1.5,
+    'Over 2.5': t > 2.5, 'Under 2.5': t < 2.5,
+    'Over 3.5': t > 3.5, 'Under 3.5': t < 3.5,
+    'BTTS Yes': g1 >= 1 && g2 >= 1, 'BTTS No': !(g1 >= 1 && g2 >= 1),
+    'Home Over 0.5': g1 > 0.5, 'Home Under 0.5': g1 < 0.5,
+    'Home Over 1.5': g1 > 1.5, 'Home Under 1.5': g1 < 1.5,
+    'Home Over 2.5': g1 > 2.5,
+    'Away Over 0.5': g2 > 0.5, 'Away Under 0.5': g2 < 0.5,
+    'Away Over 1.5': g2 > 1.5, 'Away Under 1.5': g2 < 1.5,
+    'Away Over 2.5': g2 > 2.5,
+  };
+  return sel in M ? M[sel] : null;
+}
+
+function marketFamily(group) {
+  if (group === 'Totals') return 'Totals';
+  if (group === 'BTTS') return 'BTTS';
+  if (group === 'Team Totals') return 'TeamTotals';
+  if (group === '1X2') return '1X2/draw-val';
+  return group;
+}
+
+/*
+ * The forward record grades the FLAGGED PICKS (the bets the board surfaced
+ * pre-kickoff in rankedRecommendations), by market family — NOT the per-game
+ * 1X2 argmax. 1X2 argmax is kept only as a calibration-sanity sub-field.
+ * CLV is left null here; it requires a closing-line snapshot we don't yet take
+ * for already-played picks (logged result + P&L only — never a fabricated close).
+ */
 function gradePrediction(result, prediction) {
   const market = prediction.prices && prediction.prices['1X2'];
   if (!market || !market.Home || !market.Draw || !market.Away) return null;
 
+  const g1 = Number(result.g1);
+  const g2 = Number(result.g2);
+
+  // Calibration-sanity 1X2 argmax (demoted — not the scorecard).
   const probs = [market.Home[0], market.Draw[0], market.Away[0]].map(Number);
   const labels = ['Home', 'Draw', 'Away'];
-  const actualIdx = result.g1 > result.g2 ? 0 : (result.g1 === result.g2 ? 1 : 2);
+  const actualIdx = g1 > g2 ? 0 : (g1 === g2 ? 1 : 2);
   const pickIdx = probs.indexOf(Math.max(...probs));
-  const brier = probs.reduce(
-    (sum, p, idx) => sum + (p - (idx === actualIdx ? 1 : 0)) ** 2,
-    0,
-  );
+  const brier = probs.reduce((sum, p, idx) => sum + (p - (idx === actualIdx ? 1 : 0)) ** 2, 0);
+
+  // Flagged-picks ledger for THIS game.
+  const flagged = Array.isArray(prediction.rankedRecommendations) ? prediction.rankedRecommendations : [];
+  const ledger = [];
+  for (const r of flagged) {
+    const won = settleSelection(r.selection, g1, g2);
+    if (won === null) continue; // skip pushes/handicaps we can't settle simply
+    const stake = Number(r.stakeUnits) || 0;
+    const price = Number(r.offered) || 0;
+    const pnl = price > 1 ? (won ? stake * (price - 1) : -stake) : 0;
+    ledger.push({
+      family: marketFamily(r.group),
+      selection: r.selection,
+      modelProb: r.modelProb ?? null,
+      priceTaken: price || null,
+      closingPrice: null, // no closing snapshot yet -> CLV n/a
+      clvPct: null,
+      edgeAtFlag: r.edge ?? null,
+      stakeUnits: stake,
+      won,
+      pnlUnits: +pnl.toFixed(3),
+    });
+  }
 
   return {
+    score: `${g1}-${g2}`,
+    // demoted calibration-sanity fields
     actual: labels[actualIdx],
     pick: labels[pickIdx],
     pickProb: probs[pickIdx],
     correct: actualIdx === pickIdx,
     brier1x2: brier,
-    score: `${result.g1}-${result.g2}`,
+    // the real forward record
+    ledger,
   };
 }
 
@@ -424,7 +485,69 @@ async function gradeWc26PredictionsImpl({matchId: onlyMatchId} = {}) {
   }
 
   const summary = await rebuildWc26Summary(db, ratings, results);
-  return {tenantId: ARCTURUSDC_TENANT_ID, graded, summary};
+  const ledger = await rebuildLedger(db);
+  return {tenantId: ARCTURUSDC_TENANT_ID, graded, summary, ledger: ledger.totals};
+}
+
+/*
+ * Aggregate the flagged-picks ledger across all graded predictions, by market
+ * family, with CLV as the intended headline (n/a until closing snapshots exist).
+ * Written to wc26_meta/ledger for the page to render.
+ */
+async function rebuildLedger(db) {
+  const snap = await db.collection(collections.predictions)
+    .where('tenantId', '==', ARCTURUSDC_TENANT_ID).get();
+  const families = {};
+  const rows = [];
+  let clvSum = 0; let clvCount = 0;
+
+  snap.forEach((doc) => {
+    const d = doc.data() || {};
+    const entries = d.grade && Array.isArray(d.grade.ledger) ? d.grade.ledger : [];
+    for (const e of entries) {
+      const f = families[e.family] || {picks: 0, hits: 0, staked: 0, pnl: 0, clvSum: 0, clvCount: 0};
+      f.picks += 1;
+      f.hits += e.won ? 1 : 0;
+      f.staked += e.stakeUnits || 0;
+      f.pnl += e.pnlUnits || 0;
+      if (typeof e.clvPct === 'number') { f.clvSum += e.clvPct; f.clvCount += 1; clvSum += e.clvPct; clvCount += 1; }
+      families[e.family] = f;
+      rows.push({game: `${d.home} v ${d.away}`, ...e});
+    }
+  });
+
+  const byFamily = Object.entries(families).map(([family, s]) => ({
+    family,
+    picks: s.picks,
+    hitRate: s.picks ? s.hits / s.picks : 0,
+    staked: +s.staked.toFixed(2),
+    pnl: +s.pnl.toFixed(2),
+    roi: s.staked ? s.pnl / s.staked : 0,
+    avgClv: s.clvCount ? s.clvSum / s.clvCount : null,
+  }));
+
+  const totalPicks = byFamily.reduce((a, b) => a + b.picks, 0);
+  const totalStaked = byFamily.reduce((a, b) => a + b.staked, 0);
+  const totalPnl = byFamily.reduce((a, b) => a + b.pnl, 0);
+  const totalHits = byFamily.reduce((a, b) => a + Math.round(b.hitRate * b.picks), 0);
+
+  const totals = {
+    picks: totalPicks,
+    hitRate: totalPicks ? totalHits / totalPicks : 0,
+    staked: +totalStaked.toFixed(2),
+    pnl: +totalPnl.toFixed(2),
+    roi: totalStaked ? totalPnl / totalStaked : 0,
+    avgClv: clvCount ? clvSum / clvCount : null, // null = no closing snapshots yet
+    clvCoverage: totalPicks ? clvCount / totalPicks : 0,
+  };
+
+  await db.collection(collections.meta).doc('ledger').set({
+    tenantId: ARCTURUSDC_TENANT_ID,
+    totals, byFamily, rows,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, {merge: true});
+
+  return {totals, byFamily, rows};
 }
 
 async function seedWc26Data(data, context) {
