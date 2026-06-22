@@ -78,6 +78,20 @@ async function run(request) {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization') || '';
   const isCron = Boolean(cronSecret) && authHeader === `Bearer ${cronSecret}`;
+
+  // TEMP diagnostic (no secret leak): /...snapshot-closing?debug=1
+  if (new URL(request.url).searchParams.get('debug') === '1') {
+    return json({
+      debug: true,
+      cronSecretPresent: Boolean(cronSecret),
+      cronSecretLen: cronSecret ? cronSecret.length : 0,
+      authHeaderPresent: Boolean(authHeader),
+      authHeaderStartsBearer: authHeader.startsWith('Bearer '),
+      tokenLen: authHeader.startsWith('Bearer ') ? authHeader.slice(7).length : 0,
+      isCron,
+    });
+  }
+
   if (!isCron) {
     const access = await verifySteaWorkspaceAccess(request);
     if (!access.ok) return json({ error: access.error }, access.status || 403);
