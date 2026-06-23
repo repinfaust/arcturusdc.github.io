@@ -85,9 +85,11 @@ async function run(request) {
       debug: true,
       cronSecretPresent: Boolean(cronSecret),
       cronSecretLen: cronSecret ? cronSecret.length : 0,
+      // do OTHER known vars reach this route? (proves it's per-var vs project-wide)
+      oddsKeyPresent: Boolean(process.env.WC26_ODDS_API_KEY),
+      // any env keys that look cron-ish? (names only, never values)
+      cronishKeys: Object.keys(process.env).filter((k) => /CRON/i.test(k)),
       authHeaderPresent: Boolean(authHeader),
-      authHeaderStartsBearer: authHeader.startsWith('Bearer '),
-      tokenLen: authHeader.startsWith('Bearer ') ? authHeader.slice(7).length : 0,
       isCron,
     });
   }
