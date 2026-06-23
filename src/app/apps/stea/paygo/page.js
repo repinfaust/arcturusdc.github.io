@@ -1,4 +1,8 @@
-import PaygoMagicLinkGate from './_components/PaygoMagicLinkGate';
+// TEMP 2026-06-23: PaygoMagicLinkGate removed while Ensek IT investigate a proxy
+// block on identitytoolkit.googleapis.com (ticket raised). No customer data / not
+// Ensek-branded, so gate is safe to drop temporarily. RESTORE when IT confirm the
+// fix: re-add the import and re-wrap <section> in <PaygoMagicLinkGate>…</PaygoMagicLinkGate>.
+// import PaygoMagicLinkGate from './_components/PaygoMagicLinkGate';
 import PaygoDocAssistant from './_components/PaygoDocAssistant';
 import styles from './paygo.module.css';
 
@@ -13,8 +17,8 @@ export default function PaygoWebMirrorPage() {
         background: 'radial-gradient(circle at 12% 18%, #1e293b 0, #0f172a 34%, #020617 68%)',
       }}
     >
-      <PaygoMagicLinkGate>
-        <section className={styles.paygoLayout}>
+      {/* TEMP 2026-06-23: gate removed — see note at top of file. */}
+      <section className={styles.paygoLayout}>
           <aside className={styles.leftColumn}>
             <div className={`${styles.leftCopy} ${styles.card}`}>
               <h2>PAYGO - Demo App</h2>
@@ -175,7 +179,6 @@ export default function PaygoWebMirrorPage() {
             </div>
           </aside>
         </section>
-      </PaygoMagicLinkGate>
     </main>
   );
 }
