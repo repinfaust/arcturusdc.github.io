@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { PAYGO_CONTEXT_PRIMER, PAYGO_POC_DOC_COLLECTION } from '@/lib/paygo/poc-analysis-documents';
-import { verifySorrSession } from '@/lib/sorr/controlui-server';
+// TEMP 2026-06-23: unused while the auth gate is removed — restore with the guards below.
+// import { verifySorrSession } from '@/lib/sorr/controlui-server';
 
 function tokenize(value) {
   return String(value || '')
@@ -43,10 +44,14 @@ async function loadIndexableDocsFromFirestore() {
 }
 
 export async function GET(request) {
-  const session = await verifySorrSession(request);
-  if (!session.authenticated) {
-    return NextResponse.json({ error: session.error || 'Unauthorized' }, { status: 401 });
-  }
+  // TEMP 2026-06-23: SoRR session check disabled while the PAYGO page auth gate is
+  // removed (Ensek proxy blocks Firebase magic-link sign-in; IT ticket open). With
+  // the gate gone, no session cookie is set, so this guard would 401 the embedded
+  // Doc Assistant. RESTORE alongside the page gate — re-enable the two blocks below.
+  // const session = await verifySorrSession(request);
+  // if (!session.authenticated) {
+  //   return NextResponse.json({ error: session.error || 'Unauthorized' }, { status: 401 });
+  // }
 
   return NextResponse.json({
     note: 'PAYGO document analysis is enabled. Source specs are loaded server-side from Firebase and are not publicly exposed.',
@@ -55,10 +60,12 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const session = await verifySorrSession(request);
-    if (!session.authenticated) {
-      return NextResponse.json({ error: session.error || 'Unauthorized' }, { status: 401 });
-    }
+    // TEMP 2026-06-23: SoRR session check disabled — see note on GET above. RESTORE
+    // alongside the page gate.
+    // const session = await verifySorrSession(request);
+    // if (!session.authenticated) {
+    //   return NextResponse.json({ error: session.error || 'Unauthorized' }, { status: 401 });
+    // }
 
     const body = await request.json();
     const question = String(body?.question || '').trim();
