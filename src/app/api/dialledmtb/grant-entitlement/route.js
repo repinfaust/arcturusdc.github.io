@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
-const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
+const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'];
 const ENTITLEMENT_ID = 'ArcturusDC: DialledMTB Pro';
 const VALID_DURATIONS = ['monthly', 'three_month', 'six_month', 'yearly', 'lifetime'];
 

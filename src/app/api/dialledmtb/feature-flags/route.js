@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { getDialledMTBDb } from '@/lib/firebase-admin-dialledmtb';
 
-const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
+const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'];
 const VALID_FLAGS = ['labsEnabled', 'nfcBikeSwitchEnabled', 'coach_mode_v1'];
 
 async function verifyAdmin(idToken) {

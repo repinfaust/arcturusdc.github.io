@@ -127,7 +127,7 @@ const IN_SESSION_DESTINATIONS = [
     description: 'Dialled MTB rider lookup and RevenueCat trial entitlement grants.',
     gradient: 'from-orange-50/80 to-amber-50/30',
     borderColor: 'border-orange-200',
-    onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'],
+    onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
   },
   {
     label: 'Dialled MTB — Calendar',

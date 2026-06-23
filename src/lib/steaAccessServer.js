@@ -1,7 +1,7 @@
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 const SESSION_COOKIE_NAME = '__session';
-const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
+const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'];
 
 function normalizeEmail(email) {
   return typeof email === 'string' ? email.trim().toLowerCase() : '';
