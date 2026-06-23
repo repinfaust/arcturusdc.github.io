@@ -6,6 +6,11 @@
 import PaygoDocAssistant from './_components/PaygoDocAssistant';
 import styles from './paygo.module.css';
 
+// Internal demo mirror — never index, regardless of whether the auth gate is on.
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default function PaygoWebMirrorPage() {
   return (
     <main
