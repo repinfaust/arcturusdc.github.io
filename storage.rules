@@ -11,20 +11,42 @@ service firebase.storage {
       return request.auth.uid == userId;
     }
 
-    // Ruby document assets
-    match /ruby-assets/{tenantId}/{docId}/{fileName} {
-      // Allow authenticated users to read assets from their tenant
-      // In production, you'd verify tenant membership via Firestore lookup
-      allow read: if isAuthenticated();
+    // Super admins (mirror of Firestore rules). Custom claim primary; email
+    // fallback transitional until claim removal there too.
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.superadmin == true ||
+        request.auth.token.email == 'repinfaust@gmail.com' ||
+        request.auth.token.email == 'daryn.shaxted@gmail.com'
+      );
+    }
 
-      // Allow authenticated users to upload assets
-      // Size limit: 10MB
-      allow write: if isAuthenticated()
+    // Tenant membership check, mirroring the Firestore tenant_members model
+    // (membershipId = email + '_' + tenantId, status == 'active'). Storage rules
+    // CAN read Firestore via firestore.get(). This is the boundary that was
+    // missing — paths are tenantId-keyed but were previously open to any
+    // authenticated user, exposing every tenant's assets/files/specs cross-tenant.
+    function inTenant(tenantId) {
+      return isAuthenticated() && firestore.exists(
+        /databases/(default)/documents/tenant_members/$(request.auth.token.email + '_' + tenantId)
+      ) && firestore.get(
+        /databases/(default)/documents/tenant_members/$(request.auth.token.email + '_' + tenantId)
+      ).data.status == 'active';
+    }
+
+    function canAccessTenant(tenantId) {
+      return isSuperAdmin() || inTenant(tenantId);
+    }
+
+    // Ruby document assets — tenant-scoped (membership verified via Firestore).
+    match /ruby-assets/{tenantId}/{docId}/{fileName} {
+      allow read: if canAccessTenant(tenantId);
+
+      allow write: if canAccessTenant(tenantId)
                    && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*|application/pdf|text/.*|application/json');
 
-      // Allow authenticated users to delete their own uploads
-      allow delete: if isAuthenticated();
+      allow delete: if canAccessTenant(tenantId);
     }
 
     // TLDraw whiteboard snapshots for Harls
@@ -39,29 +61,23 @@ service firebase.storage {
                    && request.resource.size < 50 * 1024 * 1024; // 50MB limit for large whiteboards
     }
 
-    // R7: API Specs - OpenAPI specification files
+    // R7: API Specs — tenant-scoped (membership verified via Firestore).
     match /ruby/r7/api-specs/{tenantId}/{specId}/{fileName} {
-      // Allow authenticated users to read API specs from any tenant
-      // Tenant membership is enforced at the Firestore level
-      allow read: if isAuthenticated();
+      allow read: if canAccessTenant(tenantId);
 
-      // Allow authenticated users to upload OpenAPI specs
-      // Size limit: 10MB for spec files
-      allow write: if isAuthenticated()
+      allow write: if canAccessTenant(tenantId)
                    && request.resource.size < 10 * 1024 * 1024
                    && (request.resource.contentType == 'application/json'
                        || request.resource.contentType == 'application/yaml'
                        || request.resource.contentType == 'text/yaml');
 
-      // Allow deletion by authenticated users
-      // Server-side enforcement checks tenant membership
-      allow delete: if isAuthenticated();
+      allow delete: if canAccessTenant(tenantId);
     }
 
     // R7: Figma Assets - Component thumbnails and previews
     match /ruby/r7/figma/{tenantId}/{fileId}/{allPaths=**} {
-      // Allow authenticated users to read Figma assets
-      allow read: if isAuthenticated();
+      // Read tenant-scoped; writes/deletes are server/MCP only (already denied).
+      allow read: if canAccessTenant(tenantId);
 
       // Only server/MCP can write Figma assets (synced from Figma API)
       // Users cannot upload directly to Figma paths
@@ -71,12 +87,12 @@ service firebase.storage {
       allow delete: if false;
     }
 
-    // Ruby imported files - raw file storage (any type, stored as-is)
+    // Ruby imported files - raw file storage — tenant-scoped.
     match /ruby-files/{tenantId}/{docId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
+      allow read: if canAccessTenant(tenantId);
+      allow write: if canAccessTenant(tenantId)
                    && request.resource.size < 50 * 1024 * 1024; // 50MB limit
-      allow delete: if isAuthenticated();
+      allow delete: if canAccessTenant(tenantId);
     }
 
     // Deny all other access
