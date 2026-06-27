@@ -303,7 +303,10 @@ export default function AutomatedTestsDashboard() {
     if (!firebaseUser) return;
 
     try {
-      const idToken = await firebaseUser.getIdToken();
+      // Force-refresh: a cached token is rejected (auth/invalid-id-token) after
+      // an early invalidation (custom-claims change / revocation) before its 1h
+      // expiry. Always mint a claim-current token before establishing a session.
+      const idToken = await firebaseUser.getIdToken(true);
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -10,3 +10,10 @@ node_modules
 .mcp.json
 stea-775cd-*.json
 .vercel
+# Firebase extension params — contain SMTP credentials (local only)
+extensions/*.env
+extensions/*.env.*
+stea-email-test-doc.md
+
+# Local backups of deleted prod docs (not for VCS)
+backups/

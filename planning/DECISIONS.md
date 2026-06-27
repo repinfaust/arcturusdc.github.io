@@ -142,3 +142,35 @@ Phase 2 of D-SITE-001, approved by David 2026-06-11 (month grouping chosen).
 - **CV/recruiter links:** `/portfolio/cv` and related public portfolio routes may include non-PII UTM/campaign parameters for attribution, but must not add per-recipient server-side visitor tracking without a separate privacy/SoRR decision.
 - **Private boundary:** Repinfaust remains excluded from public/CV portfolio surfaces. Owner-only and workspace tools must stay behind existing Firebase/Google/session-cookie and tenant membership controls; no anonymous auth is introduced.
 - **Implementation rule:** portfolio pages may link to authenticated tools, but must label them as controlled or workspace-gated and must not render private workspace data into public pages.
+
+## 2026-06-27 — Firestore rules security hardening (P0/P1 remediation, deployed)
+
+Context: AI-apps security assessment (authorization-first). Full report at `~/dev/AI_SECURITY_ASSESSMENT.md`. All changes deployed live to `stea-775cd` 2026-06-27 and behaviorally verified.
+
+Decisions:
+- **P0 — public unauthenticated write removed.** `hans_cases/{caseId}/submissions` had `allow create: if true` (any internet client could write Firestore directly, bypassing the API; storage/cost/poisoning/stored-injection vector — especially serious given the `firestore-send-email` extension on this project and the 2026-05-21 email breach). Now `allow create: if authed()`. If unauthenticated tester submissions are ever required, route them through an authenticated callable, not an open rule.
+- **P1 — tenant-isolation escape hatch removed.** The `!('tenantId' in resource.data) || canAccessTenant(...)` idiom (42 occurrences across ~15 collections) let any authenticated user read/write any tenant-less doc, defeating tenant isolation. Removed; tenantId + `canAccessTenant` is now required unconditionally on those collections. Pre-removal data audit (see below) was mandatory.
+- **P1 — comments tenant-scoped.** `stea_epics|features|cards/{id}/comments` were `allow read, create, delete: if authed()` (any user could read/delete any tenant's comments). Now gated by the parent board doc's tenant via new `canAccessParentTenant()` helper.
+- **P1 — apextwin POC reads locked.** `apextwin_sessions`/`apextwin_events` here (older POC copy) were `allow read: if authed()` (all riders' telemetry exposed to any signed-in user). Now owner-only. NOTE: the live apexstate app uses its own project `apexstate-f9e24`, whose rules were already owner-scoped — only this website POC copy was exposed.
+- **Decision — `projects` is membership-primary, tenant-optional.** Unlike the other collections, `projects` access is governed by `inProject()` (owner/member); tenant isolation applies only when a `tenantId` is present. Personal/legacy projects (no tenantId, e.g. the 5 "Felix Product Lab" workspaces owned by non-tenant users) remain accessible to their members. Forcing tenant on `projects` would have locked these real users out.
+- **P2 — super-admin via custom claim.** `isSuperAdmin()` now checks `request.auth.token.superadmin == true` first; the hardcoded email comparison is a transitional fallback. Provision the claim via `scripts/set-superadmin-claim.js`, then remove the email branch. Rationale: email can be unverified/mutable depending on provider.
+
+Production data cleanup (pre-deploy, irreversible writes — done with backup + per-doc re-verification):
+- Live tenant-less audit (`scripts/audit-tenantless-docs.js`, read-only) found 18 docs that would have become client-inaccessible on deploy.
+- 13 = abandoned MCP "cat game" board orphans (`createdBy: mcp:stea`, parent epic `GMr2vQsuFzJX6PNotsvL` already deleted). Backed up to `backups/deleted-orphans-*.json`, then deleted. Restorable from that backup.
+- 5 = real "Felix Product Lab" personal projects — kept; protected by the membership-primary `projects` rule (owner read verified live).
+- Post-cleanup audit: CLEAN.
+
+Tooling added: `scripts/audit-tenantless-docs.js` (pre-deploy gate; run before any future tightening of tenant rules), `scripts/set-superadmin-claim.js`.
+
+Outstanding: provision the superadmin custom claim on both admin UIDs, then remove the email fallback.
+
+## 2026-06-26 — STEa Clips: agent-native issue capture (Path B, native build)
+- **Origin:** Evaluated BuilderIO `agent-native` (https://github.com/BuilderIO/agent-native, MIT). It is built on Drizzle/SQL + Nitro hosting, which conflicts with this platform (Next.js 14 App Router, Firebase/Firestore, GCS, Vercel). Decision: **do not fork the repo.** Reimplement the agent-native **Clips pattern** natively so it reuses existing Firebase auth, the tenant model, GCS storage, the SoRR policy engine, and the existing `stea-mcp` server.
+- **Outcome:** record a screen clip + browser console/debug logs + a short text "ask", store it, and let Claude Code consume it via MCP — i.e. record an issue/ask for an agent instead of writing it up by hand.
+- **Routes/files:** recorder UI at `/apps/stea/clips` (`src/app/apps/stea/clips/page.js`); upload API at `src/app/api/stea/clips/route.js`; admin/storage helper `src/lib/steaClips.js`; MCP tool spec in `planning/STEA_CLIPS_MCP_SPEC.md`.
+- **Storage:** video at GCS `steaClips/{tenantId}/{clipId}.webm`; Firestore collection `steaClips` doc `{ tenantId, uid, email, clipId, title, ask, status:'new', consoleLogs[], durationMs, createdAt }`. Reuses the `firebase-admin/storage` signed-URL pattern from `src/lib/dialledMtbAdmin.js`.
+- **SoRR governance (mandatory, fatal):** a clip's `ask` is an instruction surface to an agent, so the upload route runs it through `classifyPromptLocal` (`src/lib/sorr/controlui.js`). Confidence `< 0.75` ⇒ **blocked / fail-closed**, no clip persisted, tier-4 `INCIDENT` audit entry in `sorr_control_auditLog`. No advisory band.
+- **Tenant/auth:** page sits behind the existing Firebase auth + `TenantContext` like other `/apps/stea/*` pages; clips are tenant-scoped. No anonymous auth introduced.
+- **MCP (follow-up, outside this repo):** `stea_listClips` and `stea_getClip` (returns ask + console logs + short-lived signed video URL) to be added to the `stea-mcp` server. Spec'd here; wiring deferred to that repo.
+- **Other agent-native uses noted for STEa (not yet decided):** Harls/Auto Product backlog steps as multi-surface Actions; SoRR as the universal governance layer for every Action's `run()`; WC26 ingest/refit as governed A2A Actions for the STEa Companion (no-fabricated-data enforced at the Action boundary).

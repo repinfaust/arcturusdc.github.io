@@ -171,7 +171,11 @@ export default function SteaAccessPage() {
 
     setSessionSyncing(true);
     try {
-      const idToken = await firebaseUser.getIdToken();
+      // Force-refresh the ID token. A cached token is rejected by the server
+      // (auth/invalid-id-token) whenever it has been invalidated early — e.g.
+      // after custom claims change or a token revocation — even though it has
+      // not hit its natural 1h expiry. Always mint a claim-current token here.
+      const idToken = await firebaseUser.getIdToken(true);
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
