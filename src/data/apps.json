@@ -1,5 +1,25 @@
 [
   {
+    "id": "benzel",
+    "name": "Benzel",
+    "cardAccent": {
+      "primary": "#B45735",
+      "tintTop": "rgba(180, 87, 53, 0.13)"
+    },
+    "status": "live",
+    "strap": "A mobile-first comic reader for The Night the Fun Went Missing.",
+    "summary": "Benzel is a public web comic reader built around the feel of a dark carnival storybook: full-screen mobile pages, swipe navigation, thumbnails, and a bending page-turn motion.",
+    "desc": "A full-screen comic book reader for a moonlit carnival mystery.",
+    "link": "/apps/benzel",
+    "caseFileUrl": "/apps/benzel",
+    "category": "Stories & Games",
+    "features": ["Mobile-first reading", "Swipe and tap page turns", "Comic-style page curl"],
+    "live": true,
+    "availability": ["web"],
+    "icon": "/img/benzel/cover.jpg",
+    "bg": "/img/benzel/cover.jpg"
+  },
+  {
     "id": "sprocket",
     "name": "Sprocket",
     "cardAccent": {

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const LIVE_IDS = ["adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
+const LIVE_IDS = ["benzel", "adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
 const DEV_IDS  = ["rehabpath", "apex-state", "assumezero"];
 
 const STATUS_LABEL = { live: "Live", comingSoon: "Coming soon", development: "In development" };
@@ -229,7 +229,7 @@ export default function AppsClient({ apps }) {
             <p className="mb-1 font-mono text-xs uppercase tracking-[0.16em] text-[#f0452f]">/Available now</p>
             <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Live apps<span className="text-[#f0452f]">.</span></h2>
           </div>
-          <p className="text-sm text-[#1c1c1a]/60 sm:text-right sm:max-w-xs">Available on the App Store and Google Play today.</p>
+          <p className="text-sm text-[#1c1c1a]/60 sm:text-right sm:max-w-xs">Available now on web, the App Store, or Google Play.</p>
         </div>
         {liveApps.map((app, i) => (
           <AppFeature key={app.id} app={app} index={i} />
