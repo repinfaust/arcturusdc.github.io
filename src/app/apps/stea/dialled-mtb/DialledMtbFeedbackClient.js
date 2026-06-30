@@ -349,6 +349,14 @@ export default function DialledMtbFeedbackClient() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <TenantSwitcher />
+            {(isSuperAdmin || isWorkspaceAdmin) && (
+              <Link
+                href="/apps/stea/dialled-mtb/promo"
+                className="inline-flex h-10 items-center rounded-lg border border-[#F72585]/60 px-3 text-sm font-bold text-[#F4F6F8] transition hover:bg-[#F72585]/10"
+              >
+                Promo campaigns
+              </Link>
+            )}
             <NotifToggle permission={notifPermission} onRequest={requestNotifPermission} />
             <button
               type="button"

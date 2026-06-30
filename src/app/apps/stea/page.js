@@ -130,6 +130,15 @@ const IN_SESSION_DESTINATIONS = [
     onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
   },
   {
+    label: 'Dialled MTB — Promo campaigns',
+    href: '/apps/stea/dialled-mtb/promo',
+    description: 'Create community offers, configure both stores, and track affiliate commission.',
+    gradient: 'from-neutral-950/95 to-zinc-900/95',
+    borderColor: 'border-pink-500/40',
+    textLight: true,
+    onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
+  },
+  {
     label: 'Dialled MTB — Calendar',
     href: '/apps/stea/dialled-mtb/calendar',
     description: 'Track milestones, events and marketing activities for Dialled MTB.',

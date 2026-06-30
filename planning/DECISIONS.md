@@ -174,3 +174,11 @@ Outstanding: provision the superadmin custom claim on both admin UIDs, then remo
 - **Tenant/auth:** page sits behind the existing Firebase auth + `TenantContext` like other `/apps/stea/*` pages; clips are tenant-scoped. No anonymous auth introduced.
 - **MCP (follow-up, outside this repo):** `stea_listClips` and `stea_getClip` (returns ask + console logs + short-lived signed video URL) to be added to the `stea-mcp` server. Spec'd here; wiring deferred to that repo.
 - **Other agent-native uses noted for STEa (not yet decided):** Harls/Auto Product backlog steps as multi-surface Actions; SoRR as the universal governance layer for every Action's `run()`; WC26 ingest/refit as governed A2A Actions for the STEa Companion (no-fabricated-data enforced at the Action boundary).
+
+## 2026-06-30 — Dialled MTB community promo administration
+- Added `/apps/stea/dialled-mtb/promo` as the internal campaign workbench for community/affiliate offers. It extends the existing Dialled MTB STEa workspace and Firebase Admin exception; it does not introduce a new auth model or database.
+- Campaign creation and mutation are restricted server-side to STEa super admins or active workspace admins in the Dialled MTB/ArcturusDC workspaces. Mobile clients never write campaign, assignment, or revenue-ledger records directly.
+- Commercial rule approved by David: affiliate commission is **10% of RevenueCat-estimated proceeds for the first 12 months**, with refunds reversing accrual. Payment execution remains outside the tool.
+- Native discount provisioning remains store-owned. The workbench records and validates App Store redemption mappings and Google Play developer-offer option IDs. It does not pretend that RevenueCat creates native store coupon codes.
+- Campaign activation is fail-closed: every enabled monthly/annual plan must have ready iOS and Android mappings. Codes are immutable Firestore document IDs once created; campaigns are paused/ended rather than deleted so referral and payout history remains auditable.
+- The existing Dialled MTB RevenueCat webhook and supportUserConfigs → BigQuery pipeline remain authoritative for conversion/revenue reporting. No new infrastructure is added; the existing projection gains allowlisted referral aggregates.
