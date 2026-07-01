@@ -8,6 +8,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import { useTenant } from '@/contexts/TenantContext';
 import { auth, firebaseInitError } from '@/lib/firebase';
+import PromoCalculator from './PromoCalculator';
 
 const ALLOWED_WORKSPACES = ['dialled mtb', 'arcturusdc'];
 const EMPTY_FORM = {
@@ -207,7 +208,7 @@ function Toggle({ active, children, onClick }) {
 
 function CampaignRunbook() {
   return (
-    <details id="launch-guide" open className="group mt-7 overflow-hidden rounded-xl border border-white/10 bg-[#12161A]">
+    <details id="launch-guide" className="group mt-7 overflow-hidden rounded-xl border border-white/10 bg-[#12161A]">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-5 py-5 outline-none transition hover:bg-white/[0.02] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F72585]/60 sm:px-6 [&::-webkit-details-marker]:hidden">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F72585]">Partner launch guide</p>
@@ -527,6 +528,7 @@ export default function DialledPromoCampaignClient() {
         )}
 
         <CampaignRunbook />
+        <PromoCalculator />
 
         <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,0.92fr)_minmax(560px,1.3fr)]">
           <form onSubmit={saveCampaign} className="h-fit rounded-xl border border-white/10 bg-[#12161A] p-5 sm:p-6">
