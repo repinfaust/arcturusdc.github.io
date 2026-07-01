@@ -48,9 +48,9 @@ const RUNBOOK_STEPS = [
   },
   {
     owner: 'Workbench',
-    title: 'Create the draft campaign',
+    title: 'Create the campaign',
     items: [
-      'Complete Terms and store mapping, generate or enter the public code, then select Create draft campaign.',
+      'Complete Terms and store mapping, generate or enter the public code, then select Create campaign.',
       'The public code becomes the permanent campaign ID. Check its spelling before saving.',
       'Do not share the code yet. Draft is the safe state while the two stores are configured.',
     ],
@@ -130,8 +130,8 @@ function dateOnly(value) {
   return value ? String(value).slice(0, 10) : '';
 }
 
-function dollars(value) {
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
+function pounds(value) {
+  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(value || 0));
 }
 
 function campaignToForm(campaign) {
@@ -357,7 +357,7 @@ export default function DialledPromoCampaignClient() {
     active: summary.active + (campaign.status === 'active' ? 1 : 0),
     claims: summary.claims + campaign.claimedRiderCount,
     conversions: summary.conversions + campaign.confirmedRiderCount,
-    commission: summary.commission + campaign.affiliateCommissionUsd,
+    commission: summary.commission + campaign.affiliateCommissionGbp,
   }), { active: 0, claims: 0, conversions: 0, commission: 0 }), [campaigns]);
 
   function updateField(name, value) {
@@ -417,7 +417,7 @@ export default function DialledPromoCampaignClient() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || 'Could not save campaign.');
-      setNotice(editingId ? `${campaign.code} updated.` : `${campaign.code} created as a draft.`);
+      setNotice(editingId ? `${campaign.code} updated.` : `${campaign.code} created. Add both store mappings, then activate it.`);
       resetForm();
       await loadCampaigns();
     } catch (saveError) {
@@ -512,7 +512,7 @@ export default function DialledPromoCampaignClient() {
             ['Active', totals.active],
             ['Validated riders', totals.claims],
             ['Paid conversions', totals.conversions],
-            ['Commission accrued', dollars(totals.commission)],
+            ['Commission accrued · GBP', pounds(totals.commission)],
           ].map(([label, value]) => (
             <div key={label} className="bg-[#0D1013] px-4 py-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">{label}</p>
@@ -596,7 +596,7 @@ export default function DialledPromoCampaignClient() {
             </div>
 
             <button type="submit" disabled={saving} className="mt-5 w-full rounded-lg bg-[#F72585] px-4 py-3 text-sm font-black text-white transition hover:bg-[#D91D72] disabled:cursor-not-allowed disabled:opacity-50">
-              {saving ? 'Saving…' : editingId ? 'Save campaign' : 'Create draft campaign'}
+              {saving ? 'Saving…' : editingId ? 'Save campaign' : 'Create campaign'}
             </button>
           </form>
 
@@ -606,7 +606,7 @@ export default function DialledPromoCampaignClient() {
               <button type="button" onClick={loadCampaigns} disabled={loading} className="text-xs font-bold text-[#8A939D] hover:text-white">{loading ? 'Refreshing…' : 'Refresh'}</button>
             </div>
             <div className="space-y-4">
-              {!loading && campaigns.length === 0 && <div className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm text-[#7E8790]">No campaigns yet. Create the first community offer as a draft.</div>}
+              {!loading && campaigns.length === 0 && <div className="rounded-xl border border-dashed border-white/15 p-10 text-center text-sm text-[#7E8790]">No campaigns yet. Create the first community offer; it will stay Draft until both stores are ready.</div>}
               {campaigns.map((campaign) => (
                 <article key={campaign.id} className="rounded-xl border border-white/10 bg-[#12161A] p-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -627,8 +627,8 @@ export default function DialledPromoCampaignClient() {
                     {[
                       ['Claims', `${campaign.claimedRiderCount}${campaign.maxRiders ? ` / ${campaign.maxRiders}` : ''}`],
                       ['Conversions', campaign.confirmedRiderCount],
-                      ['Proceeds', dollars(campaign.estimatedProceedsUsd)],
-                      ['Commission', dollars(campaign.affiliateCommissionUsd)],
+                      ['Proceeds · GBP', pounds(campaign.estimatedProceedsGbp)],
+                      ['Commission · GBP', pounds(campaign.affiliateCommissionGbp)],
                     ].map(([label, value]) => <div key={label}><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">{label}</p><p className="mt-1 font-mono text-sm font-bold text-[#E8EBEE]">{value}</p></div>)}
                   </div>
 
