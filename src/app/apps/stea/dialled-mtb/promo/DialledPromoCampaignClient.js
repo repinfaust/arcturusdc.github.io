@@ -34,6 +34,93 @@ const EMPTY_FORM = {
 const inputClass = 'w-full rounded-lg border border-white/10 bg-[#15191D] px-3 py-2.5 text-sm text-[#F4F6F8] outline-none transition placeholder:text-[#68717A] focus:border-[#F72585]/70 focus:ring-2 focus:ring-[#F72585]/15';
 const labelClass = 'mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-[#8A939D]';
 
+const RUNBOOK_STEPS = [
+  {
+    owner: 'Both',
+    title: 'Agree the partner terms',
+    items: [
+      'Choose the affiliate name and one memorable public code riders will type in the app.',
+      'Agree monthly, annual, or both; the rider discount; billing periods; start/end dates; and an optional rider cap.',
+      'Confirm the locked affiliate deal: 10% of estimated proceeds for 12 months. Payout is handled manually outside this tool.',
+    ],
+    ready: 'You can explain the offer in one sentence without promising a currency price.',
+  },
+  {
+    owner: 'Workbench',
+    title: 'Create the draft campaign',
+    items: [
+      'Complete Terms and store mapping, generate or enter the public code, then select Create draft campaign.',
+      'The public code becomes the permanent campaign ID. Check its spelling before saving.',
+      'Do not share the code yet. Draft is the safe state while the two stores are configured.',
+    ],
+    ready: 'The campaign appears in the ledger with Draft status.',
+  },
+  {
+    owner: 'App Store',
+    title: 'Create Apple offer codes',
+    items: [
+      'In App Store Connect, open Dialled MTB → Subscriptions → the subscription group → the monthly or annual subscription.',
+      'Under Subscription Prices, create an Offer Code with the agreed eligibility, discount type, duration, territories, and redemption limit.',
+      'Create a distinct internal custom code (for example SNOWDON26M or SNOWDON26A) and copy its redemption URL. Repeat for every enabled plan; Apple does not reuse one custom code across two offers.',
+    ],
+    ready: 'You have an Apple code and redemption URL for every selected plan. Allow up to one hour before testing.',
+    href: 'https://developer.apple.com/help/app-store-connect/manage-subscriptions/set-up-subscription-offer-codes/',
+    linkLabel: 'Apple offer-code guide',
+  },
+  {
+    owner: 'Google Play',
+    title: 'Create Google subscription offers',
+    items: [
+      'In Play Console, open Monetize → Products → Subscriptions, choose the subscription and base plan, then select Add offer.',
+      'Use Developer determined eligibility, add the agreed pricing phases, and add the tag rc-ignore-offer so RevenueCat cannot apply the partner discount automatically.',
+      'Activate the offer. Record the RevenueCat option ID as base-plan-id:offer-id and repeat for every enabled plan.',
+    ],
+    ready: 'Every selected plan has an active option ID. Do not use Play promo codes; subscription promo codes are free-trial-only.',
+    href: 'https://www.revenuecat.com/docs/subscription-guidance/subscription-offers/google-play-offers',
+    linkLabel: 'RevenueCat Google-offer guide',
+  },
+  {
+    owner: 'Workbench',
+    title: 'Map both stores and activate',
+    items: [
+      'Select Edit mappings on the draft and paste each Apple code, Apple redemption URL, and Google option ID into its matching plan.',
+      'Save the campaign and confirm both readiness indicators are green. RevenueCat remains the entitlement layer; this tool does not create a separate RevenueCat coupon.',
+      'Select Activate only after both stores are complete. The server rejects activation if any required mapping is missing.',
+    ],
+    ready: 'Campaign status is Active and both store rails say Ready.',
+  },
+  {
+    owner: 'Both',
+    title: 'Run the two-store test',
+    items: [
+      'Use a signed-in free test rider who is not Premium and has never claimed another partner code.',
+      'On iOS, test with an Apple sandbox code/TestFlight. On Android, use a Play licence tester on the internal track.',
+      'In sandbox, confirm the entitlement and webhook audit without changing production totals. Then run one tightly capped production smoke purchase to prove the offer identifier converts in the campaign ledger.',
+    ],
+    ready: 'Sandbox entitlement/webhook checks pass, then a controlled production purchase converts correctly on iOS and Android.',
+  },
+  {
+    owner: 'Partner',
+    title: 'Share the public code',
+    items: [
+      'Give the partner only the public Dialled code and the agreed wording. Hidden Apple codes and Google option IDs stay internal.',
+      'Tell riders to sign in, open Premium, choose monthly or annual, enter the code, and confirm the final terms shown by their app store.',
+      'Pause the campaign immediately if the store price, duration, eligibility, or mapping is wrong. End it when the partnership finishes; do not delete its history.',
+    ],
+    ready: 'The partner has approved copy, dates, code, and a named Dialled contact.',
+  },
+  {
+    owner: 'Monthly',
+    title: 'Report, reconcile, and pay',
+    items: [
+      'Use this ledger for live claims, paid conversions, estimated proceeds, and accrued commission; use the existing Looker Studio affiliate view for campaign reporting.',
+      'Call claims “validated riders,” not downloads. A code entered after installation does not prove which partner caused the download.',
+      'Reconcile the 10% accrued commission against RevenueCat-estimated proceeds, include refund reversals, and record the actual payout in the finance process.',
+    ],
+    ready: 'Partner report and manual payout are complete, with refunds and the 12-month commission window accounted for.',
+  },
+];
+
 function workspaceAllowed(tenant) {
   return ALLOWED_WORKSPACES.includes(String(tenant?.name || '').trim().toLowerCase());
 }
@@ -115,6 +202,86 @@ function Toggle({ active, children, onClick }) {
     >
       {children}
     </button>
+  );
+}
+
+function CampaignRunbook() {
+  return (
+    <details id="launch-guide" open className="group mt-7 overflow-hidden rounded-xl border border-white/10 bg-[#12161A]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-5 py-5 outline-none transition hover:bg-white/[0.02] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F72585]/60 sm:px-6 [&::-webkit-details-marker]:hidden">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F72585]">Partner launch guide</p>
+          <h2 className="mt-1 text-xl font-black">Eight checkpoints from agreement to payout</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-[#8A939D]">Follow in order for every campaign. Store discounts are created in Apple and Google first, then mapped here.</p>
+        </div>
+        <span className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#8A939D] group-open:text-[#FF6EAF]">
+          <span className="group-open:hidden">Open guide</span>
+          <span className="hidden group-open:inline">Hide guide</span>
+        </span>
+      </summary>
+
+      <div className="border-t border-white/10 px-5 py-6 sm:px-6">
+        <div className="grid gap-3 border-b border-white/10 pb-5 sm:grid-cols-3">
+          {[
+            ['1 public code', 'What riders type'],
+            ['2 store systems', 'Where discounts are created'],
+            ['0 guessed prices', 'The store always confirms the charge'],
+          ].map(([value, label]) => (
+            <div key={value} className="rounded-lg border border-white/10 bg-[#0D1013] px-4 py-3">
+              <p className="font-mono text-sm font-black text-[#F4F6F8]">{value}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#68717A]">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        <ol className="mt-5 grid gap-4 lg:grid-cols-2">
+          {RUNBOOK_STEPS.map((step, index) => (
+            <li key={step.title} className="relative rounded-xl border border-white/10 bg-[#0D1013] p-5">
+              <div className="flex items-start gap-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#F72585]/35 bg-[#F72585]/10 font-mono text-xs font-black text-[#FF6EAF]">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-black text-[#F4F6F8]">{step.title}</h3>
+                    <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#7E8790]">{step.owner}</span>
+                  </div>
+                  <ul className="mt-3 space-y-2 text-xs leading-5 text-[#A8B0B8]">
+                    {step.items.map((item) => (
+                      <li key={item} className="grid grid-cols-[12px_1fr] gap-2">
+                        <span aria-hidden="true" className="mt-[8px] h-1 w-1 rounded-full bg-[#F72585]" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {step.href && (
+                    <a href={step.href} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-xs font-bold text-[#FF6EAF] underline decoration-[#F72585]/35 underline-offset-4 transition hover:text-white">
+                      {step.linkLabel} ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 border-t border-white/10 pt-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-300">Checkpoint</p>
+                <p className="mt-1 text-xs leading-5 text-[#8A939D]">{step.ready}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        <div className="mt-5 flex flex-col gap-3 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-black text-amber-200">Release gate</p>
+            <p className="mt-1 text-xs leading-5 text-[#B9A98C]">The promo entry flow must be live in the current iOS and Android store builds before a partner receives a code.</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <a href="https://appstoreconnect.apple.com/" target="_blank" rel="noreferrer" className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-[#D7DCE0] transition hover:border-[#F72585]/40 hover:text-white">App Store Connect ↗</a>
+            <a href="https://play.google.com/console/" target="_blank" rel="noreferrer" className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-[#D7DCE0] transition hover:border-[#F72585]/40 hover:text-white">Play Console ↗</a>
+            <a href="https://app.revenuecat.com/" target="_blank" rel="noreferrer" className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-[#D7DCE0] transition hover:border-[#F72585]/40 hover:text-white">RevenueCat ↗</a>
+          </div>
+        </div>
+      </div>
+    </details>
   );
 }
 
@@ -358,6 +525,8 @@ export default function DialledPromoCampaignClient() {
             {error || notice}
           </div>
         )}
+
+        <CampaignRunbook />
 
         <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,0.92fr)_minmax(560px,1.3fr)]">
           <form onSubmit={saveCampaign} className="h-fit rounded-xl border border-white/10 bg-[#12161A] p-5 sm:p-6">
