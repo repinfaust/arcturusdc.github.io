@@ -79,21 +79,6 @@ async function run(request) {
   const authHeader = request.headers.get('authorization') || '';
   const isCron = Boolean(cronSecret) && authHeader === `Bearer ${cronSecret}`;
 
-  // TEMP diagnostic (no secret leak): /...snapshot-closing?debug=1
-  if (new URL(request.url).searchParams.get('debug') === '1') {
-    return json({
-      debug: true,
-      cronSecretPresent: Boolean(cronSecret),
-      cronSecretLen: cronSecret ? cronSecret.length : 0,
-      // do OTHER known vars reach this route? (proves it's per-var vs project-wide)
-      oddsKeyPresent: Boolean(process.env.WC26_ODDS_API_KEY),
-      // any env keys that look cron-ish? (names only, never values)
-      cronishKeys: Object.keys(process.env).filter((k) => /CRON/i.test(k)),
-      authHeaderPresent: Boolean(authHeader),
-      isCron,
-    });
-  }
-
   if (!isCron) {
     const access = await verifySteaWorkspaceAccess(request);
     if (!access.ok) return json({ error: access.error }, access.status || 403);

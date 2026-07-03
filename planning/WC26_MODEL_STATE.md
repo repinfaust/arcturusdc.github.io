@@ -1,8 +1,46 @@
 # WC26 xG Value Engine — Model & App State
 
-_As built on `main` (2026-06-21). This documents what exists, how it compares to
-cowork's design, and what's open. Companion to the dated entries in
-`planning/DECISIONS.md`._
+_As built on `main` (2026-06-21), updated 2026-07-03. This documents what
+exists, how it compares to cowork's design, and what's open. Companion to the
+dated entries in `planning/DECISIONS.md`._
+
+---
+
+## 0. Status update — 2026-07-03 (mid-knockouts)
+
+**Objective restated by David: ACCURACY over betting edge.** The headline is now
+forecast accuracy (hit rate + Brier) vs the devigged consensus market; the
+flagged-picks betting ledger is secondary.
+
+**Forward record after 38 graded games** (all inputs logged pre-kickoff):
+
+| Track | 1X2 acc | 1X2 Brier | O/U 2.5 acc | O/U 2.5 Brier |
+|---|---|---|---|---|
+| Pure Elo (as logged) | 68.4% | 0.4405 | **47.4%** | 0.2482 |
+| Devigged market | 69.4% | 0.4295 | 63.9% | 0.2341 |
+| 50/50 blend (counterfactual) | 69.4% | 0.4359 | 50.0% | 0.2357 |
+
+The model is near-market on match outcomes and clearly behind on totals —
+exactly the favourite-tail Poisson shape error §4 diagnosed on 06-21. A blend-
+weight sweep (n=36) showed Brier improving monotonically toward the market on
+both markets. Betting ledger for completeness: 66 flagged picks, −24% ROI, 0%
+CLV coverage.
+
+**What changed on 2026-07-03** (full detail in DECISIONS.md):
+1. Root cause of the dead automation found: production Vercel lacked
+   `WC26_ODDS_API_KEY` + `CRON_SECRET` since launch (odds button 500'd; the
+   closing-snapshot cron could never auth → CLV null). Fixed + redeployed.
+2. Predictions are now logged **two-track server-side**: pure Elo + a
+   market-anchored blend (1X2 50% market, totals 90% market) + a devigged
+   market baseline snapshot. Previously the blend existed only in the browser,
+   so the graded forward record measured a model nobody was shown.
+3. Grading now scores per-track accuracy; `wc26_meta/accuracy` feeds the new
+   headline "Forward accuracy" panel. Early games' tracks were computed
+   retrospectively from stored pre-kickoff lambdas/odds (`tracksRetro`).
+4. Odds pulls scheduled (`pullWc26Odds`, every 6 h, cron-secret auth on the
+   route). Ingest flips played fixtures to `final` (38 stale "upcoming" games
+   cleaned). Rematch id-collision guard added for the final rounds. Temp
+   `?debug=1` endpoint removed.
 
 Route: `/apps/stea/wc26` (alias `/wc26`), ArcturusDC-tenant gated.
 Firebase project `stea-775cd`, tenant `FqhckqMaorJMAQ6B29mP`.
@@ -55,7 +93,8 @@ Firebase project `stea-775cd`, tenant `FqhckqMaorJMAQ6B29mP`.
 - Odds: The Odds API (real REST feed) — no LLM, overround gate rejects suspended/
   in-play prices.
 - **GPT is entirely absent from WC26** (it fabricated results + fake citations in
-  testing; removed). Live state: 48 teams, 36 results, 36 fixtures priced.
+  testing; removed). Live state 2026-07-03: 48 teams, 85 results, knockout
+  fixtures priced + kickoffs stored.
 
 ---
 
@@ -214,11 +253,10 @@ edges were always small probability errors magnified by long odds, not shape):_
    as a separate group-stage-goals calibration, never co-fit.
 
 **Automation.**
-- Calibration (`marketLambdas`) is currently written by the "Pull live odds" button
-  and the one-off script. It is **not** on a schedule. Next step: a scheduled job (or
-  fold into the existing `refitWc26Ratings` cadence) so odds + calibration refresh
-  without a manual click. Mind the 500 req/month Odds API free-tier budget (~2 req
-  per pull: uk + eu).
+- ~~Calibration is not on a schedule~~ **Done 2026-07-03:** `pullWc26Odds`
+  (Firebase scheduler, every 6 h) drives `/api/stea/wc26/odds-api` with the cron
+  secret — odds + `marketLambdas` + kickoffs refresh unattended (~8 req/day
+  against the 500/month tier). Manual button retained.
 - The forward record only populates once `syncWc26Predictions` logs pre-kickoff
   predictions for *upcoming* fixtures (done: 37 logged) **and** `onWc26ResultFinalized`
   grades them after results land. Verify end-to-end on the next completed matchday.

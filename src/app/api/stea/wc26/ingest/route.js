@@ -105,14 +105,36 @@ export async function POST(request) {
     const now = FieldValue.serverTimestamp();
     let resultsWritten = 0;
     let fixturesWritten = 0;
+    let fixturesFinalised = 0;
     let batch = db.batch();
     let ops = 0;
     const commitIfFull = async () => {
       if (ops >= 400) { await batch.commit(); batch = db.batch(); ops = 0; }
     };
 
+    // Existing docs, for (a) flipping played fixtures to `final` and (b) the
+    // rematch guard: from the QFs / 3rd-place game onward two teams that met
+    // earlier can meet again, and the bare `home-v-away` id would silently
+    // overwrite the earlier result. A pairing already final on a DIFFERENT
+    // date gets a round-qualified id instead.
+    const [resSnap, fixSnap] = await Promise.all([
+      db.collection('wc26_results').where('tenantId', '==', ARCTURUSDC_TENANT_ID).get(),
+      db.collection('wc26_fixtures').where('tenantId', '==', ARCTURUSDC_TENANT_ID).get(),
+    ]);
+    const resultDates = new Map(resSnap.docs.map((d) => [d.id, d.data().date || null]));
+    const fixtureStatus = new Map(fixSnap.docs.map((d) => [d.id, d.data().status || 'scheduled']));
+
+    const resolveId = (home, away, date, roundName) => {
+      const base = matchId(home, away);
+      const existingDate = resultDates.get(base);
+      if (existingDate && date && existingDate !== date) {
+        return `${base}-${slug(roundName || 'rematch')}`;
+      }
+      return base;
+    };
+
     for (const r of parsed.results) {
-      const id = matchId(r.home, r.away);
+      const id = resolveId(r.home, r.away, r.date, r.round);
       batch.set(
         db.collection('wc26_results').doc(id),
         {
@@ -121,18 +143,30 @@ export async function POST(request) {
           home: r.home, away: r.away,
           g1: r.g1, g2: r.g2,
           neutral: r.neutral !== false,
-          group: r.group, date: r.date,
+          group: r.group, round: r.round || null, date: r.date,
           status: 'final',
           source: 'openfootball',
           updatedAt: now,
         },
         { merge: true },
       );
+      resultDates.set(id, r.date || null);
       resultsWritten++; ops++; await commitIfFull();
+
+      // The game is played: its fixture doc must stop appearing as upcoming.
+      if (fixtureStatus.has(id) && fixtureStatus.get(id) !== 'final') {
+        batch.set(
+          db.collection('wc26_fixtures').doc(id),
+          { status: 'final', updatedAt: now },
+          { merge: true },
+        );
+        fixtureStatus.set(id, 'final');
+        fixturesFinalised++; ops++; await commitIfFull();
+      }
     }
 
     for (const f of parsed.fixtures) {
-      const id = matchId(f.home, f.away);
+      const id = resolveId(f.home, f.away, f.date, f.round);
       // Preserve any existing odds; ingest never overwrites odds.
       batch.set(
         db.collection('wc26_fixtures').doc(id),
@@ -141,7 +175,7 @@ export async function POST(request) {
           matchId: id,
           home: f.home, away: f.away,
           neutral: f.neutral !== false,
-          group: f.group, date: f.date,
+          group: f.group, round: f.round || null, date: f.date,
           status: 'scheduled',
           source: 'openfootball',
           updatedAt: now,
@@ -164,7 +198,7 @@ export async function POST(request) {
       {
         tenantId: ARCTURUSDC_TENANT_ID,
         source: 'openfootball/worldcup.json',
-        resultsWritten, fixturesWritten,
+        resultsWritten, fixturesWritten, fixturesFinalised,
         rejected: parsed.rejected.length,
         missingPriorTeams,
         ranBy: access.user?.email || null,
@@ -179,6 +213,7 @@ export async function POST(request) {
       ok: true,
       resultsWritten,
       fixturesWritten,
+      fixturesFinalised,
       rejected: parsed.rejected.length,
       missingPriorTeams,
       note:

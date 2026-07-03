@@ -40,13 +40,22 @@ import {
   DEFAULTS,
 } from './lib/engine';
 
-const BLEND_WEIGHT = 0.5; // 50/50 Elo-model vs sharp-market lambdas
+/* Per-market sharp-lambda blend weights (= market share) — mirrors
+ * functions/wc26/service.js, which logs the same blended track. Forward sweep
+ * 2026-07-03 (n=36 graded games): Brier improved monotonically toward the
+ * market on BOTH markets. 1X2 keeps 50/50 (model graded near-market there);
+ * goal markets anchor hard to the line (pure Elo 47.4% vs market 63.9% on
+ * O/U 2.5 — the favourite-tail shape error the 06-21 decomposition found). */
+const W_MARKET_1X2 = 0.5;
+const W_MARKET_TOTALS = 0.9;
+// Goal-level market groups price off the totals-weighted matrix.
+const GOAL_GROUPS = new Set(['Totals', 'Team Totals', 'BTTS', 'Correct Score']);
 
 const SMALL_MARKETS = new Set(['Team Totals', 'BTTS', 'Totals', 'Correct Score']);
 const isDangerZone = (o) => o >= 1.34 && o <= 1.5;
 
-/* Build a priced match for a fixture, blending the Elo-model lambdas 50/50 with
- * the sharp-market-implied lambdas when available (else pure Elo model). */
+/* Build the priced matrices for a fixture: result markets off the 1X2-weighted
+ * blend, goal markets off the totals-weighted blend (else pure Elo model). */
 function pricedMatchForFixture(fixture, ratings, opts) {
   const h = ratings[fixture.home];
   const a = ratings[fixture.away];
@@ -54,11 +63,14 @@ function pricedMatchForFixture(fixture, ratings, opts) {
   const model = buildMatch(h, a, { ...opts, neutral: fixture.neutral !== false });
   const ml = fixture.marketLambdas;
   if (ml && Number.isFinite(ml.lamHome) && Number.isFinite(ml.lamAway)) {
-    const lamHome = BLEND_WEIGHT * ml.lamHome + (1 - BLEND_WEIGHT) * model.lamHome;
-    const lamAway = BLEND_WEIGHT * ml.lamAway + (1 - BLEND_WEIGHT) * model.lamAway;
-    return { match: buildMatchFromLambdas(lamHome, lamAway, opts), calibrated: true };
+    const mk = (w) => buildMatchFromLambdas(
+      w * ml.lamHome + (1 - w) * model.lamHome,
+      w * ml.lamAway + (1 - w) * model.lamAway,
+      opts,
+    );
+    return { match: mk(W_MARKET_1X2), matchGoals: mk(W_MARKET_TOTALS), calibrated: true };
   }
-  return { match: model, calibrated: false };
+  return { match: model, matchGoals: model, calibrated: false };
 }
 
 /* Calibrated value scan — mirrors engine.recommend() but prices each fixture off
@@ -74,12 +86,17 @@ function recommendCalibrated(fixtures, ratings, opts = {}) {
     const pm = pricedMatchForFixture(f, ratings, opts);
     if (!pm) continue;
     const priced = priceAll(pm.match);
+    const pricedGoals = pm.matchGoals === pm.match ? priced : priceAll(pm.matchGoals);
     const odds = f.odds || {};
     for (const [sel, offered] of Object.entries(odds)) {
       if (!offered || offered <= 1) continue;
       let modelP = null, group = null;
       for (const [g, mkt] of Object.entries(priced)) if (mkt[sel]) { modelP = mkt[sel][0]; group = g; break; }
       if (modelP == null) continue;
+      // Goal markets take the totals-weighted blend's probability instead.
+      if (GOAL_GROUPS.has(group) && pricedGoals[group] && pricedGoals[group][sel]) {
+        modelP = pricedGoals[group][sel][0];
+      }
 
       // Book's NO-VIG probability for this selection (devig against its market
       // siblings present in the odds map). Compare against this, not the vigged
@@ -196,15 +213,18 @@ async function loadWorkspaceModelData() {
   }
 
   const tenantFilter = where('tenantId', '==', ARCTURUSDC_TENANT_ID);
-  const [teamsSnap, fixturesSnap, resultsSnap, predictionsSnap, ledgerDoc] = await Promise.all([
+  const [teamsSnap, fixturesSnap, resultsSnap, predictionsSnap, ledgerDoc, accuracyDoc] = await Promise.all([
     getDocs(query(collection(db, 'wc26_teams'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_fixtures'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_results'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_predictions'), tenantFilter)),
     getDoc(doc(db, 'wc26_meta', 'ledger')),
+    getDoc(doc(db, 'wc26_meta', 'accuracy')),
   ]);
   // Flagged-picks forward ledger (CLV-first scorecard), computed server-side.
   const ledger = ledgerDoc.exists() ? ledgerDoc.data() : null;
+  // Forward accuracy per track (the headline), computed server-side at grading.
+  const accuracy = accuracyDoc.exists() ? accuracyDoc.data() : null;
 
   const remoteRatings = {};
   teamsSnap.forEach((doc) => {
@@ -268,6 +288,7 @@ async function loadWorkspaceModelData() {
     results: remoteResults.length ? remoteResults : null,
     gradedPredictions,
     ledger,
+    accuracy,
   };
 }
 
@@ -330,6 +351,7 @@ function WC26Experience() {
   const [results, setResults] = useState(seedResults);
   const [gradedPredictions, setGradedPredictions] = useState([]);
   const [ledger, setLedger] = useState(null);
+  const [accuracy, setAccuracy] = useState(null);
   const [baseGoals, setBaseGoals] = useState(DEFAULTS.baseGoals);
   const [hydrated, setHydrated] = useState(false);
   const [hasLocalRatings, setHasLocalRatings] = useState(false);
@@ -361,6 +383,7 @@ function WC26Experience() {
         if (remote.ratings && !hasLocalRatings) setRatings(remote.ratings);
         setGradedPredictions(remote.gradedPredictions || []);
         setLedger(remote.ledger || null);
+        setAccuracy(remote.accuracy || null);
 
         const parts = [
           remote.ratings ? `${Object.keys(remote.ratings).length} teams` : 'fallback teams',
@@ -400,6 +423,7 @@ function WC26Experience() {
         <OddsEntry isSuperAdmin={isSuperAdmin} fixtures={fixtures} />
         <MatchPricer ratings={ratings} opts={opts} />
         <ValueCalculator ratings={ratings} opts={opts} hydrated={hydrated} />
+        <ForwardAccuracy accuracy={accuracy} />
         <TrackRecord ratings={ratings} results={results} gradedPredictions={gradedPredictions} ledger={ledger} opts={opts} />
         <RatingsEditor
           ratings={ratings}
@@ -1164,6 +1188,84 @@ function ValueCalculator({ ratings, opts, hydrated }) {
 const FAMILY_LABEL = {
   Totals: 'Totals', BTTS: 'BTTS', TeamTotals: 'Team Totals', '1X2/draw-val': '1X2 / draw-value',
 };
+
+/*
+ * Forward accuracy — THE headline since 2026-07-03 (goal: accuracy, not edge).
+ * Three tracks graded on every pre-kickoff-logged game: the unaided Elo model,
+ * the market-anchored blend, and the devigged consensus market (the yardstick).
+ * Aggregate computed server-side at grading (wc26_meta/accuracy).
+ */
+const TRACK_LABEL = {
+  blended: 'Blended (market-anchored)',
+  elo: 'Elo model (unaided)',
+  market: 'Market (devigged consensus)',
+};
+
+function ForwardAccuracy({ accuracy }) {
+  const tracks = accuracy?.byTrack;
+  const hasData = tracks && ['elo', 'blended', 'market'].some((t) => tracks[t]?.n1x2 > 0);
+
+  return (
+    <section className={styles.card}>
+      <h2 className={styles.h2}>Forward accuracy <span className={styles.muted}>· the headline — how well each track forecasts, market as yardstick</span></h2>
+      {!hasData ? (
+        <p className={styles.empty}>
+          <b>No graded forecasts yet.</b> Every game gets probabilities logged before kickoff on three
+          tracks (Elo model, market-anchored blend, devigged market). Accuracy and Brier scores appear
+          here once results grade them.
+        </p>
+      ) : (
+        <>
+          <div className={styles.clvTiles}>
+            <Tile num={tracks.blended?.acc1x2 != null ? pct(tracks.blended.acc1x2) : 'n/a'} label="1X2 accuracy (blended)" />
+            <Tile num={tracks.blended?.brier1x2 != null ? tracks.blended.brier1x2.toFixed(3) : 'n/a'} label="1X2 Brier (blended, lower = better)" />
+            <Tile num={tracks.blended?.accOU != null ? pct(tracks.blended.accOU) : 'n/a'} label="O/U 2.5 accuracy (blended)" />
+            <Tile num={String(accuracy.gradedGames || 0)} label="graded games" />
+          </div>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Track</th>
+                  <th className={styles.num}>1X2 acc</th><th className={styles.num}>1X2 Brier</th>
+                  <th className={styles.num}>O/U acc</th><th className={styles.num}>O/U Brier</th>
+                  <th className={styles.num}>n</th>
+                </tr>
+              </thead>
+              <tbody>
+                {['blended', 'elo', 'market'].map((key) => {
+                  const t = tracks[key];
+                  if (!t || !t.n1x2) return null;
+                  return (
+                    <tr key={key}>
+                      <td>{TRACK_LABEL[key]}</td>
+                      <td className={styles.num}>{t.acc1x2 != null ? pct(t.acc1x2) : 'n/a'}</td>
+                      <td className={styles.num}>{t.brier1x2 != null ? t.brier1x2.toFixed(3) : 'n/a'}</td>
+                      <td className={styles.num}>{t.accOU != null ? pct(t.accOU) : 'n/a'}</td>
+                      <td className={styles.num}>{t.brierOU != null ? t.brierOU.toFixed(3) : 'n/a'}</td>
+                      <td className={styles.num}>{t.n1x2}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className={styles.callout}>
+            <b>Reading this:</b> Brier = mean squared error of the probabilities (0 is perfect; ~0.667
+            is a uniform 1X2 guess). The devigged market is the strongest public forecaster — the honest
+            goal is to <b>match</b> it unaided and beat it only where it&apos;s lazy. Blend weights:
+            1X2 {accuracy.weights ? Math.round(accuracy.weights.w1x2 * 100) : 50}% market,
+            totals {accuracy.weights ? Math.round(accuracy.weights.wTotals * 100) : 90}% market
+            {accuracy.retroCount ? (
+              <> · {accuracy.retroCount} early games&apos; blend/market tracks were computed at grading
+              time from their stored pre-kickoff lambdas and odds (two-track logging began 2026-07-03).</>
+            ) : null}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
 
 function TrackRecord({ ratings, results, gradedPredictions, ledger, opts }) {
   // In-sample backtest — demoted calibration check.

@@ -27,9 +27,17 @@ const matchId = (h, a) => `${slug(h)}-v-${slug(a)}`;
  * POST = write accepted consensus odds to wc26_fixtures.odds
  */
 async function run(write, request) {
-  // Any signed-in STEa member; data is ArcturusDC-scoped by tenantId + rules.
-  const access = await verifySteaWorkspaceAccess(request);
-  if (!access.ok) return json({ error: access.error }, access.status || 403);
+  // Driven either by the Firebase scheduler (`Bearer $CRON_SECRET`, same
+  // pattern as snapshot-closing) or by a signed-in STEa member (the manual
+  // "Pull live odds" button). Data is ArcturusDC-scoped by tenantId + rules.
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = request.headers.get('authorization') || '';
+  const isCron = Boolean(cronSecret) && authHeader === `Bearer ${cronSecret}`;
+  let access = { user: null };
+  if (!isCron) {
+    access = await verifySteaWorkspaceAccess(request);
+    if (!access.ok) return json({ error: access.error }, access.status || 403);
+  }
 
   const apiKey = process.env.WC26_ODDS_API_KEY;
   if (!apiKey) {
@@ -108,7 +116,7 @@ async function run(write, request) {
         marketLambdas: ml, // sharp-market-implied lambdas for the calibration blend
         kickoff: kickoff[id] || null, // exact UTC kickoff, for the closing-snapshot time gate
         oddsUpdatedAt: now,
-        oddsUpdatedBy: access.user?.email || null,
+        oddsUpdatedBy: isCron ? 'cron' : (access.user?.email || null),
       },
       { merge: true },
     );
@@ -125,7 +133,7 @@ async function run(write, request) {
       rejected: rejected.length,
       unmatched,
       requestsRemaining: fetched.remaining,
-      ranBy: access.user?.email || null,
+      ranBy: isCron ? 'cron' : (access.user?.email || null),
       updatedAt: now,
     },
     { merge: true },

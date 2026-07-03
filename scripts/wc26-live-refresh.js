@@ -66,8 +66,24 @@ async function ingest(known) {
   const res = await fetch(SOURCE_URL, { headers: { Accept: 'application/json' } });
   if (!res.ok) throw new Error(`source HTTP ${res.status}`);
   const payload = await res.json();
+
+  // Existing docs, for the played-fixture flip and the rematch guard
+  // (mirrors /api/stea/wc26/ingest — see that route for the rationale).
+  const [resSnap, fixSnap] = await Promise.all([
+    db.collection('wc26_results').where('tenantId', '==', TENANT_ID).get(),
+    db.collection('wc26_fixtures').where('tenantId', '==', TENANT_ID).get(),
+  ]);
+  const resultDates = new Map(resSnap.docs.map((d) => [d.id, d.data().date || null]));
+  const fixtureStatus = new Map(fixSnap.docs.map((d) => [d.id, d.data().status || 'scheduled']));
+  const resolveId = (home, away, date, roundName) => {
+    const base = matchId(home, away);
+    const existingDate = resultDates.get(base);
+    if (existingDate && date && existingDate !== date) return `${base}-${slug(roundName || 'rematch')}`;
+    return base;
+  };
+
   const batch = db.batch();
-  let results = 0, fixtures = 0;
+  let results = 0, fixtures = 0, finalised = 0;
   const missing = new Set();
   for (const m of payload.matches) {
     const t1 = (m.team1 || '').trim(), t2 = (m.team2 || '').trim();
@@ -78,27 +94,35 @@ async function ingest(known) {
       if (!known.has(away)) missing.add(t2);
       continue;
     }
-    const id = matchId(home, away);
+    const id = resolveId(home, away, m.date || null, m.round || null);
     const ft = m.score && m.score.ft;
     const played = Array.isArray(ft) && ft.length === 2 && Number.isInteger(ft[0]) && Number.isInteger(ft[1]);
     if (played) {
       batch.set(db.collection('wc26_results').doc(id), {
         tenantId: TENANT_ID, matchId: id, home, away, g1: ft[0], g2: ft[1],
-        neutral: true, group: m.group || null, date: m.date || null,
+        neutral: true, group: m.group || null, round: m.round || null, date: m.date || null,
         status: 'final', source: 'openfootball', updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
+      resultDates.set(id, m.date || null);
       results++;
+      if (fixtureStatus.has(id) && fixtureStatus.get(id) !== 'final') {
+        batch.set(db.collection('wc26_fixtures').doc(id), {
+          status: 'final', updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        fixtureStatus.set(id, 'final');
+        finalised++;
+      }
     } else {
       batch.set(db.collection('wc26_fixtures').doc(id), {
         tenantId: TENANT_ID, matchId: id, home, away,
-        neutral: true, group: m.group || null, date: m.date || null,
+        neutral: true, group: m.group || null, round: m.round || null, date: m.date || null,
         status: 'scheduled', source: 'openfootball', updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
       fixtures++;
     }
   }
   await batch.commit();
-  console.log(`ingest: ${results} results, ${fixtures} fixtures written; missing priors: ${[...missing].join(', ') || 'none'}`);
+  console.log(`ingest: ${results} results, ${fixtures} fixtures written, ${finalised} fixtures finalised; missing priors: ${[...missing].join(', ') || 'none'}`);
 }
 
 async function main() {

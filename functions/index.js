@@ -68,6 +68,34 @@ exports.snapshotWc26ClosingOdds = functions.pubsub
     return null;
   });
 
+// Scheduled odds + calibration refresh. Same auth pattern as the snapshot
+// driver: the Vercel route accepts `Bearer $CRON_SECRET` and does the real
+// work (The Odds API uk+eu pull → consensus odds + sharp lambdas + kickoffs
+// onto upcoming fixtures). Every 6 hours ≈ 8 API requests/day — comfortably
+// inside the 500/month free tier for the remainder of the tournament.
+exports.pullWc26Odds = functions.pubsub
+  .schedule('every 6 hours')
+  .timeZone('Europe/London')
+  .onRun(async () => {
+    const base = process.env.WC26_SITE_URL || 'https://www.arcturusdc.com';
+    const secret = process.env.WC26_CRON_SECRET;
+    if (!secret) {
+      console.warn('[wc26] odds pull skipped: WC26_CRON_SECRET not set');
+      return null;
+    }
+    try {
+      const res = await fetch(`${base}/api/stea/wc26/odds-api`, {
+        method: 'POST',
+        headers: {Authorization: `Bearer ${secret}`},
+      });
+      const body = await res.json().catch(() => ({}));
+      console.log('[wc26] odds-api:', res.status, JSON.stringify(body));
+    } catch (err) {
+      console.error('[wc26] odds-api call failed:', err.message);
+    }
+    return null;
+  });
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const LOGO_URL = 'https://arcturusdc.com/img/stea-logo.png';
