@@ -42,6 +42,14 @@ CLV coverage.
    cleaned). Rematch id-collision guard added for the final rounds. Temp
    `?debug=1` endpoint removed.
 
+**2026-07-04:** CLV pipeline confirmed live (first 3 closing snapshots + graded
+CLV). Golden Boot standings + seeded bracket-MC forecast added
+(`functions/wc26/goldenboot.js`, `wc26_meta/goldenboot`, 12 h schedule) — same
+pinned source, FIFA counting rules, assumptions disclosed on-page. The
+calibrated value scan moved into the shared engine and the prediction logger
+now flags the SAME picks as the UI board (ledger consistency fix). See
+DECISIONS.md 2026-07-04.
+
 Route: `/apps/stea/wc26` (alias `/wc26`), ArcturusDC-tenant gated.
 Firebase project `stea-775cd`, tenant `FqhckqMaorJMAQ6B29mP`.
 

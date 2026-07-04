@@ -37,128 +37,10 @@ import {
   ev,
   kelly,
   gradeHistory,
+  recommendCalibrated,
   DEFAULTS,
 } from './lib/engine';
 
-/* Per-market sharp-lambda blend weights (= market share) — mirrors
- * functions/wc26/service.js, which logs the same blended track. Forward sweep
- * 2026-07-03 (n=36 graded games): Brier improved monotonically toward the
- * market on BOTH markets. 1X2 keeps 50/50 (model graded near-market there);
- * goal markets anchor hard to the line (pure Elo 47.4% vs market 63.9% on
- * O/U 2.5 — the favourite-tail shape error the 06-21 decomposition found). */
-const W_MARKET_1X2 = 0.5;
-const W_MARKET_TOTALS = 0.9;
-// Goal-level market groups price off the totals-weighted matrix.
-const GOAL_GROUPS = new Set(['Totals', 'Team Totals', 'BTTS', 'Correct Score']);
-
-const SMALL_MARKETS = new Set(['Team Totals', 'BTTS', 'Totals', 'Correct Score']);
-const isDangerZone = (o) => o >= 1.34 && o <= 1.5;
-
-/* Build the priced matrices for a fixture: result markets off the 1X2-weighted
- * blend, goal markets off the totals-weighted blend (else pure Elo model). */
-function pricedMatchForFixture(fixture, ratings, opts) {
-  const h = ratings[fixture.home];
-  const a = ratings[fixture.away];
-  if (!h || !a) return null;
-  const model = buildMatch(h, a, { ...opts, neutral: fixture.neutral !== false });
-  const ml = fixture.marketLambdas;
-  if (ml && Number.isFinite(ml.lamHome) && Number.isFinite(ml.lamAway)) {
-    const mk = (w) => buildMatchFromLambdas(
-      w * ml.lamHome + (1 - w) * model.lamHome,
-      w * ml.lamAway + (1 - w) * model.lamAway,
-      opts,
-    );
-    return { match: mk(W_MARKET_1X2), matchGoals: mk(W_MARKET_TOTALS), calibrated: true };
-  }
-  return { match: model, matchGoals: model, calibrated: false };
-}
-
-/* Calibrated value scan — mirrors engine.recommend() but prices each fixture off
- * the blended (Elo + sharp-market) matrix. Edge therefore comes from divergence
- * in the DERIVED markets, not from disagreeing with the sharp 1X2 line. */
-function recommendCalibrated(fixtures, ratings, opts = {}) {
-  const edgeMain = 0.03;
-  const edgeSmall = 0.015;
-  const bankroll = 100;
-  const fair = (p) => (p <= 0 ? Infinity : 1 / p);
-  const out = [];
-  for (const f of fixtures || []) {
-    const pm = pricedMatchForFixture(f, ratings, opts);
-    if (!pm) continue;
-    const priced = priceAll(pm.match);
-    const pricedGoals = pm.matchGoals === pm.match ? priced : priceAll(pm.matchGoals);
-    const odds = f.odds || {};
-    for (const [sel, offered] of Object.entries(odds)) {
-      if (!offered || offered <= 1) continue;
-      let modelP = null, group = null;
-      for (const [g, mkt] of Object.entries(priced)) if (mkt[sel]) { modelP = mkt[sel][0]; group = g; break; }
-      if (modelP == null) continue;
-      // Goal markets take the totals-weighted blend's probability instead.
-      if (GOAL_GROUPS.has(group) && pricedGoals[group] && pricedGoals[group][sel]) {
-        modelP = pricedGoals[group][sel][0];
-      }
-
-      // Book's NO-VIG probability for this selection (devig against its market
-      // siblings present in the odds map). Compare against this, not the vigged
-      // price — strips the ~6.5% margin that inflated apparent edge.
-      const bookNoVigP = noVigBookProb(sel, odds);
-      // EV is still vs the price you actually take (that's what you're paid).
-      const e = ev(modelP, offered);
-      // |Δp| = honest probability disagreement, immune to longshot-odds magnification.
-      const deltaP = bookNoVigP != null ? modelP - bookNoVigP : null;
-
-      let thresh, flag = '';
-      if (SMALL_MARKETS.has(group)) thresh = edgeSmall;
-      else if (offered >= 6.0) { thresh = 0.1; flag = 'LONGSHOT — low confidence'; }
-      else thresh = edgeMain;
-      if (isDangerZone(offered) && (group === '1X2' || group === 'Asian Handicap')) flag = 'DANGER-ZONE FAV (fade)';
-      // Price-magnified: a tiny probability disagreement dressed up as a big EV by
-      // long odds. Flag regardless of how large the EV% looks.
-      const priceMagnified = deltaP != null && Math.abs(deltaP) < 0.03;
-      if (e >= thresh) {
-        out.push({
-          match: `${f.home} v ${f.away}`, group, selection: sel,
-          modelProb: modelP, fairOdds: fair(modelP), offered,
-          bookNoVigP, deltaP, priceMagnified,
-          edge: e, stakeUnits: +(kelly(modelP, offered) * bankroll).toFixed(2),
-          smallMarket: SMALL_MARKETS.has(group), flag, calibrated: pm.calibrated,
-        });
-      }
-    }
-  }
-  // Rank by absolute probability disagreement |Δp|, NOT EV% (EV% is magnified by
-  // long odds). Longshots and missing-Δp rows sink to the bottom.
-  const isLongshot = (r) => r.flag.startsWith('LONGSHOT');
-  const score = (r) => (r.deltaP == null ? -1 : Math.abs(r.deltaP));
-  out.sort((p, q) => (isLongshot(p) - isLongshot(q)) || (score(q) - score(p)));
-  return out;
-}
-
-// Market sibling groups for devig (selection keys must match engine market keys).
-const DEVIG_GROUPS = [
-  ['Home', 'Draw', 'Away'],
-  ['Over 1.5', 'Under 1.5'],
-  ['Over 2.5', 'Under 2.5'],
-  ['Over 3.5', 'Under 3.5'],
-  ['BTTS Yes', 'BTTS No'],
-  ['Home Over 0.5', 'Home Under 0.5'],
-  ['Home Over 1.5', 'Home Under 1.5'],
-  ['Away Over 0.5', 'Away Under 0.5'],
-  ['Away Over 1.5', 'Away Under 1.5'],
-];
-
-/* No-vig book probability for a selection, devigging against whichever siblings
- * the book actually quotes. Returns null if siblings aren't all present. */
-function noVigBookProb(sel, odds) {
-  const group = DEVIG_GROUPS.find((g) => g.includes(sel));
-  if (!group) return null;
-  const prices = group.map((s) => odds[s]);
-  if (prices.some((p) => !p || p <= 1)) return null;
-  const imp = prices.map((p) => 1 / p);
-  const sum = imp.reduce((a, b) => a + b, 0);
-  const idx = group.indexOf(sel);
-  return imp[idx] / sum;
-}
 import seedRatings from './data/ratings.json';
 import seedResults from './data/results.json';
 import seedFixtures from './data/fixtures.json';
@@ -213,18 +95,21 @@ async function loadWorkspaceModelData() {
   }
 
   const tenantFilter = where('tenantId', '==', ARCTURUSDC_TENANT_ID);
-  const [teamsSnap, fixturesSnap, resultsSnap, predictionsSnap, ledgerDoc, accuracyDoc] = await Promise.all([
+  const [teamsSnap, fixturesSnap, resultsSnap, predictionsSnap, ledgerDoc, accuracyDoc, goldenBootDoc] = await Promise.all([
     getDocs(query(collection(db, 'wc26_teams'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_fixtures'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_results'), tenantFilter)),
     getDocs(query(collection(db, 'wc26_predictions'), tenantFilter)),
     getDoc(doc(db, 'wc26_meta', 'ledger')),
     getDoc(doc(db, 'wc26_meta', 'accuracy')),
+    getDoc(doc(db, 'wc26_meta', 'goldenboot')),
   ]);
   // Flagged-picks forward ledger (CLV-first scorecard), computed server-side.
   const ledger = ledgerDoc.exists() ? ledgerDoc.data() : null;
   // Forward accuracy per track (the headline), computed server-side at grading.
   const accuracy = accuracyDoc.exists() ? accuracyDoc.data() : null;
+  // Golden Boot standings + seeded Monte Carlo forecast (server-side).
+  const goldenBoot = goldenBootDoc.exists() ? goldenBootDoc.data() : null;
 
   const remoteRatings = {};
   teamsSnap.forEach((doc) => {
@@ -289,6 +174,7 @@ async function loadWorkspaceModelData() {
     gradedPredictions,
     ledger,
     accuracy,
+    goldenBoot,
   };
 }
 
@@ -352,6 +238,7 @@ function WC26Experience() {
   const [gradedPredictions, setGradedPredictions] = useState([]);
   const [ledger, setLedger] = useState(null);
   const [accuracy, setAccuracy] = useState(null);
+  const [goldenBoot, setGoldenBoot] = useState(null);
   const [baseGoals, setBaseGoals] = useState(DEFAULTS.baseGoals);
   const [hydrated, setHydrated] = useState(false);
   const [hasLocalRatings, setHasLocalRatings] = useState(false);
@@ -384,6 +271,7 @@ function WC26Experience() {
         setGradedPredictions(remote.gradedPredictions || []);
         setLedger(remote.ledger || null);
         setAccuracy(remote.accuracy || null);
+        setGoldenBoot(remote.goldenBoot || null);
 
         const parts = [
           remote.ratings ? `${Object.keys(remote.ratings).length} teams` : 'fallback teams',
@@ -424,6 +312,7 @@ function WC26Experience() {
         <MatchPricer ratings={ratings} opts={opts} />
         <ValueCalculator ratings={ratings} opts={opts} hydrated={hydrated} />
         <ForwardAccuracy accuracy={accuracy} />
+        <GoldenBoot data={goldenBoot} />
         <TrackRecord ratings={ratings} results={results} gradedPredictions={gradedPredictions} ledger={ledger} opts={opts} />
         <RatingsEditor
           ratings={ratings}
@@ -1188,6 +1077,66 @@ function ValueCalculator({ ratings, opts, hydrated }) {
 const FAMILY_LABEL = {
   Totals: 'Totals', BTTS: 'BTTS', TeamTotals: 'Team Totals', '1X2/draw-val': '1X2 / draw-value',
 };
+
+/*
+ * Golden Boot — real scorer standings (openfootball, per-goal records) plus a
+ * seeded Monte Carlo forecast of the remaining bracket. Forecast, not a bet:
+ * no Golden Boot odds market on our feed, so no edge claims — accuracy-first.
+ */
+function GoldenBoot({ data }) {
+  const rows = data?.forecast || [];
+  if (!rows.length) return null;
+  const diag = data.diagnostics || {};
+  const leader = rows[0];
+  return (
+    <section className={styles.card}>
+      <h2 className={styles.h2}>Golden Boot race <span className={styles.muted}>· real standings + simulated finish ({(diag.sims || 0).toLocaleString()} bracket sims)</span></h2>
+      <div className={styles.clvTiles}>
+        <Tile num={leader.name} label={`favourite — ${leader.team}`} />
+        <Tile num={pct(leader.pTop)} label="P(top scorer, incl. ties)" />
+        <Tile num={String(leader.goals)} label="goals now" />
+        <Tile num={leader.expFinal.toFixed(1)} label="expected final goals" />
+      </div>
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Player</th><th>Team</th>
+              <th className={styles.num}>Goals</th><th className={styles.num}>(pens)</th>
+              <th className={styles.num}>E[final]</th><th className={styles.num}>P(top)</th>
+              <th className={styles.num}>P(outright)</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.slice(0, 12).map((r, i) => (
+              <tr key={i}>
+                <td>{r.name}</td>
+                <td className={styles.muted}>{r.team}</td>
+                <td className={styles.num}>{r.goals}</td>
+                <td className={`${styles.num} ${styles.muted}`}>{r.pens || 0}</td>
+                <td className={styles.num}>{r.alive ? r.expFinal.toFixed(2) : r.goals.toFixed(0)}</td>
+                <td className={styles.num}>{pct(r.pTop)}</td>
+                <td className={styles.num}>{pct(r.pOutright)}</td>
+                <td className={r.alive ? styles.edgePos : styles.muted}>{r.alive ? 'alive' : 'out'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className={styles.callout}>
+        <b>How it works:</b> goals come from the pinned openfootball per-goal records (own goals
+        excluded, extra-time goals count, shootout pens don&apos;t — FIFA rules). The forecast Monte
+        Carlos the remaining bracket with the engine&apos;s match model (sharp-market-anchored where
+        lines exist), then allocates each simulated team goal to players by their observed scoring
+        share, shrunk toward an &quot;other players&quot; bucket. Assumptions: unrecorded shootout
+        winners{diag.unknownShootouts?.length ? ` (currently: ${diag.unknownShootouts.join(', ')})` : ''} and
+        level-after-ET games resolve 50/50; FIFA&apos;s assists/minutes tiebreak is not modelled —
+        ties count every tied player as top. Deterministic seed; reruns are identical until new
+        results land.
+      </div>
+    </section>
+  );
+}
 
 /*
  * Forward accuracy — THE headline since 2026-07-03 (goal: accuracy, not edge).

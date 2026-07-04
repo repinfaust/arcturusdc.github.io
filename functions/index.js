@@ -8,6 +8,7 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const wc26 = require('./wc26/service');
+const wc26gb = require('./wc26/goldenboot');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -95,6 +96,18 @@ exports.pullWc26Odds = functions.pubsub
     }
     return null;
   });
+
+// Golden Boot: deterministic scorer standings + seeded Monte Carlo forecast
+// of the top-scorer race (same pinned openfootball source; no LLM). Twice a
+// day is plenty — it only changes when results land.
+exports.refreshWc26GoldenBoot = functions.pubsub
+  .schedule('every 12 hours')
+  .timeZone('Europe/London')
+  .onRun(wc26gb.refreshWc26GoldenBootScheduled);
+
+exports.refreshWc26GoldenBootNow = functions.https.onCall(
+  wc26gb.refreshWc26GoldenBootNow,
+);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

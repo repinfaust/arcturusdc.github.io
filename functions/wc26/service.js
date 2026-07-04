@@ -345,8 +345,12 @@ function predictionPayload(fixture, ratings, existing) {
     neutral: fixture.neutral !== false,
   });
   const prices = engine.priceAll(match);
-  const ranked = engine.recommend([fixture], ratings);
-  const top = engine.topRecommendation([fixture], ratings);
+  // Flag picks off the SAME calibrated board the UI shows (blended matrices,
+  // no-vig comparison, |Δp| ranking) so the graded ledger measures the picks
+  // a user actually saw. Falls back to pure-Elo pricing inside the engine
+  // when the fixture has no sharp lambdas.
+  const ranked = engine.recommendCalibrated([fixture], ratings);
+  const top = engine.topRecommendationCalibrated([fixture], ratings);
 
   const payload = {
     tenantId: ARCTURUSDC_TENANT_ID,

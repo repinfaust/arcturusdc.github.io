@@ -198,6 +198,121 @@ function topRecommendation(fixtures, ratings, opts = {}) {
   return (small[0] || all[0]);
 }
 
+// ---- calibrated (market-anchored) value scan ------------------------------
+// Per-market sharp-lambda blend weights (= market share). Forward sweep
+// 2026-07-03 (n=36 graded games): Brier improved monotonically toward the
+// market on both markets; goal markets anchor hard to the line (pure Elo
+// graded 47.4% vs market 63.9% on O/U 2.5). Lives in the engine so the UI
+// board and the server-side prediction logger flag the SAME picks.
+const W_MARKET_1X2 = 0.5;
+const W_MARKET_TOTALS = 0.9;
+const GOAL_GROUPS = new Set(["Totals", "Team Totals", "BTTS", "Correct Score"]);
+
+// Market sibling groups for devig (selection keys match engine market keys).
+const DEVIG_GROUPS = [
+  ["Home", "Draw", "Away"],
+  ["Over 1.5", "Under 1.5"],
+  ["Over 2.5", "Under 2.5"],
+  ["Over 3.5", "Under 3.5"],
+  ["BTTS Yes", "BTTS No"],
+  ["Home Over 0.5", "Home Under 0.5"],
+  ["Home Over 1.5", "Home Under 1.5"],
+  ["Away Over 0.5", "Away Under 0.5"],
+  ["Away Over 1.5", "Away Under 1.5"],
+];
+
+/** No-vig book probability for a selection, devigging against whichever
+ * siblings the book actually quotes. Null if siblings aren't all present. */
+function noVigBookProb(sel, odds) {
+  const group = DEVIG_GROUPS.find((g) => g.includes(sel));
+  if (!group) return null;
+  const prices = group.map((s) => odds[s]);
+  if (prices.some((p) => !p || p <= 1)) return null;
+  const imp = prices.map((p) => 1 / p);
+  const sum = imp.reduce((a, b) => a + b, 0);
+  return imp[group.indexOf(sel)] / sum;
+}
+
+/** Priced matrices for a fixture: result markets off the 1X2-weighted blend,
+ * goal markets off the totals-weighted blend (else pure Elo model). */
+function pricedMatchForFixture(fixture, ratings, opts = {}) {
+  const h = ratings[fixture.home];
+  const a = ratings[fixture.away];
+  if (!h || !a) return null;
+  const model = buildMatch(h, a, { ...opts, neutral: fixture.neutral !== false });
+  const ml = fixture.marketLambdas;
+  if (ml && Number.isFinite(ml.lamHome) && Number.isFinite(ml.lamAway)) {
+    const mk = (w) => buildMatchFromLambdas(
+      w * ml.lamHome + (1 - w) * model.lamHome,
+      w * ml.lamAway + (1 - w) * model.lamAway,
+      opts,
+    );
+    return { match: mk(W_MARKET_1X2), matchGoals: mk(W_MARKET_TOTALS), calibrated: true };
+  }
+  return { match: model, matchGoals: model, calibrated: false };
+}
+
+/** Calibrated value scan — recommend() but priced off the blended matrices,
+ * compared against the book's no-vig probability, ranked by |Δp|. */
+function recommendCalibrated(fixtures, ratings, opts = {}) {
+  const edgeMain = opts.edgeMain ?? 0.03;
+  const edgeSmall = opts.edgeSmall ?? 0.015;
+  const bankroll = opts.bankroll ?? 100;
+  const fair = (p) => (p <= 0 ? Infinity : 1 / p);
+  const out = [];
+  for (const f of fixtures || []) {
+    const pm = pricedMatchForFixture(f, ratings, opts);
+    if (!pm) continue;
+    const priced = priceAll(pm.match);
+    const pricedGoals = pm.matchGoals === pm.match ? priced : priceAll(pm.matchGoals);
+    const odds = f.odds || {};
+    for (const [sel, offered] of Object.entries(odds)) {
+      if (!offered || offered <= 1) continue;
+      let modelP = null, group = null;
+      for (const [g, mkt] of Object.entries(priced)) if (mkt[sel]) { modelP = mkt[sel][0]; group = g; break; }
+      if (modelP == null) continue;
+      // Goal markets take the totals-weighted blend's probability instead.
+      if (GOAL_GROUPS.has(group) && pricedGoals[group] && pricedGoals[group][sel]) {
+        modelP = pricedGoals[group][sel][0];
+      }
+      const bookNoVigP = noVigBookProb(sel, odds);
+      // EV is still vs the price you actually take (that's what you're paid).
+      const e = ev(modelP, offered);
+      // |Δp| = honest probability disagreement, immune to longshot magnification.
+      const deltaP = bookNoVigP != null ? modelP - bookNoVigP : null;
+      let thresh, flag = "";
+      if (SMALL_MARKETS.has(group)) thresh = edgeSmall;
+      else if (offered >= 6.0) { thresh = 0.10; flag = "LONGSHOT — low confidence"; }
+      else thresh = edgeMain;
+      if (dangerZone(offered) && (group === "1X2" || group === "Asian Handicap")) flag = "DANGER-ZONE FAV (fade)";
+      const priceMagnified = deltaP != null && Math.abs(deltaP) < 0.03;
+      if (e >= thresh) {
+        out.push({
+          match: `${f.home} v ${f.away}`, group, selection: sel,
+          modelProb: modelP, fairOdds: fair(modelP), offered,
+          bookNoVigP, deltaP, priceMagnified,
+          edge: e, stakeUnits: +(kelly(modelP, offered) * bankroll).toFixed(2),
+          smallMarket: SMALL_MARKETS.has(group), flag, calibrated: pm.calibrated,
+        });
+      }
+    }
+  }
+  const isLongshot = (r) => r.flag.startsWith("LONGSHOT");
+  const score = (r) => (r.deltaP == null ? -1 : Math.abs(r.deltaP));
+  out.sort((p, q) => (isLongshot(p) - isLongshot(q)) || (score(q) - score(p)));
+  return out;
+}
+
+/** Headline pick off the calibrated board: best non-longshot, non-price-
+ * magnified value pick, small markets preferred. */
+function topRecommendationCalibrated(fixtures, ratings, opts = {}) {
+  const all = recommendCalibrated(fixtures, ratings, opts)
+    .filter((r) => !r.flag.startsWith("LONGSHOT") && !r.priceMagnified);
+  if (!all.length) return null;
+  const small = all.filter((r) => r.smallMarket);
+  return (small[0] || all[0]);
+}
+
 // ---- model track-record grading (strike rate) -----------------------------
 /**
  * results: [{ home, away, g1, g2 }]  (completed games)
@@ -251,5 +366,11 @@ module.exports = {
   kelly,
   recommend,
   topRecommendation,
+  W_MARKET_1X2,
+  W_MARKET_TOTALS,
+  noVigBookProb,
+  pricedMatchForFixture,
+  recommendCalibrated,
+  topRecommendationCalibrated,
   gradeHistory,
 };
