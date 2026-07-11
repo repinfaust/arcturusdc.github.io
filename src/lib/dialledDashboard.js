@@ -28,6 +28,7 @@ export const METRIC_DEFINITIONS = `
 - events30d (per user): rides + AI exchanges + maintenance entries created in the last 30 days.
 - daysToFirstBike: whole days between user signup and their earliest bike creation.
 - ga4 section: aggregate Google Analytics data (sessions, active users, event counts). It cannot be split by free vs premium.
+- distributions section: how bikes/rides/maintenanceEntries/aiConversations counts are spread across all riders (bucketed histograms + min/median/mean/p90/max), independent of free vs premium. Shows whether usage is concentrated in a few power users or spread evenly.
 `.trim();
 
 function toIso(value) {
@@ -59,6 +60,29 @@ function median(values) {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function bucketDistribution(values, buckets) {
+  const counts = buckets.map(() => 0);
+  for (const value of values) {
+    const index = buckets.findIndex((bucket) => value >= bucket.min && value <= bucket.max);
+    counts[index === -1 ? buckets.length - 1 : index] += 1;
+  }
+  return buckets.map((bucket, index) => ({ label: bucket.label, count: counts[index] }));
+}
+
+function distributionSummary(values) {
+  if (!values.length) return { min: 0, max: 0, median: 0, mean: 0, p90: 0 };
+  const sorted = [...values].sort((a, b) => a - b);
+  const sum = sorted.reduce((total, value) => total + value, 0);
+  const p90Index = Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.9) - 1);
+  return {
+    min: sorted[0],
+    max: sorted[sorted.length - 1],
+    median: median(sorted),
+    mean: Math.round((sum / sorted.length) * 10) / 10,
+    p90: sorted[p90Index],
+  };
 }
 
 function pct(part, whole) {
@@ -350,6 +374,51 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
       aiUsed: row.aiConversations > 0,
     }));
 
+  const BIKE_BUCKETS = [
+    { label: '0', min: 0, max: 0 },
+    { label: '1', min: 1, max: 1 },
+    { label: '2', min: 2, max: 2 },
+    { label: '3+', min: 3, max: Infinity },
+  ];
+  const RIDE_BUCKETS = [
+    { label: '0', min: 0, max: 0 },
+    { label: '1-2', min: 1, max: 2 },
+    { label: '3-5', min: 3, max: 5 },
+    { label: '6-15', min: 6, max: 15 },
+    { label: '16+', min: 16, max: Infinity },
+  ];
+  const MAINTENANCE_BUCKETS = [
+    { label: '0', min: 0, max: 0 },
+    { label: '1-2', min: 1, max: 2 },
+    { label: '3-5', min: 3, max: 5 },
+    { label: '6+', min: 6, max: Infinity },
+  ];
+  const AI_BUCKETS = [
+    { label: '0', min: 0, max: 0 },
+    { label: '1-2', min: 1, max: 2 },
+    { label: '3-5', min: 3, max: 5 },
+    { label: '6+', min: 6, max: Infinity },
+  ];
+
+  const distributions = {
+    bikes: {
+      buckets: bucketDistribution(userRows.map((row) => row.bikes), BIKE_BUCKETS),
+      summary: distributionSummary(userRows.map((row) => row.bikes)),
+    },
+    rides: {
+      buckets: bucketDistribution(userRows.map((row) => row.rides), RIDE_BUCKETS),
+      summary: distributionSummary(userRows.map((row) => row.rides)),
+    },
+    maintenanceEntries: {
+      buckets: bucketDistribution(userRows.map((row) => row.maintenanceEntries), MAINTENANCE_BUCKETS),
+      summary: distributionSummary(userRows.map((row) => row.maintenanceEntries)),
+    },
+    aiConversations: {
+      buckets: bucketDistribution(userRows.map((row) => row.aiConversations), AI_BUCKETS),
+      summary: distributionSummary(userRows.map((row) => row.aiConversations)),
+    },
+  };
+
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
     generatedAt,
@@ -369,6 +438,7 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
       weeklyCohorts,
       recentRegistrantsWithoutBike,
     },
+    distributions,
     users: userRows.sort((a, b) => String(b.lastActiveAt || '').localeCompare(String(a.lastActiveAt || ''))),
   };
 }

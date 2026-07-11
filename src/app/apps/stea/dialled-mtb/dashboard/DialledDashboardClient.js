@@ -123,6 +123,42 @@ function Sparkline({ points, width = 560, height = 96 }) {
   );
 }
 
+function DistributionChart({ title, unitLabel, distribution }) {
+  if (!distribution) return null;
+  const { buckets, summary } = distribution;
+  const max = Math.max(1, ...buckets.map((bucket) => bucket.count));
+  const total = buckets.reduce((sum, bucket) => sum + bucket.count, 0);
+  return (
+    <div className="rounded-lg border border-white/10 bg-[#0D1013] p-4">
+      <p className="text-xs font-bold text-[#D7DCE0]">{title}</p>
+      <div className="mt-3 space-y-2">
+        {buckets.map((bucket) => {
+          const share = total ? Math.round((bucket.count / total) * 100) : 0;
+          return (
+            <div key={bucket.label} className="grid grid-cols-[52px_1fr_auto] items-center gap-2.5">
+              <p className="text-right text-[11px] font-mono text-[#68717A]">{bucket.label}</p>
+              <div className="h-4 overflow-hidden rounded-r-[4px] bg-white/[0.04]">
+                <div
+                  className="h-full rounded-r-[4px]"
+                  style={{ width: `${Math.max(1.5, (bucket.count / max) * 100)}%`, background: COLOR_FREE }}
+                  title={`${bucket.count} riders (${share}%)`}
+                />
+              </div>
+              <p className="w-16 shrink-0 text-right font-mono text-[11px] text-[#F4F6F8]">{bucket.count}</p>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-white/5 pt-3 text-[10px] text-[#68717A]">
+        <span>Median <span className="text-[#D7DCE0]">{summary.median}</span> {unitLabel}</span>
+        <span>Mean <span className="text-[#D7DCE0]">{summary.mean}</span></span>
+        <span>P90 <span className="text-[#D7DCE0]">{summary.p90}</span></span>
+        <span>Max <span className="text-[#D7DCE0]">{summary.max}</span></span>
+      </div>
+    </div>
+  );
+}
+
 function SegmentBar({ pctValue, color }) {
   return (
     <div className="h-3.5 w-full overflow-hidden rounded-r-[3px] bg-white/[0.04]">
@@ -290,7 +326,7 @@ export default function DialledDashboardClient() {
 
   useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get('tab');
-    if (tab === 'engagement') setActiveTab('engagement');
+    if (tab === 'engagement' || tab === 'riders') setActiveTab(tab);
   }, []);
 
   useEffect(() => {
@@ -366,7 +402,7 @@ export default function DialledDashboardClient() {
   function switchTab(tab) {
     setActiveTab(tab);
     const url = new URL(window.location.href);
-    if (tab === 'engagement') url.searchParams.set('tab', 'engagement');
+    if (tab === 'engagement' || tab === 'riders') url.searchParams.set('tab', tab);
     else url.searchParams.delete('tab');
     window.history.replaceState(null, '', url.toString());
   }
@@ -446,6 +482,7 @@ export default function DialledDashboardClient() {
           {[
             ['exec', 'Exec summary'],
             ['engagement', 'Engagement & onboarding'],
+            ['riders', 'Rider distribution'],
           ].map(([tab, label]) => (
             <button
               key={tab}
@@ -546,7 +583,9 @@ export default function DialledDashboardClient() {
                   </SectionCard>
                 ) : null}
               </>
-            ) : (
+            ) : null}
+
+            {activeTab === 'engagement' ? (
               <>
                 <SectionCard
                   eyebrow="Free vs premium"
@@ -668,8 +707,25 @@ export default function DialledDashboardClient() {
                     </div>
                   ) : null}
                 </SectionCard>
+              </>
+            ) : null}
 
-                <details className="group rounded-xl border border-white/10 bg-[#12161A]">
+            {activeTab === 'riders' ? (
+              <>
+                <SectionCard
+                  eyebrow="Rider distribution"
+                  title="How usage is spread across the whole user base"
+                  subtitle="Every rider counted once, free and premium together — shows whether activity is concentrated in a few power users or spread evenly. Pseudonymous uids only."
+                >
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <DistributionChart title="Bikes per rider" unitLabel="bikes" distribution={snapshot.distributions?.bikes} />
+                    <DistributionChart title="Rides per rider" unitLabel="rides" distribution={snapshot.distributions?.rides} />
+                    <DistributionChart title="Maintenance logs per rider" unitLabel="logs" distribution={snapshot.distributions?.maintenanceEntries} />
+                    <DistributionChart title="AI conversations per rider" unitLabel="conversations" distribution={snapshot.distributions?.aiConversations} />
+                  </div>
+                </SectionCard>
+
+                <details className="group rounded-xl border border-white/10 bg-[#12161A]" open>
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-5 outline-none transition hover:bg-white/[0.02] sm:px-6 [&::-webkit-details-marker]:hidden">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#F72585]">Rider detail</p>
@@ -725,7 +781,7 @@ export default function DialledDashboardClient() {
                   </div>
                 </details>
               </>
-            )}
+            ) : null}
 
             <AskPanel authenticatedFetch={authenticatedFetch} tenantId={currentTenant.id} generatedAt={snapshot.generatedAt} />
           </div>
