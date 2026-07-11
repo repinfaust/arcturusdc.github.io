@@ -1,0 +1,491 @@
+import { BetaAnalyticsDataClient } from '@google-analytics/data';
+
+import { getDialledMtbAdmin } from '@/lib/dialledMtbAdmin';
+
+const SNAPSHOT_COLLECTION = 'dashboardSnapshots';
+const SNAPSHOT_SCHEMA_VERSION = 1;
+const GA4_LAUNCH_DATE = '2026-05-01';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const FUNNEL_STAGES = [
+  { stage: 'registered', label: 'Registered' },
+  { stage: 'bikeCreated', label: 'Bike Created' },
+  { stage: 'setupComplete', label: 'Setup Complete' },
+  { stage: 'stravaConnected', label: 'Strava Connected' },
+  { stage: 'premium', label: 'Premium' },
+  { stage: 'rideLogged', label: 'Ride Logged' },
+  { stage: 'maintenance', label: 'Maintenance' },
+];
+
+export const METRIC_DEFINITIONS = `
+- registeredUsers: count of user profile documents.
+- premiumUsers: users whose RevenueCat-mirrored subscription.isPremium is true right now (churned users count as free).
+- bikeProfiles: bikes not archived; bikeProfilesArchived counted separately.
+- Funnel stages (distinct users, not sequential-gated): registered; bikeCreated = owns >=1 bike (incl. archived); setupComplete = >=1 bike with suspension/tyre setup data saved; stravaConnected = Strava OAuth connection exists; premium; rideLogged = >=1 ride document; maintenance = >=1 logged service event (a completed/recorded service, not an auto-generated schedule task).
+- aiConversations: AI advisor/insight exchanges (aiInsights docs + advisor chat history docs).
+- lastActiveAt (per user): most recent createdAt across their rides, AI exchanges, maintenance entries and bikes. Deliberate in-app actions only.
+- active7d / active30d: lastActiveAt within 7 / 30 days of the snapshot generatedAt. neverActive: no qualifying action ever.
+- events30d (per user): rides + AI exchanges + maintenance entries created in the last 30 days.
+- daysToFirstBike: whole days between user signup and their earliest bike creation.
+- ga4 section: aggregate Google Analytics data (sessions, active users, event counts). It cannot be split by free vs premium.
+`.trim();
+
+function toIso(value) {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+  if (typeof value === 'object' && typeof value._seconds === 'number') {
+    return new Date(value._seconds * 1000).toISOString();
+  }
+  return null;
+}
+
+function maxIso(...values) {
+  const valid = values.filter(Boolean).sort();
+  return valid.length ? valid[valid.length - 1] : null;
+}
+
+function minIso(...values) {
+  const valid = values.filter(Boolean).sort();
+  return valid.length ? valid[0] : null;
+}
+
+function median(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function pct(part, whole) {
+  if (!whole) return 0;
+  return Math.round((part / whole) * 1000) / 10;
+}
+
+function isoWeekStart(isoDate) {
+  const date = new Date(isoDate);
+  const day = (date.getUTCDay() + 6) % 7; // Monday = 0
+  const monday = new Date(date.getTime() - day * DAY_MS);
+  return monday.toISOString().slice(0, 10);
+}
+
+function normalizeRideSource(source) {
+  const value = String(source || '').toLowerCase();
+  if (value.includes('strava')) return 'strava';
+  if (value.includes('health')) return 'health';
+  return 'manual';
+}
+
+function mapDocs(snapshot) {
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+}
+
+async function fetchFirestoreSource(db) {
+  const [
+    users,
+    bikes,
+    rides,
+    maintenanceEntries,
+    maintenanceTasks,
+    stravaConnections,
+    aiInsights,
+    feedback,
+    userFeatureFlags,
+    advisorHistorySnap,
+    serviceEvents,
+  ] = await Promise.all([
+    db.collection('users').get(),
+    db.collection('bikes').get(),
+    db.collection('rides').get(),
+    db.collection('maintenanceEntries').get(),
+    db.collection('maintenanceTasks').get(),
+    db.collection('stravaConnections').get(),
+    db.collection('aiInsights').get(),
+    db.collection('feedback').get(),
+    db.collection('userFeatureFlags').get(),
+    db.collectionGroup('advisorHistory').get(),
+    // Completed services live at bikes/{bikeId}/serviceEvents; the top-level
+    // maintenanceEntries collection is empty in production but kept in the union.
+    db.collectionGroup('serviceEvents').get(),
+  ]);
+
+  return {
+    users: mapDocs(users),
+    bikes: mapDocs(bikes),
+    rides: mapDocs(rides),
+    maintenanceEntries: [...mapDocs(maintenanceEntries), ...mapDocs(serviceEvents)],
+    maintenanceTasks: mapDocs(maintenanceTasks),
+    stravaConnections: mapDocs(stravaConnections),
+    aiInsights: mapDocs(aiInsights),
+    feedback: mapDocs(feedback),
+    userFeatureFlags: mapDocs(userFeatureFlags),
+    advisorHistory: advisorHistorySnap.docs.map((doc) => ({
+      id: doc.id,
+      ownerUid: doc.ref.parent.parent?.id || null,
+      ...doc.data(),
+    })),
+  };
+}
+
+function groupByOwner(items, ownerKey = 'ownerUid') {
+  const map = new Map();
+  for (const item of items) {
+    const uid = item[ownerKey];
+    if (!uid) continue;
+    if (!map.has(uid)) map.set(uid, []);
+    map.get(uid).push(item);
+  }
+  return map;
+}
+
+export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), trigger = 'manual', actorEmail = null, ga4 = null } = {}) {
+  const now = new Date(generatedAt).getTime();
+  const cutoff7d = new Date(now - 7 * DAY_MS).toISOString();
+  const cutoff30d = new Date(now - 30 * DAY_MS).toISOString();
+
+  const bikesByOwner = groupByOwner(raw.bikes);
+  const ridesByOwner = groupByOwner(raw.rides);
+  const maintenanceByOwner = groupByOwner(raw.maintenanceEntries);
+  const tasksByOwner = groupByOwner(raw.maintenanceTasks);
+  const aiByOwner = groupByOwner(raw.aiInsights);
+  const advisorByOwner = groupByOwner(raw.advisorHistory);
+  const feedbackByOwner = groupByOwner(
+    raw.feedback.map((item) => ({ ...item, ownerUid: item.uid || item.ownerUid || null })),
+  );
+  const stravaUids = new Set(raw.stravaConnections.map((doc) => doc.id));
+  const flagsByUid = new Map(raw.userFeatureFlags.map((doc) => [doc.id, doc]));
+
+  const userRows = raw.users.map((userDoc) => {
+    const uid = userDoc.id;
+    const createdAt = toIso(userDoc.createdAt);
+    const isPremium = userDoc.subscription?.isPremium === true;
+
+    const bikes = bikesByOwner.get(uid) || [];
+    const rides = ridesByOwner.get(uid) || [];
+    const maintenance = maintenanceByOwner.get(uid) || [];
+    const tasks = tasksByOwner.get(uid) || [];
+    const ai = [...(aiByOwner.get(uid) || []), ...(advisorByOwner.get(uid) || [])];
+    const feedbackItems = feedbackByOwner.get(uid) || [];
+
+    const ridesBySource = { manual: 0, strava: 0, health: 0 };
+    for (const ride of rides) ridesBySource[normalizeRideSource(ride.source)] += 1;
+
+    const bikeCreatedTimes = bikes.map((bike) => toIso(bike.createdAt)).filter(Boolean);
+    const firstBikeAt = minIso(...bikeCreatedTimes);
+    const lastRideAt = maxIso(...rides.map((ride) => toIso(ride.createdAt)));
+    const lastAiAt = maxIso(...ai.map((item) => toIso(item.createdAt)));
+    const lastMaintenanceAt = maxIso(...maintenance.map((item) => toIso(item.createdAt)));
+    const lastActiveAt = maxIso(lastRideAt, lastAiAt, lastMaintenanceAt, maxIso(...bikeCreatedTimes));
+
+    let daysToFirstBike = null;
+    if (createdAt && firstBikeAt) {
+      daysToFirstBike = Math.max(0, Math.floor((new Date(firstBikeAt) - new Date(createdAt)) / DAY_MS));
+    }
+
+    const events30d = [...rides, ...ai, ...maintenance]
+      .map((item) => toIso(item.createdAt))
+      .filter((time) => time && time >= cutoff30d).length;
+
+    const flagsDoc = flagsByUid.get(uid) || {};
+    const labsFlags = Object.entries(flagsDoc)
+      .filter(([key, value]) => key !== 'id' && value === true)
+      .map(([key]) => key);
+
+    return {
+      uid,
+      createdAt,
+      isPremium,
+      bikes: bikes.length,
+      bikesArchived: bikes.filter((bike) => bike.isArchived === true).length,
+      bikesWithSetup: bikes.filter((bike) => bike.setupData != null).length,
+      rides: rides.length,
+      ridesBySource,
+      lastRideAt,
+      maintenanceEntries: maintenance.length,
+      maintenanceDue: tasks.filter((task) => task.isDue === true).length,
+      stravaConnected: stravaUids.has(uid) || userDoc.stravaConnected === true,
+      aiConversations: ai.length,
+      lastAiAt,
+      feedback: feedbackItems.length,
+      labsFlags,
+      firstBikeAt,
+      daysToFirstBike,
+      lastActiveAt,
+      events30d,
+    };
+  });
+
+  const premiumRows = userRows.filter((row) => row.isPremium);
+  const freeRows = userRows.filter((row) => !row.isPremium);
+
+  const totals = {
+    registeredUsers: userRows.length,
+    premiumUsers: premiumRows.length,
+    freeUsers: freeRows.length,
+    bikeProfiles: raw.bikes.filter((bike) => bike.isArchived !== true).length,
+    bikeProfilesArchived: raw.bikes.filter((bike) => bike.isArchived === true).length,
+    totalRides: raw.rides.length,
+    ridesBySource: raw.rides.reduce(
+      (acc, ride) => {
+        acc[normalizeRideSource(ride.source)] += 1;
+        return acc;
+      },
+      { manual: 0, strava: 0, health: 0 },
+    ),
+    stravaConnectedUsers: userRows.filter((row) => row.stravaConnected).length,
+    usersWithMaintenanceActivity: userRows.filter((row) => row.maintenanceEntries > 0).length,
+    usersWithMaintenanceDue: userRows.filter((row) => row.maintenanceDue > 0).length,
+    aiConversations: raw.aiInsights.length + raw.advisorHistory.length,
+    usersWithAi: userRows.filter((row) => row.aiConversations > 0).length,
+    feedbackCount: raw.feedback.length,
+  };
+
+  const stageTest = {
+    registered: () => true,
+    bikeCreated: (row) => row.bikes > 0,
+    setupComplete: (row) => row.bikesWithSetup > 0,
+    stravaConnected: (row) => row.stravaConnected,
+    premium: (row) => row.isPremium,
+    rideLogged: (row) => row.rides > 0,
+    maintenance: (row) => row.maintenanceEntries > 0,
+  };
+
+  const funnel = FUNNEL_STAGES.map(({ stage, label }) => ({
+    stage,
+    label,
+    count: userRows.filter(stageTest[stage]).length,
+  }));
+
+  const featureTests = [
+    { feature: 'bikeCreated', label: 'Bike created', test: (row) => row.bikes > 0, events: (row) => row.bikes },
+    { feature: 'setupCompleted', label: 'Setup completed', test: (row) => row.bikesWithSetup > 0, events: (row) => row.bikesWithSetup },
+    { feature: 'rideLoggedManual', label: 'Rides — manual', test: (row) => row.ridesBySource.manual > 0, events: (row) => row.ridesBySource.manual },
+    { feature: 'rideLoggedStrava', label: 'Rides — Strava', test: (row) => row.ridesBySource.strava > 0, events: (row) => row.ridesBySource.strava },
+    { feature: 'rideLoggedHealth', label: 'Rides — Health', test: (row) => row.ridesBySource.health > 0, events: (row) => row.ridesBySource.health },
+    { feature: 'stravaConnected', label: 'Strava connected', test: (row) => row.stravaConnected, events: (row) => (row.stravaConnected ? 1 : 0) },
+    { feature: 'maintenanceLogged', label: 'Maintenance logged', test: (row) => row.maintenanceEntries > 0, events: (row) => row.maintenanceEntries },
+    { feature: 'aiAdvisorUsed', label: 'AI advisor used', test: (row) => row.aiConversations > 0, events: (row) => row.aiConversations },
+    { feature: 'feedbackSent', label: 'Feedback sent', test: (row) => row.feedback > 0, events: (row) => row.feedback },
+    { feature: 'labsFlagEnabled', label: 'Labs feature enabled', test: (row) => row.labsFlags.length > 0, events: (row) => row.labsFlags.length },
+  ];
+
+  function segmentStats(rows, { test, events }) {
+    const using = rows.filter(test);
+    return {
+      users: using.length,
+      events: rows.reduce((sum, row) => sum + events(row), 0),
+      pctOfSegment: pct(using.length, rows.length),
+    };
+  }
+
+  const featureMatrix = featureTests.map(({ feature, label, test, events }) => ({
+    feature,
+    label,
+    free: segmentStats(freeRows, { test, events }),
+    premium: segmentStats(premiumRows, { test, events }),
+  }));
+
+  function activityStats(rows) {
+    const active30 = rows.filter((row) => row.lastActiveAt && row.lastActiveAt >= cutoff30d);
+    const totalEvents30d = active30.reduce((sum, row) => sum + row.events30d, 0);
+    return {
+      active7d: rows.filter((row) => row.lastActiveAt && row.lastActiveAt >= cutoff7d).length,
+      active30d: active30.length,
+      neverActive: rows.filter((row) => !row.lastActiveAt).length,
+      avgEventsPerActive30d: active30.length ? Math.round((totalEvents30d / active30.length) * 10) / 10 : 0,
+    };
+  }
+
+  const timeToFirstBike = { sameDay: 0, d1to3: 0, d4to7: 0, d8plus: 0, never: 0 };
+  const daysToBikeValues = [];
+  for (const row of userRows) {
+    if (row.daysToFirstBike == null) {
+      timeToFirstBike.never += 1;
+      continue;
+    }
+    daysToBikeValues.push(row.daysToFirstBike);
+    if (row.daysToFirstBike === 0) timeToFirstBike.sameDay += 1;
+    else if (row.daysToFirstBike <= 3) timeToFirstBike.d1to3 += 1;
+    else if (row.daysToFirstBike <= 7) timeToFirstBike.d4to7 += 1;
+    else timeToFirstBike.d8plus += 1;
+  }
+
+  const cohortMap = new Map();
+  for (const row of userRows) {
+    if (!row.createdAt) continue;
+    const weekStart = isoWeekStart(row.createdAt);
+    if (!cohortMap.has(weekStart)) {
+      cohortMap.set(weekStart, {
+        weekStart,
+        registered: 0,
+        bikeCreated: 0,
+        setupComplete: 0,
+        stravaConnected: 0,
+        premium: 0,
+        rideLogged: 0,
+      });
+    }
+    const cohort = cohortMap.get(weekStart);
+    cohort.registered += 1;
+    if (row.bikes > 0) cohort.bikeCreated += 1;
+    if (row.bikesWithSetup > 0) cohort.setupComplete += 1;
+    if (row.stravaConnected) cohort.stravaConnected += 1;
+    if (row.isPremium) cohort.premium += 1;
+    if (row.rides > 0) cohort.rideLogged += 1;
+  }
+  const weeklyCohorts = [...cohortMap.values()].sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+
+  const recentRegistrantsWithoutBike = userRows
+    .filter((row) => row.bikes === 0 && row.createdAt && row.createdAt >= cutoff30d)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((row) => ({
+      uid: row.uid,
+      createdAt: row.createdAt,
+      daysSinceSignup: Math.floor((now - new Date(row.createdAt).getTime()) / DAY_MS),
+      stravaConnected: row.stravaConnected,
+      aiUsed: row.aiConversations > 0,
+    }));
+
+  return {
+    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+    generatedAt,
+    trigger,
+    actorEmail,
+    totals,
+    ga4: ga4 || { error: 'GA4 metrics were not fetched.' },
+    funnel,
+    engagement: {
+      featureMatrix,
+      activity: { free: activityStats(freeRows), premium: activityStats(premiumRows) },
+    },
+    onboarding: {
+      pctNeverCreatedBike: pct(timeToFirstBike.never, userRows.length),
+      medianDaysToFirstBike: median(daysToBikeValues),
+      timeToFirstBike,
+      weeklyCohorts,
+      recentRegistrantsWithoutBike,
+    },
+    users: userRows.sort((a, b) => String(b.lastActiveAt || '').localeCompare(String(a.lastActiveAt || ''))),
+  };
+}
+
+function readGa4Credentials() {
+  const raw =
+    process.env.DIALLED_MTB_FIREBASE_SERVICE_ACCOUNT_KEY_JSON ||
+    process.env.DIALLED_MTB_FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!raw) throw new Error('Dialled MTB service account is not configured.');
+  const trimmed = raw.trim();
+  const jsonString = trimmed.startsWith('{') ? trimmed : Buffer.from(trimmed, 'base64').toString('utf8');
+  return JSON.parse(jsonString);
+}
+
+async function fetchGa4Metrics() {
+  const propertyId = process.env.DIALLED_MTB_GA4_PROPERTY_ID;
+  if (!propertyId) return { error: 'DIALLED_MTB_GA4_PROPERTY_ID is not set.' };
+
+  try {
+    const credentials = readGa4Credentials();
+    const client = new BetaAnalyticsDataClient({
+      credentials: {
+        client_email: credentials.client_email,
+        private_key: credentials.private_key,
+      },
+    });
+    const property = `properties/${propertyId}`;
+
+    const [lifetime, last30, dailySessions, eventsLifetime, events30] = await Promise.all([
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: GA4_LAUNCH_DATE, endDate: 'today' }],
+        metrics: [{ name: 'sessions' }, { name: 'activeUsers' }],
+      }),
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+        metrics: [{ name: 'sessions' }, { name: 'activeUsers' }],
+      }),
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+        dimensions: [{ name: 'date' }],
+        metrics: [{ name: 'sessions' }],
+        orderBys: [{ dimension: { dimensionName: 'date' } }],
+      }),
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: GA4_LAUNCH_DATE, endDate: 'today' }],
+        dimensions: [{ name: 'eventName' }],
+        metrics: [{ name: 'eventCount' }],
+        limit: 100,
+      }),
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+        dimensions: [{ name: 'eventName' }],
+        metrics: [{ name: 'eventCount' }],
+        limit: 100,
+      }),
+    ]);
+
+    const metricValue = (report, index = 0) =>
+      Number(report[0]?.rows?.[0]?.metricValues?.[index]?.value || 0);
+
+    const events30Map = new Map(
+      (events30[0]?.rows || []).map((row) => [row.dimensionValues[0].value, Number(row.metricValues[0].value)]),
+    );
+
+    return {
+      sessionsLifetime: metricValue(lifetime, 0),
+      activeUsersLifetime: metricValue(lifetime, 1),
+      sessions30d: metricValue(last30, 0),
+      activeUsers30d: metricValue(last30, 1),
+      dailySessions30d: (dailySessions[0]?.rows || []).map((row) => ({
+        date: row.dimensionValues[0].value,
+        sessions: Number(row.metricValues[0].value),
+      })),
+      eventCounts: (eventsLifetime[0]?.rows || [])
+        .map((row) => ({
+          eventName: row.dimensionValues[0].value,
+          lifetime: Number(row.metricValues[0].value),
+          last30d: events30Map.get(row.dimensionValues[0].value) || 0,
+        }))
+        .sort((a, b) => b.lifetime - a.lifetime),
+    };
+  } catch (error) {
+    console.warn('[dialled-dashboard] GA4 fetch failed', error?.message);
+    return { error: `GA4 unavailable: ${error?.message || 'unknown error'}` };
+  }
+}
+
+export async function computeDashboardSnapshot({ trigger = 'manual', actorEmail = null } = {}) {
+  const startedAt = Date.now();
+  const { db } = getDialledMtbAdmin();
+
+  const [raw, ga4] = await Promise.all([fetchFirestoreSource(db), fetchGa4Metrics()]);
+
+  const snapshot = buildSnapshot(raw, {
+    generatedAt: new Date().toISOString(),
+    trigger,
+    actorEmail,
+    ga4,
+  });
+  snapshot.durationMs = Date.now() - startedAt;
+
+  const dayKey = snapshot.generatedAt.slice(0, 10);
+  const batch = db.batch();
+  batch.set(db.collection(SNAPSHOT_COLLECTION).doc(dayKey), snapshot);
+  batch.set(db.collection(SNAPSHOT_COLLECTION).doc('latest'), snapshot);
+  await batch.commit();
+
+  return snapshot;
+}
+
+export async function getLatestDashboardSnapshot() {
+  const { db } = getDialledMtbAdmin();
+  const doc = await db.collection(SNAPSHOT_COLLECTION).doc('latest').get();
+  return doc.exists ? doc.data() : null;
+}
