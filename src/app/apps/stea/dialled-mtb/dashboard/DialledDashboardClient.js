@@ -18,6 +18,10 @@ const COLOR_PREMIUM = '#0284C7';
 
 const numberFormat = new Intl.NumberFormat('en-GB');
 
+// GA4 auto-collected noise, excluded from the Top events table (raw counts stay
+// in the snapshot for the Ask panel).
+const GA4_DEFAULT_EVENTS = new Set(['screen_view', 'user_engagement']);
+
 function workspaceAllowed(tenant) {
   return ALLOWED_WORKSPACES.includes(String(tenant?.name || '').trim().toLowerCase());
 }
@@ -118,6 +122,96 @@ function Sparkline({ points, width = 560, height = 96 }) {
         <span>{ga4Date(points[0].date)}</span>
         <span>peak {max}/day</span>
         <span>{ga4Date(points[points.length - 1].date)}</span>
+      </div>
+    </div>
+  );
+}
+
+function TrendChart({ series, ariaLabel, width = 560, height = 150 }) {
+  const drawn = (series || []).filter((entry) => entry.points?.length);
+  const allPoints = drawn.flatMap((entry) => entry.points);
+  if (!allPoints.length) return null;
+
+  const toTime = (date) => new Date(`${date}T00:00:00Z`).getTime();
+  const times = allPoints.map((point) => toTime(point.date));
+  const minT = Math.min(...times);
+  const maxT = Math.max(...times);
+  const maxValue = Math.max(1, ...allPoints.map((point) => point.value));
+  const padTop = 10;
+  const padBottom = 8;
+  const padRight = 44;
+  const plotWidth = width - padRight;
+  const x = (date) => (maxT === minT ? plotWidth / 2 : ((toTime(date) - minT) / (maxT - minT)) * plotWidth);
+  const y = (value) => height - padBottom - (value / maxValue) * (height - padTop - padBottom);
+
+  // Nudge end-of-line labels apart when two series finish close together.
+  const endLabels = drawn.map((entry) => {
+    const last = entry.points[entry.points.length - 1];
+    return { name: entry.name, color: entry.color, x: x(last.date), y: y(last.value), value: last.value };
+  }).sort((a, b) => a.y - b.y);
+  for (let i = 1; i < endLabels.length; i += 1) {
+    if (endLabels[i].y - endLabels[i - 1].y < 12) endLabels[i].y = endLabels[i - 1].y + 12;
+  }
+
+  return (
+    <div>
+      {drawn.length > 1 ? (
+        <div className="mb-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-[#A8B0B8]">
+          {drawn.map((entry) => (
+            <span key={entry.name} className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full" style={{ background: entry.color }} />
+              {entry.name}
+              <span className="font-mono text-[#F4F6F8]">{numberFormat.format(entry.points[entry.points.length - 1].value)}</span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={ariaLabel}>
+        {[0.5, 1].map((fraction) => (
+          <line
+            key={fraction}
+            x1="0"
+            x2={plotWidth}
+            y1={y(maxValue * fraction)}
+            y2={y(maxValue * fraction)}
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="1"
+          />
+        ))}
+        {drawn.map((entry) => (
+          <path
+            key={entry.name}
+            d={entry.points.map((point, index) => `${index ? 'L' : 'M'}${x(point.date).toFixed(1)},${y(point.value).toFixed(1)}`).join(' ')}
+            fill="none"
+            stroke={entry.color}
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        ))}
+        {drawn.map((entry) =>
+          entry.points.map((point) => (
+            <circle key={`${entry.name}-${point.date}`} cx={x(point.date)} cy={y(point.value)} r="7" fill="transparent">
+              <title>{`${formatDate(point.date)} — ${numberFormat.format(point.value)} ${entry.name.toLowerCase()}`}</title>
+            </circle>
+          )),
+        )}
+        {endLabels.map((label) => (
+          <text
+            key={label.name}
+            x={label.x + 6}
+            y={label.y + 3.5}
+            fontSize="11"
+            fontFamily="ui-monospace, monospace"
+            fill="#D7DCE0"
+          >
+            {numberFormat.format(label.value)}
+          </text>
+        ))}
+      </svg>
+      <div className="mt-1 flex justify-between text-[10px] text-[#68717A]">
+        <span>{formatDate(new Date(minT).toISOString())}</span>
+        <span>{formatDate(new Date(maxT).toISOString())}</span>
       </div>
     </div>
   );
@@ -410,7 +504,10 @@ export default function DialledDashboardClient() {
   const totals = snapshot?.totals;
   const ga4 = snapshot?.ga4;
   const ga4Ready = ga4 && !ga4.error;
-  const topEvents = useMemo(() => (ga4Ready ? (ga4.eventCounts || []).slice(0, 12) : []), [ga4, ga4Ready]);
+  const topEvents = useMemo(
+    () => (ga4Ready ? (ga4.eventCounts || []).filter((event) => !GA4_DEFAULT_EVENTS.has(event.eventName)).slice(0, 12) : []),
+    [ga4, ga4Ready],
+  );
 
   if (!authReady || tenantLoading) {
     return <div className="flex min-h-[65vh] items-center justify-center bg-[#0D1013] text-sm text-[#8A939D]">Checking workspace access…</div>;
@@ -514,6 +611,62 @@ export default function DialledDashboardClient() {
           <div className="mt-7 space-y-7">
             {activeTab === 'exec' ? (
               <>
+                {snapshot.trends ? (
+                  <div className="grid gap-7 lg:grid-cols-2">
+                    <SectionCard
+                      eyebrow="Growth"
+                      title="Registered users — lifetime"
+                      subtitle="Cumulative signups from Firebase user profiles (createdAt)."
+                    >
+                      <TrendChart
+                        ariaLabel="Cumulative registered users over time"
+                        series={[{
+                          name: 'Registered',
+                          color: COLOR_FREE,
+                          points: (snapshot.trends.registrations || []).map((point) => ({ date: point.date, value: point.count })),
+                        }]}
+                      />
+                    </SectionCard>
+                    <SectionCard
+                      eyebrow="Plan mix"
+                      title="Premium vs free"
+                      subtitle="Daily counts from stored dashboard snapshots. Premium start dates aren't recorded retroactively, so this history begins with the first snapshot and grows one point per day."
+                    >
+                      {(snapshot.trends.premiumVsFree || []).length >= 2 ? (
+                        <TrendChart
+                          ariaLabel="Premium and free users per day"
+                          series={[
+                            {
+                              name: 'Free',
+                              color: COLOR_FREE,
+                              points: snapshot.trends.premiumVsFree
+                                .filter((point) => point.freeUsers != null)
+                                .map((point) => ({ date: point.date, value: point.freeUsers })),
+                            },
+                            {
+                              name: 'Premium',
+                              color: COLOR_PREMIUM,
+                              points: snapshot.trends.premiumVsFree
+                                .filter((point) => point.premiumUsers != null)
+                                .map((point) => ({ date: point.date, value: point.premiumUsers })),
+                            },
+                          ]}
+                        />
+                      ) : (
+                        <div className="rounded-lg border border-white/10 bg-[#0D1013] px-4 py-4 text-xs leading-5 text-[#8A939D]">
+                          Only {snapshot.trends.premiumVsFree?.length || 0} day(s) of snapshot history so far — the daily 05:00 UTC
+                          snapshot adds a point each day. Current split: {numberFormat.format(totals.freeUsers)} free ·{' '}
+                          {numberFormat.format(totals.premiumUsers)} premium.
+                        </div>
+                      )}
+                    </SectionCard>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-white/10 bg-[#12161A] px-4 py-3 text-xs text-[#8A939D]">
+                    Trend charts appear once a fresh snapshot is computed — hit Refresh now.
+                  </div>
+                )}
+
                 <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3 lg:grid-cols-5">
                   <StatTile label="Registered users" value={numberFormat.format(totals.registeredUsers)} />
                   <StatTile

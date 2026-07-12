@@ -28,6 +28,8 @@ export const METRIC_DEFINITIONS = `
 - events30d (per user): rides + AI exchanges + maintenance entries created in the last 30 days.
 - daysToFirstBike: whole days between user signup and their earliest bike creation.
 - ga4 section: aggregate Google Analytics data (sessions, active users, event counts). It cannot be split by free vs premium.
+- trends.registrations: cumulative registered users over time, derived from each user's createdAt (accurate for the full lifetime).
+- trends.premiumVsFree: daily registered/premium/free counts taken from stored daily dashboard snapshots. Premium start dates are not recorded anywhere, so this history only exists from the first stored snapshot onward and grows one point per day. Never extrapolate premium status backwards.
 - distributions section: how bikes/rides/maintenanceEntries/aiConversations counts are spread across all riders (bucketed histograms + min/median/mean/p90/max), independent of free vs premium. Shows whether usage is concentrated in a few power users or spread evenly.
 `.trim();
 
@@ -166,7 +168,7 @@ function groupByOwner(items, ownerKey = 'ownerUid') {
   return map;
 }
 
-export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), trigger = 'manual', actorEmail = null, ga4 = null } = {}) {
+export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), trigger = 'manual', actorEmail = null, ga4 = null, history = [] } = {}) {
   const now = new Date(generatedAt).getTime();
   const cutoff7d = new Date(now - 7 * DAY_MS).toISOString();
   const cutoff30d = new Date(now - 30 * DAY_MS).toISOString();
@@ -419,12 +421,37 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
     },
   };
 
+  const dayKey = generatedAt.slice(0, 10);
+  const registrations = [];
+  for (const date of userRows.map((row) => row.createdAt).filter(Boolean).map((iso) => iso.slice(0, 10)).sort()) {
+    const last = registrations[registrations.length - 1];
+    if (last && last.date === date) last.count += 1;
+    else registrations.push({ date, count: (last?.count || 0) + 1 });
+  }
+  const lastRegistration = registrations[registrations.length - 1];
+  if (lastRegistration && lastRegistration.date < dayKey) {
+    registrations.push({ date: dayKey, count: lastRegistration.count });
+  }
+
+  // Premium/free history can only come from stored daily snapshots — Firestore
+  // does not record when a user became premium, so no backfill is possible.
+  const premiumVsFree = [
+    ...history.filter((point) => point.date !== dayKey),
+    {
+      date: dayKey,
+      registeredUsers: totals.registeredUsers,
+      premiumUsers: totals.premiumUsers,
+      freeUsers: totals.freeUsers,
+    },
+  ].sort((a, b) => a.date.localeCompare(b.date));
+
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
     generatedAt,
     trigger,
     actorEmail,
     totals,
+    trends: { registrations, premiumVsFree },
     ga4: ga4 || { error: 'GA4 metrics were not fetched.' },
     funnel,
     engagement: {
@@ -531,17 +558,37 @@ async function fetchGa4Metrics() {
   }
 }
 
+async function fetchSnapshotHistory(db) {
+  const snap = await db
+    .collection(SNAPSHOT_COLLECTION)
+    .select('totals.registeredUsers', 'totals.premiumUsers', 'totals.freeUsers')
+    .get();
+  return snap.docs
+    .filter((doc) => /^\d{4}-\d{2}-\d{2}$/.test(doc.id))
+    .map((doc) => {
+      const totals = doc.data().totals || {};
+      return {
+        date: doc.id,
+        registeredUsers: totals.registeredUsers ?? null,
+        premiumUsers: totals.premiumUsers ?? null,
+        freeUsers: totals.freeUsers ?? null,
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export async function computeDashboardSnapshot({ trigger = 'manual', actorEmail = null } = {}) {
   const startedAt = Date.now();
   const { db } = getDialledMtbAdmin();
 
-  const [raw, ga4] = await Promise.all([fetchFirestoreSource(db), fetchGa4Metrics()]);
+  const [raw, ga4, history] = await Promise.all([fetchFirestoreSource(db), fetchGa4Metrics(), fetchSnapshotHistory(db)]);
 
   const snapshot = buildSnapshot(raw, {
     generatedAt: new Date().toISOString(),
     trigger,
     actorEmail,
     ga4,
+    history,
   });
   snapshot.durationMs = Date.now() - startedAt;
 
