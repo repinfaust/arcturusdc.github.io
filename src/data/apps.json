@@ -206,5 +206,25 @@
     "live": false,
     "icon": "/img/rehabpath-icon.svg",
     "bg": "/img/rehabpath-card-background.png"
+  },
+  {
+    "id": "hol-yoga",
+    "name": "Heart of Living Yoga",
+    "cardAccent": {
+      "primary": "#f4128c",
+      "tintTop": "rgba(244, 18, 140, 0.1)"
+    },
+    "status": "development",
+    "strap": "Daily heart-centred practice, live meditations, and community.",
+    "summary": "Heart of Living Yoga brings guided practices, live daily meditations, teachings, retreats, and ways to support the charity together in one calm place — a living teaching space rather than just another meditation library. Free practices to begin with, live morning and evening meditations, and a growing library of classes and music.",
+    "desc": "Guided practices, live daily meditations, classes, music, and events for a heart-centred community.",
+    "link": "/apps/hol-yoga",
+    "caseFileUrl": "/apps/hol-yoga",
+    "category": "Health & Wellbeing",
+    "features": ["Heart Words for Today", "Live daily meditations", "Practice & music library", "Events & retreats"],
+    "live": false,
+    "availability": ["android", "ios"],
+    "icon": "/img/hol-yoga/foundation-logo.png",
+    "bg": "/img/hol-yoga/photo-lotus.jpg"
   }
 ]
