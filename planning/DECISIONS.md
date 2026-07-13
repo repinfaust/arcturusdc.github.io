@@ -230,3 +230,9 @@ Extends the D-SITE-003/D-SITE-004 dashboard.
 - Free vs premium split for this metric is shown as two current-status stat tiles (`snapshot.trends.bikeAdoption.currentPctByPlan`), computed from today's `isPremium` only. Explicitly **not** a historical series — extrapolating current premium status backwards is forbidden, same rule as D-SITE-004's premium/free trend. UI carries a visible caveat line.
 - **Sortable column headers** added to four tables (weekly signup cohorts, recent registrants without a bike, top GA4 events, rider detail): click a header to sort descending, click again to toggle ascending. Client-side only (`useSortableRows`/`SortableTh` in `DialledDashboardClient.js`), no new data source, no schema change.
 - No new dependencies, no auth change.
+
+### 2026-07-13 — D-SITE-005 revision: single free-scoped line, drop stat tiles
+David: the split into two lines/stat tiles (free-today, premium-today) wasn't what was needed — the requirement is one line only, scoped to users who are free **today**, so that a user who signs up free, adds a bike, then upgrades never causes the line to drop (they're excluded from the line entirely once premium, not folded into a separate premium series).
+- `trends.bikeAdoption.points` is now computed from `freeRows` only (today's free users), not all `userRows`. `currentPctByPlan` and the two stat tiles are removed.
+- Chart title changed to "% of free users who added at least one bike"; single series named "Free, with a bike".
+- METRIC_DEFINITIONS updated to describe the free-only scoping.

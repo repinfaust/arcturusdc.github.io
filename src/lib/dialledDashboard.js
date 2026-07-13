@@ -30,7 +30,7 @@ export const METRIC_DEFINITIONS = `
 - ga4 section: aggregate Google Analytics data (sessions, active users, event counts). It cannot be split by free vs premium.
 - trends.registrations: cumulative registered users over time, derived from each user's createdAt (accurate for the full lifetime).
 - trends.premiumVsFree: daily registered/premium/free counts taken from stored daily dashboard snapshots. Premium start dates are not recorded anywhere, so this history only exists from the first stored snapshot onward and grows one point per day. Never extrapolate premium status backwards.
-- trends.bikeAdoption: cumulative % of registered users with >=1 bike over time, derived from each user's own createdAt/firstBikeAt (accurate for the full lifetime, unlike premium history). currentPctByPlan gives today's % of free vs premium users with a bike, using current premium status only — do not imply this split is historical.
+- trends.bikeAdoption: cumulative % of *currently free* users with >=1 bike over time, derived from each user's own createdAt/firstBikeAt (accurate for the full lifetime, unlike premium history). Scoped to today's free users only — anyone who is premium today is excluded from this line entirely, even for dates before they upgraded, so upgrading never causes the line to drop.
 - distributions section: how bikes/rides/maintenanceEntries/aiConversations counts are spread across all riders (bucketed histograms + min/median/mean/p90/max), independent of free vs premium. Shows whether usage is concentrated in a few power users or spread evenly.
 `.trim();
 
@@ -436,7 +436,10 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
 
   // Bike adoption is derived from each user's own createdAt/firstBikeAt, so unlike
   // premium status this history is accurate for the full lifetime (no snapshot backfill needed).
-  const bikeAdoptionEvents = userRows
+  // Scoped to users who are free as of today: a user who started free, added a bike, then
+  // upgraded is excluded from this line entirely going forward (we only know current plan),
+  // rather than being folded into a "premium" line retroactively or dropping the line's numerator.
+  const bikeAdoptionEvents = freeRows
     .map((row) => ({ registeredAt: row.createdAt, bikeAt: row.firstBikeAt }))
     .filter((row) => row.registeredAt)
     .sort((a, b) => a.registeredAt.localeCompare(b.registeredAt));
@@ -484,13 +487,7 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
     trends: {
       registrations,
       premiumVsFree,
-      bikeAdoption: {
-        points: bikeAdoption,
-        currentPctByPlan: {
-          free: pct(freeRows.filter((row) => row.bikes > 0).length, freeRows.length),
-          premium: pct(premiumRows.filter((row) => row.bikes > 0).length, premiumRows.length),
-        },
-      },
+      bikeAdoption: { points: bikeAdoption },
     },
     ga4: ga4 || { error: 'GA4 metrics were not fetched.' },
     funnel,

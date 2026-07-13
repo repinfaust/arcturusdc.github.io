@@ -898,36 +898,17 @@ export default function DialledDashboardClient() {
                 {snapshot.trends?.bikeAdoption?.points?.length ? (
                   <SectionCard
                     eyebrow="Onboarding"
-                    title="% of users who added at least one bike"
-                    subtitle="Cumulative, lifetime-accurate — derived from each user's own signup and first-bike dates."
+                    title="% of free users who added at least one bike"
+                    subtitle="Cumulative, lifetime-accurate — scoped to users who are free today, so upgrading to premium never causes this line to drop."
                   >
                     <TrendChart
-                      ariaLabel="Percentage of registered users with at least one bike over time"
+                      ariaLabel="Percentage of free users with at least one bike over time"
                       series={[{
-                        name: 'With a bike',
+                        name: 'Free, with a bike',
                         color: COLOR_FREE,
                         points: snapshot.trends.bikeAdoption.points.map((point) => ({ date: point.date, value: point.pctWithBike })),
                       }]}
                     />
-                    <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10">
-                      <div className="bg-[#0D1013] px-5 py-4">
-                        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">
-                          <span className="h-2 w-2 rounded-full" style={{ background: COLOR_FREE }} />
-                          Free — today
-                        </p>
-                        <p className="mt-1.5 font-mono text-xl font-bold text-[#F4F6F8]">{snapshot.trends.bikeAdoption.currentPctByPlan.free}%</p>
-                      </div>
-                      <div className="bg-[#0D1013] px-5 py-4">
-                        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">
-                          <span className="h-2 w-2 rounded-full" style={{ background: COLOR_PREMIUM }} />
-                          Premium — today
-                        </p>
-                        <p className="mt-1.5 font-mono text-xl font-bold text-[#F4F6F8]">{snapshot.trends.bikeAdoption.currentPctByPlan.premium}%</p>
-                      </div>
-                    </div>
-                    <p className="mt-2 text-[10px] leading-4 text-[#68717A]">
-                      Free/premium split uses current premium status only, not a historical trend — see the chart above for accurate history.
-                    </p>
                   </SectionCard>
                 ) : null}
 
