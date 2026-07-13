@@ -10,6 +10,7 @@ const STEA_APPS = [
   { name: 'Hans', path: '/apps/stea/hans', icon: '🧪', color: 'text-purple-600', description: 'Test Execution' },
   { name: 'Harls', path: '/apps/stea/harls', icon: '🔍', color: 'text-green-600', description: 'Test Cases' },
   { name: 'User Feedback', path: '/apps/stea/dialled-mtb', icon: '△', color: 'text-pink-600', description: 'Dialled MTB' },
+  { name: 'Heart of Living Yoga', path: '/apps/stea/hol-yoga', icon: '🪷', color: 'text-rose-500', description: 'HoL Yoga workspace' },
   { name: 'Admin', path: '/apps/stea/admin', icon: '⚙️', color: 'text-gray-600', description: 'Settings' },
 ];
 
