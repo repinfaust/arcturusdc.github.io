@@ -895,23 +895,6 @@ export default function DialledDashboardClient() {
                   </div>
                 )}
 
-                {snapshot.trends?.bikeAdoption?.points?.length ? (
-                  <SectionCard
-                    eyebrow="Onboarding"
-                    title="% of free users who added at least one bike"
-                    subtitle="Cumulative, lifetime-accurate — scoped to users who are free today, so upgrading to premium never causes this line to drop."
-                  >
-                    <TrendChart
-                      ariaLabel="Percentage of free users with at least one bike over time"
-                      series={[{
-                        name: 'Free, with a bike',
-                        color: COLOR_FREE,
-                        points: snapshot.trends.bikeAdoption.points.map((point) => ({ date: point.date, value: point.pctWithBike })),
-                      }]}
-                    />
-                  </SectionCard>
-                ) : null}
-
                 <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3 lg:grid-cols-5">
                   <StatTile label="Registered users" value={numberFormat.format(totals.registeredUsers)} />
                   <StatTile
@@ -940,6 +923,23 @@ export default function DialledDashboardClient() {
                 >
                   <FunnelChart funnel={snapshot.funnel} />
                 </SectionCard>
+
+                {snapshot.trends?.bikeAdoption?.points?.length ? (
+                  <SectionCard
+                    eyebrow="Onboarding"
+                    title="% of free users who added at least one bike"
+                    subtitle="Cumulative, lifetime-accurate — scoped to users who are free today, so upgrading to premium never causes this line to drop."
+                  >
+                    <TrendChart
+                      ariaLabel="Percentage of free users with at least one bike over time"
+                      series={[{
+                        name: 'Free, with a bike',
+                        color: COLOR_FREE,
+                        points: snapshot.trends.bikeAdoption.points.map((point) => ({ date: point.date, value: point.pctWithBike })),
+                      }]}
+                    />
+                  </SectionCard>
+                ) : null}
 
                 <SectionCard
                   eyebrow="Sessions"
