@@ -30,6 +30,7 @@ export const METRIC_DEFINITIONS = `
 - ga4 section: aggregate Google Analytics data (sessions, active users, event counts). It cannot be split by free vs premium.
 - trends.registrations: cumulative registered users over time, derived from each user's createdAt (accurate for the full lifetime).
 - trends.premiumVsFree: daily registered/premium/free counts taken from stored daily dashboard snapshots. Premium start dates are not recorded anywhere, so this history only exists from the first stored snapshot onward and grows one point per day. Never extrapolate premium status backwards.
+- trends.bikeAdoption: cumulative % of registered users with >=1 bike over time, derived from each user's own createdAt/firstBikeAt (accurate for the full lifetime, unlike premium history). currentPctByPlan gives today's % of free vs premium users with a bike, using current premium status only — do not imply this split is historical.
 - distributions section: how bikes/rides/maintenanceEntries/aiConversations counts are spread across all riders (bucketed histograms + min/median/mean/p90/max), independent of free vs premium. Shows whether usage is concentrated in a few power users or spread evenly.
 `.trim();
 
@@ -433,6 +434,35 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
     registrations.push({ date: dayKey, count: lastRegistration.count });
   }
 
+  // Bike adoption is derived from each user's own createdAt/firstBikeAt, so unlike
+  // premium status this history is accurate for the full lifetime (no snapshot backfill needed).
+  const bikeAdoptionEvents = userRows
+    .map((row) => ({ registeredAt: row.createdAt, bikeAt: row.firstBikeAt }))
+    .filter((row) => row.registeredAt)
+    .sort((a, b) => a.registeredAt.localeCompare(b.registeredAt));
+  const bikeAdoption = [];
+  {
+    let registeredSoFar = 0;
+    let withBikeSoFar = 0;
+    const dates = [...new Set(
+      bikeAdoptionEvents.flatMap((row) => [row.registeredAt.slice(0, 10), row.bikeAt ? row.bikeAt.slice(0, 10) : null]).filter(Boolean),
+    )].sort();
+    for (const date of dates) {
+      registeredSoFar += bikeAdoptionEvents.filter((row) => row.registeredAt.slice(0, 10) === date).length;
+      withBikeSoFar += bikeAdoptionEvents.filter((row) => row.bikeAt && row.bikeAt.slice(0, 10) === date).length;
+      bikeAdoption.push({
+        date,
+        registeredUsers: registeredSoFar,
+        usersWithBike: withBikeSoFar,
+        pctWithBike: pct(withBikeSoFar, registeredSoFar),
+      });
+    }
+    const lastPoint = bikeAdoption[bikeAdoption.length - 1];
+    if (lastPoint && lastPoint.date < dayKey) {
+      bikeAdoption.push({ ...lastPoint, date: dayKey });
+    }
+  }
+
   // Premium/free history can only come from stored daily snapshots — Firestore
   // does not record when a user became premium, so no backfill is possible.
   const premiumVsFree = [
@@ -451,7 +481,17 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
     trigger,
     actorEmail,
     totals,
-    trends: { registrations, premiumVsFree },
+    trends: {
+      registrations,
+      premiumVsFree,
+      bikeAdoption: {
+        points: bikeAdoption,
+        currentPctByPlan: {
+          free: pct(freeRows.filter((row) => row.bikes > 0).length, freeRows.length),
+          premium: pct(premiumRows.filter((row) => row.bikes > 0).length, premiumRows.length),
+        },
+      },
+    },
     ga4: ga4 || { error: 'GA4 metrics were not fetched.' },
     funnel,
     engagement: {

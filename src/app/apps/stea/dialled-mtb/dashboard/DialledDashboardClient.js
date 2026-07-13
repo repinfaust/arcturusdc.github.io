@@ -38,6 +38,58 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Sortable table headers: click toggles the active column (always starts
+// descending — that's the useful direction for these count/rate tables),
+// click again on the same column flips direction.
+function useSortableRows(rows, defaultKey, accessors) {
+  const [sort, setSort] = useState({ key: defaultKey, direction: 'desc' });
+
+  const sortedRows = useMemo(() => {
+    const accessor = accessors[sort.key];
+    if (!accessor) return rows;
+    const withValues = rows.map((row) => ({ row, value: accessor(row) }));
+    withValues.sort((a, b) => {
+      const av = a.value;
+      const bv = b.value;
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      let cmp;
+      if (typeof av === 'string' && typeof bv === 'string') cmp = av.localeCompare(bv);
+      else cmp = av > bv ? 1 : av < bv ? -1 : 0;
+      return sort.direction === 'desc' ? -cmp : cmp;
+    });
+    return withValues.map((entry) => entry.row);
+  }, [rows, sort, accessors]);
+
+  function toggleSort(key) {
+    setSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc',
+    }));
+  }
+
+  return { sortedRows, sort, toggleSort };
+}
+
+function SortableTh({ label, sortKey, sort, onSort, align = 'left', className = '' }) {
+  const active = sort.key === sortKey;
+  return (
+    <th className={`${align === 'right' ? 'text-right' : 'text-left'} font-bold ${className}`}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`inline-flex items-center gap-1 uppercase tracking-[0.14em] transition hover:text-[#F4F6F8] ${
+          align === 'right' ? 'flex-row-reverse' : ''
+        } ${active ? 'text-[#FF6EAF]' : 'text-[#68717A]'}`}
+      >
+        {label}
+        <span className="text-[9px]">{active ? (sort.direction === 'desc' ? '▼' : '▲') : ''}</span>
+      </button>
+    </th>
+  );
+}
+
 function StatTile({ label, value, hint }) {
   return (
     <div className="bg-[#0D1013] px-4 py-5" title={hint || undefined}>
@@ -298,6 +350,182 @@ function FeatureMatrix({ featureMatrix, freeTotal, premiumTotal }) {
               <td className="py-2.5 text-right font-mono text-[#8A939D]">
                 {numberFormat.format(row.free.events)} / {numberFormat.format(row.premium.events)}
               </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const WEEKLY_COHORT_ACCESSORS = {
+  weekStart: (row) => row.weekStart,
+  registered: (row) => row.registered,
+  bikeCreated: (row) => row.bikeCreated,
+  setupComplete: (row) => row.setupComplete,
+  stravaConnected: (row) => row.stravaConnected,
+  rideLogged: (row) => row.rideLogged,
+  premium: (row) => row.premium,
+};
+
+function WeeklyCohortsTable({ cohorts }) {
+  const { sortedRows, sort, toggleSort } = useSortableRows(cohorts, 'registered', WEEKLY_COHORT_ACCESSORS);
+  return (
+    <div className="mt-6 overflow-x-auto">
+      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">Weekly signup cohorts</p>
+      <table className="w-full min-w-[640px] text-left text-xs">
+        <thead>
+          <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
+            <SortableTh label="Week" sortKey="weekStart" sort={sort} onSort={toggleSort} className="pb-2.5 pr-4" />
+            <SortableTh label="Registered" sortKey="registered" sort={sort} onSort={toggleSort} align="right" className="pb-2.5 pr-4" />
+            <SortableTh label="Bike" sortKey="bikeCreated" sort={sort} onSort={toggleSort} align="right" className="pb-2.5 pr-4" />
+            <SortableTh label="Setup" sortKey="setupComplete" sort={sort} onSort={toggleSort} align="right" className="pb-2.5 pr-4" />
+            <SortableTh label="Strava" sortKey="stravaConnected" sort={sort} onSort={toggleSort} align="right" className="pb-2.5 pr-4" />
+            <SortableTh label="Ride" sortKey="rideLogged" sort={sort} onSort={toggleSort} align="right" className="pb-2.5 pr-4" />
+            <SortableTh label="Premium" sortKey="premium" sort={sort} onSort={toggleSort} align="right" className="pb-2.5" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {sortedRows.map((cohort) => (
+            <tr key={cohort.weekStart}>
+              <td className="py-2 pr-4 font-mono text-[#A8B0B8]">{formatDate(cohort.weekStart)}</td>
+              <td className="py-2 pr-4 text-right font-mono text-[#F4F6F8]">{cohort.registered}</td>
+              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.bikeCreated}</td>
+              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.setupComplete}</td>
+              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.stravaConnected}</td>
+              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.rideLogged}</td>
+              <td className="py-2 text-right font-mono text-[#D7DCE0]">{cohort.premium}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const RECENT_REGISTRANTS_ACCESSORS = {
+  createdAt: (row) => row.createdAt,
+  daysSinceSignup: (row) => row.daysSinceSignup,
+  stravaConnected: (row) => (row.stravaConnected ? 1 : 0),
+  aiUsed: (row) => (row.aiUsed ? 1 : 0),
+};
+
+function RecentRegistrantsTable({ registrants }) {
+  const { sortedRows, sort, toggleSort } = useSortableRows(registrants, 'createdAt', RECENT_REGISTRANTS_ACCESSORS);
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[520px] text-left text-xs">
+        <thead>
+          <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
+            <th className="pb-2.5 pr-4 font-bold">User</th>
+            <SortableTh label="Signed up" sortKey="createdAt" sort={sort} onSort={toggleSort} className="pb-2.5 pr-4" />
+            <SortableTh label="Days ago" sortKey="daysSinceSignup" sort={sort} onSort={toggleSort} align="right" className="pb-2.5 pr-4" />
+            <SortableTh label="Strava" sortKey="stravaConnected" sort={sort} onSort={toggleSort} className="pb-2.5 pr-4" />
+            <SortableTh label="Used AI" sortKey="aiUsed" sort={sort} onSort={toggleSort} className="pb-2.5" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {sortedRows.map((registrant) => (
+            <tr key={registrant.uid}>
+              <td className="py-2 pr-4 font-mono text-[#A8B0B8]" title={registrant.uid}>{registrant.uid.slice(0, 10)}…</td>
+              <td className="py-2 pr-4 text-[#D7DCE0]">{formatDate(registrant.createdAt)}</td>
+              <td className="py-2 pr-4 text-right font-mono text-[#F4F6F8]">{registrant.daysSinceSignup}</td>
+              <td className="py-2 pr-4 text-[#D7DCE0]">{registrant.stravaConnected ? 'Yes' : '—'}</td>
+              <td className="py-2 text-[#D7DCE0]">{registrant.aiUsed ? 'Yes' : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const TOP_EVENTS_ACCESSORS = {
+  eventName: (row) => row.eventName,
+  lifetime: (row) => row.lifetime,
+  last30d: (row) => row.last30d,
+};
+
+function TopEventsTable({ events }) {
+  const { sortedRows, sort, toggleSort } = useSortableRows(events, 'lifetime', TOP_EVENTS_ACCESSORS);
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[420px] text-left text-xs">
+        <thead>
+          <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
+            <SortableTh label="Event" sortKey="eventName" sort={sort} onSort={toggleSort} className="pb-3 pr-4" />
+            <SortableTh label="Lifetime" sortKey="lifetime" sort={sort} onSort={toggleSort} align="right" className="pb-3 pr-4" />
+            <SortableTh label="Last 30d" sortKey="last30d" sort={sort} onSort={toggleSort} align="right" className="pb-3" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {sortedRows.map((event) => (
+            <tr key={event.eventName}>
+              <td className="py-2 pr-4 font-mono text-[#A8B0B8]">{event.eventName}</td>
+              <td className="py-2 pr-4 text-right font-mono text-[#F4F6F8]">{numberFormat.format(event.lifetime)}</td>
+              <td className="py-2 text-right font-mono text-[#8A939D]">{numberFormat.format(event.last30d)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const RIDER_DETAIL_ACCESSORS = {
+  uid: (row) => row.uid,
+  plan: (row) => (row.isPremium ? 1 : 0),
+  createdAt: (row) => row.createdAt,
+  bikes: (row) => row.bikes,
+  rides: (row) => row.rides,
+  maintenanceEntries: (row) => row.maintenanceEntries,
+  aiConversations: (row) => row.aiConversations,
+  stravaConnected: (row) => (row.stravaConnected ? 1 : 0),
+  daysToFirstBike: (row) => row.daysToFirstBike,
+  lastActiveAt: (row) => row.lastActiveAt,
+};
+
+function RiderDetailTable({ users }) {
+  const { sortedRows, sort, toggleSort } = useSortableRows(users, 'lastActiveAt', RIDER_DETAIL_ACCESSORS);
+  return (
+    <div className="overflow-x-auto border-t border-white/10 px-5 py-5 sm:px-6">
+      <table className="w-full min-w-[860px] text-left text-xs">
+        <thead>
+          <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
+            <SortableTh label="User" sortKey="uid" sort={sort} onSort={toggleSort} className="pb-3 pr-3" />
+            <SortableTh label="Plan" sortKey="plan" sort={sort} onSort={toggleSort} className="pb-3 pr-3" />
+            <SortableTh label="Signed up" sortKey="createdAt" sort={sort} onSort={toggleSort} className="pb-3 pr-3" />
+            <SortableTh label="Bikes" sortKey="bikes" sort={sort} onSort={toggleSort} align="right" className="pb-3 pr-3" />
+            <SortableTh label="Rides" sortKey="rides" sort={sort} onSort={toggleSort} align="right" className="pb-3 pr-3" />
+            <SortableTh label="Maint." sortKey="maintenanceEntries" sort={sort} onSort={toggleSort} align="right" className="pb-3 pr-3" />
+            <SortableTh label="AI" sortKey="aiConversations" sort={sort} onSort={toggleSort} align="right" className="pb-3 pr-3" />
+            <SortableTh label="Strava" sortKey="stravaConnected" sort={sort} onSort={toggleSort} className="pb-3 pr-3" />
+            <SortableTh label="Days to bike" sortKey="daysToFirstBike" sort={sort} onSort={toggleSort} align="right" className="pb-3 pr-3" />
+            <SortableTh label="Last active" sortKey="lastActiveAt" sort={sort} onSort={toggleSort} className="pb-3" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {sortedRows.map((row) => (
+            <tr key={row.uid}>
+              <td className="py-2 pr-3 font-mono text-[#A8B0B8]" title={row.uid}>{row.uid.slice(0, 10)}…</td>
+              <td className="py-2 pr-3">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase"
+                  style={row.isPremium
+                    ? { background: 'rgba(2,132,199,0.15)', color: '#7DC8F0', border: '1px solid rgba(2,132,199,0.4)' }
+                    : { background: 'rgba(247,37,133,0.1)', color: '#FF6EAF', border: '1px solid rgba(247,37,133,0.3)' }}
+                >
+                  {row.isPremium ? 'Premium' : 'Free'}
+                </span>
+              </td>
+              <td className="py-2 pr-3 text-[#D7DCE0]">{formatDate(row.createdAt)}</td>
+              <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.bikes}</td>
+              <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.rides}</td>
+              <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.maintenanceEntries}</td>
+              <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.aiConversations}</td>
+              <td className="py-2 pr-3 text-[#D7DCE0]">{row.stravaConnected ? 'Yes' : '—'}</td>
+              <td className="py-2 pr-3 text-right font-mono text-[#D7DCE0]">{row.daysToFirstBike ?? '—'}</td>
+              <td className="py-2 text-[#D7DCE0]">{row.lastActiveAt ? formatDate(row.lastActiveAt) : 'Never'}</td>
             </tr>
           ))}
         </tbody>
@@ -667,6 +895,42 @@ export default function DialledDashboardClient() {
                   </div>
                 )}
 
+                {snapshot.trends?.bikeAdoption?.points?.length ? (
+                  <SectionCard
+                    eyebrow="Onboarding"
+                    title="% of users who added at least one bike"
+                    subtitle="Cumulative, lifetime-accurate — derived from each user's own signup and first-bike dates."
+                  >
+                    <TrendChart
+                      ariaLabel="Percentage of registered users with at least one bike over time"
+                      series={[{
+                        name: 'With a bike',
+                        color: COLOR_FREE,
+                        points: snapshot.trends.bikeAdoption.points.map((point) => ({ date: point.date, value: point.pctWithBike })),
+                      }]}
+                    />
+                    <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10">
+                      <div className="bg-[#0D1013] px-5 py-4">
+                        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">
+                          <span className="h-2 w-2 rounded-full" style={{ background: COLOR_FREE }} />
+                          Free — today
+                        </p>
+                        <p className="mt-1.5 font-mono text-xl font-bold text-[#F4F6F8]">{snapshot.trends.bikeAdoption.currentPctByPlan.free}%</p>
+                      </div>
+                      <div className="bg-[#0D1013] px-5 py-4">
+                        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">
+                          <span className="h-2 w-2 rounded-full" style={{ background: COLOR_PREMIUM }} />
+                          Premium — today
+                        </p>
+                        <p className="mt-1.5 font-mono text-xl font-bold text-[#F4F6F8]">{snapshot.trends.bikeAdoption.currentPctByPlan.premium}%</p>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-[10px] leading-4 text-[#68717A]">
+                      Free/premium split uses current premium status only, not a historical trend — see the chart above for accurate history.
+                    </p>
+                  </SectionCard>
+                ) : null}
+
                 <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-3 lg:grid-cols-5">
                   <StatTile label="Registered users" value={numberFormat.format(totals.registeredUsers)} />
                   <StatTile
@@ -713,26 +977,7 @@ export default function DialledDashboardClient() {
 
                 {ga4Ready && topEvents.length ? (
                   <SectionCard eyebrow="App events" title="Top GA4 events" subtitle="All users, aggregate. Lifetime vs last 30 days.">
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[420px] text-left text-xs">
-                        <thead>
-                          <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
-                            <th className="pb-3 pr-4 font-bold">Event</th>
-                            <th className="pb-3 pr-4 text-right font-bold">Lifetime</th>
-                            <th className="pb-3 text-right font-bold">Last 30d</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                          {topEvents.map((event) => (
-                            <tr key={event.eventName}>
-                              <td className="py-2 pr-4 font-mono text-[#A8B0B8]">{event.eventName}</td>
-                              <td className="py-2 pr-4 text-right font-mono text-[#F4F6F8]">{numberFormat.format(event.lifetime)}</td>
-                              <td className="py-2 text-right font-mono text-[#8A939D]">{numberFormat.format(event.last30d)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <TopEventsTable events={topEvents} />
                   </SectionCard>
                 ) : null}
               </>
@@ -797,35 +1042,7 @@ export default function DialledDashboardClient() {
                   </div>
 
                   {snapshot.onboarding.weeklyCohorts.length ? (
-                    <div className="mt-6 overflow-x-auto">
-                      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">Weekly signup cohorts</p>
-                      <table className="w-full min-w-[640px] text-left text-xs">
-                        <thead>
-                          <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
-                            <th className="pb-2.5 pr-4 font-bold">Week</th>
-                            <th className="pb-2.5 pr-4 text-right font-bold">Registered</th>
-                            <th className="pb-2.5 pr-4 text-right font-bold">Bike</th>
-                            <th className="pb-2.5 pr-4 text-right font-bold">Setup</th>
-                            <th className="pb-2.5 pr-4 text-right font-bold">Strava</th>
-                            <th className="pb-2.5 pr-4 text-right font-bold">Ride</th>
-                            <th className="pb-2.5 text-right font-bold">Premium</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                          {snapshot.onboarding.weeklyCohorts.map((cohort) => (
-                            <tr key={cohort.weekStart}>
-                              <td className="py-2 pr-4 font-mono text-[#A8B0B8]">{formatDate(cohort.weekStart)}</td>
-                              <td className="py-2 pr-4 text-right font-mono text-[#F4F6F8]">{cohort.registered}</td>
-                              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.bikeCreated}</td>
-                              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.setupComplete}</td>
-                              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.stravaConnected}</td>
-                              <td className="py-2 pr-4 text-right font-mono text-[#D7DCE0]">{cohort.rideLogged}</td>
-                              <td className="py-2 text-right font-mono text-[#D7DCE0]">{cohort.premium}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <WeeklyCohortsTable cohorts={snapshot.onboarding.weeklyCohorts} />
                   ) : null}
 
                   {snapshot.onboarding.recentRegistrantsWithoutBike.length ? (
@@ -833,30 +1050,7 @@ export default function DialledDashboardClient() {
                       <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">
                         Registered in the last 30 days, garage still empty — the re-engagement list ({snapshot.onboarding.recentRegistrantsWithoutBike.length})
                       </p>
-                      <div className="overflow-x-auto">
-                        <table className="w-full min-w-[520px] text-left text-xs">
-                          <thead>
-                            <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
-                              <th className="pb-2.5 pr-4 font-bold">User</th>
-                              <th className="pb-2.5 pr-4 font-bold">Signed up</th>
-                              <th className="pb-2.5 pr-4 text-right font-bold">Days ago</th>
-                              <th className="pb-2.5 pr-4 font-bold">Strava</th>
-                              <th className="pb-2.5 font-bold">Used AI</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/5">
-                            {snapshot.onboarding.recentRegistrantsWithoutBike.map((registrant) => (
-                              <tr key={registrant.uid}>
-                                <td className="py-2 pr-4 font-mono text-[#A8B0B8]" title={registrant.uid}>{registrant.uid.slice(0, 10)}…</td>
-                                <td className="py-2 pr-4 text-[#D7DCE0]">{formatDate(registrant.createdAt)}</td>
-                                <td className="py-2 pr-4 text-right font-mono text-[#F4F6F8]">{registrant.daysSinceSignup}</td>
-                                <td className="py-2 pr-4 text-[#D7DCE0]">{registrant.stravaConnected ? 'Yes' : '—'}</td>
-                                <td className="py-2 text-[#D7DCE0]">{registrant.aiUsed ? 'Yes' : '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <RecentRegistrantsTable registrants={snapshot.onboarding.recentRegistrantsWithoutBike} />
                     </div>
                   ) : null}
                 </SectionCard>
@@ -889,49 +1083,7 @@ export default function DialledDashboardClient() {
                       <span className="hidden group-open:inline">Hide table</span>
                     </span>
                   </summary>
-                  <div className="overflow-x-auto border-t border-white/10 px-5 py-5 sm:px-6">
-                    <table className="w-full min-w-[860px] text-left text-xs">
-                      <thead>
-                        <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#68717A]">
-                          <th className="pb-3 pr-3 font-bold">User</th>
-                          <th className="pb-3 pr-3 font-bold">Plan</th>
-                          <th className="pb-3 pr-3 font-bold">Signed up</th>
-                          <th className="pb-3 pr-3 text-right font-bold">Bikes</th>
-                          <th className="pb-3 pr-3 text-right font-bold">Rides</th>
-                          <th className="pb-3 pr-3 text-right font-bold">Maint.</th>
-                          <th className="pb-3 pr-3 text-right font-bold">AI</th>
-                          <th className="pb-3 pr-3 font-bold">Strava</th>
-                          <th className="pb-3 pr-3 text-right font-bold">Days to bike</th>
-                          <th className="pb-3 font-bold">Last active</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {snapshot.users.map((row) => (
-                          <tr key={row.uid}>
-                            <td className="py-2 pr-3 font-mono text-[#A8B0B8]" title={row.uid}>{row.uid.slice(0, 10)}…</td>
-                            <td className="py-2 pr-3">
-                              <span
-                                className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase"
-                                style={row.isPremium
-                                  ? { background: 'rgba(2,132,199,0.15)', color: '#7DC8F0', border: '1px solid rgba(2,132,199,0.4)' }
-                                  : { background: 'rgba(247,37,133,0.1)', color: '#FF6EAF', border: '1px solid rgba(247,37,133,0.3)' }}
-                              >
-                                {row.isPremium ? 'Premium' : 'Free'}
-                              </span>
-                            </td>
-                            <td className="py-2 pr-3 text-[#D7DCE0]">{formatDate(row.createdAt)}</td>
-                            <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.bikes}</td>
-                            <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.rides}</td>
-                            <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.maintenanceEntries}</td>
-                            <td className="py-2 pr-3 text-right font-mono text-[#F4F6F8]">{row.aiConversations}</td>
-                            <td className="py-2 pr-3 text-[#D7DCE0]">{row.stravaConnected ? 'Yes' : '—'}</td>
-                            <td className="py-2 pr-3 text-right font-mono text-[#D7DCE0]">{row.daysToFirstBike ?? '—'}</td>
-                            <td className="py-2 text-[#D7DCE0]">{row.lastActiveAt ? formatDate(row.lastActiveAt) : 'Never'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <RiderDetailTable users={snapshot.users} />
                 </details>
               </>
             ) : null}
