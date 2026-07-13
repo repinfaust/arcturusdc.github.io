@@ -236,3 +236,13 @@ David: the split into two lines/stat tiles (free-today, premium-today) wasn't wh
 - `trends.bikeAdoption.points` is now computed from `freeRows` only (today's free users), not all `userRows`. `currentPctByPlan` and the two stat tiles are removed.
 - Chart title changed to "% of free users who added at least one bike"; single series named "Free, with a bike".
 - METRIC_DEFINITIONS updated to describe the free-only scoping.
+
+### 2026-07-13 — D-SITE-005 revision 2: Exec tab section order corrected
+David: bike-adoption chart was placed before the core stat tiles / User funnel section, breaking the intended page order. Moved to sit after the User Funnel `SectionCard` (still under Exec summary, still eyebrow "Onboarding"), so the Exec tab order is now: Registered/Premium-vs-free trend charts → core stat tiles → User funnel → bike-adoption chart. No logic change, JSX reorder only.
+
+## 2026-07-13 — Empty-garage home prompt funnel on Engagement & Onboarding tab (D-SITE-006)
+Extends D-SITE-003. The Dialled MTB app added a home-screen modal encouraging free users to add a bike, firing three GA4 events: `empty_garage_prompt_shown`, `empty_garage_prompt_dismissed`, `empty_garage_prompt_cta_tapped`. This decision covers the dashboard-side view only — the modal itself lives in the Dialled MTB app repo, not this one.
+- New `EmptyGaragePromptFunnel` component at the top of the Engagement & Onboarding tab, showing shown/dismissed/CTA-tapped counts (lifetime + last 30d) and dismiss/tap rate as % of shown, sourced from `ga4.eventCounts` (same GA4 fetch already used by the Top GA4 Events table — no new GA4 query).
+- Added `onboarding.bikesCreatedLast30d` to `buildSnapshot()`: platform-wide count of users whose `firstBikeAt` falls in the last 30 days, shown alongside the funnel as a correlational signal. **Explicitly not per-tapper attribution** — GA4 aggregate events cannot be joined to individual Firestore users in this pipeline (same limitation as the premium/free trend and bike-adoption's free-only scoping), so a rise in this number cannot be causally tied to the prompt without further instrumentation.
+- Degrades gracefully: shows a GA4-pending notice if GA4 isn't configured, and a "no events yet" notice if the three event names haven't fired in GA4 yet (e.g. before the app update ships).
+- No new dependencies, no schema change, no auth change.

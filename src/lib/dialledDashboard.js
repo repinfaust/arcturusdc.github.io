@@ -32,6 +32,7 @@ export const METRIC_DEFINITIONS = `
 - trends.premiumVsFree: daily registered/premium/free counts taken from stored daily dashboard snapshots. Premium start dates are not recorded anywhere, so this history only exists from the first stored snapshot onward and grows one point per day. Never extrapolate premium status backwards.
 - trends.bikeAdoption: cumulative % of *currently free* users with >=1 bike over time, derived from each user's own createdAt/firstBikeAt (accurate for the full lifetime, unlike premium history). Scoped to today's free users only — anyone who is premium today is excluded from this line entirely, even for dates before they upgraded, so upgrading never causes the line to drop.
 - distributions section: how bikes/rides/maintenanceEntries/aiConversations counts are spread across all riders (bucketed histograms + min/median/mean/p90/max), independent of free vs premium. Shows whether usage is concentrated in a few power users or spread evenly.
+- onboarding.bikesCreatedLast30d: platform-wide count of users whose first bike was created in the last 30 days. Used alongside GA4's empty_garage_prompt_shown/_dismissed/_cta_tapped events as a correlational read on the home-screen empty-garage prompt — GA4 events cannot be joined to individual users here, so this is not per-tapper attribution.
 `.trim();
 
 function toIso(value) {
@@ -377,6 +378,11 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
       aiUsed: row.aiConversations > 0,
     }));
 
+  // Platform-wide count, not per-tapper attribution — GA4 events can't be joined to
+  // individual users here (same limitation as the premium/free trend), so this is
+  // shown alongside the empty-garage prompt funnel as a correlational signal only.
+  const bikesCreatedLast30d = userRows.filter((row) => row.firstBikeAt && row.firstBikeAt >= cutoff30d).length;
+
   const BIKE_BUCKETS = [
     { label: '0', min: 0, max: 0 },
     { label: '1', min: 1, max: 1 },
@@ -501,6 +507,7 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
       timeToFirstBike,
       weeklyCohorts,
       recentRegistrantsWithoutBike,
+      bikesCreatedLast30d,
     },
     distributions,
     users: userRows.sort((a, b) => String(b.lastActiveAt || '').localeCompare(String(a.lastActiveAt || ''))),

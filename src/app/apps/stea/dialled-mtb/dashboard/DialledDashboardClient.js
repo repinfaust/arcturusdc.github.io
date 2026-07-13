@@ -38,6 +38,11 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function pctOf(part, whole) {
+  if (!whole) return 0;
+  return Math.round((part / whole) * 1000) / 10;
+}
+
 // Sortable table headers: click toggles the active column (always starts
 // descending — that's the useful direction for these count/rate tables),
 // click again on the same column flips direction.
@@ -310,6 +315,90 @@ function SegmentBar({ pctValue, color }) {
     <div className="h-3.5 w-full overflow-hidden rounded-r-[3px] bg-white/[0.04]">
       <div className="h-full rounded-r-[3px]" style={{ width: `${Math.min(100, Math.max(pctValue > 0 ? 1.5 : 0, pctValue))}%`, background: color }} />
     </div>
+  );
+}
+
+const EMPTY_GARAGE_PROMPT_EVENTS = {
+  shown: 'empty_garage_prompt_shown',
+  dismissed: 'empty_garage_prompt_dismissed',
+  ctaTapped: 'empty_garage_prompt_cta_tapped',
+};
+
+function EmptyGaragePromptFunnel({ ga4, ga4Ready, bikesCreatedLast30d }) {
+  if (!ga4Ready) {
+    return (
+      <SectionCard
+        eyebrow="Onboarding"
+        title="Empty-garage home prompt"
+        subtitle="Shown → dismissed / tapped, plus platform-wide bike creation over the same window."
+      >
+        <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-4 py-4 text-xs leading-5 text-[#B9A98C]">
+          GA4 access pending — {ga4?.error || 'not configured yet.'} This funnel needs GA4 event data to render.
+        </div>
+      </SectionCard>
+    );
+  }
+
+  const eventMap = new Map((ga4.eventCounts || []).map((event) => [event.eventName, event]));
+  const shown = eventMap.get(EMPTY_GARAGE_PROMPT_EVENTS.shown);
+  const dismissed = eventMap.get(EMPTY_GARAGE_PROMPT_EVENTS.dismissed);
+  const ctaTapped = eventMap.get(EMPTY_GARAGE_PROMPT_EVENTS.ctaTapped);
+
+  if (!shown && !dismissed && !ctaTapped) {
+    return (
+      <SectionCard
+        eyebrow="Onboarding"
+        title="Empty-garage home prompt"
+        subtitle="Shown → dismissed / tapped, plus platform-wide bike creation over the same window."
+      >
+        <div className="rounded-lg border border-white/10 bg-[#0D1013] px-4 py-4 text-xs leading-5 text-[#8A939D]">
+          No {Object.values(EMPTY_GARAGE_PROMPT_EVENTS).join(' / ')} events in GA4 yet — this section fills in once the prompt has fired at least once.
+        </div>
+      </SectionCard>
+    );
+  }
+
+  const shownLifetime = shown?.lifetime || 0;
+  const dismissedLifetime = dismissed?.lifetime || 0;
+  const ctaTappedLifetime = ctaTapped?.lifetime || 0;
+  const shown30d = shown?.last30d || 0;
+  const dismissed30d = dismissed?.last30d || 0;
+  const ctaTapped30d = ctaTapped?.last30d || 0;
+  const tapRate = pctOf(ctaTappedLifetime, shownLifetime);
+  const dismissRate = pctOf(dismissedLifetime, shownLifetime);
+
+  const rows = [
+    { label: 'Shown', lifetime: shownLifetime, last30d: shown30d, pctOfShown: 100 },
+    { label: 'Dismissed', lifetime: dismissedLifetime, last30d: dismissed30d, pctOfShown: dismissRate },
+    { label: 'CTA tapped ("Add my bike")', lifetime: ctaTappedLifetime, last30d: ctaTapped30d, pctOfShown: tapRate },
+  ];
+
+  return (
+    <SectionCard
+      eyebrow="Onboarding"
+      title="Empty-garage home prompt"
+      subtitle="Shown → dismissed / tapped (GA4, aggregate). Platform-wide bikes created is shown alongside as a correlational signal, not per-tapper attribution — GA4 events can't be joined to individual users here."
+    >
+      <div className="space-y-2.5">
+        {rows.map((row) => (
+          <div key={row.label} className="grid grid-cols-[170px_1fr] items-center gap-3 sm:grid-cols-[200px_1fr]">
+            <p className="text-xs font-semibold text-[#A8B0B8]">{row.label}</p>
+            <div className="flex items-center gap-3">
+              <SegmentBar pctValue={row.pctOfShown} color={COLOR_FREE} />
+              <p className="w-40 shrink-0 font-mono text-xs text-[#F4F6F8]">
+                {numberFormat.format(row.lifetime)}
+                <span className="ml-1.5 text-[#68717A]">{row.pctOfShown}% of shown</span>
+              </p>
+              <p className="w-24 shrink-0 font-mono text-[11px] text-[#68717A]">{numberFormat.format(row.last30d)} / 30d</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 rounded-lg border border-white/10 bg-[#0D1013] px-4 py-4">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#68717A]">Bikes created, last 30 days (platform-wide)</p>
+        <p className="mt-1.5 font-mono text-xl font-bold text-[#F4F6F8]">{numberFormat.format(bikesCreatedLast30d)}</p>
+      </div>
+    </SectionCard>
   );
 }
 
@@ -966,6 +1055,8 @@ export default function DialledDashboardClient() {
 
             {activeTab === 'engagement' ? (
               <>
+                <EmptyGaragePromptFunnel ga4={ga4} ga4Ready={ga4Ready} bikesCreatedLast30d={snapshot.onboarding.bikesCreatedLast30d} />
+
                 <SectionCard
                   eyebrow="Free vs premium"
                   title="Which features free riders actually touch"
