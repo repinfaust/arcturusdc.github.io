@@ -149,6 +149,80 @@ function FunnelChart({ funnel }) {
   );
 }
 
+// Event-count funnel (GA4 lifetime counts, not a per-user sequential funnel —
+// see maintenanceEngagementFunnel doc comment in dialledDashboard.js). Drop-off
+// is measured against the funnel's own first stage, not against registeredUsers,
+// and any step-to-step drop >=40% is flagged, not just one hardcoded index.
+function EventFunnelChart({ stages, window = 'lifetime' }) {
+  const values = stages.map((step) => step[window] || 0);
+  const max = Math.max(1, ...values);
+  const first = values[0] || 0;
+  return (
+    <div className="space-y-2.5">
+      {stages.map((step, index) => {
+        const value = values[index];
+        const share = first ? Math.round((value / first) * 100) : 0;
+        const prev = index > 0 ? values[index - 1] : null;
+        const drop = prev && prev > 0 ? Math.round(((prev - value) / prev) * 100) : 0;
+        const bigDrop = index > 0 && drop >= 40;
+        return (
+          <div key={step.stage} className="grid grid-cols-[170px_1fr] items-center gap-3 sm:grid-cols-[200px_1fr]">
+            <p className="text-xs font-semibold text-[#A8B0B8]">{step.label}</p>
+            <div className="flex items-center gap-3">
+              <div className="h-5 flex-1 overflow-hidden rounded-r-[4px] bg-white/[0.04]">
+                <div
+                  className="h-full rounded-r-[4px]"
+                  style={{ width: `${Math.max(1.5, (value / max) * 100)}%`, background: COLOR_FREE }}
+                  title={`${step.label}: ${value} events (${share}% of ${stages[0].label.toLowerCase()})`}
+                />
+              </div>
+              <p className="w-28 shrink-0 font-mono text-xs text-[#F4F6F8]">
+                {numberFormat.format(value)}
+                <span className="ml-1.5 text-[#68717A]">{share}%</span>
+              </p>
+              {bigDrop ? (
+                <span className="shrink-0 rounded-full border border-red-400/30 bg-red-400/10 px-2 py-0.5 text-[10px] font-black text-red-300">
+                  −{drop}% drop
+                </span>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Compact horizontal breakdown bars — same visual language as DistributionChart
+// but for a plain labelled list rather than a numeric bucket histogram.
+function BreakdownBars({ rows, totalHint }) {
+  const max = Math.max(1, ...rows.map((row) => row.count));
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
+  return (
+    <div className="space-y-2">
+      {rows.map((row) => {
+        const share = total ? Math.round((row.count / total) * 100) : 0;
+        return (
+          <div key={row.label} className="grid grid-cols-[110px_1fr_auto] items-center gap-2.5">
+            <p className="truncate text-[11px] font-semibold text-[#A8B0B8]" title={row.label}>{row.label}</p>
+            <div className="h-4 overflow-hidden rounded-r-[4px] bg-white/[0.04]">
+              <div
+                className="h-full rounded-r-[4px]"
+                style={{ width: `${Math.max(1.5, (row.count / max) * 100)}%`, background: COLOR_FREE }}
+                title={`${row.label}: ${row.count} (${share}%)`}
+              />
+            </div>
+            <p className="w-20 shrink-0 text-right font-mono text-[11px] text-[#F4F6F8]">
+              {numberFormat.format(row.count)} <span className="text-[#68717A]">{share}%</span>
+            </p>
+          </div>
+        );
+      })}
+      {totalHint ? <p className="mt-1 text-[10px] text-[#68717A]">{totalHint}</p> : null}
+    </div>
+  );
+}
+
 function Sparkline({ points, width = 560, height = 96 }) {
   if (!points?.length) return null;
   const max = Math.max(1, ...points.map((point) => point.sessions));
@@ -995,6 +1069,65 @@ export default function DialledDashboardClient() {
                     freeTotal={totals.freeUsers}
                     premiumTotal={totals.premiumUsers}
                   />
+                </SectionCard>
+
+                <SectionCard
+                  eyebrow="Maintenance"
+                  title="Where the maintenance nudge loses people"
+                  subtitle="Home's due-tasks card, shown → tapped → arrived at the maintenance tab via that card → actually logged something. Event counts, not a per-user sequential funnel — a step here is a signal, not proof every user in it came from the step before."
+                >
+                  {snapshot.maintenanceEngagementFunnel?.available ? (
+                    <>
+                      <EventFunnelChart stages={snapshot.maintenanceEngagementFunnel.stages} window="lifetime" />
+                      <p className="mt-3 text-[10px] leading-4 text-[#68717A]">
+                        Lifetime counts shown. Breakdowns below use GA4 custom dimensions registered 2026-07-14 — no
+                        backfill, so only events logged after that date carry a value.
+                      </p>
+
+                      <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                        <div className="rounded-lg border border-white/10 bg-[#0D1013] p-4">
+                          <p className="text-xs font-bold text-[#D7DCE0]">Shown — split by tasks actually due</p>
+                          {snapshot.maintenanceEngagementFunnel.dueCountBreakdown?.available ? (
+                            <div className="mt-3">
+                              <BreakdownBars
+                                rows={snapshot.maintenanceEngagementFunnel.dueCountBreakdown.buckets.map((bucket) => ({
+                                  label: bucket.label,
+                                  count: bucket.count,
+                                }))}
+                                totalHint={
+                                  snapshot.maintenanceEngagementFunnel.dueCountBreakdown.noActiveBikeCount > 0
+                                    ? `Plus ${numberFormat.format(snapshot.maintenanceEngagementFunnel.dueCountBreakdown.noActiveBikeCount)} shown with no active bike (due count not meaningful for these).`
+                                    : 'All shown events had an active bike.'
+                                }
+                              />
+                            </div>
+                          ) : (
+                            <p className="mt-3 text-xs leading-5 text-[#68717A]">No dueCount data yet — waiting on post-registration events.</p>
+                          )}
+                        </div>
+
+                        <div className="rounded-lg border border-white/10 bg-[#0D1013] p-4">
+                          <p className="text-xs font-bold text-[#D7DCE0]">Viewed — split by how riders got there</p>
+                          {snapshot.maintenanceEngagementFunnel.navSourceBreakdown?.available ? (
+                            <div className="mt-3">
+                              <BreakdownBars
+                                rows={snapshot.maintenanceEngagementFunnel.navSourceBreakdown.sources.map((entry) => ({
+                                  label: entry.navSource === 'home_due_card' ? 'Home due-tasks card' : entry.navSource === '(not set)' ? 'Bottom nav / other' : entry.navSource,
+                                  count: entry.count,
+                                }))}
+                              />
+                            </div>
+                          ) : (
+                            <p className="mt-3 text-xs leading-5 text-[#68717A]">No navSource data yet — waiting on post-registration events.</p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-4 py-4 text-xs leading-5 text-[#B9A98C]">
+                      GA4 access pending — {snapshot.maintenanceEngagementFunnel?.reason || 'not configured yet.'}
+                    </div>
+                  )}
                 </SectionCard>
 
                 <SectionCard

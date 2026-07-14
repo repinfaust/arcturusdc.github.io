@@ -17,6 +17,92 @@ const FUNNEL_STAGES = [
   { stage: 'maintenance', label: 'Maintenance' },
 ];
 
+// D-153 (mtb repo): the three new home/maintenance GA4 events, in funnel order.
+// Event counts only — dueCount/hasActiveBike/navSource are logged as GA4 event
+// params but are NOT queryable via the Data API until registered as GA4
+// custom dimensions (a manual GA4 Admin step, not done yet). Until then this
+// answers "where in shown -> tapped -> viewed -> logged do users drop off"
+// but not the finer per-value breakdowns. Note: the arrival-context param is
+// named navSource, not "source" — GA4 already has a built-in traffic-source
+// dimension called source (session/user-scoped, from UTM/referrer), and
+// reusing that name for our own event param would create exactly the kind
+// of same-name-different-thing ambiguity that leads to the wrong dimension
+// being queried or read in reports.
+const MAINTENANCE_FUNNEL_EVENTS = [
+  { stage: 'shown', eventName: 'home_due_tasks_card_shown', label: 'Due-tasks card shown' },
+  { stage: 'tapped', eventName: 'home_due_tasks_card_tapped', label: 'Card tapped' },
+  { stage: 'viewed', eventName: 'maintenance_tab_viewed', label: 'Maintenance tab viewed' },
+  { stage: 'logged', eventName: ['maintenance_create', 'service_logged'], label: 'Maintenance logged' },
+];
+
+// dueCount arrives as GA4 rows already grouped by (dueCount, hasActiveBike) pair
+// counts — fold into: bucketed due-count histogram (active-bike shown events
+// only, since a due count is meaningless without a bike) + a single
+// noActiveBike total (bike-less shown events, regardless of the dueCount value
+// GA4 happens to log for them).
+function buildDueCountBreakdown(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { available: false, buckets: [], noActiveBikeCount: 0, totalShown: 0 };
+  }
+  let noActiveBikeCount = 0;
+  let totalShown = 0;
+  const withBike = new Map();
+  for (const row of rows) {
+    totalShown += row.count;
+    if (!row.hasActiveBike) {
+      noActiveBikeCount += row.count;
+      continue;
+    }
+    const bucketKey = row.dueCount === 0 ? '0' : row.dueCount <= 2 ? '1-2' : row.dueCount <= 5 ? '3-5' : '6+';
+    withBike.set(bucketKey, (withBike.get(bucketKey) || 0) + row.count);
+  }
+  const bucketOrder = ['0', '1-2', '3-5', '6+'];
+  const buckets = bucketOrder
+    .filter((key) => withBike.has(key))
+    .map((key) => ({ label: key === '0' ? '0 due' : `${key} due`, count: withBike.get(key) }));
+  return { available: true, buckets, noActiveBikeCount, totalShown };
+}
+
+function buildNavSourceBreakdown(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { available: false, sources: [], total: 0 };
+  }
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
+  const sources = rows
+    .map((row) => ({ navSource: row.navSource, count: row.count }))
+    .sort((a, b) => b.count - a.count);
+  return { available: true, sources, total };
+}
+
+function buildMaintenanceEngagementFunnel(ga4) {
+  if (!ga4 || ga4.error || !Array.isArray(ga4.eventCounts)) {
+    return {
+      available: false,
+      reason: ga4?.error || 'GA4 metrics were not fetched.',
+      stages: [],
+      dueCountBreakdown: { available: false, buckets: [], noActiveBikeCount: 0, totalShown: 0 },
+      navSourceBreakdown: { available: false, sources: [], total: 0 },
+    };
+  }
+  const countsByName = new Map(ga4.eventCounts.map((row) => [row.eventName, row]));
+  const sumCounts = (names, key) =>
+    (Array.isArray(names) ? names : [names]).reduce((total, name) => total + (countsByName.get(name)?.[key] || 0), 0);
+
+  const stages = MAINTENANCE_FUNNEL_EVENTS.map(({ stage, eventName, label }) => ({
+    stage,
+    label,
+    lifetime: sumCounts(eventName, 'lifetime'),
+    last30d: sumCounts(eventName, 'last30d'),
+  }));
+
+  return {
+    available: true,
+    stages,
+    dueCountBreakdown: buildDueCountBreakdown(ga4.shownByDueCountAndBike),
+    navSourceBreakdown: buildNavSourceBreakdown(ga4.viewedByNavSource),
+  };
+}
+
 export const METRIC_DEFINITIONS = `
 - registeredUsers: count of user profile documents.
 - premiumUsers: users whose RevenueCat-mirrored subscription.isPremium is true right now (churned users count as free).
@@ -32,6 +118,7 @@ export const METRIC_DEFINITIONS = `
 - trends.premiumVsFree: daily registered/premium/free counts taken from stored daily dashboard snapshots. Premium start dates are not recorded anywhere, so this history only exists from the first stored snapshot onward and grows one point per day. Never extrapolate premium status backwards.
 - trends.bikeAdoption: cumulative % of registered users with >=1 bike over time, derived from each user's own createdAt/firstBikeAt (accurate for the full lifetime, unlike premium history). currentPctByPlan gives today's % of free vs premium users with a bike, using current premium status only — do not imply this split is historical.
 - distributions section: how bikes/rides/maintenanceEntries/aiConversations counts are spread across all riders (bucketed histograms + min/median/mean/p90/max), independent of free vs premium. Shows whether usage is concentrated in a few power users or spread evenly.
+- maintenanceEngagementFunnel: GA4 event counts (lifetime + last 30d) for the Home "N maintenance tasks due" card's engagement path, in order: shown (card rendered, fires even with 0 due tasks or no active bike) -> tapped (card pressed) -> viewed (arrived at the maintenance tab specifically via that card, navSource=home_due_card) -> logged (maintenance_create or service_logged fired). Counts only per stage, not a per-user sequential funnel. dueCountBreakdown splits "shown" events by how many tasks were actually due (bucketed 0 / 1-2 / 3-5 / 6+, active-bike shown events only) plus a separate noActiveBikeCount for shown events fired with no active bike at all. navSourceBreakdown splits "viewed" events by arrival path (home_due_card vs bottom-nav/unknown). Both breakdowns use GA4 custom event-scoped dimensions (dueCount, hasActiveBike, navSource) registered 2026-07-14 — no backfill, so only events logged after that date carry values; early/renamed events may show as "(not set)".
 `.trim();
 
 function toIso(value) {
@@ -493,6 +580,7 @@ export function buildSnapshot(raw, { generatedAt = new Date().toISOString(), tri
       },
     },
     ga4: ga4 || { error: 'GA4 metrics were not fetched.' },
+    maintenanceEngagementFunnel: buildMaintenanceEngagementFunnel(ga4),
     funnel,
     engagement: {
       featureMatrix,
@@ -534,7 +622,7 @@ async function fetchGa4Metrics() {
     });
     const property = `properties/${propertyId}`;
 
-    const [lifetime, last30, dailySessions, eventsLifetime, events30] = await Promise.all([
+    const [lifetime, last30, dailySessions, eventsLifetime, events30, dueCountByBike, navSourceCounts] = await Promise.all([
       client.runReport({
         property,
         dateRanges: [{ startDate: GA4_LAUNCH_DATE, endDate: 'today' }],
@@ -566,6 +654,29 @@ async function fetchGa4Metrics() {
         metrics: [{ name: 'eventCount' }],
         limit: 100,
       }),
+      // D-153 breakdowns — GA4 custom event-scoped dimensions, registered 2026-07-14.
+      // No backfill: only events logged after registration carry these values, so
+      // early rows may show as empty until real post-registration usage accrues.
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: GA4_LAUNCH_DATE, endDate: 'today' }],
+        dimensions: [{ name: 'customEvent:dueCount' }, { name: 'customEvent:hasActiveBike' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: {
+          filter: { fieldName: 'eventName', stringFilter: { value: 'home_due_tasks_card_shown' } },
+        },
+        limit: 100,
+      }),
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: GA4_LAUNCH_DATE, endDate: 'today' }],
+        dimensions: [{ name: 'customEvent:navSource' }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: {
+          filter: { fieldName: 'eventName', stringFilter: { value: 'maintenance_tab_viewed' } },
+        },
+        limit: 100,
+      }),
     ]);
 
     const metricValue = (report, index = 0) =>
@@ -574,6 +685,17 @@ async function fetchGa4Metrics() {
     const events30Map = new Map(
       (events30[0]?.rows || []).map((row) => [row.dimensionValues[0].value, Number(row.metricValues[0].value)]),
     );
+
+    const shownByDueCountAndBike = (dueCountByBike[0]?.rows || []).map((row) => ({
+      dueCount: Number(row.dimensionValues[0].value),
+      hasActiveBike: row.dimensionValues[1].value === 'true',
+      count: Number(row.metricValues[0].value),
+    }));
+
+    const viewedByNavSource = (navSourceCounts[0]?.rows || []).map((row) => ({
+      navSource: row.dimensionValues[0].value || '(not set)',
+      count: Number(row.metricValues[0].value),
+    }));
 
     return {
       sessionsLifetime: metricValue(lifetime, 0),
@@ -591,6 +713,8 @@ async function fetchGa4Metrics() {
           last30d: events30Map.get(row.dimensionValues[0].value) || 0,
         }))
         .sort((a, b) => b.lifetime - a.lifetime),
+      shownByDueCountAndBike,
+      viewedByNavSource,
     };
   } catch (error) {
     console.warn('[dialled-dashboard] GA4 fetch failed', error?.message);
