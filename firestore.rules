@@ -206,6 +206,31 @@ service cloud.firestore {
     }
 
     /* ==========================================================
+       MLB Line-Movement Study (D-SITE-008) — research collector.
+       ArcturusDC-scoped, written ONLY by Cloud Functions. Read-only
+       to tenant members. Not a betting model; no user writes.
+       ========================================================== */
+    match /mlb_games/{gameId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /mlb_line_snapshots/{snapId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /mlb_game_events/{eventId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    match /mlb_meta/{docId} {
+      allow read: if authed() && canAccessTenant(resource.data.tenantId);
+      allow write: if false;
+    }
+
+    /* ==========================================================
        Ruby Documentation (migration-friendly)
        ========================================================== */
     match /stea_doc_spaces/{spaceId} {

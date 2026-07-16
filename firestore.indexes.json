@@ -688,6 +688,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "mlb_line_snapshots",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "gameId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "capturedAtIso",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
