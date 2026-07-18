@@ -13,9 +13,15 @@
     "link": "/apps/benzel",
     "caseFileUrl": "/apps/benzel",
     "category": "Stories & Games",
-    "features": ["Mobile-first reading", "Swipe and tap page turns", "Comic-style page curl"],
+    "features": [
+      "Mobile-first reading",
+      "Swipe and tap page turns",
+      "Comic-style page curl"
+    ],
     "live": true,
-    "availability": ["web"],
+    "availability": [
+      "web"
+    ],
     "icon": "/img/benzel/cover.jpg",
     "bg": "/img/benzel/cover.jpg"
   },
@@ -33,11 +39,20 @@
     "link": "/apps/sprocket",
     "caseFileUrl": "/apps/sprocket",
     "category": "Tools & Systems",
-    "features": ["Voice and text assistant", "Plain-language reminders", "Memory and notes", "Step-by-step phone help", "Confusing message explainers"],
+    "features": [
+      "Voice and text assistant",
+      "Plain-language reminders",
+      "Memory and notes",
+      "Step-by-step phone help",
+      "Confusing message explainers"
+    ],
     "live": true,
     "appStoreUrl": "https://apps.apple.com/us/app/sprocket-calm-phone-helper/id6759454436",
     "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.sprockethelper.app",
-    "availability": ["android", "ios"],
+    "availability": [
+      "android",
+      "ios"
+    ],
     "icon": "/img/sprocket-logo.png",
     "bg": "/img/sprocket-hero-bg.svg"
   },
@@ -50,16 +65,23 @@
     },
     "status": "live",
     "strap": "A calmer way to get things out of your head and move forward.",
-    "summary": "Unload is a calm, voice-first app for the moment before clarity. It helps you set things down when you’re overloaded, name what would make today easier, and feel lighter without pressure, streaks, or integrations. Relief comes first; momentum can wait.",
+    "summary": "Unload is a calm, voice-first app for the moment before clarity. It helps you set things down when you\u2019re overloaded, name what would make today easier, and feel lighter without pressure, streaks, or integrations. Relief comes first; momentum can wait.",
     "desc": "A voice-first way to set things down and feel lighter.",
     "link": "/apps/unload",
     "caseFileUrl": "/apps/unload",
     "category": "Health & Wellbeing",
-    "features": ["Voice-first unloading", "Low-pressure reflection", "Relief before momentum"],
+    "features": [
+      "Voice-first unloading",
+      "Low-pressure reflection",
+      "Relief before momentum"
+    ],
     "live": true,
     "appStoreUrl": "https://apps.apple.com/us/app/unload-app/id6758965862",
     "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.arcturusdc.unloadapp",
-    "availability": ["android", "ios"],
+    "availability": [
+      "android",
+      "ios"
+    ],
     "icon": "/img/unload-logo.svg",
     "bg": "/img/unload-hero-bg.svg"
   },
@@ -72,16 +94,23 @@
     },
     "status": "live",
     "strap": "Small wins. Visible progress. Rewards without pressure.",
-    "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (“Wins”) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward—simple, supportive, and sustainable.",
+    "summary": "ADHD Acclaim is a motivation app designed for neurodiverse users. Instead of rigid planners or streak systems, it focuses on autonomy: users define their own tasks (\u201cWins\u201d) and collect points toward self-chosen rewards. With an achievement-first design, the app reinforces visible progress, keeps pressure low, and celebrates each step forward\u2014simple, supportive, and sustainable.",
     "desc": "Gamified rewards to celebrate wins and encourage progress.",
     "link": "/apps/adhd-acclaim",
     "caseFileUrl": "/apps/adhd-acclaim",
     "category": "Health & Wellbeing",
-    "features": ["Self-defined wins", "Reward progress", "Pressure-light motivation"],
+    "features": [
+      "Self-defined wins",
+      "Reward progress",
+      "Pressure-light motivation"
+    ],
     "live": true,
     "appStoreUrl": "https://apps.apple.com/us/app/adhdacclaim/id6754703402",
     "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.adhdacclaim.app",
-    "availability": ["android", "ios"],
+    "availability": [
+      "android",
+      "ios"
+    ],
     "icon": "/img/adhdacclaim_logo_1024x1024.png",
     "bg": "/img/adhdacclaim-card-background.png"
   },
@@ -95,10 +124,16 @@
     "link": "/apps/toume",
     "caseFileUrl": "/apps/toume",
     "category": "Family & Relationships",
-    "features": ["Shared-care organising", "Role clarity", "Lightweight scheduling"],
+    "features": [
+      "Shared-care organising",
+      "Role clarity",
+      "Lightweight scheduling"
+    ],
     "live": true,
     "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.arcturusdc.toumecoparent",
-    "availability": ["android"],
+    "availability": [
+      "android"
+    ],
     "icon": "/img/tou.me_logo.jpeg",
     "bg": "/img/toume-card-background.png",
     "policies": [
@@ -122,11 +157,18 @@
     "link": "/apps/dialled-mtb",
     "caseFileUrl": "/apps/dialled-mtb",
     "category": "Sports & Performance",
-    "features": ["Ride sync", "Service tracking", "Setup guidance"],
+    "features": [
+      "Ride sync",
+      "Service tracking",
+      "Setup guidance"
+    ],
     "live": true,
     "appStoreUrl": "https://apps.apple.com/us/app/dialled-mtb/id6760664613",
     "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.arcturusdc.dialledmtb",
-    "availability": ["android", "ios"],
+    "availability": [
+      "android",
+      "ios"
+    ],
     "icon": "/img/dialled-mtb-logo-wordmark.png",
     "bg": null
   },
@@ -135,15 +177,21 @@
     "name": "Mandrake",
     "status": "live",
     "strap": "Rhythm, not perfection.",
-    "summary": "Mandrake helps you self-manage urges with awareness and choice, turning each one into practice instead of pressure. With a breath and a move, you redirect the pull and record it in seconds, building a repertoire that strengthens your form. Over time, the shadow stops being just a test — it becomes the trainer that sharpens your rhythm and restores your balance.",
+    "summary": "Mandrake helps you self-manage urges with awareness and choice, turning each one into practice instead of pressure. With a breath and a move, you redirect the pull and record it in seconds, building a repertoire that strengthens your form. Over time, the shadow stops being just a test \u2014 it becomes the trainer that sharpens your rhythm and restores your balance.",
     "desc": "Private urge logging, quick tactics, and pattern insights.",
     "link": "/apps/mandrake",
     "caseFileUrl": "/apps/mandrake",
     "category": "Health & Wellbeing",
-    "features": ["Private urge logging", "Quick tactics", "Pattern insights"],
+    "features": [
+      "Private urge logging",
+      "Quick tactics",
+      "Pattern insights"
+    ],
     "live": true,
     "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.repinfaust.mandrake",
-    "availability": ["android"],
+    "availability": [
+      "android"
+    ],
     "icon": "/img/mandrake-app-logo.png",
     "bg": "/img/mandrake-card-background.png"
   },
@@ -152,11 +200,15 @@
     "name": "SyncFit",
     "status": "development",
     "strap": "Workouts that fit your schedule.",
-    "summary": "SyncFit makes fitness planning practical by working around real calendars. The app finds free time slots in Google Calendar, recommends sessions based on goals, and lets users log or adjust workouts on the fly. No wasted plans, no guilt—just exercise that slots into daily life and sticks.",
+    "summary": "SyncFit makes fitness planning practical by working around real calendars. The app finds free time slots in Google Calendar, recommends sessions based on goals, and lets users log or adjust workouts on the fly. No wasted plans, no guilt\u2014just exercise that slots into daily life and sticks.",
     "desc": "Smart scheduling for workouts and self-care, synced with your calendar.",
     "caseFileUrl": "/apps/syncfit",
     "category": "Productivity",
-    "features": ["Calendar-aware planning", "Goal-led sessions", "Flexible workout logging"],
+    "features": [
+      "Calendar-aware planning",
+      "Goal-led sessions",
+      "Flexible workout logging"
+    ],
     "live": false,
     "icon": "/img/SyncFit_App_Icon_512x512.png",
     "bg": "/img/syncfit-card-background.png",
@@ -167,12 +219,18 @@
     "name": "Assume Zero",
     "status": "development",
     "strap": "Question first. Certainty second.",
-    "summary": "AssumeZero teaches children to question what they're shown — AI fakes, clickbait, engineered feelings — using inoculation, a proven method, delivered in a swipe-feed they actually want to play. v0.3 core loop is built and playtested.",
-    "desc": "A playtested v0.3 prototype: the TruthNet swipe-feed core loop — spot, reveal, repeat — plus Creator Mode and a Key-Stage spine from provenance to feeling.",
+    "summary": "AssumeZero teaches children to question what they're shown \u2014 AI fakes, clickbait, engineered feelings \u2014 using inoculation, a proven method, delivered in a swipe-feed they actually want to play. v0.3 core loop is built and playtested.",
+    "desc": "A playtested v0.3 prototype: the TruthNet swipe-feed core loop \u2014 spot, reveal, repeat \u2014 plus Creator Mode and a Key-Stage spine from provenance to feeling.",
     "link": "/apps/assumezero",
     "caseFileUrl": "/apps/assumezero",
     "category": "In Development",
-    "features": ["Swipe-to-judge feed loop", "Inoculation / prebunking method", "Creator Mode — build the lie", "KS1 → KS3+ spine", "Playtested v0.3 prototype"],
+    "features": [
+      "Swipe-to-judge feed loop",
+      "Inoculation / prebunking method",
+      "Creator Mode \u2014 build the lie",
+      "KS1 \u2192 KS3+ spine",
+      "Playtested v0.3 prototype"
+    ],
     "live": false,
     "icon": "/img/assumezero/image.png",
     "bg": "/img/assumezero/image.png"
@@ -181,13 +239,17 @@
     "id": "apex-state",
     "name": "Apex State",
     "status": "development",
-    "strap": "telemetry, sessions and setup — for riders who actually ride.",
-    "summary": "Apex State is a track-day setup companion for motorcyclists who want structure over guesswork. Log tyre pressures, session notes, and suspension settings—then compare them across events to find what's actually fast.",
-    "desc": "Track-day telemetry, session logging, and setup tools — built for the paddock.",
+    "strap": "telemetry, sessions and setup \u2014 for riders who actually ride.",
+    "summary": "Apex State is a track-day setup companion for motorcyclists who want structure over guesswork. Log tyre pressures, session notes, and suspension settings\u2014then compare them across events to find what's actually fast.",
+    "desc": "Track-day telemetry, session logging, and setup tools \u2014 built for the paddock.",
     "link": "/apps/apex-state",
     "caseFileUrl": "/apps/apex-state",
     "category": "Sports & Performance",
-    "features": ["Tyre pressure logs", "Session notes", "Setup comparison"],
+    "features": [
+      "Tyre pressure logs",
+      "Session notes",
+      "Setup comparison"
+    ],
     "live": false,
     "icon": "/img/apexstate-icon.png",
     "bg": "/img/apexstate-og-card.png"
@@ -197,12 +259,16 @@
     "name": "Rehab Path",
     "status": "development",
     "strap": "A guided path to recovery.",
-    "summary": "RehabPath is a structured recovery companion for people working through injury rehab. It provides clear, phase-based programmes, step-by-step exercise guidance, and visible progress tracking—all stored privately on your device. No accounts, no tracking, no complexity. Just a calm, focused tool to help you stay on course and see your improvement.",
+    "summary": "RehabPath is a structured recovery companion for people working through injury rehab. It provides clear, phase-based programmes, step-by-step exercise guidance, and visible progress tracking\u2014all stored privately on your device. No accounts, no tracking, no complexity. Just a calm, focused tool to help you stay on course and see your improvement.",
     "desc": "Structured rehab programmes, simple exercise guidance, and private progress tracking.",
     "link": "/apps/rehabpath",
     "caseFileUrl": "/apps/rehabpath",
     "category": "Health & Wellbeing",
-    "features": ["Phase-based recovery", "Exercise guidance", "Private progress tracking"],
+    "features": [
+      "Phase-based recovery",
+      "Exercise guidance",
+      "Private progress tracking"
+    ],
     "live": false,
     "icon": "/img/rehabpath-icon.svg",
     "bg": "/img/rehabpath-card-background.png"
@@ -216,15 +282,46 @@
     },
     "status": "development",
     "strap": "Daily heart-centred practice, live meditations, and community.",
-    "summary": "Heart of Living Yoga brings guided practices, live daily meditations, teachings, retreats, and ways to support the charity together in one calm place — a living teaching space rather than just another meditation library. Free practices to begin with, live morning and evening meditations, and a growing library of classes and music.",
+    "summary": "Heart of Living Yoga brings guided practices, live daily meditations, teachings, retreats, and ways to support the charity together in one calm place \u2014 a living teaching space rather than just another meditation library. Free practices to begin with, live morning and evening meditations, and a growing library of classes and music.",
     "desc": "Guided practices, live daily meditations, classes, music, and events for a heart-centred community.",
     "link": "/apps/hol-yoga",
     "caseFileUrl": "/apps/hol-yoga",
     "category": "Health & Wellbeing",
-    "features": ["Heart Words for Today", "Live daily meditations", "Practice & music library", "Events & retreats"],
+    "features": [
+      "Heart Words for Today",
+      "Live daily meditations",
+      "Practice & music library",
+      "Events & retreats"
+    ],
     "live": false,
-    "availability": ["android", "ios"],
+    "availability": [
+      "android",
+      "ios"
+    ],
     "icon": "/img/hol-yoga/foundation-logo.png",
     "bg": "/img/hol-yoga/photo-lotus.jpg"
+  },
+  {
+    "id": "sidestand",
+    "name": "Sidestand",
+    "status": "development",
+    "strap": "The maintenance log and ride record for adventure riders.",
+    "summary": "Sidestand is a maintenance and ride-log app for adventure and touring motorcyclists - per-component service intervals keyed to the odometer, trips, a stops map, a documents wallet, and a service history export that adds real money at resale.",
+    "desc": "Maintenance tracking, ride logging, and trips for ADV riders.",
+    "link": "/apps/sidestand",
+    "caseFileUrl": "/apps/sidestand",
+    "category": "Sports & Performance",
+    "features": [
+      "Maintenance engine",
+      "Rides & trips",
+      "Service history export"
+    ],
+    "live": false,
+    "availability": [
+      "android",
+      "ios"
+    ],
+    "icon": "/img/sidestand-logo.svg",
+    "bg": null
   }
 ]
