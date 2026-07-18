@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const LIVE_IDS = ["benzel", "adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
-const DEV_IDS  = ["rehabpath", "apex-state", "assumezero"];
+const DEV_IDS  = ["rehabpath", "apex-state", "assumezero", "sidestand"];
 
 const STATUS_LABEL = { live: "Live", comingSoon: "Coming soon", development: "In development" };
 

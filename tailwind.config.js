@@ -21,6 +21,17 @@ module.exports = {
           text: '#C8C8D8',
           border: '#4A1A2D',
         },
+        // Sidestand — Livery Lite design system
+        sidestand: {
+          paper: '#F1F0ED',
+          panel: '#FBFBF9',
+          ink: '#131313',
+          muted: '#4a4a46',
+          faint: '#8a8a85',
+          hairline: '#C9C8C3',
+          safety: '#FF4D00',
+          'safety-deep': '#C63C00',
+        },
         // ApexTwin Design System
         apex: {
           carbon: '#0B0B0C',
