@@ -8,7 +8,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const wc26 = require('./wc26/service');
-const wc26gb = require('./wc26/goldenboot');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -71,46 +70,6 @@ exports.snapshotWc26ClosingOdds = functions.pubsub
     return null;
   });
 
-// Scheduled odds + calibration refresh. Same auth pattern as the snapshot
-// driver: the Vercel route accepts `Bearer $CRON_SECRET` and does the real
-// work (The Odds API uk+eu pull → consensus odds + sharp lambdas + kickoffs
-// onto upcoming fixtures). Every 6 hours ≈ 8 API requests/day — comfortably
-// inside the 500/month free tier for the remainder of the tournament.
-exports.pullWc26Odds = functions.pubsub
-  .schedule('every 6 hours')
-  .timeZone('Europe/London')
-  .onRun(async () => {
-    const base = process.env.WC26_SITE_URL || 'https://www.arcturusdc.com';
-    const secret = process.env.WC26_CRON_SECRET;
-    if (!secret) {
-      console.warn('[wc26] odds pull skipped: WC26_CRON_SECRET not set');
-      return null;
-    }
-    try {
-      const res = await fetch(`${base}/api/stea/wc26/odds-api`, {
-        method: 'POST',
-        headers: {Authorization: `Bearer ${secret}`},
-      });
-      const body = await res.json().catch(() => ({}));
-      console.log('[wc26] odds-api:', res.status, JSON.stringify(body));
-    } catch (err) {
-      console.error('[wc26] odds-api call failed:', err.message);
-    }
-    return null;
-  });
-
-// Golden Boot: deterministic scorer standings + seeded Monte Carlo forecast
-// of the top-scorer race (same pinned openfootball source; no LLM). Twice a
-// day is plenty — it only changes when results land.
-exports.refreshWc26GoldenBoot = functions.pubsub
-  .schedule('every 12 hours')
-  .timeZone('Europe/London')
-  .onRun(wc26gb.refreshWc26GoldenBootScheduled);
-
-exports.refreshWc26GoldenBootNow = functions.https.onCall(
-  wc26gb.refreshWc26GoldenBootNow,
-);
-
 // ─── MLB Line-Movement Study: research collector (D-SITE-008) ───────────────
 // NOT a betting model. Collects sequenced pre-game line snapshots + game events.
 // Spec: planning/MLB_LINE_STUDY_SPEC.md. Times are America/New_York (DST-safe).
@@ -145,6 +104,16 @@ exports.mlbFinalizeDay = functions.pubsub
   .schedule('30 3 * * *')
   .timeZone('America/New_York')
   .onRun(mlb.finalizeDayScheduled);
+
+// T-2h targeted check every 15 min through the slate window (12:00-23:45 ET —
+// covers day games' ~13:05 first pitch through west-coast ~22:15 first pitch).
+// The check itself is a free Firestore read; it only spends an Odds API credit
+// when a tracked game is actually 100-140 min from first pitch and not yet
+// captured (see t2hCheckImpl). D-SITE-008 follow-up, 2026-07-19.
+exports.mlbT2hCheck = functions.pubsub
+  .schedule('*/15 12-23 * * *')
+  .timeZone('America/New_York')
+  .onRun(mlb.t2hCheckScheduled);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

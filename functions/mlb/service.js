@@ -68,12 +68,13 @@ function impliedOverProb(overDec, underDec) {
   return total > 0 ? po / total : null;
 }
 
-// T-2h correct-side pick (pure fn, no I/O): given the snapshot nearest 120 minutes
-// pre-first-pitch and the real final total, records which side the market favored
-// at T-2h and whether that side was actually correct. Push (total === line) is
-// recorded but excluded from correct/incorrect grading — neither side wins a push.
-// Accuracy only — no value/EV claim, no recommendation.
-function buildT2hPick(snap, finalTotal) {
+// Correct-side pick (pure fn, no I/O): given any line snapshot and the real final
+// total, records which side the market favored at that snapshot and whether that
+// side was actually correct. Push (total === line) is recorded but excluded from
+// correct/incorrect grading — neither side wins a push. Used for both the opener
+// pick and the T-2h pick — same logic, different snapshot. Accuracy only — no
+// value/EV claim, no recommendation.
+function buildPick(snap, finalTotal) {
   if (!snap || !snap.consensus || !Number.isFinite(finalTotal)) return null;
   const {line, overDec, underDec} = snap.consensus;
   const pOver = impliedOverProb(overDec, underDec);
@@ -83,9 +84,45 @@ function buildT2hPick(snap, finalTotal) {
   const push = finalTotal === line;
   const correct = push ? null : (side === 'over' ? finalTotal > line : finalTotal < line);
   return {
-    side, pOverAtT2h: round2(pOver), line, minutesToFirstPitch: snap.minutesToFirstPitch,
+    side, pOver: round2(pOver), line, minutesToFirstPitch: snap.minutesToFirstPitch,
     capturedAtIso: snap.capturedAtIso, push, correct,
   };
+}
+
+// Reconstructs which pitcher was probable for each side as of a given timestamp,
+// by starting from the pitchers known at the opener and replaying pitcher_change
+// events (payload: {side, old, new}) that occurred strictly before cutoffIso.
+// Pure fn given the event list — no I/O. Returns null for a side with no known
+// starter at that point (e.g. game not yet far enough along for MLB to post one).
+function pitchersAsOf(openerPitchers, pitcherChangeEvents, cutoffIso) {
+  const result = {
+    home: (openerPitchers && openerPitchers.home) || null,
+    away: (openerPitchers && openerPitchers.away) || null,
+  };
+  const ordered = (pitcherChangeEvents || [])
+    .filter((e) => e.detectedAtIso && e.detectedAtIso <= cutoffIso)
+    .sort((a, b) => String(a.detectedAtIso).localeCompare(String(b.detectedAtIso)));
+  for (const e of ordered) {
+    const side = e.payload && e.payload.side;
+    if (side === 'home' || side === 'away') {
+      result[side] = (e.payload && e.payload.new) || null;
+    }
+  }
+  return result;
+}
+
+// Did waiting for T-2h information and re-picking actually help, vs. sticking with
+// the opener pick? null when there's nothing to compare (either pick missing/push).
+// 'unchanged': same side both times (revision was a no-op). 'improved': picks
+// differed and T-2h was the correct one. 'worsened': picks differed and opener
+// would have been correct instead.
+function buildRevisionOutcome(openerPick, t2hPick) {
+  if (!openerPick || !t2hPick || openerPick.push || t2hPick.push) return null;
+  if (openerPick.correct == null || t2hPick.correct == null) return null;
+  if (openerPick.side === t2hPick.side) return 'unchanged';
+  if (t2hPick.correct && !openerPick.correct) return 'improved';
+  if (!t2hPick.correct && openerPick.correct) return 'worsened';
+  return 'unchanged'; // both sides graded the same way despite differing (shouldn't normally happen on a single line)
 }
 
 async function readMeta(db) {
@@ -164,6 +201,29 @@ function consensusTotals(ev) {
     home: ev.home_team, away: ev.away_team, commenceTime: ev.commence_time,
     consensus: {line, overDec, underDec}, books,
   };
+}
+
+// ─── T-2h targeted check: free Firestore read; spends an odds credit only when ──
+// at least one tracked, non-final game is currently 100-140 minutes from first
+// pitch and hasn't had a T-2h snapshot yet. One odds pass (1 credit) covers every
+// in-window game simultaneously — The Odds API returns the whole slate per call,
+// so this is NOT a per-game cost. Designed to run every ~15 min during the slate
+// window without polling-cost blowup: the check itself is free, spend is targeted.
+async function t2hCheckImpl() {
+  const db = admin.firestore();
+  const date = todayNY();
+  const gamesSnap = await db.collection(collections.games).where('date', '==', date).get();
+  const now = Date.now();
+  let dueCount = 0;
+  for (const doc of gamesSnap.docs) {
+    const g = doc.data();
+    if (g.status === 'final' || g.t2hSnapshotTaken) continue;
+    if (!g.scheduledFirstPitch) continue;
+    const minsToFP = Math.round((new Date(g.scheduledFirstPitch) - now) / 60000);
+    if (minsToFP >= 100 && minsToFP <= 140) dueCount++;
+  }
+  if (dueCount === 0) return {skipped: 'no-game-in-t2h-window'};
+  return snapshotLinesImpl({trigger: 'cron:t2h'});
 }
 
 // ─── Snapshot pass: 1 odds call, write a snapshot per game ────────────────────
@@ -267,7 +327,19 @@ async function snapshotLinesImpl({trigger = 'cron'} = {}) {
       updatedAt: ts(),
     };
     if (!prev || !prev.opener) {
-      gamePayload.opener = {line: c.consensus.line, overDec: c.consensus.overDec, underDec: c.consensus.underDec, capturedAt: capturedAtIso};
+      gamePayload.opener = {
+        line: c.consensus.line, overDec: c.consensus.overDec, underDec: c.consensus.underDec, capturedAt: capturedAtIso,
+        // Pitchers as known at the exact moment the opener was captured — the "pick as of open"
+        // reference point. Frozen once; never overwritten by later passes (unlike probablePitchers above).
+        pitchers: gamePayload.probablePitchers,
+      };
+    }
+    // Mark T-2h as captured once a snapshot actually lands in the 100-140 min window,
+    // so the t2hCheck pass (below) stops re-triggering an odds call for this game.
+    if (!prev || !prev.t2hSnapshotTaken) {
+      if (Number.isFinite(minsToFP) && minsToFP >= 100 && minsToFP <= 140) {
+        gamePayload.t2hSnapshotTaken = true;
+      }
     }
     batch.set(gRef, gamePayload, {merge: true});
     ops += 2; written++;
@@ -401,15 +473,33 @@ async function finalizeDayImpl() {
     const snapDocs = allSnaps.docs.map((d) => d.data()).sort((a, b) => String(a.capturedAtIso).localeCompare(String(b.capturedAtIso)));
     const closeSnap = snapDocs.length ? snapDocs[snapDocs.length - 1] : null;
     const nSnaps = snapDocs.length;
-    const nEvents = (await db.collection(collections.events).where('gameId', '==', id).count().get()).data().count;
+    const eventsSnap = await db.collection(collections.events).where('gameId', '==', id).get();
+    const gameEvents = eventsSnap.docs.map((d) => d.data());
+    const nEvents = gameEvents.length;
+    const pitcherChangeEvents = gameEvents.filter((e) => e.type === 'pitcher_change');
 
     // T-2h pick: snapshot closest to (but not after) 120 minutes-to-first-pitch,
     // graded on whether its de-vigged P(Over) side matches the real final total.
+    // Opener pick: same grading, applied to the very first snapshot instead.
     // Correct-side accuracy only — not a value/EV claim, never a recommendation to bet.
+    const openerSnap = snapDocs[0] || null;
     const t2hSnap = snapDocs
       .filter((s) => Number.isFinite(s.minutesToFirstPitch) && s.minutesToFirstPitch >= 100 && s.minutesToFirstPitch <= 140)
       .sort((a, b) => Math.abs(a.minutesToFirstPitch - 120) - Math.abs(b.minutesToFirstPitch - 120))[0] || null;
-    const t2hPick = buildT2hPick(t2hSnap, ar + hr);
+    const openerPick = buildPick(openerSnap, ar + hr);
+    const t2hPick = buildPick(t2hSnap, ar + hr);
+    const revisionOutcome = buildRevisionOutcome(openerPick, t2hPick);
+
+    // Starting pitchers as known at each pick point — reconstructed by replaying
+    // pitcher_change events up to each snapshot's timestamp, starting from the
+    // pitchers frozen at opener capture (see snapshotLinesImpl).
+    const openerPitchers = (prev && prev.opener && prev.opener.pitchers) || null;
+    const pitchersAtOpener = openerSnap ? pitchersAsOf(openerPitchers, pitcherChangeEvents, openerSnap.capturedAtIso) : openerPitchers;
+    const pitchersAtT2h = t2hSnap ? pitchersAsOf(openerPitchers, pitcherChangeEvents, t2hSnap.capturedAtIso) : null;
+    const pitcherChangedBeforeT2h = !!(pitchersAtT2h && pitchersAtOpener && (
+      (pitchersAtT2h.home && pitchersAtOpener.home && pitchersAtT2h.home.id !== pitchersAtOpener.home.id) ||
+      (pitchersAtT2h.away && pitchersAtOpener.away && pitchersAtT2h.away.id !== pitchersAtOpener.away.id)
+    ));
 
     const opener = prev && prev.opener ? prev.opener.line : null;
     const close = closeSnap ? closeSnap.consensus.line : (prev && prev.latest ? prev.latest.line : null);
@@ -421,7 +511,12 @@ async function finalizeDayImpl() {
         delta: round2(close - opener), nSnapshots: nSnaps, nEvents,
         openerToActual: round2((prev.finalTotal != null ? prev.finalTotal : ar + hr) - opener),
       } : null,
+      openerPick,
       t2hPick,
+      revisionOutcome,
+      pitchersAtOpener,
+      pitchersAtT2h,
+      pitcherChangedBeforeT2h,
       finalizedAt: ts(), updatedAt: ts(),
     }, {merge: true});
     finalized++;
@@ -445,6 +540,9 @@ async function pollGameDataScheduled() {
 async function finalizeDayScheduled() {
  return finalizeDayImpl();
 }
+async function t2hCheckScheduled() {
+ return t2hCheckImpl();
+}
 
 module.exports = {
   ARCTURUSDC_TENANT_ID,
@@ -453,12 +551,16 @@ module.exports = {
   median,
   gameKey,
   impliedOverProb,
-  buildT2hPick,
+  buildPick,
+  pitchersAsOf,
+  buildRevisionOutcome,
   snapshotLinesImpl,
   pollGameDataImpl,
   finalizeDayImpl,
+  t2hCheckImpl,
   snapshotLinesScheduled,
   snapshotLinesCloseScheduled,
   pollGameDataScheduled,
   finalizeDayScheduled,
+  t2hCheckScheduled,
 };
