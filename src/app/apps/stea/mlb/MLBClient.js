@@ -130,6 +130,13 @@ function Study() {
     return m;
   }, [state.events]);
 
+  const t2hRecord = useMemo(() => {
+    const graded = state.games.filter((g) => g.t2hPick && g.t2hPick.correct !== null && g.t2hPick.correct !== undefined);
+    const correct = graded.filter((g) => g.t2hPick.correct).length;
+    const pushes = state.games.filter((g) => g.t2hPick && g.t2hPick.push).length;
+    return { graded: graded.length, correct, pushes };
+  }, [state.games]);
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-4">
@@ -164,6 +171,21 @@ function Study() {
             )}
           </Section>
 
+          <Section title="T-2h correct-side forward record">
+            <Note>
+              For each finalized game, the market&apos;s consensus price ~2h before first pitch is read
+              (de-vigged implied probability) and graded against the real final total — correct side only,
+              not a value/EV claim, no recommendation. Accumulates automatically each night.
+              {t2hRecord.graded === 0 ? (
+                ' No graded games yet.'
+              ) : (
+                ` ${t2hRecord.correct} / ${t2hRecord.graded} correct (${((t2hRecord.correct / t2hRecord.graded) * 100).toFixed(1)}%)${
+                  t2hRecord.pushes ? `, ${t2hRecord.pushes} push${t2hRecord.pushes === 1 ? '' : 'es'} excluded` : ''
+                }. Sample is small — not yet meaningful.`
+              )}
+            </Note>
+          </Section>
+
           <Section title={`Recently finalized (${finalized.length})`}>
             {finalized.length === 0 ? (
               <Note>No finalized games yet — the finalizer runs at 03:30 ET and back-fills results + move summaries.</Note>
@@ -179,6 +201,7 @@ function Study() {
                       <th className="py-2 pr-3 text-right">Move</th>
                       <th className="py-2 pr-3 text-right">Actual</th>
                       <th className="py-2 pr-3 text-right">Events</th>
+                      <th className="py-2 pr-3 text-right">T-2h pick</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -186,6 +209,7 @@ function Study() {
                       const opener = g.opener?.line;
                       const close = g.close?.line;
                       const delta = g.moveSummary?.delta;
+                      const pick = g.t2hPick;
                       return (
                         <tr key={g.id} className="border-t border-black/5">
                           <td className="py-2 pr-3 text-neutral-500">{g.date}</td>
@@ -195,6 +219,17 @@ function Study() {
                           <td className={`py-2 pr-3 text-right font-medium ${moveTone(delta)}`}>{fmtDelta(delta)}</td>
                           <td className="py-2 pr-3 text-right font-semibold">{Number.isFinite(g.finalTotal) ? g.finalTotal : '—'}</td>
                           <td className="py-2 pr-3 text-right text-neutral-500">{g.moveSummary?.nEvents ?? '—'}</td>
+                          <td className="py-2 pr-3 text-right">
+                            {!pick ? (
+                              <span className="text-neutral-400">—</span>
+                            ) : pick.push ? (
+                              <span className="text-neutral-500">push</span>
+                            ) : (
+                              <span className={pick.correct ? 'text-emerald-600' : 'text-rose-600'}>
+                                {pick.side} ({pick.correct ? 'correct' : 'wrong'})
+                              </span>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}

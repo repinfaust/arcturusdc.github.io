@@ -60,6 +60,34 @@ function medianLine(pts) {
 }
 const round2 = (n) => (Number.isFinite(n) ? Math.round(n * 100) / 100 : null);
 
+// De-vigged P(Over): normalize 1/overDec, 1/underDec to sum to 1, removing the book's margin.
+function impliedOverProb(overDec, underDec) {
+  if (!Number.isFinite(overDec) || !Number.isFinite(underDec) || overDec <= 0 || underDec <= 0) return null;
+  const po = 1 / overDec; const pu = 1 / underDec;
+  const total = po + pu;
+  return total > 0 ? po / total : null;
+}
+
+// T-2h correct-side pick (pure fn, no I/O): given the snapshot nearest 120 minutes
+// pre-first-pitch and the real final total, records which side the market favored
+// at T-2h and whether that side was actually correct. Push (total === line) is
+// recorded but excluded from correct/incorrect grading — neither side wins a push.
+// Accuracy only — no value/EV claim, no recommendation.
+function buildT2hPick(snap, finalTotal) {
+  if (!snap || !snap.consensus || !Number.isFinite(finalTotal)) return null;
+  const {line, overDec, underDec} = snap.consensus;
+  const pOver = impliedOverProb(overDec, underDec);
+  if (!Number.isFinite(line) || pOver == null) return null;
+  const side = pOver > 0.5 ? 'over' : pOver < 0.5 ? 'under' : null;
+  if (!side) return null;
+  const push = finalTotal === line;
+  const correct = push ? null : (side === 'over' ? finalTotal > line : finalTotal < line);
+  return {
+    side, pOverAtT2h: round2(pOver), line, minutesToFirstPitch: snap.minutesToFirstPitch,
+    capturedAtIso: snap.capturedAtIso, push, correct,
+  };
+}
+
 async function readMeta(db) {
   const snap = await db.collection(collections.meta).doc('collector').get();
   return snap.exists ? snap.data() : {};
@@ -327,7 +355,9 @@ async function pollGameDataImpl() {
       });
       events++;
     }
-    batch.set(gRef, {tracking: track, updatedAt: ts()}, {merge: true});
+    const statusPayload = {tracking: track, updatedAt: ts()};
+    if (curStatus) statusPayload.status = curStatus;
+    batch.set(gRef, statusPayload, {merge: true});
   }
   await batch.commit();
 
@@ -367,11 +397,19 @@ async function finalizeDayImpl() {
     const prev = snap.exists ? snap.data() : null;
 
     // close = last snapshot before first pitch
-    const snaps = await db.collection(collections.snapshots)
-      .where('gameId', '==', id).orderBy('capturedAtIso', 'desc').limit(1).get();
-    const closeSnap = snaps.empty ? null : snaps.docs[0].data();
-    const nSnaps = (await db.collection(collections.snapshots).where('gameId', '==', id).count().get()).data().count;
+    const allSnaps = await db.collection(collections.snapshots).where('gameId', '==', id).get();
+    const snapDocs = allSnaps.docs.map((d) => d.data()).sort((a, b) => String(a.capturedAtIso).localeCompare(String(b.capturedAtIso)));
+    const closeSnap = snapDocs.length ? snapDocs[snapDocs.length - 1] : null;
+    const nSnaps = snapDocs.length;
     const nEvents = (await db.collection(collections.events).where('gameId', '==', id).count().get()).data().count;
+
+    // T-2h pick: snapshot closest to (but not after) 120 minutes-to-first-pitch,
+    // graded on whether its de-vigged P(Over) side matches the real final total.
+    // Correct-side accuracy only — not a value/EV claim, never a recommendation to bet.
+    const t2hSnap = snapDocs
+      .filter((s) => Number.isFinite(s.minutesToFirstPitch) && s.minutesToFirstPitch >= 100 && s.minutesToFirstPitch <= 140)
+      .sort((a, b) => Math.abs(a.minutesToFirstPitch - 120) - Math.abs(b.minutesToFirstPitch - 120))[0] || null;
+    const t2hPick = buildT2hPick(t2hSnap, ar + hr);
 
     const opener = prev && prev.opener ? prev.opener.line : null;
     const close = closeSnap ? closeSnap.consensus.line : (prev && prev.latest ? prev.latest.line : null);
@@ -383,6 +421,7 @@ async function finalizeDayImpl() {
         delta: round2(close - opener), nSnapshots: nSnaps, nEvents,
         openerToActual: round2((prev.finalTotal != null ? prev.finalTotal : ar + hr) - opener),
       } : null,
+      t2hPick,
       finalizedAt: ts(), updatedAt: ts(),
     }, {merge: true});
     finalized++;
@@ -410,6 +449,11 @@ async function finalizeDayScheduled() {
 module.exports = {
   ARCTURUSDC_TENANT_ID,
   collections,
+  medianLine,
+  median,
+  gameKey,
+  impliedOverProb,
+  buildT2hPick,
   snapshotLinesImpl,
   pollGameDataImpl,
   finalizeDayImpl,
