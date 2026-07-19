@@ -188,3 +188,33 @@ Open items for approval:
   attribution input if unexplained-move fraction turns out high.
 - Confirm the shared Odds API key/budget with WC26 until the tournament ends
   (throttle guard already reserves 50 credits).
+
+---
+
+## Amendment, 2026-07-19: T-2h pick comparison added (D-SITE-008 follow-up, see DECISIONS.md)
+
+This spec's original framing ("no predictions, logs no picks") describes v1 as built
+2026-07-16. As of 2026-07-19 the collector also computes and stores, per game:
+`openerPick` and `t2hPick` — which side (Over/Under) the de-vigged market price
+favored at the opener snapshot and at a ~2h-pre-first-pitch snapshot, each graded
+against the real final total — and `revisionOutcome` (`unchanged`/`improved`/
+`worsened`), comparing the two. This is still **correct-side accuracy measurement,
+not a betting recommendation or EV claim** — no LLM, no fabricated data, same
+founding rules as before. It directly answers the user's actual research question
+(does waiting for late information — confirmed starters, latest price — and
+re-picking at T-2h beat picking at the open), which supersedes §5's original
+"move attribution" framing as the primary analysis question; §5 remains valid as a
+secondary analysis once enough data accrues.
+
+A new scheduled function, `mlbT2hCheck` (`*/15 12-23 * * *` NY), was added to
+guarantee T-2h snapshot coverage per game — the original 7 fixed-clock passes in
+§3 did not reliably land inside the 100–140-min pre-first-pitch window for every
+game given the spread of first-pitch times (~13:05–22:15 ET). It does a free
+Firestore check and only spends an Odds API credit when a game is actually due;
+one call covers the whole in-window slate, so it is not a per-game cost. Full
+detail: `planning/DECISIONS.md`, entries dated 2026-07-19.
+
+Known limitation: games whose opener was captured before this amendment
+(2026-07-16 through 2026-07-19) have no `opener.pitchers` field and cannot get one
+retroactively — the value wasn't recorded at that historical moment. Only games
+first tracked after 2026-07-19 have complete pitcher-at-open data.
