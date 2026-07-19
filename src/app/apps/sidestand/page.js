@@ -21,7 +21,7 @@ export default function Sidestand() {
           <h1 className="text-2xl font-black tracking-tight text-sidestand-ink">
             SIDESTAND<span className="text-sidestand-safety">.</span>
           </h1>
-          <div className="text-muted text-sm">Maintenance · Rides · Trips. Private by design.</div>
+          <div className="text-muted text-sm">Maintenance · Rides · Trips · Stops.</div>
           <p className="mt-2 text-sm text-neutral-700">
             Sidestand is the maintenance log and ride record for adventure and touring motorcyclists —
             the glovebox notebook, done properly. Built for GS tourers, green-laners, and anyone whose
@@ -37,7 +37,8 @@ export default function Sidestand() {
               Inside Sidestand
             </h2>
             <p className="mt-3 text-sidestand-muted max-w-2xl mx-auto">
-              No social feed. No leaderboards. No gimmicks. One trusted record of your bike and your riding.
+              Service intervals keyed to your odometer, trips you can revisit, and a service history
+              worth money at resale.
             </p>
           </div>
 
@@ -109,11 +110,13 @@ export default function Sidestand() {
                 </Faq>
                 <Faq q="Does it need GPS or a tracker?">
                   No. Rides are logged from your odometer — the way service intervals have always worked.
-                  Nothing runs in the background, nothing tracks you.
+                  There is no background ride tracking; location is only used, with your permission, to
+                  centre the Stops map when you pin a place.
                 </Faq>
-                <Faq q="Is my data shared?">
-                  No. Private by design: no feed, no followers, no data selling. Your records are yours,
-                  stored against your account, deletable at any time from within the app.
+                <Faq q="Where does my data live?">
+                  Your records are stored against your account in Google Firebase and are deletable at any
+                  time from within the app. See the Privacy Policy for what we collect and the third-party
+                  services (sign-in, maps, subscriptions) the app uses.
                 </Faq>
                 <Faq q="What's Free and what's Premium?">
                   Free covers one bike and your current-year ride log. Premium (monthly or annual)
