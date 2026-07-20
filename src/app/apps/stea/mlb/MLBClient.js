@@ -116,23 +116,33 @@ function Study() {
     return () => { alive = false; };
   }, []);
 
-  const { graded, upcoming } = useMemo(() => {
-    const g = [];
+  // A finalized game is "pick-graded" only if the finalizer actually built a pick from
+  // a line snapshot. Games finalized before the collector was capturing snapshots
+  // (2026-07-16/17 batch, and any postponement with no in-window snapshot) have a real
+  // finalTotal but null/absent openerPick + t2hPick — they can never be graded and are
+  // shown separately so the table and the summary tell the same story (D-SITE-008 f/u 3).
+  const hasPick = (p) => p && p.side != null;
+  const { pickGraded, ungraded, upcoming } = useMemo(() => {
+    const pg = [];
+    const ug = [];
     const up = [];
     for (const game of state.games) {
-      if (game.status === 'final' || game.finalTotal != null) g.push(game);
-      else up.push(game);
+      const isFinal = game.status === 'final' || game.finalTotal != null;
+      if (!isFinal) { up.push(game); continue; }
+      if (hasPick(game.openerPick) || hasPick(game.t2hPick)) pg.push(game);
+      else ug.push(game);
     }
-    g.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    pg.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    ug.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     up.sort((a, b) => String(a.scheduledFirstPitch || '').localeCompare(String(b.scheduledFirstPitch || '')));
-    return { graded: g, upcoming: up };
+    return { pickGraded: pg, ungraded: ug, upcoming: up };
   }, [state.games]);
 
   const summary = useMemo(() => {
     let openerGraded = 0; let openerCorrect = 0;
     let t2hGraded = 0; let t2hCorrect = 0;
     let improved = 0; let worsened = 0; let unchanged = 0; let pitcherChanged = 0;
-    for (const g of graded) {
+    for (const g of pickGraded) {
       const op = g.openerPick; const tp = g.t2hPick;
       if (op && !op.push && op.correct != null) { openerGraded++; if (op.correct) openerCorrect++; }
       if (tp && !tp.push && tp.correct != null) { t2hGraded++; if (tp.correct) t2hCorrect++; }
@@ -141,8 +151,8 @@ function Study() {
       else if (g.revisionOutcome === 'unchanged') unchanged++;
       if (g.pitcherChangedBeforeT2h) pitcherChanged++;
     }
-    return { openerGraded, openerCorrect, t2hGraded, t2hCorrect, improved, worsened, unchanged, pitcherChanged, total: graded.length };
-  }, [graded]);
+    return { openerGraded, openerCorrect, t2hGraded, t2hCorrect, improved, worsened, unchanged, pitcherChanged, total: pickGraded.length };
+  }, [pickGraded]);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -162,7 +172,8 @@ function Study() {
       {state.status === 'ready' && (
         <>
           <SummaryPanel s={summary} />
-          <PickTable games={graded} />
+          <PickTable games={pickGraded} />
+          <UngradedList games={ungraded} />
           <UpcomingList games={upcoming} />
           <CollectorHealth meta={state.meta} />
         </>
@@ -175,7 +186,7 @@ function SummaryPanel({ s }) {
   return (
     <div className="mb-6 rounded-xl border border-black/10 bg-neutral-50 p-4">
       <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-        Forward record ({s.total} graded games)
+        Forward record ({s.total} pick-graded {s.total === 1 ? 'game' : 'games'})
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Opener pick" value={pct(s.openerCorrect, s.openerGraded)} sub={`${s.openerCorrect}/${s.openerGraded}`} />
@@ -240,6 +251,40 @@ function PickTable({ games }) {
                 </tr>
               );
             })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function UngradedList({ games }) {
+  if (games.length === 0) return null;
+  return (
+    <section className="mt-8">
+      <h2 className="mb-1 text-xl font-bold">Final — not graded ({games.length})</h2>
+      <p className="mb-3 max-w-3xl text-xs text-neutral-500">
+        These games finished with a real total but had no line snapshots captured before first pitch
+        (the collector only began capturing pre-game lines on 2026-07-18), so there is no opener or
+        T-2h pick to grade. They are excluded from the record above.
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-neutral-500">
+              <th className="py-2 pr-3">Date</th>
+              <th className="py-2 pr-3">Matchup</th>
+              <th className="py-2 pr-3 text-right">Actual</th>
+            </tr>
+          </thead>
+          <tbody>
+            {games.map((g) => (
+              <tr key={g.id} className="border-t border-black/5">
+                <td className="py-2 pr-3 text-neutral-500">{g.date || '—'}</td>
+                <td className="py-2 pr-3">{g.away} @ {g.home}</td>
+                <td className="py-2 pr-3 text-right font-semibold">{Number.isFinite(g.finalTotal) ? g.finalTotal : '—'}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
