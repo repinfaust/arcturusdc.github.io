@@ -828,6 +828,16 @@ function ChatScreen({ sessionId, model, onMode, onArchiveState, onError }) {
     bottomRef.current?.scrollIntoView({ block: 'end' });
   }, [messages.length, sending]);
 
+  // Dev-only screen preview for the D-022 review gate: ?rf_preview=acute|danger
+  // renders the takeover without a broker call. Inert in production builds.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const preview = new URLSearchParams(window.location.search).get('rf_preview');
+    if (preview === 'acute' || preview === 'danger') {
+      setDanger({ reply: "(dev preview - the aid's reply renders here)", acuteRisk: preview === 'acute' });
+    }
+  }, []);
+
   const submit = async (event) => {
     event.preventDefault();
     const text = input.trim();
@@ -840,7 +850,7 @@ function ChatScreen({ sessionId, model, onMode, onArchiveState, onError }) {
       const result = await sendChat(sessionId, text, model);
       onMode(result.classification?.mode_guess || 'cold');
       if (result.classification?.danger_zone || result.classification?.acute_risk) {
-        setDanger({ reply: result.reply || '' });
+        setDanger({ reply: result.reply || '', acuteRisk: !!result.classification?.acute_risk });
       }
     } catch (error) {
       onError(error?.message || 'Could not reach the broker.');
@@ -888,7 +898,7 @@ function ChatScreen({ sessionId, model, onMode, onArchiveState, onError }) {
           {sending ? 'Sending' : 'Set'}
         </button>
       </form>
-      {danger ? <DangerTakeover reply={danger.reply} onDismiss={() => setDanger(null)} onError={onError} /> : null}
+      {danger ? <DangerTakeover reply={danger.reply} acuteRisk={danger.acuteRisk} onDismiss={() => setDanger(null)} onError={onError} /> : null}
     </div>
   );
 }
@@ -958,7 +968,18 @@ function Dialogue({ message, uncertain, previousText, sessionId, onError }) {
   );
 }
 
-function DangerTakeover({ reply, onDismiss, onError }) {
+// D-022 crisis floor (OQ-6). Static — no model in the path. Phone/text channels
+// only: Samaritans' UK email service closes during 2026, so no email addresses.
+const CRISIS_LINES = [
+  { name: 'Samaritans', meta: '116 123 - free from any phone, 24/7', url: 'tel:116123' },
+  { name: 'SHOUT', meta: 'text SHOUT to 85258 - 24/7, for when a call is too much', url: 'sms:85258?body=SHOUT' },
+  { name: 'FRANK', meta: '0300 123 6600 - drugs, 24 hours', url: 'tel:03001236600' },
+  { name: 'UK Narcotics Anonymous', meta: '0300 999 1212', url: 'tel:03009991212' },
+  { name: '999', meta: 'immediate danger', url: 'tel:999' },
+  { name: 'NHS 111', meta: 'mental health option', url: 'tel:111' },
+];
+
+function DangerTakeover({ reply, acuteRisk, onDismiss, onError }) {
   const [contacts, setContacts] = useState([]);
 
   useEffect(() => {
@@ -971,6 +992,20 @@ function DangerTakeover({ reply, onDismiss, onError }) {
         <p className={styles.dangerKicker}>DANGER ZONE</p>
         <h2 id="danger-title">Get a human on the line.</h2>
         <p>Not me. A person. Tap a name - the call is the point, not this screen.</p>
+        {acuteRisk ? (
+          <>
+            <p className={styles.sectionLabel}>CRISIS LINES · 24/7 · NO NAME NEEDED</p>
+            <div className={styles.callList}>
+              {CRISIS_LINES.map((line) => (
+                <a key={line.name} href={line.url} className={styles.callButton}>
+                  <strong>{line.name}</strong>
+                  <span>{line.meta}</span>
+                </a>
+              ))}
+            </div>
+            <p className={styles.sectionLabel}>YOUR PEOPLE</p>
+          </>
+        ) : null}
         <div className={styles.callList}>
           {contacts.length === 0 ? (
             <p>No contacts saved. Add your people in Settings before you need them.</p>

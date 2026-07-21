@@ -506,6 +506,19 @@
   margin: 24px 0;
 }
 
+.sectionLabel {
+  margin: 20px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: var(--rf-cream);
+  opacity: 0.7;
+}
+
+.sectionLabel + .callList {
+  margin-top: 10px;
+}
+
 .callButton {
   display: grid;
   gap: 2px;
