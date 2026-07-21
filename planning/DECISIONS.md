@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-07-21 — RehabPath data-retention disclosure
+
+- The RehabPath privacy policy has a dedicated `Data retention and deletion` section because retention details must be explicit and easy for app-store reviewers to locate.
+- The section distinguishes on-device data, user-controlled exports, transient AI content, 31-day AI quota counters, 30-day metadata-only gateway logs, and the Firebase anonymous-auth record.
+- Public wording must remain aligned with the implemented RehabPath backend rather than claiming that no data of any kind is retained.
+
 ## Ruby build spec decisions
 - Ruby is positioned as the product intelligence layer across STEa apps (Ruby, Harls, Filo, Hans).
 - TipTap is the authoring core with uploads, slash commands, and rich block support.

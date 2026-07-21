@@ -15,7 +15,7 @@ export default function RehabPathPrivacyPolicyPage() {
     <RehabPathLegalPage
       eyebrow="Privacy"
       title="RehabPath Privacy Policy"
-      effectiveDate="June 11, 2026"
+      effectiveDate="July 21, 2026"
     >
       <p>
         This Privacy Policy explains how RehabPath handles information when you use the RehabPath
@@ -289,7 +289,42 @@ export default function RehabPathPrivacyPolicyPage() {
         </p>
       </Section>
 
-      <Section title="Deleting your data">
+      <Section title="Data retention and deletion">
+        <p>RehabPath retains each category of data as follows:</p>
+        <ul>
+          <li>
+            <strong>Rehabilitation data stored in the app:</strong> retained on your device until
+            you use the reset option in the app settings or uninstall the app.
+          </li>
+          <li>
+            <strong>Encrypted backups and clinician pack PDFs:</strong> retained in the location
+            where you save or share them until you delete them. RehabPath does not receive or keep
+            a server copy of these files.
+          </li>
+          <li>
+            <strong>Content submitted to an optional AI feature:</strong> processed to return the
+            requested result and not stored in RehabPath's server database after the request is
+            completed. OpenAI processes that content under its own data-retention terms and
+            policies.
+          </li>
+          <li>
+            <strong>AI usage and rate-limit counters:</strong> daily counters associated with the
+            random Firebase identifier are retained for 31 days from their last update and are then
+            scheduled for automatic deletion. They contain request counts and timestamps, not PDF
+            text, rehabilitation records, prompts, imported plans, or generated summaries.
+          </li>
+          <li>
+            <strong>AI gateway operational logs:</strong> metadata-only logs are retained for 30
+            days. They may include the random Firebase identifier, request mode, platform, app
+            version, status, latency, and token counts, but not request or response content.
+          </li>
+          <li>
+            <strong>Firebase anonymous authentication record:</strong> the random authentication
+            identifier and Firebase authentication metadata may be retained for as long as the
+            optional AI service operates, unless removed earlier during service maintenance. It is
+            not linked by RehabPath to a name, email address, rehabilitation record, or AI content.
+          </li>
+        </ul>
         <p>
           You can delete local RehabPath data by using the reset option in the app settings or by
           uninstalling the app.
@@ -299,10 +334,6 @@ export default function RehabPathPrivacyPolicyPage() {
           system behavior. It does not delete encrypted backup files, exported clinician pack PDFs,
           or other files you saved outside the app. To remove exported files, delete them from the
           locations where you saved or shared them.
-        </p>
-        <p>
-          AI usage counters held by RehabPath's server are not rehabilitation records and are
-          retained only for operational abuse-control and rate-limit purposes.
         </p>
       </Section>
 
