@@ -14,6 +14,14 @@ import { db } from '@/lib/firebase';
 
 const ARCTURUSDC_TENANT_ID = 'FqhckqMaorJMAQ6B29mP';
 
+// Clean study window. Line capture only reached full slate coverage on 2026-07-18;
+// 07-16/17 games were finalized with no snapshots and can never be pick-graded, so
+// the record and table begin here. Earlier finals are counted only as a muted total.
+const STUDY_START_DATE = '2026-07-18';
+// A non-final game whose first pitch is more than this far in the past is stuck
+// (postponed/suspended, never re-reported Final) and is dropped from "Upcoming".
+const STALE_UPCOMING_MS = 24 * 60 * 60 * 1000;
+
 /* ── data load ─────────────────────────────────────────────────────────────── */
 async function loadStudyData() {
   if (!db) throw new Error('Firebase client database is unavailable in this environment.');
@@ -30,6 +38,7 @@ async function loadStudyData() {
 /* ── helpers ───────────────────────────────────────────────────────────────── */
 const fmtLine = (v) => (Number.isFinite(v) ? v.toFixed(1) : '—');
 const pct = (n, d) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : '—');
+const hasPick = (p) => p && p.side != null;
 
 function pitcherLabel(pitchers) {
   if (!pitchers) return 'SP not yet known';
@@ -116,26 +125,34 @@ function Study() {
     return () => { alive = false; };
   }, []);
 
-  // A finalized game is "pick-graded" only if the finalizer actually built a pick from
-  // a line snapshot. Games finalized before the collector was capturing snapshots
-  // (2026-07-16/17 batch, and any postponement with no in-window snapshot) have a real
-  // finalTotal but null/absent openerPick + t2hPick — they can never be graded and are
-  // shown separately so the table and the summary tell the same story (D-SITE-008 f/u 3).
-  const hasPick = (p) => p && p.side != null;
-  const { pickGraded, ungraded, upcoming } = useMemo(() => {
+  const { pickGraded, excludedCount, upcoming } = useMemo(() => {
     const pg = [];
-    const ug = [];
+    let excluded = 0;
     const up = [];
+    const staleBefore = Date.now() - STALE_UPCOMING_MS;
     for (const game of state.games) {
       const isFinal = game.status === 'final' || game.finalTotal != null;
-      if (!isFinal) { up.push(game); continue; }
-      if (hasPick(game.openerPick) || hasPick(game.t2hPick)) pg.push(game);
-      else ug.push(game);
+      if (!isFinal) {
+        // Drop games stuck non-final long past their first pitch (postponed/suspended
+        // games MLB never re-reports as Final) so the Upcoming list stays truthful.
+        const fp = game.scheduledFirstPitch ? Date.parse(game.scheduledFirstPitch) : NaN;
+        if (Number.isFinite(fp) && fp < staleBefore) continue;
+        up.push(game);
+        continue;
+      }
+      // Clean study window only: a game counts toward the record if it was finalized
+      // on/after STUDY_START_DATE (when line capture had full slate coverage) AND the
+      // finalizer actually built a pick from a snapshot. Everything earlier is noise
+      // (2026-07-16/17 finalized before line capture began) — see D-SITE-008 f/u 4.
+      if (String(game.date || '') >= STUDY_START_DATE && (hasPick(game.openerPick) || hasPick(game.t2hPick))) {
+        pg.push(game);
+      } else {
+        excluded++;
+      }
     }
     pg.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
-    ug.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
     up.sort((a, b) => String(a.scheduledFirstPitch || '').localeCompare(String(b.scheduledFirstPitch || '')));
-    return { pickGraded: pg, ungraded: ug, upcoming: up };
+    return { pickGraded: pg, excludedCount: excluded, upcoming: up };
   }, [state.games]);
 
   const summary = useMemo(() => {
@@ -173,7 +190,12 @@ function Study() {
         <>
           <SummaryPanel s={summary} />
           <PickTable games={pickGraded} />
-          <UngradedList games={ungraded} />
+          {excludedCount > 0 && (
+            <p className="mt-3 text-xs text-neutral-400">
+              {excludedCount} earlier {excludedCount === 1 ? 'game' : 'games'} excluded — finalized before
+              full line capture began on {STUDY_START_DATE}, so no opener/T-2h pick could be graded.
+            </p>
+          )}
           <UpcomingList games={upcoming} />
           <CollectorHealth meta={state.meta} />
         </>
@@ -186,7 +208,7 @@ function SummaryPanel({ s }) {
   return (
     <div className="mb-6 rounded-xl border border-black/10 bg-neutral-50 p-4">
       <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-        Forward record ({s.total} pick-graded {s.total === 1 ? 'game' : 'games'})
+        Forward record · since {STUDY_START_DATE} ({s.total} pick-graded {s.total === 1 ? 'game' : 'games'})
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Opener pick" value={pct(s.openerCorrect, s.openerGraded)} sub={`${s.openerCorrect}/${s.openerGraded}`} />
@@ -251,40 +273,6 @@ function PickTable({ games }) {
                 </tr>
               );
             })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-function UngradedList({ games }) {
-  if (games.length === 0) return null;
-  return (
-    <section className="mt-8">
-      <h2 className="mb-1 text-xl font-bold">Final — not graded ({games.length})</h2>
-      <p className="mb-3 max-w-3xl text-xs text-neutral-500">
-        These games finished with a real total but had no line snapshots captured before first pitch
-        (the collector only began capturing pre-game lines on 2026-07-18), so there is no opener or
-        T-2h pick to grade. They are excluded from the record above.
-      </p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-neutral-500">
-              <th className="py-2 pr-3">Date</th>
-              <th className="py-2 pr-3">Matchup</th>
-              <th className="py-2 pr-3 text-right">Actual</th>
-            </tr>
-          </thead>
-          <tbody>
-            {games.map((g) => (
-              <tr key={g.id} className="border-t border-black/5">
-                <td className="py-2 pr-3 text-neutral-500">{g.date || '—'}</td>
-                <td className="py-2 pr-3">{g.away} @ {g.home}</td>
-                <td className="py-2 pr-3 text-right font-semibold">{Number.isFinite(g.finalTotal) ? g.finalTotal : '—'}</td>
-              </tr>
-            ))}
           </tbody>
         </table>
       </div>
