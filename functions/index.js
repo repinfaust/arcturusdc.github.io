@@ -12,6 +12,8 @@ const wc26 = require('./wc26/service');
 admin.initializeApp();
 const db = admin.firestore();
 
+const mlb = require('./mlb/service');
+
 // ─── WC26 Value Engine: deterministic Firestore sync/refit ─────────────────
 
 exports.seedWc26Data = functions.https.onCall(wc26.seedWc26Data);
@@ -67,6 +69,51 @@ exports.snapshotWc26ClosingOdds = functions.pubsub
     }
     return null;
   });
+
+// ─── MLB Line-Movement Study: research collector (D-SITE-008) ───────────────
+// NOT a betting model. Collects sequenced pre-game line snapshots + game events.
+// Spec: planning/MLB_LINE_STUDY_SPEC.md. Times are America/New_York (DST-safe).
+// Each snapshot pass = 1 Odds API credit (shared WC26 key, budget-guarded); the
+// free MLB schedule gate spends nothing on off-days.
+
+// Non-close passes (baseline + attribution windows): 09:00, 15:00, 17:00, 23:00 ET.
+exports.mlbSnapshotLines = functions.pubsub
+  .schedule('0 9,15,17,23 * * *')
+  .timeZone('America/New_York')
+  .onRun(mlb.snapshotLinesScheduled);
+
+// Close-window passes (survive budget throttle): 12:30, 18:15, 21:30 ET.
+exports.mlbSnapshotLinesClose = functions.pubsub
+  .schedule('30 12,21 * * *')
+  .timeZone('America/New_York')
+  .onRun(mlb.snapshotLinesCloseScheduled);
+
+exports.mlbSnapshotLinesCloseNight = functions.pubsub
+  .schedule('15 18 * * *')
+  .timeZone('America/New_York')
+  .onRun(mlb.snapshotLinesCloseScheduled);
+
+// Free event poll every 30 min, 09:00–22:30 ET (lineups, scratches, status).
+exports.mlbPollGameData = functions.pubsub
+  .schedule('*/30 9-22 * * *')
+  .timeZone('America/New_York')
+  .onRun(mlb.pollGameDataScheduled);
+
+// Finalize yesterday's games + move summary, 03:30 ET (covers late west-coast).
+exports.mlbFinalizeDay = functions.pubsub
+  .schedule('30 3 * * *')
+  .timeZone('America/New_York')
+  .onRun(mlb.finalizeDayScheduled);
+
+// T-2h targeted check every 15 min through the slate window (12:00-23:45 ET —
+// covers day games' ~13:05 first pitch through west-coast ~22:15 first pitch).
+// The check itself is a free Firestore read; it only spends an Odds API credit
+// when a tracked game is actually 100-140 min from first pitch and not yet
+// captured (see t2hCheckImpl). D-SITE-008 follow-up, 2026-07-19.
+exports.mlbT2hCheck = functions.pubsub
+  .schedule('*/15 12-23 * * *')
+  .timeZone('America/New_York')
+  .onRun(mlb.t2hCheckScheduled);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
