@@ -116,6 +116,222 @@ function SectionCard({ eyebrow, title, subtitle, children }) {
   );
 }
 
+// --- Journeys & events tab -------------------------------------------------
+// Annotated screen walkthrough for stakeholders: each new/changed screen with
+// the analytics event(s) that fire on it overlaid in place. Presentational only
+// — no data fetch. Two axes are colour-coded so it is legible that the one-bike
+// lock and the Premium-feature gate are SEPARATE systems (see D-176).
+const JOURNEY_AXIS = {
+  onboarding: { label: 'Onboarding', dot: '#4CC9F0', chip: 'border-[#4CC9F0]/40 bg-[#4CC9F0]/10 text-[#9BE0F6]' },
+  lock: { label: 'One-bike lock', dot: '#F72585', chip: 'border-[#F72585]/40 bg-[#F72585]/10 text-[#FF9CCB]' },
+  paywall: { label: 'Contextual paywall', dot: '#B5179E', chip: 'border-[#B5179E]/40 bg-[#B5179E]/10 text-[#E4A5D8]' },
+  premium: { label: 'Premium-feature gate', dot: '#F9A03F', chip: 'border-[#F9A03F]/40 bg-[#F9A03F]/10 text-[#F7C48A]' },
+};
+
+function JourneyEventPill({ event, axis, note, top, left }) {
+  const tone = JOURNEY_AXIS[axis] ?? JOURNEY_AXIS.lock;
+  return (
+    <div className="absolute z-10 -translate-x-1/2" style={{ top: `${top}%`, left: `${left}%` }}>
+      <div className={`rounded-md border px-2 py-1 font-mono text-[10px] font-bold shadow-lg ${tone.chip}`}>
+        {event}
+      </div>
+      {note ? <p className="mt-1 max-w-[150px] text-center text-[9px] leading-tight text-[#A8B0B8]">{note}</p> : null}
+    </div>
+  );
+}
+
+function JourneyFigure({ src, screen, axis, caption, pills = [] }) {
+  const tone = JOURNEY_AXIS[axis] ?? JOURNEY_AXIS.lock;
+  return (
+    <figure className="flex flex-col">
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={screen} className="block w-full" />
+        {pills.map((p) => (
+          <JourneyEventPill key={`${p.event}-${p.top}-${p.left}`} {...p} />
+        ))}
+      </div>
+      <figcaption className="mt-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: tone.dot }} />
+          <p className="text-sm font-black text-[#F4F6F8]">{screen}</p>
+        </div>
+        <p className="mt-1 text-xs leading-5 text-[#8A939D]">{caption}</p>
+      </figcaption>
+    </figure>
+  );
+}
+
+function AxisLegend() {
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      {Object.values(JOURNEY_AXIS).map((a) => (
+        <div key={a.label} className="flex items-center gap-2">
+          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: a.dot }} />
+          <span className="text-xs font-semibold text-[#A8B0B8]">{a.label}</span>
+        </div>
+      ))}
+      <div className="flex items-center gap-2">
+        <span className="rounded-md border border-white/15 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#D7DCE0]">event_name</span>
+        <span className="text-xs text-[#68717A]">= GA4 event fired at this point</span>
+      </div>
+    </div>
+  );
+}
+
+const JOURNEY_BASE = '/apps/dialled-mtb/journeys';
+
+function JourneysTab() {
+  return (
+    <div className="space-y-7">
+      <SectionCard
+        eyebrow="Read me first"
+        title="How to read these journeys"
+        subtitle="Each phone screen below is a real build capture with the analytics events that fire on it pinned in place. Two enforcement systems run in parallel and are deliberately separate: the one-bike lock (which bike a free rider may edit) and the Premium-feature gate (whole features like the maintenance tab). Colour tells you which axis a screen belongs to."
+      >
+        <AxisLegend />
+      </SectionCard>
+
+      <SectionCard
+        eyebrow="Journey 1 — Onboarding"
+        title="From empty garage to a saved baseline"
+        subtitle="A new free rider's first two minutes. The activation funnel these events feed is on the Engagement tab; here you can see where each one fires."
+      >
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/01-empty-garage.png`}
+            screen="Empty garage prompt"
+            axis="onboarding"
+            caption="Shown when a signed-in rider has no bike. Three routes out: guided setup, direct add, or dismiss."
+            pills={[
+              { event: 'empty_garage_prompt_shown', axis: 'onboarding', top: 58, left: 50 },
+              { event: 'empty_garage_prompt_cta_tapped', axis: 'onboarding', note: 'Get my setup numbers / add directly', top: 80, left: 50 },
+              { event: 'empty_garage_prompt_dismissed', axis: 'onboarding', top: 93, left: 50 },
+            ]}
+          />
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/02-quick-setup-save.png`}
+            screen="Quick setup — save to garage"
+            axis="onboarding"
+            caption="Calculator output for a first-time rider. 'Save to my garage' creates the bike and starts its service history."
+            pills={[
+              { event: 'quick_setup', axis: 'onboarding', note: "params: terrain, riding_style, applied_to='new_bike'", top: 12, left: 50 },
+            ]}
+          />
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/03-capability-checklist.png`}
+            screen="Capability checklist"
+            axis="onboarding"
+            caption="Post-setup next-steps. Checked state is derived from real actions, never fabricated."
+            pills={[
+              { event: 'capability_checklist_shown', axis: 'onboarding', top: 46, left: 50 },
+              { event: 'capability_checklist_item_tapped', axis: 'onboarding', note: "param: item", top: 66, left: 50 },
+              { event: 'capability_checklist_dismissed', axis: 'onboarding', top: 44, left: 82 },
+            ]}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        eyebrow="Journey 2 — The one-bike lock"
+        title="What a lapsed multi-bike rider sees"
+        subtitle="A free rider keeps every bike, fully readable — but only their one active bike is editable. Lapsing loses capability, never data (D-168–176). The lock reads a server-trusted premium field, not the store SDK, so the UI never offers an edit the rules would reject."
+      >
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/05-bikes-list-locked.png`}
+            screen="Bike list — one active, rest locked"
+            axis="lock"
+            caption="Exactly one bike is editable. The others show a Locked pill and a free, unlimited 'Set active' switch."
+            pills={[
+              { event: 'Active pill', axis: 'lock', note: 'the one editable bike', top: 34, left: 82 },
+              { event: 'Locked pill', axis: 'lock', top: 55, left: 82 },
+              { event: 'active_bike_switched', axis: 'lock', note: "'Set active' — free, no cooldown", top: 66, left: 24 },
+            ]}
+          />
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/06-locked-bike-detail.png`}
+            screen="Locked bike detail"
+            axis="lock"
+            caption="Status reads 'Locked (view-only)'. Edit & Setup are disabled with a lock glyph; Log ride stays free. The maintenance CTA is demoted so the lock message is not out-shouted."
+            pills={[
+              { event: 'Status: Locked (view-only)', axis: 'lock', top: 55, left: 32 },
+              { event: 'locked_bike_edit_attempted', axis: 'lock', note: "field_group='metadata' (Edit) / 'setup' (Setup)", top: 78, left: 30 },
+            ]}
+          />
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/07-paywall-locked-edit.png`}
+            screen="Paywall — editing a locked bike"
+            axis="paywall"
+            caption="Reached from a disabled Edit/Setup tap. Copy names the exact blocked action and surfaces the free active-bike switch right here — the escape hatch at the point of friction."
+            pills={[
+              { event: 'paywall_shown', axis: 'paywall', note: "source='locked_bike_edit'", top: 20, left: 50 },
+              { event: 'active_bike_switched', axis: 'lock', note: "'Make this my active bike — free' on the paywall", top: 40, left: 50 },
+              { event: 'paywall_dismissed', axis: 'paywall', top: 14, left: 88 },
+            ]}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        eyebrow="Journey 3 — Contextual paywalls"
+        title="One paywall, copy driven by where it was reached"
+        subtitle="Every blocked action lands on a paywall that names the thing the rider was trying to do. The source param drives both the copy (config-tunable from Firestore, no release) and the conversion funnel per source."
+      >
+        <div className="grid gap-6 sm:grid-cols-2">
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/04-quick-setup-apply.png`}
+            screen="Quick setup — Apply to active bike"
+            axis="lock"
+            caption="For a free rider with a bike, quick setup applies to the ACTIVE bike (named), or offers a second bike behind Premium."
+            pills={[
+              { event: 'quick_setup', axis: 'onboarding', note: "applied_to='existing_bike'", top: 60, left: 50 },
+              { event: 'paywall_shown', axis: 'paywall', note: "source='add_bike' — 'Add a new bike instead'", top: 90, left: 50 },
+            ]}
+          />
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/08-paywall-add-bike.png`}
+            screen="Paywall — add a second bike"
+            axis="paywall"
+            caption="Reached when a free rider tries to add bike #2. Copy sells 'the second bike', not 'unlimited bikes'."
+            pills={[
+              { event: 'paywall_shown', axis: 'paywall', note: "source='add_bike'", top: 22, left: 50 },
+              { event: 'paywall_converted', axis: 'paywall', note: "on purchase — param: source", top: 84, left: 50 },
+            ]}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        eyebrow="Journey 4 — Premium-feature gate (a separate axis)"
+        title="Whole features that are Premium regardless of active bike"
+        subtitle="Distinct from the one-bike lock: these gate an entire capability (the maintenance tab, full service history) on premium status, not on which bike is active. A free rider hits these on ANY bike, including their active one."
+      >
+        <div className="grid gap-6 sm:grid-cols-2">
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/09-maintenance-gate.png`}
+            screen="Maintenance tab — Premium gate"
+            axis="premium"
+            caption="Full maintenance tracking is Premium. Free riders still get reminders and the single-task mark-serviced from the bike screen; this whole-tab tracker is the paid surface."
+            pills={[
+              { event: 'paywall_shown', axis: 'premium', note: "source='log_service' on upgrade tap", top: 66, left: 50 },
+            ]}
+          />
+          <JourneyFigure
+            src={`${JOURNEY_BASE}/10-service-history-gate.png`}
+            screen="Service history — Premium gate"
+            axis="premium"
+            caption="The kept record — every DIY log and shop receipt — is Premium. Data a rider already logged stays viewable and exportable; the retention surface is the paid product."
+            pills={[
+              { event: 'paywall_shown', axis: 'premium', note: "source='log_service'", top: 44, left: 50 },
+            ]}
+          />
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
 function FunnelChart({ funnel }) {
   const max = Math.max(1, ...funnel.map((step) => step.count));
   const registered = funnel.find((step) => step.stage === 'registered')?.count || 0;
@@ -971,6 +1187,7 @@ export default function DialledDashboardClient() {
             ['exec', 'Exec summary'],
             ['engagement', 'Engagement & onboarding'],
             ['riders', 'Rider distribution'],
+            ['journeys', 'Journeys & events'],
           ].map(([tab, label]) => (
             <button
               key={tab}
@@ -1294,6 +1511,13 @@ export default function DialledDashboardClient() {
             ) : null}
 
             <AskPanel authenticatedFetch={authenticatedFetch} tenantId={currentTenant.id} generatedAt={snapshot.generatedAt} />
+          </div>
+        ) : null}
+
+        {/* Journeys tab is a static stakeholder walkthrough — renders without a snapshot. */}
+        {activeTab === 'journeys' ? (
+          <div className="mt-7">
+            <JourneysTab />
           </div>
         ) : null}
       </div>
