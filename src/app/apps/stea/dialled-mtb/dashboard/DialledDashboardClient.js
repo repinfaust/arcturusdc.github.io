@@ -100,6 +100,81 @@ function StatTile({ label, value, hint }) {
   );
 }
 
+function NotifToggle({ permission, onRequest }) {
+  if (typeof window === 'undefined' || !('Notification' in window)) return null;
+
+  if (permission === 'granted') {
+    return (
+      <div
+        title="Browser notifications on — polls every 30 min"
+        className="flex h-10 items-center gap-2 rounded-lg border border-[#34D399]/40 bg-[#34D399]/10 px-3 text-xs font-bold text-[#6EE7B7]"
+      >
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6ZM10 18a2 2 0 0 1-2-2h4a2 2 0 0 1-2 2Z" />
+        </svg>
+        Notifications on
+      </div>
+    );
+  }
+
+  if (permission === 'denied') {
+    return (
+      <div
+        title="Notifications blocked in browser settings"
+        className="flex h-10 items-center gap-2 rounded-lg border border-[#6A7680]/40 px-3 text-xs font-bold text-[#6A7680]"
+      >
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6ZM10 18a2 2 0 0 1-2-2h4a2 2 0 0 1-2 2Z" />
+        </svg>
+        Notifications blocked
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onRequest}
+      title="Enable browser notifications for Strava sync errors"
+      className="flex h-10 items-center gap-2 rounded-lg border border-[#333840] px-3 text-xs font-bold text-[#8A939D] transition hover:border-[#F72585] hover:text-[#E8ECF0]"
+    >
+      <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10 2a6 6 0 0 0-6 6v2.586l-.707.707A1 1 0 0 0 4 13h12a1 1 0 0 0 .707-1.707L16 10.586V8a6 6 0 0 0-6-6ZM10 18a2 2 0 0 1-2-2h4a2 2 0 0 1-2 2Z" />
+      </svg>
+      Enable notifications
+    </button>
+  );
+}
+
+function StravaSyncErrorsBanner({ users, notifPermission, onRequestNotifPermission }) {
+  return (
+    <SectionCard
+      eyebrow="Strava"
+      title="Sync errors"
+      subtitle="Users whose Strava sync is currently failing (lastStravaSyncStatus === 'error'), polled every 30 min directly from Firestore — independent of the daily dashboard snapshot."
+    >
+      <div className="mb-4 flex justify-end">
+        <NotifToggle permission={notifPermission} onRequest={onRequestNotifPermission} />
+      </div>
+      {users.length === 0 ? (
+        <p className="text-xs leading-5 text-[#68717A]">No Strava sync errors right now.</p>
+      ) : (
+        <div className="space-y-2">
+          {users.map((u) => (
+            <div
+              key={u.uid}
+              className="rounded-lg border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-xs leading-5"
+            >
+              <p className="font-bold text-[#F4A6A6]">{u.email || u.displayName || u.uid}</p>
+              <p className="mt-1 break-words font-mono text-[11px] text-[#D7A8A8]">{u.lastStravaSyncMessage || '(no message)'}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
 function SectionCard({ eyebrow, title, subtitle, children }) {
   return (
     <section className="rounded-xl border border-white/10 bg-[#12161A] p-5 sm:p-6">
@@ -932,6 +1007,9 @@ export default function DialledDashboardClient() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('exec');
+  const [stravaErrors, setStravaErrors] = useState([]);
+  const [notifPermission, setNotifPermission] = useState('default');
+  const knownStravaErrorUidsRef = useRef(null);
 
   const canAdmin = Boolean(isSuperAdmin || isWorkspaceAdmin);
   const hasWorkspace = workspaceAllowed(currentTenant);
@@ -991,6 +1069,58 @@ export default function DialledDashboardClient() {
   useEffect(() => {
     void loadSnapshot();
   }, [loadSnapshot]);
+
+  const loadStravaErrors = useCallback(async () => {
+    if (!user || !currentTenant?.id || !hasWorkspace || !canAdmin) return;
+    try {
+      const response = await authenticatedFetch(`/api/stea/dialled-mtb/dashboard/strava-errors?tenantId=${encodeURIComponent(currentTenant.id)}`);
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Could not load Strava sync errors.');
+      setStravaErrors(payload.users || []);
+    } catch {
+      // Silent — this is a background poll; the main snapshot error banner covers hard failures.
+    }
+  }, [authenticatedFetch, canAdmin, currentTenant?.id, hasWorkspace, user]);
+
+  // Initialise notification permission state
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  // Poll for Strava sync errors every 30 min while the engagement tab is active
+  useEffect(() => {
+    if (activeTab !== 'engagement') return undefined;
+    void loadStravaErrors();
+    const id = setInterval(() => loadStravaErrors(), 30 * 60_000);
+    return () => clearInterval(id);
+  }, [activeTab, loadStravaErrors]);
+
+  // Track newly-erroring users and fire browser notifications
+  useEffect(() => {
+    if (stravaErrors.length === 0) return;
+    if (knownStravaErrorUidsRef.current === null) {
+      knownStravaErrorUidsRef.current = new Set(stravaErrors.map((u) => u.uid));
+      return;
+    }
+    const newErrors = stravaErrors.filter((u) => !knownStravaErrorUidsRef.current.has(u.uid));
+    if (newErrors.length > 0 && notifPermission === 'granted') {
+      const newest = newErrors[0];
+      new Notification('Strava sync failing — Dialled MTB', {
+        body: `${newest.email || newest.uid}: ${newest.lastStravaSyncMessage?.slice(0, 120) || 'Strava sync error'}`,
+        icon: '/favicon.ico',
+        tag: `dialled-mtb-strava-${newest.uid}`,
+      });
+    }
+    knownStravaErrorUidsRef.current = new Set(stravaErrors.map((u) => u.uid));
+  }, [stravaErrors, notifPermission]);
+
+  async function requestNotifPermission() {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+  }
 
   async function refresh() {
     if (refreshing || !currentTenant?.id) return;
@@ -1276,6 +1406,12 @@ export default function DialledDashboardClient() {
 
             {activeTab === 'engagement' ? (
               <>
+                <StravaSyncErrorsBanner
+                  users={stravaErrors}
+                  notifPermission={notifPermission}
+                  onRequestNotifPermission={requestNotifPermission}
+                />
+
                 <SectionCard
                   eyebrow="Free vs premium"
                   title="Which features free riders actually touch"
