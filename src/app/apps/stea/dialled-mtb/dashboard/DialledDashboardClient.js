@@ -165,15 +165,20 @@ function StravaSyncErrorsBanner({ users, notifPermission, onRequestNotifPermissi
         <p className="text-xs leading-5 text-[#68717A]">No Strava sync errors right now.</p>
       ) : (
         <div className="space-y-2">
-          {users.map((u) => (
-            <div
-              key={u.uid}
-              className="rounded-lg border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-xs leading-5"
-            >
-              <p className="font-bold text-[#F4A6A6]">{u.email || u.displayName || u.uid}</p>
-              <p className="mt-1 break-words font-mono text-[11px] text-[#D7A8A8]">{u.lastStravaSyncMessage || '(no message)'}</p>
-            </div>
-          ))}
+          {[...users]
+            .sort((a, b) => String(b.lastStravaSyncAt || '').localeCompare(String(a.lastStravaSyncAt || '')))
+            .map((u) => (
+              <div
+                key={u.uid}
+                className="rounded-lg border border-red-400/25 bg-red-400/[0.06] px-4 py-3 text-xs leading-5"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-mono font-bold text-[#F4A6A6]">{u.uid}</p>
+                  <p className="shrink-0 font-mono text-[10px] text-[#B98F8F]">{formatDateTime(u.lastStravaSyncAt)}</p>
+                </div>
+                <p className="mt-1 break-words font-mono text-[11px] text-[#D7A8A8]">{u.lastStravaSyncMessage || '(no message)'}</p>
+              </div>
+            ))}
         </div>
       )}
     </SectionCard>
@@ -1197,7 +1202,7 @@ export default function DialledDashboardClient() {
     if (newErrors.length > 0 && notifPermission === 'granted') {
       const newest = newErrors[0];
       new Notification('Strava sync failing — Dialled MTB', {
-        body: `${newest.email || newest.uid}: ${newest.lastStravaSyncMessage?.slice(0, 120) || 'Strava sync error'}`,
+        body: `${newest.uid}: ${newest.lastStravaSyncMessage?.slice(0, 120) || 'Strava sync error'}`,
         icon: '/favicon.ico',
         tag: `dialled-mtb-strava-${newest.uid}`,
       });
