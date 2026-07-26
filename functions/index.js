@@ -42,33 +42,32 @@ exports.onWc26ResultFinalized = functions.firestore
   .document('wc26_results/{id}')
   .onWrite(wc26.onWc26ResultFinalized);
 
-// Closing-line snapshot driver. Vercel Hobby allows only daily crons, so the
-// schedule lives here (no plan limit) and calls the Vercel route, which is
-// 0-cost unless a game is within its kickoff window. Hourly is safe: the route
-// gates on kickoff time before spending an Odds API call. Needs WC26_SITE_URL
-// and WC26_CRON_SECRET in functions env (secret matches Vercel's CRON_SECRET).
-exports.snapshotWc26ClosingOdds = functions.pubsub
-  .schedule('every 1 hours')
-  .timeZone('Europe/London')
-  .onRun(async () => {
-    const base = process.env.WC26_SITE_URL || 'https://www.arcturusdc.com';
-    const secret = process.env.WC26_CRON_SECRET;
-    if (!secret) {
-      console.warn('[wc26] snapshot skipped: WC26_CRON_SECRET not set');
-      return null;
-    }
-    try {
-      const res = await fetch(`${base}/api/stea/wc26/snapshot-closing`, {
-        method: 'POST',
-        headers: {Authorization: `Bearer ${secret}`},
-      });
-      const body = await res.json().catch(() => ({}));
-      console.log('[wc26] snapshot-closing:', res.status, JSON.stringify(body));
-    } catch (err) {
-      console.error('[wc26] snapshot-closing call failed:', err.message);
-    }
-    return null;
-  });
+// DISABLED 2026-07-26 (D-SITE-009): WC2026 finished a week ago. This cron had
+// no season-end shutoff and kept burning hourly Odds API credits against the
+// same key MLB depends on, draining MLB's shared quota to 0. Do not re-enable
+// without an explicit new tournament and a hard stop date built in this time.
+// exports.snapshotWc26ClosingOdds = functions.pubsub
+//   .schedule('every 1 hours')
+//   .timeZone('Europe/London')
+//   .onRun(async () => {
+//     const base = process.env.WC26_SITE_URL || 'https://www.arcturusdc.com';
+//     const secret = process.env.WC26_CRON_SECRET;
+//     if (!secret) {
+//       console.warn('[wc26] snapshot skipped: WC26_CRON_SECRET not set');
+//       return null;
+//     }
+//     try {
+//       const res = await fetch(`${base}/api/stea/wc26/snapshot-closing`, {
+//         method: 'POST',
+//         headers: {Authorization: `Bearer ${secret}`},
+//       });
+//       const body = await res.json().catch(() => ({}));
+//       console.log('[wc26] snapshot-closing:', res.status, JSON.stringify(body));
+//     } catch (err) {
+//       console.error('[wc26] snapshot-closing call failed:', err.message);
+//     }
+//     return null;
+//   });
 
 // ─── MLB Line-Movement Study: research collector (D-SITE-008) ───────────────
 // NOT a betting model. Collects sequenced pre-game line snapshots + game events.

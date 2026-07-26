@@ -237,7 +237,7 @@ async function t2hCheckImpl() {
 // ─── Snapshot pass: 1 odds call, write a snapshot per game ────────────────────
 async function snapshotLinesImpl({trigger = 'cron'} = {}) {
   const db = admin.firestore();
-  const apiKey = process.env.WC26_ODDS_API_KEY;
+  const apiKey = process.env.MLB_ODDS_API_KEY;
   const metaRef = db.collection(collections.meta).doc('collector');
 
   // Free gate: no games today AND none tomorrow -> spend nothing. Fetch a today..tomorrow
@@ -256,7 +256,7 @@ async function snapshotLinesImpl({trigger = 'cron'} = {}) {
     return {skipped: 'no-games'};
   }
   if (!apiKey) {
-    await metaRef.set({tenantId: ARCTURUSDC_TENANT_ID, lastError: 'WC26_ODDS_API_KEY not set', lastErrorAt: nowIso(), updatedAt: ts()}, {merge: true});
+    await metaRef.set({tenantId: ARCTURUSDC_TENANT_ID, lastError: 'MLB_ODDS_API_KEY not set', lastErrorAt: nowIso(), updatedAt: ts()}, {merge: true});
     return {skipped: 'no-api-key'};
   }
 
