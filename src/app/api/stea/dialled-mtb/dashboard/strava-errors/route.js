@@ -41,10 +41,9 @@ export async function GET(request) {
       const data = doc.data();
       return {
         uid: doc.id,
-        email: data.email ?? null,
-        displayName: data.displayName ?? null,
         lastStravaSyncStatus: data.lastStravaSyncStatus ?? null,
         lastStravaSyncMessage: data.lastStravaSyncMessage ?? null,
+        lastStravaSyncAt: data.lastStravaSyncAt?.toDate?.()?.toISOString() ?? null,
       };
     });
     return json({ users });
