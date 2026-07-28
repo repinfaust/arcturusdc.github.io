@@ -279,3 +279,17 @@ User asked to reduce visual noise and focus the record on the clean data window.
 - **Ungradeable finals collapsed to a single muted line** ("N earlier games excluded — finalized before full line capture began on 2026-07-18…"); the full `UngradedList` table (added in f/u 3) is removed. Data remains in Firestore, just not surfaced as a table.
 - **Stuck "Upcoming" games aged out.** `STALE_UPCOMING_MS = 24h`: a non-final game whose `scheduledFirstPitch` is >24h in the past (postponed/suspended, never re-reported Final by MLB — the 07-17 rain batch) is dropped from the Upcoming list. Genuinely upcoming and recently-started-awaiting-finalize games are unaffected.
 - **Client-only, read-side; no functions/data/schema change; no backfill.** Verified against live data: pickGraded 42 (dates 07-18/19/20), excluded note = 19, Upcoming 30→15 (only the truly-stuck games removed; kept games all have first pitch within the last 24h awaiting the nightly finalizer). Record shown: opener 13/35, T-2h 14/26, revision 4 helped/2 hurt/14 unchanged. Deploy = git push to main (Vercel).
+
+## 2026-07-28 — SoRR classification made fail-closed; policy-engine halt still OPEN (D-SITE-009)
+The repo CLAUDE.md has required fail-closed SoRR enforcement since the 2026-05-21 breach (24 app users' email addresses sent to each other). The code did not implement it, and the gap was never on `main` — it sat uncommitted on `codex/promo-campaigns`, so production has been running the weaker advisory behaviour.
+- **`src/lib/sorr/controlui.js`** — `classifyPromptLocal` threshold raised 0.6 → **0.75**, blocking unconditionally below it. The 0.6–0.75 "proceed with low-confidence warning" band is removed; scores in that range return a distinct reason stating the advisory path is disabled. Route `blocked`, tier 4. This is the change that actually alters behaviour: the function is pure and both callers (`api/sorr/controlui/requests/route.js:182`, `lib/sorr/controlui-server.js:87`) consume its return value synchronously.
+- **`src/lib/sorr/poc-analysis-documents.js`**, **`public/docs/sorr/sorr-control-v0-spec.md`** — primer and v0 spec still documented the advisory band. Updated so docs match behaviour.
+
+### OPEN — policy engine does not halt anything (do not mark SoRR fail-closed until fixed)
+A drafted change to `src/lib/orbit/policyEngine.js` (throw on violation instead of returning a list) was **deliberately not committed**. It would have been cosmetic: the sole caller, `src/app/api/orbit/events/route.js:120-122`, invokes it fire-and-forget —
+```js
+import('@/lib/orbit/policyEngine').then(({ checkEventPolicies }) => {
+  checkEventPolicies(event).catch(console.error);
+});
+```
+— *after* the event is already written to Firestore and with the HTTP response returned regardless. A thrown error lands in `.catch(console.error)` and becomes a log line; the event still persists. Making violations genuinely halt processing requires awaiting the check **before** the write and failing the request on violation, which is a change to the events route and needs its own evidence/plan/approval cycle. Until that lands, the policy engine is advisory in practice regardless of what it returns.

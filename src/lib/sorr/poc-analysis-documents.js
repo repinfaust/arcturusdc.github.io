@@ -49,4 +49,5 @@ export const POC_CONTEXT_PRIMER = [
   'The POC uses handoff states A-E to communicate escalation from Claude into governed SoRR lanes.',
   'Core routes: continue in Claude, auto-approved governed execution, approval-gated execution, governed workspace, or blocked when no approved enterprise path exists.',
   'Admin console pages are for approvals, audit, policy boundary, and governed operations visibility.',
+  'ENFORCEMENT POLICY: SoRR violations are fatal, not advisory. Confidence < 0.75 blocks unconditionally — there is no low-confidence warning path; this is enforced in classifyPromptLocal. Policy engine violations must halt event processing and produce a tier-4 INCIDENT audit entry — NOT yet implemented as of 2026-07-28 (the engine runs fire-and-forget after the event write), tracked in DECISIONS.md D-SITE-009. failClosed is the default for all ambiguous classifications.',
 ].join('\n');

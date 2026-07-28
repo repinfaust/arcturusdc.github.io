@@ -426,9 +426,9 @@ Claude returns structured JSON only:
 }
 ```
 
-If `useCaseId` is null or confidence < 0.6 → route is `"blocked"`, return "No approved use case found for this request" plus nearest alternatives.
+If `useCaseId` is null or confidence < 0.75 → route is `"blocked"`, return "No approved use case found for this request" plus nearest alternatives.
 
-If confidence is 0.6–0.75 → route proceeds but decision screen shows low-confidence warning and asks user to confirm use case before execution.
+**SoRR violations are fatal.** There is no advisory or low-confidence warning path. The former 0.6–0.75 band (proceed with warning) is removed. Any confidence below 0.75 blocks unconditionally. Policy violations detected by the policy engine must halt event processing — they must not be returned as informational lists for callers to optionally act on. **Implementation status (2026-07-28): the classification threshold is enforced; the policy-engine halt is NOT yet implemented** — the engine is invoked fire-and-forget after the event write in `src/app/api/orbit/events/route.js`, so violations are logged, not halting. See D-SITE-009.
 
 ### Classification contract (Stage 3 system prompt)
 

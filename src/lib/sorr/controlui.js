@@ -230,10 +230,13 @@ export function classifyPromptLocal(prompt) {
   const scored = UC_DEFINITIONS.map((uc) => ({ uc, score: keywordScore(text, uc) })).sort((a, b) => b.score - a.score);
   const top = scored[0];
 
-  if (!top || top.score < 0.6) {
+  // Threshold is 0.75 — the 0.6–0.75 advisory band is removed. Violations are fatal.
+  if (!top || top.score < 0.75) {
     return {
       blocked: true,
-      reason: 'No match over confidence threshold',
+      reason: top && top.score >= 0.6
+        ? 'Confidence below required threshold (0.75) — low-confidence advisory path is disabled'
+        : 'No match over confidence threshold',
       confidence: Number((top?.score || 0).toFixed(2)),
       route: 'blocked',
       tier: 4,
