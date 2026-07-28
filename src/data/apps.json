@@ -257,7 +257,7 @@
   {
     "id": "rehabpath",
     "name": "Rehab Path",
-    "status": "development",
+    "status": "live",
     "strap": "A guided path to recovery.",
     "summary": "RehabPath is a structured recovery companion for people working through injury rehab. It provides clear, phase-based programmes, step-by-step exercise guidance, and visible progress tracking\u2014all stored privately on your device. No accounts, no tracking, no complexity. Just a calm, focused tool to help you stay on course and see your improvement.",
     "desc": "Structured rehab programmes, simple exercise guidance, and private progress tracking.",
@@ -269,7 +269,13 @@
       "Exercise guidance",
       "Private progress tracking"
     ],
-    "live": false,
+    "live": true,
+    "appStoreUrl": "https://apps.apple.com/us/app/rehabpath/id6756371081",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.rehabpath.android",
+    "availability": [
+      "android",
+      "ios"
+    ],
     "icon": "/img/rehabpath-icon.svg",
     "bg": "/img/rehabpath-card-background.png"
   },
@@ -304,7 +310,7 @@
   {
     "id": "sidestand",
     "name": "Sidestand",
-    "status": "development",
+    "status": "live",
     "strap": "The maintenance log and ride record for adventure riders.",
     "summary": "Sidestand is a maintenance and ride-log app for adventure and touring motorcyclists - per-component service intervals keyed to the odometer, trips, a stops map, a documents wallet, and a service history export that adds real money at resale.",
     "desc": "Maintenance tracking, ride logging, and trips for ADV riders.",
@@ -316,7 +322,9 @@
       "Rides & trips",
       "Service history export"
     ],
-    "live": false,
+    "live": true,
+    "appStoreUrl": "https://apps.apple.com/us/app/sidestand/id6792350244",
+    "googlePlayUrl": "https://play.google.com/store/apps/details?id=com.arcturusdc.sidestand",
     "availability": [
       "android",
       "ios"
