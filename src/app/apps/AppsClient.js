@@ -3,8 +3,19 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const LIVE_IDS = ["benzel", "adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
-const DEV_IDS  = ["rehabpath", "apex-state", "assumezero", "sidestand"];
+// Newest first.
+const LIVE_IDS = [
+  "sidestand",
+  "dialled-mtb",
+  "rehabpath",
+  "sprocket",
+  "unload",
+  "mandrake",
+  "toume",
+  "adhd-acclaim",
+  "benzel",
+];
+const DEV_IDS  = ["apex-state", "assumezero", "hol-yoga", "syncfit"];
 
 const STATUS_LABEL = { live: "Live", comingSoon: "Coming soon", development: "In development" };
 
@@ -192,8 +203,10 @@ export default function AppsClient({ apps }) {
             </div>
             <div className="max-w-lg lg:pb-2">
               <p className="text-base leading-7 text-[#1c1c1a]/70 lg:text-lg">
-                Focused products with clear identities, live routes, readable policies, and
-                product pages that make the job of each app obvious.
+                Nine apps shipped to the App Store and Google Play. Maintenance logs for
+                riders who do their own spannering, structured recovery programmes, calm
+                tools for overloaded heads, and shared-care organising for separated
+                families. Small, specific products that do one job properly.
               </p>
               <Link
                 href="/apps/app-store"
