@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "stea-775cd"
+  },
+  "targets": {},
+  "etags": {
+    "stea-775cd": {
+      "extensionInstances": {
+        "firestore-send-email": "7d136d61eb4d880b3157d2baed61124979618c03d38b1e119f020c338088fd41"
+      }
+    }
   }
 }

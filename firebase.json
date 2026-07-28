@@ -1,4 +1,7 @@
 {
+  "extensions": {
+    "firestore-send-email": "firebase/firestore-send-email@0.2.9"
+  },
   "firestore": {
     "database": "(default)",
     "location": "europe-west2",
