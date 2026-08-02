@@ -146,6 +146,14 @@ const IN_SESSION_DESTINATIONS = [
     borderColor: 'border-pink-200',
     onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
   },
+  {
+    label: 'Sidestand — Team workspace',
+    href: '/apps/stea/sidestand',
+    description: 'Sidestand rider analytics, activation telemetry and native-offer planning.',
+    gradient: 'from-stone-100/90 to-orange-50/40',
+    borderColor: 'border-orange-500/50',
+    onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
+  },
 ];
 
 function sanitizeNext(raw) {

@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-08-02 — Sidestand STEa workspace and read-only analytics surface (D-SITE-011)
+- Created a `Sidestand` team tenant in the existing STEa Firebase project, matching the Dialled MTB team-access shape: `repinfaust@gmail.com` owns/administers it, `dialled.app@gmail.com` is an admin member, and the existing STEa super-admin role continues to cover Daryn. No new auth mechanism or anonymous access was introduced.
+- Added `/apps/stea/sidestand` as the authenticated workspace hub and `/apps/stea/sidestand/dashboard` as a four-view analytics surface (exec readout; activation & maintenance; rider distribution; journeys & events). Access is limited to Sidestand or ArcturusDC workspace admins through `verifySteaWorkspaceAccess`.
+- The dashboard reads Sidestand's existing `sidestand-b19e7` Firestore collections with Firebase Admin. Headline/funnel data excludes accounts carrying server-owned `users.internalType`, per Sidestand D-072; rider detail uses one-way pseudonymous codes and returns no email, name, raw UID, free text or coordinates.
+- No Sidestand schema or write path was added. The dashboard computes current readouts on demand rather than creating `dashboardSnapshots`, because adding a collection to the app backend would require its own Sidestand-repo SoRR plan/decision. Lifetime registrations are derivable from `users.createdAt`; premium history is not fabricated when RevenueCat mirror dates do not exist.
+- Firebase project inspection confirmed the production Firestore database is live in `europe-west2` and populated. Both native apps are linked to GA4 property `546046598`; the dashboard queries that property aggregate-only and degrades honestly to `GA4 access pending` until the dashboard service account has Viewer permission.
+- Added `/apps/stea/sidestand/promo` in configuration mode. It records the known `premium` entitlement and native product IDs, provides two-store provisioning guidance and a browser-only scenario calculator, but cannot create/activate campaigns. Sidestand has no approved campaign schema, app redemption flow or RevenueCat webhook projection, so claiming live promo support would invent functionality and contradict the app SoRR. Live activation remains a separate Sidestand-repo plan requiring iOS/Android parity and RevenueCat/store configuration.
+- Sidestand surfaces use the canonical Livery Lite design system: paper/panel/ink, safety orange as the sole accent, Archivo + IBM Plex Mono, zero radius, borders-only depth, dot-matrix data bars and the supplied logo glyph.
+- Deployment configuration required: `SIDESTAND_FIREBASE_SERVICE_ACCOUNT_KEY_JSON` (server-only; base64 or JSON), optional `SIDESTAND_GA4_PROPERTY_ID` override, and GA4 Viewer access for that service-account email. RevenueCat live campaign work later requires a server-only secret API key and signed webhook secret; neither belongs in client code or git.
+
 ## 2026-07-21 — RehabPath data-retention disclosure
 
 - The RehabPath privacy policy has a dedicated `Data retention and deletion` section because retention details must be explicit and easy for app-store reviewers to locate.

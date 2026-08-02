@@ -1,0 +1,35 @@
+.sidestand-shell {
+  --paper: #f1f0ed;
+  --panel: #fbfbf9;
+  --ink: #131313;
+  --muted: #4a4a46;
+  --faint: #8a8a85;
+  --hairline: #c9c8c3;
+  --safety: #ff4d00;
+  --safety-deep: #c63c00;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sidestand-display), Archivo, sans-serif;
+}
+.sidestand-mono { font-family: var(--font-sidestand-mono), "IBM Plex Mono", monospace; }
+.sidestand-panel { border: 1px solid var(--hairline); background: var(--panel); }
+.sidestand-rule { border-bottom: 2.5px solid var(--ink); }
+.sidestand-status-rail { border-left: 5px solid var(--safety); }
+.sidestand-quiet-rail { border-left: 5px solid var(--ink); }
+.sidestand-button { background: var(--safety); color: white; }
+.sidestand-button:hover { background: var(--safety-deep); }
+.sidestand-button:disabled { background: var(--hairline); color: var(--muted); }
+.sidestand-tab { border: 1.5px solid var(--ink); background: transparent; color: var(--ink); }
+.sidestand-tab:hover, .sidestand-tab[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.sidestand-dot-field {
+  background-image: radial-gradient(circle, var(--hairline) 1.25px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+.sidestand-dot-fill {
+  background-image: radial-gradient(circle, var(--safety) 1.5px, transparent 1.75px);
+  background-size: 8px 8px;
+}
+.sidestand-hazard {
+  background-image: repeating-linear-gradient(98deg, transparent 0 11px, rgba(241, 240, 237, .07) 11px 14px);
+}
