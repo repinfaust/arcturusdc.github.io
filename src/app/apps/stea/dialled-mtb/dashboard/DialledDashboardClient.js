@@ -18,6 +18,15 @@ const COLOR_PREMIUM = '#0284C7';
 
 const numberFormat = new Intl.NumberFormat('en-GB');
 
+const TREND_RANGES = [
+  { key: 'week', label: 'Week', days: 7 },
+  { key: 'month', label: 'Month', days: 30 },
+  { key: 'year', label: 'Year', days: 365 },
+  { key: 'lifetime', label: 'Lifetime', days: null },
+];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 // GA4 auto-collected noise, excluded from the Top events table (raw counts stay
 // in the snapshot for the Ask panel).
 const GA4_DEFAULT_EVENTS = new Set(['screen_view', 'user_engagement']);
@@ -554,22 +563,112 @@ function Sparkline({ points, width = 560, height = 96 }) {
   );
 }
 
-function TrendChart({ series, ariaLabel, width = 560, height = 150 }) {
-  const drawn = (series || []).filter((entry) => entry.points?.length);
-  const allPoints = drawn.flatMap((entry) => entry.points);
-  if (!allPoints.length) return null;
+function dateKey(time) {
+  return new Date(time).toISOString().slice(0, 10);
+}
+
+function enumerateDays(startTime, endTime) {
+  const days = [];
+  for (let time = startTime; time <= endTime; time += DAY_MS) days.push(dateKey(time));
+  return days;
+}
+
+function carryForwardDaily(points, startTime, endTime, toTime) {
+  const sorted = [...points].sort((a, b) => a.date.localeCompare(b.date));
+  let pointIndex = 0;
+  let latest = null;
+  while (pointIndex < sorted.length && toTime(sorted[pointIndex].date) < startTime) {
+    latest = sorted[pointIndex];
+    pointIndex += 1;
+  }
+  return enumerateDays(startTime, endTime).flatMap((date) => {
+    while (pointIndex < sorted.length && sorted[pointIndex].date <= date) {
+      latest = sorted[pointIndex];
+      pointIndex += 1;
+    }
+    return latest ? [{ date, value: latest.value }] : [];
+  });
+}
+
+function integerScale(minValue, maxValue, { includeZero = false, targetSteps = 5 } = {}) {
+  const scaleMin = includeZero ? 0 : minValue;
+  const rawStep = Math.max(1, (maxValue - scaleMin) / targetSteps);
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const normalized = rawStep / magnitude;
+  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  const step = Math.max(1, nice * magnitude);
+  const min = includeZero ? 0 : Math.max(0, Math.floor(minValue / step) * step - step);
+  const roundedMax = Math.ceil(maxValue / step) * step;
+  const max = Math.max(min + step, roundedMax === maxValue ? roundedMax + step : roundedMax);
+  const ticks = [];
+  for (let value = min; value <= max; value += step) ticks.push(value);
+  return { min, max, ticks };
+}
+
+function xAxisTicks(minT, maxT, rangeKey) {
+  const allDays = enumerateDays(minT, maxT);
+  if (rangeKey === 'week') return allDays;
+  if (rangeKey === 'month') return allDays;
+
+  const monthStarts = allDays.filter((day, index) => index === 0 || day.slice(0, 7) !== allDays[index - 1].slice(0, 7));
+  if (rangeKey === 'year' || monthStarts.length <= 12) {
+    return [...new Set([allDays[0], ...monthStarts, allDays[allDays.length - 1]])];
+  }
+
+  const stride = Math.max(1, Math.ceil(monthStarts.length / 10));
+  return [...new Set([
+    allDays[0],
+    ...monthStarts.filter((_, index) => index % stride === 0),
+    allDays[allDays.length - 1],
+  ])];
+}
+
+function axisDate(date, rangeKey) {
+  const options = rangeKey === 'year' || rangeKey === 'lifetime'
+    ? { month: 'short', year: '2-digit' }
+    : { day: 'numeric', month: 'short' };
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { ...options, timeZone: 'UTC' });
+}
+
+function TrendChart({ series, ariaLabel, carryForward = false, width = 560, height = 194 }) {
+  const [rangeKey, setRangeKey] = useState('lifetime');
+  const available = (series || []).filter((entry) => entry.points?.length);
+  const allAvailablePoints = available.flatMap((entry) => entry.points);
+  if (!allAvailablePoints.length) return null;
 
   const toTime = (date) => new Date(`${date}T00:00:00Z`).getTime();
-  const times = allPoints.map((point) => toTime(point.date));
-  const minT = Math.min(...times);
-  const maxT = Math.max(...times);
-  const maxValue = Math.max(1, ...allPoints.map((point) => point.value));
+  const availableTimes = allAvailablePoints.map((point) => toTime(point.date));
+  const earliestT = Math.min(...availableTimes);
+  const maxT = Math.max(...availableTimes);
+  const selectedRange = TREND_RANGES.find((range) => range.key === rangeKey) || TREND_RANGES[3];
+  const requestedMinT = selectedRange.days ? maxT - (selectedRange.days - 1) * DAY_MS : earliestT;
+  const minT = Math.max(earliestT, requestedMinT);
+
+  const drawn = available.map((entry) => ({
+    ...entry,
+    points: carryForward
+      ? carryForwardDaily(entry.points, minT, maxT, toTime)
+      : entry.points.filter((point) => {
+        const time = toTime(point.date);
+        return time >= minT && time <= maxT;
+      }),
+  })).filter((entry) => entry.points.length);
+  const allPoints = drawn.flatMap((entry) => entry.points);
+  const visibleValues = allPoints.map((point) => point.value);
+  const { min: axisMin, max: axisMax, ticks: yTicks } = integerScale(
+    Math.min(...visibleValues),
+    Math.max(1, ...visibleValues),
+    { includeZero: drawn.length > 1 },
+  );
+  const ticksX = xAxisTicks(minT, maxT, rangeKey);
   const padTop = 10;
-  const padBottom = 8;
+  const padBottom = rangeKey === 'month' ? 52 : 38;
   const padRight = 44;
-  const plotWidth = width - padRight;
-  const x = (date) => (maxT === minT ? plotWidth / 2 : ((toTime(date) - minT) / (maxT - minT)) * plotWidth);
-  const y = (value) => height - padBottom - (value / maxValue) * (height - padTop - padBottom);
+  const padLeft = 34;
+  const plotWidth = width - padLeft - padRight;
+  const plotHeight = height - padTop - padBottom;
+  const x = (date) => (maxT === minT ? padLeft + plotWidth / 2 : padLeft + ((toTime(date) - minT) / (maxT - minT)) * plotWidth);
+  const y = (value) => padTop + plotHeight - ((value - axisMin) / (axisMax - axisMin)) * plotHeight;
 
   // Nudge end-of-line labels apart when two series finish close together.
   const endLabels = drawn.map((entry) => {
@@ -582,6 +681,32 @@ function TrendChart({ series, ariaLabel, width = 560, height = 150 }) {
 
   return (
     <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="inline-flex rounded-lg border border-white/10 bg-[#0D1013] p-1"
+          role="group"
+          aria-label={`${ariaLabel} time range`}
+        >
+          {TREND_RANGES.map((range) => (
+            <button
+              key={range.key}
+              type="button"
+              onClick={() => setRangeKey(range.key)}
+              aria-pressed={rangeKey === range.key}
+              className={`rounded-md px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F72585] ${
+                rangeKey === range.key
+                  ? 'bg-[#F72585] text-white'
+                  : 'text-[#7E8790] hover:bg-white/[0.05] hover:text-[#D7DCE0]'
+              }`}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
+        <p className="font-mono text-[10px] text-[#68717A]">
+          {formatDate(dateKey(minT))}–{formatDate(dateKey(maxT))}
+        </p>
+      </div>
       {drawn.length > 1 ? (
         <div className="mb-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-[#A8B0B8]">
           {drawn.map((entry) => (
@@ -594,16 +719,50 @@ function TrendChart({ series, ariaLabel, width = 560, height = 150 }) {
         </div>
       ) : null}
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={ariaLabel}>
-        {[0.5, 1].map((fraction) => (
-          <line
-            key={fraction}
-            x1="0"
-            x2={plotWidth}
-            y1={y(maxValue * fraction)}
-            y2={y(maxValue * fraction)}
-            stroke="rgba(255,255,255,0.06)"
-            strokeWidth="1"
-          />
+        {yTicks.map((value) => (
+          <g key={value}>
+            <line
+              x1={padLeft}
+              x2={padLeft + plotWidth}
+              y1={y(value)}
+              y2={y(value)}
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth="1"
+            />
+            <text
+              x={padLeft - 7}
+              y={y(value) + 3.5}
+              textAnchor="end"
+              fontSize="9"
+              fontFamily="ui-monospace, monospace"
+              fill="#68717A"
+            >
+              {numberFormat.format(value)}
+            </text>
+          </g>
+        ))}
+        {ticksX.map((date) => (
+          <g key={date}>
+            <line
+              x1={x(date)}
+              x2={x(date)}
+              y1={padTop}
+              y2={padTop + plotHeight}
+              stroke="rgba(255,255,255,0.035)"
+              strokeWidth="1"
+            />
+            <text
+              x={x(date)}
+              y={padTop + plotHeight + 14}
+              textAnchor={rangeKey === 'month' ? 'end' : 'middle'}
+              transform={rangeKey === 'month' ? `rotate(-50 ${x(date)} ${padTop + plotHeight + 14})` : undefined}
+              fontSize={rangeKey === 'month' ? '7.5' : '8.5'}
+              fontFamily="ui-monospace, monospace"
+              fill="#68717A"
+            >
+              {axisDate(date, rangeKey)}
+            </text>
+          </g>
         ))}
         {drawn.map((entry) => (
           <path
@@ -618,7 +777,15 @@ function TrendChart({ series, ariaLabel, width = 560, height = 150 }) {
         ))}
         {drawn.map((entry) =>
           entry.points.map((point) => (
-            <circle key={`${entry.name}-${point.date}`} cx={x(point.date)} cy={y(point.value)} r="7" fill="transparent">
+            <circle
+              key={`${entry.name}-${point.date}`}
+              cx={x(point.date)}
+              cy={y(point.value)}
+              r={rangeKey === 'week' ? 2.5 : 1.75}
+              fill={entry.color}
+              stroke="#12161A"
+              strokeWidth="1"
+            >
               <title>{`${formatDate(point.date)} — ${numberFormat.format(point.value)} ${entry.name.toLowerCase()}`}</title>
             </circle>
           )),
@@ -636,10 +803,6 @@ function TrendChart({ series, ariaLabel, width = 560, height = 150 }) {
           </text>
         ))}
       </svg>
-      <div className="mt-1 flex justify-between text-[10px] text-[#68717A]">
-        <span>{formatDate(new Date(minT).toISOString())}</span>
-        <span>{formatDate(new Date(maxT).toISOString())}</span>
-      </div>
     </div>
   );
 }
@@ -1358,11 +1521,12 @@ export default function DialledDashboardClient() {
                   <div className="grid gap-7 lg:grid-cols-2">
                     <SectionCard
                       eyebrow="Growth"
-                      title="Registered users — lifetime"
+                      title="Registered users"
                       subtitle="Cumulative signups from Firebase user profiles (createdAt)."
                     >
                       <TrendChart
                         ariaLabel="Cumulative registered users over time"
+                        carryForward
                         series={[{
                           name: 'Registered',
                           color: COLOR_FREE,
