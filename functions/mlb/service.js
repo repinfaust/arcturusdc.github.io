@@ -38,6 +38,17 @@ const LINE_MAX = 18;
 const ts = () => admin.firestore.FieldValue.serverTimestamp();
 const nowIso = () => new Date().toISOString();
 const todayNY = () => new Date().toLocaleDateString('en-CA', {timeZone: 'America/New_York'}); // YYYY-MM-DD
+// The NY calendar day a game is actually played, derived from its first pitch.
+// Must be used for the `date` field instead of the collection date: the odds
+// feed surfaces games 1-2 days early, and filing those under the day they were
+// first seen orphans them from the finalizer and the T-2h pass (D-SITE-011).
+const dayNY = (iso) => (iso ?
+  new Date(iso).toLocaleDateString('en-CA', {timeZone: 'America/New_York'}) : null);
+const addDaysNY = (date, n) => {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
 
 function slug(v) {
   return String(v || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -137,10 +148,15 @@ function metaForToday(meta) {
 }
 
 // ─── MLB Stats API (free, unlimited, no key) ─────────────────────────────────
-async function fetchSchedule(date, {lineups = false} = {}) {
+// `throughDate` widens the fetch to an inclusive date range (same single free
+// call). The Odds API returns events 1-2 days ahead of the current NY date, so
+// a single-day schedule index cannot resolve them — see D-SITE-011.
+async function fetchSchedule(date, {lineups = false, throughDate = null} = {}) {
   const hydrate = ['probablePitcher', 'team', 'venue', 'linescore', lineups ? 'lineups' : null]
     .filter(Boolean).join(',');
-  const url = `${MLB_STATS_BASE}/schedule?sportId=1&date=${date}&hydrate=${hydrate}`;
+  const range = throughDate && throughDate !== date ?
+    `startDate=${date}&endDate=${throughDate}` : `date=${date}`;
+  const url = `${MLB_STATS_BASE}/schedule?sportId=1&${range}&hydrate=${hydrate}`;
   const res = await fetch(url, {cache: 'no-store'});
   if (!res.ok) throw new Error(`MLB schedule HTTP ${res.status}`);
   const j = await res.json();
@@ -233,10 +249,12 @@ async function snapshotLinesImpl({trigger = 'cron'} = {}) {
   const metaRef = db.collection(collections.meta).doc('collector');
 
   // Free gate: no games today AND none tomorrow -> spend nothing.
+  // Range covers today..+2d because the Odds API lists events 1-2 days ahead;
+  // anything outside this window cannot be resolved to a gamePk (D-SITE-011).
   const date = todayNY();
   let scheduled;
   try {
-    scheduled = await fetchSchedule(date);
+    scheduled = await fetchSchedule(date, {throughDate: addDaysNY(date, 2)});
   } catch (err) {
     await metaRef.set({tenantId: ARCTURUSDC_TENANT_ID, lastError: `schedule: ${err.message}`, lastErrorAt: nowIso(), updatedAt: ts()}, {merge: true});
     return {skipped: 'schedule-fetch-failed'};
@@ -278,30 +296,45 @@ async function snapshotLinesImpl({trigger = 'cron'} = {}) {
   }
 
   // Index scheduled games by matchup for gamePk + first-pitch reconciliation.
-  const byPair = {};
+  // The window spans 3 days, so the same matchup recurs across a series: key on
+  // matchup+NY-day and resolve using the odds event's own commence time, never
+  // the collection date. A bare matchup key would collapse a series to its last
+  // game and mis-assign every earlier one (D-SITE-011).
+  const byPairDay = {};
   for (const g of scheduled) {
-    const key = `${g.teams.away.team.name}|${g.teams.home.team.name}`;
-    byPair[key] = g;
+    const key = `${g.teams.away.team.name}|${g.teams.home.team.name}|${dayNY(g.gameDate)}`;
+    byPairDay[key] = g;
   }
 
   const capturedAtIso = nowIso();
   let batch = db.batch();
-  let ops = 0; let written = 0; let rejected = 0;
+  let ops = 0; let written = 0; let rejected = 0; let unmatched = 0;
   for (const ev of fetched.events || []) {
     const c = consensusTotals(ev);
     if (!c) {
  rejected++; continue;
 }
-    const sched = byPair[`${c.away}|${c.home}`];
-    const gamePk = sched ? sched.gamePk : null;
-    const firstPitch = sched ? sched.gameDate : c.commenceTime;
-    const id = gameKey(gamePk, c.home, c.away, date);
+    // Resolve against the day the odds event itself says it commences.
+    const evDay = dayNY(c.commenceTime);
+    const sched = byPairDay[`${c.away}|${c.home}|${evDay}`];
+    // Fail closed: an unresolved matchup is a rejection, not a gamePk-less doc.
+    // Writing one orphans the game from the finalizer and the T-2h pass while
+    // silently capturing what is often the true opener (D-SITE-011).
+    if (!sched || !sched.gamePk) {
+      rejected++; unmatched++;
+      continue;
+    }
+    const gamePk = sched.gamePk;
+    const firstPitch = sched.gameDate;
+    // File under the NY day the game is PLAYED, not the day it was collected.
+    const gameDate = dayNY(firstPitch) || evDay || date;
+    const id = gameKey(gamePk, c.home, c.away, gameDate);
     const minsToFP = firstPitch ? Math.round((new Date(firstPitch) - Date.now()) / 60000) : null;
 
     // snapshot doc (immutable, keyed by game + minute)
     const snapId = `${id}_${Math.floor(Date.now() / 60000)}`;
     batch.set(db.collection(collections.snapshots).doc(snapId), {
-      tenantId: ARCTURUSDC_TENANT_ID, gamePk: gamePk || null, gameId: id,
+      tenantId: ARCTURUSDC_TENANT_ID, gamePk, gameId: id,
       home: c.home, away: c.away, capturedAt: ts(), capturedAtIso,
       minutesToFirstPitch: minsToFP, trigger,
       consensus: c.consensus, books: c.books,
@@ -314,15 +347,15 @@ async function snapshotLinesImpl({trigger = 'cron'} = {}) {
     const gSnap = await gRef.get();
     const prev = gSnap.exists ? gSnap.data() : null;
     const gamePayload = {
-      tenantId: ARCTURUSDC_TENANT_ID, gamePk: gamePk || null, gameId: id,
-      date, home: c.home, away: c.away,
-      venue: sched ? (sched.venue && sched.venue.name) || null : (prev && prev.venue) || null,
+      tenantId: ARCTURUSDC_TENANT_ID, gamePk, gameId: id,
+      date: gameDate, home: c.home, away: c.away,
+      venue: (sched.venue && sched.venue.name) || null,
       scheduledFirstPitch: firstPitch || null,
-      probablePitchers: sched ? {
+      probablePitchers: {
         home: sched.teams.home.probablePitcher ? {id: sched.teams.home.probablePitcher.id, name: sched.teams.home.probablePitcher.fullName} : null,
         away: sched.teams.away.probablePitcher ? {id: sched.teams.away.probablePitcher.id, name: sched.teams.away.probablePitcher.fullName} : null,
-      } : (prev && prev.probablePitchers) || null,
-      status: sched ? (sched.status && sched.status.abstractGameState) || null : (prev && prev.status) || null,
+      },
+      status: (sched.status && sched.status.abstractGameState) || null,
       latest: {line: c.consensus.line, overDec: c.consensus.overDec, underDec: c.consensus.underDec, capturedAt: capturedAtIso},
       updatedAt: ts(),
     };
@@ -352,11 +385,12 @@ async function snapshotLinesImpl({trigger = 'cron'} = {}) {
   if (isBurst) meta.burstsUsed += 1;
   batch.set(metaRef, {
     tenantId: ARCTURUSDC_TENANT_ID, day: meta.day, oddsCalls: meta.oddsCalls, burstsUsed: meta.burstsUsed,
-    lastRun: nowIso(), lastRunNote: `${trigger}: ${written} games, ${rejected} rejected`,
+    lastRun: nowIso(), lastRunNote: `${trigger}: ${written} games, ${rejected} rejected, ${unmatched} unmatched`,
+    lastUnmatched: unmatched,
     requestsRemaining: fetched.remaining, updatedAt: ts(), lastError: null,
   }, {merge: true});
   await batch.commit();
-  return {written, rejected, trigger, remaining: fetched.remaining};
+  return {written, rejected, unmatched, trigger, remaining: fetched.remaining};
 }
 
 // ─── Event poll: free MLB Stats API; detect lineups / scratches / status ──────
