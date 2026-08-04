@@ -79,7 +79,7 @@ async function fetchFirestoreData() {
 async function fetchGa4() {
   try {
     const client = new BetaAnalyticsDataClient();
-    const [lifetime, last30d, eventsLifetime, events30d, daily] = await Promise.all([
+    const [lifetime, last30d, eventsLifetime, events30d, daily, countriesLifetime] = await Promise.all([
       client.runReport({
         property: `properties/${GA4_PROPERTY_ID}`,
         dateRanges: [{ startDate: '2026-07-01', endDate: 'today' }],
@@ -112,6 +112,14 @@ async function fetchGa4() {
         metrics: [{ name: 'sessions' }],
         orderBys: [{ dimension: { dimensionName: 'date' } }],
       }),
+      client.runReport({
+        property: `properties/${GA4_PROPERTY_ID}`,
+        dateRanges: [{ startDate: '2026-07-01', endDate: 'today' }],
+        dimensions: [{ name: 'country' }],
+        metrics: [{ name: 'activeUsers' }],
+        orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+        limit: 50,
+      }),
     ]);
 
     const metricSummary = (report) => ({
@@ -137,6 +145,10 @@ async function fetchGa4() {
       dailySessions: (daily[0].rows || []).map((row) => ({
         date: row.dimensionValues?.[0]?.value || '',
         sessions: Number(row.metricValues?.[0]?.value || 0),
+      })),
+      countryActiveUsers: (countriesLifetime[0]?.rows || []).map((row) => ({
+        country: row.dimensionValues?.[0]?.value === '(not set)' ? 'Unknown' : (row.dimensionValues?.[0]?.value || 'Unknown'),
+        activeUsers: Number(row.metricValues?.[0]?.value || 0),
       })),
     };
   } catch (error) {

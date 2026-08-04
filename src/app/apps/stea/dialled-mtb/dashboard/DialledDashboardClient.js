@@ -563,6 +563,43 @@ function Sparkline({ points, width = 560, height = 96 }) {
   );
 }
 
+function CountryBars({ countries, limit = 8 }) {
+  if (!Array.isArray(countries)) {
+    return (
+      <div className="rounded-lg border border-white/10 bg-[#0D1013] px-4 py-4 text-xs leading-5 text-[#8A939D]">
+        Country data was added after this snapshot. Hit Refresh now to populate it.
+      </div>
+    );
+  }
+  const rows = countries.filter((row) => row.activeUsers > 0);
+  if (!rows.length) return <p className="text-xs text-[#68717A]">No country rows returned by GA4 yet.</p>;
+
+  const visible = rows.slice(0, limit);
+  const remainder = rows.slice(limit).reduce((sum, row) => sum + row.activeUsers, 0);
+  const chartRows = remainder ? [...visible, { country: 'Other countries', activeUsers: remainder }] : visible;
+  const max = Math.max(...chartRows.map((row) => row.activeUsers), 1);
+
+  return (
+    <div className="space-y-3">
+      {chartRows.map((row, index) => (
+        <div key={row.country} className="grid grid-cols-[24px_minmax(88px,150px)_1fr_38px] items-center gap-3">
+          <span className="font-mono text-[10px] text-[#68717A]">{String(index + 1).padStart(2, '0')}</span>
+          <span className="truncate text-xs font-bold text-[#D7DCE0]" title={row.country}>{row.country}</span>
+          <div className="h-3 overflow-hidden rounded-r bg-white/[0.04]">
+            <div
+              className="h-full rounded-r bg-[#F72585]"
+              style={{ width: `${Math.max(3, (row.activeUsers / max) * 100)}%` }}
+              role="img"
+              aria-label={`${row.country}: ${numberFormat.format(row.activeUsers)} active users`}
+            />
+          </div>
+          <span className="text-right font-mono text-xs font-bold text-[#F4F6F8]">{numberFormat.format(row.activeUsers)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function dateKey(time) {
   return new Date(time).toISOString().slice(0, 10);
 }
@@ -1631,6 +1668,20 @@ export default function DialledDashboardClient() {
                     <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-4 py-4 text-xs leading-5 text-[#B9A98C]">
                       GA4 access pending — {ga4?.error || 'not configured yet.'} Grant the service account Viewer access on the GA4
                       property and set DIALLED_MTB_GA4_PROPERTY_ID, then hit Refresh.
+                    </div>
+                  )}
+                </SectionCard>
+
+                <SectionCard
+                  eyebrow="Rider footprint"
+                  title="Active users by country"
+                  subtitle="GA4 active users, lifetime. Aggregate and consent-dependent: this is not joined to rider profiles, cannot exclude internal accounts, and one person may appear in more than one country. City is deliberately not used."
+                >
+                  {ga4Ready ? (
+                    <CountryBars countries={ga4.countryActiveUsers} />
+                  ) : (
+                    <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-4 py-4 text-xs leading-5 text-[#B9A98C]">
+                      GA4 country data is unavailable — {ga4?.error || 'analytics is not configured yet.'}
                     </div>
                   )}
                 </SectionCard>

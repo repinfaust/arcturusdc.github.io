@@ -43,20 +43,24 @@ export default function Sidestand() {
           </div>
 
           <div className="mt-6 md:mt-8">
-            <div className="relative max-w-4xl mx-auto flex justify-center">
-              <div
-                className="w-full aspect-video border border-sidestand-ink overflow-hidden flex flex-col items-center justify-center gap-4 bg-sidestand-panel"
-              >
-                <Image src="/img/sidestand-logo.svg" width={56} height={56} alt="" />
-                <div className="text-center">
-                  <p className="text-xs font-black uppercase tracking-[0.24em] text-sidestand-safety">
-                    Coming Soon
-                  </p>
-                  <p className="mt-2 text-base font-semibold text-sidestand-ink">
-                    Product walkthrough video in production
-                  </p>
-                </div>
+            <div className="relative max-w-4xl mx-auto flex flex-col items-center">
+              <div className="w-full max-w-[360px] border-[5px] border-sidestand-ink bg-sidestand-ink shadow-[12px_12px_0_#ff4f00]">
+                <video
+                  className="block w-full aspect-[720/1558] bg-black object-contain"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  poster="/img/sidestand-walkthrough-poster.jpg"
+                  aria-label="Sidestand app walkthrough showing bike setup, maintenance intervals, ride logging, and saved stops"
+                >
+                  <source src="/vid/sidestand-walkthrough.mp4" type="video/mp4" />
+                  Your browser does not support embedded video.{' '}
+                  <a href="/vid/sidestand-walkthrough.mp4">Download the Sidestand walkthrough</a>.
+                </video>
               </div>
+              <p className="mt-6 max-w-xl text-center text-sm text-sidestand-muted">
+                A 55-second tour of bike setup, maintenance intervals, ride logging, and saved stops. No audio.
+              </p>
             </div>
           </div>
 

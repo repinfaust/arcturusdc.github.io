@@ -114,6 +114,7 @@ export const METRIC_DEFINITIONS = `
 - events30d (per user): rides + AI exchanges + maintenance entries created in the last 30 days.
 - daysToFirstBike: whole days between user signup and their earliest bike creation.
 - ga4 section: aggregate Google Analytics data (sessions, active users, event counts). It cannot be split by free vs premium.
+- ga4.countryActiveUsers: lifetime GA4 active-user counts grouped by country. Country is aggregate analytics geography, not a Firestore profile field; the same person may count in more than one country over the period, analytics-consent/thresholding applies, and internal accounts cannot be removed because GA4 is not joined to Firebase users. City is deliberately not queried or reported.
 - trends.registrations: cumulative registered users over time, derived from each user's createdAt (accurate for the full lifetime).
 - trends.premiumVsFree: daily registered/premium/free counts taken from stored daily dashboard snapshots. Premium start dates are not recorded anywhere, so this history only exists from the first stored snapshot onward and grows one point per day. Never extrapolate premium status backwards.
 - trends.bikeAdoption: cumulative % of *currently free* users with >=1 bike over time, derived from each user's own createdAt/firstBikeAt (accurate for the full lifetime, unlike premium history). Scoped to today's free users only — anyone who is premium today is excluded from this line entirely, even for dates before they upgraded, so upgrading never causes the line to drop.
@@ -626,7 +627,7 @@ async function fetchGa4Metrics() {
     });
     const property = `properties/${propertyId}`;
 
-    const [lifetime, last30, dailySessions, eventsLifetime, events30, dueCountByBike, navSourceCounts] = await Promise.all([
+    const [lifetime, last30, dailySessions, eventsLifetime, events30, dueCountByBike, navSourceCounts, countriesLifetime] = await Promise.all([
       client.runReport({
         property,
         dateRanges: [{ startDate: GA4_LAUNCH_DATE, endDate: 'today' }],
@@ -681,6 +682,14 @@ async function fetchGa4Metrics() {
         },
         limit: 100,
       }),
+      client.runReport({
+        property,
+        dateRanges: [{ startDate: GA4_LAUNCH_DATE, endDate: 'today' }],
+        dimensions: [{ name: 'country' }],
+        metrics: [{ name: 'activeUsers' }],
+        orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+        limit: 50,
+      }),
     ]);
 
     const metricValue = (report, index = 0) =>
@@ -719,6 +728,10 @@ async function fetchGa4Metrics() {
         .sort((a, b) => b.lifetime - a.lifetime),
       shownByDueCountAndBike,
       viewedByNavSource,
+      countryActiveUsers: (countriesLifetime[0]?.rows || []).map((row) => ({
+        country: row.dimensionValues?.[0]?.value === '(not set)' ? 'Unknown' : (row.dimensionValues?.[0]?.value || 'Unknown'),
+        activeUsers: Number(row.metricValues?.[0]?.value || 0),
+      })),
     };
   } catch (error) {
     console.warn('[dialled-dashboard] GA4 fetch failed', error?.message);
