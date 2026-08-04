@@ -571,31 +571,43 @@ function CountryBars({ countries, limit = 8 }) {
       </div>
     );
   }
-  const rows = countries.filter((row) => row.activeUsers > 0);
+  const grouped = countries.reduce((totals, row) => {
+    const country = String(row.country || 'Unknown').trim() || 'Unknown';
+    const activeUsers = Number(row.activeUsers || 0);
+    if (activeUsers > 0) totals.set(country, (totals.get(country) || 0) + activeUsers);
+    return totals;
+  }, new Map());
+  const rows = [...grouped.entries()]
+    .map(([country, activeUsers]) => ({ country, activeUsers }))
+    .sort((a, b) => b.activeUsers - a.activeUsers);
   if (!rows.length) return <p className="text-xs text-[#68717A]">No country rows returned by GA4 yet.</p>;
 
+  const total = rows.reduce((sum, row) => sum + row.activeUsers, 0);
   const visible = rows.slice(0, limit);
   const remainder = rows.slice(limit).reduce((sum, row) => sum + row.activeUsers, 0);
   const chartRows = remainder ? [...visible, { country: 'Other countries', activeUsers: remainder }] : visible;
-  const max = Math.max(...chartRows.map((row) => row.activeUsers), 1);
 
   return (
     <div className="space-y-3">
-      {chartRows.map((row, index) => (
-        <div key={row.country} className="grid grid-cols-[24px_minmax(88px,150px)_1fr_38px] items-center gap-3">
+      {chartRows.map((row, index) => {
+        const share = (row.activeUsers / total) * 100;
+        const label = share >= 10 ? `${share.toFixed(0)}%` : `${share.toFixed(1)}%`;
+        return (
+        <div key={row.country} className="grid grid-cols-[24px_minmax(88px,150px)_1fr_46px] items-center gap-3">
           <span className="font-mono text-[10px] text-[#68717A]">{String(index + 1).padStart(2, '0')}</span>
           <span className="truncate text-xs font-bold text-[#D7DCE0]" title={row.country}>{row.country}</span>
           <div className="h-3 overflow-hidden rounded-r bg-white/[0.04]">
             <div
               className="h-full rounded-r bg-[#F72585]"
-              style={{ width: `${Math.max(3, (row.activeUsers / max) * 100)}%` }}
+              style={{ width: `${share}%` }}
               role="img"
-              aria-label={`${row.country}: ${numberFormat.format(row.activeUsers)} active users`}
+              aria-label={`${row.country}: ${label} of GA4 country observations`}
             />
           </div>
-          <span className="text-right font-mono text-xs font-bold text-[#F4F6F8]">{numberFormat.format(row.activeUsers)}</span>
+          <span className="text-right font-mono text-xs font-bold text-[#F4F6F8]">{label}</span>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -1674,8 +1686,8 @@ export default function DialledDashboardClient() {
 
                 <SectionCard
                   eyebrow="Rider footprint"
-                  title="Active users by country"
-                  subtitle="GA4 active users, lifetime. Aggregate and consent-dependent: this is not joined to rider profiles, cannot exclude internal accounts, and one person may appear in more than one country. City is deliberately not used."
+                  title="Country distribution"
+                  subtitle="Share of GA4 active-user country observations, normalized to 100%. This is not a percentage of registered Firestore riders: anonymous and pre-registration activity is included, and one person may appear in more than one country. City is deliberately not used."
                 >
                   {ga4Ready ? (
                     <CountryBars countries={ga4.countryActiveUsers} />

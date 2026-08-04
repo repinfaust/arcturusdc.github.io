@@ -49,3 +49,10 @@
 #### Data integrity
 - Registration history comes from Firebase `createdAt` and may carry its cumulative total through days with no signup.
 - Premium/free history comes only from stored daily dashboard snapshots. Do not infer historic premium state, fill missing snapshots, or project current status backwards.
+
+#### Country distribution
+- Present GA4 country geography as ranked brand-native horizontal bars, never as a precision map and never with city-level data.
+- Merge duplicate normalized country labels before display, group the remainder after the top eight as `Other countries`, and normalize all displayed country observations to a 100% distribution.
+- Use the percentage itself as the bar width on a true 0–100% track and show percentage labels only. Do not expose raw GA4 active-user counts beside Firestore registration totals because anonymous/pre-registration activity and multi-country activity make those populations non-comparable.
+- Keep the source caveat visible: aggregate and consent-dependent, not joined to rider profiles, unable to exclude internal accounts, and subject to GA4 privacy thresholding.
+- Preserve each product's expression: magenta telemetry bars on Dialled's dark surface; orange dot-matrix bars on Sidestand's paper/ink surface.

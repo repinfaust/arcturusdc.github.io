@@ -121,30 +121,42 @@ function EventTable({ events }) {
 }
 
 function CountryBars({ countries, limit = 8 }) {
-  const rows = Array.isArray(countries) ? countries.filter((row) => row.activeUsers > 0) : [];
+  const grouped = (Array.isArray(countries) ? countries : []).reduce((totals, row) => {
+    const country = String(row.country || 'Unknown').trim() || 'Unknown';
+    const activeUsers = Number(row.activeUsers || 0);
+    if (activeUsers > 0) totals.set(country, (totals.get(country) || 0) + activeUsers);
+    return totals;
+  }, new Map());
+  const rows = [...grouped.entries()]
+    .map(([country, activeUsers]) => ({ country, activeUsers }))
+    .sort((a, b) => b.activeUsers - a.activeUsers);
   if (!rows.length) return <p className="sidestand-mono text-[10px] uppercase text-[#8a8a85]">No country rows returned by GA4 yet.</p>;
+  const total = rows.reduce((sum, row) => sum + row.activeUsers, 0);
   const visible = rows.slice(0, limit);
   const remainder = rows.slice(limit).reduce((sum, row) => sum + row.activeUsers, 0);
   const chartRows = remainder ? [...visible, { country: 'Other countries', activeUsers: remainder }] : visible;
-  const max = Math.max(...chartRows.map((row) => row.activeUsers), 1);
 
   return (
     <div className="space-y-3">
-      {chartRows.map((row, index) => (
-        <div key={row.country} className="grid grid-cols-[24px_minmax(88px,150px)_1fr_30px] items-center gap-3">
+      {chartRows.map((row, index) => {
+        const share = (row.activeUsers / total) * 100;
+        const label = share >= 10 ? `${share.toFixed(0)}%` : `${share.toFixed(1)}%`;
+        return (
+        <div key={row.country} className="grid grid-cols-[24px_minmax(88px,150px)_1fr_42px] items-center gap-3">
           <span className="sidestand-mono text-[9px] font-semibold text-[#8a8a85]">{String(index + 1).padStart(2, '0')}</span>
           <span className="truncate text-xs font-extrabold uppercase" title={row.country}>{row.country}</span>
           <div className="sidestand-dot-field h-3 border-y border-[#c9c8c3]">
             <div
               className="sidestand-dot-fill h-full"
-              style={{ width: `${Math.max(4, (row.activeUsers / max) * 100)}%` }}
+              style={{ width: `${share}%` }}
               role="img"
-              aria-label={`${row.country}: ${number.format(row.activeUsers)} active users`}
+              aria-label={`${row.country}: ${label} of GA4 country observations`}
             />
           </div>
-          <span className="sidestand-mono text-right text-[10px] font-semibold">{number.format(row.activeUsers)}</span>
+          <span className="sidestand-mono text-right text-[10px] font-semibold">{label}</span>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -243,7 +255,7 @@ export default function SidestandDashboardClient() {
               <Metric label="Tasks due" value={number.format(snapshot.totals.tasksDue)} note="Current server state" accent={snapshot.totals.tasksDue > 0} />
             </section>
             <div className="grid gap-4 lg:grid-cols-2"><Section eyebrow="Growth" title="Real-rider registrations" note="Cumulative from users.createdAt; internal accounts never enter the series."><RegistrationStrip points={snapshot.registrations} /></Section><Section eyebrow="Activation" title="Ownership record funnel" note="Distinct real riders at each independent lifetime stage."><Funnel rows={snapshot.funnel.slice(0, 5)} /></Section></div>
-            <Section eyebrow="Rider footprint" title="Active users by country" note="GA4 active users, lifetime. Aggregate and consent-dependent: this is not joined to rider profiles, cannot exclude internal accounts, and one person may appear in more than one country. City is deliberately not used.">{snapshot.ga4.available ? <CountryBars countries={snapshot.ga4.countryActiveUsers} /> : <div className="sidestand-status-rail bg-[#f1f0ed] p-4"><p className="text-sm font-extrabold">GA4 country data unavailable</p><p className="sidestand-mono mt-2 text-[9px] uppercase leading-5 text-[#6b6b67]">{snapshot.ga4.error}</p></div>}</Section>
+            <Section eyebrow="Rider footprint" title="Country distribution" note="Share of GA4 active-user country observations, normalized to 100%. This is not a percentage of registered Firestore riders: anonymous and pre-registration activity is included, and one person may appear in more than one country. City is deliberately not used.">{snapshot.ga4.available ? <CountryBars countries={snapshot.ga4.countryActiveUsers} /> : <div className="sidestand-status-rail bg-[#f1f0ed] p-4"><p className="text-sm font-extrabold">GA4 country data unavailable</p><p className="sidestand-mono mt-2 text-[9px] uppercase leading-5 text-[#6b6b67]">{snapshot.ga4.error}</p></div>}</Section>
             <Section eyebrow="Plan mix" title="Premium state now" note="Sidestand Firestore does not currently contain a RevenueCat-mirrored subscription field for these riders, so this is a truthful current-state read rather than fabricated revenue history."><div className="grid gap-px border border-[#c9c8c3] bg-[#c9c8c3] sm:grid-cols-2"><Metric label="Free / no mirrored entitlement" value={snapshot.totals.freeUsers} /><Metric label="Premium mirrored" value={snapshot.totals.premiumUsers} accent={snapshot.totals.premiumUsers > 0} /></div></Section>
           </> : null}
 
