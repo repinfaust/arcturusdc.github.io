@@ -51,6 +51,7 @@ List any intentional differences from your normal patterns.
 - Docs:
 
 ## Public app records
-- `/apps/thereabouts` is the public product record for the private thereabouts dogfood experiment.
+- `/apps/thereabouts` is the public product record for the private thereabouts development preview.
+- thereabouts is a destination-language product, not an Italian-only product. Italian and Atessa are the current first-trip implementation and may be named as that example.
 - Its feature copy must distinguish the current v0.1 build from accepted-but-unbuilt v0.2 direction.
 - Its privacy, terms, and deletion pages must reflect the actual local-first, anonymous-auth, separately consented cloud/AI data paths in the thereabouts SoRR.

@@ -23,7 +23,7 @@ export default function ThereaboutsDeleteAccount() {
       </ol>
       <p>
         This removes learner-created memories, trip moments, phrases, and replies from the device. The
-        reviewed Italian supplied with the app remains, as it is app content rather than your personal
+        reviewed language supplied with the app remains, as it is app content rather than your personal
         data. Device settings remain so the app does not silently ask again for choices you already made.
       </p>
 

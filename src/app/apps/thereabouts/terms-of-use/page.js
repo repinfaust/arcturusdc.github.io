@@ -17,13 +17,13 @@ export default function ThereaboutsTerms() {
       <h2>1. What thereabouts is</h2>
       <p>
         thereabouts is a language-readiness experiment for preparing practical conversations around a
-        real trip. It provides reviewed or clearly labelled Italian material, likely replies, listening
+        real trip. It provides reviewed or clearly labelled language material, likely replies, listening
         playback, speech-transcript evidence, trip context, and personal practice tools.
       </p>
 
       <h2>2. Private development status</h2>
       <p>
-        The current build is a dogfood experiment, not a public release or paid service. Features may
+        The current build is a private development preview, not a public release or paid service. Features may
         be incomplete, disabled, changed, or withdrawn. There is no promise of continued access, data
         synchronisation, store availability, or a particular release date.
       </p>
@@ -58,7 +58,7 @@ export default function ThereaboutsTerms() {
       <h2>6. AI-assisted material</h2>
       <p>
         Where AI translation or suggestions are enabled, model output may be inaccurate. Generated
-        Italian remains subject to the app&apos;s validation policy and may be withheld from trusted
+        language remains subject to the app&apos;s validation policy and may be withheld from trusted
         practice. You must not treat a technically valid response as proof of linguistic correctness.
       </p>
       <p>

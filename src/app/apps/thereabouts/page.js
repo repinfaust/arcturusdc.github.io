@@ -6,7 +6,7 @@ import styles from './thereabouts.module.css';
 export const metadata = {
   title: 'thereabouts — Language readiness for real trips',
   description:
-    'A private Italian trip-readiness experiment built around the places, people, and conversations you will actually encounter.',
+    'Personalised language preparation built around the places, people, and conversations you will actually encounter.',
 };
 
 const currentFeatures = [
@@ -23,7 +23,7 @@ const currentFeatures = [
   {
     index: '03',
     title: 'Hear it naturally or slowly',
-    body: 'Italian playback has platform-tuned natural and slow rates. Recognition practice asks what a likely reply meant before revealing the words.',
+    body: 'Target-language playback has platform-tuned natural and slow rates. Recognition practice asks what a likely reply meant before revealing the words.',
   },
   {
     index: '04',
@@ -32,7 +32,7 @@ const currentFeatures = [
   },
   {
     index: '05',
-    title: 'Know which Italian you can trust',
+    title: 'Know which language you can trust',
     body: 'Phrases and replies carry visible provenance. Challenging a phrase removes that exact version from practice and keeps its replacement provisional until checked.',
   },
   {
@@ -61,7 +61,7 @@ const plannedFeatures = [
   },
   {
     title: 'The return loop',
-    body: 'Capture what happened in Italy so the next trip starts from real encounters rather than another generic beginner syllabus.',
+    body: 'Capture what happened on your trip so the next one starts from real encounters rather than another generic beginner syllabus.',
   },
 ];
 
@@ -69,7 +69,7 @@ const faqs = [
   {
     question: 'Is thereabouts another general language-learning app?',
     answer:
-      'No. It is a trip-readiness experiment. Your destination, recurring places, people, and likely conversations decide what deserves attention; grammar appears only when it helps with something you are likely to use.',
+      'No. It is a trip-readiness experiment, and it is not limited to Italian. Your destination, target language, recurring places, people, and likely conversations decide what deserves attention; grammar appears only when it helps with something you are likely to use. Italy is simply the first real trip being prepared.',
   },
   {
     question: 'Why prepare the replies as well as the phrases?',
@@ -77,9 +77,9 @@ const faqs = [
       'Being able to ask a question is not enough if the answer arrives at normal speed. A thereabouts conversation fold includes what you say, likely replies, their meaning, and a useful listening cue.',
   },
   {
-    question: 'How is the Italian checked?',
+    question: 'How is the language checked?',
     answer:
-      'The current seed phrases and replies were reviewed by Italian speakers who use them. New or corrected language remains visibly provisional and cannot enter trusted practice until it passes an allowed review route.',
+      'Language carries a visible trust status. For the current Italian trip, seed phrases and replies were reviewed by Italian speakers who use them. New or corrected material in any language remains provisional until it passes an allowed review route.',
   },
   {
     question: 'Does it score my pronunciation?',
@@ -89,7 +89,7 @@ const faqs = [
   {
     question: 'Does it use AI?',
     answer:
-      'The app is designed to use a Firebase Function before any OpenAI request, with explicit consent and a tightly bounded phrase-and-trip payload. Saved people, places, preferences, recordings, and sensitive memories are excluded. Live AI translation remains disabled in the current dogfood build while the final App Check gate is completed.',
+      'The app is designed to use a Firebase Function before any OpenAI request, with explicit consent and a tightly bounded phrase-and-trip payload. Saved people, places, preferences, recordings, and sensitive memories are excluded. Live AI translation remains disabled in the current development build while the final App Check gate is completed.',
   },
   {
     question: 'Are there streaks or daily pressure?',
@@ -99,7 +99,7 @@ const faqs = [
   {
     question: 'Is it available to download?',
     answer:
-      'Not yet. thereabouts is a private iOS and Android dogfood build. The first release decision depends on a real test: whether it helps create at least three conversations in Italy that would not otherwise have happened.',
+      'Not yet. thereabouts is in private development for iOS and Android. The first release decision depends on a real test: whether it helps create conversations on an actual trip that would not otherwise have happened.',
   },
 ];
 
@@ -127,7 +127,7 @@ export default function ThereaboutsPage() {
           <h1 id="thereabouts-title" className="sr-only">thereabouts</h1>
           <p>Be ready for the conversations you are actually going to have.</p>
         </div>
-        <span className={styles.status}>Private dogfood · v0.1</span>
+        <span className={styles.status}>Private preview · v0.1</span>
       </section>
 
       <section className={styles.hero}>
@@ -135,9 +135,9 @@ export default function ThereaboutsPage() {
           <p className={styles.kicker}>Atessa · Abruzzo · October 2026</p>
           <h2>Language readiness for a real place.</h2>
           <p className={styles.lede}>
-            thereabouts prepares the Italian you are likely to say and hear on a trip you
-            actually take—built from your cafés, family, food shops, local roads, and the
-            moments that caught you out last time.
+            thereabouts prepares the language you are likely to say and hear on a trip you
+            actually take—built from your destination, people, routines, and the moments
+            that caught you out last time. The first real-world trip happens to be in Italy.
           </p>
           <div className={styles.tripTest}>
             <span>THE TEST</span>
@@ -165,7 +165,7 @@ export default function ThereaboutsPage() {
           >
             Your browser does not support embedded video.
           </video>
-          <p className={styles.caption}>A working iOS simulator build from the current dogfood loop.</p>
+          <p className={styles.caption}>A working iOS simulator build from the current trip loop.</p>
         </div>
       </section>
 

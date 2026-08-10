@@ -9,7 +9,7 @@ export default function ThereaboutsPrivacyPolicy() {
   return (
     <ThereaboutsLegalPage eyebrow="Privacy record" title="Privacy policy">
       <p>
-        <strong>The short version:</strong> thereabouts is local-first. Its reviewed Italian, your
+        <strong>The short version:</strong> thereabouts is local-first. Its reviewed language, your
         trip preparation, and your settings work without sending your language to an AI service.
         The app creates a Firebase identifier so records have an owner, but cloud backup, AI
         translation, and product analytics are separate choices. Only an explicit yes should enable
@@ -64,18 +64,18 @@ export default function ThereaboutsPrivacyPolicy() {
       <h2>5. Speech recognition and playback</h2>
       <p>
         Microphone access is requested only when you press the spoken-practice control. The app uses
-        the device platform&apos;s speech-recognition service to produce an Italian transcript and does
+        the device platform&apos;s speech-recognition service to produce a target-language transcript and does
         not save raw microphone audio as a memory or cloud record. Apple or Google may process speech
         under the operating system and recognition-service settings on your device.
       </p>
       <p>
-        Italian playback uses the device text-to-speech service. thereabouts presents transcripts as
+        Target-language playback uses the device text-to-speech service. thereabouts presents transcripts as
         recognition evidence, not as expert pronunciation or accent assessment.
       </p>
 
       <h2>6. AI translation and language suggestions</h2>
       <p>
-        Live AI translation is disabled in the current dogfood build while its final App Check gate is
+        Live AI translation is disabled in the current development build while its final App Check gate is
         completed. If enabled in a later build, the app will ask for explicit consent before the first
         request. Requests go through an App-Check-protected Firebase Function before OpenAI; the mobile
         app does not contain an OpenAI API key.

@@ -2,7 +2,8 @@
 
 ## 2026-08-10 — thereabouts public app and policy record (D-SITE-014)
 - Added `/apps/thereabouts` as a development-status app page using the product's pocket-notebook visual system and existing compressed 55-second iOS demo.
-- Public product copy separates the working v0.1 dogfood feature set from accepted v0.2 direction. Planned onboarding, reminders, translation capture, and guided acquisition are not presented as shipped.
+- Public product copy separates the working v0.1 private-preview feature set from accepted v0.2 direction. Planned onboarding, reminders, translation capture, and guided acquisition are not presented as shipped.
+- Public positioning describes thereabouts as a personalised destination-language product. Italian and Atessa are its current first-trip implementation, not a permanent product or language boundary. Internal development jargon is excluded from user-facing copy.
 - Added readable HTML routes at `/apps/thereabouts/privacy-policy`, `/terms-of-use`, and `/delete-account` for both iOS and Android development builds.
 - Policy copy follows the thereabouts SoRR and source rather than cloning Sprocket's behaviour: local SQLite is primary; anonymous Firebase ownership starts at launch; Apple/Google linking is optional; cloud backup and AI are separate consent choices; AI requests exclude memories; raw microphone audio is not saved by the app.
 - The current account deletion control removes Firebase Authentication but does not cascade-delete Firestore mirror records, so the public deletion route directs cloud deletion requests through `help@arcturusdc.com` and does not claim otherwise.
