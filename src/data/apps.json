@@ -57,6 +57,34 @@
     "bg": "/img/sprocket-hero-bg.svg"
   },
   {
+    "id": "thereabouts",
+    "name": "thereabouts",
+    "cardAccent": {
+      "primary": "#4C5C3F",
+      "tintTop": "rgba(76, 92, 63, 0.12)"
+    },
+    "status": "development",
+    "strap": "Be ready for the conversations you are actually going to have.",
+    "summary": "thereabouts is a private language-readiness experiment built around a real trip: the places, people, situations, phrases, and likely replies that matter when you return.",
+    "desc": "Trip-specific Italian preparation for what you will say and what you are likely to hear back.",
+    "link": "/apps/thereabouts",
+    "caseFileUrl": "/apps/thereabouts",
+    "category": "Travel & Learning",
+    "features": [
+      "Trip-specific conversations",
+      "Reviewed phrases and replies",
+      "Listening and spoken rehearsal",
+      "Local-first personal context"
+    ],
+    "live": false,
+    "availability": [
+      "android",
+      "ios"
+    ],
+    "icon": "/img/thereabouts/icon.png",
+    "bg": "/img/thereabouts/feature-graphic.png"
+  },
+  {
     "id": "unload",
     "name": "Unload",
     "cardAccent": {

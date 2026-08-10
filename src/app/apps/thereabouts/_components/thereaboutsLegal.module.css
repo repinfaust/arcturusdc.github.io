@@ -1,0 +1,44 @@
+.legal {
+  color: #555a51;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.legal > :first-child { margin-top: 0; }
+.legal p { margin: 0 0 1rem; }
+
+.legal h2 {
+  margin: 2.6rem 0 0.9rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #d7cebc;
+  color: #22251f;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.55rem, 4vw, 2rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.legal h3 {
+  margin: 1.7rem 0 0.65rem;
+  color: #22251f;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.legal ul,
+.legal ol {
+  margin: 0.8rem 0 1.35rem 1.4rem;
+  padding: 0;
+}
+
+.legal ul { list-style: square; }
+.legal ol { list-style: decimal; }
+.legal li { margin: 0.38rem 0; padding-left: 0.25rem; }
+.legal strong { color: #22251f; }
+.legal a { color: #2e6570; font-weight: 700; text-decoration: underline; text-underline-offset: 0.16em; }
+.legal a:hover { color: #1f4f58; }
+
+@media (max-width: 520px) {
+  .legal { font-size: 0.95rem; line-height: 1.68; }
+  .legal h2 { margin-top: 2.2rem; }
+}

@@ -49,3 +49,8 @@ List any intentional differences from your normal patterns.
 - Store listing:
 - Design:
 - Docs:
+
+## Public app records
+- `/apps/thereabouts` is the public product record for the private thereabouts dogfood experiment.
+- Its feature copy must distinguish the current v0.1 build from accepted-but-unbuilt v0.2 direction.
+- Its privacy, terms, and deletion pages must reflect the actual local-first, anonymous-auth, separately consented cloud/AI data paths in the thereabouts SoRR.
