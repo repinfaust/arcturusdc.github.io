@@ -2,6 +2,13 @@
 // block on identitytoolkit.googleapis.com (ticket raised). No customer data / not
 // Ensek-branded, so gate is safe to drop temporarily. RESTORE when IT confirm the
 // fix: re-add the import and re-wrap <section> in <PaygoMagicLinkGate>…</PaygoMagicLinkGate>.
+//
+// Layer 1 of 3. Restore ALL THREE together or the mirror breaks (see D-SITE-015):
+//   1. this file (PaygoMagicLinkGate wrapper)
+//   2. src/app/api/stea/paygo/poc-analysis/route.js (session guard)
+//   3. src/app/apps/stea/paygo/runtime/[...asset]/route.js (verifySession on GET)
+// Layer 3 was missed on 2026-06-23, which 401'd every runtime asset and left the
+// embedded app blank until 2026-08-14.
 // import PaygoMagicLinkGate from './_components/PaygoMagicLinkGate';
 import PaygoDocAssistant from './_components/PaygoDocAssistant';
 import styles from './paygo.module.css';

@@ -48,6 +48,11 @@ export async function GET(request) {
   // removed (Ensek proxy blocks Firebase magic-link sign-in; IT ticket open). With
   // the gate gone, no session cookie is set, so this guard would 401 the embedded
   // Doc Assistant. RESTORE alongside the page gate — re-enable the two blocks below.
+  //
+  // Layer 2 of 3. Restore ALL THREE together (see D-SITE-015):
+  //   1. src/app/apps/stea/paygo/page.js (PaygoMagicLinkGate wrapper)
+  //   2. this file (both GET and POST guards)
+  //   3. src/app/apps/stea/paygo/runtime/[...asset]/route.js (verifySession on GET)
   // const session = await verifySorrSession(request);
   // if (!session.authenticated) {
   //   return NextResponse.json({ error: session.error || 'Unauthorized' }, { status: 401 });

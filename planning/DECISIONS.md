@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-14 — PAYGO mirror runtime assets served unauthenticated (D-SITE-015)
+- The PAYGO demo mirror had three independent auth layers, not one. The 2026-06-23 change that dropped the magic-link gate removed only two of them: `PaygoMagicLinkGate` in `src/app/apps/stea/paygo/page.js` and the session guard in `src/app/api/stea/paygo/poc-analysis/route.js`. The third — a `verifySession` check at the top of `GET` in `src/app/apps/stea/paygo/runtime/[...asset]/route.js` — was missed.
+- Consequence: the page shell rendered but the iframe at `/apps/stea/paygo/runtime/index.html` 401'd on every asset, so the embedded app was blank. The symptom was misleading because visiting an authenticated STEa route first set a `__session` cookie, after which the mirror loaded correctly — making the failure look intermittent rather than unconditional.
+- Decision: remove the third gate so the mirror is reachable without authentication, matching the stated intent of the 2026-06-23 change. This is the root-cause fix, not a bypass: the other two layers were already down, so this route was enforcing an auth contract nothing else still honoured. `middleware.js` was never involved — `/apps/stea/paygo` is not in `protectedPaths`.
+- The route hydrates `PAYGO_FIREBASE_API_KEY` into the served JS bundle at request time. Removing the gate makes that key publicly retrievable. Accepted (David, 2026-08-14): a Firebase Web API key is a public client identifier, not a secret — it ships in every client bundle by design, and protection rests on Firebase Security Rules and authorised-domain restrictions rather than key secrecy.
+- The page remains `robots: { index: false, follow: false }`. The demo contains no real customer data, no PII and no live energy accounts, so unauthenticated access carries no data-protection exposure. Path-traversal protection on the asset route is unchanged.
+- This is a TEMPORARY state pending Ensek IT resolving the proxy block on `identitytoolkit.googleapis.com`. All three layers must be restored together; each carries a matching `TEMP 2026-06-23` comment naming the other two so a partial restore cannot recur.
+
 ## 2026-08-10 — thereabouts public app and policy record (D-SITE-014)
 - Added `/apps/thereabouts` as a development-status app page using the product's pocket-notebook visual system and existing compressed 55-second iOS demo.
 - Public product copy separates the working v0.1 private-preview feature set from accepted v0.2 direction. Planned onboarding, reminders, translation capture, and guided acquisition are not presented as shipped.

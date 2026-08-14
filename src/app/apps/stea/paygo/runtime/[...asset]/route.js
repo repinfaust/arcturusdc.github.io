@@ -1,11 +1,17 @@
+// TEMP 2026-06-23 (gate removed 2026-08-14): the third and final auth layer for the
+// PAYGO mirror. PaygoMagicLinkGate (page.js) and the poc-analysis session guard were
+// dropped on 2026-06-23 while Ensek IT investigate a proxy block on
+// identitytoolkit.googleapis.com, but this route was missed — so no __session cookie
+// existed and every runtime asset 401'd, leaving the embedded app blank.
+// Removed here so the mirror loads unauthenticated. See D-SITE-015.
+// RESTORE all three layers together when IT confirm the fix: re-add verifySession()
+// (session cookie -> auth.verifySessionCookie) and 401 ahead of the file read.
 import { promises as fs } from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
-import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
 
-const SESSION_COOKIE_NAME = '__session';
 const RUNTIME_ROOT = path.join(process.cwd(), 'src/app/apps/stea/paygo/_runtime');
 
 const CONTENT_TYPES = {
@@ -38,25 +44,7 @@ function escapeForJsStringLiteral(value) {
     .replace(/\n/g, '');
 }
 
-async function verifySession(request) {
-  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (!sessionCookie) return false;
-
-  try {
-    const { auth } = getFirebaseAdmin();
-    await auth.verifySessionCookie(sessionCookie, true);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function GET(request, { params }) {
-  const isAuthenticated = await verifySession(request);
-  if (!isAuthenticated) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
   const parts = Array.isArray(params?.asset) ? params.asset : [];
   if (parts.length === 0) {
     return NextResponse.json({ error: 'Asset path required' }, { status: 400 });
