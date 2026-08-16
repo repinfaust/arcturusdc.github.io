@@ -355,3 +355,145 @@ Routine data review found 24 `mlb_games` docs with `gamePk: null`, `status: null
 - **Verified against live APIs before deploy:** new logic matched **15/15** odds events; the old single-day logic matched **12/15**. 38 games across the 3-day window produced 38 unique keys (no series collisions). `eslint mlb/service.js` exits 0.
 - **Not in this commit — historical backfill.** The 17 orphans holding true openers are a separate, dry-run-first repair (copy the earlier opener onto the real doc, re-grade `openerPick`, then delete orphans). Mutating collected research data needs its own reviewed diff; until it runs, the opener record before 2026-08-03 retains the late-opener bias described above and any analysis must state that.
 - **Lesson:** the collector's own health doc reported `lastError: null` and `0 rejected` throughout — a fault that manifests as *silently well-formed but unjoinable* data is invisible to error-count monitoring. Coverage/consistency checks (does every doc carry the key it needs to be gradeable?) belong alongside error checks for any ingest that joins two independent feeds.
+
+## 2026-08-16 — MLB closing line was recording in-play prices; 288 of 408 finals wrong (D-SITE-014)
+
+**Definition, recorded because its ambiguity is what let the bug hide.** The **closing
+line** is the last price the market offered **before first pitch** — the line as the
+*pre-game market closed*. "Closing" refers to the market shutting, not the game ending or
+the line settling on a final value; the horse-racing analogue is SP, the price at the off.
+For a 19:35 first pitch, the closing line is the total quoted at 19:34. It is emphatically
+**not** a price quoted after the game starts. The field keeps the name `close` (the term is
+standard and used throughout `MLB_LINE_STUDY_SPEC.md`); this definition is the fix's other
+half (David, 2026-08-16).
+
+**Root cause.** `finalizeDayImpl` (`functions/mlb/service.js`) sorted every snapshot for a
+game by capture time and took the last one as `close`, with no filter on
+`minutesToFirstPitch`. The code comment said "close = last snapshot before first pitch"; the
+code did not implement it. The Odds API keeps pricing a game **live** once underway, so any
+game whose final snapshot pass landed after first pitch had an in-play total — repriced by
+runs already scored — filed as its closing line. `minutesToFirstPitch` was already stored on
+every snapshot (`service.js:331`) and goes negative post-first-pitch, so the data needed to
+filter correctly was present and simply unused.
+
+**Measured blast radius** (all 408 finals, 6,971 snapshots): **288 (70.6%) held a wrong
+close**; 227 of those wrong by ≥1.0 run; mean absolute error **2.36 runs**; worst `823750`
+(2026-08-07) stored **17.25** vs true close **8.0**. 388 finals (95.1%) had a post-first-pitch
+snapshot as their last. The error is **directional, not noise** — in-play totals mark down on
+low-scoring games and up on high-scoring ones, so the corruption correlates with the outcome
+being measured, the least benign shape for move analysis. **0 finals had zero pre-game
+snapshots**, so every value was recoverable.
+
+**Not affected:** `openerPick`/`t2hPick` hit rates. `buildPick()` reads snapshots directly and
+never touches `close`. **Nothing corrupt was ever displayed** — `MLBClient.js` renders only the
+picks (verified: it never reads `close`, `moveSummary`, `delta`, `openerToActual`). Damage was
+confined to stored data awaiting the 8-week analysis, which is why it was worth fixing now.
+
+**Fix (this commit):** close selection restricted to `minutesToFirstPitch >= 0`, taking the
+last pre-game snapshot. **Fail closed** — a game with no pre-game snapshot yields `null` and
+falls through to any previously stored close, never reaching for an in-play price. `moveSummary`
+(`delta`, `openerToActual`) derives from `close` and is corrected by the same change.
+
+**Backfill executed:** `scripts/mlb-backfill-close-and-ev.mjs`, dry-run reviewed first, then
+`--apply`: **393 docs written, 288 closes corrected, 0 fail-closed skips**. Re-run confirms
+idempotency (407 unchanged, 0 rewrites). Independent verification: **0 finals** now hold a close
+differing from the true pre-game close, and **0** closes are sourced from a post-first-pitch
+snapshot. 288 docs carry `closePreFixValue` + `closeBackfilledAt` + `closeBackfillNote` so the
+correction is auditable and reversible; audit fields are written **once**, on first correction,
+so re-runs cannot overwrite an original value with an already-fixed one.
+
+**Not a D-SITE-011 recurrence.** The trace was opened on that hypothesis and **disproved it**:
+all five traced games (824330, 823679, 823508, 823916, 824724) have exactly one game doc, one
+distinct `gameId` across their snapshots, and clean single-game series. The apparent 3.5–4.5 run
+"swings" were this bug. D-SITE-011's fix works and should not be reopened.
+
+**T-2h window — decided, unchanged at 100–140 min.** The same trace found **79 of 408 finals
+have no snapshot in that window** (cron gaps reach 210 min), which — not the 2026-07-19
+amendment — is the real reason ungraded games kept appearing at ~0–1/day. Widening to 90–150
+would recover 32. **David's decision: leave it.** The window was set before any results were
+seen; loosening it after inspecting outcomes is specification drift, and even with innocent
+intent it becomes impossible to show the threshold was not chosen to flatter the numbers. If
+coverage is worth improving later the clean route is an extra collection pass (~30 credits/month
+of a 288 balance), forward-only by construction.
+
+**Lesson.** Two defects now (D-SITE-011, D-SITE-014) have been *silently well-formed but wrong*
+data that error-count monitoring cannot see — `lastError: null` throughout both. A stored value
+that is the right type, in a plausible range, in the right field is invisible to health checks.
+Ingests joining two feeds need **semantic** invariants asserted (here: "close must come from a
+snapshot with minutesToFirstPitch >= 0"), not just error counts.
+
+## 2026-08-16 — MLB per-pick price + realized EV logging (D-SITE-015)
+
+**Standing position on betting, recorded at David's explicit instruction.** **No bet will be
+placed until the project reaches its end point and the five go/no-go gates in
+`MLB_BET_SELECTION_SPEC.md` §5 have been evaluated and passed.** The purpose of the work **is**
+to build toward a system that could, in future, inform which games are worth backing — using
+data available close to first pitch, on the premise that MLB markets are less fluid pre-game
+than horse-racing markets are pre-off. That goal is legitimate and unchanged; what is deferred
+is *acting* on it. Recorded because it was misread in session on 2026-08-16: a forward-looking
+question about future usefulness was answered as though staking were imminent, producing an
+unwarranted negative characterisation of the project. Building the measurement instrument is
+**not** a step toward betting sooner — it is the precondition for ever answering the question,
+since per spec §5 accuracy alone can never clear the gates.
+
+**Why needed.** Gates 2 (EV positive after vig) and 5 (survives worst-book pricing) were
+**unevaluable** — the fields they need existed nowhere. A 53% pick at -120 loses money. Without
+this the 8-week analysis could not produce a go/no-go answer whatever the hit rate said.
+
+**Data availability verified, not assumed.** Sampled 400 live snapshots: **400/400 carry
+per-book prices** (`books: {key: {line, over, under}}`, decimal, written at `service.js:197`),
+median **9 books** per snapshot, **0** missing `under` prices, present since day one. This build
+therefore makes **no new API calls** and cannot spend a credit; historical games are fully
+back-computable.
+
+**`MLB_BET_SELECTION_SPEC.md` was never on `main`** — D-SITE-008 follow-up 5 described it as
+written, but it existed only on `codex/promo-campaigns` (`735b0c5`, 2026-07-24). The
+pre-registered gates and filters — the things keeping the evaluation honest — were unreadable on
+`main` for three weeks. **This is the second occurrence of the same failure** (see D-SITE-010's
+renumbering note: work committed on `codex/promo-campaigns` that never merged), so it is a
+process risk, not bad luck. **Restored verbatim** from `735b0c5` in this commit — editing it
+after seeing results would destroy the pre-registration property that gives it its value.
+
+**Built** (`functions/mlb/service.js`, pure fns, unit-tested): `toAmerican()`, `pnlUnits()`,
+`buildPickEv()`. Fields exactly as pre-registered in spec §3 — `priceDecimal`, `priceAmerican`,
+`book`, `impliedProb`, `stakeUnits`, `pnlUnits` — attached as `ev` on both `openerPick` and
+`t2hPick` so the comparison stays like-for-like.
+
+**Three price variants per pick** (David's decision): `best`, `worst`, `consensus`. Spec §3 says
+"best available", but gate 5 demands worst-book robustness; logging only `best` flatters EV and
+assumes you always get on at the top book, logging only `worst` understates it. All three makes
+gates 2 and 5 directly computable and removes any later temptation to quote the flattering one.
+Headline reported on `consensus`. Only books quoting the pick's **own line** are comparable — a
+price at a different total is a different bet — so off-line books are excluded from selection
+(`nBooks` records how many qualified).
+
+**No-fabrication rule carried verbatim from spec §3:** a pick with no real book quote at its own
+line is `ev: null`, `evGradeable: false` — counted, never imputed, never interpolated. Backfill
+found **3** such picks of 378.
+
+**Backfill executed** in the same run as D-SITE-014: **375 picks received EV**, 3 ungradeable.
+
+**First read — F0_all null benchmark, flat 1u, no filter applied, no gate evaluated:**
+
+| pick | variant | n | hit | pnl | roi |
+|---|---|---|---|---|---|
+| opener | best | 331 | 46.2% | -34.59u | -10.45% |
+| opener | consensus | 331 | 46.2% | -38.76u | -11.71% |
+| opener | worst | 331 | 46.2% | -42.09u | -12.72% |
+| t2h | best | 304 | 52.0% | +9.17u | +3.02% |
+| t2h | consensus | 304 | 52.0% | +3.55u | +1.17% |
+| t2h | worst | 304 | 52.0% | -0.72u | -0.24% |
+
+**This is the null benchmark — betting every game — and it is explicitly the thing spec §4 says
+must be beaten to matter, not a result.** Read with care: T-2h at consensus is +1.17% ROI on
+n=304, which at this sample is indistinguishable from zero, and at **worst-book pricing it is
+already negative** — i.e. it fails gate 5 outright as an unfiltered strategy. The opener figures
+being firmly negative is expected and is the vig doing exactly what it should. Note the hit rates
+here (46.2% / 52.0%) differ from the previously quoted 48.5% / 54.3% because EV grading requires a
+real book quote at the pick's line, a stricter population than correct-side grading. **No filter
+has been registered, no gate evaluated, and no bet is implied or authorised by this data
+existing.**
+
+**Not in this build:** no filter registered or scored (F0–F5 and θ/φ must be frozen in DECISIONS.md
+*before* scoring, per spec §4), no gate evaluated, no staking logic, no Kelly, no change to pick
+selection or the 100–140 window. This build makes EV **measurable** and answers nothing.

@@ -100,6 +100,71 @@ function buildPick(snap, finalTotal) {
   };
 }
 
+// Decimal -> American odds. +N for underdogs (dec >= 2), -N for favourites.
+function toAmerican(dec) {
+  if (!Number.isFinite(dec) || dec <= 1) return null;
+  return dec >= 2 ? Math.round((dec - 1) * 100) : Math.round(-100 / (dec - 1));
+}
+
+// Realized P&L in units for a settled pick at a given price (spec §3).
+// push -> 0, correct -> stake * (priceDecimal - 1), wrong -> -stake.
+function pnlUnits(correct, push, priceDecimal, stakeUnits = 1) {
+  if (push) return 0;
+  if (!Number.isFinite(priceDecimal) || priceDecimal <= 1 || correct == null) return null;
+  return round2(correct ? stakeUnits * (priceDecimal - 1) : -stakeUnits);
+}
+
+// Per-pick price + realized EV, from the per-book prices already stored on every
+// snapshot (`books: {key: {line, over, under}}`) — no new API calls (D-SITE-015).
+//
+// Three variants are recorded per pick, because the go/no-go gates need different ones:
+//   best      — most favourable real price for the picked side (gate 2 upper bound)
+//   worst     — least favourable (gate 5: does the edge survive bad pricing?)
+//   consensus — median across books at the consensus line; the honest headline
+// Logging only `best` would flatter EV and assume you always get on at the top book;
+// logging only `worst` would understate it. All three removes the temptation to choose
+// the flattering one after seeing results.
+//
+// NO-FABRICATION RULE (spec §3): if no real book price exists for the picked side, the
+// pick is not EV-gradeable — `null` is returned and the caller records evGradeable:false.
+// A price is never imputed, interpolated, or defaulted.
+function buildPickEv(snap, pick, stakeUnits = 1) {
+  if (!snap || !pick || !pick.side) return null;
+  const side = pick.side;
+  const books = snap.books && typeof snap.books === 'object' ? snap.books : null;
+  if (!books) return null;
+
+  // Only books quoting the pick's own line are comparable — a price at a different
+  // total is a different bet, so it must not enter best/worst selection.
+  const quotes = Object.entries(books)
+    .filter(([, b]) => b && b.line === pick.line && Number.isFinite(b[side]) && b[side] > 1)
+    .map(([key, b]) => ({book: key, priceDecimal: round2(b[side])}));
+  if (!quotes.length) return null;
+
+  const sorted = quotes.slice().sort((a, b) => a.priceDecimal - b.priceDecimal);
+  const worst = sorted[0];
+  const best = sorted[sorted.length - 1];
+  const consensusDec = round2(median(quotes.map((q) => q.priceDecimal)));
+
+  const variant = (priceDecimal, book) => {
+    if (!Number.isFinite(priceDecimal) || priceDecimal <= 1) return null;
+    return {
+      priceDecimal,
+      priceAmerican: toAmerican(priceDecimal),
+      book: book || null,
+      impliedProb: round2(1 / priceDecimal), // vigged, at the actual price
+      pnlUnits: pnlUnits(pick.correct, pick.push, priceDecimal, stakeUnits),
+    };
+  };
+
+  return {
+    side, line: pick.line, stakeUnits, nBooks: quotes.length,
+    best: variant(best.priceDecimal, best.book),
+    worst: variant(worst.priceDecimal, worst.book),
+    consensus: variant(consensusDec, 'consensus'),
+  };
+}
+
 // Reconstructs which pitcher was probable for each side as of a given timestamp,
 // by starting from the pitchers known at the opener and replaying pitcher_change
 // events (payload: {side, old, new}) that occurred strictly before cutoffIso.
@@ -502,10 +567,19 @@ async function finalizeDayImpl() {
     const snap = await gRef.get();
     const prev = snap.exists ? snap.data() : null;
 
-    // close = last snapshot before first pitch
+    // close = last snapshot before first pitch.
+    // "Closing line" = the last price the market offered BEFORE first pitch, i.e. as the
+    // pre-game market closed (the horse-racing SP analogue). It is NOT the game's final
+    // price: the Odds API keeps pricing a game live once underway, and that in-play
+    // total is a different quantity entirely — it reprices as runs go in or don't, and
+    // can land far from the pre-game number. Filtering on minutesToFirstPitch >= 0 is
+    // therefore mandatory, not defensive (D-SITE-014).
     const allSnaps = await db.collection(collections.snapshots).where('gameId', '==', id).get();
     const snapDocs = allSnaps.docs.map((d) => d.data()).sort((a, b) => String(a.capturedAtIso).localeCompare(String(b.capturedAtIso)));
-    const closeSnap = snapDocs.length ? snapDocs[snapDocs.length - 1] : null;
+    const preGameSnaps = snapDocs.filter((s) => Number.isFinite(s.minutesToFirstPitch) && s.minutesToFirstPitch >= 0);
+    // Fail closed: with no pre-game snapshot there is no closing line. Fall through to
+    // any previously stored close rather than reaching for an in-play price.
+    const closeSnap = preGameSnaps.length ? preGameSnaps[preGameSnaps.length - 1] : null;
     const nSnaps = snapDocs.length;
     const eventsSnap = await db.collection(collections.events).where('gameId', '==', id).get();
     const gameEvents = eventsSnap.docs.map((d) => d.data());
@@ -523,6 +597,13 @@ async function finalizeDayImpl() {
     const openerPick = buildPick(openerSnap, ar + hr);
     const t2hPick = buildPick(t2hSnap, ar + hr);
     const revisionOutcome = buildRevisionOutcome(openerPick, t2hPick);
+
+    // Per-pick price + realized EV at real book prices (D-SITE-015). Accuracy alone
+    // cannot clear the go/no-go gates — you bet into a price, so a 53% pick at -120
+    // still loses. Recorded for measurement only: no filter is applied, no gate is
+    // evaluated, and no bet is implied or authorised by this data existing.
+    const openerEv = buildPickEv(openerSnap, openerPick);
+    const t2hEv = buildPickEv(t2hSnap, t2hPick);
 
     // Starting pitchers as known at each pick point — reconstructed by replaying
     // pitcher_change events up to each snapshot's timestamp, starting from the
@@ -545,8 +626,8 @@ async function finalizeDayImpl() {
         delta: round2(close - opener), nSnapshots: nSnaps, nEvents,
         openerToActual: round2((prev.finalTotal != null ? prev.finalTotal : ar + hr) - opener),
       } : null,
-      openerPick,
-      t2hPick,
+      openerPick: openerPick ? {...openerPick, ev: openerEv, evGradeable: !!openerEv} : null,
+      t2hPick: t2hPick ? {...t2hPick, ev: t2hEv, evGradeable: !!t2hEv} : null,
       revisionOutcome,
       pitchersAtOpener,
       pitchersAtT2h,
@@ -586,6 +667,9 @@ module.exports = {
   gameKey,
   impliedOverProb,
   buildPick,
+  toAmerican,
+  pnlUnits,
+  buildPickEv,
   pitchersAsOf,
   buildRevisionOutcome,
   snapshotLinesImpl,

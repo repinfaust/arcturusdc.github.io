@@ -5,10 +5,33 @@ which concluded: no exploitable edge in our data at any price point, but the
 open→close move is real (57.7% follow-the-move @ opener, 2024 data) and is driven by
 information arriving pre-game. This spec is the instrument to observe that process._
 
-**This is a research instrument, NOT a betting model.** It makes no predictions,
-logs no picks, and has no LLM anywhere. It collects the sequenced pre-game data that
-cannot be bought historically: line snapshots + timestamped game events, so we can
-later measure *what information moves the MLB total, by how much, and how fast*.
+**This is a research instrument, NOT a betting model.** It makes no predictions and has
+no LLM anywhere. It collects the sequenced pre-game data that cannot be bought
+historically: line snapshots + timestamped game events, so we can later measure *what
+information moves the MLB total, by how much, and how fast*.
+
+> _Amended 2026-08-16: "logs no picks" was true at drafting but was superseded on
+> 2026-07-19 (D-SITE-008 follow-up), which added `openerPick` and `t2hPick` — the
+> **market's own de-vigged price** recorded as a pick and graded against the real final
+> total. These are accuracy measurements, not predictions or recommendations._
+
+## Standing position on betting (David, 2026-08-16)
+
+**No bet will be placed until the project reaches its end point and the five go/no-go
+gates in `MLB_BET_SELECTION_SPEC.md` §5 have been evaluated and passed.** That is the
+user's explicit and settled intent.
+
+The purpose of this work **is** to build toward a system that could, in future, inform
+which games are worth backing — using data available close to first pitch, on the
+premise that MLB markets are less fluid pre-game than horse-racing markets are pre-off.
+That goal is legitimate and unchanged. What is deferred is *acting* on it: no staking,
+no filter scoring, no go/no-go call until season-length data exists.
+
+Recorded because it was misread in session on 2026-08-16 — a forward-looking question
+about future usefulness was answered as though staking were imminent, producing an
+unwarranted negative characterisation of the project. Neither a nil result nor a
+positive one is established; at n=293 with a 95% CI of 48.5–60.0% the study is
+**unresolved**, which at four weeks in is the expected state, not a disappointing one.
 
 The user's framing (2026-07-16): like horse racing overnight odds vs SP — the going
 and declarations move the price; we want to watch that happen with timestamps.
