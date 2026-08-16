@@ -497,3 +497,66 @@ existing.**
 **Not in this build:** no filter registered or scored (F0–F5 and θ/φ must be frozen in DECISIONS.md
 *before* scoring, per spec §4), no gate evaluated, no staking logic, no Kelly, no change to pick
 selection or the 100–140 window. This build makes EV **measurable** and answers nothing.
+
+## 2026-08-16 — MLB bet-selection filters PRE-REGISTERED and frozen (D-SITE-016)
+
+Registered the filter set that will be tested, **before scoring any of it**, per
+`MLB_BET_SELECTION_SPEC.md` §4. Written to `planning/MLB_FILTER_REGISTRATION.md`. This
+changes no running code and authorises no bet.
+
+**Why now:** the instrument only became complete today (D-SITE-015 made EV measurable).
+Pre-registration is worthless if done after results are known, and cheap if done before —
+so it happens now, at the moment scoring first becomes possible.
+
+**Six filters registered:** `F0_all` (null benchmark), `F1_revision` (opener/T-2h sides
+differ, ~44%), `F2_pmove` (|ΔP(Over)| ≥ θ, ~20%), `F3_pitcher` (starter changed by T-2h,
+~2%), `F4_conf` (|P(Over)−0.5| ≥ φ, ~20%), `F5_combo` (F2 AND F4, ~5–8%).
+
+**`F2_pmove` is the single PRIMARY filter**; the other five are exploratory-only and never
+bettable on this sample (spec §4 prefers one pre-committed primary to correcting across
+many). Rationale fixed in advance: the study's whole premise is that pre-game information
+arrival moves the price, and F2 operationalises exactly that — it selects games where the
+market demonstrably moved between opener and T-2h. F1 is a coarser proxy (a side flip is a
+large move, but a large move need not flip the side), F4 measures conviction not
+information, F3 at 2.2% can never reach the sample gate. Filters tested = 6, recorded;
+exploratory five carry Bonferroni 0.05/5 = 0.01 and are reportable, never actionable.
+
+**Frozen thresholds: θ = 0.0274, φ = 0.0196** — each the 80th percentile of its own
+distribution over pre-registration games (n=272), selecting the most extreme ~20%.
+
+**Thresholds were set from the predictor distribution alone. No win rate, no P&L, and no
+correctness value was computed, inspected, or referenced during threshold selection** — the
+calibration computed percentiles of `|ΔP(Over)|` and `|P(Over)−0.5|` and nothing else. This
+is the specific discipline that keeps the test forward: the usual way to corrupt a
+pre-registration is to try several θ, see which scores best, and register the winner. The
+scoring machinery was never pointed at these games. Selectivity drove the choice (~2
+bets/night, matching the spec's "0–4 games/night"), balanced against gate 3's ~250+ bet
+requirement.
+
+**Precision finding:** `pOver` is stored rounded to 2dp, which is too coarse to threshold —
+at 2dp the entire useful θ range collapses onto 0.02/0.03. Filters therefore compute
+`P(Over)` at full precision via `impliedOverProb(overDec, underDec)` on the snapshot's
+consensus prices, never from the stored `pOver`. Recorded because using the rounded field
+would silently distort every selection.
+
+**Evaluation window: games finalizing 2026-08-17 or later.** The 408 games already
+collected are permanently excluded from gate evaluation — they calibrated threshold scale
+only and remain an exploratory sandbox. **At 9.7 games/day and ~20% selectivity, gate 3
+(~250+ selected bets) needs roughly 125 slate-days — this does not conclude in 2026.**
+
+**Reference price for gates fixed as `ev.worst`** (spec §8 open item, resolved:
+conservatism). `ev.consensus` is the reported headline; `ev.best` is recorded but grounds no
+go/no-go claim.
+
+**Amendment rule, and the point of the whole document:** nothing registered may be revised
+after a score is computed on post-registration data. A "better" variant suggested by a poor
+result is a **new** filter with a **new** registration date, evaluated on games arriving
+after it. Amending in place converts a forward test into a backfit.
+
+**Caveat to carry into findings:** thresholds are absolute, not rolling quantiles (the
+honest choice), so if the forward price-movement distribution shifts — plausible in
+September/postseason — realised selectivity will drift from ~20%. The realised selection
+rate must be reported alongside any result.
+
+Standing position unchanged: no bet until the project's end point and all five gates pass.
+Registration authorises nothing.
