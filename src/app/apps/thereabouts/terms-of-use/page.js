@@ -9,23 +9,24 @@ export default function ThereaboutsTerms() {
   return (
     <ThereaboutsLegalPage eyebrow="Usage record" title="Terms of use">
       <p>
-        These terms apply to the private thereabouts iOS and Android development builds supplied by
-        Arcturus Digital Consulting. By using a build, you agree to these terms and the{' '}
+        These terms apply to the thereabouts iOS and Android apps supplied by Arcturus Digital
+        Consulting. By using the app, you agree to these terms and the{' '}
         <a href="/apps/thereabouts/privacy-policy">privacy policy</a>.
       </p>
 
       <h2>1. What thereabouts is</h2>
       <p>
-        thereabouts is a language-readiness experiment for preparing practical conversations around a
-        real trip. It provides reviewed or clearly labelled language material, likely replies, listening
-        playback, speech-transcript evidence, trip context, and personal practice tools.
+        thereabouts is a language-readiness app for preparing practical conversations around a real
+        trip. It provides language material, likely replies, listening playback, speech-transcript
+        evidence, trip context, and personal practice tools.
       </p>
 
-      <h2>2. Private development status</h2>
+      <h2>2. Service status</h2>
       <p>
-        The current build is a private development preview, not a public release or paid service. Features may
-        be incomplete, disabled, changed, or withdrawn. There is no promise of continued access, data
-        synchronisation, store availability, or a particular release date.
+        thereabouts is released on the App Store and Google Play. Features may be changed, added or
+        withdrawn as the app develops. We aim to keep the app available, but do not promise
+        uninterrupted access, cloud synchronisation, or that any particular feature will continue in
+        its current form.
       </p>
 
       <h2>3. Personal use</h2>
@@ -37,14 +38,18 @@ export default function ThereaboutsTerms() {
 
       <h2>4. Language accuracy and real-world judgement</h2>
       <p>
-        Trust labels are central to thereabouts. Reviewed language has stronger provenance than
-        provisional or generated language, but no phrase can guarantee that every speaker, region, or
-        situation will use the same wording. Context, register, dialect, hearing conditions, and local
-        custom still matter.
+        thereabouts prepares language for real situations, and no phrase can guarantee that every
+        speaker, region or situation will use the same wording. Context, register, dialect, hearing
+        conditions and local custom all matter. Much of the language in the app is written by an AI
+        model and checked by a second one rather than by a person.
       </p>
       <p>
-        Do not rely on thereabouts as an emergency interpreting service or as professional medical,
-        legal, immigration, safety, or financial advice. Verify important or high-consequence
+        If something does not sound right, tell the app so. The phrase is withdrawn and replaced, and
+        it will not come back.
+      </p>
+      <p>
+        Do not rely on thereabouts as an emergency interpreting service, or as professional medical,
+        legal, immigration, safety or financial advice. Verify important or high-consequence
         communication with a qualified person.
       </p>
 
@@ -57,14 +62,13 @@ export default function ThereaboutsTerms() {
 
       <h2>6. AI-assisted material</h2>
       <p>
-        Where AI translation or suggestions are enabled, model output may be inaccurate. Generated
-        language remains subject to the app&apos;s validation policy and may be withheld from trusted
-        practice. You must not treat a technically valid response as proof of linguistic correctness.
+        Model output may be inaccurate. A response that is well-formed is not evidence that it is
+        linguistically correct, and should not be treated as such.
       </p>
       <p>
-        You remain responsible for the text you submit. Do not submit confidential information or
-        another person&apos;s personal data unless you have a lawful reason and their appropriate knowledge
-        or permission.
+        You remain responsible for the text you submit. Do not submit confidential information, or
+        another person&apos;s personal data — particularly health information, identification numbers
+        or financial details — unless you have a lawful reason and their knowledge or permission.
       </p>
 
       <h2>7. Your content</h2>
@@ -89,18 +93,18 @@ export default function ThereaboutsTerms() {
         may be interrupted by third-party availability.
       </p>
 
-      <h2>10. No charge in the current build</h2>
+      <h2>10. Charges</h2>
       <p>
-        The private development build has no subscription, purchase, or paid entitlement. Any later
-        commercial terms would require a new release decision and updated terms before charging users.
+        thereabouts has no subscription, purchase, or paid entitlement. Any future commercial terms
+        would be introduced with updated terms before charging users.
       </p>
 
       <h2>11. Liability</h2>
       <p>
         Nothing in these terms excludes liability that cannot legally be excluded. Subject to that,
-        thereabouts is supplied for experimental personal use without a guarantee that it will be
-        error-free or suitable for every conversation, and we are not liable for indirect or
-        consequential loss arising from reliance on the app.
+        thereabouts is supplied for personal use without a guarantee that it will be error-free or
+        suitable for every conversation, and we are not liable for indirect or consequential loss
+        arising from reliance on the app.
       </p>
 
       <h2>12. Governing law</h2>
@@ -111,8 +115,8 @@ export default function ThereaboutsTerms() {
 
       <h2>13. Changes and contact</h2>
       <p>
-        We may update these terms as the experiment changes. Material changes will be identified before
-        they apply to a public release. Questions: {' '}
+        We may update these terms as the app changes. Material changes will be identified before they
+        take effect. Questions: {' '}
         <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>.
       </p>
     </ThereaboutsLegalPage>

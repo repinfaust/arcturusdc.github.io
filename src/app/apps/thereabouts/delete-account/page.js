@@ -9,9 +9,9 @@ export default function ThereaboutsDeleteAccount() {
   return (
     <ThereaboutsLegalPage eyebrow="Data controls" title="Delete account or data">
       <p>
-        thereabouts separates your local learning data, Firebase authentication account, and optional
-        cloud mirror. This prevents one action from pretending to delete information held somewhere
-        else. Use the instructions below for the outcome you want.
+        thereabouts gives you two controls: one deletes your account and everything associated with
+        it, and one deletes only the learner-created data on this device. Use the instructions below
+        for the outcome you want.
       </p>
 
       <h2>Delete everything you added from this device</h2>
@@ -27,30 +27,18 @@ export default function ThereaboutsDeleteAccount() {
         data. Device settings remain so the app does not silently ask again for choices you already made.
       </p>
 
-      <h2>Delete the authentication account</h2>
+      <h2>Delete your account and everything with it</h2>
       <ol>
         <li>Open <strong>Settings</strong>.</li>
-        <li>If you linked Apple or Google, find <strong>Your account</strong>.</li>
+        <li>Find <strong>Your account</strong>.</li>
         <li>Choose <strong>Delete your account</strong> and confirm.</li>
       </ol>
       <p>
-        The Firebase Authentication account is deleted and the app returns to a fresh anonymous owner.
-        Data already present on the device stays until you delete it separately. The current development
-        build does not automatically erase Firestore mirror records when the authentication account is
-        deleted.
-      </p>
-
-      <h2>Delete cloud-mirrored records</h2>
-      <p>
-        Email <a href="mailto:help@arcturusdc.com?subject=thereabouts%20data%20deletion">help@arcturusdc.com</a>{' '}
-        with the subject <strong>thereabouts data deletion</strong>. If possible, send the request while
-        you can still access the linked account so ownership can be verified. Do not email phrase text,
-        memories, identity documents, passwords, or sign-in tokens.
-      </p>
-      <p>
-        After verification, we will delete records held under your user path in Firestore and confirm
-        completion. We may retain the minimum information required to document the request, prevent
-        fraud or abuse, resolve disputes, or comply with law.
+        This deletes cloud-mirrored records first, then the data on your device, then the Firebase
+        Authentication account. If the cloud step fails, the account is kept rather than leaving
+        records behind that nothing can reach — try again, or contact us. Audio files cached on your
+        device are removed with your device data. We may retain the minimum information required to
+        prevent fraud or abuse, resolve disputes, or comply with law.
       </p>
 
       <h2>If you cannot open the app</h2>
@@ -63,9 +51,9 @@ export default function ThereaboutsDeleteAccount() {
 
       <h2>What uninstalling does</h2>
       <p>
-        Uninstalling normally removes the local app database from that device. It does not reliably
-        delete the Firebase Authentication account or any cloud mirror. Use the controls above or
-        contact us if you want those records deleted as well.
+        Uninstalling normally removes the local app database from that device. It does not delete the
+        Firebase Authentication account or any cloud mirror. Use <strong>Delete your account</strong>
+        {' '}before uninstalling, or contact us, if you want those records deleted as well.
       </p>
 
       <h2>Questions</h2>

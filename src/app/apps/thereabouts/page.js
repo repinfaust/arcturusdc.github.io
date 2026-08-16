@@ -13,12 +13,12 @@ const currentFeatures = [
   {
     index: '01',
     title: 'Prepare both sides of the conversation',
-    body: 'Each conversation fold pairs what you may say with reviewed replies you are likely to hear, plus the fragment worth listening for.',
+    body: 'Each conversation fold pairs what you may say with the replies you are likely to hear, plus the fragment worth listening for.',
   },
   {
     index: '02',
     title: 'Practise the language for your real trip',
-    body: 'The current build is organised around repeat visits to Atessa: cafés, restaurants, food shops, family, neighbours, driving, and local errands.',
+    body: 'Preparation is organised around the places you actually go: cafés, restaurants, food shops, family, neighbours, driving, and local errands.',
   },
   {
     index: '03',
@@ -32,8 +32,8 @@ const currentFeatures = [
   },
   {
     index: '05',
-    title: 'Know which language you can trust',
-    body: 'Phrases and replies carry visible provenance. Challenging a phrase removes that exact version from practice and keeps its replacement provisional until checked.',
+    title: 'Say when something sounds wrong',
+    body: 'Much of the language is written by an AI model and checked by a second one. If a phrase does not sound right, tell the app: it is withdrawn, replaced, and does not come back.',
   },
   {
     index: '06',
@@ -69,7 +69,7 @@ const faqs = [
   {
     question: 'Is thereabouts another general language-learning app?',
     answer:
-      'No. It is a trip-readiness experiment, and it is not limited to Italian. Your destination, target language, recurring places, people, and likely conversations decide what deserves attention; grammar appears only when it helps with something you are likely to use. Italy is simply the first real trip being prepared.',
+      'No. It is a trip-readiness app, and it is not limited to Italian. Your destination, target language, recurring places, people, and likely conversations decide what deserves attention; grammar appears only when it helps with something you are likely to use. Italy is simply the first real trip it was built around.',
   },
   {
     question: 'Why prepare the replies as well as the phrases?',
@@ -79,7 +79,7 @@ const faqs = [
   {
     question: 'How is the language checked?',
     answer:
-      'Language carries a visible trust status. For the current Italian trip, seed phrases and replies were reviewed by Italian speakers who use them. New or corrected material in any language remains provisional until it passes an allowed review route.',
+      'Much of the language in the app is written by an AI model and checked by a second one, rather than by a person. That is a real limit and the app says so. If a phrase does not sound right to you, report it: the phrase is withdrawn and replaced, and it will not come back. Do not rely on it for emergency, medical, legal, or other high-consequence communication.',
   },
   {
     question: 'Does it score my pronunciation?',
@@ -89,17 +89,17 @@ const faqs = [
   {
     question: 'Does it use AI?',
     answer:
-      'The app is designed to use a Firebase Function before any OpenAI request, with explicit consent and a tightly bounded phrase-and-trip payload. Saved people, places, preferences, recordings, and sensitive memories are excluded. Live AI translation remains disabled in the current development build while the final App Check gate is completed.',
+      'Requests go through an App-Check-protected Firebase Function before OpenAI, with explicit consent that can be withdrawn in settings. What is sent is the note you write about your trip, the text you ask to be translated, and your destination and language. Saved people, places, preferences, recordings, and high-sensitivity memories are excluded.',
   },
   {
     question: 'Are there streaks or daily pressure?',
     answer:
-      'No. There are no streaks, leagues, XP, punishment mechanics, or percentage-complete scores. Planned reminders are opt-in, pausable, trip-aware, and only appear when there is something genuinely worth preparing.',
+      'No. There are no streaks, leagues, XP, punishment mechanics, or percentage-complete scores. The reminders on the roadmap will be opt-in, pausable, trip-aware, and will only appear when there is something genuinely worth preparing.',
   },
   {
     question: 'Is it available to download?',
     answer:
-      'Not yet. thereabouts is in private development for iOS and Android. The first release decision depends on a real test: whether it helps create conversations on an actual trip that would not otherwise have happened.',
+      'Yes. thereabouts is available for iOS and Android. It is free, with no subscription, purchase, or paid entitlement.',
   },
 ];
 
@@ -127,7 +127,7 @@ export default function ThereaboutsPage() {
           <h1 id="thereabouts-title" className="sr-only">thereabouts</h1>
           <p>Be ready for the conversations you are actually going to have.</p>
         </div>
-        <span className={styles.status}>Private preview · v0.1</span>
+        <span className={styles.status}>iOS and Android</span>
       </section>
 
       <section className={styles.hero}>
@@ -150,7 +150,6 @@ export default function ThereaboutsPage() {
 
         <div className={styles.demoFrame}>
           <div className={styles.demoLabel}>
-            <span>BUILD 0.0.1</span>
             <span>55 SEC</span>
           </div>
           <video
@@ -165,17 +164,17 @@ export default function ThereaboutsPage() {
           >
             Your browser does not support embedded video.
           </video>
-          <p className={styles.caption}>A working iOS simulator build from the current trip loop.</p>
+          <p className={styles.caption}>A walk through the trip loop.</p>
         </div>
       </section>
 
       <section className={styles.section} aria-labelledby="current-heading">
         <div className={styles.sectionHeading}>
           <div>
-            <p className={styles.kicker}>Current build · v0.1</p>
-            <h2 id="current-heading">What works now</h2>
+            <p className={styles.kicker}>In the app</p>
+            <h2 id="current-heading">What it does</h2>
           </div>
-          <p>Built and exercised on iOS and Android. Still a private experiment, not a release candidate.</p>
+          <p>Available on iOS and Android.</p>
         </div>
         <div className={styles.featureGrid}>
           {currentFeatures.map((feature) => (
@@ -193,10 +192,10 @@ export default function ThereaboutsPage() {
       <section className={`${styles.section} ${styles.planned}`} aria-labelledby="planned-heading">
         <div className={styles.sectionHeading}>
           <div>
-            <p className={styles.kicker}>Accepted direction · v0.2</p>
-            <h2 id="planned-heading">What comes next if the trip loop earns it</h2>
+            <p className={styles.kicker}>Accepted direction</p>
+            <h2 id="planned-heading">What comes next</h2>
           </div>
-          <p>These are planned product decisions, not claims about the current build.</p>
+          <p>Planned, and not yet in the app.</p>
         </div>
         <div className={styles.plannedGrid}>
           {plannedFeatures.map((feature, index) => (

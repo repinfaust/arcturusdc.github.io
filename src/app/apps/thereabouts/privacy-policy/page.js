@@ -9,11 +9,13 @@ export default function ThereaboutsPrivacyPolicy() {
   return (
     <ThereaboutsLegalPage eyebrow="Privacy record" title="Privacy policy">
       <p>
-        <strong>The short version:</strong> thereabouts is local-first. Its reviewed language, your
-        trip preparation, and your settings work without sending your language to an AI service.
-        The app creates a Firebase identifier so records have an owner, but cloud backup, AI
-        translation, and product analytics are separate choices. Only an explicit yes should enable
-        an optional use.
+        <strong>The short version:</strong> thereabouts keeps your trip, your phrases and your
+        practice on your device, and they work without a connection. Three things do leave: what you
+        write about your trip is sent to OpenAI to prepare your language; phrase text is sent to
+        Microsoft to produce audio in languages your device cannot speak; and your destination is
+        sent to Unsplash to find a photograph of the place. Cloud backup and product analytics are
+        separate choices, off until you turn them on. No advertising identifier is collected at any
+        point.
       </p>
 
       <h2>1. Who controls your data</h2>
@@ -39,10 +41,10 @@ export default function ThereaboutsPrivacyPolicy() {
 
       <h2>3. Account and sign-in information</h2>
       <p>
-        The current build creates an anonymous Firebase Authentication account when it starts. This
-        gives local records an owner before you add anything. You may later link that account using
-        Apple or Google sign-in. Firebase Authentication may process an identifier, sign-in provider,
-        email address supplied by that provider, IP address, user agent, and security information.
+        The app creates an anonymous Firebase Authentication account when it starts. This gives local
+        records an owner before you add anything. You may later link that account using Apple or
+        Google sign-in. Firebase Authentication may process an identifier, sign-in provider, email
+        address supplied by that provider, IP address, user agent, and security information.
       </p>
       <p>
         Signing in is optional for the learning experience. Apple and Google process sign-in under
@@ -63,58 +65,97 @@ export default function ThereaboutsPrivacyPolicy() {
 
       <h2>5. Speech recognition and playback</h2>
       <p>
-        Microphone access is requested only when you press the spoken-practice control. The app uses
-        the device platform&apos;s speech-recognition service to produce a target-language transcript and does
-        not save raw microphone audio as a memory or cloud record. Apple or Google may process speech
-        under the operating system and recognition-service settings on your device.
+        Microphone access is requested only when you press a spoken-practice or speak-to-translate
+        control. The app uses your device platform&apos;s speech-recognition service to produce a
+        transcript, and does not save raw microphone audio as a memory or a cloud record. Apple or
+        Google may process speech under the operating system and recognition settings on your device.
       </p>
       <p>
-        Target-language playback uses the device text-to-speech service. thereabouts presents transcripts as
-        recognition evidence, not as expert pronunciation or accent assessment.
+        Playback uses your device&apos;s own text-to-speech service where it supports the language you
+        are preparing. Where it does not — which is common for less widely supported languages — the
+        phrase text is sent to Microsoft Azure Speech, which returns an audio file. That file is
+        stored on your device and reused, so a phrase is sent once rather than on every playback. What
+        is sent is the phrase text and the language. It does not include your name, your memories,
+        your account, or anything identifying you.
+      </p>
+      <p>
+        thereabouts presents transcripts as recognition evidence, not as pronunciation or accent
+        assessment.
       </p>
 
       <h2>6. AI translation and language suggestions</h2>
       <p>
-        Live AI translation is disabled in the current development build while its final App Check gate is
-        completed. If enabled in a later build, the app will ask for explicit consent before the first
-        request. Requests go through an App-Check-protected Firebase Function before OpenAI; the mobile
-        app does not contain an OpenAI API key.
+        thereabouts uses OpenAI to prepare your language. Consent is requested before the first
+        request and can be withdrawn in settings, which stops further requests without deleting
+        anything you already have. Requests go through an App-Check-protected Firebase Function; the
+        app contains no OpenAI API key.
       </p>
-      <p>The permitted request is deliberately narrow:</p>
+      <p>
+        The main input is the note you write about your trip. That note is free text and is sent as
+        written, so it will contain whatever you put in it. It is sent again if you later refine the
+        trip.
+      </p>
+      <p>What is sent:</p>
       <ul>
-        <li>The phrase you ask to translate</li>
-        <li>Your destination and approximate trip timing</li>
-        <li>The selected situation, using a closed set of fields</li>
+        <li>the note you write about your trip, or a later refinement of it</li>
+        <li>for translation, the text you ask to be translated</li>
+        <li>your destination and the language being prepared</li>
       </ul>
-      <p>The request does not include:</p>
+      <p>What is not sent:</p>
       <ul>
-        <li>Your saved people, places, relationships, routines, or preferences</li>
-        <li>High-sensitivity memories</li>
-        <li>Raw recordings</li>
-        <li>Your email address or sign-in credential</li>
+        <li>your saved memories, people, places, routines or preferences</li>
+        <li>memories marked high-sensitivity, which never leave your device</li>
+        <li>raw recordings</li>
+        <li>your email address or sign-in credential</li>
       </ul>
       <p>
-        OpenAI states that API inputs and outputs are not used to train its models by default unless
-        the customer opts in. Its abuse-monitoring retention and other processing are governed by its{' '}
+        OpenAI states that API inputs and outputs are not used to train its models by default. Its
+        abuse-monitoring retention and other processing are governed by its{' '}
         <a href="https://platform.openai.com/docs/models/default-usage-policies-by-endpoint" target="_blank" rel="noopener noreferrer">
           API data controls
         </a>.
       </p>
 
-      <h2>7. Analytics and technical data</h2>
+      <h2>7. Photographs of your destination</h2>
       <p>
-        The development build contains Firebase Analytics and an in-app consent choice intended to
-        govern anonymous feature counts. The consent-to-collection binding is not yet verified, so
-        testers should assume Firebase may receive standard automatic app-instance, device, session,
-        and diagnostic events. The app does not deliberately send phrase text, transcripts, recordings,
-        names, addresses, or memory content as analytics events.
-      </p>
-      <p>
-        Analytics will not be described as opt-in for a public release until collection is technically
-        proven to remain disabled before consent.
+        To show a photograph of where you are going, the app sends your destination — a town, region
+        or country — to the Unsplash image search API, and stores the image reference it returns.
+        Nothing else is sent, and Unsplash receives no identifier connecting the search to you or your
+        account. If no photograph is found, the app records that and does not search again.
       </p>
 
-      <h2>8. Why information is processed</h2>
+      <h2>8. Information about other people</h2>
+      <p>
+        What you write about your trip may mention other people: who you are travelling with, who you
+        are visiting, and why. That text is processed as described above, and anything you approve as
+        a memory is stored on your device.
+      </p>
+      <p>
+        Those people have not agreed to this, so please do not include other people&apos;s health
+        information, identification numbers, financial details or exact home addresses. The app is
+        designed to keep only what it needs to prepare language — it will prepare for travelling with
+        someone who needs support without recording why — but it cannot catch everything, and you can
+        edit or delete any memory in the app.
+      </p>
+      <p>
+        Memories you mark high-sensitivity stay on your device and are never sent to an AI service or
+        mirrored to the cloud.
+      </p>
+
+      <h2>9. Analytics and technical data</h2>
+      <p>
+        No advertising identifier is collected, at any point, by the app or by any library it
+        includes.
+      </p>
+      <p>
+        Analytics collection is off when the app is installed and stays off until you agree to it. If
+        you agree, the app records anonymous counts of feature use — which screens are reached,
+        whether onboarding completed, whether a practice session finished. Event content is filtered
+        before sending, and the app does not send phrase text, translations, transcripts, recordings,
+        names, addresses or memory content. You can change this choice at any time in settings.
+      </p>
+
+      <h2>10. Why information is processed</h2>
       <ul>
         <li>To provide local trip preparation and practice you request</li>
         <li>To authenticate an owner and prevent access to another learner&apos;s records</li>
@@ -122,7 +163,7 @@ export default function ThereaboutsPrivacyPolicy() {
         <li>To secure the service, prevent abuse, diagnose failures, and meet legal obligations</li>
       </ul>
 
-      <h2>9. Retention and deletion</h2>
+      <h2>11. Retention and deletion</h2>
       <ul>
         <li>Local learner-created data remains until you delete it, clear the app, or uninstall it.</li>
         <li>Cloud-mirrored data remains until it is deleted following a verified request.</li>
@@ -130,21 +171,22 @@ export default function ThereaboutsPrivacyPolicy() {
         <li>Service providers may retain security, abuse-prevention, and operational records under their own terms or where law requires.</li>
       </ul>
       <p>
-        Settings includes separate controls to delete learner-created data on the device and to delete
-        the authentication account. The current account button does not by itself erase cloud-mirrored
-        Firestore records. To request deletion of cloud data, follow the steps on the{' '}
-        <a href="/apps/thereabouts/delete-account">delete account or data page</a>.
+        Settings includes a control that deletes your account and everything associated with it:
+        cloud-mirrored records first, then the data on your device, then the authentication account.
+        If the cloud step fails, the account is kept rather than leaving records behind that nothing
+        can reach. A separate control deletes learner-created data on the device only. Audio files
+        cached on your device are removed with your device data.
       </p>
 
-      <h2>10. International processing</h2>
+      <h2>12. International processing</h2>
       <p>
-        Firebase Authentication is operated by Google from US data centres. Other Firebase services
-        may use configured regions or Google&apos;s global infrastructure depending on the service. AI
-        requests may be processed outside the UK. Appropriate provider contractual safeguards apply
-        where required.
+        Firebase Authentication is operated by Google from US data centres. The Firebase Function that
+        reaches OpenAI runs in europe-west2 (London). OpenAI, Microsoft Azure Speech and Unsplash may
+        process requests outside the UK. Appropriate provider contractual safeguards apply where
+        required.
       </p>
 
-      <h2>11. Your rights</h2>
+      <h2>13. Your rights</h2>
       <p>
         Depending on where you live, you may have rights to access, correct, erase, restrict, export,
         or object to processing of your personal data, and to withdraw consent without affecting prior
@@ -152,15 +194,15 @@ export default function ThereaboutsPrivacyPolicy() {
         Information Commissioner&apos;s Office or your local supervisory authority.
       </p>
 
-      <h2>12. Children</h2>
+      <h2>14. Children</h2>
       <p>
-        thereabouts is designed as an adult travel-learning experiment and is not directed to children
-        under 13. We do not knowingly seek children&apos;s personal information.
+        thereabouts is designed as an adult travel-learning app and is not directed to children under
+        13. We do not knowingly seek children&apos;s personal information.
       </p>
 
-      <h2>13. Changes and contact</h2>
+      <h2>15. Changes and contact</h2>
       <p>
-        We will update this policy when the build&apos;s data handling changes and provide appropriate
+        We will update this policy when the app&apos;s data handling changes and provide appropriate
         notice before a material new use. Questions and requests: {' '}
         <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>.
       </p>
