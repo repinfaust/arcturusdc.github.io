@@ -10,12 +10,12 @@ export default function ThereaboutsPrivacyPolicy() {
     <ThereaboutsLegalPage eyebrow="Privacy record" title="Privacy policy">
       <p>
         <strong>The short version:</strong> thereabouts keeps your trip, your phrases and your
-        practice on your device, and they work without a connection. Three things do leave: what you
+        practice on your device, and they work without a connection. Four things do leave: what you
         write about your trip is sent to OpenAI to prepare your language; phrase text is sent to
-        Microsoft to produce audio in languages your device cannot speak; and your destination is
-        sent to Unsplash to find a photograph of the place. Cloud backup and product analytics are
-        separate choices, off until you turn them on. No advertising identifier is collected at any
-        point.
+        Microsoft to produce audio in languages your device cannot speak; your destination is sent to
+        Unsplash to find a photograph of the place; and if you report something from inside the app,
+        what you wrote comes to us. Cloud backup and product analytics are separate choices, off until
+        you turn them on. No advertising identifier is collected at any point.
       </p>
 
       <h2>1. Who controls your data</h2>
@@ -99,6 +99,10 @@ export default function ThereaboutsPrivacyPolicy() {
       <ul>
         <li>the note you write about your trip, or a later refinement of it</li>
         <li>for translation, the text you ask to be translated</li>
+        <li>
+          when the app breaks a phrase into parts for you to learn, that phrase and a short
+          description of what it means
+        </li>
         <li>your destination and the language being prepared</li>
       </ul>
       <p>What is not sent:</p>
@@ -155,30 +159,70 @@ export default function ThereaboutsPrivacyPolicy() {
         names, addresses or memory content. You can change this choice at any time in settings.
       </p>
 
-      <h2>10. Why information is processed</h2>
+      <h2>10. Feedback you send us</h2>
+      <p>
+        If you report something from inside the app, what you write is stored in our Google Cloud
+        Firestore database along with the account identifier it was sent from, the kind of report you
+        chose, and the time you sent it. It never carries your trip, your phrases, your memories, your
+        destination or anything else you have written in the app.
+      </p>
+      <p>
+        The report also carries your app and device details unless you turn that off before sending.
+        The toggle starts on, and what it sends is the app version and build number, the platform, the
+        operating system version, the device model, and the name of the screen you were on — the name
+        only, never what was on it. Turning it off drops all of it rather than some of it.
+      </p>
+      <p>
+        Sending a report is not governed by the cloud backup choice in section 4. That choice is about
+        your records being copied somewhere; a report is a message you wrote and pressed send on. If
+        you are offline, the report waits on your device and is sent the next time the app opens with a
+        connection.
+      </p>
+      <p>
+        Reports are kept until they have been dealt with, are readable only by us, and are not used for
+        anything else. You cannot read a report back or edit it once it has been sent — email{' '}
+        <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a> if you want one removed.
+      </p>
+
+      <h2>11. Keeping the service within its limits</h2>
+      <p>
+        To stop a fault or a misuse of the app running up unbounded cost, the service counts the
+        requests made by each copy of it. That record is stored in Google Cloud Firestore and holds a
+        count, a timestamp and the identifier it is counting: your account identifier, or — for the
+        brief window at startup before an account exists — the IP address the request came from. It
+        holds nothing about what you asked for.
+      </p>
+
+      <h2>12. Why information is processed</h2>
       <ul>
         <li>To provide local trip preparation and practice you request</li>
         <li>To authenticate an owner and prevent access to another learner&apos;s records</li>
         <li>To provide optional backup, translation, or analytics where the relevant choice permits it</li>
+        <li>To read and act on what you report to us</li>
         <li>To secure the service, prevent abuse, diagnose failures, and meet legal obligations</li>
       </ul>
 
-      <h2>11. Retention and deletion</h2>
+      <h2>13. Retention and deletion</h2>
       <ul>
         <li>Local learner-created data remains until you delete it, clear the app, or uninstall it.</li>
         <li>Cloud-mirrored data remains until it is deleted following a verified request.</li>
         <li>Your Firebase Authentication record remains until the account is deleted.</li>
+        <li>Feedback reports remain until they have been dealt with.</li>
+        <li>Request-count records fall out of use at the end of the day they were written for.</li>
         <li>Service providers may retain security, abuse-prevention, and operational records under their own terms or where law requires.</li>
       </ul>
       <p>
         Settings includes a control that deletes your account and everything associated with it:
         cloud-mirrored records first, then the data on your device, then the authentication account.
         If the cloud step fails, the account is kept rather than leaving records behind that nothing
-        can reach. A separate control deletes learner-created data on the device only. Audio files
-        cached on your device are removed with your device data.
+        can reach. A separate control deletes learner-created data on the device only. That one keeps
+        any feedback report still waiting to be sent, on the grounds that a message you wrote to us —
+        quite possibly about whatever made you reset — is not something to discard without asking.
+        Deleting your account does clear those unsent reports. Audio files cached on your device are
+        removed with your device data.
       </p>
 
-      <h2>12. International processing</h2>
+      <h2>14. International processing</h2>
       <p>
         Firebase Authentication is operated by Google from US data centres. The Firebase Function that
         reaches OpenAI runs in europe-west2 (London). OpenAI, Microsoft Azure Speech and Unsplash may
@@ -186,7 +230,7 @@ export default function ThereaboutsPrivacyPolicy() {
         required.
       </p>
 
-      <h2>13. Your rights</h2>
+      <h2>15. Your rights</h2>
       <p>
         Depending on where you live, you may have rights to access, correct, erase, restrict, export,
         or object to processing of your personal data, and to withdraw consent without affecting prior
@@ -194,13 +238,13 @@ export default function ThereaboutsPrivacyPolicy() {
         Information Commissioner&apos;s Office or your local supervisory authority.
       </p>
 
-      <h2>14. Children</h2>
+      <h2>16. Children</h2>
       <p>
         thereabouts is designed as an adult travel-learning app and is not directed to children under
         13. We do not knowingly seek children&apos;s personal information.
       </p>
 
-      <h2>15. Changes and contact</h2>
+      <h2>17. Changes and contact</h2>
       <p>
         We will update this policy when the app&apos;s data handling changes and provide appropriate
         notice before a material new use. Questions and requests: {' '}
