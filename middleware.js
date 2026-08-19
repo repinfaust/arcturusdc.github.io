@@ -47,6 +47,7 @@ export async function middleware(req) {
     '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
     '/apps/stea/repinfaust',
     '/apps/stea/toume',
+    '/apps/stea/dialled-mtb/riders',
     '/apps/stea/dialledmtb-riders',
     '/apps/stea/fof',
     '/apps/stea/wc26',

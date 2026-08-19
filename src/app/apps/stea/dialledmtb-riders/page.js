@@ -76,7 +76,7 @@ export default function DialledMTBRidersPage() {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setAuthReady(true);
-      if (!firebaseUser) router.replace('/apps/stea?next=/apps/stea/dialledmtb-riders');
+      if (!firebaseUser) router.replace('/apps/stea?next=/apps/stea/dialled-mtb/riders');
     });
     return () => unsub();
   }, [router]);

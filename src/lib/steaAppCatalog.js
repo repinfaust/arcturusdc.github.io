@@ -85,7 +85,11 @@ export const STEA_APP_CATALOG = [
     name: 'Rider Management',
     description: 'Dialled MTB rider lookup and trial entitlements.',
     group: 'Team operations',
-    paths: ['/apps/stea/dialledmtb-riders'],
+    paths: [
+      '/apps/stea/dialled-mtb/riders',
+      // Transitional match for bookmarks while Next redirects the old URL.
+      '/apps/stea/dialledmtb-riders',
+    ],
   },
   {
     key: 'dialled-mtb-promo',

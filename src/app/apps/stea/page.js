@@ -138,7 +138,7 @@ const IN_SESSION_DESTINATIONS = [
   {
     label: 'Rider Management',
     appKey: 'rider-management',
-    href: '/apps/stea/dialledmtb-riders',
+    href: '/apps/stea/dialled-mtb/riders',
     description: 'Dialled MTB rider lookup and RevenueCat trial entitlement grants.',
     gradient: 'from-orange-50/80 to-amber-50/30',
     borderColor: 'border-orange-200',

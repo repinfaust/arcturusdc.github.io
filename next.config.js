@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: '/apps/stea/dialledmtb-riders',
+        destination: '/apps/stea/dialled-mtb/riders',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
