@@ -18,7 +18,7 @@ const {
   assertFails,
   assertSucceeds,
 } = require('@firebase/rules-unit-testing');
-const { setDoc, getDoc, doc, deleteDoc } = require('firebase/firestore');
+const { setDoc, getDoc, doc, deleteDoc, updateDoc } = require('firebase/firestore');
 
 const PROJECT_ID = 'stea-775cd-test';
 const TENANT_A = 'tenantA';
@@ -34,6 +34,12 @@ async function seed(env) {
     await setDoc(doc(db, `tenant_members/alice@x.com_${TENANT_A}`), {
       userEmail: 'alice@x.com', tenantId: TENANT_A, status: 'active', role: 'member',
     });
+    await setDoc(doc(db, `tenant_members/admin@x.com_${TENANT_A}`), {
+      userEmail: 'admin@x.com', tenantId: TENANT_A, status: 'active', role: 'admin',
+    });
+    await setDoc(doc(db, `tenants/${TENANT_A}`), {
+      name: 'Tenant A', ownerEmail: 'owner@x.com', plan: 'team', allowedSteaApps: ['filo'],
+    });
     // A tenant-A card and a tenant-B card.
     await setDoc(doc(db, 'stea_cards/cardA'), { tenantId: TENANT_A, title: 'A' });
     await setDoc(doc(db, 'stea_cards/cardB'), { tenantId: TENANT_B, title: 'B' });
@@ -48,6 +54,7 @@ async function seed(env) {
 // Auth context helpers.
 const alice = () => testEnv.authenticatedContext('alice', { email: 'alice@x.com' }).firestore();
 const mallory = () => testEnv.authenticatedContext('mallory', { email: 'mallory@evil.com' }).firestore();
+const tenantAdmin = () => testEnv.authenticatedContext('tenant-admin', { email: 'admin@x.com' }).firestore();
 const anon = () => testEnv.unauthenticatedContext().firestore();
 
 beforeAll(async () => {
@@ -93,6 +100,33 @@ describe('P1 — comments are tenant-scoped', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) =>
       setDoc(doc(ctx.firestore(), 'stea_epics/epicA/comments/c1'), { body: 'hi' }));
     await assertFails(deleteDoc(doc(mallory(), 'stea_epics/epicA/comments/c1')));
+  });
+});
+
+describe('Workspace admins can manage only their STEa app shelf', () => {
+  test('tenant admin can update the allowed app list', async () => {
+    await assertSucceeds(updateDoc(doc(tenantAdmin(), `tenants/${TENANT_A}`), {
+      allowedSteaApps: ['filo', 'ruby'],
+    }));
+  });
+
+  test('ordinary member cannot update the allowed app list', async () => {
+    await assertFails(updateDoc(doc(alice(), `tenants/${TENANT_A}`), {
+      allowedSteaApps: ['filo', 'ruby'],
+    }));
+  });
+
+  test('tenant admin cannot change ownership while updating apps', async () => {
+    await assertFails(updateDoc(doc(tenantAdmin(), `tenants/${TENANT_A}`), {
+      ownerEmail: 'admin@x.com',
+      allowedSteaApps: ['filo', 'ruby'],
+    }));
+  });
+
+  test('tenant admin cannot assign an unknown app key', async () => {
+    await assertFails(updateDoc(doc(tenantAdmin(), `tenants/${TENANT_A}`), {
+      allowedSteaApps: ['filo', 'repinfaust'],
+    }));
   });
 });
 

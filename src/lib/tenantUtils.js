@@ -16,7 +16,7 @@ import {
 /**
  * Create a new tenant/workspace
  */
-export async function createTenant({ name, plan = 'team', ownerEmail }) {
+export async function createTenant({ name, plan = 'team', ownerEmail, allowedSteaApps = [] }) {
   try {
     const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
@@ -38,6 +38,7 @@ export async function createTenant({ name, plan = 'team', ownerEmail }) {
       plan, // 'solo', 'team', 'agency'
       createdAt: serverTimestamp(),
       ownerEmail,
+      allowedSteaApps,
       settings: {
         customBranding: {},
         features: {},

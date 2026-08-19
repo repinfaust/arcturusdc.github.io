@@ -20,6 +20,9 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
 import TenantAppsManager from '@/components/admin/TenantAppsManager';
 import DashboardAggregationPanel from '@/components/admin/DashboardAggregationPanel';
+import SteaAppSelector from '@/components/admin/SteaAppSelector';
+import WorkspaceAppAccessManager from '@/components/admin/WorkspaceAppAccessManager';
+import { normalizeAllowedSteaApps } from '@/lib/steaAppCatalog';
 
 const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
@@ -58,6 +61,7 @@ export default function AdminPage() {
   const [showAddMember, setShowAddMember] = useState(false);
   const [newTenantName, setNewTenantName] = useState('');
   const [newTenantPlan, setNewTenantPlan] = useState('team');
+  const [newTenantApps, setNewTenantApps] = useState([]);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('member');
   const [actionLoading, setActionLoading] = useState(false);
@@ -66,6 +70,14 @@ export default function AdminPage() {
 
   // Auth check
   useEffect(() => {
+    if (!auth) {
+      setUser(null);
+      setAuthReady(true);
+      setLoading(false);
+      router.replace('/apps/stea');
+      return undefined;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setAuthReady(true);
@@ -147,11 +159,13 @@ export default function AdminPage() {
         name: validatedName,
         plan: newTenantPlan,
         ownerEmail: user.email,
+        allowedSteaApps: normalizeAllowedSteaApps(newTenantApps),
       });
 
       setSuccess(`Workspace "${validatedName}" created successfully!`);
       setNewTenantName('');
       setNewTenantPlan('team');
+      setNewTenantApps([]);
       setShowCreateTenant(false);
       await loadTenants();
       refreshTenants();
@@ -252,7 +266,7 @@ export default function AdminPage() {
   const handleSignOut = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      await signOut(auth);
+      if (auth) await signOut(auth);
       router.replace('/apps/stea');
     } catch (err) {
       console.error('Sign out failed:', err);
@@ -357,6 +371,17 @@ export default function AdminPage() {
           >
             Dashboard Setup
           </button>
+          <button
+            onClick={() => setActiveTab('app-access')}
+            className={`px-4 py-2 text-sm font-medium transition ${
+              activeTab === 'app-access'
+                ? 'border-b-2 border-pink-600 text-pink-600'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+            disabled={!selectedTenant}
+          >
+            App Access
+          </button>
         </div>
 
         {/* Tenants Tab */}
@@ -402,9 +427,17 @@ export default function AdminPage() {
                     </select>
                   </div>
                 </div>
+                <div className="mt-5 border-t border-neutral-100 pt-5">
+                  <SteaAppSelector
+                    selectedKeys={newTenantApps}
+                    onChange={setNewTenantApps}
+                    disabled={actionLoading}
+                    compact
+                  />
+                </div>
                 <button
                   type="submit"
-                  disabled={actionLoading}
+                  disabled={actionLoading || newTenantApps.length === 0}
                   className="mt-4 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-pink-700 disabled:opacity-50"
                 >
                   {actionLoading ? 'Creating...' : 'Create Workspace'}
@@ -606,6 +639,22 @@ export default function AdminPage() {
             {/* Dashboard Aggregation */}
             <DashboardAggregationPanel />
           </div>
+        )}
+
+        {activeTab === 'app-access' && (
+          selectedTenant ? (
+            <WorkspaceAppAccessManager
+              tenant={selectedTenant}
+              onSaved={(updatedTenant) => {
+                setSelectedTenant(updatedTenant);
+                setTenants((current) => current.map((tenant) => tenant.id === updatedTenant.id ? updatedTenant : tenant));
+              }}
+            />
+          ) : (
+            <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
+              <p className="text-neutral-600">Select a workspace before configuring app access.</p>
+            </div>
+          )
         )}
       </div>
     </div>

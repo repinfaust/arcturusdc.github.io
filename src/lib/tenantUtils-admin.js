@@ -9,7 +9,7 @@ import admin from 'firebase-admin';
 /**
  * Create a new tenant/workspace (server-side)
  */
-export async function createTenantAdmin({ name, plan = 'team', ownerEmail }) {
+export async function createTenantAdmin({ name, plan = 'team', ownerEmail, allowedSteaApps }) {
   try {
     const SUPER_ADMINS = ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com'];
 
@@ -18,6 +18,7 @@ export async function createTenantAdmin({ name, plan = 'team', ownerEmail }) {
       plan, // 'solo-monthly', 'solo-yearly', 'team-monthly', etc.
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       ownerEmail: ownerEmail.toLowerCase(),
+      ...(Array.isArray(allowedSteaApps) ? { allowedSteaApps } : {}),
       settings: {
         customBranding: {},
         features: {},
@@ -68,4 +69,3 @@ export async function addTenantMemberAdmin({ tenantId, userEmail, role = 'member
     throw error;
   }
 }
-

@@ -35,6 +35,23 @@ service cloud.firestore {
       return isSuperAdmin() || inTenant(tenantId);
     }
 
+    function isTenantAdmin(tenantId) {
+      let membershipId = request.auth.token.email + '_' + tenantId;
+      let membership = /databases/$(database)/documents/tenant_members/$(membershipId);
+      return authed() && exists(membership) &&
+        get(membership).data.status == 'active' &&
+        get(membership).data.role == 'admin';
+    }
+
+    function validAllowedSteaApps(apps) {
+      return apps is list && apps.size() <= 20 && [
+        'harls', 'autoproduct', 'filo', 'hans', 'ruby', 'automated-tests',
+        'career', 'art-atlas', 'wc26', 'mlb', 'dialled-mtb',
+        'sidestand', 'apextwin', 'hol-yoga', 'paygo', 'orbit', 'sorr',
+        'orbit-charity', 'orbit-grapheneos', 'fight-or-flight'
+      ].hasAll(apps);
+    }
+
     // Tenant-scope a comments subcollection by its parent board doc.
     // A comment is accessible only if the caller can access the parent's tenant
     // (legacy parents with no tenantId remain accessible to any authed user,
@@ -94,6 +111,12 @@ service cloud.firestore {
 
       // Members can read their own tenants
       allow get: if inTenant(tenantId);
+
+      // Workspace admins may change only the app allowlist. They cannot alter
+      // ownership, plan, branding, or any other tenant setting.
+      allow update: if isTenantAdmin(tenantId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['allowedSteaApps']) &&
+        validAllowedSteaApps(request.resource.data.allowedSteaApps);
 
       // Workspace dashboard metrics
       match /dashboard/{metricDoc} {

@@ -86,7 +86,19 @@ export async function middleware(req) {
     // Verify the session cookie with Firebase Admin
     try {
       const { auth } = getFirebaseAdmin();
-      await auth.verifySessionCookie(sessionCookie, true); // checkRevoked = true
+      const claims = await auth.verifySessionCookie(sessionCookie, true); // checkRevoked = true
+
+      const isRepinfaustRoute =
+        url.pathname === '/apps/stea/repinfaust' ||
+        url.pathname.startsWith('/apps/stea/repinfaust/') ||
+        url.pathname === '/stea/repinfaust' ||
+        url.pathname.startsWith('/stea/repinfaust/');
+      const email = typeof claims.email === 'string' ? claims.email.trim().toLowerCase() : '';
+      if (isRepinfaustRoute && email !== 'repinfaust@gmail.com') {
+        const redirectUrl = new URL('/apps/stea', req.url);
+        redirectUrl.searchParams.set('denied', 'repinfaust');
+        return NextResponse.redirect(redirectUrl);
+      }
       // Session is valid, continue
     } catch (error) {
       // Invalid or expired session - redirect to login

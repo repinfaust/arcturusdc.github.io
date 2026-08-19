@@ -9,6 +9,7 @@ import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import WorkspacePulse from '@/components/workspace/WorkspacePulse';
+import { isSteaAppAllowed } from '@/lib/steaAppCatalog';
 
 // Tenant ID for ApexTwin-exclusive workspace
 const APEXTWIN_TENANT_ID = 'DL7ScScEhvAcFpAmmS8h';
@@ -16,6 +17,7 @@ const APEXTWIN_TENANT_ID = 'DL7ScScEhvAcFpAmmS8h';
 const IN_SESSION_DESTINATIONS = [
   {
     label: 'Harls',
+    appKey: 'harls',
     href: '/apps/stea/harls',
     description: 'Product discovery lab: capture requirements, sketch on whiteboard, export structured prompts for LLMs.',
     gradient: 'from-amber-50/80 to-orange-50/30',
@@ -24,6 +26,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Auto Product',
+    appKey: 'autoproduct',
     href: '/apps/stea/autoproduct',
     description: 'AI-powered backlog generation via MCP. Turn product specs into structured Epics, Features, and Cards.',
     gradient: 'from-indigo-50/80 to-blue-50/30',
@@ -32,6 +35,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Filo',
+    appKey: 'filo',
     href: '/apps/stea/filo',
     note: 'Also available at /stea/filo',
     description: 'Plan, prioritise, and track the STEa backlog.',
@@ -41,6 +45,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Hans Testing Suite',
+    appKey: 'hans',
     href: '/apps/stea/hans',
     description: 'Test case management and user testing coordination across all apps.',
     gradient: 'from-emerald-50/80 to-green-50/30',
@@ -49,6 +54,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Ruby',
+    appKey: 'ruby',
     href: '/apps/stea/ruby',
     description: 'Product Intelligence documentation repository for notes, architecture designs, and technical docs across all apps.',
     gradient: 'from-rose-50/80 to-pink-50/30',
@@ -57,6 +63,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Automated Tests',
+    appKey: 'automated-tests',
     href: '/apps/stea/automatedtestsdashboard',
     description: 'Trigger Jest suites and review the latest run results.',
     gradient: 'from-slate-50/80 to-gray-50/30',
@@ -73,6 +80,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Orbit POC',
+    appKey: 'orbit',
     href: '/apps/stea/orbit/poc',
     description: 'Cryptographically-verifiable audit trail for AI systems. Track consent, data usage, and verification events.',
     gradient: 'from-cyan-50/80 to-teal-50/30',
@@ -81,6 +89,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Orbit: AI Act Demo',
+    appKey: 'orbit',
     href: '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
     description: 'EU AI Act compliance demo for KYC providers. Reconstruct lineage, generate Annex IV documentation bundles.',
     gradient: 'from-sky-50/80 to-blue-50/30',
@@ -89,6 +98,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Art Atlas',
+    appKey: 'art-atlas',
     href: '/apps/stea/art-atlas',
     description: 'Constellation art-history atlas with Wikipedia-sourced artist cards and walkable Wikimedia galleries.',
     gradient: 'from-stone-950/95 to-neutral-900/95',
@@ -97,6 +107,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'WC26',
+    appKey: 'wc26',
     href: '/apps/stea/wc26',
     description: 'Dixon-Coles/xG World Cup value engine with fair odds, edge checks, and track-record grading.',
     gradient: 'from-emerald-950/95 to-neutral-900/95',
@@ -105,6 +116,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Repinfaust',
+    appKey: 'repinfaust',
     href: '/apps/stea/repinfaust',
     description: 'Single-user interruption aid web mirror synced with the Repinfaust Android app.',
     gradient: 'from-neutral-950/95 to-stone-900/95',
@@ -114,6 +126,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'ApexTwin',
+    appKey: 'apextwin',
     href: '/apps/stea/apextwin-poc',
     description: 'Track-day setup companion. Log tyre pressures, suspension settings, and compare setups in the paddock.',
     gradient: 'from-emerald-950/90 to-neutral-900/95',
@@ -131,6 +144,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Dialled MTB — Promo campaigns',
+    appKey: 'dialled-mtb',
     href: '/apps/stea/dialled-mtb/promo',
     description: 'Create community offers, configure both stores, and track affiliate commission.',
     gradient: 'from-neutral-950/95 to-zinc-900/95',
@@ -140,6 +154,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Dialled MTB — Calendar',
+    appKey: 'dialled-mtb',
     href: '/apps/stea/dialled-mtb/calendar',
     description: 'Track milestones, events and marketing activities for Dialled MTB.',
     gradient: 'from-pink-50/80 to-rose-50/30',
@@ -148,6 +163,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Sidestand — Team workspace',
+    appKey: 'sidestand',
     href: '/apps/stea/sidestand',
     description: 'Sidestand rider analytics, activation telemetry and native-offer planning.',
     gradient: 'from-stone-100/90 to-orange-50/40',
@@ -169,9 +185,10 @@ export default function SteaAccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams?.get('next') || '';
+  const deniedApp = searchParams?.get('denied') || '';
 
   const destination = useMemo(() => sanitizeNext(nextParam), [nextParam]);
-  const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
+  const { currentTenant, availableTenants, loading: tenantLoading, userEmail } = useTenant();
 
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -445,12 +462,21 @@ export default function SteaAccessPage() {
             {error}
           </div>
         )}
+
+        {deniedApp === 'repinfaust' && (
+          <div className="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Repinfaust is private to its owner and is not available to this account.
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {IN_SESSION_DESTINATIONS
           .filter((dest) => {
             const tenantId = currentTenant?.id;
+            if (!isSteaAppAllowed({ appKey: dest.appKey, tenant: currentTenant, userEmail, isSuperAdmin: false })) {
+              return false;
+            }
             // If destination is restricted to specific email addresses
             if (dest.onlyForEmails) {
               return user?.email && dest.onlyForEmails.includes(user.email);

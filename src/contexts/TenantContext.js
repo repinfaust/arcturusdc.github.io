@@ -14,6 +14,7 @@ const TenantContext = createContext({
   refreshTenants: () => {},
   isSuperAdmin: false,
   isWorkspaceAdmin: false,
+  userEmail: '',
 });
 
 export function useTenant() {
@@ -222,6 +223,7 @@ export function TenantProvider({ children }) {
     refreshTenants,
     isSuperAdmin,
     isWorkspaceAdmin,
+    userEmail: typeof user?.email === 'string' ? user.email.trim().toLowerCase() : '',
   };
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;

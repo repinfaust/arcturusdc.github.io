@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-19 — Workspace-scoped STEa app shelves and Repinfaust owner boundary (D-SITE-018)
+- Added the optional tenant field `allowedSteaApps`, backed by one canonical STEa app catalogue. New workspaces choose at least one app during creation; existing workspaces retain their legacy all-app view until an admin saves an explicit policy, preserving existing functionality.
+- The selected workspace policy now drives the STEa home shelf and shared app dropdown. A shared route gate blocks members from rendering internal STEa apps that are not assigned to the active workspace; explicitly public demos, including the temporarily unauthenticated PAYGO mirror, remain public in accordance with existing decisions.
+- Super admins retain direct operational access to internal apps, but the visible shelf still follows the selected workspace so irrelevant tools do not clutter customer workspaces.
+- Added an `App Access` admin tab for post-creation changes. Active workspace admins may update only `allowedSteaApps`; Firestore rules reject changes to ownership, plan, branding, other tenant fields, unknown app keys, and any attempt to assign Repinfaust.
+- Repinfaust remains outside the assignable catalogue. In addition to its existing client and separate-project Firebase owner checks, middleware now rejects every `/apps/stea/repinfaust` request unless the verified STEa session email is exactly `repinfaust@gmail.com`.
+- No new authentication mechanism, anonymous access, backend service, or infrastructure was introduced.
+
 ## 2026-08-16 — thereabouts policy pages restated for public release (D-SITE-017)
 - Source of the rewrite: copy supplied by David from a separate review of the app source. This site repo does not contain the thereabouts app, so the factual claims below were not verified against app code here — they are recorded as supplied.
 - Status line changed from "private iOS and Android development build" to "iOS and Android release" (David, 2026-08-16). This is the `updated`/status default in `src/app/apps/thereabouts/_components/ThereaboutsLegalPage.jsx`, so it applies to all three legal pages at once. `updated` bumped to 16 August 2026.
