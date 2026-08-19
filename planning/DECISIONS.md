@@ -1,7 +1,7 @@
 # Decisions
 
 ## 2026-08-19 — Workspace-scoped STEa app shelves and Repinfaust owner boundary (D-SITE-018)
-- Added the optional tenant field `allowedSteaApps`, backed by one canonical STEa app catalogue. New workspaces choose at least one app during creation; existing workspaces retain their legacy all-app view until an admin saves an explicit policy, preserving existing functionality.
+- Added the optional tenant field `allowedSteaApps`, backed by the exact app-card set rendered on the authenticated `/apps/stea` workspace launchpad. Product pages, unpublished tools, and route-folder experiments are not assignable merely because they exist. New workspaces choose at least one launchpad app during creation; existing workspaces retain their legacy all-app view until an admin saves an explicit policy, preserving existing functionality.
 - The selected workspace policy now drives the STEa home shelf and shared app dropdown. A shared route gate blocks members from rendering internal STEa apps that are not assigned to the active workspace; explicitly public demos, including the temporarily unauthenticated PAYGO mirror, remain public in accordance with existing decisions.
 - Super admins retain direct operational access to internal apps, but the visible shelf still follows the selected workspace so irrelevant tools do not clutter customer workspaces.
 - Added an `App Access` admin tab for post-creation changes. Active workspace admins may update only `allowedSteaApps`; Firestore rules reject changes to ownership, plan, branding, other tenant fields, unknown app keys, and any attempt to assign Repinfaust.

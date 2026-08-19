@@ -1,3 +1,6 @@
+// The assignable catalogue is deliberately identical to the cards rendered on
+// the authenticated STEa workspace launchpad. Do not add product pages, route
+// folders, experiments, or unpublished tools here merely because they exist.
 export const STEA_APP_CATALOG = [
   {
     key: 'harls',
@@ -22,7 +25,7 @@ export const STEA_APP_CATALOG = [
   },
   {
     key: 'hans',
-    name: 'Hans',
+    name: 'Hans Testing Suite',
     description: 'Test execution and coordination.',
     group: 'Core studio',
     paths: ['/apps/stea/hans'],
@@ -42,108 +45,68 @@ export const STEA_APP_CATALOG = [
     paths: ['/apps/stea/automatedtestsdashboard'],
   },
   {
-    key: 'career',
-    name: 'Career Ops',
-    description: 'Role analysis, applications, and career evidence.',
-    group: 'Workspace tools',
-    paths: ['/apps/stea/career'],
+    key: 'explore-stea',
+    name: 'Explore STEa',
+    description: 'Interactive showcase of the STEa workflow and pricing.',
+    group: 'Specialist tools',
+    paths: ['/apps/stea/explore'],
+    publicAccess: true,
+  },
+  {
+    key: 'orbit-poc',
+    name: 'Orbit POC',
+    description: 'Consent, lineage, and audit demonstration.',
+    group: 'Specialist tools',
+    paths: ['/apps/stea/orbit/poc'],
+  },
+  {
+    key: 'orbit-ai-act',
+    name: 'Orbit: AI Act Demo',
+    description: 'EU AI Act technical-documentation demonstration.',
+    group: 'Specialist tools',
+    paths: ['/apps/stea/orbit/AI-Act-Technical-DocumentationBundle'],
   },
   {
     key: 'art-atlas',
     name: 'Art Atlas',
     description: 'Interactive art-history research atlas.',
-    group: 'Workspace tools',
+    group: 'Specialist tools',
     paths: ['/apps/stea/art-atlas'],
   },
   {
     key: 'wc26',
     name: 'WC26',
     description: 'World Cup pricing and value research.',
-    group: 'Workspace tools',
+    group: 'Specialist tools',
     paths: ['/apps/stea/wc26'],
   },
   {
-    key: 'mlb',
-    name: 'MLB Study',
-    description: 'Line-movement research and grading.',
-    group: 'Workspace tools',
-    paths: ['/apps/stea/mlb'],
+    key: 'rider-management',
+    name: 'Rider Management',
+    description: 'Dialled MTB rider lookup and trial entitlements.',
+    group: 'Team operations',
+    paths: ['/apps/stea/dialledmtb-riders'],
   },
   {
-    key: 'dialled-mtb',
-    name: 'Dialled MTB',
-    description: 'Feedback, analytics, campaigns, and calendar.',
-    group: 'Product workspaces',
-    paths: ['/apps/stea/dialled-mtb'],
+    key: 'dialled-mtb-promo',
+    name: 'Dialled MTB — Promo campaigns',
+    description: 'Community offers, stores, and affiliate commission.',
+    group: 'Team operations',
+    paths: ['/apps/stea/dialled-mtb/promo'],
+  },
+  {
+    key: 'dialled-mtb-calendar',
+    name: 'Dialled MTB — Calendar',
+    description: 'Milestones, events, and marketing activities.',
+    group: 'Team operations',
+    paths: ['/apps/stea/dialled-mtb/calendar'],
   },
   {
     key: 'sidestand',
-    name: 'Sidestand',
-    description: 'Rider analytics and offer planning.',
-    group: 'Product workspaces',
+    name: 'Sidestand — Team workspace',
+    description: 'Rider analytics and native-offer planning.',
+    group: 'Team operations',
     paths: ['/apps/stea/sidestand'],
-  },
-  {
-    key: 'apextwin',
-    name: 'ApexTwin',
-    description: 'Track-day setup and paddock workspace.',
-    group: 'Product workspaces',
-    paths: ['/apps/stea/apextwin-poc'],
-  },
-  {
-    key: 'hol-yoga',
-    name: 'Heart of Living Yoga',
-    description: 'Yoga product workspace and prototypes.',
-    group: 'Product workspaces',
-    paths: ['/apps/stea/hol-yoga'],
-  },
-  {
-    key: 'paygo',
-    name: 'PAYGO',
-    description: 'PAYGO product mirror and analysis tools.',
-    group: 'Product workspaces',
-    paths: ['/apps/stea/paygo'],
-    publicAccess: true,
-  },
-  {
-    key: 'orbit',
-    name: 'Orbit POC',
-    description: 'Consent, lineage, and audit demonstrations.',
-    group: 'Governance & demos',
-    paths: [
-      '/apps/stea/orbit/poc',
-      '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
-    ],
-  },
-  {
-    key: 'sorr',
-    name: 'SoRR Control',
-    description: 'Governed AI workflow and control surfaces.',
-    group: 'Governance & demos',
-    paths: ['/apps/stea/sorr/controlui'],
-  },
-  {
-    key: 'orbit-charity',
-    name: 'Orbit Charity',
-    description: 'Charity-sector governance demonstration.',
-    group: 'Governance & demos',
-    paths: ['/apps/stea/orbit-charity'],
-    publicAccess: true,
-  },
-  {
-    key: 'orbit-grapheneos',
-    name: 'Orbit GrapheneOS',
-    description: 'Device-event governance demonstration.',
-    group: 'Governance & demos',
-    paths: ['/apps/stea/orbit-grapheneos'],
-    publicAccess: true,
-  },
-  {
-    key: 'fight-or-flight',
-    name: 'Fight or Flight',
-    description: 'Decision-support prototype.',
-    group: 'Governance & demos',
-    paths: ['/apps/stea/fof'],
   },
 ];
 
@@ -158,6 +121,13 @@ export const OWNER_ONLY_STEA_APPS = [
   },
 ];
 
+// Translate the two combined keys briefly shipped by the mistaken catalogue.
+// They are removed the next time an admin saves the workspace policy.
+const LEGACY_APP_KEY_ALIASES = {
+  orbit: ['orbit-poc', 'orbit-ai-act'],
+  'dialled-mtb': ['dialled-mtb-promo', 'dialled-mtb-calendar'],
+};
+
 function pathMatches(pathname, prefix) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
@@ -170,7 +140,8 @@ export function getSteaAppForPath(pathname = '') {
 export function normalizeAllowedSteaApps(appKeys) {
   if (!Array.isArray(appKeys)) return [];
   const allowedKeys = new Set(STEA_APP_KEYS);
-  return [...new Set(appKeys.filter((key) => allowedKeys.has(key)))];
+  const expanded = appKeys.flatMap((key) => LEGACY_APP_KEY_ALIASES[key] || [key]);
+  return [...new Set(expanded.filter((key) => allowedKeys.has(key)))];
 }
 
 export function tenantUsesLegacyAppAccess(tenant) {
@@ -186,12 +157,14 @@ export function isSteaAppAllowed({ appKey, tenant, userEmail, isSuperAdmin = fal
     return ownerOnlyApp.allowedEmails.includes(normalizedEmail);
   }
 
+  // Routes and fixed-tenant tools that are not launchpad cards are outside the
+  // workspace shelf policy and retain their existing access controls.
+  if (!STEA_APP_KEYS.includes(appKey)) return true;
+
   if (isSuperAdmin) return true;
   if (!tenant) return false;
 
-  // Existing workspaces pre-date app policies. Preserve their current access
-  // until an admin saves an explicit selection for that workspace.
   if (tenantUsesLegacyAppAccess(tenant)) return true;
 
-  return tenant.allowedSteaApps.includes(appKey);
+  return normalizeAllowedSteaApps(tenant.allowedSteaApps).includes(appKey);
 }

@@ -72,6 +72,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Explore STEa',
+    appKey: 'explore-stea',
     href: '/apps/stea/explore',
     description: 'Interactive showcase of the complete STEa tech stack, closed-loop workflow, and pricing.',
     gradient: 'from-pink-50/80 to-fuchsia-50/30',
@@ -80,7 +81,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Orbit POC',
-    appKey: 'orbit',
+    appKey: 'orbit-poc',
     href: '/apps/stea/orbit/poc',
     description: 'Cryptographically-verifiable audit trail for AI systems. Track consent, data usage, and verification events.',
     gradient: 'from-cyan-50/80 to-teal-50/30',
@@ -89,7 +90,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Orbit: AI Act Demo',
-    appKey: 'orbit',
+    appKey: 'orbit-ai-act',
     href: '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
     description: 'EU AI Act compliance demo for KYC providers. Reconstruct lineage, generate Annex IV documentation bundles.',
     gradient: 'from-sky-50/80 to-blue-50/30',
@@ -136,6 +137,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Rider Management',
+    appKey: 'rider-management',
     href: '/apps/stea/dialledmtb-riders',
     description: 'Dialled MTB rider lookup and RevenueCat trial entitlement grants.',
     gradient: 'from-orange-50/80 to-amber-50/30',
@@ -144,7 +146,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Dialled MTB — Promo campaigns',
-    appKey: 'dialled-mtb',
+    appKey: 'dialled-mtb-promo',
     href: '/apps/stea/dialled-mtb/promo',
     description: 'Create community offers, configure both stores, and track affiliate commission.',
     gradient: 'from-neutral-950/95 to-zinc-900/95',
@@ -154,7 +156,7 @@ const IN_SESSION_DESTINATIONS = [
   },
   {
     label: 'Dialled MTB — Calendar',
-    appKey: 'dialled-mtb',
+    appKey: 'dialled-mtb-calendar',
     href: '/apps/stea/dialled-mtb/calendar',
     description: 'Track milestones, events and marketing activities for Dialled MTB.',
     gradient: 'from-pink-50/80 to-rose-50/30',

@@ -44,11 +44,10 @@ service cloud.firestore {
     }
 
     function validAllowedSteaApps(apps) {
-      return apps is list && apps.size() <= 20 && [
+      return apps is list && apps.size() <= 15 && [
         'harls', 'autoproduct', 'filo', 'hans', 'ruby', 'automated-tests',
-        'career', 'art-atlas', 'wc26', 'mlb', 'dialled-mtb',
-        'sidestand', 'apextwin', 'hol-yoga', 'paygo', 'orbit', 'sorr',
-        'orbit-charity', 'orbit-grapheneos', 'fight-or-flight'
+        'explore-stea', 'orbit-poc', 'orbit-ai-act', 'art-atlas', 'wc26',
+        'rider-management', 'dialled-mtb-promo', 'dialled-mtb-calendar', 'sidestand'
       ].hasAll(apps);
     }
 
