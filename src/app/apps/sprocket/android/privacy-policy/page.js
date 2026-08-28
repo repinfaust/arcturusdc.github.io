@@ -114,14 +114,6 @@ export default function AndroidPrivacyPolicyPage() {
       <h2>12. Contact</h2>
       <p>
         ARCTURUS DIGITAL CONSULTING LIMITED
-        <br />
-        82 Victoria Street
-        <br />
-        Nottingham
-        <br />
-        NG15 7EA
-        <br />
-        United Kingdom
       </p>
       <p>
         Email: <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a>

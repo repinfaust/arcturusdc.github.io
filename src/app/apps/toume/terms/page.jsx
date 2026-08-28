@@ -164,14 +164,6 @@ export default function ToumeTerms() {
         <h2>14. Contact</h2>
         <p>
           ARCTURUS DIGITAL CONSULTING LIMITED
-          <br />
-          82 Victoria Street
-          <br />
-          Nottingham
-          <br />
-          NG15 7EA
-          <br />
-          United Kingdom
         </p>
         <p>
           Email:

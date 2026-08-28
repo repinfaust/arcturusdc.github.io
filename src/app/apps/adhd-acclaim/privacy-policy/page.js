@@ -101,7 +101,6 @@ export default function PrivacyPolicyPage() {
       <h2>11) Contact us</h2>
       <p>
         <strong>Arcturus Digital Consulting Ltd</strong><br />
-        82 Victoria Street, Nottingham, NG15 7EA, United Kingdom<br />
         Email: <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>
       </p>
 

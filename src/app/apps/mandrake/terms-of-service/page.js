@@ -9,8 +9,7 @@ export default function MandrakeTermsPage() {
   return (
     <MandrakeLegalPage title="Terms of Service" updated="28 August 2026">
       <p>
-        Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>, 82 Victoria
-        Street, Nottingham, NG15 7EA, United Kingdom. Contact:{' '}
+        Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>. Contact:{' '}
         <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>.
       </p>
       <p>By using Mandrake, you agree to these terms. If you do not agree, do not use the app.</p>

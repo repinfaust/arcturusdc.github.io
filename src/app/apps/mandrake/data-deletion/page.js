@@ -71,7 +71,6 @@ export default function MandrakeDataDeletionPage() {
       <h2>Questions or complaints</h2>
       <p>
         <strong>Arcturus Digital Consulting Ltd</strong><br />
-        82 Victoria Street, Nottingham, NG15 7EA, United Kingdom<br />
         <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>
       </p>
       <p>

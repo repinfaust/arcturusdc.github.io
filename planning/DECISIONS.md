@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-08-28 — Personal residential address removed from every public policy source (D-SITE-020)
+- David identified that the postal address repeated in several app policy pages is his personal home address and must not be published. Removed it site-wide from all nine matching public-source locations across Mandrake, Unload, Sprocket, Tou.me and ADHD Acclaim; contact sections retain the company name and support email only.
+- Scanned every PDF under `public/` by extracted text for both the street name and postcode; no PDF contains the address. Re-ran repository text searches for both forms after the edit and found no remaining source occurrence.
+- Privacy rule: never copy a founder, director or developer postal address from supplied legal drafts into a public page without explicit confirmation that it is an approved public business/registered-office address. A company name and monitored contact email are the default until such confirmation exists.
+
 ## 2026-08-28 — Mandrake public record corrected and HTML legal set completed (D-SITE-019)
 - Replaced Mandrake's 6 October 2025 privacy page and PDF-only policy links with public, readable HTML routes at `/apps/mandrake/privacy-policy`, `/apps/mandrake/terms-of-service`, and `/apps/mandrake/data-deletion`. The pages share a compact legal navigation and use the site's existing static App Router architecture; no auth, backend, analytics, data collection, or new infrastructure was added.
 - Source of the rewrite: three drafts supplied by David from `~/dev/mandrake2/legal`, checked against the canonical Mandrake Android source and its SoRR rather than copied as fact. The legal copy is not a substitute for a solicitor's review.

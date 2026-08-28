@@ -9,9 +9,8 @@ export default function MandrakePrivacyPolicyPage() {
   return (
     <MandrakeLegalPage title="Privacy Policy" updated="28 August 2026">
       <p>
-        Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>, 82 Victoria
-        Street, Nottingham, NG15 7EA, United Kingdom. We are the controller for personal data
-        processed through the app. Contact us at{' '}
+        Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>. We are the
+        controller for personal data processed through the app. Contact us at{' '}
         <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>.
       </p>
 
@@ -165,7 +164,6 @@ export default function MandrakePrivacyPolicyPage() {
       </p>
       <p>
         <strong>Arcturus Digital Consulting Ltd</strong><br />
-        82 Victoria Street, Nottingham, NG15 7EA, United Kingdom<br />
         <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>
       </p>
     </MandrakeLegalPage>
