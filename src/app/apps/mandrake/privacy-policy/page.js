@@ -1,114 +1,173 @@
+import MandrakeLegalPage, { LegalCallout } from '../_components/MandrakeLegalPage';
+
 export const metadata = {
-  title: "Mandrake – Privacy Policy",
-  description:
-    "Read the Mandrake privacy policy in HTML. Arcturus Digital Consulting Ltd.",
+  title: 'Mandrake — Privacy Policy',
+  description: 'How Mandrake stores, uses, protects and deletes app data.',
 };
 
 export default function MandrakePrivacyPolicyPage() {
   return (
-    <main className="prose prose-neutral mx-auto px-4 md:px-6 lg:px-8 py-8">
-      <h1>Mandrake — Privacy Policy</h1>
-      <p><strong>Effective date:</strong> 6 October 2025</p>
-
+    <MandrakeLegalPage title="Privacy Policy" updated="28 August 2026">
       <p>
-        This Privacy Policy explains how <strong>Arcturus Digital Consulting Ltd</strong>
-        (“Arcturus Digital Consulting”, “we”, “our”, or “us”) collects, uses, and protects
-        information when you use the <strong>Mandrake</strong> mobile application (the “App”).
-        By using the App, you agree to the practices described here. Mandrake is intended
-        for users aged <strong>16+</strong>.
+        Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>, 82 Victoria
+        Street, Nottingham, NG15 7EA, United Kingdom. We are the controller for personal data
+        processed through the app. Contact us at{' '}
+        <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>.
       </p>
 
-      <h2>1) What information we collect</h2>
+      <LegalCallout>
+        <p className="font-semibold text-neutral-950">The short version</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>You do not provide a name, email address or password.</li>
+          <li>The app creates a random Firebase identifier and stores your urge log in Firestore.</li>
+          <li>Screening answers, custom text and other app records stay on your device.</li>
+          <li>There are no ads or analytics SDKs in the current Android app.</li>
+          <li>You can reset app data in Settings and can request cloud deletion by email.</li>
+        </ul>
+      </LegalCallout>
+
+      <h2>1. Information Mandrake processes</h2>
+
+      <h3>Anonymous app identity</h3>
+      <p>
+        On first use, Firebase Authentication assigns the app a random user identifier (UID).
+        Mandrake does not ask you for a name, email address or password. The UID keeps cloud
+        records separated between app installations. Although it is pseudonymous rather than a
+        name, we still protect it as personal data.
+      </p>
+
+      <h3>Urge events stored in Firestore</h3>
+      <p>When you save an urge event, the current app uploads the following fields:</p>
       <ul>
-        <li>
-          <strong>On-device app data (no account required):</strong> your in-app settings,
-          content and preferences are stored locally on your device. This information does not
-          leave your device unless you back it up with your OS features or share it with us
-          (e.g., via support email).
-        </li>
-        <li>
-          <strong>Crash/diagnostics:</strong> your operating system or app store may provide
-          anonymised crash and performance reports which we use to improve stability.
-        </li>
-        <li>
-          <strong>Support communications:</strong> if you contact us, we process the information
-          you provide to resolve your request.
-        </li>
+        <li>the time of the event and whether the urge was bypassed or acted on;</li>
+        <li>the selected urge category, intensity, mood and trigger;</li>
+        <li>the selected tactic; and</li>
+        <li>whether the wave timer was used and its duration.</li>
+      </ul>
+      <p>
+        These records can reveal information about health, substance use or behaviour and are
+        treated as sensitive. They are stored under the anonymous UID in Google Cloud Firestore.
+        Custom tactic text and custom urge-category text are not included in the current cloud
+        upload.
+      </p>
+
+      <h3>Information stored only on your device</h3>
+      <ul>
+        <li>the local copy of your urge events, including any custom text;</li>
+        <li>optional screening responses, scores and risk bands;</li>
+        <li>loops, milestones, rewards and progress; and</li>
+        <li>settings such as support region and reminder preferences.</li>
       </ul>
 
-      <h2>2) How we use information</h2>
+      <h3>Purchases</h3>
+      <p>
+        A one-time unlock is sold by Google Play and checked by RevenueCat. Google handles the
+        payment details. RevenueCat processes the identifiers and transaction information needed
+        to validate and restore the purchase; it does not receive your urge log from Mandrake.
+      </p>
+
+      <h3>Support and platform diagnostics</h3>
+      <p>
+        If you email us, we process the information you choose to send so we can answer. Google
+        Play or your device platform may also provide diagnostic or crash information under its
+        own settings. Mandrake does not currently include Firebase Analytics or Crashlytics.
+      </p>
+
+      <h2>2. What Mandrake does not collect</h2>
       <ul>
-        <li>To operate core features of the App on your device.</li>
-        <li>To fix bugs, improve performance and maintain security.</li>
-        <li>To provide user support and respond to enquiries.</li>
+        <li>No advertising identifiers, advertising or cross-app tracking.</li>
+        <li>No location, contacts, photos, camera or microphone data.</li>
+        <li>No sale or rental of data.</li>
+        <li>No use of urge data to train AI or to build commercial profiles.</li>
+      </ul>
+      <p>
+        The app requests notification permission for reminders you choose and vibration access
+        for haptic feedback.
+      </p>
+
+      <h2>3. Why we process information</h2>
+      <p>We process the minimum information needed to:</p>
+      <ul>
+        <li>save and show your history, patterns, milestones and rewards;</li>
+        <li>provide optional screening and support signposting;</li>
+        <li>validate and restore a purchase; and</li>
+        <li>answer support requests and maintain the security and reliability of the app.</li>
       </ul>
 
-      <h2>3) Legal bases (UK/EU)</h2>
-      <ul>
-        <li><strong>Legitimate interests:</strong> running and improving the App.</li>
-        <li><strong>Consent:</strong> where required by your platform settings (e.g., device permissions you opt in to).</li>
-      </ul>
-
-      <h2>4) Data storage and retention</h2>
+      <h2>4. Legal basis in the UK and EEA</h2>
       <p>
-        App data remains on your device until you delete it or uninstall the App.
-        Support emails are retained only as long as needed for support and for
-        reasonable business, legal or audit purposes.
+        We process app data because it is necessary to provide the Mandrake service you request.
+        Where urge records reveal special-category information, including health information, the
+        relevant additional condition is explicit consent. The current Android release does not
+        yet present a separate explicit-consent control before the first cloud upload; this is an
+        app-side compliance gap, and this policy does not treat ordinary app use as a substitute
+        for that control. You may stop further processing by no longer recording events and may
+        request deletion as described below. We use legitimate interests to answer support
+        requests and protect the service, where those interests are not overridden by your rights.
       </p>
 
-      <h2>5) Sharing and transfers</h2>
-      <ul>
-        <li>We do <strong>not</strong> sell your data.</li>
-        <li>We may use service providers (e.g., crash analytics) under contracts with appropriate safeguards.</li>
-        <li>We may disclose information if required by law or to protect rights/safety.</li>
-      </ul>
-
-      <h2>6) Children’s privacy</h2>
+      <h2>5. Storage, processors and international transfers</h2>
       <p>
-        Mandrake is intended for users aged <strong>16+</strong> and not directed to children under 13.
-        If you believe a child has provided information, contact us and we will take appropriate steps.
+        Google Firebase provides authentication and Firestore storage. Google Play processes the
+        purchase, and RevenueCat checks purchase entitlement. These providers act under their own
+        terms and applicable data-processing safeguards. Their processing may take place outside
+        the UK; where required, recognised transfer safeguards apply.
       </p>
 
-      <h2>7) Your choices and rights</h2>
-      <ul>
-        <li><strong>Access/export/delete on-device data:</strong> clear App data in device settings or uninstall the App.</li>
-        <li><strong>Permissions:</strong> change or revoke device permissions in your settings at any time.</li>
-        <li><strong>Contact:</strong> exercise applicable data rights via the email below.</li>
-      </ul>
-
-      <h2>8) Security</h2>
+      <h2>6. Retention and deletion</h2>
       <p>
-        We take reasonable technical and organisational measures to protect information.
-        No mobile or internet service is 100% secure—please keep your device updated and use a passcode where available.
+        Local records remain until you reset app data, clear the app&apos;s storage or uninstall it.
+        Firestore urge events remain until the in-app cloud deletion succeeds or we fulfil a
+        deletion request. Purchase and support records may be retained where reasonably needed for
+        accounting, fraud prevention, legal claims or support history.
+      </p>
+      <p>
+        Android backup is enabled for the current app, so Google may retain or restore an encrypted
+        device backup according to your Android backup settings and Google&apos;s retention rules.
+      </p>
+      <p>
+        The current Reset action clears the local database and then attempts to delete Firestore
+        urge events. It does not delete the Firebase anonymous-authentication record or all locally
+        stored preferences. See the <a href="/apps/mandrake/data-deletion">Data Deletion page</a>{' '}
+        for the exact process and limitations.
       </p>
 
-      <h2>9) International users</h2>
+      <h2>7. Your rights</h2>
       <p>
-        We are a UK company. Where providers are outside your country, we use appropriate safeguards consistent with applicable law.
+        Depending on where you live, you may have rights to access, correct, erase, restrict,
+        object to or receive a copy of your personal data. Because Mandrake does not collect your
+        name or email address, we may need the anonymous UID to locate cloud records and may be
+        unable to identify them without it.
+      </p>
+      <p>
+        Contact <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>. You may also
+        complain to the UK Information Commissioner&apos;s Office at{' '}
+        <a href="https://ico.org.uk/make-a-complaint/" rel="noreferrer">ico.org.uk</a>.
       </p>
 
-      <h2>10) Changes to this policy</h2>
+      <h2>8. Security</h2>
       <p>
-        We may update this policy from time to time. The latest version will be posted on this page with the updated effective date.
+        Data is encrypted in transit and at rest by our cloud provider, and access to production
+        systems is restricted. No service is completely secure, so keep your device and app up to
+        date and use a device passcode.
       </p>
 
-      <h2>11) Contact us</h2>
+      <h2>9. Age</h2>
+      <p>
+        Mandrake is for people aged 16 and over. If you believe someone under 16 has provided data,
+        contact us so we can take appropriate action.
+      </p>
+
+      <h2>10. Changes and contact</h2>
+      <p>
+        We may update this policy when the app or legal requirements change. We will publish the
+        new date here and flag material changes where appropriate.
+      </p>
       <p>
         <strong>Arcturus Digital Consulting Ltd</strong><br />
         82 Victoria Street, Nottingham, NG15 7EA, United Kingdom<br />
-        Email: <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>
+        <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>
       </p>
-
-      <p>
-        You can also{" "}
-        <a
-          href="/assets/policies/Mandrake_Privacy_Policy_16plus.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          download the PDF version
-        </a>.
-      </p>
-    </main>
+    </MandrakeLegalPage>
   );
 }

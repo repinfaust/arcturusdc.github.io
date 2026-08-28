@@ -17,13 +17,13 @@ export default function Mandrake() {
         <div>
           <div className="font-extrabold">Mandrake</div>
           <div className="text-muted text-sm">
-            Private urge logging, quick tactics, and pattern insights.
+            Urge logging, quick tactics, and pattern insights for Android.
           </div>
           <p className="mt-2 text-sm text-neutral-700">
             Mandrake gives you a private, lightweight way to spot urges, take action fast, and see
             what’s really going on beneath the surface. Every feature is designed to keep friction
-            low, reinforcement immediate, and insights clear — all while staying entirely on your
-            terms.
+            low, reinforcement immediate, and insights clear. Your urge history is kept under a
+            random app identifier so it can remain available across sessions.
           </p>
         </div>
       </div>
@@ -50,8 +50,8 @@ export default function Mandrake() {
               Inside Mandrake
             </h1>
             <p className="mt-3 text-white/85 max-w-2xl mx-auto">
-              A quick look at logging, fast tactics, and the insight flow. All private,
-              always on your terms.
+              A quick look at logging, fast tactics, and the insight flow — with clear controls
+              for exporting and deleting your data.
             </p>
           </div>
 
@@ -86,12 +86,6 @@ export default function Mandrake() {
                 className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-red-600 text-white hover:bg-red-700 transition"
               >
                 Get it on Android
-              </Link>
-              <Link
-                href="/apps/mandrake/ios"
-                className="inline-flex items-center justify-center rounded-2xl px-6 h-12 text-base font-semibold bg-white text-black hover:bg-white/90 transition border border-black/10"
-              >
-                Get it on iOS
               </Link>
             </div>
           </div>
@@ -134,13 +128,13 @@ export default function Mandrake() {
                 icon="shield"
               />
               <Feature
-                title="Private by Default"
-                desc="Local-first storage; export or delete anytime."
+                title="Pseudonymous by Default"
+                desc="No name, email, or password. Cloud urge events are stored under a random Firebase ID."
                 icon="lock"
               />
               <Feature
-                title="Cross-Platform Access"
-                desc="Available on both Android and iOS."
+                title="Built for Android"
+                desc="Available on Google Play for Android devices."
                 icon="device"
               />
             </div>
@@ -159,8 +153,9 @@ export default function Mandrake() {
                 </AccordionItem>
                 <AccordionItem question="Is my data private?">
                   <p>
-                    Yes. Logs are stored on your device by default. You can export or delete them
-                    anytime. Nothing is shared unless you choose to.
+                    Mandrake does not ask for your name, email, or password. Urge events are stored
+                    in Firestore under a random Firebase ID; screening results and other records
+                    remain on your device. See the privacy policy for the exact fields and providers.
                   </p>
                 </AccordionItem>
                 <AccordionItem question="What happens if urges feel too heavy?">
@@ -171,10 +166,13 @@ export default function Mandrake() {
                   </p>
                 </AccordionItem>
                 <AccordionItem question="Do I need an account to use Mandrake?">
-                  <p>No. You can use the app straight away without creating an account.</p>
+                  <p>
+                    You do not create a named account. Mandrake automatically creates an anonymous
+                    Firebase identity so cloud urge events remain separate between app installations.
+                  </p>
                 </AccordionItem>
                 <AccordionItem question="What platforms does Mandrake run on?">
-                  <p>Mandrake is available on both Android and iOS.</p>
+                  <p>Mandrake is currently available on Android.</p>
                 </AccordionItem>
               </div>
             </div>
@@ -186,33 +184,16 @@ export default function Mandrake() {
       <section className="card p-6 mt-4">
         <h2 className="text-2xl font-extrabold mb-4">Policies</h2>
 
-        <div className="mb-6">
-          <h3 className="text-xl font-bold">Android</h3>
-          <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
-            <li>
-              <Link href="/assets/policies/Mandrake_Disclaimer_16plus.pdf">Disclaimer (PDF)</Link>
-            </li>
-            <Link
-            href="/apps/mandrake/privacy-policy"
-            className="text-blue-600 hover:underline"
-              >
-              Privacy Policy (HTML)
-            </Link>
-
-            <li>
-              <Link href="/assets/policies/Mandrake_Terms_of_Service_16plus.pdf">Terms of Service (PDF)</Link>
-            </li>
-          </ul>
-        </div>
-
         <div>
-          <h3 className="text-xl font-bold">iOS</h3>
           <ul className="list-disc ml-5 mt-2 space-y-1 text-red-600">
             <li>
-              <Link href="/assets/policies/Mandrake_Disclaimer_iOS.pdf">Disclaimer (PDF)</Link>
+              <Link href="/apps/mandrake/privacy-policy">Privacy Policy</Link>
             </li>
             <li>
-              <Link href="/assets/policies/Mandrake_Terms_of_Service_iOS.pdf">Terms of Service (PDF)</Link>
+              <Link href="/apps/mandrake/terms-of-service">Terms of Service</Link>
+            </li>
+            <li>
+              <Link href="/apps/mandrake/data-deletion">Data Deletion</Link>
             </li>
           </ul>
         </div>
