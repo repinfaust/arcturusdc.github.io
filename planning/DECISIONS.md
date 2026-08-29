@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-08-29 — Mandrake web privacy copy aligned with the corrected deletion flow (D-SITE-021)
+- David explicitly limited this pass to the public Mandrake website. No Android source, version, artifact, Play listing or release process is part of this site change.
+- Adopted the reviewed landing-page wording: anonymous by default; no name, email or password; urge entries stored in the cloud under a random identifier; screening answers and custom text kept on-device; export and deletion available. Deliberately rejected any claim that history survives a lost phone, reinstall or device change: anonymous Firebase state is local and Android backup recovery is opportunistic, not guaranteed.
+- Updated the Privacy Policy and Data Deletion pages to the corrected Mandrake deletion implementation recorded in app decision D-M014, superseding D-SITE-019's disclosure of the older broken flow. Reset is cloud-first and fail-closed: Firestore urge events are deleted before local Room data and preferences; on cloud failure local data remains and the user is told to retry. The UID is now copyable in Settings for email deletion requests. The anonymous-auth record, purchase records, support correspondence and any Android-managed backup are not claimed to be deleted.
+- Effective dates moved to 29 August 2026. No site auth, backend, analytics, data collection or infrastructure changed.
+
 ## 2026-08-28 — Personal residential address removed from every public policy source (D-SITE-020)
 - David identified that the postal address repeated in several app policy pages is his personal home address and must not be published. Removed it site-wide from all nine matching public-source locations across Mandrake, Unload, Sprocket, Tou.me and ADHD Acclaim; contact sections retain the company name and support email only.
 - Scanned every PDF under `public/` by extracted text for both the street name and postcode; no PDF contains the address. Re-ran repository text searches for both forms after the edit and found no remaining source occurrence.

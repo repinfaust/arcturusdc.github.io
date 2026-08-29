@@ -128,8 +128,8 @@ export default function Mandrake() {
                 icon="shield"
               />
               <Feature
-                title="Pseudonymous by Default"
-                desc="No name, email, or password. Cloud urge events are stored under a random Firebase ID."
+                title="Anonymous by Default"
+                desc="No name, email or password—just a random app identifier. Urge entries are stored securely in the cloud under that identifier; screening answers and custom text remain on your device. You can export or delete your data at any time."
                 icon="lock"
               />
               <Feature
@@ -153,9 +153,10 @@ export default function Mandrake() {
                 </AccordionItem>
                 <AccordionItem question="Is my data private?">
                   <p>
-                    Mandrake does not ask for your name, email, or password. Urge events are stored
-                    in Firestore under a random Firebase ID; screening results and other records
-                    remain on your device. See the privacy policy for the exact fields and providers.
+                    Mandrake does not ask for your name, email or password. It uses a random app
+                    identifier. Urge entries are stored securely in the cloud under that identifier;
+                    screening answers and custom text remain on your device. See the privacy policy
+                    for the exact fields and providers.
                   </p>
                 </AccordionItem>
                 <AccordionItem question="What happens if urges feel too heavy?">

@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function MandrakePrivacyPolicyPage() {
   return (
-    <MandrakeLegalPage title="Privacy Policy" updated="28 August 2026">
+    <MandrakeLegalPage title="Privacy Policy" updated="29 August 2026">
       <p>
         Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>. We are the
         controller for personal data processed through the app. Contact us at{' '}
@@ -17,9 +17,9 @@ export default function MandrakePrivacyPolicyPage() {
       <LegalCallout>
         <p className="font-semibold text-neutral-950">The short version</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>You do not provide a name, email address or password.</li>
-          <li>The app creates a random Firebase identifier and stores your urge log in Firestore.</li>
-          <li>Screening answers, custom text and other app records stay on your device.</li>
+          <li>No name, email or password—just a random app identifier.</li>
+          <li>Urge entries are stored securely in the cloud under that identifier.</li>
+          <li>Screening answers and custom text remain on your device.</li>
           <li>There are no ads or analytics SDKs in the current Android app.</li>
           <li>You can reset app data in Settings and can request cloud deletion by email.</li>
         </ul>
@@ -125,18 +125,19 @@ export default function MandrakePrivacyPolicyPage() {
         device backup according to your Android backup settings and Google&apos;s retention rules.
       </p>
       <p>
-        The current Reset action clears the local database and then attempts to delete Firestore
-        urge events. It does not delete the Firebase anonymous-authentication record or all locally
-        stored preferences. See the <a href="/apps/mandrake/data-deletion">Data Deletion page</a>{' '}
-        for the exact process and limitations.
+        The Reset action deletes Firestore urge events first. Only after that succeeds does it
+        clear the local database and app preferences. If cloud deletion fails, the app leaves the
+        local data in place and asks you to try again. Reset does not delete the Firebase anonymous
+        authentication record. See the <a href="/apps/mandrake/data-deletion">Data Deletion page</a>{' '}
+        for the exact process.
       </p>
 
       <h2>7. Your rights</h2>
       <p>
         Depending on where you live, you may have rights to access, correct, erase, restrict,
         object to or receive a copy of your personal data. Because Mandrake does not collect your
-        name or email address, we may need the anonymous UID to locate cloud records and may be
-        unable to identify them without it.
+        name or email address, we need the anonymous UID to locate cloud records. You can copy it
+        from the Account section in Mandrake Settings.
       </p>
       <p>
         Contact <a href="mailto:info@arcturusdc.com">info@arcturusdc.com</a>. You may also
