@@ -170,3 +170,154 @@ failure.
 **Standing position (David, 2026-08-16), restated:** no bet will be placed until the
 project reaches its end point and all five gates have been evaluated and passed. Registering
 these filters does not authorise, imply, or bring forward any bet.
+
+---
+---
+
+# AMENDMENT — SECOND REGISTRATION, 2026-09-10
+
+**Additive only. Nothing above this line is altered, and nothing above it may be read as
+altered.** θ, φ, the `F2_pmove` primary designation, the six original filters, the five
+gates and the 2026-08-17 window all stand exactly as frozen on 2026-08-16. This section
+registers a **separate, second** filter with its **own** window, per §0's rule that a new
+idea is a new registration on a new date rather than an amendment in place.
+
+---
+
+## A0. Why this exists, in one paragraph
+
+The 2026 season-close review (D-SITE-022, `MLB_BET_SELECTION_FINDINGS.md`) scored the
+pre-registration sandbox. `F4_conf` — market conviction at T-2h — read 60.4% there and,
+more notably, held across the held-out split at 60.9% (H1) and 60.0% (H2). That stability
+is the pattern worth a second look. It is **not** evidence: those are the games φ was
+calibrated on, the CI lower bound was 46.9%, and F4 was exploratory-only. The correct
+response to an interesting-but-contaminated signal is neither to bet it nor to discard it,
+but to **give it a clean forward test of its own**. That is all this section does.
+
+---
+
+## A1. What is registered
+
+| | |
+|---|---|
+| Filter id | **`F4b_conf`** (new id — deliberately *not* `F4_conf`, which stays exploratory-only under the 2026-08-16 registration) |
+| Condition | `abs(P(Over)@T-2h − 0.5) >= φ_b` |
+| **φ_b (frozen)** | **0.0222** |
+| Status | **SECOND PRIMARY**, independent of `F2_pmove` |
+| Registration date | **2026-09-10** |
+| First eligible game | **2026-09-11** |
+| Permanently excluded | Every game finalizing on or before 2026-09-10 |
+
+`P(Over)` is computed at full precision via `impliedOverProb(overDec, underDec)` on the
+snapshot's consensus prices, never from the 2dp-rounded `pOver` field — same rule as §2.
+
+**`F2_pmove` remains the primary for its own window and is unaffected.** The two run in
+parallel on disjoint windows, are scored separately, and neither may be substituted for the
+other. There are now two pre-committed primaries, each with one shot: F2 on games from
+2026-08-17, F4b on games from 2026-09-11.
+
+---
+
+## A2. How φ_b was set — and why it is NOT 0.0196
+
+**The old φ = 0.0196 was not reused, and could not honestly have been.** It was calibrated
+on the pre-registration games, and on 2026-09-10 those games were scored — F4's 60.4% is now
+known. Re-registering that same threshold would mean freezing a value chosen partly in the
+knowledge of how it performed. That is the precise failure §3 was written to prevent.
+
+**φ_b = 0.0222 was recalibrated on the 278 post-registration games (2026-08-17 → 2026-09-10),
+reading the predictor distribution ONLY.** The calibration script computed
+`|P(Over)@T-2h − 0.5|` per game and its percentiles, and read no correctness value, no win
+rate and no P&L. That window has never been scored by anyone, so no outcome on it was known
+at the moment φ_b was fixed. The target percentile (p80) was carried over unchanged from §3
+rather than re-chosen, so no search over percentiles occurred either.
+
+Observed distribution, n=278, for the record:
+
+| percentile | φ_b candidate | games selected |
+|---|---|---|
+| p50 | 0.0117 | 140 (50.4%) |
+| p60 | 0.0157 | 112 (40.3%) |
+| p70 | 0.0170 | 87 (31.3%) |
+| p75 | 0.0196 | 71 (25.5%) |
+| **p80** | **0.0222** | **59 (21.2%)** |
+| p90 | 0.0222 | 40 (14.4%) |
+| max | 0.0325 | — |
+
+The conviction distribution is coarse at the top (p80, p85 and p90 share the 0.0222 value),
+a consequence of 2dp price rounding upstream. Recorded so the realised selectivity is not
+later mistaken for drift.
+
+**Note:** those 278 games are now spent as a *calibration* set for F4b, exactly as the
+original 272 were for F2. They are excluded from F4b's evaluation window and can never
+satisfy a gate for it.
+
+---
+
+## A3. Gates, and the multiple-comparisons position
+
+The five gates in §4 apply to `F4b_conf` unchanged, evaluated on `ev.worst`.
+
+**Filters now pre-committed as primary: two** (`F2_pmove`, `F4b_conf`) — on **disjoint
+windows and disjoint calibration sets**, each tested once. This is two independent
+experiments, not two draws from one sample, so no Bonferroni correction applies between
+them. The five exploratory filters from the 2026-08-16 registration keep their 0.05/5 = 0.01
+threshold and remain never-actionable.
+
+**A gate failing for one primary says nothing about the other.** They are not alternatives
+and must not be traded off. Specifically: if F2 fails and F4b passes, that is not licence to
+retrospectively call F4b "the real primary all along" — both outcomes were registered in
+advance precisely so both can be reported honestly.
+
+---
+
+## A4. Expected timeline
+
+At ~21% selectivity, `F4b_conf` accrues ~2.5 selections per slate-day. Gate 3's ~250+ needs
+roughly **100 slate-days**. The 2026 regular season ends within weeks and the postseason is
+a handful of games per day, so F4b — like F2 — **does not conclude in 2026**. Meaningful
+accumulation begins April 2027. Rushing either is the one failure mode that cannot be
+repaired later.
+
+---
+
+## A5. PURPOSE — restated, and binding on both registrations
+
+Restated at David's explicit instruction (2026-09-10) because the documents had drifted into
+reading like preparation for a betting operation, which they are not.
+
+**This is a proof of concept. It is not a plan to bet, and it is emphatically not a plan to
+stake meaningful money.**
+
+What it is:
+
+- **A research instrument** measuring whether pre-game information arrival moves the MLB
+  total in a way that is exploitable at real prices — the question D-SITE-007 answered "no"
+  for static team/pitcher models, asked again for *price movement*.
+- **A methods asset.** The pre-registration discipline, the no-leakage rigour, the
+  fail-closed collection and the honest-negative-result culture are reusable across
+  projects. They have already killed one mirage (the 2025 "61.5%", which was leakage) and
+  caught four production bugs that would each have produced a confident wrong answer.
+- **Possibly, and this is entirely TBD,** an additional tool for *avoiding* poor bets rather
+  than placing good ones — i.e. a filter that says "this one is not worth touching." Whether
+  it is ever used that way is undecided and depends on the gate outcomes.
+
+What it is **not**:
+
+- Not a betting system, a tipping service, or a staking plan.
+- Not a route to significant sums. No life savings, no meaningful bankroll, nothing of the
+  sort is contemplated, now or on any gate outcome.
+- Not something whose value depends on finding an edge. **The most likely honest outcome
+  remains "no edge, do not bet"** (spec §7, D-SITE-007 precedent), and that result is a
+  success — the alternative was believing 61.5% and finding out with money.
+
+**The single number that best represents the project's value to date is `F0_all` = 51.5%
+over 281 games** — the vig arriving within ~0.1pp of where theory predicts (~51.4%). That
+demonstrates the instrument is calibrated and trustworthy. It is not a finding about any
+edge, and no filter result in the findings document should be read as a "benchmark" or a
+floor to improve on.
+
+**Standing position (David), unchanged and reaffirmed:** no bet will be placed until the
+project reaches its end point and all five gates have been evaluated and passed on a
+pre-registered primary. Registering `F4b_conf` authorises nothing, implies nothing, and
+brings nothing forward.

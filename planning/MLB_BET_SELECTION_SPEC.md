@@ -140,6 +140,39 @@ it to price.
 
 ---
 
+## 6a. PURPOSE — what this project is, and what it is not (restated 2026-09-10)
+
+_Added at David's explicit instruction because the documents had drifted into reading like
+preparation for a betting operation. They are not. This section binds every filter
+registration, present and future._
+
+**This is a proof of concept, not a plan to bet, and emphatically not a plan to stake
+meaningful money. No life savings, no meaningful bankroll, nothing of the sort is
+contemplated — now, or on any gate outcome.**
+
+What it is:
+
+- **A research instrument** measuring whether pre-game information arrival moves the MLB
+  total in a way exploitable at real prices.
+- **A methods asset** — pre-registration discipline, no-leakage rigour, fail-closed
+  collection, honest-negative-result culture. Reusable across projects. Already killed one
+  mirage (the 2025 "61.5%", which was look-ahead leakage) and caught four production bugs
+  that would each have produced a confident wrong answer.
+- **Possibly — entirely TBD — an additional tool for _avoiding_ poor bets** rather than
+  placing good ones: a filter that says "this one is not worth touching." Whether it is ever
+  used that way is undecided and depends on gate outcomes.
+
+Its value does not depend on finding an edge. The most likely honest outcome remains **no
+edge, do not bet** (§7, and the D-SITE-007 precedent), and that is a **success** — the
+alternative was believing 61.5% and finding out with money.
+
+**No result in this project is a "benchmark" or a floor to improve on.** The number that
+best represents its value to date is the null benchmark `F0_all` = 51.5% over 281 games:
+the vig arriving within ~0.1pp of theory (~51.4%), which demonstrates the instrument is
+calibrated and trustworthy.
+
+---
+
 ## 7. What this is not
 
 - Not a claim that an edge exists — the likeliest honest outcome is that no filter clears the

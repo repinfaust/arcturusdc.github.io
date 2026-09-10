@@ -1,5 +1,144 @@
 # Decisions
 
+## 2026-09-10 — MLB: `F4b_conf` registered as second primary; project purpose restated (D-SITE-023)
+
+Two things, both directed by David after the D-SITE-022 review: register F4 properly as its
+own forward test, and put the project's actual purpose back on the record because the
+documents had drifted into reading like preparation for a betting operation.
+
+**PURPOSE, restated and now binding in three places** (`MLB_BET_SELECTION_SPEC.md` §6a,
+`MLB_FILTER_REGISTRATION.md` §A5, `MLB_BET_SELECTION_FINDINGS.md` header): **this is a proof
+of concept, not a plan to bet, and emphatically not a plan to stake meaningful money — no
+life savings, no meaningful bankroll, on any gate outcome.** It is (a) a research instrument
+on whether pre-game information movement is exploitable at real prices, (b) a reusable
+methods asset (pre-registration, no-leakage rigour, fail-closed collection) that has already
+killed the 2025 "61.5%" leakage mirage and caught four production bugs, and (c) **possibly,
+entirely TBD, a tool for _avoiding_ poor bets rather than placing good ones** — that use is
+undecided. Its value does not depend on finding an edge; "no edge, do not bet" remains the
+most likely honest outcome and is a success.
+
+**Registered `F4b_conf`** (`MLB_FILTER_REGISTRATION.md` amendment §A0–A5, additive, touching
+no frozen value): `abs(P(Over)@T-2h − 0.5) >= 0.0222`, **second primary**, evaluated only on
+games finalizing **2026-09-11 or later**. Rationale: F4 held 60.9% (H1) / 60.0% (H2) across
+the sandbox split — stability is the pattern worth a second look, but it sat on calibration
+games with a 46.9% CI lower bound. The correct response to an interesting-but-contaminated
+signal is neither to bet it nor bin it, but to give it a clean forward test. New id
+deliberately, so the exploratory `F4_conf` under the 2026-08-16 registration is untouched.
+
+**φ_b = 0.0222 is deliberately NOT the old φ = 0.0196.** The old value was calibrated on
+games that have now been scored (D-SITE-022), so re-registering it would freeze a threshold
+chosen partly in knowledge of its performance — precisely the failure the original §3 exists
+to prevent. **φ_b was recalibrated on the 278 post-registration games reading the predictor
+distribution ONLY** — no correctness, no win rate, no P&L — at the same p80 target percentile
+carried over unchanged, so no search over percentiles occurred either. Those 278 games are
+now spent as F4b's calibration set and are excluded from its evaluation window. Decision
+taken by David when the contamination was put to him with both options.
+
+**Two primaries now run in parallel** on **disjoint windows and disjoint calibration sets**:
+`F2_pmove` (games from 2026-08-17) and `F4b_conf` (games from 2026-09-11). Two independent
+experiments, not two draws from one sample, so **no Bonferroni correction applies between
+them**. A gate outcome for one says nothing about the other, and they must not be traded off
+after the fact — specifically, F2 failing while F4b passes is **not** licence to call F4b
+"the real primary all along". Both outcomes were registered in advance so both can be
+reported honestly. The five exploratory filters keep their 0.05/5 = 0.01 threshold.
+
+**Timeline:** F4b selects ~21.2% (59/278 on calibration), ~2.5 selections/slate-day, so gate
+3's ~250+ needs ~100 slate-days. Like F2 it **does not conclude in 2026**; accumulation
+begins April 2027.
+
+**Incidental data-quality finding that narrows the D-SITE-022 open item:** all 278
+post-registration games resolved a T-2h snapshot during φ_b calibration. The 21 unresolvable
+games therefore fail on the **opener** side, not T-2h. The ~9% matching issue is an
+opener-snapshot problem specifically — that is where diagnosis should start. Still not fixed;
+no code changed.
+
+**No code changed, nothing deployed, no bet authorised.** Documentation only.
+
+## 2026-09-10 — MLB season-close review: sandbox scored, forward window preserved (D-SITE-022)
+
+Season-close review of `apps/stea/mlb`. **No gate evaluated, no bet authorised, and the
+primary filter `F2_pmove`'s forward test remains intact and unspent.** Full numbers in
+`planning/MLB_BET_SELECTION_FINDINGS.md`; this entry records the decision and its reasoning.
+
+**The decision: score the pre-registration sandbox only.** David asked for a season review,
+recalling an agreement that season-end would be sufficient to look. `MLB_FILTER_REGISTRATION.md`
+§5 says "season-end at the earliest, and realistically 2027 for gate 3" — season-end is the
+earliest moment scoring becomes *permissible*, not the moment the sample becomes *sufficient*.
+The ambiguity is genuine and is recorded so it is not re-litigated from memory. Resolution
+(David, 2026-09-10): score the 315 pre-registration games (permanently excluded from gate
+evaluation by registration §1, so scoring them costs nothing); never touch the post-registration
+window. The scoring script applies a hard `date <= '2026-08-16'` filter.
+
+**Why the forward window was not scored, stated plainly:** F2 can be evaluated against gate 3
+exactly once. Computing an interim forward result means every later decision about F2 is made by
+someone who has seen it — the forward test is then gone and cannot be restored. Arithmetic makes
+this a bad trade regardless: at 61 selections the 95% CI is roughly ±12pp, so even a 60% observed
+rate would have a lower bound near 48%, below the 52.4% breakeven. Scoring now would spend the
+primary filter to obtain a number that cannot clear a gate.
+
+**Sandbox results (281 resolvable of 315 EV-gradeable, 2026-07-18 → 2026-08-16), exploratory
+only:** `F0_all` 51.5% / -10.67u; `F1_revision` 54.7% / +2.31u; `F2_pmove` (primary) 50.9% /
+-3.32u; `F3_pitcher` 33.3% (n=6); `F4_conf` 60.4% / +5.47u; `F5_combo` 63.6% / +3.55u.
+**Every 95% CI lower bound sits below the 52.4% breakeven — gate 3 fails for all six.**
+
+**`F0_all` at 51.5% and -3.80% ROI over 281 games is the most informative figure:** the vig
+arriving where theory says it should, which is evidence the *instrument* is sound (prices,
+grading and EV computation internally consistent). It is not evidence about any edge.
+
+**F2 looks poor and this changes nothing.** CI 38.1–63.6 on 55 graded games spans nearly every
+hypothesis worth holding, so it is not evidence F2 is bad. Per registration §0, a "better"
+variant suggested by a poor result is a **new** filter with a **new** date. F2 stays PRIMARY,
+frozen, for 2027.
+
+**Recorded pre-emptively because the temptation is foreseeable:** F1 and F2 operationalise the
+same premise (information arrival moves the price) and disagree in the sandbox — F1 54.7% and
+profitable at every price variant, F2 50.9% and negative. Their CIs overlap almost entirely and
+both sit on calibration games, so nothing should be read into it. But if F2 reads weak in 2027
+while F1 again looks strong, **swapping the primary at that point would convert the forward test
+into a backfit.** Written down now, while nothing is at stake. F1 also fails stability on its
+own terms: 59.6%/+5.28 in H1 against 51.4%/-2.97 in H2.
+
+**F4/F5 are the eye-catching numbers and the least trustworthy** — CI lower bounds 46.9% and
+43.0%, both computed on the sample that calibrated θ and φ, both exploratory-only under a
+Bonferroni threshold of 0.05/5 = 0.01 that neither approaches.
+
+**Answer to David's direct question — can we model further factors to improve on these
+benchmarks? No, and more games alone will not change it.** (a) Sample: a 55% filter needs
+~250–400 selected bets to clear breakeven on a CI, a 53% edge well over a thousand — that part
+is answered by time. (b) **What the data can support:** the collector stores the market's own
+price at two moments plus the final total, and nothing else. No team-rate, pitcher, bullpen,
+park, lineup or weather data exists in this repo. D-SITE-007 already tested team rates and
+as-of-date pitcher form against a real closing line on 2,319 games and got ~50%, with the
+apparent pitcher signal proven to be look-ahead leakage. Modelling further factors is a
+different project requiring data not being gathered — not an extension of what is running.
+**F1/F4/F5 are explicitly NOT benchmarks and must not be treated as a floor to improve on;**
+doing so is the exact error that produced the 2025 "61.5%" mirage. The only defensible benchmark
+is `F0_all` at 51.5%, i.e. the vig.
+
+**Collector health (verified live, 2026-09-10):** `lastError: null`, last odds pass 13:00Z,
+last finalize 07:30Z grading 15 games, 365 credits remaining on the dedicated `MLB_ODDS_API_KEY`,
+`lastUnmatched: 0`. 777 game docs, 749 with finals, 593 EV-gradeable. All D-SITE-011/014/015
+fixes holding.
+
+**Forward status (selection counts only, no scoring):** 278 post-registration EV-gradeable games;
+F2 selects 61 (21.9%, against a ~20% design target — the September distribution shift registration
+§3 warned of has not materialised). At ~2.6 F2 selections/slate-day, gate 3's ~250 needs ~73 more
+slate-days. Regular season ends within weeks and the postseason is a handful of games/day, so
+**this does not conclude in 2026**; accumulation resumes April 2027.
+
+**Open item, not yet diagnosed:** snapshot matching by exact `capturedAtIso` equality fails to
+resolve 34/315 sandbox games (10.8%) and 21/278 forward games (7.6%), ~9% overall. Cause unknown —
+may be the matching method rather than missing data. **Must be resolved before any gate
+evaluation:** silently dropping ~9% of games would bias the selected set in an unknown direction.
+No code changed.
+
+**Also worth deciding before the season ends:** whether the collector idles cleanly through the
+offseason. The free MLB schedule gate should skip and spend nothing from ~October to April, but
+that should be *verified* rather than assumed, given D-SITE-010 — a finite-event cron left running
+past its event drained a shared quota.
+
+Standing position unchanged: no bet until the project's end point and all five gates pass.
+
 ## 2026-08-29 — Mandrake web privacy copy aligned with the corrected deletion flow (D-SITE-021)
 - David explicitly limited this pass to the public Mandrake website. No Android source, version, artifact, Play listing or release process is part of this site change.
 - Adopted the reviewed landing-page wording: anonymous by default; no name, email or password; urge entries stored in the cloud under a random identifier; screening answers and custom text kept on-device; export and deletion available. Deliberately rejected any claim that history survives a lost phone, reinstall or device change: anonymous Firebase state is local and Android backup recovery is opportunistic, not guaranteed.
