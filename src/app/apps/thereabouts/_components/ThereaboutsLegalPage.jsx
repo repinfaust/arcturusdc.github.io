@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import styles from './thereaboutsLegal.module.css';
 
-export default function ThereaboutsLegalPage({ eyebrow, title, updated = '16 August 2026', children }) {
+export default function ThereaboutsLegalPage({ eyebrow, title, updated = '12 September 2026', children }) {
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
       <header className="border border-[#D7CEBC] bg-[#FFFDF8] p-5 md:p-7">

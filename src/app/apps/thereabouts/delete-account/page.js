@@ -34,11 +34,18 @@ export default function ThereaboutsDeleteAccount() {
         <li>Choose <strong>Delete your account</strong> and confirm.</li>
       </ol>
       <p>
-        This deletes cloud-mirrored records first, then the data on your device, then the Firebase
-        Authentication account. If the cloud step fails, the account is kept rather than leaving
-        records behind that nothing can reach — try again, or contact us. Audio files cached on your
-        device are removed with your device data. We may retain the minimum information required to
-        prevent fraud or abuse, resolve disputes, or comply with law.
+        This deletes your purchase record held by RevenueCat first, then cloud-mirrored records, then
+        the data on your device, then the Firebase Authentication account. If any step fails, the
+        account is kept rather than leaving records behind that nothing can reach — try again, or
+        contact us. Audio files cached on your device are removed with your device data. We may retain
+        the minimum information required to prevent fraud or abuse, resolve disputes, or comply with
+        law.
+      </p>
+      <p>
+        <strong>Deleting your account does not cancel a purchase and is not a refund.</strong> If you
+        bought full access, ownership stays with your Apple or Google account. Reinstall thereabouts
+        and choose <strong>Restore purchases</strong>, signed in to the same store account, to get your
+        access back. Refunds are requested from Apple or Google, not from us.
       </p>
 
       <h2>If you cannot open the app</h2>

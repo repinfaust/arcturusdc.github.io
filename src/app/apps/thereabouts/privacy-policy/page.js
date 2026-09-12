@@ -14,8 +14,9 @@ export default function ThereaboutsPrivacyPolicy() {
         write about your trip is sent to OpenAI to prepare your language; phrase text is sent to
         Microsoft to produce audio in languages your device cannot speak; your destination is sent to
         Unsplash to find a photograph of the place; and if you report something from inside the app,
-        what you wrote comes to us. Cloud backup and product analytics are separate choices, off until
-        you turn them on. No advertising identifier is collected at any point.
+        what you wrote comes to us. If you buy full access, RevenueCat and the app store handle that
+        purchase and know that you made it. Cloud backup and product analytics are separate choices,
+        off until you turn them on. No advertising identifier is collected at any point.
       </p>
 
       <h2>1. Who controls your data</h2>
@@ -159,7 +160,62 @@ export default function ThereaboutsPrivacyPolicy() {
         names, addresses or memory content. You can change this choice at any time in settings.
       </p>
 
-      <h2>10. Feedback you send us</h2>
+      <h2>10. Purchases and full access</h2>
+      <p>
+        Full access to thereabouts is a one-time purchase. Payment itself is handled entirely by Apple
+        or Google &mdash; we never receive or store your payment card details, billing address or
+        bank information.
+      </p>
+      <p>
+        To know whether you have bought the app, thereabouts uses <strong>RevenueCat</strong>, a
+        purchase-infrastructure provider acting as our processor. RevenueCat sits between the app and
+        the store and keeps the record of what you own. It is used only when the app checks your
+        access, when you buy, and when you restore a purchase.
+      </p>
+      <p>What RevenueCat receives and holds:</p>
+      <ul>
+        <li>
+          <strong>A linked user identifier.</strong> Before you sign in with Apple or Google, this is
+          an anonymous identifier RevenueCat generates for the install. Once you link Apple or Google
+          sign-in, your Firebase user identifier becomes that identifier, so a purchase made before
+          signing in stays attached to you. It is an identifier only &mdash; not your name, and not
+          your email address.
+        </li>
+        <li>
+          <strong>Purchase history and receipt data</strong> passed on from the App Store or Google
+          Play: the product bought, the transaction and its identifiers, the store, the price and
+          currency, the purchase, renewal or refund status, and the country of the store account.
+        </li>
+        <li>
+          <strong>Entitlement status</strong> &mdash; the processed result of the above, which is
+          simply whether full access is currently unlocked. This is what the app asks for at launch,
+          when it returns to the foreground, and after a purchase or restore.
+        </li>
+        <li>
+          <strong>Technical data about the install</strong>, such as the platform, app version, store
+          and country, which RevenueCat uses to validate a receipt against the right store.
+        </li>
+      </ul>
+      <p>
+        Your trip, your phrases, your practice, your memories, your transcripts and your feedback are
+        never sent to RevenueCat. No advertising identifier is sent to it, and the app does not use
+        RevenueCat for analytics, attribution or marketing.
+      </p>
+      <p>
+        Your confirmed unlock is also stored on your device, so the app works offline and does not
+        lock you out when a check cannot reach the network.
+      </p>
+      <p>
+        RevenueCat processes this data under its own{' '}
+        <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener noreferrer">
+          privacy policy
+        </a>{' '}
+        and under a data-processing agreement with us. Apple and Google process the payment under
+        their own privacy policies, and the store &mdash; not us &mdash; is who a refund is requested
+        from.
+      </p>
+
+      <h2>11. Feedback you send us</h2>
       <p>
         If you report something from inside the app, what you write is stored in our Google Cloud
         Firestore database along with the account identifier it was sent from, the kind of report you
@@ -184,7 +240,7 @@ export default function ThereaboutsPrivacyPolicy() {
         <a href="mailto:help@arcturusdc.com">help@arcturusdc.com</a> if you want one removed.
       </p>
 
-      <h2>11. Keeping the service within its limits</h2>
+      <h2>12. Keeping the service within its limits</h2>
       <p>
         To stop a fault or a misuse of the app running up unbounded cost, the service counts the
         requests made by each copy of it. That record is stored in Google Cloud Firestore and holds a
@@ -193,7 +249,7 @@ export default function ThereaboutsPrivacyPolicy() {
         holds nothing about what you asked for.
       </p>
 
-      <h2>12. Why information is processed</h2>
+      <h2>13. Why information is processed</h2>
       <ul>
         <li>To provide local trip preparation and practice you request</li>
         <li>To authenticate an owner and prevent access to another learner&apos;s records</li>
@@ -202,18 +258,28 @@ export default function ThereaboutsPrivacyPolicy() {
         <li>To secure the service, prevent abuse, diagnose failures, and meet legal obligations</li>
       </ul>
 
-      <h2>13. Retention and deletion</h2>
+      <h2>14. Retention and deletion</h2>
       <ul>
         <li>Local learner-created data remains until you delete it, clear the app, or uninstall it.</li>
         <li>Cloud-mirrored data remains until it is deleted following a verified request.</li>
         <li>Your Firebase Authentication record remains until the account is deleted.</li>
+        <li>
+          Your RevenueCat customer record remains until the account is deleted. The store&apos;s own
+          record of the purchase belongs to Apple or Google and is kept under their terms.
+        </li>
         <li>Feedback reports remain until they have been dealt with.</li>
         <li>Request-count records fall out of use at the end of the day they were written for.</li>
         <li>Service providers may retain security, abuse-prevention, and operational records under their own terms or where law requires.</li>
       </ul>
       <p>
-        Settings includes a control that deletes your account and everything associated with it:
-        cloud-mirrored records first, then the data on your device, then the authentication account.
+        Settings includes a control that deletes your account and everything associated with it: the
+        RevenueCat customer record first, then cloud-mirrored records, then the data on your device,
+        then the authentication account. RevenueCat goes first because that record is keyed to your
+        account identifier and deleting it has to be authorised while the account still exists. If
+        that step fails, deletion stops there rather than telling you every copy is gone while one is
+        still held by a processor. Deleting the RevenueCat record does not cancel your purchase with
+        Apple or Google and is not a refund: ownership stays with your store account, and{' '}
+        <em>Restore purchases</em> returns your access.
         If the cloud step fails, the account is kept rather than leaving records behind that nothing
         can reach. A separate control deletes learner-created data on the device only. That one keeps
         any feedback report still waiting to be sent, on the grounds that a message you wrote to us —
@@ -222,15 +288,17 @@ export default function ThereaboutsPrivacyPolicy() {
         removed with your device data.
       </p>
 
-      <h2>14. International processing</h2>
+      <h2>15. International processing</h2>
       <p>
         Firebase Authentication is operated by Google from US data centres. The Firebase Function that
-        reaches OpenAI runs in europe-west2 (London). OpenAI, Microsoft Azure Speech and Unsplash may
-        process requests outside the UK. Appropriate provider contractual safeguards apply where
+        reaches OpenAI runs in europe-west2 (London), as does the function that deletes your
+        RevenueCat record. OpenAI, Microsoft Azure Speech, Unsplash and RevenueCat may process
+        requests outside the UK; RevenueCat is a United States company and processes purchase data
+        there. Appropriate provider contractual safeguards apply where
         required.
       </p>
 
-      <h2>15. Your rights</h2>
+      <h2>16. Your rights</h2>
       <p>
         Depending on where you live, you may have rights to access, correct, erase, restrict, export,
         or object to processing of your personal data, and to withdraw consent without affecting prior
@@ -238,13 +306,13 @@ export default function ThereaboutsPrivacyPolicy() {
         Information Commissioner&apos;s Office or your local supervisory authority.
       </p>
 
-      <h2>16. Children</h2>
+      <h2>17. Children</h2>
       <p>
         thereabouts is designed as an adult travel-learning app and is not directed to children under
         13. We do not knowingly seek children&apos;s personal information.
       </p>
 
-      <h2>17. Changes and contact</h2>
+      <h2>18. Changes and contact</h2>
       <p>
         We will update this policy when the app&apos;s data handling changes and provide appropriate
         notice before a material new use. Questions and requests: {' '}

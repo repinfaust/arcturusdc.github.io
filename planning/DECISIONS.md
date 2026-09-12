@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-09-12 — thereabouts legal pages disclose the one-time purchase and RevenueCat (D-SITE-024)
+
+- Required before store submission. The live Terms section 10 asserted "thereabouts has no subscription, purchase, or paid entitlement", which directly contradicted the app's shipped monetisation (`sprocket-lingo` D-PROD-044, D-ARC-065). The public record is now aligned with the binary rather than the binary with the record.
+- Every purchase claim on the pages is taken from the app source, not from the supplied brief: one non-consumable lifetime purchase (`src/domain/entitlement.ts`), free tier of one complete trip plus five successful `Say it now` translations, paywall on a second trip or a sixth translation, and explicit restore on the paywall and in Settings (`src/ui/useRevenueCat.ts`).
+- **The launch price is deliberately not stated on the pages.** D-PROD-044 fixes it at £2.99 UK but treats it as an experiment, and the client always reads price and currency from the store product. A figure in the Terms becomes wrong the moment the experiment moves, and a legal page is the worst place to carry a volatile value.
+- Terms section 10 replaced by sections 10–13 (free use and payment, restoring, refunds, purchases and account deletion), tail renumbered to 16. Refunds are stated as Apple's and Google's to grant under their own policies, because we cannot refund a store purchase, with statutory rights preserved. Section 2's "features may be withdrawn" is now explicitly bounded so it cannot read as a right to withdraw paid access.
+- Privacy gains section 10 naming RevenueCat as a processor; 10–17 renumbered to 11–18. Disclosed: the linked user identifier (RevenueCat's anonymous id before sign-in, the Firebase uid after Apple or Google linking, per the supported anonymous-to-identified merge), store purchase history and receipt data, entitlement processing, and install technical data. Stated as not sent: trips, phrases, memories, transcripts, feedback, and any advertising identifier. RevenueCat is not used for analytics, attribution or marketing.
+- **Deletion ordering was corrected against `cloudSync.ts:562`, which deletes the RevenueCat customer *first* — before cloud, device and Firebase Auth — because that record is keyed to the uid and must be authorised while the account still exists.** Both the Privacy policy and the delete-account page previously described a sequence that omitted the step entirely. The fail-closed behaviour is now stated: if a step fails the account is kept rather than claiming every copy is gone while a processor still holds one.
+- All three pages now state that deleting an account **does not cancel the purchase and is not a refund**; store ownership persists and Restore returns access. This is the disclosure most likely to generate a support complaint if left unsaid.
+- `updated` default in `ThereaboutsLegalPage.jsx` moved to 12 September 2026, which moves the date on all four thereabouts legal pages together. No site auth, backend, analytics, data collection or infrastructure changed.
+- Not claimed and deliberately left out: any server-authoritative entitlement. D-ARC-065 records that every present gate is local UI; if a future paid gate protects server work that becomes a new decision, and the pages must not imply it exists today.
+
 ## 2026-09-10 — MLB: `F4b_conf` registered as second primary; project purpose restated (D-SITE-023)
 
 Two things, both directed by David after the D-SITE-022 review: register F4 properly as its
