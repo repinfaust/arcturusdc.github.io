@@ -133,6 +133,7 @@ export async function POST(request) {
       'team-yearly': 'team',
       'agency-monthly': 'agency',
       'agency-yearly': 'agency',
+      'solo-one-off-us': 'solo',
     };
     const plan = planMap[pendingWorkspace.plan] || 'team';
 
@@ -143,17 +144,20 @@ export async function POST(request) {
       ownerEmail: normalizedUserEmail,
     });
 
-    // Update subscription with workspace ID
+    // Link the Stripe record to the claimed workspace. Recurring plans are
+    // subscriptions; the US one-off plan is recorded as a purchase.
     if (pendingWorkspace.stripeSessionId) {
-      const subscriptionQuery = await adminDb
-        .collection('stea_subscriptions')
+      const collectionName = pendingWorkspace.purchaseType === 'one_off'
+        ? 'stea_purchases'
+        : 'stea_subscriptions';
+      const paymentQuery = await adminDb
+        .collection(collectionName)
         .where('sessionId', '==', pendingWorkspace.stripeSessionId)
         .limit(1)
         .get();
 
-      if (!subscriptionQuery.empty) {
-        const subscriptionDoc = subscriptionQuery.docs[0];
-        await subscriptionDoc.ref.update({
+      if (!paymentQuery.empty) {
+        await paymentQuery.docs[0].ref.update({
           workspaceId: tenant.id,
           status: 'active',
           updatedAt: new Date(),
@@ -181,4 +185,3 @@ export async function POST(request) {
     );
   }
 }
-

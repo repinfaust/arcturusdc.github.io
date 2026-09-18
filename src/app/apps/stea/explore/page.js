@@ -44,12 +44,12 @@ export default function SteaDemoPage() {
   }, [searchParams]);
 
   // Handle Stripe checkout
-  const handleCheckout = async (priceId, planName) => {
+  const handleCheckout = async (priceId, planName, options = {}) => {
     setCheckoutLoading(planName);
 
     try {
       // Determine if this is a one-time payment (MCP addon) or subscription
-      const isOneTime = priceId === priceIds.mcp_addon;
+      const isOneTime = priceId === priceIds.mcp_addon || options.offer === 'us-solo-one-off';
       
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -58,7 +58,9 @@ export default function SteaDemoPage() {
         },
         body: JSON.stringify({ 
           priceId,
-          mode: isOneTime ? 'payment' : 'subscription'
+          mode: isOneTime ? 'payment' : 'subscription',
+          planName,
+          offer: options.offer,
         }),
       });
 
@@ -543,7 +545,7 @@ export default function SteaDemoPage() {
                     </svg>
                     <div>
                       <h3 className="font-bold text-lg">Payment Successful!</h3>
-                      <p className="text-sm">Thank you for subscribing to STEa. Check your email for your receipt and next steps.</p>
+                      <p className="text-sm">Thank you for choosing STEa. Check your email for your receipt and workspace setup steps.</p>
                     </div>
                   </div>
                 </div>
@@ -626,6 +628,12 @@ export default function SteaDemoPage() {
                         price: '499.00',
                         priceCurrency: 'GBP',
                         billingDuration: 'P1Y',
+                      },
+                      {
+                        '@type': 'Offer',
+                        name: 'US Solo One-Off',
+                        price: '46.00',
+                        priceCurrency: 'USD',
                       },
                     ],
                     description: 'A closed-loop product system that keeps strategy, delivery, testing, and product intelligence in perfect sync',
@@ -827,6 +835,23 @@ export default function SteaDemoPage() {
               <p className="text-sm text-neutral-600 italic mb-12">
                 *Need higher capacity? Contact us for enterprise workspace options.
               </p>
+
+              <div className="mb-12 border-2 border-blue-200 bg-blue-50 p-6 rounded-xl md:flex md:items-center md:justify-between md:gap-8">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-blue-700">US market · one-time purchase</p>
+                  <h3 className="mt-2 text-2xl font-bold text-neutral-900">Solo One-Off — $46</h3>
+                  <p className="mt-2 text-neutral-700">
+                    One Solo workspace with the same included tools as Solo. Pay once in USD with no recurring charge.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleCheckout(null, 'US Solo One-Off', { offer: 'us-solo-one-off' })}
+                  disabled={checkoutLoading === 'US Solo One-Off'}
+                  className="mt-5 w-full shrink-0 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white transition-all hover:bg-blue-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:mt-0 md:w-auto"
+                >
+                  {checkoutLoading === 'US Solo One-Off' ? 'Loading...' : 'Purchase for $46'}
+                </button>
+              </div>
 
               <hr className="my-8 border-neutral-200" />
 

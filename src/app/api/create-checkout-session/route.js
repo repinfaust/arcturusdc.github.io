@@ -23,11 +23,12 @@ export async function POST(request) {
     const stripe = await getStripe();
 
     const body = await request.json();
-    const { priceId, mode = 'subscription' } = body;
+    const { priceId, mode = 'subscription', offer } = body;
+    const isUsSoloOneOff = offer === 'us-solo-one-off';
 
-    if (!priceId) {
+    if (!priceId && !isUsSoloOneOff) {
       return NextResponse.json(
-        { error: 'Price ID is required' },
+        { error: 'Price ID or a supported offer is required' },
         { status: 400 }
       );
     }
@@ -52,18 +53,27 @@ export async function POST(request) {
       'price_1ST5pfCtbV5UkklC8d44VTfC': 'agency-monthly',
       'price_1ST5pgCtbV5UkklCsj4MuhYh': 'agency-yearly',
     };
-    const plan = planMap[priceId] || 'solo-monthly';
+    const plan = isUsSoloOneOff ? 'solo-one-off-us' : (planMap[priceId] || 'solo-monthly');
+    const checkoutMode = isUsSoloOneOff ? 'payment' : mode;
+    const lineItem = isUsSoloOneOff
+      ? {
+          price_data: {
+            currency: 'usd',
+            unit_amount: 4600,
+            product_data: {
+              name: 'STEa Solo — US One-Off',
+              description: 'One-time purchase of a Solo STEa workspace for the US market.',
+            },
+          },
+          quantity: 1,
+        }
+      : { price: priceId, quantity: 1 };
 
     // Create Checkout Session with custom fields
     const session = await stripe.checkout.sessions.create({
       billing_address_collection: 'auto',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: mode,
+      line_items: [lineItem],
+      mode: checkoutMode,
       success_url: `${origin}/apps/stea/explore?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/apps/stea/explore?canceled=true`,
       allow_promotion_codes: true,
@@ -71,8 +81,10 @@ export async function POST(request) {
       // Skip card collection if payment amount is 0 (e.g., with 100% discount)
       payment_method_collection: 'if_required',
       metadata: {
-        planName: body.planName || 'Unknown',
+        planName: body.planName || (isUsSoloOneOff ? 'US Solo One-Off' : 'Unknown'),
         plan: plan,
+        kind: isUsSoloOneOff ? 'stea_us_solo_one_off' : (body.kind || ''),
+        market: isUsSoloOneOff ? 'US' : '',
       },
       // Custom fields for workspace setup
       custom_fields: [
@@ -93,7 +105,6 @@ export async function POST(request) {
           },
           type: 'text',
           optional: false,
-          description: 'Use the email you\'ll sign in with using "Continue with Google" for STEa.',
         },
       ],
     });

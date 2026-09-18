@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-09-18 — STEa checkout repaired and US Solo one-off model added (D-SITE-025)
+
+- Fixed the live Stripe Checkout failure shown on `/apps/stea/explore`: the configured Stripe API rejects `custom_fields[1][description]`, so the unsupported custom-field parameter was removed. The Google sign-in email remains a required Checkout field.
+- Added a US-market Solo one-off purchase at **$46 USD**, charged once with no recurring fee. Checkout uses server-owned inline Stripe price data rather than accepting an amount or currency from the browser.
+- The purchase creates the same claimable Solo workspace as the recurring Solo plans. Its Checkout metadata is `kind: stea_us_solo_one_off`, `plan: solo-one-off-us`, and `market: US`; the webhook records it in `stea_purchases`, sends the existing claim email, and the claim route links the resulting workspace back to that purchase.
+- Checkout-session records are keyed by Stripe session id and pending claim tokens are deterministically signed from that id, preventing ordinary Stripe webhook retries from creating duplicate purchase/subscription records or workspaces.
+- Updated the public pricing structured data and STEa Terms so the displayed price, currency, non-recurring nature, and entitlement match the implemented checkout flow.
+- No new authentication mechanism or infrastructure was introduced. Existing Google sign-in, Stripe webhook, pending-workspace, and tenant creation flows are reused.
+
 ## 2026-09-12 — thereabouts legal pages disclose the one-time purchase and RevenueCat (D-SITE-024)
 
 - Required before store submission. The live Terms section 10 asserted "thereabouts has no subscription, purchase, or paid entitlement", which directly contradicted the app's shipped monetisation (`sprocket-lingo` D-PROD-044, D-ARC-065). The public record is now aligned with the binary rather than the binary with the record.

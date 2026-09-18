@@ -42,14 +42,15 @@ export default function SteaTermsPage() {
             </ul>
           </section>
 
-          {/* 2. Subscription Plans */}
+          {/* 2. Plans and purchases */}
           <section>
-            <h2 className="text-2xl font-bold text-neutral-900 mb-4">2. Subscription Plans</h2>
+            <h2 className="text-2xl font-bold text-neutral-900 mb-4">2. Plans and Purchases</h2>
             <div className="space-y-4 text-neutral-700">
               <div>
                 <h3 className="font-bold text-lg mb-2">2.1 Plan Types</h3>
                 <ul className="list-disc ml-6 space-y-1">
                   <li><strong>Solo Plan:</strong> £9/month or £92/year. Includes 1 active App, personal workspace, and full access to all tools.</li>
+                  <li><strong>US Solo One-Off:</strong> $46 once. Includes one Solo workspace for the US market with no recurring charge.</li>
                   <li><strong>Team Plan:</strong> £25/seat/month or £255/seat/year. Includes up to 10 active Apps, shared workspaces, and collaborative features.</li>
                   <li><strong>Agency/Partner Plan:</strong> £49/seat/month or £499/seat/year. Includes multiple client workspaces, custom branding, and white-label options.</li>
                 </ul>
@@ -58,7 +59,7 @@ export default function SteaTermsPage() {
                 <h3 className="font-bold text-lg mb-2">2.2 Billing</h3>
                 <ul className="list-disc ml-6 space-y-1">
                   <li>Subscriptions are billed in advance on a monthly or yearly basis.</li>
-                  <li>All prices are in British Pounds (GBP) and include applicable taxes unless stated otherwise.</li>
+                  <li>Subscription prices are in British Pounds (GBP). The US Solo One-Off price is in US Dollars (USD). Prices include applicable taxes unless stated otherwise.</li>
                   <li>Yearly subscriptions offer a 15% discount compared to monthly billing.</li>
                   <li>Payment is processed securely through Stripe.</li>
                 </ul>
@@ -85,6 +86,9 @@ export default function SteaTermsPage() {
               <p>
                 One-time purchases grant you a perpetual license to use the purchased digital content 
                 according to the terms specified at the time of purchase.
+              </p>
+              <p>
+                The US Solo One-Off purchase grants ongoing access to one Solo workspace without a recurring subscription fee, subject to these Terms.
               </p>
             </div>
           </section>
@@ -310,4 +314,3 @@ export default function SteaTermsPage() {
     </main>
   );
 }
-

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { sendClaimEmail } from '@/lib/email';
-import { randomBytes } from 'crypto';
+import { createHmac } from 'crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +19,44 @@ async function getStripe() {
   return new Stripe(stripeSecretKey, {
     apiVersion: '2024-11-20.acacia',
   });
+}
+
+async function createPendingWorkspaceAndSendClaim({ session, workspaceName, googleEmail, plan, purchaseType }) {
+  const claimToken = createHmac('sha256', process.env.STRIPE_WEBHOOK_SECRET)
+    .update(session.id)
+    .digest('hex');
+  const pendingWorkspaceRef = adminDb.collection('pendingWorkspaces').doc(claimToken);
+  const existingClaim = await pendingWorkspaceRef.get();
+  if (existingClaim.exists) return;
+
+  await pendingWorkspaceRef.set({
+    workspaceName,
+    googleEmail,
+    stripeCustomerId: session.customer,
+    stripeSessionId: session.id,
+    plan,
+    purchaseType,
+    status: 'pending_claim',
+    createdAt: new Date(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.arcturusdc.com';
+  const claimUrl = `${origin}/apps/stea/claim?token=${claimToken}`;
+
+  try {
+    await sendClaimEmail({
+      to: googleEmail,
+      workspaceName,
+      claimToken,
+      claimUrl,
+      purchaseType,
+    });
+    console.log(`Claim email sent to ${googleEmail}`);
+  } catch (emailError) {
+    console.error('Failed to send claim email:', emailError);
+    // Keep the paid workspace claim pending so support can resend the email.
+  }
 }
 
 export async function POST(request) {
@@ -69,22 +107,38 @@ export async function POST(request) {
         const workspaceName = workspaceNameField?.text?.value;
         const googleEmail = googleEmailField?.text?.value?.toLowerCase().trim();
         const plan = session.metadata?.plan || 'solo-monthly';
+        const checkoutEmail = session.customer_details?.email || session.customer_email || googleEmail || null;
 
         // Handle one-time payments (like MCP addon) vs subscriptions
         if (session.mode === 'payment') {
           // One-time payment - log to purchases collection
-          await adminDb.collection('stea_purchases').add({
+          await adminDb.collection('stea_purchases').doc(session.id).set({
             customerId: session.customer,
             sessionId: session.id,
-            email: session.customer_email,
+            email: checkoutEmail,
             amount: session.amount_total,
             currency: session.currency,
             paymentStatus: 'succeeded',
+            status: session.metadata?.kind === 'stea_us_solo_one_off' ? 'pending' : 'completed',
             kind: session.metadata?.kind || null,
             tenantId: session.metadata?.tenantId || null,
+            plan,
+            market: session.metadata?.market || null,
+            workspaceName: workspaceName || null,
+            googleEmail: googleEmail || null,
             createdAt: new Date(),
             updatedAt: new Date(),
-          });
+          }, { merge: true });
+
+          if (session.metadata?.kind === 'stea_us_solo_one_off' && workspaceName && googleEmail) {
+            await createPendingWorkspaceAndSendClaim({
+              session,
+              workspaceName,
+              googleEmail,
+              plan,
+              purchaseType: 'one_off',
+            });
+          }
 
           // Career Ops "buy a coffee" top-up → grant +50 actions to the tenant.
           // Transaction so the grant is added to the free baseline (20), not 0,
@@ -106,45 +160,20 @@ export async function POST(request) {
           // Subscription - create pending workspace if we have the required fields
           // Note: This works even with 100% discount codes (amount_total will be 0)
           if (workspaceName && googleEmail && session.mode === 'subscription') {
-            // Generate claim token
-            const claimToken = randomBytes(32).toString('hex');
-            
-            // Create pending workspace
-            const pendingWorkspaceRef = adminDb.collection('pendingWorkspaces').doc(claimToken);
-            await pendingWorkspaceRef.set({
+            await createPendingWorkspaceAndSendClaim({
+              session,
               workspaceName,
               googleEmail,
-              stripeCustomerId: session.customer,
-              stripeSessionId: session.id,
               plan,
-              status: 'pending_claim',
-              createdAt: new Date(),
-              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+              purchaseType: 'subscription',
             });
-
-            // Send claim email
-            const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.arcturusdc.com';
-            const claimUrl = `${origin}/apps/stea/claim?token=${claimToken}`;
-            
-            try {
-              await sendClaimEmail({
-                to: session.customer_email,
-                workspaceName,
-                claimToken,
-                claimUrl,
-              });
-              console.log(`Claim email sent to ${session.customer_email}`);
-            } catch (emailError) {
-              console.error('Failed to send claim email:', emailError);
-              // Don't fail the webhook if email fails - we can resend later
-            }
           }
 
           // Log to subscriptions collection
-          await adminDb.collection('stea_subscriptions').add({
+          await adminDb.collection('stea_subscriptions').doc(session.id).set({
             customerId: session.customer,
             sessionId: session.id,
-            email: session.customer_email,
+            email: checkoutEmail,
             status: 'pending',
             mode: session.mode,
             amount: session.amount_total,
@@ -154,7 +183,7 @@ export async function POST(request) {
             googleEmail,
             createdAt: new Date(),
             updatedAt: new Date(),
-          });
+          }, { merge: true });
         }
 
         break;

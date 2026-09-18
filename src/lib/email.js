@@ -35,8 +35,11 @@ export async function sendEmail({ to, subject, html, text }) {
 /**
  * Send workspace claim email
  */
-export async function sendClaimEmail({ to, workspaceName, claimToken, claimUrl }) {
+export async function sendClaimEmail({ to, workspaceName, claimToken, claimUrl, purchaseType = 'subscription' }) {
   const subject = 'Complete your STEa workspace setup';
+  const acknowledgement = purchaseType === 'one_off'
+    ? 'Thanks for your purchase!'
+    : 'Thanks for subscribing!';
   
   const html = `
     <!DOCTYPE html>
@@ -53,7 +56,7 @@ export async function sendClaimEmail({ to, workspaceName, claimToken, claimUrl }
         
         <div style="background: #ffffff; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <p style="font-size: 16px; margin-bottom: 20px;">
-            Thanks for subscribing! Your workspace <strong>${escapeHtml(workspaceName)}</strong> is ready to be set up.
+            ${acknowledgement} Your workspace <strong>${escapeHtml(workspaceName)}</strong> is ready to be set up.
           </p>
           
           <p style="font-size: 16px; margin-bottom: 30px;">
@@ -82,7 +85,7 @@ export async function sendClaimEmail({ to, workspaceName, claimToken, claimUrl }
   const text = `
 Welcome to STEa!
 
-Thanks for subscribing! Your workspace "${workspaceName}" is ready to be set up.
+${acknowledgement} Your workspace "${workspaceName}" is ready to be set up.
 
 Complete your setup by visiting:
 ${claimUrl}
@@ -101,4 +104,3 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-
