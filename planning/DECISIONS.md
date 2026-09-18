@@ -3,6 +3,7 @@
 ## 2026-09-18 — STEa checkout repaired and US Solo one-off model added (D-SITE-025)
 
 - Fixed the live Stripe Checkout failure shown on `/apps/stea/explore`: the configured Stripe API rejects `custom_fields[1][description]`, so the unsupported custom-field parameter was removed. The Google sign-in email remains a required Checkout field.
+- Follow-up from the first deployed $46 checkout: `payment_method_collection: if_required` is now sent only for subscription sessions because the deployed Stripe API rejects it for one-time prices. This repairs both the US Solo one-off and the existing MCP Config Pack checkout.
 - Added a US-market Solo one-off purchase at **$46 USD**, charged once with no recurring fee. Checkout uses server-owned inline Stripe price data rather than accepting an amount or currency from the browser.
 - The purchase creates the same claimable Solo workspace as the recurring Solo plans. Its Checkout metadata is `kind: stea_us_solo_one_off`, `plan: solo-one-off-us`, and `market: US`; the webhook records it in `stea_purchases`, sends the existing claim email, and the claim route links the resulting workspace back to that purchase.
 - Checkout-session records are keyed by Stripe session id and pending claim tokens are deterministically signed from that id, preventing ordinary Stripe webhook retries from creating duplicate purchase/subscription records or workspaces.

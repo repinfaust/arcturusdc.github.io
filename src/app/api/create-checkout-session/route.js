@@ -78,8 +78,11 @@ export async function POST(request) {
       cancel_url: `${origin}/apps/stea/explore?canceled=true`,
       allow_promotion_codes: true,
       customer_email: body.email || undefined,
-      // Skip card collection if payment amount is 0 (e.g., with 100% discount)
-      payment_method_collection: 'if_required',
+      // Stripe only accepts this option when the Checkout Session contains a
+      // recurring price. One-time payments collect a payment method normally.
+      ...(checkoutMode === 'subscription'
+        ? { payment_method_collection: 'if_required' }
+        : {}),
       metadata: {
         planName: body.planName || (isUsSoloOneOff ? 'US Solo One-Off' : 'Unknown'),
         plan: plan,
