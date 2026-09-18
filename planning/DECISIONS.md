@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-09-18 — US Solo one-off price reduced to $30 (D-SITE-026)
+
+- David reduced the US-market Solo one-off purchase from **$46 USD to $30 USD**. The server-owned Stripe amount, public pricing UI, structured data, and STEa Terms move together; the entitlement and non-recurring purchase flow are unchanged.
+
 ## 2026-09-18 — STEa checkout repaired and US Solo one-off model added (D-SITE-025)
 
 - Fixed the live Stripe Checkout failure shown on `/apps/stea/explore`: the configured Stripe API rejects `custom_fields[1][description]`, so the unsupported custom-field parameter was removed. The Google sign-in email remains a required Checkout field.

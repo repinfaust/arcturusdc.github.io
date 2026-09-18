@@ -59,7 +59,7 @@ export async function POST(request) {
       ? {
           price_data: {
             currency: 'usd',
-            unit_amount: 4600,
+            unit_amount: 3000,
             product_data: {
               name: 'STEa Solo — US One-Off',
               description: 'One-time purchase of a Solo STEa workspace for the US market.',

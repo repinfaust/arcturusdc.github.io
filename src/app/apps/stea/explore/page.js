@@ -632,7 +632,7 @@ export default function SteaDemoPage() {
                       {
                         '@type': 'Offer',
                         name: 'US Solo One-Off',
-                        price: '46.00',
+                        price: '30.00',
                         priceCurrency: 'USD',
                       },
                     ],
@@ -839,7 +839,7 @@ export default function SteaDemoPage() {
               <div className="mb-12 border-2 border-blue-200 bg-blue-50 p-6 rounded-xl md:flex md:items-center md:justify-between md:gap-8">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-blue-700">US market · one-time purchase</p>
-                  <h3 className="mt-2 text-2xl font-bold text-neutral-900">Solo One-Off — $46</h3>
+                  <h3 className="mt-2 text-2xl font-bold text-neutral-900">Solo One-Off — $30</h3>
                   <p className="mt-2 text-neutral-700">
                     One Solo workspace with the same included tools as Solo. Pay once in USD with no recurring charge.
                   </p>
@@ -849,7 +849,7 @@ export default function SteaDemoPage() {
                   disabled={checkoutLoading === 'US Solo One-Off'}
                   className="mt-5 w-full shrink-0 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white transition-all hover:bg-blue-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:mt-0 md:w-auto"
                 >
-                  {checkoutLoading === 'US Solo One-Off' ? 'Loading...' : 'Purchase for $46'}
+                  {checkoutLoading === 'US Solo One-Off' ? 'Loading...' : 'Purchase for $30'}
                 </button>
               </div>
 

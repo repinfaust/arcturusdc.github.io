@@ -50,7 +50,7 @@ export default function SteaTermsPage() {
                 <h3 className="font-bold text-lg mb-2">2.1 Plan Types</h3>
                 <ul className="list-disc ml-6 space-y-1">
                   <li><strong>Solo Plan:</strong> £9/month or £92/year. Includes 1 active App, personal workspace, and full access to all tools.</li>
-                  <li><strong>US Solo One-Off:</strong> $46 once. Includes one Solo workspace for the US market with no recurring charge.</li>
+                  <li><strong>US Solo One-Off:</strong> $30 once. Includes one Solo workspace for the US market with no recurring charge.</li>
                   <li><strong>Team Plan:</strong> £25/seat/month or £255/seat/year. Includes up to 10 active Apps, shared workspaces, and collaborative features.</li>
                   <li><strong>Agency/Partner Plan:</strong> £49/seat/month or £499/seat/year. Includes multiple client workspaces, custom branding, and white-label options.</li>
                 </ul>
