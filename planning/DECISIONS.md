@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-09-20 — RehabPath QR store redirect; store URLs read from the catalogue (D-SITE-028)
+
+Adds `/apps/rehabpath/get` (`src/app/apps/rehabpath/get/route.js`), mirroring the existing
+Dialled MTB route at `src/app/apps/dialled-mtb/get/route.js`: a `route.js` handler that
+sniffs the User-Agent and 302s to the App Store or Play Store, with `Cache-Control:
+private, no-store` and `Vary: User-Agent` so no shared cache can pin one platform's
+destination for the other's scanners. Desktop and unrecognised agents fall through to
+`/apps/rehabpath`, which lists both stores — the right destination for a scanner on a
+laptop, and kept deliberately.
+
+**Departure from the Dialled route, and the reason:** Dialled hardcodes its two store URLs,
+duplicating `src/data/apps.json`. RehabPath instead imports the catalogue and reads
+`appStoreUrl` / `googlePlayUrl` from the `rehabpath` entry. A QR code is printed on
+physical media and cannot be reissued once it is in the wild, so the redirect behind it
+must not be able to drift from the catalogue. Two copies of a store URL is exactly the
+shape that rots silently: nothing fails at build time when one is updated and the other is
+not, and the symptom is a dead link reached by scanning a sticker.
+
+A missing catalogue field degrades to the marketing page rather than redirecting to
+`undefined`. This means a malformed catalogue entry produces a usable page, not a broken
+redirect.
+
+**Pattern going forward:** new store-redirect routes read from `apps.json`. The Dialled
+route is left as-is — its hardcoded URLs currently match the catalogue (verified), and
+rewriting a working production redirect that sits behind already-distributed QR codes is
+not worth the change risk. It should be migrated the next time it is touched for another
+reason.
+
 ## 2026-09-20 — Dialled MTB analytics registered in the app catalogue (D-SITE-027)
 
 The route `/apps/stea/dialled-mtb/dashboard` (metadata title "Analytics — Dialled MTB",
