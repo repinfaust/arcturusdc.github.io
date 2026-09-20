@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-09-20 — Dialled MTB analytics registered in the app catalogue (D-SITE-027)
+
+The route `/apps/stea/dialled-mtb/dashboard` (metadata title "Analytics — Dialled MTB",
+`src/app/apps/stea/dialled-mtb/dashboard/page.js:4`) existed and rendered, but had no entry
+in `src/lib/steaAppCatalog.js`. Two consequences, one cosmetic and one a governance hole:
+
+1. The launchpad grid renders from the catalogue, so no card existed. The page was reachable
+   only by typing the URL — which is how this surfaced.
+2. `getSteaAppForPath` returned `null` for the path, and `isSteaAppAllowed` returns `true`
+   for a null `appKey` ("routes that are not launchpad cards retain their existing access
+   controls"). The route therefore sat outside the workspace shelf policy entirely. That
+   null-means-allow branch is correct for genuinely fixed-tenant tools, but an unregistered
+   card-shaped route inherits it silently — the failure is invisible until someone notices
+   the missing card.
+
+Registered as `dialled-mtb-dashboard` in the `Team operations` group, with the matching card
+in `src/app/apps/stea/page.js` restricted to the three Dialled addresses, consistent with the
+other Dialled cards.
+
+**Migration consequence, accepted deliberately:** any tenant with an explicit
+`allowedSteaApps` array will not see the new key until an admin re-saves the workspace policy
+with it selected. This is fail-closed and correct per the project's SoRR stance — a new
+governed key defaults to denied, not granted. The Dialled workspace needs one admin save
+after deploy.
+
+**Pattern worth carrying:** a new page under `/apps/stea/` is not complete when it renders.
+It is complete when it has a catalogue entry, because the catalogue — not the route tree —
+is what the access gate reads.
+
 ## 2026-09-18 — US Solo one-off price reduced to $30 (D-SITE-026)
 
 - David reduced the US-market Solo one-off purchase from **$46 USD to $30 USD**. The server-owned Stripe amount, public pricing UI, structured data, and STEa Terms move together; the entitlement and non-recurring purchase flow are unchanged.

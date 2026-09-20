@@ -164,6 +164,16 @@ const IN_SESSION_DESTINATIONS = [
     onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
   },
   {
+    label: 'Dialled MTB — Analytics',
+    appKey: 'dialled-mtb-dashboard',
+    href: '/apps/stea/dialled-mtb/dashboard',
+    description: 'Rider activity, retention and engagement metrics for Dialled MTB.',
+    gradient: 'from-neutral-950/95 to-zinc-900/95',
+    borderColor: 'border-sky-500/40',
+    textLight: true,
+    onlyForEmails: ['repinfaust@gmail.com', 'daryn.shaxted@gmail.com', 'dialled.app@gmail.com'],
+  },
+  {
     label: 'Sidestand — Team workspace',
     appKey: 'sidestand',
     href: '/apps/stea/sidestand',

@@ -106,6 +106,13 @@ export const STEA_APP_CATALOG = [
     paths: ['/apps/stea/dialled-mtb/calendar'],
   },
   {
+    key: 'dialled-mtb-dashboard',
+    name: 'Dialled MTB — Analytics',
+    description: 'Rider activity, retention, and engagement metrics.',
+    group: 'Team operations',
+    paths: ['/apps/stea/dialled-mtb/dashboard'],
+  },
+  {
     key: 'sidestand',
     name: 'Sidestand — Team workspace',
     description: 'Rider analytics and native-offer planning.',
