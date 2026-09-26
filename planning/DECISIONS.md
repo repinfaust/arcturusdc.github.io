@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-09-26 — PMR homepage concept served as a static Claude Design export (D-SITE-029)
+
+Adds `/apps/pmr/concept`: the PMR Bike Couriers homepage concept, a self-contained Claude
+Design share export, stored byte-for-byte at `public/apps/pmr/concept.html` and reached
+through a `next.config.js` rewrite. Every `/apps/pmr/*` response carries
+`X-Robots-Tag: noindex, nofollow`, and the page is not listed in the app catalogue: it is a
+client concept shared by link, not a public product page.
+
+**Why a static file, not the `route.js` pattern used for the legal pages:** the export is
+14 MB because every asset is embedded, including the 4 MB hero video. A `route.js` handler
+would trace that file into a serverless function and read it on every request; a `public/`
+file is served straight from the CDN. Nothing is lost by serving it statically: the page
+assembles itself in the browser (bundled React, fonts, images, and the hero video set to
+muted and started by the page's own code, so autoplay works on mobile). The export makes no
+network requests of its own.
+
+**Known cost:** the browser must download the whole 14 MB before anything renders, so first
+load on mobile data is slow. If the concept is kept long-term, the hero video should be
+split out and streamed (web-ready `pmr-animation-bg.webm`/`.mp4` and poster files already
+exist in the PMR project's `Assets/Videos/`).
+
+**Pattern going forward:** further client concepts exported from Claude Design go in
+`public/apps/<client>/<name>.html`, get a rewrite for the extensionless URL, and get the
+noindex header. Replacing a concept means replacing the file, with no code change.
+
 ## 2026-09-20 — RehabPath QR store redirect; store URLs read from the catalogue (D-SITE-028)
 
 Adds `/apps/rehabpath/get` (`src/app/apps/rehabpath/get/route.js`), mirroring the existing

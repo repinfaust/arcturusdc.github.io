@@ -16,6 +16,11 @@ const nextConfig = {
         source: '/stea/:path*',
         destination: '/apps/stea/:path*',
       },
+      // Client design concepts: self-contained Claude Design exports served as static files (D-SITE-029)
+      {
+        source: '/apps/pmr/concept',
+        destination: '/apps/pmr/concept.html',
+      },
     ];
   },
 
@@ -28,6 +33,11 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
         ]
+      },
+      {
+        // Unlisted client concepts are not for search engines (D-SITE-029)
+        source: '/apps/pmr/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }]
       }
     ];
   },
