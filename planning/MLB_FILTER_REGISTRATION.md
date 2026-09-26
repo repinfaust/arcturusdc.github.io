@@ -321,3 +321,23 @@ floor to improve on.
 project reaches its end point and all five gates have been evaluated and passed on a
 pre-registered primary. Registering `F4b_conf` authorises nothing, implies nothing, and
 brings nothing forward.
+
+---
+
+## 2026-09-26 — Collection coverage note (additive; no frozen value touched)
+
+From 2026-09-27 the T-2h targeted check runs from 09:00 ET instead of 12:00 ET (D-SITE-030).
+Before this, day games with first pitch before ~14:00 ET could receive a T-2h snapshot only
+by chance (a burst or scheduled pass landing in the window). Those games were systematically
+under-represented in the eligible set for **both** `F2_pmove` (window from 2026-08-17) and
+`F4b_conf` (from 2026-09-11).
+
+No filter, θ, φ, φ_b, primary designation or gate is changed. The eligibility rule (§1 /
+A1: `t2hPick.evGradeable === true`) is unchanged; more early games will now satisfy it. At
+gate evaluation, report results with and without games whose first pitch is before 14:00 ET,
+so any composition effect of this change is visible rather than silently absorbed.
+
+Separately, 5 eligible games in the F2 window had their opener captured 0.5–1.0 h late,
+because a stale deployment wrote the earliest price to an orphan doc (D-SITE-030). Their
+openers are left as captured. They are listed in `MLB_BET_SELECTION_FINDINGS.md` (2026-09-26).
+

@@ -1,5 +1,47 @@
 # Decisions
 
+## 2026-09-26 — MLB T-2h window widened; all six MLB functions redeployed as one bundle (D-SITE-030)
+
+Health check of `apps/stea/mlb` (full evidence: `planning/MLB_BET_SELECTION_FINDINGS.md`,
+2026-09-26 entries). Two decisions, approved by David the same day.
+
+**1. `mlbT2hCheck` now runs `*/15 9-23` ET (was `12-23`).** The T-2h window is 100-140 min
+before first pitch. With a 12:00 start, no game with first pitch before ~14:00 ET could be
+captured by the targeted check. Over 09-12 → 09-25, all 7 no-snapshot T-2h misses were
+13:10-13:37 ET first pitches. The collection's earliest regular slot is 12:10 ET (window opens
+09:50), so 09:00 covers every first pitch from 11:05 onward. Cost: extra Firestore reads
+only. An odds credit is still spent only when a game is actually in its window. The previous
+comment, which claimed 13:05 coverage, was wrong and has been corrected.
+
+*Effect on the study:* the missed games were a **systematic** exclusion of day games from
+the eligible population, not random loss. The change alters who is eligible from 2026-09-27;
+it touches no filter, threshold, primary designation or gate. Recorded as a dated additive
+note in `MLB_FILTER_REGISTRATION.md` so it is visible at gate evaluation.
+
+**2. All six MLB functions deploy together, never with a partial `--only` list.** Root cause
+of 31 post-fix gamePk-less orphan docs: `mlbPollGameData` was last deployed 2026-07-18, and the
+`burst:material_event` snapshot it fires (`functions/mlb/service.js:540`) ran the bundled
+pre-D-SITE-011 `snapshotLinesImpl`. The 2026-08-03 fix was deployed to the snapshot, close
+and T-2h functions only. Production therefore ran two versions of the same function, and one
+of them failed open. Every orphan snapshot carries the burst trigger; 0 of 15,171 non-burst
+snapshots since 08-04 lack a gamePk. Redeployed 2026-09-26 19:26Z:
+`mlbSnapshotLines, mlbSnapshotLinesClose, mlbSnapshotLinesCloseNight, mlbPollGameData,
+mlbFinalizeDay, mlbT2hCheck`. Source diff since the 08-03 bundle touched finalize and EV
+helpers only, so the snapshot and T-2h functions change behaviour only by the cron edit above.
+
+**Orphan data: documented, not repaired (David's decision).** Of 26 post-registration
+orphans with a real counterpart, 21 real games still got an opener at or before the orphan's
+time. 5 had their opener captured 0.5-1.0 h late, and 1 of those (Dodgers@Braves, 2026-08-25,
+gamePk 824881) has a different opener line (+0.25). Rewriting openers would alter F2 inputs
+after registration, so they stay as captured. The orphan docs remain; they are excluded from
+everything by `gamePk: null`.
+
+**Also:** `firebase.json` functions `ignore` now excludes `_*-tmp.*`, so ad-hoc admin scripts
+in `functions/` are no longer uploaded with the bundle.
+
+**Open, not decided here:** Node.js 20 is decommissioned for Cloud Functions on 2026-10-30,
+after which these functions cannot be redeployed without a runtime upgrade.
+
 ## 2026-09-26 — PMR homepage concept served as a static Claude Design export (D-SITE-029)
 
 Adds `/apps/pmr/concept`: the PMR Bike Couriers homepage concept, a self-contained Claude

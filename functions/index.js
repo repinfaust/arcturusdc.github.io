@@ -104,13 +104,15 @@ exports.mlbFinalizeDay = functions.pubsub
   .timeZone('America/New_York')
   .onRun(mlb.finalizeDayScheduled);
 
-// T-2h targeted check every 15 min through the slate window (12:00-23:45 ET —
-// covers day games' ~13:05 first pitch through west-coast ~22:15 first pitch).
-// The check itself is a free Firestore read; it only spends an Odds API credit
-// when a tracked game is actually 100-140 min from first pitch and not yet
-// captured (see t2hCheckImpl). D-SITE-008 follow-up, 2026-07-19.
+// T-2h targeted check every 15 min, 09:00-23:45 ET. A game's 100-140 min window
+// opens 140 min before first pitch: 09:50 for the earliest regular slot (12:10 ET),
+// 08:45 for an 11:05 start, so a 09:00 start covers every first pitch from 11:05
+// onward. The old 12:00 start systematically missed 12:xx-13:xx ET day games
+// (D-SITE-030). The check itself is a free Firestore read; it only spends an Odds
+// API credit when a tracked game is actually 100-140 min from first pitch and not
+// yet captured (see t2hCheckImpl). D-SITE-008 follow-up, 2026-07-19.
 exports.mlbT2hCheck = functions.pubsub
-  .schedule('*/15 12-23 * * *')
+  .schedule('*/15 9-23 * * *')
   .timeZone('America/New_York')
   .onRun(mlb.t2hCheckScheduled);
 

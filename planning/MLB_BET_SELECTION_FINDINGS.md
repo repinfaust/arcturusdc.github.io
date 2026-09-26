@@ -245,3 +245,89 @@ slate-day, so gate 3's ~250+ needs ~100 slate-days. Like F2, **it does not concl
 snapshot during φ_b calibration. The 21 unresolvable games reported above therefore fail on
 the **opener** side, not T-2h. This narrows the open ~9% matching issue to opener-snapshot
 matching specifically and is the place to start when diagnosing it.
+
+---
+
+## 2026-09-26 — Collector health check (no scoring performed)
+
+**Status: NO GATE EVALUATED. NO FORWARD-WINDOW CORRECTNESS, WIN RATE OR P&L COMPUTED.**
+All queries below read price, timing and provenance fields only.
+
+### Healthy
+
+- All six MLB functions deployed; every one ran on 2026-09-26.
+- `mlb_meta/collector`: last run 19:00Z (`cron: 13 games, 0 rejected, 0 unmatched`),
+  `lastError: null` since 2026-07-31, finalize 07:30Z (17 games), 135 odds credits remaining
+  at ~9/day.
+- Every gamePk-linked game 09-12 → 09-25 has opener + close and finalized.
+- Since 2026-08-04, **0 of 15,171** non-burst snapshots carry `gamePk: null` — the D-SITE-011
+  fix is working on the paths it was deployed to.
+
+### Fault 1 — D-SITE-011 orphaning persists via the burst path (root cause established)
+
+45 `mlb_games` docs have no `gamePk`; 31 were created after the 2026-08-03 fix (08-03 ×6,
+08-10 ×4, 08-14 ×1, 08-17 ×3, 08-24 ×4, 08-31 ×5, 09-14 ×4, 09-21 ×10), plus 8 with no
+`date` at all (not yet examined). Signature is identical to D-SITE-011: slug id, filed under
+the collection date, first pitch 1–2 days later.
+
+**Every orphan snapshot carries `trigger: 'burst:material_event'`** (135 null-gamePk burst
+snapshots in total). The burst is fired from inside `pollGameDataImpl`
+(`functions/mlb/service.js:540`), so it executes whatever `snapshotLinesImpl` is bundled in
+the **`mlbPollGameData` deployment — last updated 2026-07-18T19:10Z**, 16 days before the
+D-SITE-011 fix (`a599afc`, 2026-08-03). The 08-03 deploy covered the snapshot, close and
+T-2h functions only. Production therefore runs two versions of `snapshotLinesImpl`; the
+stale one fails open.
+
+**Impact on the study (measured, same day):** orphans are never finalized or graded, so no
+pick or EV is corrupt. Of the 26 post-registration orphans, every one maps to a real gamePk
+doc that is final and `evGradeable`. **21 of those real games got their opener at or
+before the orphan's time**, so they were unaffected. **5 had their opener captured
+0.5–1.0 h late:**
+
+| played | game | gamePk | opener lag | opener line vs orphan |
+|---|---|---|---|---|
+| 2026-08-25 | Astros @ Yankees | 823505 | 0.5 h | same |
+| 2026-08-25 | Royals @ Blue Jays | 822773 | 0.5 h | same |
+| 2026-08-25 | Dodgers @ Braves | 824881 | 0.5 h | +0.25 |
+| 2026-08-25 | Brewers @ Mets | 823585 | 0.5 h | same |
+| 2026-09-15 | Brewers @ Pirates | 823333 | 1.0 h | same |
+
+The earlier guess that this might explain the ~9% opener-matching issue is **not supported**:
+5 games cannot account for 21 forward-window failures. Recurs mostly on Mondays. Separately,
+8 docs have numeric gamePk-style ids but no `gamePk`, `date`, first pitch or opener. They look
+like status-only stubs; they have not been examined further and are excluded by `gamePk: null`.
+
+**Resolution (David, 2026-09-26, D-SITE-030):** all six MLB functions redeployed as one
+bundle at 19:26Z. Orphan data documented, not repaired: rewriting the 5 openers would alter F2
+inputs after registration.
+
+This is the same lesson as the 2026-07-28 drift finding: source review cannot show what is
+deployed. A partial `--only` deploy leaves every other function on its old bundle.
+
+### Fault 2 — T-2h misses, 09-12 → 09-25: 22 games, two causes, one real
+
+| cause | games | status |
+|---|---|---|
+| Market exactly even at the chosen T-2h snapshot (`overDec === underDec`) → `buildPick` returns no side (`service.js:93-94`) | 15 | **By design, not a bug.** No side exists to grade. Consistent with the registration's eligibility rule (`evGradeable`). |
+| No snapshot in the 100–140 min window | 7 | **Real gap.** All are 13:10–13:37 ET first pitches. Their window opens ~11:10 ET; `mlbT2hCheck` runs `*/15 12-23` ET, so it cannot fire in time. The comment in `functions/index.js` claiming 13:05 coverage is wrong. |
+
+The 7 are a **systematic** exclusion of early day games from the eligible population, not
+random loss. It must be fixed, or accounted for, before any gate evaluation. **Fixed 2026-09-26 (D-SITE-030):** the check now runs `*/15 9-23` ET; the earliest regular slot (12:10 ET) has its window open at 09:50. Widening the
+cron changes who is eligible but no filter, threshold or gate. It should still be recorded
+as a dated, additive note against both registrations, not applied silently.
+
+**Correction to the same-day verbal report:** 14 games were first described as "T-2h taken
+but no pick, undiagnosed" and orphans as "no snapshots". Both were wrong. The first set is
+the even-market case above. The second came from querying a non-existent collection
+(`mlb_snapshots` rather than `mlb_line_snapshots`).
+
+### Forward-window counts (no scoring)
+
+| | eligible games (final, `t2hPick.evGradeable`) |
+|---|---|
+| F2 window (≥ 2026-08-17) | 457 |
+| F4b window (≥ 2026-09-11) | 175 |
+
+Filter selection counts were **not** computed. At the observed ~21–22% selection rates, they
+imply roughly 100 F2 and 37 F4b selections — against ~250+ each for gate 3. Neither
+concludes in 2026.
