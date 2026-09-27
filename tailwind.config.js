@@ -2,7 +2,10 @@
 module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx,mdx}",
-    "./public/**/*.html"
+    "./public/**/*.html",
+    // D-SITE-029: this self-contained export ships its own styles. Its embedded
+    // media/bundle is not Tailwind source and overflows the production extractor.
+    "!./public/apps/pmr/concept.html"
   ],
   theme: {
     extend: {

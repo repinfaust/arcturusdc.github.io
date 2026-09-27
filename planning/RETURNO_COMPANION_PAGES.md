@@ -69,12 +69,14 @@ product/privacy release gates have been resolved. Before production publication:
 - Browser: desktop gallery at 1280px, mobile overview and all three policies
   at 390px; overview/privacy had no horizontal overflow. Policy navigation
   and Premium FAQ expansion worked. No captured browser errors.
-- `npm run build` with Node 20.19.5 failed in Tailwind's default extractor with
-  `RangeError: Maximum call stack size exceeded` while compiling globals.css.
-  Production build success is NOT claimed. Standalone PostCSS compilation of
-  the existing content without Returno and of Returno alone both passed, so the
-  precise build-only trigger is not established. The site scans a pre-existing
-  PMR HTML export containing a 14 MB line, but that is a lead, not a confirmed
-  root cause. No build error was suppressed or unrelated configuration changed.
+- The initial production build failed in Tailwind's extractor. Resolved on
+  2026-09-27 at David's request: the content glob incorrectly scanned the
+  self-contained PMR export and its roughly 14 MB embedded-data line. A clean
+  uninstrumented baseline failed; the same clean build passed after excluding
+  that single export from Tailwind's inputs. See `planning/FINDINGS.md`.
+- `npm run build` on Node 20.19.5 now passes, including the postbuild leak check.
+  The production server on port 3027 serves all four Returno routes and their
+  CSS/images. All three legal HTML sources are present in the function traces.
+  PMR's URL still returns the original unchanged HTML and noindex header.
 - `git diff --check` passed. Existing unrelated site changes, including
   functions and planning/DECISIONS.md, were preserved outside this checkpoint.
