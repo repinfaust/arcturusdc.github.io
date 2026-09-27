@@ -54,9 +54,10 @@ product/privacy release gates have been resolved. Before production publication:
    arrangements for the actual accounts; add concrete periods where established.
    OpenAI API documentation checked 2026-09-27 supports the stated standard
    abuse-monitoring period and exceptions, not a zero-retention claim.
-4. Review the terms and privacy notice for release. The overview remains in
-   testing until public distribution is approved. Publishing pages is separate
-   from submitting the app or completing Play Data Safety.
+4. Review the terms and privacy notice for release. The website pages are now
+   published, while the overview still labels the app as in testing until public
+   distribution is approved. Publishing pages is separate from submitting the
+   app or completing Play Data Safety.
 
 ## Verification
 
@@ -80,3 +81,8 @@ product/privacy release gates have been resolved. Before production publication:
   PMR's URL still returns the original unchanged HTML and noindex header.
 - `git diff --check` passed. Existing unrelated site changes, including
   functions and planning/DECISIONS.md, were preserved outside this checkpoint.
+- Commit `34cc9b2` was deployed to the configured Vercel production project on
+  2026-09-27 after the direct CLI token was refreshed through Vercel's device
+  login. The production domain `https://www.arcturusdc.com` returned HTTP 200
+  for the overview and all three policy routes; the overview contains the
+  Returno gallery and each policy contains reciprocal navigation links.
