@@ -34,9 +34,9 @@ Business-partner review of Squared, and David's approval of every fix, same day.
   readable text.
 - **Adzuna credit:** its API terms require "Jobs by Adzuna" on every displayed Adzuna advert, at
   least 116x23px, with "Jobs" and the Adzuna logo linked to adzuna.co.uk. Neither app did this.
-  `AdzunaCredit` now renders on each Adzuna advert in both apps. **Open:** the logo image must come
-  from adzuna.co.uk/press.html, which blocks automated download (403). Until David supplies it,
-  the word "Adzuna" is a linked label, so the credit is not yet fully compliant.
+  `AdzunaCredit` now renders on each Adzuna advert in both apps. The logo image comes from
+  adzuna.co.uk/press.html (it blocks automated download, so David supplied it); it is resized from
+  4000px to 320px wide as `public/img/adzuna-logo.jpg`, shown 18px high and linked.
 - **Saved searches / digest (planned item 3) on hold:** default Adzuna limits (250 calls/day, 2,500
   a month, shared by both apps) cannot support it as designed. Reed publishes no API terms; its
   website terms bar copying "for any commercial or business use", so storing or emailing Reed
