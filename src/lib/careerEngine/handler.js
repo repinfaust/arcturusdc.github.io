@@ -602,6 +602,7 @@ export function createCareerHandler(app) {
           body,
           tenantId,
           loadCandidate: (opts) => loadCandidate(tenantId, opts),
+          getUsage: () => getUsage(tenantId),
           assertActionAvailable: () => assertActionAvailable(tenantId),
           incrementUsage: () => incrementUsage(tenantId),
         });

@@ -10,7 +10,7 @@ import remarkGfm from 'remark-gfm';
 
 export const DISPLAY = 'font-[family-name:var(--font-sq-display)] [font-stretch:88%] font-black uppercase';
 export const MONO = 'font-[family-name:var(--font-sq-mono)]';
-export const CAPS = 'text-[11px] font-extrabold tracking-[0.13em] uppercase';
+export const CAPS = 'text-xs sm:text-[11px] font-extrabold tracking-[0.13em] uppercase';
 export const INPUT = 'w-full px-3.5 py-3 border border-[#d7cebc] bg-[#f8f4ea] text-sm text-[#22251f] outline-none focus:border-[#4c5c3f] placeholder:text-[#a39b89]';
 
 export function Kicker({ children, className = '' }) {
@@ -47,7 +47,7 @@ export function NumberedTitle({ n, title, right }) {
   return (
     <div className="flex flex-wrap justify-between items-center gap-3">
       <div className="flex items-baseline gap-3">
-        <span className={`${MONO} text-xs text-[#4c5c3f]`}>{n}</span>
+        <span className={`${MONO} text-[13px] sm:text-xs text-[#4c5c3f]`}>{n}</span>
         <h3 className="m-0 text-xl font-extrabold">{title}</h3>
       </div>
       {right}
@@ -60,7 +60,7 @@ export function Field({ label, hint, children }) {
     <label className="flex flex-col gap-2">
       <span className={`${CAPS} text-[#686c62]`}>{label}</span>
       {children}
-      {hint && <span className="text-[11px] leading-snug text-[#686c62]">{hint}</span>}
+      {hint && <span className="text-xs sm:text-[11px] leading-snug text-[#686c62]">{hint}</span>}
     </label>
   );
 }
@@ -114,14 +114,14 @@ export function Segmented({ options, value, onChange }) {
 export function StageBar({ stages, stage, note }) {
   return (
     <div className="mt-4">
-      <div className="flex justify-between text-xs mb-2 gap-3">
+      <div className="flex justify-between text-[13px] sm:text-xs mb-2 gap-3">
         <span className="font-semibold">{stages[stage]}</span>
         <span className={`${CAPS} text-[#686c62] shrink-0`}>Step {stage + 1} / {stages.length}</span>
       </div>
       <div className="h-1.5 bg-[#ede5d4]">
         <div className="h-1.5 bg-[#4c5c3f] transition-all duration-700" style={{ width: `${((stage + 1) / stages.length) * 100}%` }} />
       </div>
-      {note && <p className="text-[11px] text-[#686c62] mt-1.5">{note}</p>}
+      {note && <p className="text-xs sm:text-[11px] text-[#686c62] mt-1.5">{note}</p>}
     </div>
   );
 }
@@ -154,12 +154,12 @@ export function CopyField({ label, value, editable, onChange, multiline }) {
             : <input value={value || ''} onChange={(e) => onChange(e.target.value)} className={INPUT} />
         ) : (
           <div className="px-3.5 py-3 border border-[#ede5d4] bg-[#f8f4ea] text-sm min-h-[46px] break-words whitespace-pre-wrap">
-            {value || <span className="text-[#a39b89]">—</span>}
+            {value || <span className="text-[#686c62]">—</span>}
           </div>
         )}
       </div>
       <button onClick={doCopy} disabled={!value} title="Copy"
-        className={`shrink-0 h-[46px] px-3 ${CAPS} border ${value ? 'border-[#22251f] text-[#22251f] hover:bg-[#22251f] hover:text-[#f8f4ea]' : 'border-[#d7cebc] text-[#a39b89] cursor-not-allowed'}`}>
+        className={`shrink-0 h-[46px] px-3 ${CAPS} border ${value ? 'border-[#22251f] text-[#22251f] hover:bg-[#22251f] hover:text-[#f8f4ea]' : 'border-[#d7cebc] text-[#686c62] cursor-not-allowed'}`}>
         {copied ? 'Copied' : 'Copy'}
       </button>
     </div>
@@ -172,7 +172,7 @@ export function AiReviewWarning({ what = 'document' }) {
   return (
     <div className="mt-3 flex gap-2.5 p-3.5 bg-[#f3e5dc] border border-[#d9b8a6]">
       <span className="font-extrabold text-[#C63C00]">!</span>
-      <p className="text-xs leading-relaxed text-[#5a3c2f]">
+      <p className="text-[13px] sm:text-xs leading-relaxed text-[#5a3c2f]">
         <strong>Check this before you use it.</strong> AI can get details wrong or overstate things. Read every line of this {what} and make sure it&apos;s accurate and genuinely yours before sending it anywhere.
       </p>
     </div>

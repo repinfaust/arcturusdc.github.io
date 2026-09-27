@@ -76,7 +76,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
   const tailorStage = useStages(tailoring, 5, 5000);
 
   // Search
-  const [search, setSearch] = useState({ keywords: '', location: '', salary: '', mode: 'both', excludeService: true });
+  const [search, setSearch] = useState({ keywords: '', location: '', salary: '', mode: 'both', excludeService: false });
   const [searching, setSearching] = useState(false);
   const [searchOut, setSearchOut] = useState(null);
   const searchStage = useStages(searching, 4, 3000);
@@ -172,9 +172,14 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
     const derived = profile.current_role || [profile.rank, profile.trade].filter(Boolean).join(', ');
     return saveConfig(what, { profile_obj: { ...profile, current_role: derived } });
   };
-  const saveAnchors = () => saveConfig('anchors', {
-    evidence_obj: anchors.map((a) => ({ ...a, bullets: (a.bullets || []).map((b) => b.trim()).filter(Boolean) })),
-  });
+  // `next` lets a caller save a list it has just built, before state updates land.
+  const saveAnchors = (next) => {
+    const list = Array.isArray(next) ? next : anchors;
+    if (Array.isArray(next)) setAnchors(next);
+    return saveConfig('anchors', {
+      evidence_obj: list.map((a) => ({ ...a, bullets: (a.bullets || []).map((b) => b.trim()).filter(Boolean) })),
+    });
+  };
   const saveTranslations = (next) => {
     setTranslations(next);
     return api('save_config', { skills_translations: next });
@@ -252,7 +257,8 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
     setSearching(true);
     setSearchOut(null);
     const keywords = search.keywords.trim() || (profile.target_roles || [])[0] || '';
-    // Exclude the MOD and the user's own service (the design's default).
+    // Optional: exclude the MOD and the user's own service. Off by default: a
+    // leaver's chain of command already knows they're going (D-SITE-036).
     const exclude_employer = search.excludeService
       ? ['Ministry of Defence', profile.service_branch].filter(Boolean)
       : [];
@@ -342,6 +348,15 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
   // --- Skills translator ---
   async function translateLine(text) {
     const { res, data } = await api('translate_skill', { text });
+    if (handleLimit(res, data)) return null;
+    if (!res.ok) { alert(data.error || 'Translation failed'); return null; }
+    loadUsage();
+    return data;
+  }
+
+  // Whole-record translation: returns reviewable lines; nothing is saved here.
+  async function translateRecord(text) {
+    const { res, data } = await api('translate_record', { text });
     if (handleLimit(res, data)) return null;
     if (!res.ok) { alert(data.error || 'Translation failed'); return null; }
     loadUsage();
@@ -449,7 +464,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
             return (
               <button key={id} onClick={() => setTab(id)}
                 className={`flex items-center gap-2.5 px-4 py-3 border-r border-[#d7cebc] whitespace-nowrap text-sm font-bold ${on ? 'bg-[#22251f] text-[#f8f4ea]' : 'bg-transparent text-[#686c62]'}`}>
-                <span className={`${MONO} text-[11px] font-semibold ${on ? 'text-[#b9c7ab]' : 'text-[#a39b89]'}`}>{String(i + 1).padStart(2, '0')}</span>
+                <span className={`${MONO} text-xs sm:text-[11px] font-semibold ${on ? 'text-[#b9c7ab]' : 'text-[#686c62]'}`}>{String(i + 1).padStart(2, '0')}</span>
                 {label}
               </button>
             );
@@ -457,7 +472,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
         </nav>
         {usageLabel && (
           <button onClick={() => !usage?.unlimited && setShowPaywall(true)} title="Analyses, CV tailoring, searches and translations each use one action"
-            className={`px-3.5 py-2.5 border border-[#d7cebc] bg-[#fffdf8] text-xs font-extrabold whitespace-nowrap ${usage?.remaining === 0 ? 'text-[#C63C00]' : 'text-[#686c62]'}`}>
+            className={`px-3.5 py-2.5 border border-[#d7cebc] bg-[#fffdf8] text-[13px] sm:text-xs font-extrabold whitespace-nowrap ${usage?.remaining === 0 ? 'text-[#C63C00]' : 'text-[#686c62]'}`}>
             {usageLabel}
           </button>
         )}
@@ -510,6 +525,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
           profile={profile} setProfile={setProfile} saveProfile={saveProfile}
           anchors={anchors} setAnchors={setAnchors} saveAnchors={saveAnchors}
           translations={translations} saveTranslations={saveTranslations} translateLine={translateLine}
+          translateRecord={translateRecord} usage={usage}
           saving={saving}
           cvUploads={cvUploads} cvBusy={cvBusy} handleCvFile={handleCvFile} saveCvAndExtract={saveCvAndExtract}
           setActiveCv={setActiveCv} relabelCv={relabelCv} deleteCv={deleteCv}

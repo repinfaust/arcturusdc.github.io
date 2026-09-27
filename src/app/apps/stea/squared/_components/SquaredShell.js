@@ -47,7 +47,7 @@ export default function SquaredShell({ children }) {
             </div>
             {currentTenant && (
               <div className="bg-white rounded-xl px-3 py-2 border border-[#D6E0F4] sm:text-right">
-                <div className="text-[11px] text-[#94A3B8] font-bold uppercase">Workspace</div>
+                <div className="text-xs sm:text-[11px] text-[#94A3B8] font-bold uppercase">Workspace</div>
                 <div className="text-sm font-bold text-[#10294D]">{currentTenant.name}</div>
               </div>
             )}

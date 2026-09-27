@@ -13,7 +13,7 @@ export default function Paywall({ usage, onClose, onBuy, onRedeem }) {
         Squared is free for your first {usage?.free_actions || 20} actions (analyses, CV tailoring, searches and translations).
         {out ? ' To keep going, buy us a brew.' : ` You have ${usage.remaining} left.`}
       </p>
-      <p className="mt-3 text-xs leading-relaxed text-[#686c62]">
+      <p className="mt-3 text-[13px] sm:text-xs leading-relaxed text-[#686c62]">
         This isn&apos;t about profit — it covers the AI costs of running your search. A £5 brew unlocks another {usage?.bundle || 50} actions.
       </p>
       <div className="flex flex-wrap gap-3 mt-6">
@@ -22,7 +22,7 @@ export default function Paywall({ usage, onClose, onBuy, onRedeem }) {
         </button>
         <button onClick={onClose} className="h-12 px-5 border border-[#22251f] font-bold">Maybe later</button>
       </div>
-      <button onClick={onRedeem} className="mt-5 w-full text-center text-xs text-[#686c62] underline">
+      <button onClick={onRedeem} className="mt-5 w-full text-center text-[13px] sm:text-xs text-[#686c62] underline">
         Have an access code? Enter it here
       </button>
     </Modal>

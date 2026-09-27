@@ -6,6 +6,7 @@ import { extractCvText } from '@/lib/careerEngine/cvParse';
 import { useTenant } from '@/contexts/TenantContext';
 import { auth } from '@/lib/firebase';
 import { printCvAsPdf } from '@/lib/careerEngine/printCv';
+import AdzunaCredit from '@/components/AdzunaCredit';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -150,7 +151,7 @@ const ONBOARDING_CARDS = [
   },
   {
     icon: '🔒', title: 'Your data stays yours',
-    body: "Before you add anything, the important bit:\n\n• Everything you enter lives in your own private, isolated Arcturus DC workspace — no one else can see it.\n• We never sell or share your personal details for marketing — ever.\n• Your CV and job details are only sent to the AI and job-board services needed to do the analysis, then stored securely in your workspace.\n\nIt's your job search. We just help you run it.",
+    body: "Before you add anything, the important bit:\n\n• Everything you enter lives in your own private, isolated Arcturus DC workspace — no one else can see it.\n• We never sell your personal details or use them for marketing — ever.\n• Your CV and job details are only sent to the AI and job-board services needed to do the analysis, then stored securely in your workspace.\n\nIt's your job search. We just help you run it.",
   },
   {
     icon: '⚙️', title: 'First: set up your profile',
@@ -1126,7 +1127,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {activeTab === 'pipeline' && (
         <p className="-mt-4 text-[11px] text-slate-400 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm text-[#006C50]">lock</span>
-          Private to your Arcturus DC workspace · we never sell or share your data ·{' '}
+          Private to your Arcturus DC workspace · we never sell your data or use it for marketing · shared only with the AI and job boards that run your search ·{' '}
           <button onClick={() => setShowOnboarding(true)} className="underline hover:text-slate-600">how it works</button>
         </p>
       )}
@@ -1517,6 +1518,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{job.source}</span>
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5 truncate">{job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}</p>
+                      {job.source === 'Adzuna' && <AdzunaCredit className="mt-1" />}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -1750,7 +1752,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
              <p className="text-slate-500 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
              <div className="mt-3 inline-flex items-start gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 max-w-2xl">
                <span className="material-symbols-outlined text-[#006C50] text-base">lock</span>
-               <span>Your details stay in your own private Arcturus DC workspace. We never sell or share your personal data — it's only sent to the AI and job-board services needed to run your search, then stored securely here.</span>
+               <span>Your details stay in your own private Arcturus DC workspace. We never sell your data or use it for marketing. It's shared only with the AI and job-board services that run your search, then stored securely here.</span>
              </div>
            </header>
            

@@ -37,7 +37,7 @@ function Verdict({ results, onClear }) {
         <div className={`${DISPLAY} text-[26px] leading-none tracking-[-0.02em]`} style={{ color: v.color }}>{v.label}</div>
         <p className="mt-2 text-[13px]">{v.sub}</p>
         {action && (
-          <p className="mt-3 pt-3 border-t border-[#d7cebc] text-xs leading-relaxed"><strong>Recommendation: </strong>{action}</p>
+          <p className="mt-3 pt-3 border-t border-[#d7cebc] text-[13px] sm:text-xs leading-relaxed"><strong>Recommendation: </strong>{action}</p>
         )}
       </div>
 
@@ -52,7 +52,7 @@ function Verdict({ results, onClear }) {
               <span key={n} className="w-[22px] h-2" style={{ background: s != null && n <= Math.round(s) ? v.color : '#ede5d4' }} />
             ))}
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-[#686c62]">
+          <p className="mt-2 text-[13px] sm:text-xs leading-relaxed text-[#686c62]">
             <strong className="text-[#22251f]">Rough fit estimate.</strong> An AI&apos;s opinion to help you triage — read the reasoning, don&apos;t take the number as gospel.
           </p>
         </div>
@@ -61,8 +61,8 @@ function Verdict({ results, onClear }) {
       <div className="mt-4 p-3.5 bg-[#f3e5dc] border border-[#d9b8a6] flex gap-2.5">
         <span className="font-extrabold text-[#C63C00]">!</span>
         <div>
-          <div className="text-xs font-extrabold text-[#5a3c2f]">Watch-out</div>
-          <p className="mt-1 text-xs leading-relaxed text-[#5a3c2f]">{risk || 'Check the gaps in the reasoning before applying.'}</p>
+          <div className="text-[13px] sm:text-xs font-extrabold text-[#5a3c2f]">Watch-out</div>
+          <p className="mt-1 text-[13px] sm:text-xs leading-relaxed text-[#5a3c2f]">{risk || 'Check the gaps in the reasoning before applying.'}</p>
         </div>
       </div>
     </div>
@@ -78,7 +78,7 @@ function Reasoning({ results, tailorCv, tailoring, tailorStage, profile, goCvs }
     <div className="flex-[2_1_460px] min-w-0 bg-[#ede5d4] border border-[#d7cebc] p-5 sm:p-6">
       <div className="flex justify-between items-start gap-3">
         <h3 className="m-0 font-serif text-[28px] sm:text-[32px] font-normal leading-none tracking-[-0.02em]">The reasoning</h3>
-        <span className={`px-2 py-1 border border-[#4c5c3f] ${CAPS} !text-[10px] text-[#4c5c3f]`}>AI assessment</span>
+        <span className={`px-2 py-1 border border-[#4c5c3f] ${CAPS} !text-[11px] text-[#4c5c3f]`}>AI assessment</span>
       </div>
       <p className="mt-2 mb-4 text-[13px] text-[#686c62]">The why behind the score. The number&apos;s just a quick triage signal.</p>
 
@@ -89,7 +89,7 @@ function Reasoning({ results, tailorCv, tailoring, tailorStage, profile, goCvs }
               <button onClick={() => setOpen((o) => ({ ...o, [i]: !o[i] }))}
                 className="w-full flex justify-between items-center px-4 py-3.5 text-sm font-extrabold text-left">
                 <span className="flex gap-3 items-center">
-                  <span className={`${MONO} text-[11px] text-[#4c5c3f]`}>{String(i + 1).padStart(2, '0')}</span>
+                  <span className={`${MONO} text-xs sm:text-[11px] text-[#4c5c3f]`}>{String(i + 1).padStart(2, '0')}</span>
                   {sec.title}
                 </span>
                 <span className="text-lg font-normal text-[#4c5c3f]">{open[i] ? '−' : '+'}</span>
@@ -109,7 +109,7 @@ function Reasoning({ results, tailorCv, tailoring, tailorStage, profile, goCvs }
               <div className="flex flex-wrap justify-between items-center gap-3.5">
                 <div>
                   <div className="text-sm font-extrabold">Decided to go for it?</div>
-                  <p className="mt-0.5 text-xs text-[#686c62]">Generate a CV tailored to this job, in civvy language, grounded in your real evidence.</p>
+                  <p className="mt-0.5 text-[13px] sm:text-xs text-[#686c62]">Generate a CV tailored to this job, in civvy language, grounded in your real evidence.</p>
                 </div>
                 <Btn variant="olive" className="h-12 px-5 text-sm" onClick={() => tailorCv(results.id)} disabled={tailoring}>
                   {tailoring ? 'Tailoring CV…' : 'Proceed to Apply →'}
@@ -128,7 +128,7 @@ function Reasoning({ results, tailorCv, tailoring, tailorStage, profile, goCvs }
               </div>
               <div className="bg-[#fffdf8] border border-[#d7cebc] p-4 sm:p-5 max-h-[520px] overflow-y-auto"><Md>{results.tailored_cv}</Md></div>
               <AiReviewWarning what="CV" />
-              <p className="text-[11px] text-[#686c62] mt-2">
+              <p className="text-xs sm:text-[11px] text-[#686c62] mt-2">
                 Saved to your <button onClick={goCvs} className="font-bold underline text-[#4c5c3f]">CV library</button>.
               </p>
             </div>
@@ -145,15 +145,15 @@ export default function PipelineTab(props) {
 
   return (
     <div>
-      <p className="mt-3.5 text-xs text-[#686c62] flex items-center gap-2">
+      <p className="mt-3.5 text-[13px] sm:text-xs text-[#686c62] flex items-center gap-2">
         <span className="w-2 h-2 bg-[#4c5c3f] shrink-0" />
-        <span>Private to your Arcturus DC workspace · we never sell or share your data · <button onClick={openOnboarding} className="underline">how it works</button></span>
+        <span>Private to your Arcturus DC workspace · we never sell your data or use it for marketing · shared only with the AI and job boards that run your search · <button onClick={openOnboarding} className="underline">how it works</button></span>
       </p>
 
       <Panel accent className="mt-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className={`${CAPS} text-[#686c62]`}>Input terminal</span>
-          <span className={`${MONO} text-[11px] text-[#8a8474]`}>Brief in → straight answer out</span>
+          <span className={`${MONO} text-xs sm:text-[11px] text-[#8a8474]`}>Brief in → straight answer out</span>
         </div>
         <div className="flex flex-wrap gap-5 items-end mt-4">
           <textarea value={jdText} onChange={(e) => setJdText(e.target.value)} disabled={!hasConfig}
@@ -208,7 +208,7 @@ export default function PipelineTab(props) {
                   <span className="w-2 h-2" style={{ background: c }} />{typeof p.score === 'number' ? p.score.toFixed(1) : '—'}
                 </span>
                 <span>
-                  <span className={`px-2 py-1 border ${CAPS} !text-[10px] ${applying ? 'bg-[#4c5c3f] border-[#4c5c3f] text-[#f8f4ea]' : 'border-[#d7cebc] text-[#686c62]'}`}>{p.status}</span>
+                  <span className={`px-2 py-1 border ${CAPS} !text-[11px] ${applying ? 'bg-[#4c5c3f] border-[#4c5c3f] text-[#f8f4ea]' : 'border-[#d7cebc] text-[#686c62]'}`}>{p.status}</span>
                 </span>
                 <span className="text-[13px]">{p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</span>
                 <span className={`flex justify-end gap-4 ${CAPS}`}>

@@ -3,14 +3,20 @@
 // skills translator. No service number is collected or sent anywhere.
 import { NextResponse } from 'next/server';
 import { callAnthropic, stripJsonFences } from '../anthropic';
-import { clearanceMentioned, clearanceTag } from '../clearance';
+import { clearanceMentioned, clearanceTag, clearanceStatus } from '../clearance';
+import { chunkText, validateLine, MAX_CHUNKS, CATEGORIES } from '../recordTranslate';
+
+// Phrases the AI says it inferred beyond the original (D-SITE-036); the review
+// screen blocks the line until each is removed or confirmed by the user.
+const cleanAdded = (a) => (Array.isArray(a) ? a.filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim()) : []);
 
 const rolesText = (f) => (f.targetRoles.length ? f.targetRoles.join(', ') : 'civilian roles that fit their service');
 
 const SERVICE_RULES = `Rules for service leavers:
 - Translate military terms into civilian language an employer outside Defence understands (e.g. "detachment commander" -> "team leader"; "SJAR" -> "annual performance appraisal"). Expand any acronym you keep.
 - Never invent experience, metrics, qualifications, clearance or dates. Only use what is in the Candidate Profile, Evidence Library, approved translations and CV.
-- Clearance: only treat a clearance as held if the profile states it. Never assume it is still valid beyond what is stated; if expiry is unknown, say so.
+- Clearance: use the "Clearance status today" line in the context, never the raw profile field. A national security clearance (CTC/SC/DV) lapses when the holder leaves; it may be reinstated only if they move to another cleared role within 12 months and it is no older than 10 years (CTC/SC) or 7 years (DV), and that is the new employer's decision. Never call a lapsed clearance "held".
+- Civil Service roles: the Great Place to Work for Veterans scheme moves an eligible applicant on to the next selection stage (interview or test) if they meet the minimum criteria. Eligible: at least one year's service (Regular or Reserve, training counts), in transition or already left, and not already a civil servant. It is not a guaranteed job. Mention it only for Civil Service employers.
 - Keep security-sensitive detail general: do not add operation names, locations, unit details or equipment specifics beyond what the evidence already states.
 - Do not reference or request a service number.`;
 
@@ -28,10 +34,14 @@ export const squaredApp = {
 
   // Approved skills translations are part of what the AI may draw on.
   contextExtras(doc) {
+    const profile = doc.candidate_profile && typeof doc.candidate_profile === 'object' ? doc.candidate_profile : {};
+    let out = `\n\n## Clearance status today:\n${clearanceStatus(profile).label}`;
     const approved = (doc.skills_translations || []).filter((t) => t && t.used && t.civ);
-    if (!approved.length) return '';
-    return `\n\n## Approved civilian translations of service experience (use these phrasings):\n` +
-      approved.map((t) => `- ${t.mil} -> ${t.civ}`).join('\n');
+    if (approved.length) {
+      out += `\n\n## Approved civilian translations of service experience (use these phrasings):\n` +
+        approved.map((t) => `- ${t.mil} -> ${t.civ}`).join('\n');
+    }
+    return out;
   },
 
   prompts: {
@@ -151,15 +161,75 @@ ${cvText}`,
       return `Armed Forces service leaver${bits ? ` (${bits})` : ''}. Military experience often maps to operations, logistics, engineering, security, project and people-management roles.`;
     },
     enrich(jobs, profile) {
-      const held = profile && typeof profile === 'object' ? profile.clearance : '';
+      const status = clearanceStatus(profile && typeof profile === 'object' ? profile : {});
       return jobs.map((j) => {
         const required = clearanceMentioned(`${j.title}\n${j.description}`);
-        return required ? { ...j, clearance: clearanceTag(required, held) } : j;
+        return required ? { ...j, clearance: clearanceTag(required, status) } : j;
       });
     },
   },
 
   extraActions: {
+    // Whole-record translation (D-SITE-035): an appraisal, JPA extract or
+    // military CV in, reviewable civilian lines out. One action per chunk. The
+    // record itself is never stored; only lines the user approves are saved.
+    async translate_record({ body, loadCandidate, getUsage, incrementUsage }) {
+      const text = (body.text || '').trim();
+      if (!text) return NextResponse.json({ error: 'Upload or paste a record to translate.' }, { status: 400 });
+      const chunks = chunkText(text);
+      if (chunks.length > MAX_CHUNKS) {
+        return NextResponse.json({ error: `That record is too long (${chunks.length} parts). Split it and translate up to ${MAX_CHUNKS} parts at a time.` }, { status: 400 });
+      }
+      const usage = await getUsage();
+      if (!usage.unlimited && usage.remaining < chunks.length) {
+        const err = new Error(`This record needs ${chunks.length} actions and you have ${usage.remaining} left.`);
+        err.code = 'LIMIT_REACHED';
+        err.usage = usage;
+        throw err;
+      }
+      const cand = await loadCandidate({ withCv: false });
+
+      const system = 'You translate Armed Forces records (appraisal reports, JPA extracts, course reports, military CVs) into plain civilian CV language. ' +
+        'Respond with ONLY a valid JSON array.\n\n' + SERVICE_RULES;
+      const prompt = (chunk) => `From this part of the candidate's service record, pick out every line worth putting on a civilian CV and translate each one.
+
+Return ONLY a JSON array of objects:
+{"mil": "<the original wording, copied EXACTLY from the record>", "civ": "<one civilian CV line, max 25 words>", "category": "<one of: ${CATEGORIES.join(', ')}>", "added": ["<each phrase in civ that states a fact not in mil, copied exactly from civ>"], "note": "<optional: what you could not translate without more detail, else empty>"}
+
+Rules:
+- "mil" must be copied character for character from the record below — no paraphrasing, no joining separate sentences.
+- "civ" keeps every fact and number exactly as the original states it; add no new numbers, claims or qualifications.
+- If civ says anything the original does not (e.g. "zero losses" when the original only says "kit account"), list that phrase in "added". Be strict: an interviewer may ask about it.
+- Skip administrative text, headings, and anything security-sensitive.
+
+Record:
+${chunk}`;
+
+      const results = await Promise.all(chunks.map(async (chunk) => {
+        try {
+          const raw = await callAnthropic({ system, cachedContext: cand.cachedContext, prompt: prompt(chunk), maxTokens: 4000 });
+          const arr = JSON.parse(stripJsonFences(raw));
+          return Array.isArray(arr) ? arr : null;
+        } catch (e) {
+          console.error('translate_record chunk failed', e?.message);
+          return null;
+        }
+      }));
+
+      // Only successful chunks are charged.
+      const ok = results.filter(Boolean);
+      for (let i = 0; i < ok.length; i++) await incrementUsage();
+      if (!ok.length) return NextResponse.json({ error: 'Could not translate that record. Try pasting the text instead of uploading.' }, { status: 422 });
+
+      const lines = ok.flat()
+        .filter((l) => l && typeof l.mil === 'string' && typeof l.civ === 'string' && l.civ.trim())
+        .map((l) => {
+          const line = { mil: l.mil.trim(), civ: l.civ.trim(), category: CATEGORIES.includes(l.category) ? l.category : 'Skills', added: cleanAdded(l.added), note: (l.note || '').trim() };
+          return { ...line, ...validateLine(line, text) };
+        });
+      return NextResponse.json({ lines, chunks: chunks.length, charged: ok.length, failed: chunks.length - ok.length });
+    },
+
     // The AI suggests a civilian phrasing for one line of service experience;
     // the user approves it line by line in Config (one action).
     async translate_skill({ body, loadCandidate, assertActionAvailable, incrementUsage }) {
@@ -175,13 +245,14 @@ ${cvText}`,
           'Respond with ONLY valid JSON.\n\n' + SERVICE_RULES,
         cachedContext: cand.cachedContext,
         prompt: `Translate this line of service experience into one civilian CV line (max 25 words):\n\n"${line}"\n\n` +
-          'Return ONLY JSON: {"civ": "<civilian line>", "note": "<optional: anything you could not translate without more detail, else empty>"}',
+          'If the civilian line says anything the original does not, list each such phrase (copied exactly from civ) in "added".\n' +
+          'Return ONLY JSON: {"civ": "<civilian line>", "added": ["<phrase>"], "note": "<optional: anything you could not translate without more detail, else empty>"}',
         maxTokens: 400,
       });
       let out;
       try { out = JSON.parse(stripJsonFences(raw)); } catch { return NextResponse.json({ error: 'Could not translate that line. Try rewording it.' }, { status: 422 }); }
       await incrementUsage();
-      return NextResponse.json({ mil: line, civ: out.civ || '', note: out.note || '' });
+      return NextResponse.json({ mil: line, civ: out.civ || '', added: cleanAdded(out.added), note: out.note || '' });
     },
   },
 };

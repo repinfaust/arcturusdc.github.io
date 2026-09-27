@@ -1,5 +1,74 @@
 # Decisions
 
+## 2026-09-27 — Squared: review fixes (clearance lapse, sourcing, privacy wording, Adzuna credit) (D-SITE-036)
+
+Business-partner review of Squared, and David's approval of every fix, same day.
+
+- **Clearance lapses on exit.** "You hold SC" was wrong from the day after exit. `clearanceStatus`
+  (`src/lib/careerEngine/clearance.js`) now follows UK Security Vetting aftercare guidance
+  (gov.uk, "Aftercare and existing clearances"): a CTC/SC/DV clearance lapses on leaving; it may be
+  reinstated if the holder moves to another cleared role within 12 months; a transfer needs it to
+  be no older than 10 years (CTC/SC) or 7 years (DV); the new employer decides. There is a new
+  optional "year granted" field. Search tags, the Config note and the AI context all use this
+  status; BPSS is treated as an employer check, not a national security clearance.
+- **Great Place to Work for Veterans:** eligibility shown from the service record (1+ year served;
+  in transition or left; not already a civil servant), with links to the scheme and Civil Service
+  Jobs, both from official pages. It moves an applicant on a stage if they meet the minimum
+  criteria; it does not guarantee an interview, so the copy says the former. The AI rules carry
+  the same facts. CTP RightJob is not linked: a search result says it was discontinued in
+  September 2024, and the source page could not be fetched to confirm it.
+- **Inferred claims:** both translators now return `added` phrases (facts in the civilian line
+  that are not in the original, e.g. "zero losses"). A line cannot be ticked while any added phrase
+  is still in it and unconfirmed; the user edits it out or confirms "I can back this up", recorded
+  as `confirmed_claims`. Each saved translation shows its source (record or single line).
+- **Privacy wording:** "we never sell or share your data" contradicted "sent to the AI and job
+  boards". Both apps now say "we never sell your data or use it for marketing; shared only with the
+  AI and job-board services that run your search".
+- **MOD exclusion** defaults to off.
+- **Relevance** shows as a strong/good/partial title match, not a percentage, so it can't be read
+  as fit next to the /5 verdict.
+- **Notice date** is shown in full ("Notice started 14 Mar 2026").
+- **OPSEC nudge** added on CV upload.
+- **Phone text:** 12px becomes 13px and 11px becomes 12px below the `sm` breakpoint; the lowest
+  label size goes from 10px to 11px; `#a39b89` (about 2.6:1 on paper) is no longer used for
+  readable text.
+- **Adzuna credit:** its API terms require "Jobs by Adzuna" on every displayed Adzuna advert, at
+  least 116x23px, with "Jobs" and the Adzuna logo linked to adzuna.co.uk. Neither app did this.
+  `AdzunaCredit` now renders on each Adzuna advert in both apps. **Open:** the logo image must come
+  from adzuna.co.uk/press.html, which blocks automated download (403). Until David supplies it,
+  the word "Adzuna" is a linked label, so the credit is not yet fully compliant.
+- **Saved searches / digest (planned item 3) on hold:** default Adzuna limits (250 calls/day, 2,500
+  a month, shared by both apps) cannot support it as designed. Reed publishes no API terms; its
+  website terms bar copying "for any commercial or business use", so storing or emailing Reed
+  listings needs Reed's written confirmation first.
+
+## 2026-09-27 — Squared: whole-record translation with provenance and number checks (D-SITE-035)
+
+**Why:** David's business partner's core observation: service leavers are capable but struggle to
+change their language from military to civilian. The one-line translator is too slow for a
+whole appraisal report.
+
+**Decision:** a `translate_record` action takes an appraisal report, JPA extract, course report
+or military CV (uploaded and read in the browser, or pasted) and returns reviewable civilian
+lines grouped by category.
+- **Price:** one action per 12,000-character chunk, at most 3 chunks per run, shown to the user
+  before sending. Only chunks that translate successfully are charged. The run is refused up front
+  if the balance is below the chunk count.
+- **Provenance check (code, not trust):** each line's original wording must appear verbatim
+  (ignoring case and whitespace) in the submitted record, or it is flagged and cannot be ticked.
+- **Number check:** every number in the civilian line must appear in the original, or it is
+  flagged and cannot be ticked. This catches the most damaging kind of fabricated CV claim.
+- The same checks run live in the review screen as the user edits (`recordTranslate.js`, no
+  dependencies, shared by server and client).
+- **Data minimisation:** the record is never stored. It is held in the request and in the review
+  component's memory only; only ticked lines are saved, into `skills_translations`
+  (`source: 'record'`, `category`), capped at 200. The user can also append them to an evidence
+  anchor.
+- A pre-upload warning covers OFFICIAL/unmarked documents and security-sensitive detail. It is
+  advice, not a filter: classification cannot be reliably detected.
+
+**Not in this change:** the jargon check (glossary under review by Ellis) follows separately.
+
 ## 2026-09-27 — Squared: forces-leaver app on a shared career engine; Career Ops prompts profile-driven (D-SITE-034)
 
 **What:** Squared (`/apps/stea/squared`) is a separate STEa app for people leaving the Armed

@@ -110,7 +110,7 @@ export default function ApplyTab({
                 {coverLoading ? 'Revising…' : 'Revise →'}
               </Btn>
             </div>
-            <p className="text-[11px] text-[#686c62] mt-2">Each revision uses one action.</p>
+            <p className="text-xs sm:text-[11px] text-[#686c62] mt-2">Each revision uses one action.</p>
           </div>
         )}
       </Panel>

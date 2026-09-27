@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { TabHeading, Panel, NumberedTitle, Field, Segmented, SmallBtn, Btn, INPUT, DISPLAY, MONO, CAPS } from '../ui';
+import RecordTranslator from '../RecordTranslator';
+import { unresolvedClaims } from '@/lib/careerEngine/recordTranslate';
+import { clearanceStatus } from '@/lib/careerEngine/clearance';
 
 const BRANCHES = ['British Army', 'Royal Navy', 'Royal Air Force', 'Royal Marines'];
 const CLEARANCES = ['None', 'BPSS', 'CTC', 'SC', 'DV'];
@@ -9,7 +12,7 @@ const CLEARANCE_NOTE = {
   None: 'No clearance — that’s fine for most civilian roles.',
   BPSS: 'Baseline check. Most employers can re-run this quickly.',
   CTC: 'Counter-terrorist check. Useful for ports, police and some site roles.',
-  SC: 'Opens most defence-sector roles — we flag listings that mention it.',
+  SC: 'Opens most defence-sector roles while it is live — we flag listings that mention it.',
   DV: 'DV is rare and valuable — we flag listings that mention it.',
 };
 
@@ -48,8 +51,8 @@ function ExitPanel({ profile, set }) {
           {pct != null && (
             <>
               <div className="mt-4 h-1.5 bg-[rgba(248,244,234,0.18)]"><div className="h-1.5 bg-[#b9c7ab]" style={{ width: `${pct.toFixed(0)}%` }} /></div>
-              <div className={`mt-2 flex justify-between ${MONO} text-[11px] text-[#cbd3c0]`}>
-                <span>Notice in · {notice.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' })}</span>
+              <div className={`mt-2 flex justify-between ${MONO} text-xs sm:text-[11px] text-[#cbd3c0]`}>
+                <span>Notice started {notice.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 <span>{pct.toFixed(0)}% through notice</span>
               </div>
             </>
@@ -69,8 +72,9 @@ function ExitPanel({ profile, set }) {
   );
 }
 
-function Translator({ translations, saveTranslations, translateLine }) {
+function Translator({ translations, saveTranslations, translateLine, translateRecord, usage, anchors, saveAnchors }) {
   const [line, setLine] = useState('');
+  const [recordOpen, setRecordOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
   const used = translations.filter((t) => t.used).length;
@@ -90,7 +94,7 @@ function Translator({ translations, saveTranslations, translateLine }) {
     setBusy(false);
     if (!out) return;
     // New suggestions start unapproved: the user decides what goes in their CV.
-    await commit([...translations, { mil: out.mil, civ: out.civ, used: false }]);
+    await commit([...translations, { mil: out.mil, civ: out.civ, used: false, source: 'line', added: out.added || [], confirmed_claims: [] }]);
     setNote(out.note || '');
     setLine('');
   };
@@ -105,29 +109,51 @@ function Translator({ translations, saveTranslations, translateLine }) {
         <span className={`${CAPS} text-[#686c62]`}>{used} of {translations.length} in CV</span>
       </div>
 
-      <div className="mt-4 border-t-4 border-[#22251f] overflow-x-auto">
-        <div className="min-w-[620px]">
-          <div className={`grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)_150px] gap-3 py-2.5 border-b border-[#d7cebc] ${CAPS} text-[#686c62]`}>
+      <div className="mt-4 border-t-4 border-[#22251f]">
+        <div>
+          <div className={`hidden sm:grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)_150px] gap-3 py-2.5 border-b border-[#d7cebc] ${CAPS} text-[#686c62]`}>
             <span>In service</span><span /><span>In civilian work</span><span className="text-right">Use</span>
           </div>
           {translations.length === 0 && (
             <p className="py-5 text-[13px] text-[#686c62]">Nothing yet. Paste a line from your record below and we&apos;ll suggest a civilian version.</p>
           )}
-          {translations.map((t, i) => (
-            <div key={`${i}:${t.mil}:${t.civ}`} className="grid grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)_150px] gap-3 items-center py-3 border-b border-[#ede5d4]">
-              <span className="text-sm leading-snug text-[#686c62]">{t.mil}</span>
-              <span className={`${MONO} text-[#4c5c3f] text-center`}>→</span>
-              <input defaultValue={t.civ} onBlur={(e) => e.target.value !== t.civ && update(i, { civ: e.target.value })}
-                className="text-sm font-semibold bg-transparent border-b border-transparent hover:border-[#d7cebc] focus:border-[#4c5c3f] outline-none py-1" />
-              <span className="flex justify-end gap-2">
-                <button onClick={() => update(i, { used: !t.used })}
-                  className={`px-2.5 py-1.5 border text-[11px] font-extrabold tracking-[0.08em] uppercase ${t.used ? 'bg-[#4c5c3f] border-[#4c5c3f] text-[#f8f4ea]' : 'border-[#22251f]'}`}>
+          {translations.map((t, i) => {
+            // Show where each line came from, and block inferred claims until
+            // they are edited out or confirmed (D-SITE-036).
+            const open = unresolvedClaims({ civ: t.civ, added: t.added, confirmed: t.confirmed_claims });
+            const confirmed = (t.confirmed_claims || []).filter((c) => (t.added || []).includes(c));
+            return (
+            <div key={`${i}:${t.mil}:${t.civ}`} className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)_150px] gap-2 sm:gap-3 sm:items-center py-3 border-b border-[#ede5d4]">
+              <span className="text-sm leading-snug text-[#686c62]">
+                {t.mil}
+                <span className={`block mt-1 ${CAPS} !text-[11px] text-[#686c62]`}>{t.source === 'record' ? `From your record${t.category ? ` · ${t.category}` : ''}` : 'Single line'}</span>
+              </span>
+              <span className={`hidden sm:block ${MONO} text-[#4c5c3f] text-center`}>→</span>
+              <textarea defaultValue={t.civ} rows={2} onBlur={(e) => e.target.value !== t.civ && update(i, { civ: e.target.value })}
+                className="text-sm font-semibold leading-snug bg-transparent border-b border-transparent hover:border-[#d7cebc] focus:border-[#4c5c3f] outline-none py-1 resize-y" />
+              <span className="flex sm:justify-end gap-2">
+                <button onClick={() => update(i, { used: !t.used })} disabled={!t.used && open.length > 0}
+                  title={!t.used && open.length ? 'Remove or confirm the inferred wording first' : ''}
+                  className={`px-2.5 py-1.5 border text-xs sm:text-[11px] font-extrabold tracking-[0.08em] uppercase disabled:opacity-40 disabled:cursor-not-allowed ${t.used ? 'bg-[#4c5c3f] border-[#4c5c3f] text-[#f8f4ea]' : 'border-[#22251f]'}`}>
                   {t.used ? '✓ In CV' : 'Add'}
                 </button>
                 <button onClick={() => remove(i)} title="Remove" className="px-2 text-[#C63C00] font-bold">✕</button>
               </span>
+              {(open.length > 0 || confirmed.length > 0) && (
+                <div className="sm:col-span-4 flex flex-col gap-1 sm:-mt-1">
+                  {open.map((ph) => (
+                    <span key={ph} className="flex flex-wrap items-center gap-2 text-xs sm:text-[11px] font-bold text-[#C63C00]">
+                      Inferred, not in the original: &ldquo;{ph}&rdquo; — edit it out, or
+                      <button onClick={() => update(i, { confirmed_claims: [...(t.confirmed_claims || []), ph] })}
+                        className="px-2 py-0.5 border border-[#C63C00] uppercase tracking-[0.08em]">I can back this up</button>
+                    </span>
+                  ))}
+                  {confirmed.map((c) => <span key={c} className="text-xs sm:text-[11px] text-[#4c5c3f]">&ldquo;{c}&rdquo; — confirmed by you, not in the original</span>)}
+                </div>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -138,8 +164,15 @@ function Translator({ translations, saveTranslations, translateLine }) {
           {busy ? 'Translating…' : 'Translate →'}
         </Btn>
       </div>
-      {note && <p className="mt-2 text-xs text-[#8a5a1e]">{note}</p>}
-      <p className="mt-2 text-[11px] text-[#686c62]">Each translation uses one action. Edit any suggestion before you tick it.</p>
+      {note && <p className="mt-2 text-[13px] sm:text-xs text-[#8a5a1e]">{note}</p>}
+      <p className="mt-2 text-xs sm:text-[11px] text-[#686c62]">Each translation uses one action. Edit any suggestion before you tick it.</p>
+      {!recordOpen && (
+        <button onClick={() => setRecordOpen(true)} className="mt-3 text-sm font-extrabold text-[#4c5c3f]">Got a whole appraisal or record? Translate it in one go →</button>
+      )}
+      {recordOpen && (
+        <RecordTranslator translations={translations} saveTranslations={saveTranslations} translateRecord={translateRecord}
+          usage={usage} anchors={anchors} saveAnchors={saveAnchors} onClose={() => setRecordOpen(false)} />
+      )}
     </Panel>
   );
 }
@@ -164,12 +197,12 @@ function Anchors({ anchors, setAnchors, saveAnchors, saving }) {
               <input value={a.company || ''} onChange={(e) => update(i, { company: e.target.value })} placeholder="Unit or employer"
                 className="text-sm font-bold bg-transparent border-b border-[#ede5d4] focus:border-[#4c5c3f] outline-none py-1" />
               <input value={a.period || ''} onChange={(e) => update(i, { period: e.target.value })} placeholder="e.g. 2021–2027"
-                className={`${CAPS} !text-[10px] text-[#686c62] bg-transparent border-b border-[#ede5d4] focus:border-[#4c5c3f] outline-none py-1`} />
-              <button onClick={() => setAnchors(anchors.filter((_, j) => j !== i))} className={`self-start mt-1 ${CAPS} !text-[10px] text-[#C63C00]`}>Remove</button>
+                className={`${CAPS} !text-[11px] text-[#686c62] bg-transparent border-b border-[#ede5d4] focus:border-[#4c5c3f] outline-none py-1`} />
+              <button onClick={() => setAnchors(anchors.filter((_, j) => j !== i))} className={`self-start mt-1 ${CAPS} !text-[11px] text-[#C63C00]`}>Remove</button>
             </div>
             <textarea value={(a.bullets || []).join('\n')} onChange={(e) => update(i, { bullets: e.target.value.split('\n') })}
               placeholder="One achievement per line, with numbers"
-              className="min-h-[96px] text-xs leading-relaxed bg-[#f8f4ea] p-2.5 border border-[#ede5d4] outline-none focus:border-[#4c5c3f] resize-y" />
+              className="min-h-[96px] text-[13px] sm:text-xs leading-relaxed bg-[#f8f4ea] p-2.5 border border-[#ede5d4] outline-none focus:border-[#4c5c3f] resize-y" />
           </div>
         ))}
       </div>
@@ -179,7 +212,7 @@ function Anchors({ anchors, setAnchors, saveAnchors, saving }) {
 
 export default function ConfigTab({
   profile, setProfile, saveProfile, anchors, setAnchors, saveAnchors,
-  translations, saveTranslations, translateLine, saving,
+  translations, saveTranslations, translateLine, translateRecord, usage, saving,
   cvUploads, cvBusy, handleCvFile, saveCvAndExtract, setActiveCv, relabelCv, deleteCv,
 }) {
   const set = (k, v) => setProfile((p) => ({ ...p, [k]: v }));
@@ -192,9 +225,9 @@ export default function ConfigTab({
       <div className="mt-8">
         <TabHeading kicker="Kit list" title="Onboarding & configuration.">
           <p className="mt-2.5 text-[15px] text-[#686c62]">Your service record goes in here. Everything downstream — scoring, search, CV — is built from it.</p>
-          <div className="mt-3.5 flex gap-2.5 items-start max-w-[680px] p-3 border border-[#d7cebc] bg-[#fffdf8] text-xs leading-relaxed text-[#686c62]">
+          <div className="mt-3.5 flex gap-2.5 items-start max-w-[680px] p-3 border border-[#d7cebc] bg-[#fffdf8] text-[13px] sm:text-xs leading-relaxed text-[#686c62]">
             <span className="shrink-0 w-2 h-2 mt-1 bg-[#4c5c3f]" />
-            Your details stay in your own private Arcturus DC workspace. We never sell or share your personal data — it&apos;s only sent to the AI and job-board services needed to run your search, then stored securely here. We never ask for your service number.
+            Your details stay in your own private Arcturus DC workspace. We never sell your data or use it for marketing. It&apos;s shared only with the AI and job-board services that run your search, then stored securely here. We never ask for your service number.
           </div>
         </TabHeading>
       </div>
@@ -204,6 +237,9 @@ export default function ConfigTab({
         <NumberedTitle n="01" title="Your CV" />
         <p className="mt-2 text-sm leading-relaxed text-[#686c62] max-w-[820px]">
           Upload your CV (PDF or DOCX). The <strong className="text-[#22251f]">active</strong> CV is the reference Squared uses to analyse roles, search and tailor — and we&apos;ll fill your service record, profile and evidence from it.
+        </p>
+        <p className="mt-2 text-[13px] sm:text-xs leading-relaxed text-[#5a3c2f] max-w-[820px]">
+          <strong className="text-[#C63C00]">OPSEC:</strong> before uploading, take out operation names, deployment locations, unit details and anything you wouldn&apos;t say to a civilian employer.
         </p>
         <div className="flex flex-wrap gap-2.5 mt-4">
           <label className={`inline-flex items-center h-[46px] px-5 text-sm font-extrabold ${cvBusy ? 'bg-[#d7cebc] text-[#686c62] cursor-not-allowed' : 'bg-[#4c5c3f] text-[#f8f4ea] shadow-[4px_4px_0_#22251f] cursor-pointer'}`}>
@@ -232,9 +268,9 @@ export default function ConfigTab({
                 <div className="flex-1 min-w-[200px]">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold truncate">{cv.label}</span>
-                    {cv.active && <span className={`px-1.5 py-0.5 bg-[#4c5c3f] text-[#f8f4ea] ${CAPS} !text-[10px]`}>Active</span>}
+                    {cv.active && <span className={`px-1.5 py-0.5 bg-[#4c5c3f] text-[#f8f4ea] ${CAPS} !text-[11px]`}>Active</span>}
                   </div>
-                  <div className="mt-0.5 text-xs text-[#686c62] truncate">{cv.preview}…</div>
+                  <div className="mt-0.5 text-[13px] sm:text-xs text-[#686c62] truncate">{cv.preview}…</div>
                 </div>
                 {!cv.active && <button onClick={() => setActiveCv(cv.id)} className={`${CAPS} text-[#4c5c3f]`}>Set active</button>}
                 <button onClick={() => relabelCv(cv.id, cv.label)} className={`${CAPS} text-[#686c62]`}>Rename</button>
@@ -264,18 +300,35 @@ export default function ConfigTab({
             <Field label="Years served">
               <input type="number" min={0} max={50} value={profile.years_served ?? ''} onChange={(e) => set('years_served', e.target.value)} className={INPUT} />
             </Field>
+            {profile.clearance && profile.clearance !== 'None' && profile.clearance !== 'BPSS' && (
+              <Field label="Clearance granted or renewed (year) · optional" hint="Used to check the 10-year (SC/CTC) or 7-year (DV) transfer limit.">
+                <input type="number" min={1980} max={2100} value={profile.clearance_granted ?? ''} onChange={(e) => set('clearance_granted', e.target.value === '' ? '' : Number(e.target.value))} placeholder="e.g. 2019" className={INPUT} />
+              </Field>
+            )}
           </div>
           <div className="mt-4 flex flex-col gap-2">
             <span className={`${CAPS} text-[#686c62]`}>Security clearance held</span>
             <Segmented value={profile.clearance || 'None'} onChange={(v) => set('clearance', v)} options={CLEARANCES.map((c) => [c, c])} />
-            <span className="text-xs text-[#686c62]">{CLEARANCE_NOTE[profile.clearance || 'None'] || ''}</span>
+            <span className="text-[13px] sm:text-xs text-[#686c62]">{CLEARANCE_NOTE[profile.clearance || 'None'] || ''}</span>
+            {['transferable', 'lapsed', 'past'].includes(clearanceStatus(profile).state) && (
+              <span className="text-[13px] sm:text-xs font-bold text-[#8a5a1e]">{clearanceStatus(profile).label}.</span>
+            )}
           </div>
+          {Number(profile.years_served) >= 1 && (
+            <div className="mt-4 p-3.5 border border-[#4c5c3f] bg-[#f8f4ea] text-[13px] sm:text-xs leading-relaxed">
+              <strong>Civil Service roles:</strong> with a year or more served you look eligible for the{' '}
+              <a href="https://www.civil-service-careers.gov.uk/great-place-to-work-for-veterans/" target="_blank" rel="noreferrer" className="underline font-bold text-[#4c5c3f]">Great Place to Work for Veterans</a>{' '}
+              scheme (unless you&apos;re already a civil servant): meet a role&apos;s minimum criteria and your application moves on to the next stage. Most of these roles are on{' '}
+              <a href="https://www.civilservicejobs.service.gov.uk/csr/index.cgi" target="_blank" rel="noreferrer" className="underline font-bold text-[#4c5c3f]">Civil Service Jobs</a>, not Reed or Adzuna.
+            </div>
+          )}
         </div>
         <ExitPanel profile={profile} set={set} />
       </section>
 
       {/* 03 Translator */}
-      <Translator translations={translations} saveTranslations={saveTranslations} translateLine={translateLine} />
+      <Translator translations={translations} saveTranslations={saveTranslations} translateLine={translateLine}
+        translateRecord={translateRecord} usage={usage} anchors={anchors} saveAnchors={saveAnchors} />
 
       {/* 04 Profile + 05 Evidence */}
       <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] gap-5 items-start">

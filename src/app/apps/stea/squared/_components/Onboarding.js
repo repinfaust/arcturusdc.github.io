@@ -12,7 +12,7 @@ const CARDS = [
   },
   {
     title: 'Your data stays yours',
-    body: "Before you add anything:\n\n• Everything lives in your own private, isolated Arcturus DC workspace — no one else can see it.\n• We never sell or share your details for marketing. Ever.\n• We never ask for your service number.\n• Your CV and job details only go to the AI and job-board services needed to do the analysis.",
+    body: "Before you add anything:\n\n• Everything lives in your own private, isolated Arcturus DC workspace — no one else can see it.\n• We never sell your details or use them for marketing. Ever.\n• We never ask for your service number.\n• Your CV and job details only go to the AI and job-board services needed to do the analysis.",
   },
   {
     title: 'First: your service record',

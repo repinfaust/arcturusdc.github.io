@@ -39,7 +39,7 @@ export default function CvTab({ cvLibrary, profile, goPipeline }) {
                     </div>
                   </div>
                   <span className="flex items-center gap-3">
-                    <span className={`px-2 py-1 bg-[#4c5c3f] text-[#f8f4ea] ${CAPS} !text-[10px]`}>{cv.status}</span>
+                    <span className={`px-2 py-1 bg-[#4c5c3f] text-[#f8f4ea] ${CAPS} !text-[11px]`}>{cv.status}</span>
                     <span className="text-lg text-[#4c5c3f]">{open ? '−' : '+'}</span>
                   </span>
                 </button>

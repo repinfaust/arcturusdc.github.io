@@ -1,6 +1,12 @@
 'use client';
 
 import { TabHeading, Panel, Field, Segmented, Btn, StageBar, INPUT, DISPLAY, MONO, CAPS } from '../ui';
+import AdzunaCredit from '@/components/AdzunaCredit';
+
+// A title-relevance rank, not a fit score: shown as words so nobody reads a
+// percentage next to the verdict's /5 as fit (D-SITE-036).
+const matchLabel = (r) => (r >= 75 ? 'Strong title match' : r >= 60 ? 'Good title match' : 'Partial title match');
+const TAG_TONE = { ok: 'bg-[#dfe9ea] text-[#2e6570]', maybe: 'bg-[#f6ecdc] text-[#8a5a1e]', no: 'bg-[#f7e6dc] text-[#C63C00]' };
 
 const SEARCH_STAGES = [
   'Searching Reed & Adzuna…',
@@ -19,8 +25,13 @@ export default function ScansTab({ search, setSearch, searchJobs, searching, sea
       <div className="mt-8">
         <TabHeading kicker="Find roles" title="Recce the market">
           <p className="mt-2.5 text-[15px]">Search live UK job boards (Reed + Adzuna), then analyse any role against your service record.</p>
-          <p className="mt-2 text-xs leading-relaxed text-[#686c62] max-w-[820px]">
+          <p className="mt-2 text-[13px] sm:text-xs leading-relaxed text-[#686c62] max-w-[820px]">
             We search Reed + Adzuna — a good slice of UK roles, but not all (direct-employer and some boards aren&apos;t covered). Found a job elsewhere? Paste it on the Pipeline tab and analyse it directly.
+          </p>
+          <p className="mt-2 text-[13px] sm:text-xs leading-relaxed text-[#686c62] max-w-[820px]">
+            Civil Service roles mostly aren&apos;t on these boards — search{' '}
+            <a href="https://www.civilservicejobs.service.gov.uk/csr/index.cgi" target="_blank" rel="noreferrer" className="underline font-bold text-[#4c5c3f]">Civil Service Jobs</a>{' '}
+            and paste any role here to analyse it.
           </p>
         </TabHeading>
       </div>
@@ -42,7 +53,7 @@ export default function ScansTab({ search, setSearch, searchJobs, searching, sea
             <Segmented value={search.mode} onChange={set('mode')}
               options={[['both', 'Local + Remote'], ['location', 'Local only'], ['remote', 'Remote only']]} />
             <button type="button" onClick={() => set('excludeService')(!search.excludeService)} className="flex items-center gap-2.5 text-sm text-left">
-              <span className={`w-5 h-5 border-2 border-[#4c5c3f] flex items-center justify-center text-xs font-extrabold text-[#f8f4ea] shrink-0 ${search.excludeService ? 'bg-[#4c5c3f]' : ''}`}>
+              <span className={`w-5 h-5 border-2 border-[#4c5c3f] flex items-center justify-center text-[13px] sm:text-xs font-extrabold text-[#f8f4ea] shrink-0 ${search.excludeService ? 'bg-[#4c5c3f]' : ''}`}>
                 {search.excludeService ? '✓' : ''}
               </span>
               Exclude my current employer (Ministry of Defence{serviceBranch ? ` / ${serviceBranch}` : ''})
@@ -76,23 +87,24 @@ export default function ScansTab({ search, setSearch, searchJobs, searching, sea
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-base font-bold">{j.title}</span>
-                    <span className={`px-1.5 py-0.5 border border-[#d7cebc] ${CAPS} !text-[10px] text-[#686c62]`}>{j.source}</span>
+                    <span className={`px-1.5 py-0.5 border border-[#d7cebc] ${CAPS} !text-[11px] text-[#686c62]`}>{j.source}</span>
                   </div>
                   <div className="mt-0.5 text-[13px] text-[#686c62]">
                     {[j.company, j.location, j.salary || 'Salary not listed'].filter(Boolean).join(' · ')}
                   </div>
+                  {j.source === 'Adzuna' && <AdzunaCredit className="mt-2" />}
                   <div className="flex flex-wrap gap-2 mt-2.5">
-                    {j.why && <span className="px-2 py-1 bg-[#dce3d2] text-[11px] font-bold text-[#3d4a33]">{j.why}</span>}
+                    {j.why && <span className="px-2 py-1 bg-[#dce3d2] text-xs sm:text-[11px] font-bold text-[#3d4a33]">{j.why}</span>}
                     {j.clearance && (
                       <span title="Clearance is detected from the listing text — check the full advert."
-                        className={`px-2 py-1 text-[11px] font-bold ${j.clearance.ok ? 'bg-[#dfe9ea] text-[#2e6570]' : 'bg-[#f6ecdc] text-[#8a5a1e]'}`}>
+                        className={`px-2 py-1 text-xs sm:text-[11px] font-bold ${TAG_TONE[j.clearance.tone] || TAG_TONE.maybe}`}>
                         {j.clearance.label}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 sm:gap-4">
-                  {typeof j.relevance === 'number' && <span className={`${MONO} text-[13px] font-semibold text-[#4c5c3f]`}>{j.relevance}%</span>}
+                  {typeof j.relevance === 'number' && <span className="text-[13px] font-semibold text-[#4c5c3f] whitespace-nowrap">{matchLabel(j.relevance)}</span>}
                   {j.url && <a href={j.url} target="_blank" rel="noreferrer" className={`${CAPS} text-[#686c62]`}>View</a>}
                   <Btn variant="outline" className="h-[42px] px-4 text-[13px]" onClick={() => analyseFromSearch(j)} disabled={analysing}>Analyse</Btn>
                 </div>
@@ -101,16 +113,16 @@ export default function ScansTab({ search, setSearch, searchJobs, searching, sea
           </div>
 
           {searchOut.excluded_terms?.length > 0 && (
-            <details className="mt-4 text-[11px] text-[#686c62]">
+            <details className="mt-4 text-xs sm:text-[11px] text-[#686c62]">
               <summary className="cursor-pointer">Some role types are left out of results — what&apos;s filtered?</summary>
               <p className="mt-2 leading-relaxed">Job titles containing these terms are hidden before ranking: {searchOut.excluded_terms.join(' · ')}</p>
             </details>
           )}
 
           {debug && (
-            <details className="mt-3 bg-[#fffdf8] border border-[#d7cebc] text-xs">
+            <details className="mt-3 bg-[#fffdf8] border border-[#d7cebc] text-[13px] sm:text-xs">
               <summary className="cursor-pointer px-4 py-3 font-bold">Why these results? ({debug.ranked_count} of {debug.raw_count} raw)</summary>
-              <div className={`px-4 pb-4 ${MONO} text-[11px] space-y-0.5 text-[#686c62]`}>
+              <div className={`px-4 pb-4 ${MONO} text-xs sm:text-[11px] space-y-0.5 text-[#686c62]`}>
                 <div>queries: <b>{(debug.query?.terms || []).join(', ')}</b> · loc <b>{debug.query?.location}</b> · mode <b>{debug.query?.mode}</b></div>
                 <div>sources: {Object.entries(debug.source_counts || {}).map(([s, n]) => `${s}=${n}`).join(' · ') || 'none returned'}</div>
                 <div>funnel: {debug.raw_count} raw → {debug.deduped_count} deduped → {debug.after_negative_filter} after filter → {debug.ranked_count} shown</div>
