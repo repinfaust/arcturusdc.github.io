@@ -3,6 +3,15 @@ import { adminDb } from '@/lib/firebase-admin';
 import { sendClaimEmail } from '@/lib/email';
 import { createHmac } from 'crypto';
 
+// Coffee top-ups from the career-engine apps. The kind is set server-side by
+// each app's checkout route; it selects which app's usage doc gets the grant.
+const FREE_ACTIONS = 20;
+const COFFEE_BUNDLE = 50;
+const COFFEE_KINDS = {
+  career_coffee: { name: 'Career Ops', opsCollection: 'career_ops' },
+  squared_coffee: { name: 'Squared', opsCollection: 'squared_ops' },
+};
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -140,21 +149,21 @@ export async function POST(request) {
             });
           }
 
-          // Career Ops "buy a coffee" top-up → grant +50 actions to the tenant.
+          // Career-engine "buy a coffee" top-up → grant +50 actions to the tenant
+          // in the app the purchase came from (Career Ops or Squared, D-SITE-034).
           // Transaction so the grant is added to the free baseline (20), not 0,
           // when the usage doc doesn't exist yet.
-          if (session.metadata?.kind === 'career_coffee' && session.metadata?.tenantId) {
-            const FREE_ACTIONS = 20;
-            const COFFEE_BUNDLE = 50;
+          const coffeeApp = COFFEE_KINDS[session.metadata?.kind];
+          if (coffeeApp && session.metadata?.tenantId) {
             const usageRef = adminDb
               .collection('tenants').doc(session.metadata.tenantId)
-              .collection('career_ops').doc('usage');
+              .collection(coffeeApp.opsCollection).doc('usage');
             await adminDb.runTransaction(async (tx) => {
               const snap = await tx.get(usageRef);
               const current = snap.exists ? (snap.data().actions_granted ?? FREE_ACTIONS) : FREE_ACTIONS;
               tx.set(usageRef, { actions_granted: current + COFFEE_BUNDLE, updated_at: new Date() }, { merge: true });
             });
-            console.log(`Granted ${COFFEE_BUNDLE} Career Ops actions to tenant ${session.metadata.tenantId}`);
+            console.log(`Granted ${COFFEE_BUNDLE} ${coffeeApp.name} actions to tenant ${session.metadata.tenantId}`);
           }
         } else {
           // Subscription - create pending workspace if we have the required fields

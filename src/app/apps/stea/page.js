@@ -107,6 +107,14 @@ const IN_SESSION_DESTINATIONS = [
     textLight: true,
   },
   {
+    label: 'Squared',
+    appKey: 'squared',
+    href: '/apps/stea/squared',
+    description: 'Honest job-search triage for Armed Forces service leavers: straight verdicts, clearance-aware search and civilian CVs.',
+    gradient: 'from-stone-100/90 to-lime-50/40',
+    borderColor: 'border-[#4c5c3f]/50',
+  },
+  {
     label: 'WC26',
     appKey: 'wc26',
     href: '/apps/stea/wc26',

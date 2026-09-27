@@ -1,5 +1,45 @@
 # Decisions
 
+## 2026-09-27 — Squared: forces-leaver app on a shared career engine; Career Ops prompts profile-driven (D-SITE-034)
+
+**What:** Squared (`/apps/stea/squared`) is a separate STEa app for people leaving the Armed
+Forces, built from the Claude Design export in `planning/design/career-ops-forces/`. David chose
+a separate app with its own name rather than a Career Ops edition flag, so data controls can be
+refined per app as onboarding starts.
+
+**Shared engine (`src/lib/careerEngine/`):** the Career Ops API route was one 900-line handler.
+It is now a shared handler (auth, metering, CV library, analysis persistence, job search,
+checkout) plus one config per app (`apps/careerOps.js`, `apps/squared.js`) holding collections,
+prompts, search rules and extra actions. Both API routes are thin bindings. Membership auth
+(D-SITE-033) lives in the handler, so every engine app has it.
+
+**Career Ops prompts were hard-coded to one user.** The extract, evaluate, tailor, ranking and
+cover-letter prompts all assumed an energy/billing Product Owner targeting >£65k. They now build
+from each user's profile (target roles, salary floor, evidence). Output format is unchanged, so
+the Career Ops page is unaffected. Also changed: `analyse` now includes the active CV in the
+model context (it was loaded but unused), and prompts are JS modules, not runtime-read `.md` files.
+
+**Squared data:** own collections `tenants/{tid}/squared_ops` (config, usage, apply_profile,
+prefs), `squared_analyses`, `squared_cv_uploads`. Nothing is shared with Career Ops. No service
+number is collected; the prompts forbid requesting one. Exit date is optional (not set,
+countdown, or already out).
+
+**Squared features:** service record (branch, trade, rank, years, clearance, exit and notice
+dates) stored on the profile; clearance tags on search results from a case-sensitive pattern
+match on listing text, labelled "mentioned", never "required", because it is a text match; the
+default employer exclusion is the MOD plus the user's service; a skills translator
+(`translate_skill`, one action) where the AI suggests and the user approves line by line;
+approved lines join the model context. The evaluate prompt fixes the output headings the verdict
+panel parses.
+
+**Pricing:** same model as Career Ops (20 free, £5 for 50) with its own usage counter. Its own
+Stripe price (`SQUARED_COFFEE_PRICE_ID`) so checkout never shows Career Ops branding; unset
+means top-ups report "no price configured". Own access code (`SQUARED_ACCESS_CODE`), no default.
+The Stripe webhook maps `kind` to the right app's usage doc.
+
+**Access:** catalogue key `squared` and launchpad card; protected in `middleware.js`. Workspaces
+with an explicit `allowedSteaApps` list need `squared` added to see it.
+
 ## 2026-09-27 — Career Ops API requires a signed-in workspace member (D-SITE-033)
 
 **Finding:** `/api/stea/career` and `/api/stea/career/checkout` had no authentication. Both

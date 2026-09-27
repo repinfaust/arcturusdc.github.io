@@ -74,6 +74,13 @@ export const STEA_APP_CATALOG = [
     paths: ['/apps/stea/art-atlas'],
   },
   {
+    key: 'squared',
+    name: 'Squared',
+    description: 'Job-search triage for Armed Forces service leavers.',
+    group: 'Specialist tools',
+    paths: ['/apps/stea/squared'],
+  },
+  {
     key: 'wc26',
     name: 'WC26',
     description: 'World Cup pricing and value research.',
