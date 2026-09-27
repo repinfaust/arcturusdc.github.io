@@ -4,7 +4,7 @@
 // Same engine as Career Ops (src/lib/careerEngine) with its own collections,
 // prompts and forces features. Design: planning/design/career-ops-forces.
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { extractCvText } from '@/lib/careerEngine/cvParse';
 import { squaredApi, squaredCheckout } from './_components/api';
@@ -49,14 +49,22 @@ const EMPTY_PROFILE = {
 export default function SquaredApp({ initialTab = 'pipeline' }) {
   const { currentTenant, loading: tenantLoading } = useTenant();
   const tenantId = currentTenant?.id;
-  const router = useRouter();
+  const pathname = usePathname();
 
+  // Tabs switch in place and only rewrite the URL. router.push would change
+  // route segment, remounting this component: every tab change refetched all
+  // data and re-ran the first-run tour check. Next 14.2 syncs usePathname with
+  // native pushState, so Back/Forward still move between tabs.
   const [tab, setTabState] = useState(initialTab);
   const setTab = (id) => {
     setTabState(id);
     const path = TABS.find((t) => t[0] === id)?.[2] || TAB_BASE;
-    if (typeof window !== 'undefined' && window.location.pathname !== path) router.push(path, { scroll: false });
+    if (typeof window !== 'undefined' && window.location.pathname !== path) window.history.pushState(null, '', path);
   };
+  useEffect(() => {
+    const match = TABS.find((t) => t[2] === pathname);
+    if (match && match[0] !== tab) setTabState(match[0]);
+  }, [pathname]);
 
   // Config
   const [configStatus, setConfigStatus] = useState({ loading: true, has_config: false });
@@ -536,6 +544,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
         <Onboarding
           onClose={() => setShowOnboarding(false)}
           onDismiss={dismissOnboarding}
+          onFinish={dismissOnboarding}
           onGoConfig={() => { setShowOnboarding(false); setTab('settings'); }}
         />
       )}

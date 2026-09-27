@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { extractCvText } from '@/lib/careerEngine/cvParse';
 import { useTenant } from '@/contexts/TenantContext';
 import { auth } from '@/lib/firebase';
@@ -176,7 +176,8 @@ const ONBOARDING_CARDS = [
   },
 ];
 
-function OnboardingModal({ onClose, onDismiss, onCta }) {
+// Finishing the tour ("Get started") counts as seen; closing only hides it.
+function OnboardingModal({ onClose, onDismiss, onFinish, onCta }) {
   const [i, setI] = useState(0);
   const card = ONBOARDING_CARDS[i];
   const last = i === ONBOARDING_CARDS.length - 1;
@@ -204,7 +205,7 @@ function OnboardingModal({ onClose, onDismiss, onCta }) {
           <div className="flex gap-2">
             {i > 0 && <button onClick={() => setI(i - 1)} className="px-4 h-10 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm">Back</button>}
             {last ? (
-              <button onClick={onClose} className="px-5 h-10 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] text-sm">Get started</button>
+              <button onClick={onFinish} className="px-5 h-10 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] text-sm">Get started</button>
             ) : (
               <button onClick={() => setI(i + 1)} className="px-5 h-10 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] text-sm">Next</button>
             )}
@@ -458,16 +459,23 @@ const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
 
 export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const { currentTenant, loading: tenantLoading } = useTenant();
-  const router = useRouter();
+  const pathname = usePathname();
   const [activeTab, setActiveTabState] = useState(initialTab);
   // Switch tab AND update the URL so sub-pages are deep-linkable / bookmarkable.
+  // Rewrite the URL in place: router.push changed route segment and remounted
+  // the dashboard, refetching everything and re-showing the first-run tour.
+  // Next 14.2 syncs usePathname with native pushState, so Back/Forward work.
   const setActiveTab = (tab) => {
     setActiveTabState(tab);
     const path = TAB_TO_PATH[tab] || TAB_BASE;
     if (typeof window !== 'undefined' && window.location.pathname !== path) {
-      router.push(path, { scroll: false });
+      window.history.pushState(null, '', path);
     }
   };
+  useEffect(() => {
+    const match = Object.entries(TAB_TO_PATH).find(([, p]) => p === pathname);
+    if (match && match[0] !== activeTab) setActiveTabState(match[0]);
+  }, [pathname]);
   const [jdText, setJdText] = useState('');
   const [loading, setLoading] = useState(false);
   const [progressStage, setProgressStage] = useState(0);
@@ -1878,6 +1886,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         <OnboardingModal
           onClose={() => setShowOnboarding(false)}
           onDismiss={dismissOnboarding}
+          onFinish={dismissOnboarding}
           onCta={(tab) => { setShowOnboarding(false); setActiveTab(tab); }}
         />
       )}

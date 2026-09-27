@@ -37,7 +37,9 @@ const CARDS = [
   },
 ];
 
-export default function Onboarding({ onClose, onDismiss, onGoConfig }) {
+// Finishing the tour ("Get started") counts as seen; the close button only hides
+// it for this visit. The "?" button always reopens it.
+export default function Onboarding({ onClose, onDismiss, onFinish, onGoConfig }) {
   const [i, setI] = useState(0);
   const card = CARDS[i];
   const last = i === CARDS.length - 1;
@@ -57,7 +59,7 @@ export default function Onboarding({ onClose, onDismiss, onGoConfig }) {
           {i > 0 && (
             <button onClick={() => setI(i - 1)} className="h-[42px] px-4 border border-[#22251f] text-sm font-bold">Back</button>
           )}
-          <button onClick={() => (last ? onClose() : setI(i + 1))} className="h-[42px] px-5 bg-[#22251f] text-[#f8f4ea] text-sm font-extrabold">
+          <button onClick={() => (last ? onFinish() : setI(i + 1))} className="h-[42px] px-5 bg-[#22251f] text-[#f8f4ea] text-sm font-extrabold">
             {last ? 'Get started' : 'Next'}
           </button>
         </div>

@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-09-27 — Career-engine apps: tabs rewrite the URL in place; finishing the tour dismisses it (D-SITE-037)
+
+**Bug:** in Squared (and, by the same code, Career Ops) the first-run tour reappeared on every tab
+change. Each tab has its own route file, and `setTab` used `router.push`, which changes route
+segment and remounts the dashboard, re-running every load call (7 API requests per tab change)
+and the tour check. Only "Don't show again" was persisted.
+
+**Decision:** tabs call `window.history.pushState` instead, and read the tab back from
+`usePathname()` for Back/Forward. Verified in Next 14.2.35 with a probe route: one mount (strict
+mode doubles it in dev) across push, back and forward, with `usePathname` tracking each step.
+Deep links to each tab still work, because the route files remain. Finishing the tour ("Get
+started") now persists the dismissal; closing it only hides it for that visit.
+
 ## 2026-09-27 — Squared: review fixes (clearance lapse, sourcing, privacy wording, Adzuna credit) (D-SITE-036)
 
 Business-partner review of Squared, and David's approval of every fix, same day.
