@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Returno Companion — Privacy Policy</title>
+  <meta name="description" content="How Returno Companion uses account information, personal wellbeing records, optional AI and analytics, and purchase information.">
+  <link rel="stylesheet" href="/assets/returno-companion/legal.css">
+</head>
+<body>
+  <header><div class="wrap"><a class="brand" href="/apps/returno-companion"><img src="/img/returno-companion/icon.png" alt="" width="44" height="44">Returno Companion</a></div></header>
+  <main class="wrap">
+    <p class="eyebrow">Your information</p>
+    <h1>Privacy policy</h1>
+    <p class="updated">Last updated: 27 September 2026</p>
+    <p>This policy describes the Returno Companion mobile app for iOS and Android, operated by Arcturus Digital Consulting in the United Kingdom. Arcturus Digital Consulting is responsible for the personal information processed to provide Returno. Contact us at <a href="mailto:info@returno.health">info@returno.health</a>.</p>
+    <div class="callout"><p><strong>The essentials:</strong> your personal records are stored on your device and synced to your signed-in account. AI goal help and analytics are optional. We do not sell your health information, use it for advertising, or share your records with other users or clinicians.</p></div>
+
+    <h2>1. Information Returno uses</h2>
+    <ul>
+      <li><strong>Account information:</strong> Google sign-in provides an account identifier and basic profile information, such as your name, email address and profile picture where available. Firebase Authentication connects that identity to your Returno account. Returno does not receive your Google password.</li>
+      <li><strong>Your records:</strong> the goals, recovery context, check-ins, activities and milestones you enter. These may include symptoms, mood, fatigue, stress, sleep, exercise details and personal notes. They can reveal sensitive health or wellbeing information.</li>
+      <li><strong>Preferences:</strong> app settings, check-in choices, saved activity choices, and your decisions about optional AI and analytics.</li>
+      <li><strong>Purchase information:</strong> your Returno account identifier, product and transaction information, trial dates and access status. The app stores handle payment details; Returno does not receive your full payment card details.</li>
+      <li><strong>Technical information:</strong> authentication and app-verification information, network information and limited operational metadata needed to deliver and protect the service. Health content must not be included in our application logs or analytics.</li>
+      <li><strong>Support messages:</strong> information you choose to include when you contact us. Please do not email health records or passwords.</li>
+    </ul>
+
+    <h2>2. Why we use this information</h2>
+    <p>We use account information to sign you in and keep records linked to you; your entries to display and sync your personal record; purchase information to provide trial or paid access and restore purchases; and limited technical information to secure and operate the service. Support information is used to answer your request.</p>
+    <p>Returno presents factual views of information you recorded. It does not use your records to make medical decisions, predict recovery, target advertising or determine insurance or employment eligibility.</p>
+
+    <h2>3. Device storage and cloud sync</h2>
+    <p>Records are saved locally on your device and mirrored to Cloud Firestore under your signed-in account. Signing in enables this account sync; there is no separate cloud-storage switch. Connections use encryption in transit, and access rules restrict account records to their owner.</p>
+    <p>The Returno Firestore database and application Functions are configured in London, UK. This does not mean that every supplier processes all information only in the UK: authentication, payments and optional third-party services may process information elsewhere.</p>
+    <p>Signing out or uninstalling the app does not delete your cloud records. Use the deletion controls described below.</p>
+
+    <h2>4. Optional AI goal help</h2>
+    <p>If you choose AI goal help, Returno asks for permission and lets you review the text before sending it. A server-side request sends that reviewed text and the limited context needed to interpret it, such as language and date, to OpenAI. Your stored check-ins, activities, milestones and account profile are not attached to the request.</p>
+    <p>The text you submit can still contain personal or health information. Remove details you do not want sent; automated checks cannot guarantee that every identifying detail is removed. You review and edit the result before using it.</p>
+    <p>Returno requests that API responses are not stored as retrievable response history. This is not a promise of zero retention: OpenAI's standard abuse-monitoring logs may retain request content for up to 30 days, or longer for legal or safety reasons. OpenAI states that API data is not used to train its models by default. See <a href="https://developers.openai.com/api/docs/guides/your-data">OpenAI's API data controls</a>.</p>
+    <p>You can decline AI help or withdraw permission in Settings. Withdrawal stops future optional requests; it does not recall information already processed.</p>
+
+    <h2>5. Optional goal images</h2>
+    <p>You can search for a goal image using a short search phrase that you review before it is sent to Unsplash through our server. Returno does not attach your account identity, recovery context or stored health records to that search. Avoid putting personal details in the phrase.</p>
+    <p>Selected image references and attribution are stored with your goal. Images are loaded from Unsplash's image service, which receives ordinary network information such as an IP address when your device requests an image. See the <a href="https://unsplash.com/privacy">Unsplash privacy policy</a>.</p>
+
+    <h2>6. Optional analytics and advertising</h2>
+    <p>Firebase Analytics is disabled unless you opt in. If enabled, it receives a limited set of app-use events and technical information such as an app-instance identifier, device and app characteristics, and related usage information. Returno excludes goal text, health records, notes and account identity from its analytics event payloads.</p>
+    <p>You can turn analytics off in Settings without losing app functionality. Turning it off stops future collection and resets the app's analytics state; this does not automatically erase events previously received by the provider.</p>
+    <p>Returno contains no advertising, does not request the Android advertising-ID permission, and disables advertising-ID collection. It does not use health information for advertising. See <a href="https://firebase.google.com/support/privacy">Firebase privacy and security information</a>.</p>
+
+    <h2>7. Purchases and service providers</h2>
+    <p>Apple App Store or Google Play processes purchases. RevenueCat links your Returno account identifier to trial and purchase records, checks access and supports restoring purchases. It may process associated device, store and transaction metadata. Returno does not send your goals, check-ins, activities or milestones to RevenueCat.</p>
+    <p>Our service providers include Google/Firebase for authentication, storage, app verification and optional analytics; RevenueCat for purchase access; OpenAI for optional goal help; and Unsplash for optional images. They receive information necessary for their respective functions. The app stores and Google sign-in also process information under their own terms and privacy policies.</p>
+    <p>Providers may process information outside your country, including outside the UK and European Economic Area. Applicable provider agreements describe their international-transfer safeguards. You can contact us for information about the providers used for your account.</p>
+    <p>We may also disclose information where required by law or necessary to address fraud, security incidents or legal claims. There is no social feed, public profile or clinician-access service in Returno Companion.</p>
+
+    <h2>8. Retention and deletion</h2>
+    <p>Account records remain available until you delete them or your account. Settings offers two different actions:</p>
+    <ul>
+      <li><strong>Delete my records:</strong> removes goals, check-ins, activities and milestones from your cloud account and the current device, while keeping your sign-in account and settings.</li>
+      <li><strong>Delete my account:</strong> removes the Returno cloud account records and Firebase sign-in account, then clears the current device's account data and consent decisions.</li>
+    </ul>
+    <p>These actions do not delete your Google account, cancel a store transaction or automatically erase RevenueCat customer and purchase records. Store transaction records and provider security or operational records have separate retention rules. Contact us to request deletion of associated purchase-service information; legal, accounting, fraud-prevention or transaction obligations may require some records to be retained.</p>
+    <p>Deletion cannot remove copies you keep outside Returno or immediately clear local copies on another offline device. You should also remove local app data from any other devices you used. For instructions, including a request without the app, see <a href="/apps/returno-companion/delete-account">account and data deletion</a>.</p>
+
+    <h2>9. Your choices and rights</h2>
+    <p>You can edit your records, change optional AI and analytics permissions, and use the deletion actions in the app. You can also contact <a href="mailto:info@returno.health">info@returno.health</a> to request access, correction, deletion, a copy of your information, or restriction of processing. Rights to object or transfer information may also apply under local law. We may need to verify your identity before acting.</p>
+    <p>If you have a concern, please contact us. You may also complain to your local data protection authority, including the UK's <a href="https://ico.org.uk/make-a-complaint/">Information Commissioner's Office</a>.</p>
+
+    <h2>10. Age, changes and contact</h2>
+    <p>Returno is intended for people aged 16 and over. If you believe a child under 16 has provided information, contact us so we can investigate and handle its removal.</p>
+    <p>We will publish updates to this policy on this page with a revised date. Questions about Returno Companion or your information: <a href="mailto:info@returno.health">info@returno.health</a>.</p>
+  </main>
+  <footer><nav class="wrap" aria-label="Returno pages"><a href="/apps/returno-companion">Overview</a><a href="/apps/returno-companion/terms-of-use">Terms of use</a><a href="/apps/returno-companion/delete-account">Account &amp; data deletion</a></nav></footer>
+</body>
+</html>

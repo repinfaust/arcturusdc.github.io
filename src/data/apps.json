@@ -1,5 +1,25 @@
 [
   {
+    "id": "returno-companion",
+    "name": "Returno Companion",
+    "cardAccent": {
+      "primary": "#08714D",
+      "tintTop": "rgba(8, 113, 77, 0.1)"
+    },
+    "status": "development",
+    "strap": "A personal record of your return to what matters.",
+    "summary": "Keep your goal in view, record daily check-ins and activities, and reflect on personal milestones. Returno Companion supports your own record without medical advice or recovery predictions.",
+    "desc": "Goals, check-ins, activities and reflection, at your own pace.",
+    "link": "/apps/returno-companion",
+    "caseFileUrl": "/apps/returno-companion",
+    "category": "Health & Wellbeing",
+    "features": ["Personal goals", "Daily check-ins", "Activities and milestones", "Factual reflection"],
+    "live": false,
+    "availability": ["android", "ios"],
+    "icon": "/img/returno-companion/icon.png",
+    "bg": "/img/returno-companion/feature-graphic.png"
+  },
+  {
     "id": "benzel",
     "name": "Benzel",
     "cardAccent": {
