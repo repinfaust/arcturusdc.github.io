@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-09-27 — Career Ops API requires a signed-in workspace member (D-SITE-033)
+
+**Finding:** `/api/stea/career` and `/api/stea/career/checkout` had no authentication. Both
+trusted the `tenantId` in the request body, and `middleware.js` skips all `/api/` paths. An
+unauthenticated POST with an arbitrary tenant ID returned `HTTP 200`
+(`{"action":"get_usage","tenantId":"nonexistent-probe-tenant"}`, 2026-09-27). With a real
+workspace ID, every action was reachable: users' CVs (`list_cv_uploads`), analyses
+(`get_analysis`), and writes/deletes (`save_config`, `delete_cv`). Workspace IDs are random but
+not secret; two are committed in this public repo. Not tested against a real workspace, to avoid
+reading personal data. The unlimited-actions access code also defaulted to a value hard-coded in
+the public repo because `CAREER_ACCESS_CODE` was never set in Vercel.
+
+**Decision:**
+- Both routes call `verifySteaWorkspaceAccess(request, { tenantId })` before any action: a valid
+  `__session` cookie or Firebase ID token, and an active `tenant_members` record for that
+  workspace (super-admins pass). Otherwise 401/403.
+- The career page sends the Firebase ID token as `Authorization: Bearer` on every call, because
+  the session cookie lapses after 12 h.
+- The access code has no default. Redemption is disabled unless `CAREER_ACCESS_CODE` is set, and
+  the old public value is retired.
+
+**Rule carried forward:** every STEa API route that touches workspace data verifies membership
+server-side. A client-supplied `tenantId` is a claim, not an authorisation. Squared (the forces
+app built from Career Ops) inherits this from its first commit.
+
 ## 2026-09-27 — Career CV tab route moved from `/cvs` to `/cv-library` (D-SITE-032)
 
 **Symptom:** `/apps/stea/career/cvs` returned 404 in production (`x-matched-path: /_not-found`)

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { extractCvText } from './_components/cvParse';
 import { useTenant } from '@/contexts/TenantContext';
+import { auth } from '@/lib/firebase';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -14,6 +15,15 @@ import remarkGfm from 'remark-gfm';
 // directory named CVS (case-insensitive), so a cvs/ route never deploys (D-SITE-032).
 const TAB_BASE = '/apps/stea/career';
 const TAB_TO_PATH = { pipeline: TAB_BASE, scans: `${TAB_BASE}/scans`, cvs: `${TAB_BASE}/cv-library`, apply: `${TAB_BASE}/apply`, settings: `${TAB_BASE}/setup` };
+
+// The career API requires a signed-in workspace member (D-SITE-033). Send the
+// Firebase ID token as well as the __session cookie, which lapses after 12h.
+async function apiHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = await auth?.currentUser?.getIdToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
 
 /* ---------------- Markdown renderer for the AI fit narrative ---------------- */
 function FitNarrative({ markdown }) {
@@ -660,7 +670,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'list_analyses', tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -677,7 +687,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'tailor_cv', tenantId: currentTenant.id, id }),
       });
       const data = await res.json();
@@ -700,7 +710,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'list_cvs', tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -718,7 +728,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     if (!code || !currentTenant?.id) return;
     try {
       const res = await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: await apiHeaders(),
         body: JSON.stringify({ action: 'redeem_code', tenantId: currentTenant.id, code }),
       });
       const data = await res.json();
@@ -736,7 +746,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -752,7 +762,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'get_usage', tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -767,7 +777,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     if (!currentTenant?.id) return;
     try {
       const res = await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: await apiHeaders(),
         body: JSON.stringify({ action: 'get_onboarding', tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -783,7 +793,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     if (!currentTenant?.id) return;
     try {
       await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: await apiHeaders(),
         body: JSON.stringify({ action: 'dismiss_onboarding', tenantId: currentTenant.id }),
       });
     } catch (err) { console.error('Failed to dismiss onboarding', err); }
@@ -793,7 +803,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     if (!currentTenant?.id) return;
     try {
       const res = await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: await apiHeaders(),
         body: JSON.stringify({ action: 'list_cv_uploads', tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -806,7 +816,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     setCvBusy(true);
     try {
       const saveRes = await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: await apiHeaders(),
         body: JSON.stringify({ action: 'save_cv', tenantId: currentTenant.id, label, cv_text: cvText, make_active: true }),
       });
       const saved = await saveRes.json();
@@ -814,7 +824,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       await loadCvUploads();
       if (window.confirm('CV saved & set as active. Auto-fill your profile and evidence from it now? (uses one action — you can review and edit before saving)')) {
         const exRes = await fetch('/api/stea/career', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: await apiHeaders(),
           body: JSON.stringify({ action: 'extract_from_cv', tenantId: currentTenant.id, id: saved.id }),
         });
         const ex = await exRes.json();
@@ -844,7 +854,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   async function setActiveCv(id) {
     try {
       await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: await apiHeaders(),
         body: JSON.stringify({ action: 'set_active_cv', tenantId: currentTenant.id, id }),
       });
       loadCvUploads();
@@ -854,7 +864,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     const label = window.prompt('Label for this CV:', current || '');
     if (label == null) return;
     await fetch('/api/stea/career', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: await apiHeaders(),
       body: JSON.stringify({ action: 'relabel_cv', tenantId: currentTenant.id, id, label }),
     });
     loadCvUploads();
@@ -862,7 +872,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   async function deleteCv(id) {
     if (!window.confirm('Delete this CV from your library?')) return;
     await fetch('/api/stea/career', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: await apiHeaders(),
       body: JSON.stringify({ action: 'delete_cv', tenantId: currentTenant.id, id }),
     });
     loadCvUploads();
@@ -873,7 +883,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'get_apply_profile', tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -888,7 +898,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'save_apply_profile', tenantId: currentTenant.id, apply_profile: applyExtras }),
       });
       setApplyExtrasDirty(false);
@@ -909,7 +919,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'cover_letter', tenantId: currentTenant.id, id: applyRoleId, edit_instruction: editInstruction || '' }),
       });
       const data = await res.json();
@@ -932,7 +942,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     setAnswersLoading(true);
     try {
       const res = await fetch('/api/stea/career', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: await apiHeaders(),
         body: JSON.stringify({ action: 'apply_answers', tenantId: currentTenant.id, id: applyRoleId }),
       });
       const data = await res.json();
@@ -951,7 +961,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     (async () => {
       try {
         const res = await fetch('/api/stea/career', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: await apiHeaders(),
           body: JSON.stringify({ action: 'get_analysis', tenantId: currentTenant.id, id: applyRoleId }),
         });
         const data = await res.json();
@@ -987,7 +997,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'get_analysis', tenantId: currentTenant.id, id }),
       });
       const data = await res.json();
@@ -1004,7 +1014,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'get_config', tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -1036,7 +1046,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ 
           action: 'save_config', 
           tenantId: currentTenant.id,
@@ -1086,7 +1096,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'analyse', jd_text: input, tenantId: currentTenant.id }),
       });
       const data = await res.json();
@@ -1117,7 +1127,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await apiHeaders(),
         body: JSON.stringify({ action: 'search_jobs', tenantId: currentTenant.id, keywords, location, salary_min, exclude_employer, mode: searchMode }),
       });
       const data = await res.json();

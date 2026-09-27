@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { verifySteaWorkspaceAccess } from '@/lib/steaAccessServer';
 
 // David's workspace ID (ArcturusDC primary tenant or his specific one)
 const DAVID_TENANT_ID = 'KovW8P7K5O2537V8I3H1';
@@ -211,6 +212,13 @@ export async function POST(request) {
 
     if (!tenantId) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+    }
+
+    // Every action reads or writes one workspace's private career data, so the
+    // caller must be signed in and an active member of that workspace (D-SITE-033).
+    const access = await verifySteaWorkspaceAccess(request, { tenantId });
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
 
     if (action === 'get_config') {
@@ -812,11 +820,12 @@ export async function POST(request) {
     }
 
     // Friendlies access code → unlimited actions for this workspace (no payment).
-    // Rotate via CAREER_ACCESS_CODE env; default code below for the inner circle.
+    // The code is set via CAREER_ACCESS_CODE env; redemption is disabled when unset.
     if (action === 'redeem_code') {
       const { code = '' } = body;
-      const valid = (process.env.CAREER_ACCESS_CODE || 'FRIENDS2026');
-      if ((code || '').trim().toUpperCase() !== valid.toUpperCase()) {
+      // No default: the code lives only in Vercel env, never in this public repo (D-SITE-033).
+      const valid = process.env.CAREER_ACCESS_CODE || '';
+      if (!valid || (code || '').trim().toUpperCase() !== valid.toUpperCase()) {
         return NextResponse.json({ error: 'That code isn\'t valid.' }, { status: 400 });
       }
       const { db } = getFirebaseAdmin();

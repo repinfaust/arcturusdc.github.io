@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { verifySteaWorkspaceAccess } from '@/lib/steaAccessServer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,11 @@ export async function POST(request) {
     const { tenantId } = await request.json();
     if (!tenantId) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+    }
+    // Only a signed-in member can start a purchase for their workspace (D-SITE-033).
+    const access = await verifySteaWorkspaceAccess(request, { tenantId });
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
 
     // Prefer the configured price id; fall back to looking one up from the product.
