@@ -8,6 +8,12 @@ const nextConfig = {
         destination: '/apps/stea/dialled-mtb/riders',
         permanent: true,
       },
+      // cvs/ is on Vercel's default ignore list, so the route moved to cv-library (D-SITE-032)
+      {
+        source: '/apps/stea/career/cvs',
+        destination: '/apps/stea/career/cv-library',
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

@@ -1,5 +1,26 @@
 # Decisions
 
+## 2026-09-27 — Career CV tab route moved from `/cvs` to `/cv-library` (D-SITE-032)
+
+**Symptom:** `/apps/stea/career/cvs` returned 404 in production (`x-matched-path: /_not-found`)
+while its sibling routes `/scans`, `/setup` and `/apply`, built the same way in the same commit
+(3fc3f69), returned 200. `cvs/page.js` was on `main`, but the production build log's route list
+had no `/apps/stea/career/cvs`, so the page was never built.
+
+**Cause:** Vercel's default upload ignore list includes `CVS` (the legacy version-control
+directory) and matches it case-insensitively, so the `cvs/` route directory was dropped from the
+deployment source. No repo config referenced `cvs`. The build log does not report the drop; this
+is an inference from the one-directory-missing evidence.
+
+**Decision:** rename the route segment to `cv-library` rather than try to override the ignore
+with `.vercelignore`: overriding a platform default is unverified and would fail silently if it
+stopped working. `/apps/stea/career/cvs` permanently redirects to the new path in
+`next.config.js`, because redirects live in config and are not subject to the file ignore.
+
+**Rule carried forward:** never name an `src/app` route directory after a Vercel default-ignored
+name (`CVS`, `node_modules`, `venv`, `__pycache__`, `.git`, `.svn`, `.hg`, `.cache` and similar,
+case-insensitive).
+
 ## 2026-09-26 — MLB T-2h window widened; all six MLB functions redeployed as one bundle (D-SITE-030)
 
 Health check of `apps/stea/mlb` (full evidence: `planning/MLB_BET_SELECTION_FINDINGS.md`,

@@ -10,8 +10,10 @@ import remarkGfm from 'remark-gfm';
 // Tab <-> URL path mapping for deep-linkable sub-pages.
 // NOTE: the config TAB uses the /setup path because career/config/ holds the
 // YAML config files (a route there would collide / confuse).
+// The CV tab uses /cv-library, not /cvs: Vercel's default upload ignore list drops any
+// directory named CVS (case-insensitive), so a cvs/ route never deploys (D-SITE-032).
 const TAB_BASE = '/apps/stea/career';
-const TAB_TO_PATH = { pipeline: TAB_BASE, scans: `${TAB_BASE}/scans`, cvs: `${TAB_BASE}/cvs`, apply: `${TAB_BASE}/apply`, settings: `${TAB_BASE}/setup` };
+const TAB_TO_PATH = { pipeline: TAB_BASE, scans: `${TAB_BASE}/scans`, cvs: `${TAB_BASE}/cv-library`, apply: `${TAB_BASE}/apply`, settings: `${TAB_BASE}/setup` };
 
 /* ---------------- Markdown renderer for the AI fit narrative ---------------- */
 function FitNarrative({ markdown }) {
