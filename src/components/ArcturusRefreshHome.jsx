@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import appsData from "@/data/apps.json";
+import DecisionTreeHero from "@/components/DecisionTreeHero";
 
 const LIVE_APP_IDS    = ["adhd-acclaim", "unload", "toume", "dialled-mtb", "sprocket", "mandrake"];
 const DEV_APP_IDS     = ["rehabpath", "apex-state", "assumezero"];
@@ -278,14 +279,7 @@ export default function ArcturusRefreshHome() {
   return (
     <div className="w-screen -ml-[calc(50vw-50%)] bg-[#ece6d8] text-[#1c1c1a]">
       <section className="relative isolate min-h-[66vh] overflow-hidden border-b-2 border-[#1c1c1a] px-5 py-10 sm:px-8 lg:px-10">
-        <Image
-          src="/img/arcturus-logo-transparent.png"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="pointer-events-none -z-10 object-contain object-center opacity-[0.13]"
-        />
+        <DecisionTreeHero className="pointer-events-none absolute inset-0 -z-10" />
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(28,28,26,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(28,28,26,0.07)_1px,transparent_1px)] bg-[size:72px_72px]" />
 
         <div className="mx-auto flex min-h-[56vh] max-w-7xl flex-col justify-between gap-8">

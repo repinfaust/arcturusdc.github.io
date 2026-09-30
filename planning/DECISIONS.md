@@ -1,5 +1,24 @@
 # Decisions
 
+## 2026-09-30 — Home hero: animated decision-tree SVG replaces the logo watermark (D-SITE-038)
+
+**Why:** the hero is all type, and the 13% logo watermark added nothing to "Better decisions in
+the real world". David wanted motion without the hero looking like AI stock footage.
+
+**Decision:** `DecisionTreeHero` (`src/components/DecisionTreeHero.jsx` + `.module.css`) draws a
+decision tree as inline SVG on an 18s CSS loop: ink branches draw left to right, dashed
+alternatives fade in, one red path resolves to an outcome, and the ink falls away first so the
+chosen path briefly stands alone. The art direction came from four Higgsfield stills (Nano Banana 2,
+8 credits); the decision tree was chosen over a Boötes star chart, contours and an orbital diagram.
+It is hand-built SVG rather than generated video because line art redrawn as vectors stays sharp,
+weighs a few KB instead of MBs, loops exactly, and ships no JavaScript.
+- Opacity is kept low (ink 0.2, red 0.38) because the tree sits behind the heading and paragraph
+  at every width; a first pass at 0.75 red competed with the headline.
+- `preserveAspectRatio="xMidYMid slice"`: on mobile it crops to the centre (the red path).
+- `prefers-reduced-motion: reduce` shows the finished drawing with no animation.
+- Revert: restore the `<Image src="/img/arcturus-logo-transparent.png" …>` watermark in
+  `ArcturusRefreshHome.jsx`.
+
 ## 2026-09-27 — Career-engine apps: tabs rewrite the URL in place; finishing the tour dismisses it (D-SITE-037)
 
 **Bug:** in Squared (and, by the same code, Career Ops) the first-run tour reappeared on every tab
