@@ -1,5 +1,6 @@
-/* 18s loop: ink branches draw (0–4s), alternatives fade in, the red path resolves (4–8s),
-   ink falls away first so the chosen path stands alone, then everything clears and repeats. */
+/* Plays once, ~5s end to end: ink branches draw (0–1.6s), alternatives fade in (1.3–2s), the red
+   path resolves to the outcome (2–3.9s), then the ink recedes (4.3–5s) and the drawing rests there.
+   Per-element start times come from inline animation-delay in DecisionTreeHero.jsx. */
 
 .tree {
   --ink: #1c1c1a;
@@ -15,28 +16,32 @@
   stroke-linecap: round;
 }
 
+.inkLayer {
+  animation: recede 0.7s ease-in-out 4.3s both;
+}
+
 .ink,
 .red {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation-duration: 18s;
-  animation-iteration-count: infinite;
   animation-fill-mode: both;
-  animation-timing-function: ease-in-out;
+  animation-timing-function: ease-out;
 }
 
 .ink {
   stroke: var(--ink);
   stroke-opacity: 0.2;
   stroke-width: 1.5;
-  animation-name: draw-ink;
+  animation-name: draw;
+  animation-duration: 0.55s;
 }
 
 .red {
   stroke: var(--red);
   stroke-opacity: 0.38;
   stroke-width: 2.5;
-  animation-name: draw-red;
+  animation-name: draw;
+  animation-duration: 0.5s;
 }
 
 .alt {
@@ -44,7 +49,7 @@
   stroke-opacity: 0.16;
   stroke-width: 1.25;
   stroke-dasharray: 5 6;
-  animation: fade-alt 18s ease-in-out infinite both;
+  animation: fade-in 0.6s ease-out both;
 }
 
 .inkNode,
@@ -52,9 +57,14 @@
 .outcome {
   transform-box: fill-box;
   transform-origin: center;
-  animation-duration: 18s;
-  animation-iteration-count: infinite;
   animation-fill-mode: both;
+  animation-timing-function: ease-out;
+}
+
+.inkNode,
+.redNode {
+  animation-name: pop;
+  animation-duration: 0.3s;
 }
 
 .inkNode {
@@ -62,7 +72,6 @@
   stroke: var(--ink);
   stroke-opacity: 0.24;
   stroke-width: 1.5;
-  animation-name: pop-ink;
 }
 
 .redNode {
@@ -71,7 +80,6 @@
   stroke: var(--red);
   stroke-opacity: 0.45;
   stroke-width: 2;
-  animation-name: pop-red;
 }
 
 .redNode.open {
@@ -83,52 +91,34 @@
   fill: var(--red);
   fill-opacity: 0.6;
   animation-name: outcome;
+  animation-duration: 0.9s;
 }
 
-@keyframes draw-ink {
-  0% { stroke-dashoffset: 1; opacity: 1; }
-  12% { stroke-dashoffset: 0; opacity: 1; }
-  66% { stroke-dashoffset: 0; opacity: 1; }
-  74%, 100% { stroke-dashoffset: 0; opacity: 0; }
+@keyframes draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
 }
 
-@keyframes draw-red {
-  0% { stroke-dashoffset: 1; opacity: 1; }
-  10% { stroke-dashoffset: 0; opacity: 1; }
-  62% { stroke-dashoffset: 0; opacity: 1; }
-  70%, 100% { stroke-dashoffset: 0; opacity: 0; }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes fade-alt {
-  0% { opacity: 0; }
-  10% { opacity: 1; }
-  60% { opacity: 1; }
-  68%, 100% { opacity: 0; }
-}
-
-@keyframes pop-ink {
-  0% { opacity: 0; transform: scale(0.4); }
-  4% { opacity: 1; transform: scale(1); }
-  64% { opacity: 1; transform: scale(1); }
-  72%, 100% { opacity: 0; transform: scale(1); }
-}
-
-@keyframes pop-red {
-  0% { opacity: 0; transform: scale(0.4); }
-  4% { opacity: 1; transform: scale(1); }
-  60% { opacity: 1; transform: scale(1); }
-  68%, 100% { opacity: 0; transform: scale(1); }
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes outcome {
   0% { opacity: 0; transform: scale(0.4); }
-  4% { opacity: 1; transform: scale(1); }
-  12% { transform: scale(1.35); }
-  20% { transform: scale(1); }
-  28% { transform: scale(1.2); }
-  36% { transform: scale(1); }
-  56% { opacity: 1; transform: scale(1); }
-  64%, 100% { opacity: 0; transform: scale(1); }
+  30% { opacity: 1; transform: scale(1); }
+  55% { transform: scale(1.35); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes recede {
+  from { opacity: 1; }
+  to { opacity: 0.5; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -142,5 +132,11 @@
     stroke-dashoffset: 0;
     opacity: 1;
     transform: none;
+  }
+
+  /* Same resting state the animation ends on. */
+  .inkLayer {
+    animation: none;
+    opacity: 0.5;
   }
 }

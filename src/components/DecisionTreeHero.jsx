@@ -2,7 +2,8 @@ import styles from "./DecisionTreeHero.module.css";
 
 // Hero background (D-SITE-038): many options branch out, converge on one decision point, and a
 // single red path resolves to an outcome. Dashed lines are the alternatives that were weighed.
-// Pure SVG + CSS keyframes, so it renders on the server and ships no JavaScript.
+// Plays once in ~5s and rests on the resolved state (ink dimmed, red path kept). Pure SVG + CSS
+// keyframes, so it renders on the server and ships no JavaScript.
 
 const NODES = {
   root: [90, 340, "c"],
@@ -66,14 +67,17 @@ const curve = (from, to) => {
 };
 
 // Stagger by horizontal position so the drawing sweeps left to right.
-const inkDelay = (x) => ((x - 90) / 550) * 2.4;
-const redDelay = (x) => 4 + ((x - 640) / 870) * 2.2;
+const inkDelay = (x) => ((x - 90) / 550) * 1.1;
+const redDelay = (x) => 2 + ((x - 640) / 870) * 1.4;
+const isInk = (id) => ["c", "s"].includes(NODES[id][2]);
+const INK_NODES = Object.keys(NODES).filter(isInk);
+const RED_NODES = Object.keys(NODES).filter((id) => !isInk(id));
 const delay = (seconds) => ({ animationDelay: `${seconds.toFixed(2)}s` });
 
 function Node({ id }) {
   const [x, y, kind] = NODES[id];
-  const red = kind !== "c" && kind !== "s";
-  const start = red ? redDelay(x) + 0.35 : inkDelay(x) + 0.35;
+  const red = !isInk(id);
+  const start = red ? redDelay(x) + 0.3 : inkDelay(x) + 0.3;
   const className = red ? styles.redNode : styles.inkNode;
 
   if (kind === "end") {
@@ -98,16 +102,21 @@ export default function DecisionTreeHero({ className = "" }) {
       aria-hidden="true"
       focusable="false"
     >
-      {ALTERNATIVES.map(([from, to]) => (
-        <path key={`${from}-${to}`} className={styles.alt} style={delay(3 + inkDelay(NODES[from][0]) / 3)} d={curve(from, to)} />
-      ))}
-      {INK.map(([from, to]) => (
-        <path key={`${from}-${to}`} className={styles.ink} style={delay(inkDelay(NODES[from][0]))} d={curve(from, to)} pathLength="1" />
-      ))}
+      <g className={styles.inkLayer}>
+        {ALTERNATIVES.map(([from, to]) => (
+          <path key={`${from}-${to}`} className={styles.alt} style={delay(1.3 + inkDelay(NODES[from][0]) / 3)} d={curve(from, to)} />
+        ))}
+        {INK.map(([from, to]) => (
+          <path key={`${from}-${to}`} className={styles.ink} style={delay(inkDelay(NODES[from][0]))} d={curve(from, to)} pathLength="1" />
+        ))}
+        {INK_NODES.map((id) => (
+          <Node key={id} id={id} />
+        ))}
+      </g>
       {RED.map(([from, to]) => (
         <path key={`${from}-${to}`} className={styles.red} style={delay(redDelay(NODES[from][0]))} d={curve(from, to)} pathLength="1" />
       ))}
-      {Object.keys(NODES).map((id) => (
+      {RED_NODES.map((id) => (
         <Node key={id} id={id} />
       ))}
     </svg>
