@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-10-03 — Site build runtime moved to Node.js 24 on Vercel (D-SITE-040)
+
+**Why:** the production build of `71f9378` failed in 12 s, before compiling: Vercel has
+discontinued Node.js 20.x and requires 24.x. Root `package.json` `engines.node` was
+`">=18 <=20"`, which Vercel resolves to 20.x. The previous production build (3 days earlier, same
+setting) succeeded, so the discontinuation landed in between. Production kept serving the last
+good deployment throughout.
+
+**Decision: runtime only, no dependency changes.** `engines.node` set to `"24.x"`. Verified locally
+in a clean worktree off `origin/main`: `npm ci` + `next build` on Next 14.2.35 exit 0 under Node
+24.21.0, with output identical to the same tree under Node 20.19.5 (253 routes each; the same 5
+pre-existing "Dynamic server usage" logs from API routes in both). `functions/package.json`
+(Firebase, Node 22, D-SITE-031) is a separate runtime and unchanged.
+
+**Rule carried forward:** after any push to main, confirm the Vercel production deployment
+reaches Ready (`vercel ls`) before reporting it deployed.
+
 ## 2026-10-03 — Repinfaust mirror: Sonnet 5.5 option and in-chat model switcher (D-SITE-039)
 
 Mirrors app decision D-091 in `~/dev/xyz` (the real app and broker; reasoning lives there). The
