@@ -56,12 +56,14 @@ const MODE_META = {
 
 const MODEL_OPTIONS = [
   { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5' },
   { id: 'claude-opus-4-8', label: 'Claude Opus 4.8' },
   { id: 'claude-fable-5', label: 'Fable 5', embargoed: true },
 ];
 
 const MODEL_NAMES = {
   'claude-sonnet-4-6': 'Sonnet 4.6',
+  'claude-sonnet-5-5': 'Sonnet 5.5',
   'claude-opus-4-8': 'Claude Opus 4.8',
   'claude-fable-5': 'Fable 5',
 };
@@ -236,6 +238,7 @@ function watchMessages(sessionId, callback, onError) {
           id: item.id,
           role: data.role,
           text: data.text || '',
+          model: data.model || '',
           classification: data.classification,
           at: data.at,
           seq: data.seq || 0,
@@ -772,6 +775,7 @@ export default function RepinfaustClient() {
       <ChatScreen
         sessionId={sessionId}
         model={model}
+        onModel={setModel}
         onMode={setMode}
         onArchiveState={setArchiveDisabled}
         onError={setGlobalError}
@@ -805,7 +809,7 @@ export default function RepinfaustClient() {
   );
 }
 
-function ChatScreen({ sessionId, model, onMode, onArchiveState, onError }) {
+function ChatScreen({ sessionId, model, onModel, onMode, onArchiveState, onError }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -837,6 +841,17 @@ function ChatScreen({ sessionId, model, onMode, onArchiveState, onError }) {
       setDanger({ reply: "(dev preview - the aid's reply renders here)", acuteRisk: preview === 'acute' });
     }
   }, []);
+
+  // In-chapter model switch (D-SITE-039, mirrors app D-091). Writes the same
+  // sticky preference Settings does; applies from the next message.
+  const pickModel = async (id) => {
+    onModel(id);
+    try {
+      await setModelPreference(id);
+    } catch (error) {
+      onError(error?.message || 'Could not save model preference.');
+    }
+  };
 
   const submit = async (event) => {
     event.preventDefault();
@@ -887,6 +902,20 @@ function ChatScreen({ sessionId, model, onMode, onArchiveState, onError }) {
         {sending ? <p className={styles.thinking}>The aid is writing...</p> : null}
         <div ref={bottomRef} />
       </div>
+      <div className={styles.voiceBar}>
+        <span>voice</span>
+        {MODEL_OPTIONS.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            className={model === option.id ? styles.voiceButtonActive : ''}
+            disabled={option.embargoed || sending}
+            onClick={() => pickModel(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
       <form className={styles.composer} onSubmit={submit}>
         <textarea
           value={input}
@@ -909,7 +938,12 @@ function Dialogue({ message, uncertain, previousText, sessionId, onError }) {
 
   return (
     <article className={`${styles.dialogue} ${isAssistant ? styles.dialogueAssistant : styles.dialogueUser}`}>
-      <div className={styles.dialogueLabel}>{isAssistant ? 'THE AID' : 'DAVID'}</div>
+      <div className={styles.dialogueLabel}>
+        {isAssistant ? 'THE AID' : 'DAVID'}
+        {isAssistant && message.model ? (
+          <span className={styles.dialogueModel}> · {MODEL_NAMES[message.model] || message.model}</span>
+        ) : null}
+      </div>
       {uncertain ? <p className={styles.uncertain}>Tone check logged on the previous line.</p> : null}
       {paragraphs.map((paragraph, index) => (
         <p key={`${message.id}-${index}`}>{paragraph}</p>

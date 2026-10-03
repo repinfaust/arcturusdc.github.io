@@ -365,7 +365,7 @@
   position: relative;
   display: grid;
   min-height: calc(100vh - 240px);
-  grid-template-rows: minmax(300px, 1fr) auto;
+  grid-template-rows: minmax(300px, 1fr) auto auto;
   border: 1px solid rgba(19, 17, 15, 0.18);
   background: var(--rf-paper-light);
 }
@@ -408,6 +408,11 @@
   font-weight: 700;
 }
 
+.dialogueModel {
+  font-style: italic;
+  font-weight: 400;
+}
+
 .dialogue p {
   margin: 0 0 10px;
   color: var(--rf-ink);
@@ -431,6 +436,42 @@
   min-height: 30px;
   padding: 5px 8px;
   color: var(--rf-muted);
+}
+
+.voiceBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 6px 12px;
+  border-top: 1px solid rgba(19, 17, 15, 0.18);
+  background: var(--rf-paper-edge);
+  font-size: 13px;
+}
+
+.voiceBar span {
+  color: var(--rf-muted);
+  font-style: italic;
+}
+
+.voiceBar button {
+  border: 0;
+  background: transparent;
+  color: var(--rf-muted);
+  padding: 2px 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.voiceBar button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.voiceBar .voiceButtonActive {
+  color: var(--rf-ink);
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .composer {

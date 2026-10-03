@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-10-03 — Repinfaust mirror: Sonnet 5.5 option and in-chat model switcher (D-SITE-039)
+
+Mirrors app decision D-091 in `~/dev/xyz` (the real app and broker; reasoning lives there). The
+`/apps/stea/repinfaust` web mirror gains Sonnet 5.5 in its model list and a "voice" switcher above
+the chat composer that writes the same sticky `profile/state.model` preference Settings uses. Each
+aid reply shows the model that wrote it, from the `model` field the broker already stores. Sonnet 4.6
+stays the default. The broker allowlist change was deployed 2026-10-03.
+
 ## 2026-09-30 — Home hero: animated decision-tree SVG replaces the logo watermark (D-SITE-038)
 
 **Why:** the hero is all type, and the 13% logo watermark added nothing to "Better decisions in
