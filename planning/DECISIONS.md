@@ -1,5 +1,19 @@
 # Decisions
 
+## 2026-10-07 — Repinfaust mirror: GPT-6.1 Sol and GPT-6 Astra in the model switcher (D-SITE-042)
+
+Mirrors app decision D-093 in `~/dev/xyz` (provider choice, privacy approval and reasoning live
+there). The web mirror's model list gains the two OpenAI options; replies are labelled by model as
+before. The broker routes them server-side via the OpenAI Responses API; no key or provider call
+touches the browser. Broker deployed 2026-10-07.
+
+## 2026-10-07 — Repinfaust mirror: callable timeouts match the server (D-SITE-041)
+
+Mirrors app decision D-092. The web mirror showed `deadline-exceeded` after an archive: `distillNow`
+returned 200 after 76.6 s, but the Firebase callable client stops waiting at its 70 s default.
+Each callable whose server `timeoutSeconds` exceeds 70 s now sets a matching client `timeout`
+(`chat`, `compareModels`, `distillNow`, `deleteAll` 300 s; `draftDisclosure`, `exportAll` 120 s).
+
 ## 2026-10-03 — Site build runtime moved to Node.js 24 on Vercel (D-SITE-040)
 
 **Why:** the production build of `71f9378` failed in 12 s, before compiling: Vercel has

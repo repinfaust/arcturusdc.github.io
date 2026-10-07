@@ -58,6 +58,9 @@ const MODEL_OPTIONS = [
   { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6' },
   { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5' },
   { id: 'claude-opus-4-8', label: 'Claude Opus 4.8' },
+  // OpenAI voices (D-SITE-042, mirrors app D-093).
+  { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
+  { id: 'gpt-6-astra', label: 'GPT-6 Astra' },
   { id: 'claude-fable-5', label: 'Fable 5', embargoed: true },
 ];
 
@@ -65,6 +68,8 @@ const MODEL_NAMES = {
   'claude-sonnet-4-6': 'Sonnet 4.6',
   'claude-sonnet-5-5': 'Sonnet 5.5',
   'claude-opus-4-8': 'Claude Opus 4.8',
+  'gpt-6.1-sol': 'GPT-6.1 Sol',
+  'gpt-6-astra': 'GPT-6 Astra',
   'claude-fable-5': 'Fable 5',
 };
 
@@ -254,16 +259,19 @@ function watchMessages(sessionId, callback, onError) {
   );
 }
 
+// Client deadlines match each function's server timeoutSeconds (D-SITE-041,
+// mirrors app D-092). The SDK default is 70 s, so a slow-but-successful call
+// (distillNow, 76.6 s) surfaced as deadline-exceeded while the server finished.
 async function sendChat(sessionId, message, model) {
   const { functions } = requireClient();
-  const fn = httpsCallable(functions, 'chat');
+  const fn = httpsCallable(functions, 'chat', { timeout: 300000 });
   const response = await fn({ sessionId, message, model });
   return response.data;
 }
 
 async function endSession(sessionId) {
   const { functions } = requireClient();
-  const fn = httpsCallable(functions, 'distillNow');
+  const fn = httpsCallable(functions, 'distillNow', { timeout: 300000 });
   await fn({ sessionId });
 }
 
@@ -448,14 +456,14 @@ async function deleteNaLog(id) {
 
 async function draftDisclosure(recipient, situation, model) {
   const { functions } = requireClient();
-  const fn = httpsCallable(functions, 'draftDisclosure');
+  const fn = httpsCallable(functions, 'draftDisclosure', { timeout: 120000 });
   const response = await fn({ recipient, situation, model });
   return response.data?.draft || '';
 }
 
 async function compareModels(message) {
   const { functions } = requireClient();
-  const fn = httpsCallable(functions, 'compareModels');
+  const fn = httpsCallable(functions, 'compareModels', { timeout: 300000 });
   const response = await fn({ message });
   return response.data;
 }
@@ -488,14 +496,14 @@ function watchComparisonTally(callback, onError) {
 
 async function exportAll() {
   const { functions } = requireClient();
-  const fn = httpsCallable(functions, 'exportAll');
+  const fn = httpsCallable(functions, 'exportAll', { timeout: 120000 });
   const response = await fn();
   return response.data;
 }
 
 async function deleteAll() {
   const { functions } = requireClient();
-  const fn = httpsCallable(functions, 'deleteAll');
+  const fn = httpsCallable(functions, 'deleteAll', { timeout: 300000 });
   const response = await fn({ confirm: 'DELETE EVERYTHING' });
   return response.data?.deleted || 0;
 }
