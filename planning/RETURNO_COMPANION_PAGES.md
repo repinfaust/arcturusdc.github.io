@@ -15,7 +15,15 @@ person-initiated local JSON text export, and completed provider revocation.
 It corrects the implication of free-text symptom/activity notes and explains
 that optional AI permission is required for goal creation. No lawful basis,
 retention period, zero-retention promise or new processing purpose is invented.
-No other website page or product is changed. Publication status remains pending.
+No other website page or product is changed. Publication remains pending.
+Commit `55366f1` is pushed on `codex/returno-public-policy`. Vercel rejected
+both preview and production-without-domain deployment attempts because the
+commit author lacks deployment permission. GitHub confirms the existing
+configured author (`arcturusecs`, ID 116175558); it is also the author of the
+currently published baseline. Retrying after the branch was pushed, with
+Vercel CLI 63.1.2, returned the same explicit Blocked status. No identity,
+team permission or deployment-protection setting was changed. The production
+domain has not been promoted and still serves the existing notice.
 
 ## Routes and assets
 
