@@ -4,6 +4,19 @@ Created 2026-09-27 at David's request, following the Sidestand overview and
 standalone HTML policy pattern. Scope is public website content only: no new
 authentication, collection, analytics, payment flow or app behaviour.
 
+## Public iOS preparation — 2026-10-11
+
+David authorised public iOS submission in Returno D-REL-008. This isolated
+worktree starts from `31f5b96`, the exact commit identified in the live Vercel
+production deployment's build logs, preserving the currently published site.
+The Privacy Policy update describes already implemented Apple sign-in,
+D-DATA-009 reviewed feedback and its account-deletion boundary, D-DATA-010
+person-initiated local JSON text export, and completed provider revocation.
+It corrects the implication of free-text symptom/activity notes and explains
+that optional AI permission is required for goal creation. No lawful basis,
+retention period, zero-retention promise or new processing purpose is invented.
+No other website page or product is changed. Publication status remains pending.
+
 ## Routes and assets
 
 - `/apps/returno-companion`: overview, features, FAQ and policy links.
