@@ -24,6 +24,13 @@ currently published baseline. Retrying after the branch was pushed, with
 Vercel CLI 63.1.2, returned the same explicit Blocked status. No identity,
 team permission or deployment-protection setting was changed. The production
 domain has not been promoted and still serves the existing notice.
+David clarified that this project normally deploys through its Git integration.
+On 2026-10-11 GitHub verified `main` still at `31f5b96`, and the policy branch's
+Vercel status was successful with "Canceled by Ignored Build Step", rather than
+an author-permission error. Publication is proceeding through a fast-forward
+push to the existing production branch, containing only this policy and its
+project record. A successful Git deployment and live notice read-back are still
+required before publication is considered complete.
 
 ## Routes and assets
 
