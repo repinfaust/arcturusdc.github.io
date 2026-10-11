@@ -15,22 +15,25 @@ person-initiated local JSON text export, and completed provider revocation.
 It corrects the implication of free-text symptom/activity notes and explains
 that optional AI permission is required for goal creation. No lawful basis,
 retention period, zero-retention promise or new processing purpose is invented.
-No other website page or product is changed. Publication remains pending.
-Commit `55366f1` is pushed on `codex/returno-public-policy`. Vercel rejected
+No other website page or product is changed. Publication completed on
+2026-10-11 through the existing GitHub main → Vercel integration.
+Commit `55366f1` was pushed on `codex/returno-public-policy`. Vercel rejected
 both preview and production-without-domain deployment attempts because the
 commit author lacks deployment permission. GitHub confirms the existing
 configured author (`arcturusecs`, ID 116175558); it is also the author of the
 currently published baseline. Retrying after the branch was pushed, with
 Vercel CLI 63.1.2, returned the same explicit Blocked status. No identity,
 team permission or deployment-protection setting was changed. The production
-domain has not been promoted and still serves the existing notice.
+domain was not promoted through the CLI.
 David clarified that this project normally deploys through its Git integration.
 On 2026-10-11 GitHub verified `main` still at `31f5b96`, and the policy branch's
 Vercel status was successful with "Canceled by Ignored Build Step", rather than
-an author-permission error. Publication is proceeding through a fast-forward
-push to the existing production branch, containing only this policy and its
-project record. A successful Git deployment and live notice read-back are still
-required before publication is considered complete.
+an author-permission error. The existing production branch was fast-forwarded
+to `5eb3551`, containing only this policy and its project record. GitHub reported
+"Deployment has completed" for deployment `82d122avu26PGx3FK3tEZEge4sKk`.
+The public privacy URL returned HTTP 200 with the 11 October 2026 date and
+reviewed feedback/local export wording. Source: GitHub status and live HTTP
+read-back on 2026-10-11. Use the normal Git integration for future publication.
 
 ## Routes and assets
 
