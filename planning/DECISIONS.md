@@ -1,5 +1,8 @@
 # Decisions
 
+## 2026-10-19 — RehabPath 1.3.1 reviewed optional AI context disclosure
+The RehabPath release work approved individually selected activity notes, symptom readings and additional details, on-device redaction and editable outgoing/returned review gates (RehabPath planning/DECISIONS.md, 17 October). The public policy and two product descriptions still say written notes never reach AI. Prepare factual copy alignment on codex/rehabpath-131-policy from origin/main in a bounded isolated website worktree, preserving existing retention/deletion claims and all site functionality. No backend, auth, collection, dependency or service changes. David explicitly approved publishing the exact correction in the RehabPath project’s planning/PUBLIC_POLICY_1.3.1_CORRECTION.md and then submitting the Play closed test on 19 October. Use the existing Git/Vercel publication path, verify production Ready and the live policy wording before sending the Alpha/Data Safety changes for review.
+
 ## 2026-10-07 — Repinfaust mirror: GPT-6.1 Sol and GPT-6 Astra in the model switcher (D-SITE-042)
 
 Mirrors app decision D-093 in `~/dev/xyz` (provider choice, privacy approval and reasoning live

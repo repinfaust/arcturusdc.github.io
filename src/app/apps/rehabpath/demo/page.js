@@ -47,7 +47,7 @@ const records = [
   ["Custom plan details", "Stored locally on device", "Reviewed, redacted PDF text only if AI import is used"],
   ["Activity and exercise logs", "Stored locally on device", "Included only in exports or selected AI summary metrics"],
   ["Symptom scores and recovery ratings", "Stored locally on device", "Included only in exports or selected AI summary metrics"],
-  ["Written notes", "Stored locally on device", "Not sent to the AI clinician summary feature"],
+  ["Written notes", "Stored locally on device", "Only selected, redacted and reviewed notes are sent if you opt in"],
   ["Milestone progress", "Stored locally on device", "Included only in exports or selected AI summary metrics"],
   ["Clinician progress pack PDF", "Generated on device", "Leaves the device only through the share destination the user chooses"],
 ];
