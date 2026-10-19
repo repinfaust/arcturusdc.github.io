@@ -114,7 +114,7 @@ export default function RehabPath() {
               />
               <Feature
                 title="Optional AI Summary"
-                desc="Generate a plain-English summary for your clinician pack from structured app metrics. Your written notes are not sent to the AI summary feature, and you review and edit the summary before it is included."
+                desc="Create a focused clinician summary from the sections you choose. Optionally include selected activity notes, symptom readings and additional details. Review the outgoing content and edit the summary before including it in your PDF."
                 icon="programme"
               />
               <Feature

@@ -15,7 +15,7 @@ export default function RehabPathPrivacyPolicyPage() {
     <RehabPathLegalPage
       eyebrow="Privacy"
       title="RehabPath Privacy Policy"
-      effectiveDate="July 21, 2026"
+      effectiveDate="October 19, 2026"
     >
       <p>
         This Privacy Policy explains how RehabPath handles information when you use the RehabPath
@@ -118,24 +118,26 @@ export default function RehabPathPrivacyPolicyPage() {
         <p>If you choose to generate an AI summary for a clinician pack:</p>
         <ul>
           <li>
-            The app sends only structured metrics from the sections you selected, such as activity
-            counts, symptom scores, and milestone status.
+            The app sends information from the dates and sections you select, such as activity
+            counts, symptom scores, milestone status and current planned exercises. You can enter
+            a focus request to guide the summary.
           </li>
           <li>
-            Your written notes are not sent to the AI summary feature. If you include notes in the
-            clinician pack, they are included in the exported PDF exactly as app data, not as AI
-            input.
+            Written activity notes, symptom readings and additional details are included in the AI
+            request only when you explicitly choose to include them. Selecting notes for the local
+            PDF does not automatically select them for AI.
           </li>
           <li>
-            Custom milestone text is redacted on-device before it is included in the AI summary
-            request.
+            Outgoing free text is redacted on your device. You review and can edit or remove the
+            outgoing content before it is sent to RehabPath’s Firebase AI gateway and OpenAI.
+            Original records and clinician prescriptions remain unchanged.
           </li>
           <li>
-            The AI-generated summary is shown to you for review and editing before it is included in
-            the clinician pack.
+            The AI-generated summary is shown to you for review and editing, and must be confirmed
+            before it is included in the clinician pack.
           </li>
           <li>
-            The clinician pack is exported as a PDF through your device's sharing options. RehabPath
+            The clinician pack is exported as a PDF through your device’s sharing options. RehabPath
             does not automatically send it to a clinician or upload it to a portal.
           </li>
         </ul>
