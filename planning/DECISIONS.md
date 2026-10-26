@@ -1,5 +1,28 @@
 # Decisions
 
+## 2026-10-26 — Orbit regulatory copy reflects phased AI Act application (D-SITE-044)
+
+David requested correction of the expired August 2026 deadline and blanket €35M
+fine claim on `/apps/stea/orbit`. The public page now distinguishes transparency
+rules applying since 2 August 2026 from high-risk application dates of
+2 December 2027 (Annex III) and 2 August 2028 (regulated products). It links the
+European Commission's implementation timeline and Article 99, identifies the
+€35M/7% ceiling as applying to prohibited practices, and qualifies other penalties
+and SME protections. Regulatory copy is dated 26 October 2026. The Data Act date
+is stated as applying since 12 September 2025; the expired pre-deadline GTM copy
+is replaced with undated aims.
+
+Sources checked:
+- https://ai-act-service-desk.ec.europa.eu/en/ai-act/eu-ai-act-implementation-timeline
+- https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-99
+- https://digital-strategy.ec.europa.eu/en/factpages/data-act-explained
+
+Copy only within the existing App Router page; no auth, backend, infrastructure,
+dependencies or product functionality changes. Consent-tracking wording describes
+policy checks without claiming either advisory-only or complete fail-closed
+enforcement, respecting the recorded open enforcement gap. David authorised publication to main through the existing Git/Vercel path.
+JSX syntax and stale-copy checks passed before publication.
+
 ## 2026-10-26 — Mandrake privacy policy published from the corrected 1.4 app record (D-SITE-043)
 
 David requested publication of `~/dev/mandrake2/legal/privacy-policy.md` after confirming the
