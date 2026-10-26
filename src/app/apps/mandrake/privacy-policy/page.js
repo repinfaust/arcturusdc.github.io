@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function MandrakePrivacyPolicyPage() {
   return (
-    <MandrakeLegalPage title="Privacy Policy" updated="29 August 2026">
+    <MandrakeLegalPage title="Privacy Policy" updated="26 October 2026">
       <p>
         Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>. We are the
         controller for personal data processed through the app. Contact us at{' '}
@@ -19,7 +19,7 @@ export default function MandrakePrivacyPolicyPage() {
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>No name, email or password—just a random app identifier.</li>
           <li>Urge entries are stored securely in the cloud under that identifier.</li>
-          <li>Screening answers and custom text remain on your device.</li>
+          <li>Screening answers remain on your device. Text you type under "Other" is not saved.</li>
           <li>There are no ads or analytics SDKs in the current Android app.</li>
           <li>You can reset app data in Settings and can request cloud deletion by email.</li>
         </ul>
@@ -44,15 +44,24 @@ export default function MandrakePrivacyPolicyPage() {
         <li>whether the wave timer was used and its duration.</li>
       </ul>
       <p>
+        If you tap &quot;Save check-in&quot; on the Today screen, Mandrake also saves a check-in: the
+        time, how strong an urge is (0 to 10) and your mood. Check-ins are saved only when you tap
+        the button, never automatically, and are stored the same way as urge events.
+      </p>
+      <p>
         These records can reveal information about health, substance use or behaviour and are
         treated as sensitive. They are stored under the anonymous UID in Google Cloud Firestore.
-        Custom tactic text and custom urge-category text are not included in the current cloud
-        upload.
+        Firebase also keeps a cached copy of these same fields on your device so the app works
+        offline.
+      </p>
+      <p>
+        If you choose &quot;Other&quot; for the urge or the tactic and type a description, only the
+        choice &quot;Other&quot; is recorded. The text you type is not uploaded and is not kept on
+        your device either.
       </p>
 
       <h3>Information stored only on your device</h3>
       <ul>
-        <li>the local copy of your urge events, including any custom text;</li>
         <li>optional screening responses, scores and risk bands;</li>
         <li>loops, milestones, rewards and progress; and</li>
         <li>settings such as support region and reminder preferences.</li>

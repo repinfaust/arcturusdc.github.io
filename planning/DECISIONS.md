@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-10-26 — Mandrake privacy policy published from the corrected 1.4 app record (D-SITE-043)
+
+David requested publication of `~/dev/mandrake2/legal/privacy-policy.md` after confirming the
+live page still carried 29 August's inaccurate custom-text storage claims. Keep the existing
+static App Router/legal layout and publish through the existing Git/Vercel path from current
+`origin/main`, excluding unrelated working-tree changes.
+
+The effective date becomes **26 October 2026**. The policy now states that text typed under
+"Other" is neither uploaded nor retained, distinguishes Firestore's offline cache of uploaded
+fields from an independent local event store, removes the claimed local copy including custom
+text, and explains user-requested strength/mood check-ins. This supersedes the custom-text
+claims in D-SITE-019/D-SITE-021. Other legal sections remain unchanged, including the honest
+statement that explicit consent is still an app-side gap; publishing this policy does not
+claim to implement consent. No app code, auth, backend, dependencies, collection or
+infrastructure changes. Billing fixes are being handled separately by Claude.
+
+
 ## 2026-10-19 — RehabPath 1.3.1 reviewed optional AI context disclosure
 The RehabPath release work approved individually selected activity notes, symptom readings and additional details, on-device redaction and editable outgoing/returned review gates (RehabPath planning/DECISIONS.md, 17 October). The public policy and two product descriptions still say written notes never reach AI. Prepare factual copy alignment on codex/rehabpath-131-policy from origin/main in a bounded isolated website worktree, preserving existing retention/deletion claims and all site functionality. No backend, auth, collection, dependency or service changes. David explicitly approved publishing the exact correction in the RehabPath project’s planning/PUBLIC_POLICY_1.3.1_CORRECTION.md and then submitting the Play closed test on 19 October. Use the existing Git/Vercel publication path, verify production Ready and the live policy wording before sending the Alpha/Data Safety changes for review.
 
