@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-10-26 — Orbit public copy removes pricing, penalties and federated roadmap (D-SITE-045)
+
+David requested removal of Orbit's pricing tiers and margin figures, penalty
+framing, and the Federated Consortium Governance roadmap. Remove the pricing
+data and rendered pricing blocks, the complete penalty card, and the Phase 2
+roadmap card; retain the service descriptions and centralised infrastructure
+card. Adjust the remaining regulatory and infrastructure layouts to fit their
+card counts. This supersedes D-SITE-044's choice to display qualified penalties.
+Copy only; no app features, backend, auth, dependencies or infrastructure change.
+Publish through the existing main/Git/Vercel path. JSX syntax, removal checks and
+Git whitespace checks passed before publication.
+
 ## 2026-10-26 — Orbit regulatory copy reflects phased AI Act application (D-SITE-044)
 
 David requested correction of the expired August 2026 deadline and blanket €35M

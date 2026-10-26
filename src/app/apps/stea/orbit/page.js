@@ -92,22 +92,19 @@ export default function OrbitPage() {
   const revenueStreams = [
     {
       title: 'B2B: Compliance Infrastructure',
-      description: 'Per-event or per-seat pricing for organisations to write signed declarations',
-      pricing: '$0.001–0.01 per event | $50–500/month per org',
+      description: 'Infrastructure for organisations to write signed declarations',
       gradient: 'from-blue-50 to-cyan-50',
       borderColor: 'border-blue-200',
     },
     {
       title: 'B2B: KYC Integration Layer',
       description: 'Primary GTM. Integrates with KYC providers to create reusable identity attestations. 40–60% cost reduction for financial institutions.',
-      pricing: 'Platform fees + attestation requests (60–80% margins)',
       gradient: 'from-emerald-50 to-green-50',
       borderColor: 'border-emerald-200',
     },
     {
       title: 'B2B: RegTech Audit Dashboards',
       description: 'Real-time compliance reporting, data lineage visualisation, risk scoring for banks, fintechs, healthcare providers',
-      pricing: 'Enterprise tier: $50K–500K/year',
       gradient: 'from-violet-50 to-purple-50',
       borderColor: 'border-violet-200',
     },
@@ -371,7 +368,7 @@ export default function OrbitPage() {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
           <div className="rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50 to-rose-50 p-6">
             <div className="text-3xl mb-3">⚖️</div>
             <h3 className="text-lg font-bold text-red-900 mb-2">AI Act Compliance</h3>
@@ -405,24 +402,6 @@ export default function OrbitPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-            <div className="text-3xl mb-3">💰</div>
-            <h3 className="text-lg font-bold text-blue-900 mb-2">Penalties Depend on the Infringement</h3>
-            <p className="text-sm text-neutral-700 mb-3">
-              <strong>AI Act Article 99</strong>
-            </p>
-            <p className="text-sm text-neutral-700">
-              Prohibited practices: up to €35M or 7% of worldwide annual turnover.
-              Certain other breaches: up to €15M or 3%. For undertakings, the higher
-              ceiling generally applies; SMEs have lower-cap protections.
-              Orbit supports evidence gathering; it does not guarantee compliance.
-            </p>
-            <p className="text-xs mt-3">
-              <a href="https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-99" className="text-blue-800 underline hover:text-blue-950">
-                Article 99: penalties and exceptions
-              </a>
-            </p>
-          </div>
         </div>
         <p className="text-xs text-neutral-600 text-center mt-6">Regulatory information checked: 26 October 2026.</p>
       </section>
@@ -447,14 +426,6 @@ export default function OrbitPage() {
               <p className="text-sm text-neutral-700 mb-4 leading-relaxed">
                 {stream.description}
               </p>
-              <div className="mt-4 pt-4 border-t border-neutral-200">
-                <p className="text-xs font-semibold text-neutral-900">
-                  Pricing:
-                </p>
-                <p className="text-sm text-neutral-700 mt-1">
-                  {stream.pricing}
-                </p>
-              </div>
             </div>
           ))}
         </div>
@@ -468,8 +439,8 @@ export default function OrbitPage() {
           </h2>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-6">
+        <div className="max-w-2xl mx-auto">
+          <div>
             <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
               <div className="text-3xl mb-3">🚀</div>
               <h3 className="text-lg font-bold text-blue-900 mb-2">Phase 1 (2025–2026)</h3>
@@ -485,20 +456,6 @@ export default function OrbitPage() {
               </ul>
             </div>
 
-            <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-6">
-              <div className="text-3xl mb-3">🌍</div>
-              <h3 className="text-lg font-bold text-purple-900 mb-2">Phase 2 (2027+)</h3>
-              <p className="text-sm text-neutral-700 mb-3 font-semibold">
-                Federated Consortium Governance
-              </p>
-              <ul className="text-sm text-neutral-700 space-y-2">
-                <li>• Multi-region infrastructure</li>
-                <li>• Consortium governance model</li>
-                <li>• Cross-border compliance</li>
-                <li>• Enterprise-grade cryptography</li>
-                <li>• Advanced anomaly detection</li>
-              </ul>
-            </div>
           </div>
         </div>
       </section>
