@@ -414,7 +414,7 @@ export default function AIActTechnicalDocumentationPage() {
               <h1 className="text-3xl font-bold text-neutral-900">AI Act Technical Documentation</h1>
               <p className="text-sm text-neutral-600 mt-1">
                 Compliance documentation as a service for AI providers. Generate Annex IV, VIII, and XI technical documentation
-                using the Orbit Logging SDK and Integrity Service.
+                using the Orbit Integrity Service.
               </p>
             </div>
             <Link
@@ -438,7 +438,7 @@ export default function AIActTechnicalDocumentationPage() {
                 <p className="text-sm text-neutral-700 leading-relaxed">
                   This demo highlights our strongest early use case: <span className="font-semibold text-neutral-900">KYC and Identity Verification vendors</span>,
                   who face immediate AI Act obligations and strict enterprise procurement requirements.
-                  The same Orbit Logging SDK and Integrity Service apply to any high-risk AI system —
+                  The same Orbit Integrity Service applies to any high-risk AI system —
                   <span className="font-semibold text-neutral-900"> KYC is simply the first vertical where demand is urgent and the benefits are clearest</span>.
                 </p>
               </div>
@@ -453,7 +453,6 @@ export default function AIActTechnicalDocumentationPage() {
           <nav className="flex space-x-4 md:space-x-8 overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             {[
               { id: 'kyc', label: 'Orbit and KYC Use Case' },
-              { id: 'sdk', label: 'Orbit Logging SDK' },
               { id: 'ingestion', label: 'Data Ingestion' },
               { id: 'dashboard', label: 'Compliance Dashboard' },
               { id: 'workflow', label: 'Compliance Workflow' },
@@ -481,14 +480,6 @@ export default function AIActTechnicalDocumentationPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
-        {/* Orbit Logging SDK Tab */}
-        {activeTab === 'sdk' && (
-          <div className="space-y-6">
-            <LoggingSDKExplainer />
-            <LoggingSDKExamples />
-          </div>
-        )}
-
         {/* Why KYC Needs Orbit Tab */}
         {activeTab === 'kyc' && (
           <div className="space-y-6">
@@ -1057,299 +1048,6 @@ function DashboardExplainer() {
   );
 }
 
-// Orbit Logging SDK Explainer
-function LoggingSDKExplainer() {
-  return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-8">
-      <h2 className="text-2xl font-bold text-neutral-900 mb-4">Orbit Logging SDK</h2>
-      <p className="text-neutral-700 mb-6">
-        The open standard for Annex IV-ready logging. Most AI vendors don't have the logs needed for compliance. 
-        Orbit provides SDKs, schemas, and templates to generate compliant logs in 5 lines of code.
-      </p>
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="font-semibold text-green-900 mb-2">Your Defensible Moat</div>
-        <div className="text-sm text-green-800 space-y-1">
-          <div>✓ Define the schema used by 100+ vendors → become the de facto AI Act logging standard</div>
-          <div>✓ Much harder for OneTrust / ServiceNow to copy</div>
-          <div>✓ Solves the "Show me the logs" problem by providing the logs</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Orbit Logging SDK Examples Component
-function LoggingSDKExamples() {
-  const [selectedLanguage, setSelectedLanguage] = useState('python');
-
-  const examples = {
-    python: {
-      code: `import { orbit } from "@orbit/sdk";
-
-# Log model execution (Annex IV-ready)
-orbit.log_execution(
-    model="kyc_risk_v3",
-    model_version="3.2.1",
-    inputs={
-        "applicant_income": 75000,
-        "credit_score": 720,
-        "debt_to_income": 0.35
-    },
-    outputs={
-        "decision": "APPROVED",
-        "confidence": 0.87,
-        "risk_score": 0.12
-    },
-    timestamp=datetime.now()
-)
-
-# Log training data summary
-orbit.log_training(
-    model="kyc_risk_v3",
-    data_size="2.3M records",
-    period="2020-01-01 to 2023-12-31",
-    sources=["internal_applications", "credit_bureau"]
-)
-
-# Log human oversight
-orbit.log_oversight(
-    decision_id="dec_12345",
-    reviewer="analyst_jane",
-    action="MANUAL_REVIEW",
-    reason="confidence < 0.7"
-)`,
-      description: 'Python SDK - Generate Annex IV-ready logs in 5 lines of code',
-    },
-    nodejs: {
-      code: `import { orbit } from '@orbit/sdk';
-
-// Log model execution (Annex IV-ready)
-orbit.logExecution({
-  model: 'kyc_risk_v3',
-  modelVersion: '3.2.1',
-  inputs: {
-    applicantIncome: 75000,
-    creditScore: 720,
-    debtToIncome: 0.35
-  },
-  outputs: {
-    decision: 'APPROVED',
-    confidence: 0.87,
-    riskScore: 0.12
-  },
-  timestamp: new Date()
-});
-
-// Log training data summary
-orbit.logTraining({
-  model: 'kyc_risk_v3',
-  dataSize: '2.3M records',
-  period: '2020-01-01 to 2023-12-31',
-  sources: ['internal_applications', 'credit_bureau']
-});
-
-// Log human oversight
-orbit.logOversight({
-  decisionId: 'dec_12345',
-  reviewer: 'analyst_jane',
-  action: 'MANUAL_REVIEW',
-  reason: 'confidence < 0.7'
-});`,
-      description: 'Node.js SDK - TypeScript support, async/await ready',
-    },
-    java: {
-      code: `import com.orbit.sdk.Orbit;
-
-Orbit orbit = Orbit.getInstance();
-
-// Log model execution (Annex IV-ready)
-orbit.logExecution(ExecutionLog.builder()
-    .model("kyc_risk_v3")
-    .modelVersion("3.2.1")
-    .inputs(Map.of(
-        "applicantIncome", 75000,
-        "creditScore", 720,
-        "debtToIncome", 0.35
-    ))
-    .outputs(Map.of(
-        "decision", "APPROVED",
-        "confidence", 0.87,
-        "riskScore", 0.12
-    ))
-    .timestamp(Instant.now())
-    .build());
-
-// Log training data summary
-orbit.logTraining(TrainingLog.builder()
-    .model("kyc_risk_v3")
-    .dataSize("2.3M records")
-    .period("2020-01-01 to 2023-12-31")
-    .sources(List.of("internal_applications", "credit_bureau"))
-    .build());`,
-      description: 'Java SDK - Enterprise-ready with builder pattern',
-    },
-    go: {
-      code: `import "github.com/orbit/orbit-go"
-
-orbit := orbit.NewClient()
-
-// Log model execution (Annex IV-ready)
-orbit.LogExecution(orbit.ExecutionLog{
-    Model:       "kyc_risk_v3",
-    ModelVersion: "3.2.1",
-    Inputs: map[string]interface{}{
-        "applicantIncome": 75000,
-        "creditScore":     720,
-        "debtToIncome":    0.35,
-    },
-    Outputs: map[string]interface{}{
-        "decision":   "APPROVED",
-        "confidence": 0.87,
-        "riskScore":  0.12,
-    },
-    Timestamp: time.Now(),
-})
-
-// Log training data summary
-orbit.LogTraining(orbit.TrainingLog{
-    Model:    "kyc_risk_v3",
-    DataSize: "2.3M records",
-    Period:   "2020-01-01 to 2023-12-31",
-    Sources:  []string{"internal_applications", "credit_bureau"},
-})`,
-      description: 'Go SDK - High performance, minimal dependencies',
-    },
-  };
-
-  const eventTypes = [
-    { name: 'MODEL_EXECUTED', description: 'Log model inference execution with inputs/outputs' },
-    { name: 'TRAINING_COMPLETED', description: 'Log model training with data summary' },
-    { name: 'OVERSIGHT_ACTION', description: 'Log human oversight and intervention' },
-    { name: 'VERSION_DEPLOYED', description: 'Log model version changes and approvals' },
-    { name: 'DRIFT_DETECTED', description: 'Log data drift and model drift events' },
-    { name: 'COMPLIANCE_CHECK', description: 'Log automated compliance validation results' },
-  ];
-
-  return (
-    <div className="space-y-6">
-      {/* Code Examples */}
-      <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4">SDK Examples</h2>
-        
-        {/* Language Selector */}
-        <div className="flex gap-2 mb-4">
-          {Object.keys(examples).map(lang => (
-            <button
-              key={lang}
-              onClick={() => setSelectedLanguage(lang)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm ${
-                selectedLanguage === lang
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              {lang === 'nodejs' ? 'Node.js' : lang.charAt(0).toUpperCase() + lang.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Code Block */}
-        <div className="bg-neutral-900 rounded-lg p-6 overflow-x-auto">
-          <pre className="text-sm text-neutral-100 font-mono">
-            <code>{examples[selectedLanguage].code}</code>
-          </pre>
-        </div>
-        <p className="text-sm text-neutral-600 mt-3">{examples[selectedLanguage].description}</p>
-      </div>
-
-      {/* Event Types */}
-      <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4">Standard Event Types</h2>
-        <p className="text-sm text-neutral-600 mb-4">
-          Orbit defines a standard schema for Annex IV-compliant logging. These event types cover all requirements.
-        </p>
-        <div className="grid md:grid-cols-2 gap-4">
-          {eventTypes.map((event, idx) => (
-            <div key={idx} className="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
-              <div className="font-semibold text-neutral-900 mb-1">{event.name}</div>
-              <div className="text-sm text-neutral-600">{event.description}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Minimum Viable Log Set */}
-      <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4">Minimum Viable Log Set</h2>
-        <p className="text-sm text-neutral-600 mb-4">
-          For Annex IV compliance, you need at minimum these log types:
-        </p>
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
-            <div>
-              <div className="font-semibold text-neutral-900">Model Execution Logs</div>
-              <div className="text-sm text-neutral-600">Every inference with inputs, outputs, model version, timestamp</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
-            <div>
-              <div className="font-semibold text-neutral-900">Training Data Summary</div>
-              <div className="text-sm text-neutral-600">Data size, period, sources, preprocessing steps</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
-            <div>
-              <div className="font-semibold text-neutral-900">Human Oversight Logs</div>
-              <div className="text-sm text-neutral-600">Review actions, escalations, intervention decisions</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">✓</div>
-            <div>
-              <div className="font-semibold text-neutral-900">Version Change Logs</div>
-              <div className="text-sm text-neutral-600">Model version deployments, approvals, rollbacks</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Installation */}
-      <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4">Installation</h2>
-        <div className="space-y-4">
-          <div>
-            <div className="font-semibold text-neutral-900 mb-2">Python</div>
-            <div className="bg-neutral-900 rounded-lg p-4">
-              <code className="text-sm text-neutral-100">pip install orbit-sdk</code>
-            </div>
-          </div>
-          <div>
-            <div className="font-semibold text-neutral-900 mb-2">Node.js</div>
-            <div className="bg-neutral-900 rounded-lg p-4">
-              <code className="text-sm text-neutral-100">npm install @orbit/sdk</code>
-            </div>
-          </div>
-          <div>
-            <div className="font-semibold text-neutral-900 mb-2">Java</div>
-            <div className="bg-neutral-900 rounded-lg p-4">
-              <code className="text-sm text-neutral-100">&lt;dependency&gt;<br/>&nbsp;&nbsp;&lt;groupId&gt;com.orbit&lt;/groupId&gt;<br/>&nbsp;&nbsp;&lt;artifactId&gt;orbit-sdk&lt;/artifactId&gt;<br/>&lt;/dependency&gt;</code>
-            </div>
-          </div>
-          <div>
-            <div className="font-semibold text-neutral-900 mb-2">Go</div>
-            <div className="bg-neutral-900 rounded-lg p-4">
-              <code className="text-sm text-neutral-100">go get github.com/orbit/orbit-go</code>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Compliance Workflow Explainer
 function ComplianceWorkflowExplainer() {
   return (
@@ -1555,10 +1253,6 @@ function BundlesExplainer() {
     </div>
   );
 }
-
-// Orbit Logging SDK Explainer
-
-// Orbit Logging SDK Examples Component
 
 // Compliance Workflow Explainer
 
@@ -2367,10 +2061,6 @@ function ComplianceScorecard({ completenessScore, documentationBundle, onExport 
   );
 }
 
-// Orbit Logging SDK Explainer
-
-// Orbit Logging SDK Examples Component
-
 // Compliance Workflow Explainer
 
 // Compliance Workflow Component
@@ -2459,10 +2149,6 @@ function SourceLogsUsed({ dashboardData }) {
     </div>
   );
 }
-
-// Orbit Logging SDK Explainer
-
-// Orbit Logging SDK Examples Component
 
 // Compliance Workflow Explainer
 
@@ -3196,10 +2882,6 @@ function ModelRiskTeamView({ dashboardData, documentationBundle }) {
   );
 }
 
-// Orbit Logging SDK Explainer
-
-// Orbit Logging SDK Examples Component
-
 // Compliance Workflow Explainer
 
 // Compliance Workflow Component
@@ -3225,7 +2907,7 @@ function WhyKYCNeedsOrbitExplainer() {
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">2</div>
             <div className="text-sm md:text-base text-neutral-800">
-              <strong>Explore the tabs</strong> above to see how Orbit logging SDK works and how data flows
+              <strong>Explore the tabs</strong> above to see how Orbit works and how data flows
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -3422,7 +3104,7 @@ function WhyKYCNeedsOrbitExplainer() {
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-green-600">✓</span>
-                <span>Independent integrity layer</span>
+                <span>Integrity layer (verified by Orbit, not yet independently)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-green-600">✓</span>
@@ -3431,7 +3113,7 @@ function WhyKYCNeedsOrbitExplainer() {
             </div>
           </div>
         </div>
-        <div className="text-xs md:text-sm font-semibold text-red-900">Orbit replaces all of this with a single SDK and automated documentation engine.</div>
+        <div className="text-xs md:text-sm font-semibold text-red-900">Orbit aims to replace all of this with one integrity service and an automated documentation engine (proof of concept).</div>
       </div>
 
       {/* Orbit in KYC Architecture Diagram */}
@@ -3447,7 +3129,7 @@ function WhyKYCNeedsOrbitExplainer() {
           </div>
           <div className="text-lg md:text-xl lg:text-2xl text-neutral-400">→</div>
           <div className="bg-green-100 rounded-lg px-3 md:px-4 py-1.5 md:py-2 border border-green-300">
-            <div className="font-semibold text-green-900 text-xs md:text-sm">Orbit Logging SDK</div>
+            <div className="font-semibold text-green-900 text-xs md:text-sm">Your Logs</div>
           </div>
           <div className="text-lg md:text-xl lg:text-2xl text-neutral-400">→</div>
           <div className="bg-amber-100 rounded-lg px-3 md:px-4 py-1.5 md:py-2 border border-amber-300">
@@ -3666,17 +3348,38 @@ function SecurityArchitecture() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4">Hash Chain Specification</h2>
-        <div className="bg-neutral-50 rounded-lg p-4">
-          <h3 className="font-semibold text-neutral-900 mb-2">Algorithm</h3>
-          <p className="text-sm text-neutral-700 mb-3">
-            SHA-256 for event hashing, HMAC-SHA256 for cryptographic signatures
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <h2 className="text-2xl font-bold text-neutral-900">Hash Chain Specification (chain v2)</h2>
+          <span className="px-2 py-1 rounded-md bg-amber-100 border border-amber-300 text-amber-900 text-xs font-semibold">
+            Design — in development
+          </span>
+        </div>
+        <p className="text-sm text-neutral-700 mb-4">
+          This is the design of chain v2. It is not yet live and verified on stored events. Tamper-evidence,
+          once live, is verified by Orbit, not independently: Orbit holds the signing secret, and an
+          independent timestamp of the chain head is planned.
+        </p>
+        <div className="bg-neutral-50 rounded-lg p-4 space-y-3">
+          <h3 className="font-semibold text-neutral-900">Algorithm</h3>
+          <p className="text-sm text-neutral-700">
+            Every value is serialised as canonical JSON, with keys sorted at every depth. Anything that is not
+            plain JSON is refused rather than skipped.
           </p>
-          <div className="bg-neutral-900 rounded-lg p-4 font-mono text-sm text-neutral-100">
-            <div>eventHash = SHA256(canonicalJSON(event) + signature)</div>
-            <div className="mt-2">previousEventHash → eventHash → nextEventHash</div>
-            <div className="mt-2">blockIndex = sequential counter per user/org</div>
+          <div className="bg-neutral-900 rounded-lg p-4 font-mono text-sm text-neutral-100 space-y-2">
+            <div>signature = HMAC-SHA256(secret, canonical(payload + signingKeyId))</div>
+            <div>eventHash = SHA256(canonical(payload + signingKeyId + signature + previousEventHash + blockIndex))</div>
+            <div>block 1: previousEventHash = 64 zeros (genesis)</div>
+            <div>block n: previousEventHash = eventHash of block n−1</div>
           </div>
+          <p className="text-sm text-neutral-700">
+            Because each hash covers the previous hash and the block index, editing, reordering, deleting or
+            relinking any event changes every hash after it. A verifier walks the stored chain and checks each
+            block's signature, hash, link and index, then the stored head.
+          </p>
+          <p className="text-sm text-neutral-700">
+            The chain is kept per organisation. Appends move the head in a single transaction, so the chain
+            cannot fork.
+          </p>
         </div>
       </div>
       <div className="bg-white rounded-2xl border border-neutral-200 p-6">

@@ -43,7 +43,7 @@ export default function OrbitPage() {
     {
       icon: '🔐',
       title: 'Signed Event Ledger',
-      description: 'An audit trail that sits around existing systems. Never stores PII—only pointers, hashes, signatures, and declarations. Hash-chain verification is in development.',
+      description: 'An audit trail that sits around existing systems. Never stores PII—only pointers, hashes, signatures, and declarations. Hash-chain verification is in development; when live, it is verified by Orbit, not independently.',
       gradient: 'from-blue-500 to-cyan-500',
     },
     {
@@ -504,7 +504,7 @@ export default function OrbitPage() {
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-neutral-400 font-bold">○</span>
-                <span className="text-sm text-neutral-700"><strong>Hash-chain verification:</strong> in development</span>
+                <span className="text-sm text-neutral-700"><strong>Hash-chain verification:</strong> in development (verified by Orbit, not independently)</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-600 font-bold">✓</span>

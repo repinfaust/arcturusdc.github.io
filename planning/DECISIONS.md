@@ -1,5 +1,40 @@
 # Decisions
 
+## 2026-10-27 — AI Act page: SDK tab removed, chain spec rewritten as design; integrity "verified by Orbit, not independently" (D-SITE-055)
+
+**Live verification of D-SITE-046, 047 and 050** was done by David on www.arcturusdc.com,
+2026-10-27, from screenshots:
+- **Signed in as the owner:** `GET /api/orbit/orgs`; testing the body for `apiKey|signingSecret`
+  gave `false`.
+- **Signed in with a second, non-owner Google account:**
+  - `POST /api/orbit/reset` returned `HTTP/2 403`;
+  - `GET /api/orbit/events?userId=nobody` returned `HTTP/2 403`.
+- David accepted the sandbox compromise (non-owners can read only `user_12345`).
+
+**The AI Act POC page** (`AI-Act-…/page.js`), at David's request:
+- **The SDK tab is removed.** That covers the "Orbit Logging SDK" tab, `LoggingSDKExplainer` and
+  `LoggingSDKExamples` (Python, Node, Java and Go examples, plus install commands for packages that
+  don't exist), and eight orphaned SDK comments.
+- **The other SDK mentions are reworded:** the header, the positioning block, the "Explore the
+  tabs" step, the "replaces all of this with a single SDK" line (now "aims to … (proof of
+  concept)") and the "Orbit Logging SDK" box in the KYC diagram (now "Your Logs").
+- **"Hash Chain Specification"** is rewritten to describe chain v2 (D-SITE-054) and labelled
+  **"Design — in development"** until v2 is live and verified on stored events. The old text
+  described v1 as if the link were hashed.
+- **"✓ Independent integrity layer"** now reads "Integrity layer (verified by Orbit, not yet
+  independently)".
+
+**Rule until an external anchor exists:** all copy says integrity is verified by Orbit, not
+independently. The public page's two hash-chain lines say so.
+- The external anchor is due after the backfill and verify chain mode, as its own D-SITE entry. It
+  is not deferred indefinitely.
+
+**Guard:** `claims.test.mjs` now fails on any SDK reference in the AI Act page, on a chain spec
+without the design label, and on "independently verified", "independent integrity" or similar on
+any Orbit page. The old AI Act copy matches these guards 18 times.
+
+**Tests:** `npm run test:orbit` gives 86 pass, 0 fail, 2 todo (the v1 defects).
+
 ## 2026-10-27 — Orbit chain v2: recursive canonical form, hash covers the link (D-SITE-054)
 
 `src/lib/orbit/chainV2.js`, for new events only. v1 (`signatures.js`) is untouched.

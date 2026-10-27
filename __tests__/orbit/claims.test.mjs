@@ -30,8 +30,30 @@ for (const page of PAGES) {
   });
 }
 
+const AI_ACT = 'src/app/apps/stea/orbit/AI-Act-Technical-DocumentationBundle/page.js';
+
 test('AI Act bundle: no hard-coded tamper count or "all records intact" message', () => {
-  const src = read('src/app/apps/stea/orbit/AI-Act-Technical-DocumentationBundle/page.js');
+  const src = read(AI_ACT);
   assert.doesNotMatch(src, /tamperSignals/);
   assert.doesNotMatch(src, /All tamper-evident records are intact/);
 });
+
+test('AI Act bundle: no SDK that does not exist (D-SITE-055)', () => {
+  const src = read(AI_ACT);
+  assert.doesNotMatch(src, /Logging SDK|@orbit\/sdk|orbit-sdk|com\.orbit\.sdk|LoggingSDK/);
+});
+
+test('AI Act bundle: the chain specification is labelled as design until v2 is verified on stored events', () => {
+  const src = read(AI_ACT);
+  assert.match(src, /Hash Chain Specification \(chain v2\)/);
+  assert.match(src, /Design — in development/);
+});
+
+// Until an external anchor exists (D-SITE-048 follow-up), integrity is verified by Orbit only.
+for (const page of [...PAGES, AI_ACT]) {
+  test(`${page}: never claims independent verification`, () => {
+    const src = read(page);
+    assert.doesNotMatch(src, /independent(ly)?\s+(verif\w*|integrity|audit\w*)/i);
+    assert.doesNotMatch(src, /(verifiable|verified|verify)\s+independently/i);
+  });
+}
