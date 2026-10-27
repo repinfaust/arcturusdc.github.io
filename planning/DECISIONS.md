@@ -1163,6 +1163,40 @@ stopped working. `/apps/stea/career/cvs` permanently redirects to the new path i
 name (`CVS`, `node_modules`, `venv`, `__pycache__`, `.git`, `.svn`, `.hg`, `.cache` and similar,
 case-insensitive).
 
+## 2026-09-26 — Cloud Functions moved to Node.js 22; WC26 crons and orphan removed (D-SITE-031)
+> Restored to `main` on 2026-10-27. It was written and deployed on 2026-09-26, but never committed;
+> it was found parked in David's local checkout. The text is unchanged, and the code change
+> (`functions/index.js`, `functions/package.json`) is restored in the same commit, so `main` matches
+> what is deployed.
+
+**Why now:** Google decommissions Node.js 20 for Cloud Functions on 2026-10-30. After that
+date no function on that runtime can be redeployed, which would freeze fixes such as
+D-SITE-030. All 21 first-gen functions in `stea-775cd` were on `nodejs20`.
+
+**Decision: runtime only, no dependency upgrade.** `functions/package.json` `engines.node`
+changed from `"20"` to `"22"`. `firebase-functions` 5.1.1 and `firebase-admin` 12.7.0 are unchanged; both run
+on Node 22, and `index.js` loads cleanly under Node 22.23.3. Moving `firebase-functions` to
+v6/v7 is a breaking API change (root import becomes v2), and it is deliberately a separate,
+later piece of work. The `ext-firestore-send-email` extension is Gen 2 and manages its own
+runtime; it was out of scope.
+
+**Low-drift redeploy, checked first:** since their last deploys, the non-MLB, non-WC26
+functions (05-21) had only comment changes, and `functions/wc26/` (07-04) had none. Deployed
+2026-09-26 by explicit name list, never a bare `--only functions`: all 18 source exports are
+now `nodejs22`, and environment variables carried over.
+
+**Removed (David's decision, same day):**
+- `refreshWc26GoldenBootNow`: deployed but absent from source (orphan), so it could not be
+  upgraded. Deleted.
+- `refitWc26Ratings` (every 24 h) and `syncWc26Predictions` (every 6 h): WC2026 ended
+  2026-07-19 and these crons had no season-end shutoff, the same failure class as D-SITE-009.
+  Deleted from production, and commented out in `functions/index.js` with a do-not-re-enable
+  note. The on-demand `refitWc26RatingsNow` and `syncWc26PredictionsNow` callables are kept,
+  as is the `onWc26ResultFinalized` trigger.
+
+**Rule carried forward:** deploy functions by explicit name list covering every source export,
+then confirm with `gcloud functions list` that nothing deployed is absent from source.
+
 ## 2026-09-26 — MLB T-2h window widened; all six MLB functions redeployed as one bundle (D-SITE-030)
 
 Health check of `apps/stea/mlb` (full evidence: `planning/MLB_BET_SELECTION_FINDINGS.md`,

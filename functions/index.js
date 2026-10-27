@@ -20,19 +20,25 @@ exports.seedWc26Data = functions.https.onCall(wc26.seedWc26Data);
 
 exports.refitWc26RatingsNow = functions.https.onCall(wc26.refitWc26RatingsNow);
 
-exports.refitWc26Ratings = functions.pubsub
-  .schedule('every 24 hours')
-  .timeZone('Europe/London')
-  .onRun(wc26.refitWc26RatingsScheduled);
+// DISABLED 2026-09-26 (D-SITE-031): WC2026 ended 2026-07-19; this cron kept
+// firing with no season-end shutoff. The on-demand refitWc26RatingsNow callable is kept.
+// Do not re-enable without a new tournament and a hard stop date.
+// exports.refitWc26Ratings = functions.pubsub
+//   .schedule('every 24 hours')
+//   .timeZone('Europe/London')
+//   .onRun(wc26.refitWc26RatingsScheduled);
 
 exports.syncWc26PredictionsNow = functions.https.onCall(
   wc26.syncWc26PredictionsNow,
 );
 
-exports.syncWc26Predictions = functions.pubsub
-  .schedule('every 6 hours')
-  .timeZone('Europe/London')
-  .onRun(wc26.syncWc26PredictionsScheduled);
+// DISABLED 2026-09-26 (D-SITE-031): WC2026 ended 2026-07-19; this cron kept
+// firing with no season-end shutoff. The on-demand syncWc26PredictionsNow callable is kept.
+// Do not re-enable without a new tournament and a hard stop date.
+// exports.syncWc26Predictions = functions.pubsub
+//   .schedule('every 6 hours')
+//   .timeZone('Europe/London')
+//   .onRun(wc26.syncWc26PredictionsScheduled);
 
 exports.gradeWc26PredictionsNow = functions.https.onCall(
   wc26.gradeWc26PredictionsNow,
