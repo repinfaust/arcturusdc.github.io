@@ -13,13 +13,14 @@ const CANONICAL_HOST = 'www.arcturusdc.com';
 // Report-only for now: this policy has never been enforced on the live site, and the old one would
 // have blocked Google Fonts and Dialled MTB's Cloud Functions. Enforce it (rename the header) once
 // a pass through the apps shows no violations in the browser console (D-SITE-064).
+// cdn.tldraw.com: Harls' whiteboard fonts and translations, from David's pass (D-SITE-065).
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://apis.google.com https://accounts.google.com https://www.gstatic.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: https: blob:",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://*.google.com https://*.cloudfunctions.net https://www.google-analytics.com https://*.google-analytics.com",
+  "font-src 'self' data: https://fonts.gstatic.com https://cdn.tldraw.com",
+  "connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://*.google.com https://*.cloudfunctions.net https://www.google-analytics.com https://*.google-analytics.com https://cdn.tldraw.com",
   "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",

@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-10-27 — CSP pass, first results: `cdn.tldraw.com` allowed (D-SITE-065)
+
+David's signed-in pass on 2026-10-27 (screenshots: `/apps/stea` and `/apps/stea/harls`, Firefox).
+
+**Signed-in access works.** The STEa home and Harls loaded normally behind the new server gates
+(D-SITE-064).
+
+**Report-only violations:** only from tldraw (Harls' whiteboard). It loads fonts and
+`translations/en.json` from `https://cdn.tldraw.com/2.4.6/…`, so that host is added to `font-src`
+and `connect-src`. The STEa home page had none.
+
+**Ignored:** the other console lines come from Firefox itself (`about:newtab`, `mozgcp.net`,
+`getElementById` warnings on the new-tab page), not from this site.
+
+**Not caused by D-SITE-064:** `[Harls] Project setup failed: FirebaseError: Missing or insufficient
+permissions` for tenant `zsQe61eMHgrTdjjGjNCK`, followed by success for `FqhckqMaorJMAQ6B29mP`.
+- `harls/page.js:1180-1191` runs project setup for whichever workspace is current. It first ran
+  under the Dialled MTB workspace shown in the switcher, where the Firestore rules refuse it, then
+  re-ran when the workspace changed.
+- Neither the Harls code nor the deployed Firestore rules changed today. The gates are server-side
+  and pass before the page runs.
+- It's a pre-existing workspace race in Harls. It's noted here, not fixed.
+
+**Still to do:** the remaining apps in the pass. The CSP is enforced only once those show no
+violations.
+
 ## 2026-10-27 — Page gates move to server layouts, plus an edge cookie check; `src/middleware.js` for host and headers (D-SITE-064)
 
 David chose option (c) plus (a) from D-SITE-061.
