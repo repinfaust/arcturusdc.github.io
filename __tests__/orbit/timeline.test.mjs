@@ -52,6 +52,7 @@ test('sessionFromCookie: no cookie, a bad cookie and a good one', async () => {
   assert.deepEqual(await sessionFromCookie('good', auth), { authenticated: true, user: { uid: 'u1', email: 'repinfaust@gmail.com', emailVerified: true } });
 });
 
+// Inert until D-SITE-061 is fixed: Next ignores the root middleware.js. The page check below is the real gate.
 test('middleware protects the route and limits it to the owner', () => {
   const mw = readFileSync(new URL('middleware.js', ROOT), 'utf8');
   for (const p of ['/apps/stea/orbit/evidence', '/stea/orbit/evidence']) assert.ok(mw.includes(`'${p}'`), p);

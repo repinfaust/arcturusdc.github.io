@@ -1,5 +1,45 @@
 # Decisions
 
+## 2026-10-27 — FINDING: `middleware.js` has never run; protected pages are gated client-side only (D-SITE-061)
+
+**Found while checking D-SITE-059 on the live site, signed out:**
+- `/apps/stea/repinfaust`, `/apps/stea/orbit/poc` and `/apps/stea/orbit/AI-Act-…` all return
+  **200**, not the middleware's redirect.
+- The built `.next/server/middleware-manifest.json` is empty (`"middleware": {}`).
+- The live responses carry none of the middleware's headers: no CSP, and `x-frame-options` is
+  `SAMEORIGIN` rather than the middleware's `DENY`.
+
+**Cause:** the app lives in `src/app`. Next.js 14 loads middleware from `src/middleware.js` in that
+layout, and silently ignores the root `middleware.js`. So none of this has ever run:
+- the `protectedPaths` redirects;
+- the Repinfaust email gate;
+- the canonical-host redirect;
+- the CSP and security headers.
+
+**What still protects data:**
+- The API routes check the session themselves (Orbit's since D-SITE-046 to 050, and `verifySession`
+  elsewhere).
+- Firestore rules.
+- Each page's client-side sign-in check.
+
+**What is exposed:** the HTML and JavaScript bundles of "protected" pages download without signing
+in, and no page gets the CSP.
+
+**The Orbit evidence timeline (D-SITE-059) is not affected.** Its gate is the page's own
+server-side check (`loadTimeline`, then `notFound()`), which returned 404 signed out on the live
+site. The middleware lines added in D-SITE-059 are inert until this is fixed.
+
+**Not fixed here: this needs a decision.** Moving the file to `src/middleware.js` would switch it
+on, but it imports `firebase-admin`, which can't run in Next 14's Edge middleware runtime. That
+would break the build or every request. The options:
+- **(a)** Edge-safe middleware that only checks the cookie is present, plus the headers. The real
+  session check stays in each page or route.
+- **(b)** Verify the session cookie in Edge with `jose` against Google's public keys.
+- **(c)** Move the gates into server layouts per area, as done for the evidence page.
+
+Each changes behaviour across all STEa apps, so each gets its own plan and approval. Also recorded
+in FINDINGS.
+
 ## 2026-10-27 — Independent anchoring of the evidence head: recommendation, waiting for David (D-SITE-060)
 
 David asked for this after the backfill and verify chain mode, as its own entry. Anchoring is not
@@ -22,6 +62,8 @@ David's choice.
 - **Middleware** (`middleware.js`) adds both paths to `protectedPaths`. A new
   `isOrbitEvidenceRoute` check redirects anyone who isn't the owner, meaning the verified
   `repinfaust@gmail.com`, to `/apps/stea?denied=orbit-evidence`.
+  *(Same day: D-SITE-061 found the root middleware never runs. The page's own check below is the
+  gate that works.)*
 - **The page** (`page.js`) is a dynamic server component. It reads the `__session` cookie and
   checks it with revocation (`serverSession.js`). It then calls `loadTimeline`
   (`evidenceTimeline.js`), which checks the owner **before** reading anything, and anyone else

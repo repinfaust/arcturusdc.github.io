@@ -92,6 +92,30 @@ test that no response body contains a credential".
 
 ---
 
+## 2026-10-27 — Root `middleware.js` silently ignored: the app is under `src/` (D-SITE-061)
+**What happened:**
+- Every "protected" STEa page returns 200 signed out.
+- No CSP or security headers from the middleware reach production.
+- The built middleware manifest is empty.
+
+**Root cause:**
+- Next.js loads middleware from `src/middleware.js` when the app is in `src/app`, and ignores the
+  root file without any warning.
+- Nothing ever checked the built manifest or a signed-out response.
+- Also, the middleware imports `firebase-admin`, which can't run in Edge middleware. So simply
+  moving the file would fail.
+
+**Fix / workaround:**
+- Not yet fixed; it waits on a decision between options (a), (b) and (c) in D-SITE-061.
+- Data stays protected by the API routes' own session checks and by Firestore rules.
+- The Orbit evidence page gates itself server-side.
+
+**Promote to global?** yes — "with a `src/` app, middleware must be `src/middleware.js`; after
+adding middleware, check `.next/server/middleware-manifest.json` is non-empty and that a signed-out
+request to a protected path is redirected".
+
+---
+
 ## YYYY-MM-DD — <Finding title>
 **What happened:**  
 **Root cause:**  
