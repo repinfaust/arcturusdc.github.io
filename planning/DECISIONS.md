@@ -1,5 +1,70 @@
 # Decisions
 
+## 2026-10-27 — Orbit evidence timeline: owner-only, read-only, re-checked server-side (D-SITE-059)
+
+**The route:** `/apps/stea/orbit/evidence`, and its vanity form `/stea/orbit/evidence`.
+- **Middleware** (`middleware.js`) adds both paths to `protectedPaths`. A new
+  `isOrbitEvidenceRoute` check redirects anyone who isn't the owner, meaning the verified
+  `repinfaust@gmail.com`, to `/apps/stea?denied=orbit-evidence`.
+- **The page** (`page.js`) is a dynamic server component. It reads the `__session` cookie and
+  checks it with revocation (`serverSession.js`). It then calls `loadTimeline`
+  (`evidenceTimeline.js`), which checks the owner **before** reading anything, and anyone else
+  gets `notFound()`, so the route doesn't confirm it exists.
+- **Not indexed:** `robots: noindex, nofollow`.
+
+**The view** (`EvidenceTimeline.js`) is read-only. It has no form other than the verify button.
+For each block it shows:
+- the index, type, system and version, the decision id, the date and the commit;
+- the related decisions, the hashes (shortened, with the full value on hover) and the models;
+- the links, as anchors to the linked blocks;
+- the event hash and the previous hash;
+- the metrics, as a table.
+
+Signatures and `recordedAt` are not sent to the client.
+
+**"Verify chain"** calls `POST /api/orbit/verify {orgId, chain: true}` (D-SITE-058). It marks
+signature, hash and link per block, and prints one scoped line: "Chain verified against stored
+events: N blocks, head …, <UTC time>. Verified by Orbit, not independently."
+
+**Tests:** `timeline.test.mjs`, written first, gives 6 tests. They cover the rows, owner-only
+loading with nothing read for others, the cookie check, the middleware gate, the page's
+server-side 404, and the scoped wording.
+
+**Not yet seen with real data:** the timeline is empty until David runs the backfill. Its visual
+check is part of the exit check, after the backfill.
+
+## 2026-10-27 — `POST /api/orbit/verify` chain mode: the stored chain, walked server-side (D-SITE-058)
+
+Logic is in `src/lib/orbit/handlers/verify.js`; the route is a thin wrapper.
+
+**Chain mode** (`{orgId, chain: true}`):
+- It's **owner only**.
+- It fetches the org's stored evidence chain and its head server-side, and runs `verifyChainV2`:
+  per-block schema, signature, hash, link and index, then the head.
+- **The caller sends only the org id,** so what is verified is what is stored. This fixes F3, where
+  the route checked an object the caller sent.
+- **An empty chain is never "verified".**
+- **The response** carries per-block booleans, the head, `verifiedAt` and a `scope` string ("…
+  verified by Orbit, not independently. Orbit holds the signing secret."). Errors name blocks and
+  checks, never values.
+
+**Event mode** (the POC) is kept, with three changes:
+- A malformed signature or snapshot hash returns "not verified" instead of a 500.
+- A snapshot is only looked up for a user the caller may read (D-SITE-050).
+- The hash note says "links not checked", because chain v1 never hashed its links.
+
+**Tests:** `verifyRoute.test.mjs`, written first, gives 8 tests:
+- an intact chain verifies;
+- a stored metric edit is caught at block 2, without leaking the value;
+- a deleted block is caught;
+- a 403, a 404 and a 401;
+- an empty chain is not ok;
+- event mode is unchanged, including simulated tampering;
+- a malformed signature gives no 500;
+- another user's snapshot isn't looked up.
+
+`npm run test:orbit`: 114 pass, 2 todo. `next build` passes.
+
 ## 2026-10-27 — Orbit evidence backfill: local, source-verified, idempotent (D-SITE-057)
 
 **Files:** `scripts/orbit/backfill-evidence.mjs`, the CLI, and `scripts/orbit/backfillCore.mjs`, the

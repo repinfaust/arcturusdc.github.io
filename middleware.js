@@ -46,6 +46,7 @@ export async function middleware(req) {
     '/apps/stea/harls',
     '/apps/stea/orbit/poc',
     '/apps/stea/orbit/AI-Act-Technical-DocumentationBundle',
+    '/apps/stea/orbit/evidence',
     '/apps/stea/repinfaust',
     '/apps/stea/toume',
     '/apps/stea/dialled-mtb/riders',
@@ -64,6 +65,7 @@ export async function middleware(req) {
     '/stea/harls',
     '/stea/orbit/poc',
     '/stea/orbit/AI-Act-Technical-DocumentationBundle',
+    '/stea/orbit/evidence',
     '/stea/repinfaust',
     '/stea/toume',
     '/stea/fof',
@@ -97,6 +99,17 @@ export async function middleware(req) {
         url.pathname === '/stea/repinfaust' ||
         url.pathname.startsWith('/stea/repinfaust/');
       const email = typeof claims.email === 'string' ? claims.email.trim().toLowerCase() : '';
+      // The Orbit evidence chain is owner-only too (D-SITE-059); its page re-checks server-side.
+      const isOrbitEvidenceRoute =
+        url.pathname === '/apps/stea/orbit/evidence' ||
+        url.pathname.startsWith('/apps/stea/orbit/evidence/') ||
+        url.pathname === '/stea/orbit/evidence' ||
+        url.pathname.startsWith('/stea/orbit/evidence/');
+      if (isOrbitEvidenceRoute && (email !== 'repinfaust@gmail.com' || claims.email_verified !== true)) {
+        const redirectUrl = new URL('/apps/stea', req.url);
+        redirectUrl.searchParams.set('denied', 'orbit-evidence');
+        return NextResponse.redirect(redirectUrl);
+      }
       if (isRepinfaustRoute && email !== 'repinfaust@gmail.com') {
         const redirectUrl = new URL('/apps/stea', req.url);
         redirectUrl.searchParams.set('denied', 'repinfaust');
