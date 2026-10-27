@@ -9,6 +9,7 @@ import { createSnapshot, getSnapshot, getLatestSnapshot, addLedgerEvent, getOrg 
 import { hashSnapshot, signEvent } from '@/lib/orbit/signatures';
 import { generateEventId } from '@/lib/orbit/eventTypes';
 import { verifySession } from '@/lib/orbit/auth';
+import { canReadUserRecords } from '@/lib/orbit/owner';
 import { authenticateOrg } from '@/lib/orbit/orgAuth';
 
 export async function POST(request) {
@@ -112,13 +113,17 @@ export async function GET(request) {
 
     if (snapshotPointer) {
       const snapshot = await getSnapshot(snapshotPointer);
-      if (!snapshot) {
+      // Not found and not permitted look the same, so a pointer can't be probed (D-SITE-050).
+      if (!snapshot || !canReadUserRecords(session, snapshot.userId)) {
         return NextResponse.json({ error: 'Snapshot not found' }, { status: 404 });
       }
       return NextResponse.json({ snapshot });
     }
 
     if (userId && orgId) {
+      if (!canReadUserRecords(session, userId)) {
+        return NextResponse.json({ error: 'Not permitted to read this user' }, { status: 403 });
+      }
       const snapshot = await getLatestSnapshot(userId, orgId);
       if (!snapshot) {
         return NextResponse.json({ error: 'Snapshot not found' }, { status: 404 });

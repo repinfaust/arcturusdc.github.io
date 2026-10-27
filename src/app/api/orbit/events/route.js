@@ -9,6 +9,7 @@ import { addLedgerEvent, getUserEvents, getOrg, updateConsentState, getLatestEve
 import { validateEvent, generateEventId } from '@/lib/orbit/eventTypes';
 import { signEvent, hashEvent } from '@/lib/orbit/signatures';
 import { verifySession } from '@/lib/orbit/auth';
+import { canReadUserRecords } from '@/lib/orbit/owner';
 import { authenticateOrg } from '@/lib/orbit/orgAuth';
 
 export async function POST(request) {
@@ -145,6 +146,10 @@ export async function GET(request) {
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
+
+    if (!canReadUserRecords(session, userId)) {
+      return NextResponse.json({ error: 'Not permitted to read this user' }, { status: 403 });
     }
 
     const events = await getUserEvents(userId, { orgId, eventType });

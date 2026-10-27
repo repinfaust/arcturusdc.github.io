@@ -58,9 +58,9 @@ destructive route.
 
 **Fix / workaround:**
 - The route is owner-only (`isOrbitOwner`: verified owner email), and is tested.
-- **Still open, reported, not fixed:** `GET /api/orbit/events`, `/alerts` and `/consent` let any
-  signed-in user read any `userId`'s records. This is the same root cause, on reads. It's sandbox
-  data today, but it should be closed before Orbit holds anything real.
+- **Then closed in D-SITE-050:** `GET /api/orbit/events`, `/alerts` and `/consent` let any
+  signed-in user read any `userId`'s records. This is the same root cause, on reads. Non-owners
+  now read only the shared sandbox user, and `/snapshots` is covered too.
 
 **Promote to global?** yes — "a session check is not an authorisation check; every destructive
 route needs an owner/role check and a test that a non-owner gets 403 with nothing changed".

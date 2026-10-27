@@ -1,5 +1,40 @@
 # Decisions
 
+## 2026-10-27 — Orbit user-record reads restricted; failing-first proof for D-SITE-046/047 (D-SITE-050)
+
+**Reads (the open item from FINDINGS, closed at David's request):**
+- `GET /api/orbit/events`, `/alerts`, `/consent` and `/snapshots` (by `userId`) let any signed-in
+  account read any `userId`. Now:
+  - the owner can read any user;
+  - any other signed-in account can read only the shared sandbox user `user_12345`. Every POC
+    visitor already writes to and reads from that user, so the POC keeps working;
+  - anything else gets a 403, before any read.
+- **A snapshot read by pointer** returns 404 both when it's missing and when it isn't permitted,
+  so a pointer can't be probed.
+- **The policy** is `canReadUserRecords` in `src/lib/orbit/owner.js`.
+- **Strict owner-only** would be a one-line change. It would also lock other signed-in users out
+  of the POC.
+- **Not covered:** `POST /api/orbit/verify` still returns a snapshot's hashes by pointer. It's
+  reworked with chain v2 (§2 of the plan). The `ai-act/*` routes weren't audited here.
+
+**Route-level tests:**
+- `__tests__/orbit/routes.test.mjs` loads the **real route files**. Next, Firebase Admin and the
+  Firestore helpers are swapped for fakes by a loader hook (`__tests__/orbit/fakes/`), so the tests
+  run on any commit.
+- `npm run test:orbit` now passes 34/34.
+- The read tests were written first and failed 4/4 on the code before this change.
+
+**Failing-first proof for D-SITE-046 and D-SITE-047 (David's request):**
+- `routes.test.mjs` was run unchanged against `ebe08f9`, the parent of `2f6894e`, in a scratch
+  worktree. The result was 9 pass, 8 fail.
+- Every test for these two entries failed, each for the stated reason:
+  - **non-owner reset:** `200 !== 403`;
+  - **orgs GET:** the body leaked `"apiKey":"org_plaintext_key"`;
+  - **orgs POST update:** returned the existing `apiKey`;
+  - **orgs POST create:** wrote the plaintext key.
+- The other four failures are this entry's read tests.
+- The owner-path tests passed on both commits, as they should.
+
 ## 2026-10-27 — Orbit integrity claims audited; interim wording proposed, not shipped (D-SITE-049)
 
 David asked that, until chain v2 is live and verified, the Orbit page and overview stop claiming

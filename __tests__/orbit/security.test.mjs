@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { isOrbitOwner, ORBIT_OWNER_EMAIL } from '../../src/lib/orbit/owner.js';
+import { isOrbitOwner, ORBIT_OWNER_EMAIL, canReadUserRecords, SANDBOX_USER_ID } from '../../src/lib/orbit/owner.js';
 import { hashApiKey, apiKeyMatches, publicOrgView, storedKeyFields } from '../../src/lib/orbit/orgKeys.js';
 import { authenticateOrg } from '../../src/lib/orbit/orgAuth.js';
 import { makeResetHandler } from '../../src/lib/orbit/handlers/reset.js';
@@ -32,6 +32,14 @@ test('owner: only the verified owner email passes', () => {
   assert.equal(isOrbitOwner({ ...owner, user: { ...owner.user, emailVerified: false } }), false);
   assert.equal(isOrbitOwner({ authenticated: false }), false);
   assert.equal(isOrbitOwner(null), false);
+});
+
+test('reads: owner reads anyone; others only the sandbox user; signed out nobody', () => {
+  assert.equal(canReadUserRecords(owner, 'victim'), true);
+  assert.equal(canReadUserRecords(other, 'victim'), false);
+  assert.equal(canReadUserRecords(other, SANDBOX_USER_ID), true);
+  assert.equal(canReadUserRecords({ authenticated: false }, SANDBOX_USER_ID), false);
+  assert.equal(canReadUserRecords(other, undefined), false);
 });
 
 // ---- (a) reset ----

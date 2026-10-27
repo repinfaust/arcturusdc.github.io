@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import { getUserAlerts } from '@/lib/orbit/db-admin';
 import { verifySession } from '@/lib/orbit/auth';
+import { canReadUserRecords } from '@/lib/orbit/owner';
 
 export async function GET(request) {
   try {
@@ -23,6 +24,10 @@ export async function GET(request) {
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
+
+    if (!canReadUserRecords(session, userId)) {
+      return NextResponse.json({ error: 'Not permitted to read this user' }, { status: 403 });
     }
 
     const alerts = await getUserAlerts(userId);
