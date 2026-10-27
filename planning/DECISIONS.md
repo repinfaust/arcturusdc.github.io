@@ -1,5 +1,21 @@
 # Decisions
 
+## 2026-10-27 — Independent anchoring of the evidence head: recommendation, waiting for David (D-SITE-060)
+
+David asked for this after the backfill and verify chain mode, as its own entry. Anchoring is not
+deferred indefinitely.
+
+**Recommendation:** use **RFC 3161 time-stamp tokens from two independent TSAs** (DigiCert and
+Sectigo proposed), verified with `openssl ts -verify`, with OpenTimestamps as an optional third
+anchor later. The trade-offs, the design and the open questions are in
+`planning/ORBIT_ANCHOR_RECOMMENDATION.md`.
+
+**Nothing has been sent to any TSA or calendar.** Sending hashes to an outside service waits for
+David's choice.
+
+**Until anchoring ships,** all copy says integrity is "verified by Orbit, not independently"
+(D-SITE-055), and the claims guard enforces it.
+
 ## 2026-10-27 — Orbit evidence timeline: owner-only, read-only, re-checked server-side (D-SITE-059)
 
 **The route:** `/apps/stea/orbit/evidence`, and its vanity form `/stea/orbit/evidence`.
