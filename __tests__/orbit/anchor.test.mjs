@@ -138,3 +138,12 @@ test('httpPost: sends the DER query with the RFC 3161 content type, refuses a no
   assert.deepEqual([...out], [1, 2]);
   await assert.rejects(httpPost('http://tsa.example', async () => ({ ok: false, status: 503 }))(Buffer.from([9])), /HTTP 503/);
 });
+
+test('a chain failure reports openssl\'s real error and the token\'s certificates, not the config preamble', async () => {
+  const q = makeQuery(anchorImprint({ orgId: ORG, blockIndex: 9, eventHash: 'd'.repeat(64) }));
+  const v = verifyReply({ queryDer: q, replyDer: await digicert.post(q), caFile: sectigo.caFile, vendor: 'DigiCert', now: NOW() });
+  assert.equal(v.ok, false);
+  assert.doesNotMatch(v.error, /Using configuration from/);
+  assert.match(v.error, /verif|certificate|issuer/i);
+  assert.match(v.error, /certificates in the token: .*subject=.*DigiCert Test/);
+});

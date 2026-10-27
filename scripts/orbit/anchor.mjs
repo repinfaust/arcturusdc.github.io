@@ -24,6 +24,26 @@ const OPENSSL = process.env.ORBIT_OPENSSL || 'openssl';
 const MAX_SKEW_MS = 10 * 60 * 1000;
 const ossl = (cwd, ...a) => execFileSync(OPENSSL, a, { cwd, stdio: ['ignore', 'pipe', 'pipe'] }).toString('utf8');
 
+// openssl's useful lines, without the "Using configuration from …" preamble (D-SITE-068).
+function opensslError(e) {
+  const lines = String(e.stderr || e.message).split('\n').map((l) => l.trim()).filter((l) => l && !/^Using configuration from/.test(l));
+  return lines.slice(0, 4).join(' | ') || 'no detail';
+}
+
+// Subject and issuer of each certificate inside a reply's token, for diagnosing chain failures.
+function tokenCertificates(dir) {
+  try {
+    ossl(dir, 'ts', '-reply', '-in', 'r.tsr', '-token_out', '-out', 'diag.der');
+    return ossl(dir, 'pkcs7', '-inform', 'DER', '-in', 'diag.der', '-print_certs', '-noout')
+      .split('\n').filter((l) => /^(subject|issuer)\s*=/.test(l)).join(' ; ');
+  } catch {
+    return 'could not list';
+  }
+}
+
+// Extra intermediate certificates, if a TSA's token doesn't carry its full chain (ORBIT_TSA_UNTRUSTED).
+const untrustedArgs = () => (process.env.ORBIT_TSA_UNTRUSTED ? ['-untrusted', process.env.ORBIT_TSA_UNTRUSTED] : []);
+
 function inTemp(fn) {
   const dir = mkdtempSync(join(tmpdir(), 'orbit-anchor-'));
   try {
@@ -48,9 +68,9 @@ export function verifyReply({ queryDer, replyDer, caFile, vendor, now }) {
     writeFileSync(join(dir, 'q.tsq'), queryDer);
     writeFileSync(join(dir, 'r.tsr'), replyDer);
     try {
-      ossl(dir, 'ts', '-verify', '-queryfile', 'q.tsq', '-in', 'r.tsr', '-CAfile', caFile);
+      ossl(dir, 'ts', '-verify', '-queryfile', 'q.tsq', '-in', 'r.tsr', '-CAfile', caFile, ...untrustedArgs());
     } catch (e) {
-      return { ok: false, error: `openssl ts -verify failed: ${String(e.stderr || e.message).split('\n').find((l) => l.trim()) || 'no detail'}` };
+      return { ok: false, error: `openssl ts -verify failed: ${opensslError(e)} — certificates in the token: ${tokenCertificates(dir)}` };
     }
     let text;
     let certs;
@@ -89,9 +109,9 @@ export function verifyStoredToken({ imprint, replyDer, caFile, vendor }) {
   return inTemp((dir) => {
     writeFileSync(join(dir, 'r.tsr'), replyDer);
     try {
-      ossl(dir, 'ts', '-verify', '-digest', imprint, '-in', 'r.tsr', '-CAfile', caFile);
+      ossl(dir, 'ts', '-verify', '-digest', imprint, '-in', 'r.tsr', '-CAfile', caFile, ...untrustedArgs());
     } catch (e) {
-      return { ok: false, error: `openssl ts -verify failed: ${String(e.stderr || e.message).split('\n').find((l) => l.trim()) || 'no detail'}` };
+      return { ok: false, error: `openssl ts -verify failed: ${opensslError(e)} — certificates in the token: ${tokenCertificates(dir)}` };
     }
     ossl(dir, 'ts', '-reply', '-in', 'r.tsr', '-token_out', '-out', 't.der');
     const certs = ossl(dir, 'pkcs7', '-inform', 'DER', '-in', 't.der', '-print_certs', '-noout');

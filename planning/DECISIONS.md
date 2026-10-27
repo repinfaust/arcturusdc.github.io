@@ -1,5 +1,38 @@
 # Decisions
 
+## 2026-10-27 — Evidence chain written and verified on stea-775cd; the Sectigo anchor failed closed (D-SITE-068)
+
+**Backfill run by David** on his Mac (`/Users/davidloake/dev/arcturus-orbit` at `0325748`), 2026-10-27.
+
+**Dry run:**
+- **78 checks passed, 0 skipped.** The real A3 results files were present, and the A3 figures were
+  recomputed with xyz's scorer at `4071677`. They matched every transcribed number, tied by
+  `run_identity + rejudged_from`.
+- The 15 event ids were identical to the cloud session's offline run.
+
+**`--write`:**
+- The org `repinfaust-evidence` was created, with a random signing secret and no API key.
+- Blocks 1–15 were written, and the chain was re-read and verified: **`verify: OK — 15 blocks, head 15
+  4331a24076def4d9d9b2b553b9ad63ac1875cf395477b7de2632e1c31b47b8bf`**.
+
+**The anchor failed closed:**
+- **DigiCert** passed every check.
+- **Sectigo** failed `openssl ts -verify`, so **nothing was stored**, by design.
+- The error was unusable: only openssl's first stderr line ("Using configuration from …") was kept.
+
+**Fix (`scripts/orbit/anchor.mjs`):**
+- A verification failure now reports openssl's actual error lines, without the config preamble, and
+  the subject and issuer of every certificate inside the token, so a missing intermediate is
+  visible.
+- `ORBIT_TSA_UNTRUSTED` can name a PEM file of extra intermediates, passed as `-untrusted`. That's
+  for a TSA whose token lacks part of its chain. Trust still comes only from the machine's roots.
+
+**Test:** on a chain failure, the real error and the token's certificates are reported.
+`npm run test:orbit`: 159 pass, 2 todo.
+
+**Next:** David reruns `anchor-head.mjs --send` to see Sectigo's real error. Until an anchor is stored,
+the whole chain reads "verified by Orbit, not independently".
+
 ## 2026-10-27 — Backfill's A3 check loads xyz's scorer from the pinned commit, and reports the cause once (D-SITE-067)
 
 **What happened:** David's first dry run, on his Mac at `/Users/davidloake/dev/xyz`, refused with 22
