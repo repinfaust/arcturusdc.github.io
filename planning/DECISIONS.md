@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-10-27 — Backfill check `json-equals`, for flags derived from a committed string (D-SITE-071)
+
+Lab D-L051's stage-2 export records the verdict as numeric flags (`verdict_pass`, `no_verdict`).
+`json-equals` checks such a flag against the committed file: the field must be 1 if the value at
+the pointer equals `equals`, and 0 otherwise. A missing pointer refuses the run.
+
+**Rehearsed with D-L051's synthetic STOP verdict:** 19 events and 91 checks passed. `--append` on an
+in-memory copy of the live chain wrote the 4 new events, verified 19 blocks and anchored the new
+head. **Test** in `backfill.test.mjs`. `npm run test:orbit`: 163 pass, 2 todo.
+
 ## 2026-10-27 — The evidence head is anchored by DigiCert and Sectigo (D-SITE-070)
 
 **Run by David** on his Mac (`anchor-head.mjs --send`, at `8dfbc8d`), 2026-10-27.

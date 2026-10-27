@@ -147,3 +147,19 @@ test('A3 checks: absent files are skipped and reported, not passed', () => {
 test('A3 checks: a refusal from the recompute refuses the run', () => {
   assert.throws(() => buildEvidencePayloads(a3Sources(), withA3({ error: 'oq25_recompute refused: run_identity differs' })), /a3-run: A3 results refused: oq25_recompute refused/);
 });
+
+// ---- json-equals (D-SITE-071), for flags derived from a committed string ----
+test('json-equals: 1 when the committed value equals the given string, else 0; anything else refuses', () => {
+  const s = sources();
+  fakeRepos['repo-a'].json['bbbbbbb:out.json'].verdict = 'PASS';
+  s.events[1].payload.metrics.verdict_pass = 1;
+  s.events[1].payload.metrics.no_verdict = 0;
+  s.events[1].verify.push(
+    { field: 'metrics.verdict_pass', kind: 'json-equals', path: 'out.json', at: 'bbbbbbb', pointer: '/verdict', equals: 'PASS' },
+    { field: 'metrics.no_verdict', kind: 'json-equals', path: 'out.json', at: 'bbbbbbb', pointer: '/verdict', equals: 'NO VERDICT' },
+  );
+  assert.ok(buildEvidencePayloads(s, verifier).checks.every((c) => c.ok));
+  s.events[1].payload.metrics.verdict_pass = 0;
+  assert.throws(() => buildEvidencePayloads(s, verifier), /metrics\.verdict_pass does not match json-equals/);
+  delete fakeRepos['repo-a'].json['bbbbbbb:out.json'].verdict;
+});

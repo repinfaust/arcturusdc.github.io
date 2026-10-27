@@ -7,6 +7,8 @@
  *   sha256 / sha256-12   the field equals the sha256 (or its first 12 hex) of path@at
  *   json / json-length   the field equals a value (or an array length) at a JSON pointer in path@at;
  *                        booleans compare as 1/0
+ *   json-equals          the field is 1 if the value at the pointer equals `equals`, else 0 (a flag
+ *                        derived from a committed string, e.g. a verdict; D-SITE-071)
  *   a3                   the field equals a figure recomputed from the local A3 results files by
  *                        xyz's own oq25_recompute.py (scripts/orbit/a3_results.py, D-SITE-062).
  *                        If the files are absent the check is skipped and reported (ok: null);
@@ -40,11 +42,12 @@ function expected(check, repo, verifier) {
     if (h == null) return { missing: `${check.path}@${check.at} not found` };
     return { value: check.kind === 'sha256' ? h : h.slice(0, 12) };
   }
-  if (check.kind === 'json' || check.kind === 'json-length') {
+  if (check.kind === 'json' || check.kind === 'json-length' || check.kind === 'json-equals') {
     const doc = verifier.readJson(repo, check.at, check.path);
     if (doc == null) return { missing: `${check.path}@${check.at} not found` };
     const v = jsonPointer(doc, check.pointer);
     if (check.kind === 'json-length') return Array.isArray(v) ? { value: v.length } : { missing: `${check.pointer} is not an array` };
+    if (check.kind === 'json-equals') return v === undefined ? { missing: `${check.pointer} not found` } : { value: v === check.equals ? 1 : 0 };
     return { value: typeof v === 'boolean' ? (v ? 1 : 0) : v };
   }
   if (check.kind === 'a3') {
