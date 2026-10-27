@@ -24,8 +24,11 @@ downloadable tokens.
 - **The claims guard still forbids** unscoped "independently verified" wording.
 - **The evidence timeline is the one place that states the anchor,** scoped to the blocks it covers.
 
-**Still to confirm:** `anchor-head.mjs --check`, which re-verifies the stored tokens from scratch,
-and a screenshot of the timeline with the anchor shown.
+**`anchor-head.mjs --check`** (David's Mac, 2026-10-27): `block 15 digicert: token OK`,
+`block 15 sectigo: token OK`, `block 15: matches the stored chain`, `check: OK — 1 anchors`. Both
+stored tokens re-verified from scratch with openssl, from the imprint alone.
+
+**Still to confirm:** a screenshot of the timeline with the anchor shown.
 
 ## 2026-10-27 — Sectigo anchor: macOS's self-signed R46 broke openssl's ESS check; retry with it set aside (D-SITE-069)
 
