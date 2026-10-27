@@ -17,3 +17,4 @@ stea-email-test-doc.md
 
 # Local backups of deleted prod docs (not for VCS)
 backups/
+.DS_Store
