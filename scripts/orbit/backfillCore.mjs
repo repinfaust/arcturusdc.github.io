@@ -110,7 +110,8 @@ export function buildEvidencePayloads(sources, verifier) {
     payloads.push(payload);
   }
 
-  if (errors.length) throw new Error(`sources refused (${errors.length}):\n  ${errors.join('\n  ')}`);
+  const unique = [...new Set(errors)];
+  if (unique.length) throw new Error(`sources refused (${unique.length}):\n  ${unique.join('\n  ')}`);
   return { payloads, checks };
 }
 

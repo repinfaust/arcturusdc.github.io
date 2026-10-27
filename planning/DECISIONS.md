@@ -1,5 +1,36 @@
 # Decisions
 
+## 2026-10-27 — Backfill's A3 check loads xyz's scorer from the pinned commit, and reports the cause once (D-SITE-067)
+
+**What happened:** David's first dry run, on his Mac at `/Users/davidloake/dev/xyz`, refused with 22
+copies of `a3_results.py failed: Command failed: python3 -I …` and no cause. It failed closed, so
+nothing was written or sent.
+
+**Likely cause:** `a3_results.py` imported `oq25_recompute.py` from xyz's **working tree**. That
+script exists only on the branch that added it, and David's checkout was on another branch (its
+`git pull` said "Already up to date").
+
+**Fix:**
+- **The scorer is pinned to a commit.** `oq25_recompute.py` and `score.py` are now read with
+  `git show 4071677:<path>`, the commit that published the D-096 figures. The checked-out branch no
+  longer matters, and the figures are recomputed with exactly the published scorer. `A3_SCORER_REF`
+  overrides it.
+- **The commit is checked.** If it's missing, the helper says so and how to fetch it.
+- **Any other exception** comes back as `{"error": "<Type>: <message>"}`, never a traceback or row
+  text.
+- **The CLI** reports the helper's last stderr line instead of "Command failed".
+- **`backfillCore` de-duplicates errors,** so one cause prints once.
+
+**Checked here:**
+- Synthetic results files placed briefly in the real xyz `eval/results/` (gitignored), with the
+  scorer at `4071677`: the figures came out as built.
+- A bad ref gave the clear "not found at commit" error.
+- The full offline backfill refused with exactly 3 named mismatches. That's correct: synthetic
+  files don't have 693 rows.
+- The files were removed afterwards, and xyz is clean.
+
+`npm run test:orbit`: 158 pass, 2 todo.
+
 ## 2026-10-27 — CSP enforced (D-SITE-066)
 
 David finished the signed-in pass through the STEa apps (D-SITE-065) and reported it done, with no

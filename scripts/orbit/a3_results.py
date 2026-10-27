@@ -3,7 +3,9 @@
 
 Reads xyz's eval/results/baseline-20260808T083911Z.json and rejudged-20260809T073724Z.json
 (the pair D-096 names) and recomputes, with xyz's own oq25_recompute.py and score.py, so the
-definitions cannot drift from the published scorer:
+definitions cannot drift from the published scorer. Both scripts are taken from commit 4071677,
+the one that published the D-096 figures, with `git show`, not from the working tree, so the
+checked-out branch doesn't matter (D-SITE-067). Set A3_SCORER_REF to use another commit.
   - per arm, 58- and 78-turn sensitivity (k) and calm-turn fires (k, n);
   - rows and error rows in the pre-registered run;
   - verdicts changed by the re-judge, paired on (scenario_id, turn_idx, arm).
@@ -18,11 +20,16 @@ Usage: python3 -I a3_results.py <path to the xyz checkout>
 """
 
 import json
+import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 PREREG = "baseline-20260808T083911Z.json"
 REJUDGED = "rejudged-20260809T073724Z.json"
+SCORER_REF = os.environ.get("A3_SCORER_REF", "4071677")
+SCORER_FILES = ("eval/scripts/oq25_recompute.py", "eval/scripts/score.py")
 
 
 def out(obj):
@@ -39,8 +46,16 @@ def main(xyz):
     if not all(present):
         out({"error": f"only one A3 results file is present ({PREREG if present[0] else REJUDGED}); need both or neither"})
 
-    sys.path.insert(0, str(xyz / "eval" / "scripts"))
-    import oq25_recompute as q  # noqa: E402  xyz's own recompute and scorer
+    scorer_dir = Path(tempfile.mkdtemp(prefix="orbit-a3-"))
+    for f in SCORER_FILES:
+        try:
+            src = subprocess.run(["git", "-C", str(xyz), "show", f"{SCORER_REF}:{f}"],
+                                 capture_output=True, check=True).stdout
+        except subprocess.CalledProcessError:
+            out({"error": f"{f} not found at commit {SCORER_REF} in {xyz}; fetch that commit (git -C {xyz} fetch --all)"})
+        (scorer_dir / Path(f).name).write_bytes(src)
+    sys.path.insert(0, str(scorer_dir))
+    import oq25_recompute as q  # noqa: E402  xyz's own recompute and scorer, as of SCORER_REF
 
     pre = json.loads(pre_p.read_text())
     rej = json.loads(rej_p.read_text())
@@ -67,6 +82,7 @@ def main(xyz):
     out({
         "present": True,
         "tied_by": tied,
+        "scorer_ref": SCORER_REF,
         "prereg": {"arms": per_arm(figures["prereg"]), "rows": len(pre_rows),
                    "errors": sum(1 for r in pre_rows if "error" in r)},
         "rejudged": {"arms": per_arm(figures["rejudged"]), "rows": len(after),
@@ -77,4 +93,9 @@ def main(xyz):
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit("usage: a3_results.py <xyz checkout>")
-    main(Path(sys.argv[1]).resolve())
+    try:
+        main(Path(sys.argv[1]).resolve())
+    except SystemExit:
+        raise
+    except Exception as e:  # report the cause as JSON instead of a traceback; never row text
+        out({"error": f"{type(e).__name__}: {e}"})

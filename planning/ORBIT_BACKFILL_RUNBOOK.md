@@ -8,8 +8,9 @@ Lab D-L049/D-L050 (sources). The paths are David's. The Repinfaust repo is **`~/
 
 ```
 cd /Users/davidloake/dev/repinfaust-lab && git pull origin claude/l4-web
-cd /Users/davidloake/dev/xyz && git pull
-cd /Users/davidloake/dev/arcturusdc.github.io-clean && git pull origin main && npm ci
+cd /Users/davidloake/dev/xyz && git fetch --all
+git -C /Users/davidloake/dev/arcturusdc.github.io-clean worktree add /Users/davidloake/dev/arcturus-orbit origin/main
+cd /Users/davidloake/dev/arcturus-orbit && npm ci
 gcloud auth application-default login
 openssl ts -help >/dev/null 2>&1 && echo "openssl ts OK"
 ```
@@ -21,10 +22,16 @@ brew install openssl@3
 export ORBIT_OPENSSL=/opt/homebrew/opt/openssl@3/bin/openssl
 ```
 
+The backfill runs from a separate worktree (`arcturus-orbit`), because the `-clean` checkout's
+`main` has diverged from GitHub (2026-10-27). To update it later, run
+`cd /Users/davidloake/dev/arcturus-orbit && git fetch origin && git checkout --detach origin/main`.
+xyz only needs the commits fetched: the A3 scorer is read from commit `4071677`, not from the
+working tree (D-SITE-067).
+
 ## 1. Dry run (nothing written, nothing sent)
 
 ```
-cd /Users/davidloake/dev/arcturusdc.github.io-clean && node scripts/orbit/backfill-evidence.mjs \
+cd /Users/davidloake/dev/arcturus-orbit && node scripts/orbit/backfill-evidence.mjs \
   --sources /Users/davidloake/dev/repinfaust-lab/scripts/orbit/evidence-sources.json \
   --repo repinfaust-aid=/Users/davidloake/dev/xyz \
   --repo repinfaust-lab=/Users/davidloake/dev/repinfaust-lab
@@ -59,9 +66,9 @@ written and verified, and you retry with step 3.
 ## 3. Anchor or re-check on its own
 
 ```
-cd /Users/davidloake/dev/arcturusdc.github.io-clean && node scripts/orbit/anchor-head.mjs           # dry run: shows the imprint
-cd /Users/davidloake/dev/arcturusdc.github.io-clean && node scripts/orbit/anchor-head.mjs --send    # anchor the current head
-cd /Users/davidloake/dev/arcturusdc.github.io-clean && node scripts/orbit/anchor-head.mjs --check   # re-verify every stored token with openssl
+cd /Users/davidloake/dev/arcturus-orbit && node scripts/orbit/anchor-head.mjs           # dry run: shows the imprint
+cd /Users/davidloake/dev/arcturus-orbit && node scripts/orbit/anchor-head.mjs --send    # anchor the current head
+cd /Users/davidloake/dev/arcturus-orbit && node scripts/orbit/anchor-head.mjs --check   # re-verify every stored token with openssl
 ```
 
 ## 4. Look

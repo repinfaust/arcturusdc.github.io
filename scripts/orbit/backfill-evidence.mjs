@@ -79,7 +79,8 @@ const verifier = {
       const helper = new URL('./a3_results.py', import.meta.url).pathname;
       r = JSON.parse(execFileSync('python3', ['-I', helper, repos[repo]], { stdio: ['ignore', 'pipe', 'pipe'] }).toString('utf8'));
     } catch (e) {
-      r = { error: `a3_results.py failed: ${e.message.split('\n')[0]}` };
+      const detail = String(e.stderr || '').trim().split('\n').filter(Boolean).pop() || e.message.split('\n')[0];
+      r = { error: `a3_results.py failed: ${detail}` };
     }
     a3Cache.set(repo, r);
     return r;
