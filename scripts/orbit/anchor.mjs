@@ -14,6 +14,7 @@
  */
 
 import { execFileSync } from 'child_process';
+import { X509Certificate } from 'crypto';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -38,6 +39,45 @@ function tokenCertificates(dir) {
       .split('\n').filter((l) => /^(subject|issuer)\s*=/.test(l)).join(' ; ');
   } catch {
     return 'could not list';
+  }
+}
+
+const PEM_BLOCK = /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/g;
+
+/**
+ * The machine's roots minus any self-signed root sharing its name with a certificate the token
+ * carries (D-SITE-069). Some TSAs (Sectigo) list a cross-signed root in the token's ESS
+ * signing-certificate attribute; if the machine also trusts a self-signed root of the same name
+ * (macOS does for Sectigo R46), openssl ends the chain there, the chain no longer matches the ESS
+ * list, and newer openssl refuses with "ess cert id not found". Dropping that root makes openssl
+ * take the chain the token names, up to another root the machine trusts. Removing roots can only
+ * narrow trust.
+ */
+export function rootsWithoutShadowed(rootsPem, tokenCertPems) {
+  const tokenSubjects = new Set(tokenCertPems.map((p) => new X509Certificate(p).subject));
+  const kept = (rootsPem.match(PEM_BLOCK) || []).filter((pem) => {
+    try {
+      const c = new X509Certificate(pem);
+      return !(c.subject === c.issuer && tokenSubjects.has(c.subject));
+    } catch {
+      return true; // leave anything we can't parse to openssl, as before
+    }
+  });
+  return `${kept.join('\n')}\n`;
+}
+
+// Verify, and on an ESS chain mismatch retry once with the shadowing roots removed.
+function verifyWithEssFallback(dir, args, caFile) {
+  try {
+    ossl(dir, ...args, '-CAfile', caFile, ...untrustedArgs());
+    return { chain: 'machine roots' };
+  } catch (e) {
+    if (!/ess cert id not found/i.test(String(e.stderr || ''))) throw e;
+    ossl(dir, 'ts', '-reply', '-in', 'r.tsr', '-token_out', '-out', 'ess.der');
+    const tokenCerts = ossl(dir, 'pkcs7', '-inform', 'DER', '-in', 'ess.der', '-print_certs').match(PEM_BLOCK) || [];
+    writeFileSync(join(dir, 'roots-narrowed.pem'), rootsWithoutShadowed(readFileSync(caFile, 'utf8'), tokenCerts));
+    ossl(dir, ...args, '-CAfile', join(dir, 'roots-narrowed.pem'), ...untrustedArgs());
+    return { chain: 'token-named chain (shadowing self-signed root set aside)' };
   }
 }
 
@@ -67,8 +107,9 @@ export function verifyReply({ queryDer, replyDer, caFile, vendor, now }) {
   return inTemp((dir) => {
     writeFileSync(join(dir, 'q.tsq'), queryDer);
     writeFileSync(join(dir, 'r.tsr'), replyDer);
+    let chain;
     try {
-      ossl(dir, 'ts', '-verify', '-queryfile', 'q.tsq', '-in', 'r.tsr', '-CAfile', caFile, ...untrustedArgs());
+      ({ chain } = verifyWithEssFallback(dir, ['ts', '-verify', '-queryfile', 'q.tsq', '-in', 'r.tsr'], caFile));
     } catch (e) {
       return { ok: false, error: `openssl ts -verify failed: ${opensslError(e)} — certificates in the token: ${tokenCertificates(dir)}` };
     }
@@ -85,6 +126,7 @@ export function verifyReply({ queryDer, replyDer, caFile, vendor, now }) {
     const genTimeRaw = field(text, 'Time stamp');
     const genMs = genTimeRaw ? Date.parse(genTimeRaw) : NaN;
     const result = {
+      chain,
       status,
       genTime: Number.isNaN(genMs) ? null : new Date(genMs).toISOString(),
       serial: field(text, 'Serial number'),
@@ -109,7 +151,7 @@ export function verifyStoredToken({ imprint, replyDer, caFile, vendor }) {
   return inTemp((dir) => {
     writeFileSync(join(dir, 'r.tsr'), replyDer);
     try {
-      ossl(dir, 'ts', '-verify', '-digest', imprint, '-in', 'r.tsr', '-CAfile', caFile, ...untrustedArgs());
+      verifyWithEssFallback(dir, ['ts', '-verify', '-digest', imprint, '-in', 'r.tsr'], caFile);
     } catch (e) {
       return { ok: false, error: `openssl ts -verify failed: ${opensslError(e)} — certificates in the token: ${tokenCertificates(dir)}` };
     }
@@ -165,7 +207,7 @@ export async function anchorHead(db, { orgId, tsas, now = () => new Date(), serv
       const replyDer = Buffer.from(await tsa.post(queryDer));
       const v = verifyReply({ queryDer, replyDer, caFile: tsa.caFile, vendor: tsa.vendor, now: now() });
       if (!v.ok) throw new Error(v.error);
-      tokens[tsa.id] = { url: tsa.url, genTime: v.genTime, serial: v.serial, policy: v.policy, replyDer: replyDer.toString('base64') };
+      tokens[tsa.id] = { url: tsa.url, genTime: v.genTime, serial: v.serial, policy: v.policy, chain: v.chain, replyDer: replyDer.toString('base64') };
     } catch (e) {
       failures.push(`${tsa.id}: ${e.message}`);
     }

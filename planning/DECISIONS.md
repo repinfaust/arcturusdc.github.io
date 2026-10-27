@@ -1,5 +1,44 @@
 # Decisions
 
+## 2026-10-27 — Sectigo anchor: macOS's self-signed R46 broke openssl's ESS check; retry with it set aside (D-SITE-069)
+
+**David's retry** (`anchor-head.mjs --send`, at `d112aa6`) refused Sectigo again, this time with the
+real error: `ESS routines:find:ess cert id not found`.
+- The token carried its full chain: Signer R37, CA R41, and **Root R46 cross-signed by USERTrust
+  RSA**.
+- DigiCert passed. Nothing was stored.
+
+**Diagnosis:**
+- **A real Sectigo reply,** requested here for a random throwaway digest (no Orbit data), was
+  inspected. Its ESS `signingCertificate` attribute lists **three** certificate ids: the signer, CA
+  R41 and the cross-signed R46. Newer openssl therefore checks every certificate in the chain it
+  builds against that list.
+- **macOS trusts a self-signed "Sectigo Public Time Stamping Root R46"** as well. So openssl ends the
+  chain at that root, which isn't in the token's list, and fails.
+- **Linux trusts only USERTrust,** so the chain runs through the token's cross-signed R46 and passes.
+- **Reproduced here:** the Linux roots plus the self-signed R46 (sha256 `4941B001…C046A5`, from
+  `http://crt.sectigo.com`) gave the identical error.
+- DigiCert's ESS lists only its signer, so it never hit this.
+
+**Fix (`scripts/orbit/anchor.mjs`):**
+- When, and only when, openssl reports `ess cert id not found`, verification retries once with the
+  machine's roots **minus any self-signed root whose subject matches a certificate the token
+  carries** (`rootsWithoutShadowed`). openssl then takes the chain the token names, up to a root the
+  machine trusts.
+- **Removing roots can only narrow trust.** With R46 as the only root, the retry fails.
+- The path taken is recorded per token as `chain`: "machine roots" or "token-named chain (shadowing
+  self-signed root set aside)".
+- Re-verifying stored tokens (`--check`) uses the same logic.
+
+**Tests:**
+- `rootsWithoutShadowed`, for both what it drops and what it keeps.
+- **A real Sectigo token is committed as a fixture** (`__tests__/orbit/fixtures/sectigo/`: the query,
+  the reply, the USERTrust root and the self-signed R46; all public, and the digest is random):
+  - with macOS-like roots it verifies through the fallback;
+  - with USERTrust alone it verifies plainly;
+  - with R46 alone it fails.
+- `npm run test:orbit`: 162 pass, 2 todo.
+
 ## 2026-10-27 — Evidence chain written and verified on stea-775cd; the Sectigo anchor failed closed (D-SITE-068)
 
 **Backfill run by David** on his Mac (`/Users/davidloake/dev/arcturus-orbit` at `0325748`), 2026-10-27.

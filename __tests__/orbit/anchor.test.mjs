@@ -147,3 +147,49 @@ test('a chain failure reports openssl\'s real error and the token\'s certificate
   assert.match(v.error, /verif|certificate|issuer/i);
   assert.match(v.error, /certificates in the token: .*subject=.*DigiCert Test/);
 });
+
+// ---- ESS fallback (D-SITE-069) ----
+test('rootsWithoutShadowed: drops only self-signed roots that share a name with a cert the token carries', async () => {
+  const { rootsWithoutShadowed } = await import('../../scripts/orbit/anchor.mjs');
+  const a = readFileSync(digicert.caFile, 'utf8'); // self-signed "DigiCert Test Root"
+  const b = readFileSync(sectigo.caFile, 'utf8'); // self-signed "Sectigo Test Root"
+  const out = rootsWithoutShadowed(a + b, [a]);
+  assert.ok(!out.includes(a.trim()), 'the shadowed self-signed root is dropped');
+  assert.ok(out.includes(b.trim()), 'unrelated roots are kept');
+  assert.equal(rootsWithoutShadowed(a + b, []), (a + b).trim() + '\n');
+});
+
+test('verification still passes for a normal token (no fallback needed)', async () => {
+  const q = makeQuery(anchorImprint({ orgId: ORG, blockIndex: 11, eventHash: 'e'.repeat(64) }));
+  const v = verifyReply({ queryDer: q, replyDer: await sectigo.post(q), caFile: sectigo.caFile, vendor: 'Sectigo', now: NOW() });
+  assert.equal(v.ok, true, v.error);
+  assert.equal(v.chain, 'machine roots');
+});
+
+// A real Sectigo reply to a random throwaway digest (2026-10-27), and the two public roots:
+// USERTrust RSA (which the token's cross-signed R46 chains to) and Sectigo's self-signed R46
+// (which macOS also trusts). With both, plain openssl fails "ess cert id not found", exactly as on
+// David's Mac (D-SITE-069); the fallback must verify it through the token's own chain.
+test('real Sectigo token: verifies with macOS-like roots via the fallback, and plainly without the shadowing root', async () => {
+  const dir = new URL('./fixtures/sectigo/', import.meta.url).pathname;
+  const { mkdtempSync, writeFileSync: write } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join: pjoin } = await import('node:path');
+  const queryDer = readFileSync(dir + 'query.tsq');
+  const replyDer = readFileSync(dir + 'reply.tsr');
+  const now = new Date('2026-10-27T20:25:00Z');
+  const usertrust = readFileSync(dir + 'usertrust-rsa-root.pem', 'utf8');
+  const r46 = readFileSync(dir + 'sectigo-ts-root-r46-selfsigned.pem', 'utf8');
+  const tmp = mkdtempSync(pjoin(tmpdir(), 'orbit-sectigo-'));
+  write(pjoin(tmp, 'mac-like.pem'), usertrust + r46);
+  write(pjoin(tmp, 'usertrust.pem'), usertrust);
+  const macLike = verifyReply({ queryDer, replyDer, caFile: pjoin(tmp, 'mac-like.pem'), vendor: 'Sectigo', now });
+  assert.equal(macLike.ok, true, macLike.error);
+  assert.match(macLike.chain, /token-named chain/);
+  const plain = verifyReply({ queryDer, replyDer, caFile: pjoin(tmp, 'usertrust.pem'), vendor: 'Sectigo', now });
+  assert.equal(plain.ok, true, plain.error);
+  assert.equal(plain.chain, 'machine roots');
+  // Only R46 self-signed, no USERTrust: setting R46 aside leaves no trusted root, so it must fail.
+  write(pjoin(tmp, 'r46-only.pem'), r46);
+  assert.equal(verifyReply({ queryDer, replyDer, caFile: pjoin(tmp, 'r46-only.pem'), vendor: 'Sectigo', now }).ok, false);
+});
