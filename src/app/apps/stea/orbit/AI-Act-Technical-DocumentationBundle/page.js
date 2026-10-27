@@ -1017,14 +1017,14 @@ function DocumentationBundles({ documentationBundle, onDownloadBundle, truncateH
             {/* Cryptographic Seal */}
             {documentationBundle.cryptographicSeal && (
               <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
-                <div className="font-medium text-green-900 mb-2">🔒 Tamper-Evident Record</div>
+                <div className="font-medium text-green-900 mb-2">🔒 Sealed Bundle</div>
                 <div className="text-sm text-green-800 space-y-1">
                   <div>Sealed: {new Date(documentationBundle.cryptographicSeal.timestamp).toLocaleString()}</div>
                   <div className="font-mono text-xs">
                     Seal: {truncateHash(documentationBundle.cryptographicSeal.hash)}
                   </div>
                   <div className="text-xs text-green-700 mt-2">
-                    This bundle is cryptographically sealed to ensure integrity and provide proof of authenticity for regulators.
+                    Sealed with a SHA-256 hash of the bundle at generation time.
                   </div>
                 </div>
               </div>
@@ -3645,7 +3645,7 @@ function SecurityArchitectureExplainer() {
     <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border-2 border-indigo-200 p-8">
       <h2 className="text-2xl font-bold text-neutral-900 mb-4">Security & Architecture</h2>
       <p className="text-neutral-700 mb-6">
-        Orbit provides enterprise-grade security, cryptographic integrity, and architectural guarantees 
+        Orbit's security and integrity design (proof of concept) 
         for AI system audit trail infrastructure. AI Act compliance is the first killer use case.
       </p>
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

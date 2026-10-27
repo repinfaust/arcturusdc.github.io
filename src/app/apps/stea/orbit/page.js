@@ -42,20 +42,20 @@ export default function OrbitPage() {
   const solutionFeatures = [
     {
       icon: '🔐',
-      title: 'Cryptographically-Verifiable Event Ledger',
-      description: 'Tamper-evident audit trail that sits around existing systems. Never stores PII—only pointers, hashes, signatures, and declarations.',
+      title: 'Signed Event Ledger',
+      description: 'An audit trail that sits around existing systems. Never stores PII—only pointers, hashes, signatures, and declarations. Hash-chain verification is in development.',
       gradient: 'from-blue-500 to-cyan-500',
     },
     {
       icon: '📊',
       title: 'Off-Ledger Snapshots',
-      description: 'Data stays where it is. Orbit stores pointers and cryptographic hashes proving integrity at specific timestamps.',
+      description: 'Data stays where it is. Orbit stores pointers and a hash of each snapshot as it was recorded.',
       gradient: 'from-indigo-500 to-blue-500',
     },
     {
       icon: '✍️',
       title: 'Signed Declarations',
-      description: 'Organisations declare their actions with cryptographic signatures: profile updates, data usage, sharing events, consent changes.',
+      description: 'Organisations declare their actions, and Orbit signs each declaration on receipt: profile updates, data usage, sharing events, consent changes.',
       gradient: 'from-purple-500 to-pink-500',
     },
     {
@@ -236,11 +236,11 @@ export default function OrbitPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-blue-600 font-bold">✓</span>
-                <span><strong>Hashes</strong> proving data integrity at specific timestamps</span>
+                <span><strong>Hashes</strong> of data as it was at specific timestamps</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-blue-600 font-bold">✓</span>
-                <span><strong>Signed declarations</strong> from organisations about their actions</span>
+                <span><strong>Declarations</strong> from organisations about their actions, signed by Orbit on receipt</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-blue-600 font-bold">✓</span>
@@ -299,7 +299,7 @@ export default function OrbitPage() {
                   <h3 className="font-bold text-blue-900">Upstream: Organisations Declare Possession</h3>
                 </div>
                 <p className="text-neutral-700 italic">
-                  "We hold data about this user. Here's the snapshot pointer + hash proof."
+                  "We hold data about this user. Here's the snapshot pointer + hash."
                 </p>
               </div>
 
@@ -330,7 +330,7 @@ export default function OrbitPage() {
               {/* Neutral Audit Surface */}
               <div className="text-center pt-4 border-t-2 border-neutral-200">
                 <p className="text-lg font-semibold text-neutral-900">
-                  Orbit becomes the <span className="text-blue-600">proof layer</span> between organisations and users
+                  Orbit becomes the <span className="text-blue-600">record layer</span> between organisations and users
                 </p>
               </div>
             </div>
@@ -468,7 +468,7 @@ export default function OrbitPage() {
           </h2>
           <p className="text-xl text-blue-100 mb-8 leading-relaxed">
             Orbit is the missing infrastructure layer of the digital identity stack.
-            A cryptographically-verifiable record of who did what with a user's data.
+            A signed record of who did what with a user's data.
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <div className="px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
@@ -486,7 +486,7 @@ export default function OrbitPage() {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-neutral-900 mb-4">Try Orbit PoC</h2>
           <p className="text-neutral-600 mb-8">
-            Proof-of-concept for AI providers: Logging SDK, Compliance Workflows, and Technical Documentation Generation
+            Proof-of-concept for AI providers: Compliance Workflows and Technical Documentation Generation
           </p>
         </div>
         <div className="max-w-2xl mx-auto">
@@ -495,24 +495,24 @@ export default function OrbitPage() {
             <h3 className="text-2xl font-bold text-purple-900 mb-3">AI Act Technical Documentation</h3>
             <p className="text-neutral-700 mb-6">
               Compliance documentation as a service for AI providers. Generate Annex IV, VIII, and XI technical documentation 
-              using the Orbit Logging SDK, Integrity Service, and Compliance Workflows.
+              using the Orbit Integrity Service and Compliance Workflows.
             </p>
             <div className="space-y-3 mb-6">
               <div className="flex items-start gap-3">
                 <span className="text-green-600 font-bold">✓</span>
-                <span className="text-sm text-neutral-700"><strong>Orbit Logging SDK:</strong> Open standard for Annex IV-ready logging (Python, Node.js, Java, Go)</span>
+                <span className="text-sm text-neutral-700"><strong>Orbit Integrity Service:</strong> Event signing (HMAC-SHA256)</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-neutral-400 font-bold">○</span>
+                <span className="text-sm text-neutral-700"><strong>Hash-chain verification:</strong> in development</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-600 font-bold">✓</span>
-                <span className="text-sm text-neutral-700"><strong>Orbit Integrity Service:</strong> Cryptographic signing and hash chain linking for tamper-evident logs</span>
+                <span className="text-sm text-neutral-700"><strong>Compliance Workflows:</strong> Governance alerts from the policy engine (proof of concept)</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-600 font-bold">✓</span>
-                <span className="text-sm text-neutral-700"><strong>Compliance Workflows:</strong> Active governance alerts and compliance tasks powered by policy engine</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-green-600 font-bold">✓</span>
-                <span className="text-sm text-neutral-700"><strong>Documentation Generation:</strong> Automated Annex IV, VIII, XI bundles from logs</span>
+                <span className="text-sm text-neutral-700"><strong>Documentation Generation:</strong> Annex IV, VIII and XI bundle drafts from logs (proof of concept)</span>
               </div>
             </div>
             <Link

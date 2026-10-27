@@ -1,13 +1,13 @@
 # Orbit POC Implementation
 
-This is the Proof of Concept implementation of Orbit - a cryptographically-verifiable audit-log-as-a-service.
+This is the Proof of Concept implementation of Orbit - a signed audit-log-as-a-service.
 
 ## Architecture
 
 ### Core Components
 
 1. **Signatures** (`signatures.js`)
-   - HMAC-SHA256 signing for event tamper-evidence
+   - HMAC-SHA256 event signing (Orbit holds the secret; nested values and chain links are not yet covered, see planning/ORBIT_EVIDENCE_CHAIN_PLAN.md §0)
    - SHA-256 hashing for snapshot integrity
    - Signature verification
 
@@ -73,7 +73,7 @@ Use the "Org Sandbox" tab to:
 
 - `orbit_orgs` - Organisation metadata, API keys, scope configs
 - `orbit_snapshots` - Off-ledger user profile snapshots
-- `orbit_ledger_events` - Append-only event log
+- `orbit_ledger_events` - Event log (not append-only: the owner reset deletes from it)
 - `orbit_consent_state` - Derived consent state per user/org/scope
 - `orbit_verification_routes` - Verification routing config (future)
 - `orbit_alerts` - Policy violation alerts

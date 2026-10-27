@@ -1,7 +1,8 @@
 # Orbit integrity claims: audit and proposed interim wording
 
-**Status:** a list and a proposal (D-SITE-049). No copy has changed. David approves the wording,
-then it ships as its own copy change. The claims hold until chain v2 is live and verified
+**Status:** shipped 2026-10-27. The three false statements were removed in D-SITE-051, and the
+wording below was applied in D-SITE-052, with the SDK row removed and a ✓ only for what exists.
+This list is kept as the record. The claims hold until chain v2 is live and verified
 (`planning/ORBIT_EVIDENCE_CHAIN_PLAN.md` §0).
 **Audited:** 2026-10-27, at the commit that adds this file.
 

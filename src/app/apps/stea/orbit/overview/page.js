@@ -83,7 +83,7 @@ const architecture = [
     label: 'Layer 3',
     title: 'Orbit',
     subtitle: 'Proof',
-    description: 'Immutable record of constraints, planning snapshot, outputs, and approvals. No data, only hashes.',
+    description: 'A hash-linked record of constraints, planning snapshot, outputs and approvals. No data, only hashes.',
     accent: 'text-emerald-700',
     border: 'border-emerald-200',
     bg: 'from-emerald-50 to-teal-50',
@@ -129,10 +129,10 @@ const stages = [
     kill: 'Enforcement too brittle; constraints ignored; overhead exceeds value.',
   },
   {
-    title: 'Stage 3: Provable Provenance',
+    title: 'Stage 3: Recorded Provenance',
     duration: '4-6 weeks',
     focus: 'Validate Orbit as the proof layer.',
-    scope: 'Add immutable recording to Stage 2 project.',
+    scope: 'Add hash-linked recording to the Stage 2 project.',
     artefacts: 'Hash planning snapshots, constraints, outputs, and approvals with identities + timestamps.',
     success: 'Can answer "what rules applied?" and "who approved?" for any AI output.',
     kill: 'Proof layer adds friction without value; auditors do not find it useful.',
@@ -142,7 +142,7 @@ const stages = [
 const timeline = [
   { stage: '1. Intent Capture', duration: '4-6 weeks', risk: 'None', value: 'Decision traceability' },
   { stage: '2. Bounded AI', duration: '4-6 weeks', risk: 'Low (internal)', value: 'Constraint enforcement' },
-  { stage: '3. Provenance', duration: '4-6 weeks', risk: 'Low (internal)', value: 'Audit-ready proof' },
+  { stage: '3. Provenance', duration: '4-6 weeks', risk: 'Low (internal)', value: 'Audit-ready record' },
 ];
 
 export default function SteaOrbitOverviewPage() {

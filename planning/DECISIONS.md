@@ -1,5 +1,48 @@
 # Decisions
 
+## 2026-10-27 — Orbit: audited wording shipped; a tick only for what exists (D-SITE-052)
+
+`planning/ORBIT_CLAIMS_AUDIT.md`'s proposed wording is shipped as approved, under David's rule:
+**nothing gets a ✓ unless it exists in this repository.**
+
+**Public pages (`orbit/page.js`, `overview/page.js`):** every row of the audit table is applied.
+- **The SDK row is removed,** along with the two other SDK mentions on the public page
+  (`:489` and `:497`). `:489` was missed by the audit and caught by the new guard test.
+- **Integrity Service:** "Event signing (HMAC-SHA256)" keeps its ✓, because signing exists.
+  Hash-chain verification is a separate row, marked ○ "in development".
+- **Compliance Workflows:** ✓ "Governance alerts from the policy engine (proof of concept)". The
+  POC's compliance tasks are mock data (`AI-Act-…/page.js:1379`), so they're no longer claimed.
+- **Documentation Generation:** ✓ "bundle drafts … (proof of concept)".
+- **The five ✓ in "What Orbit stores"** all exist: pointers, hashes, declarations, consent state
+  and access events.
+
+**POC page:**
+- The interim wording from the audit is applied.
+- The removed tick (D-SITE-051) is replaced by a neutral ○ "N events carry a link to the previous
+  event (not verified)".
+- The 90-day expiry is described as "not yet enforced".
+- Signing is described as "a per-organisation secret held by Orbit".
+
+**AI Act bundle:** the seal reads "Sealed with a SHA-256 hash of the bundle at generation time",
+and "enterprise-grade … guarantees" now reads "proof of concept".
+
+**The README** matches, and "Append-only" is corrected.
+
+**Guard:** `__tests__/orbit/claims.test.mjs` fails if any of these phrases return to the Orbit
+page, the overview or the POC:
+- "tamper-evident", "cryptographically-verifiable", "immutable", "cannot be tampered";
+- the false link statement, an unchecked "Hash chain intact" tick, or "Logging SDK";
+- `tamperSignals`, in the AI Act page.
+
+A phrase is lifted only by a D-SITE entry that cites the chain-v2 verification.
+
+**Left for David (gated, larger than a wording change):** the AI Act POC has a whole "Orbit
+Logging SDK" tab with code examples (`AI-Act-…/page.js:456`, `:1064`, `:3450`) for an SDK that isn't
+in the repo, and a "Hash Chain Specification" section describing chain linking (`:3683`). The
+options are to label them "design, not shipped", or to remove them.
+
+**Tests:** `npm run test:orbit` 38/38. `next build` passes.
+
 ## 2026-10-27 — Orbit: three false integrity statements removed (D-SITE-051)
 
 At David's request, and as its own commit ahead of the wording change (D-SITE-049's audit):

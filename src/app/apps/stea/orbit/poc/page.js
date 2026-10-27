@@ -623,6 +623,10 @@ export default function OrbitPocPage() {
                         <span className="text-green-600 font-bold">✓</span>
                         <span className="font-semibold text-neutral-900">All events cryptographically signed (HMAC-SHA256)</span>
                       </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-neutral-400 font-bold">○</span>
+                        <span className="font-semibold text-neutral-900">{events.filter(e => e.previousEventHash).length} events carry a link to the previous event (not verified)</span>
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="text-amber-600 font-bold">⚠</span>
                         <span className="font-semibold text-neutral-900">Signature expiration: Keys must be rotated every 90 days</span>
@@ -1119,7 +1123,7 @@ function EventVerificationCard({ event, orgs, onLog, eventTypeColors = {} }) {
                 </div>
                 {verificationResults?.hashChain && (
                   <div className="text-xs text-neutral-600">
-                    verified: {verificationResults.hashChain.verified ? '✓ Hash chain intact - Immutable linked list' : '✗ Hash chain broken - Tampering detected'}
+                    verified: {verificationResults.hashChain.verified ? '✓ This event\'s hash matches its contents (links not checked)' : '✗ Hash chain broken - Tampering detected'}
                   </div>
                 )}
               </div>
@@ -1223,7 +1227,7 @@ function HowOrbitWorks() {
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-8 mt-8">
       <h2 className="text-2xl font-bold text-neutral-900 mb-4">How Orbit Works</h2>
       <p className="text-neutral-700 mb-6">
-        Orbit is a cryptographically-verifiable event ledger that creates an immutable audit trail 
+        Orbit is a signed event ledger that creates an audit trail 
         of how organizations use your data. Here's how it works:
       </p>
 
@@ -1260,7 +1264,7 @@ function HowOrbitWorks() {
               <h3 className="font-bold text-neutral-900 mb-2">User Grants Consent</h3>
               <p className="text-sm text-neutral-700 mb-3">
                 When a user grants consent to an organization, Orbit records a <strong>CONSENT_GRANTED</strong> 
-                event in the ledger. This event is cryptographically signed and cannot be tampered with.
+                event in the ledger. This event is signed by Orbit, so a change by anyone without Orbit's signing secret is detectable.
               </p>
               <div className="bg-neutral-50 rounded p-3 text-xs font-mono text-neutral-600">
                 <div className="font-semibold mb-1">API Call:</div>
@@ -1304,7 +1308,7 @@ function HowOrbitWorks() {
               <p className="text-sm text-neutral-700 mb-3">
                 Organizations can create <strong>snapshots</strong> (point-in-time views of user data) 
                 and request <strong>verifications</strong> (cryptographic proofs of claims). Each snapshot 
-                is hashed and linked to the ledger, creating an immutable chain.
+                is hashed and linked to the ledger, creating a linked record.
               </p>
               <div className="bg-neutral-50 rounded p-3 text-xs font-mono text-neutral-600">
                 <div className="font-semibold mb-1">API Calls:</div>
@@ -1345,13 +1349,14 @@ function HowOrbitWorks() {
           <div className="bg-white rounded-lg p-4 border border-blue-100">
             <div className="font-semibold text-neutral-900 mb-2">🔐 Cryptographic Signatures</div>
             <p className="text-xs text-neutral-700">
-              Every event is signed with HMAC-SHA256 using the organization's secret key. 
-              This ensures events cannot be tampered with after creation. <strong>Signatures expire after 90 days</strong>—organizations must re-key to maintain validity.
+              Every event is signed with HMAC-SHA256, using a per-organisation secret held by Orbit. 
+              A change by anyone without Orbit's signing secret is detectable. <strong>Keys carry a 90-day expiry date</strong> (not yet enforced).
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 border border-blue-100">
             <div className="font-semibold text-neutral-900 mb-2">🔗 Hash Chain (Linked List)</div>
             <p className="text-xs text-neutral-700">
+              Each event records the previous event's hash. Linking the hashes themselves arrives with chain v2.
               Visualized as: <strong>Previous Event Hash → This Event Hash</strong>.
             </p>
           </div>
@@ -1365,8 +1370,8 @@ function HowOrbitWorks() {
           <div className="bg-white rounded-lg p-4 border border-blue-100">
             <div className="font-semibold text-neutral-900 mb-2">🔍 Verifiable</div>
             <p className="text-xs text-neutral-700">
-              Anyone can verify the integrity of the ledger by checking signatures 
-              and hash chains. <strong>External verifiers</strong> can independently verify events and return proof tokens.
+              Events can be checked against their signatures and hashes through Orbit's verify route. 
+              <strong>Verifiers</strong> can check events through Orbit and return proof tokens.
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 border border-blue-100">
