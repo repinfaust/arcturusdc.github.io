@@ -60,8 +60,24 @@ The root `middleware.js` is deleted.
 
 `npm run test:orbit`: 158 pass, 2 todo. `next build` passes.
 
-**After deploy:** the same signed-out sweep runs against www.arcturusdc.com (below, or in the next
-entry).
+**After deploy: the live check on www.arcturusdc.com, signed out, 2026-10-27, at `5b2b02b`.** The
+deploy went live about 105 s after the push.
+- **All 46 gated spellings** return a **307 to `/apps/stea?next=<base>`**. That's 23 paths, each as
+  `/apps/stea/…` and `/stea/…`, nested pages included: Career and Squared subpages, Dialled MTB
+  riders and promo, Hans/Toume, the Orbit POC, AI Act and evidence pages, and Repinfaust.
+  `/apps/stea/dialledmtb-riders` keeps its 308 to `dialled-mtb/riders`.
+- **The public pages** (`/`, `/apps/stea`, `/apps/stea/orbit`, `overview`, `explore`) return 200.
+- **The apex** `https://arcturusdc.com/apps/stea` gets a 308 to `https://www.arcturusdc.com/apps/stea`.
+- **The headers:** `content-security-policy-report-only` and `permissions-policy` are present, and
+  `x-frame-options` is still `SAMEORIGIN`.
+- **`/apps/stea/toume` returns 200, but it isn't a page.** Every unknown path does the same, as a
+  soft 404 with the default title: `/apps/stea/this-does-not-exist` also returns 200. Nothing sits
+  behind it to gate. The soft-404 behaviour is pre-existing and not changed here.
+
+**Still owed:**
+- a signed-in pass through the apps, checking the console for CSP "[Report Only]" violations
+  before the CSP is enforced;
+- David's check that signed-in access to his apps is unchanged.
 
 ## 2026-10-27 — RFC 3161 anchoring of the evidence head: DigiCert and Sectigo, after every append batch (D-SITE-063)
 
