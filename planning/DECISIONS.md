@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-10-27 — The evidence head is anchored by DigiCert and Sectigo (D-SITE-070)
+
+**Run by David** on his Mac (`anchor-head.mjs --send`, at `8dfbc8d`), 2026-10-27.
+
+**`anchor: anchored`:**
+- **Block 15:** `4331a24076def4d9d9b2b553b9ad63ac1875cf395477b7de2632e1c31b47b8bf`.
+- **Imprint:** `bb22969547c50a2f40502ef35f6bd44db4581b80604a0664202e35b2744e21ba`.
+- **DigiCert:** time-stamped `2026-10-27T20:28:40Z`.
+- **Sectigo:** time-stamped `2026-10-27T20:28:41Z`, through the D-SITE-069 fallback.
+- Both replies were verified with openssl against the Mac's System Roots, with the vendor named in
+  the token and the times within 10 minutes, before the record was stored.
+
+**What this establishes, scoped:** the evidence chain's blocks 1–15, as they stand at head
+`4331a240…`, existed by 20:28:41 UTC on 2026-10-27, per two independent time-stamp authorities. That
+holds for this evidence ledger (`repinfaust-evidence` on stea-775cd), not for Orbit's POC ledger or
+for the product in general. Anyone can check it with `openssl ts -verify -digest <imprint>` on the
+downloadable tokens.
+
+**What doesn't change:**
+- **The public Orbit pages keep "verified by Orbit, not independently"** (D-SITE-055). Those
+  statements are about Orbit as a product, and the POC's v1 chain is still unanchored.
+- **The claims guard still forbids** unscoped "independently verified" wording.
+- **The evidence timeline is the one place that states the anchor,** scoped to the blocks it covers.
+
+**Still to confirm:** `anchor-head.mjs --check`, which re-verifies the stored tokens from scratch,
+and a screenshot of the timeline with the anchor shown.
+
 ## 2026-10-27 — Sectigo anchor: macOS's self-signed R46 broke openssl's ESS check; retry with it set aside (D-SITE-069)
 
 **David's retry** (`anchor-head.mjs --send`, at `d112aa6`) refused Sectigo again, this time with the
