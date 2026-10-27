@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-10-27 — Orbit: three false integrity statements removed (D-SITE-051)
+
+At David's request, and as its own commit ahead of the wording change (D-SITE-049's audit):
+- **`orbit/poc/page.js:628`:** removed the ✓ "Hash chain intact - N linked events". It counted
+  events that *had* a `previousEventHash` and checked nothing.
+- **`orbit/poc/page.js:1359-1360`:** removed "each event's hash includes the previous event's
+  hash, creating an immutable linked list". That is false (F1: `signatures.js:17` strips the link
+  before hashing). The visual description of the link stays.
+- **`AI-Act-…/page.js:1925, :1965-1966, :2017-2023`:**
+  - Removed `tamperSignals`, which was hard-coded to `0` ("Would be calculated from hash chain
+    checks").
+  - Removed the "Tamper Signals" tile that showed it.
+  - Removed the "✓ No Tamper Signals: All tamper-evident records are intact" message it triggered.
+  - The summary grid goes from 5 columns to 4.
+
+Copy and layout only. There are no logic, auth or data changes.
+
 ## 2026-10-27 — Orbit user-record reads restricted; failing-first proof for D-SITE-046/047 (D-SITE-050)
 
 **Reads (the open item from FINDINGS, closed at David's request):**

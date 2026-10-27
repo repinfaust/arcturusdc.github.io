@@ -623,10 +623,6 @@ export default function OrbitPocPage() {
                         <span className="text-green-600 font-bold">✓</span>
                         <span className="font-semibold text-neutral-900">All events cryptographically signed (HMAC-SHA256)</span>
                       </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-green-600 font-bold">✓</span>
-                        <span className="font-semibold text-neutral-900">Hash chain intact - {events.filter(e => e.previousEventHash).length} linked events</span>
-                      </div>
                       <div className="flex items-center gap-2">
                         <span className="text-amber-600 font-bold">⚠</span>
                         <span className="font-semibold text-neutral-900">Signature expiration: Keys must be rotated every 90 days</span>
@@ -1356,8 +1352,7 @@ function HowOrbitWorks() {
           <div className="bg-white rounded-lg p-4 border border-blue-100">
             <div className="font-semibold text-neutral-900 mb-2">🔗 Hash Chain (Linked List)</div>
             <p className="text-xs text-neutral-700">
-              Events are linked cryptographically: each event's hash includes the previous event's hash, 
-              creating an immutable linked list. Visualized as: <strong>Previous Event Hash → This Event Hash</strong>.
+              Visualized as: <strong>Previous Event Hash → This Event Hash</strong>.
             </p>
           </div>
           <div className="bg-white rounded-lg p-4 border border-blue-100">

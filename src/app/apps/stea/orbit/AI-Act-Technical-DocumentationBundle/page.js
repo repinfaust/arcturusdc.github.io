@@ -1922,7 +1922,6 @@ function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboar
   // Calculate integrity metrics
   const missingLogs = policyDeviations.filter(d => d.type.includes('Missing')).length;
   const anomalies = policyDeviations.filter(d => d.severity === 'high').length;
-  const tamperSignals = 0; // Would be calculated from hash chain checks
   const gaps = policyDeviations.length;
 
   return (
@@ -1948,7 +1947,7 @@ function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboar
       {expanded && (
         <div className="space-y-4">
           {/* Summary Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <div className="text-2xl font-bold text-blue-600">{completenessScore}%</div>
               <div className="text-sm text-neutral-600 mt-1">Completeness</div>
@@ -1960,10 +1959,6 @@ function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboar
             <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
               <div className="text-2xl font-bold text-amber-600">{anomalies}</div>
               <div className="text-sm text-neutral-600 mt-1">Anomalies</div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-              <div className="text-2xl font-bold text-green-600">{tamperSignals}</div>
-              <div className="text-sm text-neutral-600 mt-1">Tamper Signals</div>
             </div>
             <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
               <div className="text-2xl font-bold text-purple-600">{gaps}</div>
@@ -2010,15 +2005,6 @@ function EvidenceIntegrityReport({ completenessScore, policyDeviations, dashboar
                 <div className="font-medium text-amber-900 mb-2">Anomalies Detected</div>
                 <p className="text-sm text-amber-700">
                   {anomalies} high-severity anomaly(ies) detected. Review policy deviations and address critical issues.
-                </p>
-              </div>
-            )}
-
-            {tamperSignals === 0 && (
-              <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                <div className="font-medium text-green-900 mb-2">✓ No Tamper Signals</div>
-                <p className="text-sm text-green-700">
-                  All tamper-evident records are intact. No evidence of data tampering detected.
                 </p>
               </div>
             )}
