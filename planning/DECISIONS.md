@@ -1,5 +1,41 @@
 # Decisions
 
+## 2026-10-27 — Orbit evidence store: own collection, one chain per org, head moved in the same transaction (D-SITE-056)
+
+`src/lib/orbit/evidenceStore.js`, as approved in D-SITE-048 (answer 1).
+
+**Collections:** `orbit_evidence_events` holds the blocks, and `orbit_evidence_heads/{orgId}`
+holds `{orgId, blockIndex, eventHash, updatedAt}`. Neither is touched by the POC reset, the
+consent updates or the policy engine.
+
+**`appendEvidenceEvent`:**
+- In one Firestore transaction, it reads the head, links the event (`linkEventV2`, which validates
+  first), **creates** the block document `{orgId}__{blockIndex, 8 digits}`, and sets the head.
+- `create` refuses an existing block, so a lost or reset head can't lead to block 1 being
+  rewritten.
+- An optional `expectHead` refuses the append if anything else was appended since the head was
+  read. The backfill's `--append` uses this.
+- `recordedAt` is server bookkeeping, outside both the signature and the hash.
+
+**`readEvidenceChain`:** returns the chain in block order, sorted in memory so no composite index
+is needed, together with the head.
+
+**Rules:** both collections are added to `firestore.rules` as `allow read, write: if false`. The
+file has no catch-all rule, so they were already denied before the rules are deployed. Deploying
+keeps the file and the live rules in step.
+
+**Tests:** `__tests__/orbit/evidenceStore.test.mjs`, written first, against an in-memory Firestore
+with serialised transactions. They cover:
+- link and verify;
+- 5 concurrent appends with no fork;
+- an `expectHead` refusal;
+- invalid, wrong-org and free-text payloads, each writing nothing;
+- no overwrite after a lost head;
+- separate chains per org;
+- the rules text.
+
+`npm run test:orbit`: 94 pass, 2 todo.
+
 ## 2026-10-27 — AI Act page: SDK tab removed, chain spec rewritten as design; integrity "verified by Orbit, not independently" (D-SITE-055)
 
 **Live verification of D-SITE-046, 047 and 050** was done by David on www.arcturusdc.com,

@@ -555,6 +555,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Orbit evidence chain (D-SITE-056): server-side only, via the Admin SDK
+    match /orbit_evidence_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /orbit_evidence_heads/{orgId} {
+      allow read, write: if false;
+    }
+
     /* ==========================================================
        ApexTwin POC Collections (Track Setup Companion)
        Restricted to tenantId: DL7ScScEhvAcFpAmmS8h
