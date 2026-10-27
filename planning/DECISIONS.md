@@ -1,5 +1,68 @@
 # Decisions
 
+## 2026-10-27 — Page gates move to server layouts, plus an edge cookie check; `src/middleware.js` for host and headers (D-SITE-064)
+
+David chose option (c) plus (a) from D-SITE-061.
+
+**(c) Server layouts are the real gate.**
+- `src/lib/protectedRoutes.js` lists every route the old root `middleware.js` protected, 17 bases.
+  `/apps/stea/toume` is left out because it has no route; `/stea/toume` already 404s.
+- Each base folder has a server `layout.js` that calls `enforceGate(base)` (`src/lib/serverGate.js`,
+  which runs in Node). It verifies `__session` with revocation, as the old middleware meant to:
+  - signed out goes to `/apps/stea?next=<base>`;
+  - for `/apps/stea/repinfaust`, anything but the verified `repinfaust@gmail.com` goes to
+    `?denied=repinfaust`;
+  - for `/apps/stea/orbit/evidence`, anyone but the owner gets a 404.
+- **The Career and Squared layouts** keep their shells; the gate runs first.
+- `/stea/...` vanity paths are rewrites, so they're covered.
+- **Missing Admin credentials** count as signed out, so the gate fails closed.
+
+**(a) Edge middleware.** The new `src/middleware.js` imports no Admin SDK. It does three things:
+1. **Canonical host:** `arcturusdc.com` redirects to `https://www.arcturusdc.com` with a 308. Vercel
+   serves the apex with a 200 today.
+2. **Cookie check:** a gated path (either spelling) with no `__session` cookie redirects to sign-in
+   with a 307 before anything renders. It doesn't verify the cookie; the layout does.
+3. **Headers:** `Permissions-Policy`, and the CSP **as `Content-Security-Policy-Report-Only`**.
+
+The root `middleware.js` is deleted.
+
+**Why the CSP is report-only (a deviation from "CSP", flagged to David):**
+- The old policy was never live, and it would have blocked Google Fonts (82 references) and Dialled
+  MTB's Cloud Functions (`*.cloudfunctions.net`).
+- The new policy adds those, plus `www.gstatic.com`, `*.firebaseapp.com` frames and Google
+  Analytics.
+- It becomes enforced once a signed-in pass through the apps shows no "[Report Only]" violations
+  in the console. That's a one-word header change.
+- `X-Frame-Options` stays `SAMEORIGIN`, from `next.config.js`. The old `DENY` isn't added, because
+  setting both would conflict.
+
+**Local check** (production build, `next start`, 2026-10-27):
+- **Signed out,** all 34 spellings of the gated routes (`/apps/stea/…` and `/stea/…`, including
+  nested pages) get a **307 to sign-in**. `/apps/stea/dialledmtb-riders` gets its existing 308 to
+  `dialled-mtb/riders` first.
+- **The public pages** (`/`, `/apps/stea`, `/apps/stea/orbit`, `explore`, `sidestand`) still return
+  200.
+- **With a forged cookie,** the layout stops the request:
+  - `admin` gets a 307 and `orbit/evidence` a 404;
+  - `wc26` and `repinfaust` return 200 with the redirect inside the stream. The page's
+    `<title>` and a reference to its JS bundle are sent, but **not the page component**. The bundle
+    itself is public under `/_next/static` anyway. That is the residual.
+- **Without the edge check,** some routes gave that in-stream 200 even with no cookie. This is why
+  (a) matters.
+- **The built middleware manifest is no longer empty** (`"middleware": {"/": …}`).
+
+**Tests:** `__tests__/orbit/gates.test.mjs`, written first:
+- every old protected path is covered, or has no route;
+- every listed folder has a server layout that calls its gate and is dynamic;
+- the decisions for signed out, other users and the owner;
+- the root file is gone, and the new middleware is edge-safe and checks the cookie on every gated
+  route.
+
+`npm run test:orbit`: 158 pass, 2 todo. `next build` passes.
+
+**After deploy:** the same signed-out sweep runs against www.arcturusdc.com (below, or in the next
+entry).
+
 ## 2026-10-27 — RFC 3161 anchoring of the evidence head: DigiCert and Sectigo, after every append batch (D-SITE-063)
 
 David chose this from D-SITE-060: RFC 3161, from DigiCert and Sectigo, anchoring the head after every
@@ -21,7 +84,7 @@ append batch, starting with the backfill. Nothing is sent until he runs it.
   holds the imprint, and per TSA the time, serial, policy and token (DER, base64).
 
 **Why trust the machine's roots** and not certificates committed to the repo: the DigiCert root
-downloaded here (`DigiCertTrustedRootG4`, sha256 `552F7BDC…99 88`), but Sectigo's certificate host
+downloaded here (`DigiCertTrustedRootG4`, sha256 `552F7BDC…C89988`), but Sectigo's certificate host
 refused this session's proxy. A root committed without a check would be worse than the OS store, and
 the vendor-name pin narrows the OS store's breadth.
 

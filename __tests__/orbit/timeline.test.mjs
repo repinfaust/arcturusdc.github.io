@@ -52,11 +52,10 @@ test('sessionFromCookie: no cookie, a bad cookie and a good one', async () => {
   assert.deepEqual(await sessionFromCookie('good', auth), { authenticated: true, user: { uid: 'u1', email: 'repinfaust@gmail.com', emailVerified: true } });
 });
 
-// Inert until D-SITE-061 is fixed: Next ignores the root middleware.js. The page check below is the real gate.
-test('middleware protects the route and limits it to the owner', () => {
-  const mw = readFileSync(new URL('middleware.js', ROOT), 'utf8');
-  for (const p of ['/apps/stea/orbit/evidence', '/stea/orbit/evidence']) assert.ok(mw.includes(`'${p}'`), p);
-  assert.match(mw, /isOrbitEvidenceRoute/);
+test('the route is in the server gate table as owner-only (D-SITE-064)', async () => {
+  const { PROTECTED_ROUTES } = await import('../../src/lib/protectedRoutes.js');
+  const rule = PROTECTED_ROUTES.find((r) => r.base === '/apps/stea/orbit/evidence');
+  assert.equal(rule?.owner, true);
 });
 
 test('the page re-checks server-side and shows nothing but a 404 to anyone else', () => {

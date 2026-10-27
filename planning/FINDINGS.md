@@ -106,7 +106,8 @@ test that no response body contains a credential".
   moving the file would fail.
 
 **Fix / workaround:**
-- Not yet fixed; it waits on a decision between options (a), (b) and (c) in D-SITE-061.
+- Fixed in D-SITE-064: server layouts gate each route, and the edge `src/middleware.js` handles the
+  cookie-presence redirect, the host and the headers. The CSP is report-only until checked.
 - Data stays protected by the API routes' own session checks and by Firestore rules.
 - The Orbit evidence page gates itself server-side.
 
