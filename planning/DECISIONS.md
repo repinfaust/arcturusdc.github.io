@@ -1,5 +1,116 @@
 # Decisions
 
+## 2026-10-27 — Orbit integrity claims audited; interim wording proposed, not shipped (D-SITE-049)
+
+David asked that, until chain v2 is live and verified, the Orbit page and overview stop claiming
+cryptographic tamper-evidence for the existing chain, and for every such claim on the site to be
+listed with file and line, with interim wording. The list and the proposals are in
+`planning/ORBIT_CLAIMS_AUDIT.md`. **No copy has changed**: David approves the wording first, and
+it then ships as its own copy change.
+
+- **Public:** 9 claims on `/apps/stea/orbit` and 4 on the overview.
+- **Gated:** three statements in gated pages are false, not just strong:
+  - `poc/page.js:1359` says each hash includes the previous hash, which it doesn't (F1).
+  - `poc/page.js:628` reports "Hash chain intact" without checking anything.
+  - `AI-Act-…/page.js:1925` hard-codes `tamperSignals = 0`, and `:2019-2021` then says all
+    records are intact.
+- **Also flagged:** the ✓ on a four-language "Orbit Logging SDK" (`orbit/page.js:503`). No SDK is
+  in this repo.
+
+## 2026-10-27 — Orbit evidence-chain plan approved, with answers (D-SITE-048)
+
+`planning/ORBIT_EVIDENCE_CHAIN_PLAN.md` was approved by David, in this order:
+1. **The live exposures first:** D-SITE-046 and D-SITE-047.
+2. Then the claims audit (D-SITE-049).
+3. Then features.
+
+**Answers:**
+1. **Storage:** a dedicated `orbit_evidence_events` collection, plus the per-org head
+   transaction.
+2. **Timeline:** owner-only, re-checked server-side.
+3. **Visibility:** David is checking the repo's visibility. If it's public, the K4 demo secrets
+   are rotated, and `evidence-sources.json` lives in the Lab repo. It lives there either way.
+4. **Event types:**
+   - `HUMAN_REVIEW_COMPLETED` is added to the control family, paired with
+     `HUMAN_REVIEW_REQUESTED`.
+   - It is distinct from `HUMAN_AUDIT_COMPLETED`, in the evaluation family.
+   - The 9 Aug direction note lists nine types. **`PREREGISTRATION_FROZEN` is an addition** to
+     the note, made here.
+   - So the family is 11 types.
+5. **Tests:** `node --test` (`npm run test:orbit`). There's no new dependency, and Jest isn't
+   touched.
+
+**Stage-2 export:** approved as a proposal only. The Lab's code guard
+(`eval/scripts/l3_codeguard.py`, `GUARDED = eval, functions/src, prompts, functions/package*.json`)
+classifies `scripts/orbit/export-evidence.mjs` and `scripts/orbit/evidence-sources.json` as
+unguarded. That was checked by calling `guarded()` on 2026-10-27.
+
+**Numbering:** the plan's §7 table is renumbered, and the feature entries start at D-SITE-050.
+
+## 2026-10-27 — Orbit org API keys hashed at rest, compared in constant time, never returned (D-SITE-047)
+
+Security finding, recorded in FINDINGS.
+
+**Defects:**
+- **K3. Any signed-in STEa user could read every org's API key.** `GET /api/orbit/orgs` stripped
+  only `signingSecret`. This was the live exposure.
+- **K1.** Keys were stored in plaintext.
+- **K2.** Keys were compared with `!==`, in three copied `authenticateOrg` functions (events,
+  snapshots, verification/request).
+- **K5.** An update returned the existing key.
+- **K4.** The four demo orgs' keys and signing secrets are hard-coded.
+
+**Fix:**
+- **`src/lib/orbit/orgKeys.js`:**
+  - It stores `apiKeyHash = sha256(key)`, with `apiKeyHashVersion: 1`. The keys are 128 random
+    bits, so no KDF is needed.
+  - It compares sha256 digests with `timingSafeEqual`. They're always 32 bytes, so there's no
+    length leak and no throw.
+  - `publicOrgView` drops `apiKey`, `apiKeyHash`, `apiKeyHashVersion` and `signingSecret`.
+- **`src/lib/orbit/orgAuth.js`:** the one `authenticateOrg`.
+- **`src/lib/orbit/handlers/orgs.js`:**
+  - Creation stores the hash and shows the key and secret once.
+  - An update writes no credential field and returns `[REDACTED]`.
+  - GET returns `publicOrgView` only.
+  - Error bodies no longer carry `error.message` or stacks.
+- **The POC page** sends the known demo keys from a constant (`DEMO_API_KEYS`), instead of reading
+  them back from GET.
+- **Migration:** `scripts/orbit/hash-org-keys.mjs`.
+  - It's local and uses ADC against `stea-775cd`. It's a dry run unless `--apply`.
+  - It prints org ids only.
+  - It refuses a record whose existing hash disagrees with its plaintext.
+  - Until it runs, a legacy plaintext record still matches, compared on hashes.
+- **Not changed:** `signingSecret` stays recoverable, because HMAC needs it. K4 rotation waits on
+  David's visibility check (D-SITE-048).
+
+**Tests:** `__tests__/orbit/security.test.mjs`, 15/15. A static check fails on any `apiKey !==` or
+`apiKey ===` in `src/app/api/orbit` or `src/lib/orbit`. `next build` passes.
+
+## 2026-10-27 — `POST /api/orbit/reset` is owner-only (D-SITE-046)
+
+Security finding, recorded in FINDINGS.
+
+**The exposure:** any signed-in STEa user could delete:
+- every ledger event, alert, consent record and snapshot, for **any** `userId` in the body;
+- with `deleteOrgs`, the four demo orgs.
+
+**Fix:**
+- `src/lib/orbit/handlers/reset.js` refuses anyone but the owner with a 403, before touching the
+  database.
+- **The owner check** (`src/lib/orbit/owner.js`, `isOrbitOwner`) requires
+  `repinfaust@gmail.com` with `email_verified`. `verifySession` now returns `emailVerified`. This
+  is the same address as the middleware's Repinfaust gate.
+- The route is a thin wrapper around the handler.
+- Error bodies no longer carry `error.message`.
+- **Behaviour change:** other signed-in users can still use the POC sandbox, but "Reset sandbox"
+  now fails for them with the 403 message.
+
+**Chosen over removal:** owner-only keeps David's sandbox reset working. Removing the route would
+remove that and protect nothing more.
+
+**Tests:** a non-owner gets 403 and nothing is deleted. Signed out gets 401 and nothing is
+deleted. The owner's reset succeeds. A 500 carries no internals.
+
 ## 2026-10-26 — Orbit public copy removes pricing, penalties and federated roadmap (D-SITE-045)
 
 David requested removal of Orbit's pricing tiers and margin figures, penalty

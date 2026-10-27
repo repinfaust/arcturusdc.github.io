@@ -4,6 +4,7 @@
  */
 
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { COLLECTION_NAMES } from './collections';
 
 // Get Firebase Admin instances
 function getAdminDb() {
@@ -34,16 +35,8 @@ function removeUndefined(obj) {
   return cleaned;
 }
 
-// Collection names
-export const COLLECTIONS = {
-  ORGS: 'orbit_orgs',
-  USERS: 'orbit_users',
-  SNAPSHOTS: 'orbit_snapshots',
-  LEDGER_EVENTS: 'orbit_ledger_events',
-  CONSENT_STATE: 'orbit_consent_state',
-  VERIFICATION_ROUTES: 'orbit_verification_routes',
-  ALERTS: 'orbit_alerts',
-};
+// Collection names (collections.js)
+export const COLLECTIONS = COLLECTION_NAMES;
 
 /**
  * Create or update an organisation

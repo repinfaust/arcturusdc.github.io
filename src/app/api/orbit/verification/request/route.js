@@ -8,23 +8,7 @@ import { addLedgerEvent, getOrg } from '@/lib/orbit/db-admin';
 import { signEvent } from '@/lib/orbit/signatures';
 import { generateEventId } from '@/lib/orbit/eventTypes';
 import { verifySession } from '@/lib/orbit/auth';
-
-// Authenticate org request
-async function authenticateOrg(request) {
-  const orgId = request.headers.get('X-Orbit-Org-Id');
-  const apiKey = request.headers.get('X-Orbit-Api-Key');
-
-  if (!orgId || !apiKey) {
-    return { authenticated: false, error: 'Missing X-Orbit-Org-Id or X-Orbit-Api-Key headers' };
-  }
-
-  const org = await getOrg(orgId);
-  if (!org || org.apiKey !== apiKey) {
-    return { authenticated: false, error: 'Invalid org credentials' };
-  }
-
-  return { authenticated: true, org };
-}
+import { authenticateOrg } from '@/lib/orbit/orgAuth';
 
 // Mock verifier (PoC)
 async function mockVerifier(claimId, userId) {
@@ -53,7 +37,7 @@ export async function POST(request) {
     }
 
     // Authenticate org
-    const auth = await authenticateOrg(request);
+    const auth = await authenticateOrg(request, getOrg);
     if (!auth.authenticated) {
       return NextResponse.json({ error: auth.error }, { status: 401 });
     }

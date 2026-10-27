@@ -12,7 +12,8 @@
     "paygo:sync": "bash ./scripts/sync-paygo-web.sh",
     "little-fibbing:sync": "bash ./scripts/sync-little-fibbing-web.sh",
     "paygo:seed-docs": "node scripts/seed-paygo-poc-docs.js",
-    "test:rules": "firebase emulators:exec --only firestore \"jest --config jest.rules.config.js\""
+    "test:rules": "firebase emulators:exec --only firestore \"jest --config jest.rules.config.js\"",
+    "test:orbit": "node --test \"__tests__/orbit/*.test.mjs\""
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",

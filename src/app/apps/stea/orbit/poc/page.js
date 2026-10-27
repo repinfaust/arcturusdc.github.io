@@ -9,6 +9,14 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 
 const DEMO_USER_ID = 'user_12345';
+// The sandbox's demo org keys (src/lib/orbit/handlers/orgs.js). GET /api/orbit/orgs no longer
+// returns keys (D-SITE-047, K3), so the POC sends these known demo keys itself.
+const DEMO_API_KEYS = {
+  experian: 'org_demo_experian_12345',
+  challenger_bank: 'org_demo_challenger_12345',
+  broker_app: 'org_demo_broker_12345',
+  healthcare_provider: 'org_demo_healthcare_12345',
+};
 
 export default function OrbitPocPage() {
   const router = useRouter();
@@ -1589,7 +1597,7 @@ function OrgSandbox({ orgs, onEventCreated, onLog, onNotification }) {
       const headers = {
         'Content-Type': 'application/json',
         'X-Orbit-Org-Id': org.orgId,
-        'X-Orbit-Api-Key': org.apiKey,
+        'X-Orbit-Api-Key': DEMO_API_KEYS[org.orgId] || '',
       };
 
       if (action === 'profile') {

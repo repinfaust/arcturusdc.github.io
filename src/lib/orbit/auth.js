@@ -41,6 +41,7 @@ export async function verifySession(request) {
         user: {
           uid: decodedClaims.uid,
           email: decodedClaims.email,
+          emailVerified: decodedClaims.email_verified === true,
         },
       };
     } catch (adminError) {

@@ -46,6 +46,52 @@ to the source with its existing noindex header.
 
 ---
 
+## 2026-10-27 — Orbit: any signed-in user could delete any user's ledger events (D-SITE-046)
+**What happened:**
+- `POST /api/orbit/reset` checked only that a session existed.
+- `verifySession` accepts any account that can sign in to STEa.
+- So any such account could delete events, alerts, consent state and snapshots for any `userId`,
+  and the demo orgs.
+
+**Root cause:** "signed in" was treated as "authorised". There was no owner or role check on a
+destructive route.
+
+**Fix / workaround:**
+- The route is owner-only (`isOrbitOwner`: verified owner email), and is tested.
+- **Still open, reported, not fixed:** `GET /api/orbit/events`, `/alerts` and `/consent` let any
+  signed-in user read any `userId`'s records. This is the same root cause, on reads. It's sandbox
+  data today, but it should be closed before Orbit holds anything real.
+
+**Promote to global?** yes — "a session check is not an authorisation check; every destructive
+route needs an owner/role check and a test that a non-owner gets 403 with nothing changed".
+
+---
+
+## 2026-10-27 — Orbit: org API keys readable by any signed-in user, stored in plaintext, compared non-constant-time (D-SITE-047)
+**What happened:**
+- **K3:** `GET /api/orbit/orgs` returned every org's `apiKey` to any signed-in user. The POC page
+  relied on that to send the key.
+- **K1:** keys were stored in plaintext.
+- **K2:** keys were compared with `!==`, in three copies.
+- **K5:** an update returned the existing key.
+- **K4:** the demo credentials are hard-coded.
+
+**Root cause:** a proof-of-concept credential model ("For demo/PoC… In production, these would be
+truly random and stored securely") reached a deployed route, and nothing tested what a response
+may carry.
+
+**Fix / workaround:**
+- Keys are stored as sha256 hashes and compared with `timingSafeEqual` on the digests.
+- They're shown once, on creation, and responses go through `publicOrgView`.
+- There's one `authenticateOrg`.
+- `scripts/orbit/hash-org-keys.mjs` migrates stored keys.
+- Tests assert that no response carries a key, hash or secret.
+
+**Promote to global?** yes — "API keys: store a hash, compare digests in constant time, show once;
+test that no response body contains a credential".
+
+---
+
 ## YYYY-MM-DD — <Finding title>
 **What happened:**  
 **Root cause:**  

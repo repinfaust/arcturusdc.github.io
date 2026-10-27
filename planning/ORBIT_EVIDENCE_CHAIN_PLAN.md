@@ -1,7 +1,10 @@
 # Orbit: the evidence chain — plan
 
-**Status:** a plan, waiting for David's approval. No code yet. Written 2026-10-27 against `ebe08f9`.
-The D-SITE entries (D-SITE-046 onwards) are written with the code, after approval.
+**Status:** approved by David, 2026-10-27, with answers recorded in D-SITE-048. Written against `ebe08f9`.
+Order: the live exposures first (D-SITE-046 reset, D-SITE-047 keys), then the claims audit
+(D-SITE-049, `ORBIT_CLAIMS_AUDIT.md`), then features. §6's questions are answered in D-SITE-048.
+§7's numbering moves: the feature entries start at D-SITE-050. The event family is 11 types
+(adds `HUMAN_REVIEW_COMPLETED` in the control family).
 
 ## 0. Two defects in the existing chain that change the plan
 
