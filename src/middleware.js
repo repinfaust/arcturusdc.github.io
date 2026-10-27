@@ -10,10 +10,9 @@ import { PROTECTED_ROUTES, SIGN_IN_PATH } from './lib/protectedRoutes';
 
 const CANONICAL_HOST = 'www.arcturusdc.com';
 
-// Report-only for now: this policy has never been enforced on the live site, and the old one would
-// have blocked Google Fonts and Dialled MTB's Cloud Functions. Enforce it (rename the header) once
-// a pass through the apps shows no violations in the browser console (D-SITE-064).
-// cdn.tldraw.com: Harls' whiteboard fonts and translations, from David's pass (D-SITE-065).
+// Enforced since D-SITE-066, after David's signed-in pass through every app showed no violations.
+// cdn.tldraw.com: Harls' whiteboard fonts and translations, from that pass (D-SITE-065).
+// A new third-party host needs adding here, or the browser will block it.
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://apis.google.com https://accounts.google.com https://www.gstatic.com",
@@ -47,7 +46,7 @@ export function middleware(req) {
   }
 
   const response = NextResponse.next();
-  response.headers.set('Content-Security-Policy-Report-Only', CSP);
+  response.headers.set('Content-Security-Policy', CSP);
   response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   return response;
 }

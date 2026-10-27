@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-10-27 — CSP enforced (D-SITE-066)
+
+David finished the signed-in pass through the STEa apps (D-SITE-065) and reported it done, with no
+further violations after `cdn.tldraw.com` was added. So `src/middleware.js` now sends the policy as
+`Content-Security-Policy` instead of `-Report-Only`. The policy text is unchanged.
+
+**If something breaks,** the browser console will say "Content-Security-Policy … blocked". Then
+either add the host to the policy, or, for an immediate rollback, change the header name back to
+`-Report-Only`.
+
 ## 2026-10-27 — CSP pass, first results: `cdn.tldraw.com` allowed (D-SITE-065)
 
 David's signed-in pass on 2026-10-27 (screenshots: `/apps/stea` and `/apps/stea/harls`, Firefox).
