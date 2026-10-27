@@ -9,15 +9,21 @@
  *   - Every commit, hash and machine-checkable number is verified against the local checkouts
  *     before anything is read from or written to Firestore (backfillCore.mjs). Any failure
  *     refuses the whole run.
+ *   - A3 figures: when xyz's eval/results/ holds the pre-registered and re-judged results files,
+ *     they are recomputed with xyz's own oq25_recompute.py (a3_results.py) and must match; any
+ *     mismatch or refusal refuses the run. When the files are absent, those checks are reported
+ *     as skipped and the figures stay transcribed (D-SITE-062).
+ *   - After writing, the new head is anchored with RFC 3161 tokens from DigiCert and Sectigo
+ *     (anchor.mjs, D-SITE-063). Skip with --no-anchor; anchor later with anchor-head.mjs.
  *   - Idempotent: a chain that already holds these events is refused unless --append, which
  *     needs --expect-head and writes only the missing tail.
  *   - After writing, the whole stored chain is re-read and verified (chainV2.verifyChainV2).
  *   - Prints keys, types, decision ids, commits, event ids, hashes and counts. No free text.
  *
- * USAGE (from this repo's root)
+ * USAGE (from this repo's root; on David's Mac the Repinfaust repo is ~/dev/xyz)
  *   node scripts/orbit/backfill-evidence.mjs \
- *     --sources ../repinfaust-lab/scripts/orbit/evidence-sources.json \
- *     --repo repinfaust-aid=../repinfaust-aid --repo repinfaust-lab=../repinfaust-lab \
+ *     --sources /Users/davidloake/dev/repinfaust-lab/scripts/orbit/evidence-sources.json \
+ *     --repo repinfaust-aid=/Users/davidloake/dev/xyz --repo repinfaust-lab=/Users/davidloake/dev/repinfaust-lab \
  *     [--offline] [--write] [--append --expect-head <hash>]
  *   --offline verifies the sources only; it needs no credentials and touches no database.
  */
@@ -66,7 +72,20 @@ const verifier = {
   readJson: (repo, at, path) => {
     try { return JSON.parse(git(repo, 'show', `${at}:${path}`).toString('utf8')); } catch { return null; }
   },
+  a3Results: (repo) => {
+    if (a3Cache.has(repo)) return a3Cache.get(repo);
+    let r;
+    try {
+      const helper = new URL('./a3_results.py', import.meta.url).pathname;
+      r = JSON.parse(execFileSync('python3', ['-I', helper, repos[repo]], { stdio: ['ignore', 'pipe', 'pipe'] }).toString('utf8'));
+    } catch (e) {
+      r = { error: `a3_results.py failed: ${e.message.split('\n')[0]}` };
+    }
+    a3Cache.set(repo, r);
+    return r;
+  },
 };
+const a3Cache = new Map();
 
 function table(payloads) {
   payloads.forEach((p, i) => {
@@ -80,7 +99,11 @@ function table(payloads) {
 async function main() {
   const sources = JSON.parse(readFileSync(sourcesPath, 'utf8'));
   const { payloads, checks } = buildEvidencePayloads(sources, verifier);
-  console.log(`sources verified: ${payloads.length} events, ${checks.length} checks, all passed (org ${sources.orgId})`);
+  const skipped = checks.filter((c) => c.ok === null);
+  console.log(`sources verified: ${payloads.length} events, ${checks.length - skipped.length} checks passed, ${skipped.length} skipped (org ${sources.orgId})`);
+  for (const [repo, r] of a3Cache) {
+    console.log(`A3 results (${repo}): ${r.present ? `present, recomputed and matched (${r.tied_by})` : 'not present; A3 figures are transcribed, not checked'}`);
+  }
   table(payloads);
   if (OFFLINE) return;
 

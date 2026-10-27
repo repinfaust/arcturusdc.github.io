@@ -100,3 +100,50 @@ test('plan: empty chain writes all; a matching prefix needs --append; anything e
   assert.equal(planBackfill(payloads, payloads, { append: true }).toWrite.length, 0);
   assert.throws(() => planBackfill(payloads, [{ eventId: 'ev_other' }], { append: true }), /does not match/);
 });
+
+// ---- A3 results files (D-SITE-062) ----
+const A3 = {
+  present: true,
+  prereg: { arms: { bare: { k58: 20, k78: 37 } }, rows: 693, errors: 0 },
+  rejudged: { arms: { bare: { k58: 25 } }, rows: 693, verdicts_changed: 209 },
+};
+const a3Sources = () => ({
+  version: 1,
+  orgId: 'evidence-org',
+  events: [{
+    key: 'a3-run', repo: 'repo-a',
+    payload: { eventType: 'EVALUATION_RUN', system: 'sys-a', version: 'v0.1', decisionId: 'D-062', commit: 'aaaaaaa', occurredAt: '2026-08-08', modelSnapshots: [],
+      metrics: { rows: 693, errors: 0, sens58_bare_k: 20, sens78_bare_k: 37, rejudged_sens58_bare_k: 25, verdicts_changed: 209 } },
+    verify: [
+      { field: 'metrics.rows', kind: 'a3', file: 'prereg', value: 'rows' },
+      { field: 'metrics.errors', kind: 'a3', file: 'prereg', value: 'errors' },
+      { field: 'metrics.sens58_bare_k', kind: 'a3', file: 'prereg', value: 'arms.bare.k58' },
+      { field: 'metrics.sens78_bare_k', kind: 'a3', file: 'prereg', value: 'arms.bare.k78' },
+      { field: 'metrics.rejudged_sens58_bare_k', kind: 'a3', file: 'rejudged', value: 'arms.bare.k58' },
+      { field: 'metrics.verdicts_changed', kind: 'a3', file: 'rejudged', value: 'verdicts_changed' },
+    ],
+  }],
+});
+const withA3 = (a3) => ({ ...verifier, a3Results: () => a3 });
+
+test('A3 checks: present files must match every figure', () => {
+  const { checks } = buildEvidencePayloads(a3Sources(), withA3(A3));
+  assert.equal(checks.filter((c) => c.kind === 'a3' && c.ok === true).length, 6);
+});
+
+test('A3 checks: a mismatch refuses the run, naming the field', () => {
+  const s = a3Sources();
+  s.events[0].payload.metrics.verdicts_changed = 208;
+  assert.throws(() => buildEvidencePayloads(s, withA3(A3)), /a3-run: metrics\.verdicts_changed does not match a3 rejudged\.verdicts_changed/);
+});
+
+test('A3 checks: absent files are skipped and reported, not passed', () => {
+  const { checks } = buildEvidencePayloads(a3Sources(), withA3({ present: false }));
+  const a3 = checks.filter((c) => c.kind === 'a3');
+  assert.equal(a3.length, 6);
+  assert.ok(a3.every((c) => c.ok === null && /not present/.test(c.note)));
+});
+
+test('A3 checks: a refusal from the recompute refuses the run', () => {
+  assert.throws(() => buildEvidencePayloads(a3Sources(), withA3({ error: 'oq25_recompute refused: run_identity differs' })), /a3-run: A3 results refused: oq25_recompute refused/);
+});

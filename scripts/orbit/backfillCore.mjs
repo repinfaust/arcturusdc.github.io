@@ -7,6 +7,10 @@
  *   sha256 / sha256-12   the field equals the sha256 (or its first 12 hex) of path@at
  *   json / json-length   the field equals a value (or an array length) at a JSON pointer in path@at;
  *                        booleans compare as 1/0
+ *   a3                   the field equals a figure recomputed from the local A3 results files by
+ *                        xyz's own oq25_recompute.py (scripts/orbit/a3_results.py, D-SITE-062).
+ *                        If the files are absent the check is skipped and reported (ok: null);
+ *                        if present, any mismatch or refusal refuses the run.
  * Every payload's commit must exist in its repository. Every failure is collected and reported
  * together; nothing is returned unless all pass.
  */
@@ -43,6 +47,13 @@ function expected(check, repo, verifier) {
     if (check.kind === 'json-length') return Array.isArray(v) ? { value: v.length } : { missing: `${check.pointer} is not an array` };
     return { value: typeof v === 'boolean' ? (v ? 1 : 0) : v };
   }
+  if (check.kind === 'a3') {
+    const a3 = verifier.a3Results ? verifier.a3Results(repo) : { present: false };
+    if (a3.error) return { refused: `A3 results refused: ${a3.error}` };
+    if (!a3.present) return { skipped: 'A3 results files not present; figure transcribed, not checked' };
+    const v = `${check.file}.${check.value}`.split('.').reduce((o, k) => (o == null ? undefined : o[k]), a3);
+    return v === undefined ? { missing: `a3 ${check.file}.${check.value} not computed` } : { value: v };
+  }
   return { missing: `unknown check kind ${check.kind}` };
 }
 
@@ -76,10 +87,20 @@ export function buildEvidencePayloads(sources, verifier) {
 
     for (const check of src.verify || []) {
       const exp = expected(check, repo, verifier);
+      if (exp.skipped) {
+        checks.push({ key, field: check.field, kind: check.kind, ok: null, note: exp.skipped });
+        continue;
+      }
+      if (exp.refused) {
+        checks.push({ key, field: check.field, kind: check.kind, ok: false });
+        errors.push(`${key}: ${exp.refused}`);
+        continue;
+      }
       const actual = getField(payload, check.field);
       const ok = exp.missing === undefined && actual === exp.value;
       checks.push({ key, field: check.field, kind: check.kind, ok });
-      if (!ok) errors.push(`${key}: ${check.field} ${exp.missing ?? `does not match ${check.kind} of ${check.path}@${check.at}`}`);
+      const what = check.kind === 'a3' ? `a3 ${check.file}.${check.value}` : `${check.kind} of ${check.path}@${check.at}`;
+      if (!ok) errors.push(`${key}: ${check.field} ${exp.missing ?? `does not match ${what}`}`);
     }
 
     const v = validateEvidenceEvent(payload);

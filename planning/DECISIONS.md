@@ -1,5 +1,42 @@
 # Decisions
 
+## 2026-10-27 — Backfill checks A3 figures against the local results files; paths corrected to ~/dev/xyz (D-SITE-062)
+
+**David's request:** when xyz's A3 results files are on disk, verify the A3 event metrics against
+them, as `oq25_recompute.py` does, and refuse on a mismatch.
+
+**`scripts/orbit/a3_results.py`:**
+- It's run as `python3 -I`, with the xyz checkout path as its argument.
+- It reads `eval/results/baseline-20260808T083911Z.json` and
+  `rejudged-20260809T073724Z.json`, the pair D-096 names.
+- It imports xyz's own `oq25_recompute` (`tie_files`, `analyse`) and therefore `score.py`'s
+  `correct()`. That means:
+  - the same population and definitions as the published scorer;
+  - oq25's own refusals pass straight through: wrong `rubric_sha`, a different `run_identity`,
+    `rejudged_from` naming another file, or 58-turn counts that differ from the published ones.
+- **It adds:** per arm, k for 58-turn and 78-turn sensitivity and calm-turn fires; rows and error
+  rows; and verdicts changed by the re-judge, paired on `(scenario_id, turn_idx, arm)`.
+- **It returns** `{present: false}` when neither file is there, and `{error}` when only one is, or on
+  any refusal. It never outputs text.
+
+**`backfillCore.mjs`:**
+- **A new check kind, `a3`.** With the files present, every figure must match. A mismatch or a
+  refusal refuses the run.
+- **Files absent:** the check is recorded as **skipped** (`ok: null`), never as passed. The CLI
+  prints "A3 figures are transcribed, not checked".
+
+**The Lab sources** gain 22 `a3` checks (D-L050).
+
+**Paths:** the Repinfaust repo on David's Mac is `/Users/davidloake/dev/xyz`. The usage text and
+the runbook use full paths, because `~` isn't expanded after `name=` in a shell argument.
+
+**Checked:**
+- **Synthetic results through xyz's real `oq25_recompute.py`:** the figures came out as built.
+  Changing `run_identity` gave oq25's refusal, and one file alone was refused.
+- **Here, with no results files:** 56 checks passed and 22 were skipped.
+- `npm run test:orbit`: 118 pass, 2 todo. The A3 tests were written before the code, but not run
+  red first.
+
 ## 2026-10-27 — FINDING: `middleware.js` has never run; protected pages are gated client-side only (D-SITE-061)
 
 **Found while checking D-SITE-059 on the live site, signed out:**
