@@ -1,5 +1,70 @@
 # Decisions
 
+## 2026-10-27 — Orbit chain v2: recursive canonical form, hash covers the link (D-SITE-054)
+
+`src/lib/orbit/chainV2.js`, for new events only. v1 (`signatures.js`) is untouched.
+
+**F2.** `canonicalV2` serialises recursively with sorted keys, so nested values are covered. It
+refuses `undefined`, NaN and infinities, Dates, Timestamps, Maps, BigInt and functions, instead of
+skipping them as v1's `cleanEventForSigning` does.
+
+**F1.** The hash covers the link:
+- **The signature** is HMAC-SHA256 over the payload plus `signingKeyId`.
+- **The hash** is SHA-256 over everything stored except `eventHash` and bookkeeping (`id`,
+  `recordedAt`). That includes the signature, `previousEventHash` and `blockIndex`.
+- **Block 1** links to `GENESIS_HASH`, 64 zeros, so it's checked like every other block. v1 never
+  checked block 1 (F3).
+
+**Functions:**
+- `linkEventV2` validates the payload first (D-SITE-053), so chain fields can't be smuggled in as
+  payload.
+- `verifySignatureV2` returns false on malformed input; it never throws.
+- `verifyChainV2` checks, per block, the schema, signature, hash, link and index, then the head
+  record. Its errors name blocks and checks only, never values.
+
+**Trust limit, stated rather than solved:** Orbit holds the HMAC secret. So anyone with the secret
+(Orbit, or the owner) could rewrite and re-sign the whole chain, recomputing every hash after the
+edit. Chain v2 detects edits by anyone without the secret, and any partial edit. Making the head
+checkable from outside needs an external anchor, for example publishing the head hash to a commit
+or a timestamping service. That isn't in scope; it's noted for a later decision.
+
+**Tests** (`__tests__/orbit/chainV2.test.mjs`):
+- **The v2 tests pass.** These cover the canonical form, refusals, signatures, genesis linking, and
+  the detection of an edited metric, a reorder, a deletion, a relink, a truncated tail and a
+  re-signed edit.
+- **The same two properties run against v1** as `todo` tests. They fail on every run, which shows
+  F1 and F2: v1's signature ignores a nested metric change, and v1's hash ignores relinking.
+- **A legacy v1 event is pinned byte for byte:** signature `c0185753…`, hash `d1f7933c…`.
+- `npm run test:orbit`: 80 pass, 0 fail, 2 todo.
+
+## 2026-10-27 — Orbit evidence event family: 11 types, strict schema, no free text (D-SITE-053)
+
+Added to `src/lib/orbit/eventTypes.js`, beside the legacy consent family. That family and
+`validateEvent` are unchanged, and a test pins them.
+
+**The types:**
+- **Control:** `CONTROL_TRIGGERED`, `CONTROL_OVERRIDDEN`, `ESCALATION_REQUESTED`,
+  `HUMAN_REVIEW_REQUESTED`, `HUMAN_REVIEW_COMPLETED`.
+- **Evaluation:** `EVALUATION_RUN`, `RUBRIC_VERSIONED`, `HUMAN_AUDIT_COMPLETED`,
+  `REGRESSION_DETECTED`, `CLAIM_WITHDRAWN`, `PREREGISTRATION_FROZEN`. The last is the addition to
+  the direction note (D-SITE-048).
+- `HUMAN_REVIEW_COMPLETED` requires `subjectEventId`, which links it to its request.
+
+**`validateEvidenceEvent`:**
+- It returns `{valid, errors}` and never throws.
+- Every field is typed, and unknown fields are refused, so `userId` and free-text fields can't be
+  stored.
+- Every string field has a pattern with no whitespace and a length cap.
+- `metrics` is an object of at most 64 identifier keys, with finite numbers only. Booleans are
+  stored as 0 or 1. A `0` is a value, which fixes the presence-check bug in `validateEvent`.
+- Arrays are typed and capped at 16.
+- `chainVersion` must be `2`.
+- `generateEvidenceEventId` uses `crypto.randomUUID`.
+
+**Tests:** `__tests__/orbit/eventTypes.test.mjs` was written first and failed on import. It covers
+a valid event of each type, each required field, unknown fields, free text, metric types, arrays,
+nesting, and the type-specific rules.
+
 ## 2026-10-27 — Orbit: audited wording shipped; a tick only for what exists (D-SITE-052)
 
 `planning/ORBIT_CLAIMS_AUDIT.md`'s proposed wording is shipped as approved, under David's rule:
