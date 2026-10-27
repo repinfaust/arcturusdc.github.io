@@ -24,7 +24,7 @@
  *   node scripts/orbit/backfill-evidence.mjs \
  *     --sources /Users/davidloake/dev/repinfaust-lab/scripts/orbit/evidence-sources.json \
  *     --repo repinfaust-aid=/Users/davidloake/dev/xyz --repo repinfaust-lab=/Users/davidloake/dev/repinfaust-lab \
- *     [--offline] [--write] [--append --expect-head <hash>]
+ *     [--offline] [--write] [--append --expect-head <hash>] [--no-anchor] [--ca-file roots.pem]
  *   --offline verifies the sources only; it needs no credentials and touches no database.
  */
 
@@ -152,6 +152,21 @@ async function main() {
   console.log(`\nverify: ${r.ok ? 'OK' : 'FAILED'} — ${after.events.length} blocks, head ${after.head.blockIndex} ${after.head.eventHash}`);
   if (!r.ok) {
     console.log(r.errors.join('\n'));
+    process.exitCode = 1;
+    return;
+  }
+
+  // Anchor the new head with DigiCert and Sectigo (D-SITE-063), after every append batch.
+  if (flag('--no-anchor')) {
+    console.log('anchor: skipped (--no-anchor); run scripts/orbit/anchor-head.mjs --send to anchor this head');
+    return;
+  }
+  const { runAnchor } = await import('./anchor-head.mjs');
+  try {
+    await runAnchor(db, { orgId: sources.orgId, send: true, caFileArg: value('--ca-file') });
+  } catch (e) {
+    console.log(`anchor: FAILED, nothing stored — ${e.message}`);
+    console.log('the chain itself is written and verified; retry with scripts/orbit/anchor-head.mjs --send');
     process.exitCode = 1;
   }
 }

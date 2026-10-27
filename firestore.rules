@@ -564,6 +564,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // RFC 3161 anchors of the evidence head (D-SITE-063): server-side only
+    match /orbit_evidence_anchors/{anchorId} {
+      allow read, write: if false;
+    }
+
     /* ==========================================================
        ApexTwin POC Collections (Track Setup Companion)
        Restricted to tenantId: DL7ScScEhvAcFpAmmS8h

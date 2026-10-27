@@ -6,6 +6,7 @@
 
 import { isOrbitOwner } from './owner.js';
 import { EVIDENCE_FAMILIES } from './eventTypes.js';
+import { ANCHOR_TSAS } from './anchors.js';
 
 export const EVIDENCE_ORG_ID = 'repinfaust-evidence';
 const HASH_FIELDS = ['policyHash', 'promptHash', 'rubricHash', 'previousRubricHash', 'preregHash', 'artifactHash'];
@@ -34,13 +35,28 @@ export function buildTimeline(events) {
   }));
 }
 
-export async function loadTimeline({ session, readChain, orgId = EVIDENCE_ORG_ID }) {
+/** Anchors as plain JSON for the page, tokens included so they can be downloaded and checked. */
+export function buildAnchors(anchors) {
+  return [...anchors]
+    .sort((a, b) => a.blockIndex - b.blockIndex)
+    .map((a) => ({
+      blockIndex: a.blockIndex,
+      eventHash: a.eventHash,
+      imprint: a.imprint,
+      tokens: ANCHOR_TSAS.filter((t) => a.tokens?.[t.id]).map((t) => ({
+        id: t.id, vendor: t.vendor, url: a.tokens[t.id].url, genTime: a.tokens[t.id].genTime, replyDer: a.tokens[t.id].replyDer,
+      })),
+    }));
+}
+
+export async function loadTimeline({ session, readChain, readAnchors = async () => [], orgId = EVIDENCE_ORG_ID }) {
   if (!isOrbitOwner(session)) return { status: 'forbidden' };
-  const { events, head } = await readChain(orgId);
+  const [{ events, head }, anchors] = await Promise.all([readChain(orgId), readAnchors(orgId)]);
   return {
     status: 'ok',
     orgId,
     rows: buildTimeline(events),
     head: head ? { blockIndex: head.blockIndex, eventHash: head.eventHash } : null,
+    anchors: buildAnchors(anchors),
   };
 }

@@ -111,3 +111,46 @@ test('event mode: another user\'s snapshot is not looked up', async () => {
   const res = await POST(req({ event: legacy(), snapshotPointer: 'p1' }));
   assert.equal(res.body.results.snapshotHash, null);
 });
+
+// ---- anchors (D-SITE-063) ----
+import { anchorImprint } from '../../src/lib/orbit/anchors.js';
+
+async function withAnchors(mutate = (a) => a) {
+  const db = memoryFirestore();
+  for (let i = 1; i <= 3; i++) {
+    await appendEvidenceEvent(db, { orgId: ORG, payload: payload(i), signingSecret: SECRET, signingKeyId: 'k1', serverTimestamp: () => 'ts' });
+  }
+  const { events } = await readEvidenceChain(db, ORG);
+  const b2 = events[1];
+  const anchor = mutate({
+    orgId: ORG, blockIndex: 2, eventHash: b2.eventHash, imprint: anchorImprint({ orgId: ORG, blockIndex: 2, eventHash: b2.eventHash }),
+    tokens: { digicert: { genTime: '2026-10-27T10:00:00.000Z', replyDer: 'AAAA' }, sectigo: { genTime: '2026-10-27T10:00:01.000Z', replyDer: 'AAAA' } },
+  });
+  return makeVerifyHandler({
+    verifySession: async () => OWNER, getOrg: async () => ({ orgId: ORG, signingSecret: SECRET }), getSnapshot: async () => null,
+    readChain: (o) => readEvidenceChain(db, o), readAnchors: async () => [anchor], now: () => new Date('2026-10-27T12:00:00Z'), json,
+  });
+}
+
+test('chain mode: a matching anchor is reported, with the scope that goes with it', async () => {
+  const res = await (await withAnchors())(req({ orgId: ORG, chain: true }));
+  assert.equal(res.body.ok, true, JSON.stringify(res.body.errors));
+  assert.equal(res.body.anchoredThrough, 2);
+  assert.match(res.body.anchorScope, /DigiCert and Sectigo/);
+  assert.deepEqual(res.body.anchors[0].tsas.map((t) => t.present), [true, true]);
+});
+
+test('chain mode: an anchor that no longer matches the chain fails verification', async () => {
+  const res = await (await withAnchors((a) => ({ ...a, eventHash: '0'.repeat(64) })))(req({ orgId: ORG, chain: true }));
+  assert.equal(res.body.ok, false);
+  assert.ok(res.body.errors.some((e) => /anchor at block 2/.test(e)));
+  assert.equal(res.body.anchoredThrough, null);
+});
+
+test('chain mode: with no anchors, the result says so and stays "verified by Orbit"', async () => {
+  const { POST } = await setup(OWNER);
+  const res = await POST(req({ orgId: ORG, chain: true }));
+  assert.equal(res.body.anchoredThrough, null);
+  assert.equal(res.body.anchorScope, null);
+  assert.match(res.body.scope, /not independently/);
+});

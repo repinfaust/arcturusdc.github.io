@@ -23,7 +23,17 @@ function Mark({ ok, label }) {
   );
 }
 
-export default function EvidenceTimeline({ orgId, rows, head }) {
+function downloadToken(blockIndex, t) {
+  const bytes = Uint8Array.from(atob(t.replyDer), (c) => c.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/timestamp-reply' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `block-${blockIndex}-${t.id}.tsr`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export default function EvidenceTimeline({ orgId, rows, head, anchors = [] }) {
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -49,6 +59,8 @@ export default function EvidenceTimeline({ orgId, rows, head }) {
   }
 
   const checks = new Map((result?.blocks ?? []).map((b) => [b.blockIndex, b]));
+  const anchorAt = new Map(anchors.map((a) => [a.blockIndex, a]));
+  const anchoredThrough = anchors.length ? anchors[anchors.length - 1].blockIndex : null;
 
   return (
     <main className="min-h-screen bg-neutral-50">
@@ -58,6 +70,12 @@ export default function EvidenceTimeline({ orgId, rows, head }) {
         <p className="text-sm text-neutral-600 mt-1">
           Org <span className="font-mono">{orgId}</span> · {rows.length} blocks · head{' '}
           <span className="font-mono">{head ? `${head.blockIndex} ${short(head.eventHash)}` : 'none'}</span> · read-only
+        </p>
+
+        <p className="mt-3 text-sm text-neutral-700">
+          {anchoredThrough
+            ? <>Blocks 1–{anchoredThrough} are time-stamped by DigiCert and Sectigo (RFC 3161): download a token below and check it yourself with openssl. {anchoredThrough < rows.length ? `Blocks after ${anchoredThrough} are verified by Orbit, not independently, until the next anchor.` : ''}</>
+            : 'Not yet anchored: the chain is verified by Orbit, not independently.'}
         </p>
 
         <div className="mt-5 rounded-xl border border-neutral-200 bg-white p-4 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -75,7 +93,8 @@ export default function EvidenceTimeline({ orgId, rows, head }) {
               <span className={result.ok ? 'text-emerald-800' : 'text-red-800'}>
                 {result.ok ? 'Chain verified' : 'Chain NOT verified'} against stored events: {result.blocks.length} blocks, head{' '}
                 <span className="font-mono">{result.head ? `${result.head.blockIndex} ${short(result.head.eventHash)}` : 'none'}</span>,{' '}
-                {new Date(result.verifiedAt).toISOString().replace('T', ' ').slice(0, 19)} UTC. Verified by Orbit, not independently.
+                {new Date(result.verifiedAt).toISOString().replace('T', ' ').slice(0, 19)} UTC. Verified by Orbit, not independently
+                {result.anchoredThrough ? `; blocks 1–${result.anchoredThrough} match their DigiCert and Sectigo anchors (token signatures: check with openssl).` : '.'}
               </span>
             )}
           </div>
@@ -118,6 +137,23 @@ export default function EvidenceTimeline({ orgId, rows, head }) {
                   <dt className="text-neutral-500">eventHash</dt><dd className="font-mono break-all" title={r.eventHash}>{short(r.eventHash)}</dd>
                   <dt className="text-neutral-500">previous</dt><dd className="font-mono break-all" title={r.previousEventHash}>{short(r.previousEventHash)}</dd>
                 </dl>
+                {anchorAt.has(r.blockIndex) && (
+                  <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
+                    <div className="font-semibold">Anchored here: the chain up to this block is time-stamped</div>
+                    <div className="mt-1 font-mono break-all">imprint {anchorAt.get(r.blockIndex).imprint}</div>
+                    <ul className="mt-2 space-y-1">
+                      {anchorAt.get(r.blockIndex).tokens.map((t) => (
+                        <li key={t.id} className="flex flex-wrap items-center gap-2">
+                          <span>{t.vendor} · {t.genTime?.replace('T', ' ').slice(0, 19)} UTC</span>
+                          <button onClick={() => downloadToken(r.blockIndex, t)} className="underline">download token</button>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-2 font-mono break-all text-emerald-800">
+                      openssl ts -verify -digest {anchorAt.get(r.blockIndex).imprint} -in block-{r.blockIndex}-digicert.tsr -CAfile &lt;trusted roots&gt;
+                    </div>
+                  </div>
+                )}
                 {r.metrics.length > 0 && (
                   <div className="mt-3 overflow-x-auto">
                     <table className="text-xs">

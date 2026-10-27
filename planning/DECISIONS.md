@@ -1,5 +1,68 @@
 # Decisions
 
+## 2026-10-27 — RFC 3161 anchoring of the evidence head: DigiCert and Sectigo, after every append batch (D-SITE-063)
+
+David chose this from D-SITE-060: RFC 3161, from DigiCert and Sectigo, anchoring the head after every
+append batch, starting with the backfill. Nothing is sent until he runs it.
+
+**What is anchored:**
+- **The imprint** is `sha256(canonicalV2({orgId, blockIndex, eventHash}))` for the head. Nothing
+  else leaves the Mac.
+- **It's sent to both TSAs:** `http://timestamp.digicert.com` and `http://timestamp.sectigo.com`.
+  They're plain HTTP, which is safe because the tokens are signed and verified.
+- **Each reply must, before anything is stored:**
+  - pass `openssl ts -verify` against the query, meaning the same imprint and nonce;
+  - verify against the machine's trusted roots (macOS System Roots, exported for each run);
+  - be "Granted";
+  - carry a time within 10 minutes of the local clock;
+  - contain a certificate whose subject names the expected vendor.
+- **Both must pass,** or nothing is stored.
+- **Storage:** one record, `orbit_evidence_anchors/{orgId}__{block}`, created and never set. It
+  holds the imprint, and per TSA the time, serial, policy and token (DER, base64).
+
+**Why trust the machine's roots** and not certificates committed to the repo: the DigiCert root
+downloaded here (`DigiCertTrustedRootG4`, sha256 `552F7BDC…99 88`), but Sectigo's certificate host
+refused this session's proxy. A root committed without a check would be worse than the OS store, and
+the vendor-name pin narrows the OS store's breadth.
+
+**Code:**
+- `src/lib/orbit/anchors.js` (server-safe): the imprint, the TSAs, and `checkAnchors`, which checks
+  each anchor still matches the stored block and has both tokens.
+- `scripts/orbit/anchor.mjs`: the openssl side, meaning query, reply verification, stored-token
+  verification from the digest, HTTP POST and the roots file.
+- `scripts/orbit/anchor-head.mjs`: the CLI. It's a dry run by default; `--send` anchors and
+  `--check` re-verifies every stored token.
+- **The backfill anchors after every write,** unless `--no-anchor`. A failed anchor leaves the chain
+  written and verified, and says how to retry.
+
+**Shown:**
+- **The verify chain mode** (D-SITE-058) adds `anchors` and `anchoredThrough`. An anchor that no
+  longer matches the chain fails verification. Token signatures need openssl, so the route checks
+  them only for consistency and says so.
+- **The timeline** says which blocks are anchored. Later blocks are "verified by Orbit, not
+  independently, until the next anchor". Each anchored block offers the tokens for download, with
+  the `openssl ts -verify -digest …` command.
+
+**Runbook:** `planning/ORBIT_BACKFILL_RUNBOOK.md`, with David's paths, `~/dev/xyz` included.
+
+**Tests:** `anchor.test.mjs`, written first, failed on import. It uses throwaway local TSAs built
+with openssl, so nothing is sent. It covers:
+- the imprint;
+- genuine replies;
+- refusals for another query, the wrong CA, the wrong vendor, clock skew and garbage;
+- all-or-nothing storage;
+- dry runs sending nothing;
+- stored-token re-verification;
+- HTTP posting;
+- `checkAnchors`;
+- the rules.
+
+The verify route and timeline tests were extended. `npm run test:orbit`: 134 pass, 2 todo.
+`next build` passes.
+
+**Not yet exercised against the real TSAs:** whether their tokens carry the full intermediate chain
+is only known from the first real run. If one doesn't, the run fails closed and stores nothing.
+
 ## 2026-10-27 — Backfill checks A3 figures against the local results files; paths corrected to ~/dev/xyz (D-SITE-062)
 
 **David's request:** when xyz's A3 results files are on disk, verify the A3 event metrics against

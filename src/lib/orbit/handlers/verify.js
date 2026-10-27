@@ -18,9 +18,11 @@
 
 import { verifyEventSignature, verifySnapshotHash, hashEvent, hashSnapshot } from '../signatures.js';
 import { verifyChainV2 } from '../chainV2.js';
+import { checkAnchors } from '../anchors.js';
 import { isOrbitOwner, canReadUserRecords } from '../owner.js';
 
 export const CHAIN_SCOPE = 'Chain v2, as stored, verified by Orbit, not independently. Orbit holds the signing secret.';
+export const ANCHOR_SCOPE = 'Blocks up to the latest anchor are also time-stamped by DigiCert and Sectigo (RFC 3161); anyone can check the tokens with openssl ts -verify. This route checks that each anchor matches the stored chain; the token signatures are checked with openssl, not here.';
 
 const quietly = (fn) => {
   try {
@@ -30,7 +32,7 @@ const quietly = (fn) => {
   }
 };
 
-export function makeVerifyHandler({ verifySession, getOrg, getSnapshot, readChain, now, json }) {
+export function makeVerifyHandler({ verifySession, getOrg, getSnapshot, readChain, readAnchors = async () => [], now, json }) {
   async function verifyChain(session, orgId) {
     if (!isOrbitOwner(session)) {
       return json({ error: 'Only the Orbit owner can verify a stored chain' }, { status: 403 });
@@ -40,9 +42,15 @@ export function makeVerifyHandler({ verifySession, getOrg, getSnapshot, readChai
 
     const { events, head } = await readChain(orgId);
     const r = verifyChainV2(events, org.signingSecret, head ? { blockIndex: head.blockIndex, eventHash: head.eventHash } : null);
-    const errors = events.length === 0 ? ['no blocks stored; nothing to verify', ...r.errors] : r.errors;
+    const anchors = checkAnchors(await readAnchors(orgId), events);
+    const errors = events.length === 0 ? ['no blocks stored; nothing to verify', ...r.errors] : [...r.errors];
+    for (const a of anchors.anchors) if (!a.ok) errors.push(`anchor at block ${a.blockIndex}: does not match the stored chain`);
+    const latest = anchors.anchors.filter((a) => a.ok).at(-1) ?? null;
     return json({
-      ok: events.length > 0 && r.ok,
+      ok: events.length > 0 && r.ok && anchors.ok,
+      anchors: anchors.anchors.map(({ blockIndex, ok, tsas }) => ({ blockIndex, ok, tsas })),
+      anchoredThrough: latest ? latest.blockIndex : null,
+      anchorScope: latest ? ANCHOR_SCOPE : null,
       orgId,
       blocks: r.blocks,
       head: head ? { blockIndex: head.blockIndex, eventHash: head.eventHash } : null,

@@ -72,3 +72,25 @@ test('the verification line is scoped and says "verified by Orbit, not independe
   assert.match(ui, /verified by Orbit, not independently/i);
   assert.match(ui, /verifiedAt/);
 });
+
+test('loadTimeline: anchors come through sorted, with downloadable tokens; none for others', async () => {
+  const { buildAnchors } = await import('../../src/lib/orbit/evidenceTimeline.js');
+  const anchors = [
+    { blockIndex: 5, eventHash: 'b', imprint: 'i5', tokens: { sectigo: { url: 's', genTime: 't2', replyDer: 'QQ==' }, digicert: { url: 'd', genTime: 't1', replyDer: 'QQ==' } } },
+    { blockIndex: 2, eventHash: 'a', imprint: 'i2', tokens: { digicert: { url: 'd', genTime: 't0', replyDer: 'QQ==' } } },
+  ];
+  const out = buildAnchors(anchors);
+  assert.deepEqual(out.map((a) => a.blockIndex), [2, 5]);
+  assert.deepEqual(out[1].tokens.map((t) => t.id), ['digicert', 'sectigo']);
+  let read = false;
+  await loadTimeline({ session: OTHER, readChain: async () => ({ events: [], head: null }), readAnchors: async () => { read = true; return anchors; } });
+  assert.equal(read, false);
+});
+
+test('the page says which blocks are anchored and that later ones are verified by Orbit only', () => {
+  const ui = readFileSync(new URL('src/app/apps/stea/orbit/evidence/EvidenceTimeline.js', ROOT), 'utf8');
+  assert.match(ui, /time-stamped by DigiCert and Sectigo/);
+  assert.match(ui, /verified by Orbit, not independently, until the next anchor/);
+  assert.match(ui, /Not yet anchored: the chain is verified by Orbit, not independently/);
+  assert.match(ui, /openssl ts -verify -digest/);
+});
