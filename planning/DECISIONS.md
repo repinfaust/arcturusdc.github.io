@@ -1,5 +1,56 @@
 # Decisions
 
+## 2026-10-27 — Orbit evidence backfill: local, source-verified, idempotent (D-SITE-057)
+
+**Files:** `scripts/orbit/backfill-evidence.mjs`, the CLI, and `scripts/orbit/backfillCore.mjs`, the
+pure core.
+
+**The sources** are `repinfaust-lab` `scripts/orbit/evidence-sources.json` (Lab D-L049), which is
+kept out of this repo (D-SITE-048).
+
+**How it runs:**
+- **Locally, with Application Default Credentials** against `stea-775cd`, never through the public
+  API.
+- **Dry run by default.** `--write` writes, and `--offline` verifies the sources without touching
+  any database.
+
+**Verification before any read or write:**
+- **Commits:** every payload's commit must exist in its local checkout.
+- **Hashes** are checked against `git show <at>:<path>`, either the full sha256 or its first 12
+  hex characters.
+- **Numbers** are checked by JSON pointer against committed outcome files, with booleans compared
+  as 1 or 0.
+- **Links** resolve only to earlier events.
+- **Payloads** must pass `validateEvidenceEvent`.
+- **The backfill sets the chain fields,** never the sources: a hand-set `eventId` or chain field is
+  refused.
+- **Every failure is listed together,** and nothing is written unless all checks pass.
+
+**Ids and the head:**
+- **`eventId`** is `ev_` plus the first 24 hex characters of `sha256(orgId|key)`. So a re-run is
+  refused if the chain already holds the events.
+- **`--append --expect-head <hash>`** writes only the missing tail, and only if the head is
+  unchanged. A chain that doesn't match the sources is refused.
+
+**The org:** `repinfaust-evidence` is created on first `--write` with a random signing secret and
+**no API key**, since nothing ingests into it.
+
+**After writing,** the whole stored chain is re-read and verified with `verifyChainV2`. The output
+is keys, types, decision ids, commits, event ids, hashes and counts.
+
+**Result (2026-10-27, cloud session):**
+- **Offline:** 15 events, **56 checks, all passed**.
+- **In memory,** with the real sources: all 15 blocks written, `verifyChainV2` OK, and a re-run
+  refused.
+- **Not run against Firestore yet.** That needs David's credentials; the command is in the
+  script's header.
+
+**The A3 numbers are transcribed** from the scorecards and D-096, because the results files aren't
+in xyz. The Lab numbers are machine-checked.
+
+**Tests:** `__tests__/orbit/backfill.test.mjs`, written first, gives 6 tests. `npm run test:orbit`
+gives 100 pass, 2 todo.
+
 ## 2026-10-27 — Orbit evidence store: own collection, one chain per org, head moved in the same transaction (D-SITE-056)
 
 `src/lib/orbit/evidenceStore.js`, as approved in D-SITE-048 (answer 1).
