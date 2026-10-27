@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-10-27 — CSP enforced after a clean signed-in pass (D-SITE-067)
+
+David reported on 2026-10-27 that the signed-in pass through the STEa apps came back with all
+console messages clear. That closes D-SITE-065's "Still to do" and both "Still owed" items in
+D-SITE-064: no "[Report Only]" violations, and signed-in access unchanged.
+- **Change:** `src/middleware.js` now sends the policy as `Content-Security-Policy` instead of
+  `Content-Security-Policy-Report-Only`. The policy text is unchanged.
+- **Also confirmed:** the same load showed no Harls permission error, so D-SITE-066 works.
+- **Not covered by the pass:** the middleware matcher applies the header to every non-asset route,
+  including public pages outside `/apps/stea`. The pass covered the STEa apps, not those pages.
+  A violation there now blocks the resource instead of just logging it.
+- **Rollback:** rename the header back to `Content-Security-Policy-Report-Only`.
+
 ## 2026-10-27 — Harls sets up its project only when Harls is on the current workspace's shelf (D-SITE-066)
 
 Follows the Harls finding noted in D-SITE-065.

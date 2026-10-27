@@ -10,9 +10,9 @@ import { PROTECTED_ROUTES, SIGN_IN_PATH } from './lib/protectedRoutes';
 
 const CANONICAL_HOST = 'www.arcturusdc.com';
 
-// Report-only for now: this policy has never been enforced on the live site, and the old one would
-// have blocked Google Fonts and Dialled MTB's Cloud Functions. Enforce it (rename the header) once
-// a pass through the apps shows no violations in the browser console (D-SITE-064).
+// Enforced since David's signed-in pass through the STEa apps came back clean (D-SITE-067); it ran
+// report-only before that (D-SITE-064). To go back, rename the header to
+// Content-Security-Policy-Report-Only.
 // cdn.tldraw.com: Harls' whiteboard fonts and translations, from David's pass (D-SITE-065).
 const CSP = [
   "default-src 'self'",
@@ -47,7 +47,7 @@ export function middleware(req) {
   }
 
   const response = NextResponse.next();
-  response.headers.set('Content-Security-Policy-Report-Only', CSP);
+  response.headers.set('Content-Security-Policy', CSP);
   response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   return response;
 }
