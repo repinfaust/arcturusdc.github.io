@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-10-27 — Harls sets up its project only when Harls is on the current workspace's shelf (D-SITE-066)
+
+Follows the Harls finding noted in D-SITE-065.
+
+**Why the first call was refused.** `ensureProjectAndBoard` opens with `getDoc(projects/{tenantId}_harls_lab)`.
+In `firestore.rules` (`match /projects/{projectId}`), `get` on an *existing* project needs
+`inProject` (owner or in `members`) plus `canAccessTenant`. A missing project is readable, and
+creating it needs only `canAccessTenant`. A super admin passes `canAccessTenant` for every tenant,
+so the refusal in Dialled MTB (`zsQe61eMHgrTdjjGjNCK`) means that workspace's Harls project
+already exists and the signed-in user is not its owner or a member. The page's "add me to the
+existing project" branch can't help. It runs after that `get`, and `update` also needs `inProject`.
+
+**Change (`src/app/apps/stea/harls/page.js`):**
+- Setup waits for `TenantContext` to finish loading. It runs only if `isSteaAppAllowed({ appKey: 'harls', … })`
+  passes for the current tenant, with `isSuperAdmin: false`. So the decision follows the
+  workspace's own shelf (`allowedSteaApps`), not the super-admin override.
+  `SteaAppAccessGate` still lets super admins *view* the page anywhere. Where Harls isn't on
+  the shelf, they see a one-line notice instead of a board.
+- The effect is keyed on the tenant id and discards a result that lands after the workspace changed.
+  The project is cleared when the workspace changes, so one workspace's board never shows under another.
+
+**Limit.** A tenant with no `allowedSteaApps` field uses legacy access and counts as having
+every app (`tenantUsesLegacyAppAccess`). If Dialled MTB is legacy, or its shelf lists Harls,
+setup still runs there and is still refused by the membership rule above. In that case the fix is
+data, not code: take Harls off Dialled MTB's shelf in workspace admin. The other open defect is
+that a second tenant member can never join an existing tenant Harls project, because the rules
+allow no non-member read or update. It is recorded here and not fixed.
+
 ## 2026-10-27 — CSP pass, first results: `cdn.tldraw.com` allowed (D-SITE-065)
 
 David's signed-in pass on 2026-10-27 (screenshots: `/apps/stea` and `/apps/stea/harls`, Firefox).

@@ -13,6 +13,7 @@ import { ref as storageRef, uploadString, getDownloadURL, getBlob } from 'fireba
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { useTenant } from '@/contexts/TenantContext';
 import SteaAppsDropdown from '@/components/SteaAppsDropdown';
+import { isSteaAppAllowed } from '@/lib/steaAppCatalog';
 
 /** ✅ tldraw */
 import { Tldraw, getSnapshot as getTlSnapshot, loadSnapshot as loadTlSnapshot } from '@tldraw/tldraw';
@@ -1166,8 +1167,18 @@ function BadgeStrip({ user }) {
 export default function ProductLabPage() {
   const router = useRouter();
   const { user, login, logout } = useAuth();
-  const { currentTenant, availableTenants, loading: tenantLoading } = useTenant();
+  const { currentTenant, availableTenants, loading: tenantLoading, userEmail } = useTenant();
   const [project, setProject] = useState(null);
+  const tenantId = currentTenant?.id;
+  // Project setup follows the workspace's own app shelf. The super-admin override
+  // (which lets the access gate show this page anywhere) is deliberately not
+  // applied: setup in a workspace without Harls is refused by the rules. (D-SITE-066)
+  const harlsOnShelf = !tenantLoading && !!currentTenant && isSteaAppAllowed({
+    appKey: 'harls',
+    tenant: currentTenant,
+    userEmail,
+    isSuperAdmin: false,
+  });
   const [diagOpen, setDiagOpen] = useState(false); // flip to true to debug quickly
 
   // Authorization check: require tenant membership
@@ -1178,18 +1189,24 @@ export default function ProductLabPage() {
   }, [user, availableTenants, tenantLoading, router]);
 
   useEffect(() => {
+    setProject(null);
+    if (!user || !tenantId || !harlsOnShelf) return undefined;
+    // Ignore a result that lands after the workspace has changed.
+    let stale = false;
     (async () => {
-      if (!user || !currentTenant?.id) return setProject(null);
       try {
-        console.log('[Harls] Creating/loading project for user:', user.uid, 'tenant:', currentTenant.id);
-        const ids = await ensureProjectAndBoard(user.uid, currentTenant.id);
+        console.log('[Harls] Creating/loading project for user:', user.uid, 'tenant:', tenantId);
+        const ids = await ensureProjectAndBoard(user.uid, tenantId);
+        if (stale) return;
         console.log('[Harls] Project setup complete:', ids);
         setProject(ids);
       } catch (err) {
+        if (stale) return;
         console.error('[Harls] Project setup failed:', err);
       }
     })();
-  }, [user, currentTenant]);
+    return () => { stale = true; };
+  }, [user, tenantId, harlsOnShelf]);
 
   // Show loading while checking tenant access
   if (tenantLoading) {
@@ -1233,6 +1250,14 @@ export default function ProductLabPage() {
         <div className="rounded-2xl border bg-white/70 p-6">
           <p className="text-sm">
             Sign in to create notes, upgrade to stories, and earn badges. This is a teaching sandbox for product design and development.
+          </p>
+        </div>
+      )}
+
+      {user && currentTenant && !harlsOnShelf && (
+        <div className="rounded-2xl border bg-white/70 p-6">
+          <p className="text-sm">
+            Harls is not on the app shelf for {currentTenant.name || 'this workspace'}. Switch to a workspace that has Harls to open its board.
           </p>
         </div>
       )}
