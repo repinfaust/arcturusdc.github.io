@@ -21,7 +21,7 @@ export default function MandrakePrivacyPolicyPage() {
           <li>Urge entries are stored securely in the cloud under that identifier.</li>
           <li>Screening answers remain on your device. Text you type under "Other" is not saved.</li>
           <li>There are no ads or analytics SDKs in the Android or iOS app.</li>
-          <li>You can reset app data in Settings and can request cloud deletion by email.</li>
+          <li>You can reset app data in Settings or request cloud deletion using only your app identifier.</li>
         </ul>
       </LegalCallout>
 
@@ -78,6 +78,11 @@ export default function MandrakePrivacyPolicyPage() {
       </p>
 
       <h3>Support and platform diagnostics</h3>
+      <p>
+        The <a href="/apps/mandrake/data-deletion">deletion request form</a> asks only for your app
+        identifier (UID). It sends the UID to our support inbox for manual review and deletion
+        handling. It does not ask for a name or email address; confirmation is shown on the page.
+      </p>
       <p>
         If you email us, we process the information you choose to send so we can answer. Google
         Play, Apple or your device platform may also provide diagnostic or crash information under

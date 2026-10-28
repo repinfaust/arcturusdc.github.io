@@ -1,13 +1,14 @@
 import MandrakeLegalPage, { LegalCallout } from '../_components/MandrakeLegalPage';
+import DeletionRequestForm from '../_components/DeletionRequestForm';
 
 export const metadata = {
   title: 'Mandrake — Data Deletion',
-  description: 'How to delete data stored by the Mandrake Android app.',
+  description: 'Delete Mandrake data in the app or request cloud deletion using only your app identifier.',
 };
 
 export default function MandrakeDataDeletionPage() {
   return (
-    <MandrakeLegalPage title="Delete Your Mandrake Data" updated="29 August 2026">
+    <MandrakeLegalPage title="Delete Your Mandrake Data" updated="28 October 2026">
       <p>
         Mandrake does not ask for a name, email address or password. It uses a random Firebase UID
         to keep cloud urge events separate. The current app provides a data-reset control rather
@@ -18,7 +19,7 @@ export default function MandrakeDataDeletionPage() {
       <ol>
         <li>Connect your device to the internet.</li>
         <li>Open Mandrake and go to <strong>Settings</strong>.</li>
-        <li>Select <strong>Reset All Data</strong>, then confirm <strong>Reset</strong>.</li>
+        <li>Select <strong>Delete everything</strong> (<strong>Reset All Data</strong> on older versions), then confirm <strong>Reset</strong>.</li>
       </ol>
 
       <LegalCallout>
@@ -33,7 +34,7 @@ export default function MandrakeDataDeletionPage() {
       <h2>What Reset deletes</h2>
       <ul>
         <li>all urge events under the current anonymous UID in Firestore;</li>
-        <li>the on-device urge-event database;</li>
+        <li>the cached urge events on the device;</li>
         <li>local screening responses, scores, bands and risk assessments;</li>
         <li>local loops, milestones, rewards and related progress held in that database; and</li>
         <li>local app preferences, including points, onboarding, region and reminder settings.</li>
@@ -42,29 +43,30 @@ export default function MandrakeDataDeletionPage() {
       <h2>What Reset does not currently delete</h2>
       <ul>
         <li>the Firebase anonymous-authentication record;</li>
-        <li>Google Play or RevenueCat purchase records needed to validate and restore a purchase; or</li>
+        <li>Google Play, Apple or RevenueCat purchase records needed to validate and restore a purchase; or</li>
         <li>support emails, subject to applicable legal retention requirements.</li>
       </ul>
 
       <h2>Request deletion without relying on Reset</h2>
       <p>
-        Email <a href="mailto:info@arcturusdc.com?subject=Mandrake%20data%20deletion">info@arcturusdc.com</a>{' '}
-        with the subject <strong>Mandrake data deletion</strong>. We will acknowledge the request
-        within three working days and aim to complete a verifiable request within 30 days.
+        Use the form below to request deletion of the cloud urge events associated with your app
+        identifier. We review requests manually and aim to complete a verifiable request within
+        30 days. The confirmation appears on this page.
       </p>
       <p>
-        Because Mandrake does not collect your name or email address, include the anonymous UID
-        assigned to the app installation so we can find the correct cloud records. In Mandrake,
-        open <strong>Settings → Account</strong>, then copy the identifier shown there. If you no
-        longer have access to the installed app or the identifier, tell us; without it we may be
-        unable to identify anonymous cloud records.
+        The form asks only for the UID shown in <strong>Settings → Account</strong>. It sends that
+        identifier to our support inbox so we can find the cloud records. Keep a copy until the
+        request is complete. Without the identifier, we may be unable to locate those records.
       </p>
+      <DeletionRequestForm />
+      <p>A request through this page cannot clear data stored locally on your device. Use the in-app control above to clear local records.</p>
 
       <h2>Uninstalling Mandrake</h2>
       <p>
         Uninstalling removes the installed app&apos;s local data but does not by itself delete
-        Firestore urge events, purchase records or any Android backup retained under your Google
-        account settings. Use Reset while online before uninstalling, or contact us.
+        Firestore urge events, purchase records or backups retained under your Google or Apple
+        settings. On iOS, the anonymous identity may also persist in the system Keychain. Use
+        Reset while online before uninstalling, or submit a cloud deletion request above.
       </p>
 
       <h2>Questions or complaints</h2>

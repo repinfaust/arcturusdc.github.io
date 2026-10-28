@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-10-28 — UID-only Mandrake deletion request (D-SITE-073)
+
+David explicitly approved the narrow exception to PROJECT_CONTEXT.md's public-site collection
+rule after reviewing this plan: a UID-only form, using the existing SMTP setup and inbox,
+on-screen acknowledgement, existing manual deletion procedure. This removes the requirement
+to email a UID from a personal email account. No name/email/free-text field, authentication,
+database, Firebase access or new service. The route neither verifies UID ownership nor performs
+deletion; request review stays manual.
+
+- Dedicated same-origin JSON route `/api/mandrake/deletion-request`; fixed recipient
+  `info@arcturusdc.com`, existing SMTP environment/dependency, bounded body, strict UID/payload
+  validation and honeypot. It does not forward cookies, IP, user agent or caller-supplied metadata.
+  No UID in URLs, application logs, browser storage or form analytics. Existing platform/site
+  infrastructure is unchanged; this is not a claim that all infrastructure access logs disappear.
+- Success only after SMTP accepts the recipient. Failure retains the UID for retry and shows
+  an error. A server acknowledgement confirms request submission; manual deletion follows.
+- Existing general contact route and app reset/authentication behaviour remain unchanged.
+  Web deletion instructions updated for current Android/iOS labels, cache, Apple purchases and
+  iOS identity/backup behaviour. Privacy copy describes the UID-only support request.
+- Route regression tests fake SMTP: success, refusal/failure, missing configuration, invalid
+  input, oversized/chunked body and cross-origin rejection. Live delivery verification uses
+  an unmistakable synthetic `TEST_ONLY_DO_NOT_DELETE` UID; no real user's data is touched.
+- David disputes the prior blanket health-data/consent classification. This change makes no
+  legal reclassification, and adds no consent screen or cloud-processing change.
+
 ## 2026-10-28 — Mandrake policy covers the approved iOS beta (D-SITE-072)
 
 David approved the Mandrake iOS review/compliance plan (app D-M054). Updated the existing

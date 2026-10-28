@@ -23,6 +23,9 @@
 ## Constraints (non-negotiables)
 - Compliance: App store policy pages must remain accessible and readable.
 - Data handling: No user data collection in site code.
+- Approved exception (D-SITE-073): Mandrake's public deletion form accepts only an app UID
+  and forwards the request through existing SMTP to the existing support inbox for manual
+  handling. No contact details, app logs, Firebase access or new service in this route.
 - Performance: Keep media optimized; use `next/image` for local images.
 - Accessibility: Maintain semantic headings, alt text, and accessible links.
 - Offline requirements: None.
