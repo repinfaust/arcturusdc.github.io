@@ -74,7 +74,7 @@ export default function MandrakePrivacyPolicyPage() {
         checked by RevenueCat. The relevant store handles the payment details. Purchases are
         separate on each platform; an Android unlock does not unlock iOS, or vice versa. RevenueCat
         processes the identifiers and transaction information needed to validate and restore the
-        purchase; it does not receive your urge log from Mandrake.
+        purchase and provide purchase reporting; it does not receive your urge log from Mandrake.
       </p>
 
       <h3>Support and platform diagnostics</h3>
