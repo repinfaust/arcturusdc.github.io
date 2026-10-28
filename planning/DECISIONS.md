@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-10-28 — Mandrake policy covers the approved iOS beta (D-SITE-072)
+
+David approved the Mandrake iOS review/compliance plan (app D-M054). Updated the existing
+public policy from its app source: Apple/Google purchase processing, separate platform unlocks,
+local reminders, iOS backups and Keychain identity persistence. The policy continues to disclose
+the unresolved explicit-consent gap (OQ-M6); no data-path or legal-basis redesign. Effective
+28 October 2026. Android behaviour and the site's architecture/access controls are unchanged.
+
 ## 2026-10-27 — Backfill check `json-equals`, for flags derived from a committed string (D-SITE-071)
 
 Lab D-L051's stage-2 export records the verdict as numeric flags (`verdict_pass`, `no_verdict`).

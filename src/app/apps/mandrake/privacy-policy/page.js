@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function MandrakePrivacyPolicyPage() {
   return (
-    <MandrakeLegalPage title="Privacy Policy" updated="26 October 2026">
+    <MandrakeLegalPage title="Privacy Policy" updated="28 October 2026">
       <p>
         Mandrake is published by <strong>Arcturus Digital Consulting Ltd</strong>. We are the
         controller for personal data processed through the app. Contact us at{' '}
@@ -20,7 +20,7 @@ export default function MandrakePrivacyPolicyPage() {
           <li>No name, email or password—just a random app identifier.</li>
           <li>Urge entries are stored securely in the cloud under that identifier.</li>
           <li>Screening answers remain on your device. Text you type under "Other" is not saved.</li>
-          <li>There are no ads or analytics SDKs in the current Android app.</li>
+          <li>There are no ads or analytics SDKs in the Android or iOS app.</li>
           <li>You can reset app data in Settings and can request cloud deletion by email.</li>
         </ul>
       </LegalCallout>
@@ -30,9 +30,10 @@ export default function MandrakePrivacyPolicyPage() {
       <h3>Anonymous app identity</h3>
       <p>
         On first use, Firebase Authentication assigns the app a random user identifier (UID).
-        Mandrake does not ask you for a name, email address or password. The UID keeps cloud
-        records separated between app installations. Although it is pseudonymous rather than a
-        name, we still protect it as personal data.
+        Mandrake does not ask you for a name, email address or password. The UID keeps cloud records
+        separated by anonymous app identity. On iOS, the identity may persist after reinstalling
+        because authentication credentials are stored in the system Keychain. Although it is
+        pseudonymous rather than a name, we still protect it as personal data.
       </p>
 
       <h3>Urge events stored in Firestore</h3>
@@ -69,16 +70,18 @@ export default function MandrakePrivacyPolicyPage() {
 
       <h3>Purchases</h3>
       <p>
-        A one-time unlock is sold by Google Play and checked by RevenueCat. Google handles the
-        payment details. RevenueCat processes the identifiers and transaction information needed
-        to validate and restore the purchase; it does not receive your urge log from Mandrake.
+        A one-time unlock is sold by Google Play on Android or the Apple App Store on iOS and
+        checked by RevenueCat. The relevant store handles the payment details. Purchases are
+        separate on each platform; an Android unlock does not unlock iOS, or vice versa. RevenueCat
+        processes the identifiers and transaction information needed to validate and restore the
+        purchase; it does not receive your urge log from Mandrake.
       </p>
 
       <h3>Support and platform diagnostics</h3>
       <p>
         If you email us, we process the information you choose to send so we can answer. Google
-        Play or your device platform may also provide diagnostic or crash information under its
-        own settings. Mandrake does not currently include Firebase Analytics or Crashlytics.
+        Play, Apple or your device platform may also provide diagnostic or crash information under
+        its own settings. Mandrake does not currently include Firebase Analytics or Crashlytics.
       </p>
 
       <h2>2. What Mandrake does not collect</h2>
@@ -89,8 +92,9 @@ export default function MandrakePrivacyPolicyPage() {
         <li>No use of urge data to train AI or to build commercial profiles.</li>
       </ul>
       <p>
-        The app requests notification permission for reminders you choose and vibration access
-        for haptic feedback.
+        The app requests notification permission for reminders you choose. It also uses device
+        haptics (and Android vibration access) for feedback. Reminders are scheduled locally on your
+        device.
       </p>
 
       <h2>3. Why we process information</h2>
@@ -106,20 +110,22 @@ export default function MandrakePrivacyPolicyPage() {
       <p>
         We process app data because it is necessary to provide the Mandrake service you request.
         Where urge records reveal special-category information, including health information, the
-        relevant additional condition is explicit consent. The current Android release does not
-        yet present a separate explicit-consent control before the first cloud upload; this is an
-        app-side compliance gap, and this policy does not treat ordinary app use as a substitute
-        for that control. You may stop further processing by no longer recording events and may
-        request deletion as described below. We use legitimate interests to answer support
-        requests and protect the service, where those interests are not overridden by your rights.
+        relevant additional condition is explicit consent. The current Android and iOS
+        implementations do not yet present a separate explicit-consent control before the first
+        cloud upload; this is an app-side compliance gap, and this policy does not treat ordinary
+        app use as a substitute for that control. You may stop further processing by no longer
+        recording events and may request deletion as described below. We use legitimate interests to
+        answer support requests and protect the service, where those interests are not overridden by
+        your rights.
       </p>
 
       <h2>5. Storage, processors and international transfers</h2>
       <p>
-        Google Firebase provides authentication and Firestore storage. Google Play processes the
-        purchase, and RevenueCat checks purchase entitlement. These providers act under their own
-        terms and applicable data-processing safeguards. Their processing may take place outside
-        the UK; where required, recognised transfer safeguards apply.
+        Google Firebase provides authentication and Firestore storage. Google Play or Apple
+        processes the purchase on the relevant platform, and RevenueCat checks purchase entitlement.
+        These providers act under their own terms and applicable data-processing safeguards. Their
+        processing may take place outside the UK; where required, recognised transfer safeguards
+        apply.
       </p>
 
       <h2>6. Retention and deletion</h2>
@@ -132,6 +138,10 @@ export default function MandrakePrivacyPolicyPage() {
       <p>
         Android backup is enabled for the current app, so Google may retain or restore an encrypted
         device backup according to your Android backup settings and Google&apos;s retention rules.
+        On iOS, app data may be included in iCloud or computer backups according to your
+        Apple/device settings. Deleting the app does not delete cloud urge records or necessarily
+        remove the iOS Keychain identity. Use the in-app deletion control or contact us to remove
+        cloud records.
       </p>
       <p>
         The Reset action deletes Firestore urge events first. Only after that succeeds does it
