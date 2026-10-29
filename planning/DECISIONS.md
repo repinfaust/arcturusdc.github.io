@@ -22,6 +22,12 @@ deletion; request review stays manual.
 - Route regression tests fake SMTP: success, refusal/failure, missing configuration, invalid
   input, oversized/chunked body and cross-origin rejection. Live delivery verification uses
   an unmistakable synthetic `TEST_ONLY_DO_NOT_DELETE` UID; no real user's data is touched.
+- Verification 29 October: production deployment `dpl_C9PswJw5A8UTcdcg2crJQwYZbQQa`
+  (commit b314d67) is Ready. Eight route tests, Next production build and local failure/retry UI
+  passed. Live synthetic send failed; an invalid-body probe correctly returns 400. A separate
+  SMTP connection/authentication check against the existing configuration returns **EAUTH /
+  535 / AUTH PLAIN**. No successful email delivery is claimed. Credential correction handed
+  to David in Vercel; no new credential created, changed or exposed by the agent.
 - David disputes the prior blanket health-data/consent classification. This change makes no
   legal reclassification, and adds no consent screen or cloud-processing change.
 
