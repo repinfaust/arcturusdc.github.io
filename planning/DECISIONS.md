@@ -28,6 +28,13 @@ deletion; request review stays manual.
   SMTP connection/authentication check against the existing configuration returns **EAUTH /
   535 / AUTH PLAIN**. No successful email delivery is claimed. Credential correction handed
   to David in Vercel; no new credential created, changed or exposed by the agent.
+- Resolution 29 October: site Production Firebase project `stea-775cd` has an active mail
+  extension configured for the correct `info@arcturusdc.com` mailbox. Its existing password
+  authenticates successfully; Vercel's stored SMTP_PASS differed. Reused the existing valid
+  secret in Vercel, preserving its original scopes. No mailbox password reset, Firebase change,
+  new infrastructure or grant. Credentials never displayed or saved to files. Redeployment
+  `dpl_2jozX4B3Ykh5Naag6A6MKxsbn4mk` is Ready; synthetic live browser request showed success
+  after SMTP accepted the support recipient. Inbox arrival not independently checked. No deletion.
 - David disputes the prior blanket health-data/consent classification. This change makes no
   legal reclassification, and adds no consent screen or cloud-processing change.
 
