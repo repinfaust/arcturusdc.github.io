@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-10-31 — Career Ops: CV auto-fill fills gaps only; never silently replaces curated evidence (D-SITE-075)
+
+**Bug:** after uploading a CV, accepting "Auto-fill your profile and evidence" replaced the
+whole evidence library in the Config form with the AI extraction. It also spread the
+extracted profile over the user's, blanks included (`min_salary: null`, inferred
+`target_roles`). Nothing was written until Save, but one Save would replace a curated library
+(David's 7 approved anchors, D-SITE-074) and wipe his salary floor and stretch roles.
+
+**Decision (`src/lib/careerEngine/extractMerge.js`, client-safe, no dependencies):**
+- Profile: extraction fills only fields that are empty; it never overwrites a set value.
+- Evidence: if the user has no evidence, the extraction fills it as before. If they have some,
+  a dialog offers "Add only new roles" (the default first button), "Replace all my anchors"
+  or "Keep my anchors". A role counts as already present when the employer (text before a
+  " — ", " | " or " - " qualifier) and the period match, ignoring case, spacing and dash
+  style. Nothing is saved until Save.
+
+**Same change, Apply Assist Email:** the Email field was read-only and copied from
+`profile.email`, which neither the Config form nor CV extraction ever sets, so it was always
+empty and could not be filled in. It is now editable and saved with the apply extras, the same
+as Phone and LinkedIn (a profile email still shows first if present). Contact details are
+deliberately not added to CV extraction.
+
+**Squared has the same pattern** (`squared/page.js` replaces anchors; its profile merge
+skips blanks but overwrites set fields). Not changed here; the helper is shared so Squared can
+adopt it once David approves.
+
 ## 2026-10-31 — Career Ops: stretch roles, sectors, salary target, and the saved weights now score (D-SITE-074)
 
 **Why:** David audited his own Career Ops instance against his October 2026 CVs (floor

@@ -6,6 +6,7 @@ import { extractCvText } from '@/lib/careerEngine/cvParse';
 import { useTenant } from '@/contexts/TenantContext';
 import { auth } from '@/lib/firebase';
 import { printCvAsPdf } from '@/lib/careerEngine/printCv';
+import { fillEmptyProfile, hasEvidence, mergeNewAnchors } from '@/lib/careerEngine/extractMerge';
 import AdzunaCredit from '@/components/AdzunaCredit';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -593,6 +594,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   // CV library (uploaded CVs — the candidate's source of truth).
   const [cvUploads, setCvUploads] = useState([]);
   const [cvBusy, setCvBusy] = useState(false);
+  // Extracted evidence awaiting the user's replace / add-new / skip choice (D-SITE-075).
+  const [pendingEvidence, setPendingEvidence] = useState(null);
   const [cvPasteOpen, setCvPasteOpen] = useState(false);
   const [cvPasteText, setCvPasteText] = useState('');
   const [cvPasteLabel, setCvPasteLabel] = useState('');
@@ -812,11 +815,17 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         const ex = await exRes.json();
         if (handleLimit(exRes, ex)) return;
         if (!exRes.ok) throw new Error(ex.error || 'Extraction failed');
-        if (ex.profile) setProfileData((p) => ({ ...p, ...ex.profile }));
-        if (Array.isArray(ex.evidence) && ex.evidence.length) setAnchorsData(ex.evidence);
+        // Extraction only fills empty profile fields; it never overwrites ones the user set.
+        if (ex.profile) setProfileData((p) => fillEmptyProfile(p, ex.profile));
         loadUsage();
         setActiveTab('settings');
-        alert('Profile & evidence filled from your CV. Review them and hit Save.');
+        const extracted = Array.isArray(ex.evidence) ? ex.evidence : [];
+        if (extracted.length && hasEvidence(anchorsData)) {
+          setPendingEvidence(extracted); // existing library: ask before touching it
+        } else {
+          if (extracted.length) setAnchorsData(extracted);
+          alert('Empty profile fields and evidence filled from your CV. Review them and hit Save.');
+        }
       }
     } catch (err) { alert(err.message); }
     finally { setCvBusy(false); }
@@ -1652,7 +1661,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">badge</span>Standard fields</h4>
               <CopyField label="Full name" value={profileData?.name} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <CopyField label="Email" value={profileData?.email} />
+                <CopyField label="Email" value={profileData?.email || applyExtras.email} editable onChange={(v) => setExtra('email', v)} />
                 <CopyField label="Phone" value={profileData?.phone || applyExtras.phone} editable onChange={(v) => setExtra('phone', v)} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1931,6 +1940,42 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       )}
 
       {/* First-run onboarding walkthrough */}
+      {pendingEvidence && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl flex flex-col gap-4">
+            <h3 className="font-bold text-[#10294D] text-lg">You already have evidence anchors</h3>
+            <p className="text-sm text-slate-600">
+              The CV gave {pendingEvidence.length} role{pendingEvidence.length === 1 ? '' : 's'}. Your existing anchors are
+              unchanged unless you choose to replace them. Empty profile fields were filled; nothing you had set was changed.
+              Nothing is saved until you press Save.
+            </p>
+            <button
+              onClick={() => {
+                const { anchors, addedCount } = mergeNewAnchors(anchorsData, pendingEvidence);
+                setAnchorsData(anchors);
+                setPendingEvidence(null);
+                alert(addedCount ? `Added ${addedCount} new role${addedCount === 1 ? '' : 's'}. Review and hit Save.` : 'No new roles found. Your anchors are unchanged.');
+              }}
+              className="px-4 py-3 bg-[#10294D] text-white rounded-xl font-bold text-xs uppercase tracking-widest"
+            >
+              Add only new roles
+            </button>
+            <button
+              onClick={() => { setAnchorsData(pendingEvidence); setPendingEvidence(null); }}
+              className="px-4 py-3 bg-slate-100 text-[#10294D] rounded-xl font-bold text-xs uppercase tracking-widest"
+            >
+              Replace all my anchors
+            </button>
+            <button
+              onClick={() => setPendingEvidence(null)}
+              className="px-4 py-3 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest"
+            >
+              Keep my anchors
+            </button>
+          </div>
+        </div>
+      )}
+
       {showOnboarding && (
         <OnboardingModal
           onClose={() => setShowOnboarding(false)}
