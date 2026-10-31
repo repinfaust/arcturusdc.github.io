@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { extractCvText } from '@/lib/careerEngine/cvParse';
 import { useTenant } from '@/contexts/TenantContext';
@@ -99,6 +99,22 @@ function CollapsibleNarrative({ markdown, openCount = 2 }) {
 }
 
 /* A labelled value with a one-click copy button (Apply Assist). */
+// Apply Assist save state; shows nothing until something has been saved.
+function ApplySaveStatus({ status, onRetry }) {
+  const cls = 'text-[10px] font-bold uppercase tracking-widest';
+  if (status.state === 'pending') return <span className={`${cls} text-slate-400`}>Unsaved changes</span>;
+  if (status.state === 'saving') return <span className={`${cls} text-slate-400`}>Saving…</span>;
+  if (status.state === 'saved') return <span className={`${cls} text-[#006C50]`}>Saved</span>;
+  if (status.state === 'error') {
+    return (
+      <button onClick={onRetry} title={status.message} className={`${cls} text-red-600 hover:underline`}>
+        Couldn&apos;t save — retry
+      </button>
+    );
+  }
+  return null;
+}
+
 function CopyField({ label, value, editable, onChange, multiline }) {
   const [copied, setCopied] = useState(false);
   const doCopy = () => {
@@ -588,7 +604,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   // Apply Assist: extra application fields (persisted) + the role being applied to.
   const [applyExtras, setApplyExtras] = useState({});
-  const [applyExtrasDirty, setApplyExtrasDirty] = useState(false);
+  // Apply Assist autosave status (D-SITE-076): idle (nothing saved yet) | pending | saving | saved | error.
+  const [applySave, setApplySave] = useState({ state: 'idle' });
+  const applyEditVersion = useRef(0);
   const [applyRoleId, setApplyRoleId] = useState('');
 
   // CV library (uploaded CVs — the candidate's source of truth).
@@ -878,7 +896,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         body: JSON.stringify({ action: 'get_apply_profile', tenantId: currentTenant.id }),
       });
       const data = await res.json();
-      if (res.ok && data.apply_profile) setApplyExtras(data.apply_profile);
+      if (res.ok && data.apply_profile) {
+        setApplyExtras(data.apply_profile);
+        setApplySave({ state: data.apply_profile.updated_at ? 'saved' : 'idle' });
+      }
     } catch (err) {
       console.error('Failed to load apply profile', err);
     }
@@ -886,19 +907,36 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
   async function saveApplyExtras() {
     if (!currentTenant?.id) return;
+    const version = applyEditVersion.current;
+    setApplySave({ state: 'saving' });
     try {
-      await fetch('/api/stea/career', {
+      const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: await apiHeaders(),
         body: JSON.stringify({ action: 'save_apply_profile', tenantId: currentTenant.id, apply_profile: applyExtras }),
       });
-      setApplyExtrasDirty(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      // An edit made while this save was in flight stays pending and saves next.
+      setApplySave({ state: applyEditVersion.current === version ? 'saved' : 'pending' });
     } catch (err) {
-      alert('Could not save: ' + err.message);
+      setApplySave({ state: 'error', message: err.message });
     }
   }
 
-  const setExtra = (key, val) => { setApplyExtras((e) => ({ ...e, [key]: val })); setApplyExtrasDirty(true); };
+  const setExtra = (key, val) => {
+    setApplyExtras((e) => ({ ...e, [key]: val }));
+    applyEditVersion.current += 1;
+    setApplySave({ state: 'pending' });
+  };
+
+  // Autosave shortly after typing stops, so leaving a field or reloading keeps it.
+  useEffect(() => {
+    if (applySave.state !== 'pending') return undefined;
+    const t = setTimeout(saveApplyExtras, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyExtras, applySave.state]);
 
   // Cover letter (A2): generate or revise for the selected apply role.
   const [coverLetter, setCoverLetter] = useState('');
@@ -1658,7 +1696,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Standard fields from profile + CV */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">badge</span>Standard fields</h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">badge</span>Standard fields</h4>
+                <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
+              </div>
+              <p className="text-xs text-slate-500 -mt-2">Name, location, current role and salary come from Config.</p>
               <CopyField label="Full name" value={profileData?.name} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <CopyField label="Email" value={profileData?.email || applyExtras.email} editable onChange={(v) => setExtra('email', v)} />
@@ -1679,10 +1721,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">edit_note</span>Your extras</h4>
-                <button onClick={saveApplyExtras} disabled={!applyExtrasDirty}
-                  className={`text-[10px] font-bold uppercase tracking-widest ${applyExtrasDirty ? 'text-[#006C50] hover:underline' : 'text-slate-300 cursor-default'}`}>
-                  {applyExtrasDirty ? 'Save' : 'Saved'}
-                </button>
+                <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <CopyField label="Address line 1" value={applyExtras.address1} editable onChange={(v) => setExtra('address1', v)} />

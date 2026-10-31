@@ -1,5 +1,25 @@
 # Decisions
 
+## 2026-10-31 — Career Ops Apply Assist autosaves with a real save status (D-SITE-076)
+
+**Evidence:** David's Apply Assist entries survived tab changes but not a reload. No workspace
+had a `career_ops/apply_profile` document (checked all four, 2026-10-31), so no Apply Assist
+save had ever reached Firestore. Calling `save_apply_profile` on production with David's
+signed-in token returned 200 and read back correctly, so the server path works.
+
+**Cause (page):** saving needed a small text link in the "Your extras" card header. It also
+saved the Email, Phone, LinkedIn and Work pattern fields in the other card, and it read "Saved"
+before anything had ever been saved. `saveApplyExtras` ignored the HTTP status, so a failed
+save would also have shown "Saved".
+
+**Decision:** Apply Assist fields autosave 800 ms after typing stops. Both cards show the real
+state: nothing (never saved), "Unsaved changes", "Saving…", "Saved", or "Couldn't save — retry".
+A non-OK response is an error. An edit made during a save stays pending and saves next, using an
+edit-version counter. A note says that name, location, role and salary come from Config.
+
+**Squared** keeps a manual Save button (visible, error-checked) that also reads "Saved" before
+any save. It is not changed here.
+
 ## 2026-10-31 — Career Ops: CV auto-fill fills gaps only; never silently replaces curated evidence (D-SITE-075)
 
 **Bug:** after uploading a CV, accepting "Auto-fill your profile and evidence" replaced the
