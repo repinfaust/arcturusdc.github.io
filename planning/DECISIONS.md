@@ -1,5 +1,40 @@
 # Decisions
 
+## 2026-10-31 — Career Ops: stretch roles, sectors, salary target, and the saved weights now score (D-SITE-074)
+
+**Why:** David audited his own Career Ops instance against his October 2026 CVs (floor
+£85–90k for Senior PM; Head of Product / Director as a stretch; financial services and
+payments; no gambling). Three engine gaps made it unfit for that brief:
+- **Weights were dead.** The Config sliders saved `scoring_weights`, but nothing read them:
+  they were not in the model context or the evaluate prompt. The sliders also showed 50% for
+  unset factors whose implied weight was High.
+- **One flat level rule.** The evaluate prompt penalised "clearly out-of-reach roles", so a
+  deliberate step up to Head of / Director was marked down for seniority alone.
+- **No sector or working-pattern input**, so scoring and search ranking could not prefer
+  financial services or exclude gambling.
+
+**Decision (Career Ops only; Squared prompts unchanged):**
+- New optional profile fields: `stretch_roles`, `target_salary`, `location` (now editable),
+  `work_pattern`, `target_sectors`, `excluded_sectors`. `profileFacts` returns them; empty
+  values reproduce the previous prompt wording.
+- Evaluate prompt: stretch roles are judged on whether the evidence makes the step credible,
+  naming the gaps, not on current title. Excluded sectors score 1.0 and recommend Archive.
+- Weights: the ten weighted factors carry defaults (High 1.0, Med 0.5, Low 0.2). The four
+  slider factors (`domain_complexity`, `platform_data_depth`, `compensation`,
+  `interview_likelihood`) take the user's saved value. The model must show a
+  "Weighted calculation:" line before "Overall score: X.X / 5.0". The score regex keys on
+  "overall", so the calculation line cannot be mistaken for the score. The two gates are not
+  weighted: a gate at 2.0 or below caps the recommendation at Selective. Sliders now display
+  the real default (100%).
+- Search: stretch roles join the query terms (still capped at 5). The ranker is told about
+  preferred sectors and scores excluded-sector listings 0 (`rankRules`, an optional engine
+  parameter Squared does not set). Exclusion is a model judgement on employer/title, not a
+  keyword filter.
+
+**Known limit, not changed here:** super-admins (`steaAccessServer.js` SUPER_ADMINS) pass
+the workspace check for every workspace, so a solo career workspace keeps data out of shared
+workspace views but not out of super-admin reach.
+
 ## 2026-10-28 — UID-only Mandrake deletion request (D-SITE-073)
 
 David explicitly approved the narrow exception to PROJECT_CONTEXT.md's public-site collection

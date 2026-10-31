@@ -344,7 +344,55 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
           placeholder="e.g. Product Owner, Senior Product Owner, Product Manager"
         />
       </div>
+
+      <ListField label="Stretch Roles (step up, comma separated)" field="stretch_roles" data={data} onChange={onChange}
+        placeholder="e.g. Head of Product, Product Director" />
+
+      <div className="grid grid-cols-2 gap-4">
+        <TextField label="Target Salary (£)" field="target_salary" type="number" data={data} onChange={onChange} placeholder="e.g. 90000" />
+        <TextField label="Location" field="location" data={data} onChange={onChange} placeholder="e.g. Nottingham" />
+      </div>
+
+      <TextField label="Working Pattern" field="work_pattern" data={data} onChange={onChange}
+        placeholder="e.g. Hybrid, Nottingham or London depending on office days" />
+
+      <ListField label="Preferred Sectors (comma separated)" field="target_sectors" data={data} onChange={onChange}
+        placeholder="e.g. Financial services, Payments" />
+      <ListField label="Excluded Sectors (comma separated)" field="excluded_sectors" data={data} onChange={onChange}
+        placeholder="e.g. Gambling" />
     </div>
+  </div>
+);
+
+const FIELD_LABEL = 'text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1';
+const FIELD_INPUT = 'w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100';
+
+const TextField = ({ label, field, data, onChange, placeholder, type = 'text' }) => (
+  <div className="space-y-2">
+    <label className={FIELD_LABEL}>{label}</label>
+    <input
+      type={type}
+      {...(type === 'number' ? { step: 5000, min: 0 } : {})}
+      value={data?.[field] || ''}
+      onChange={(e) => onChange({ ...data, [field]: e.target.value })}
+      className={FIELD_INPUT}
+      placeholder={placeholder}
+    />
+  </div>
+);
+
+// Comma-separated list stored as an array (same behaviour as Target Roles).
+const ListField = ({ label, field, data, onChange, placeholder }) => (
+  <div className="space-y-2">
+    <label className={FIELD_LABEL}>{label}</label>
+    <input
+      type="text"
+      value={Array.isArray(data?.[field]) ? data[field].join(',') : (data?.[field] || '')}
+      onChange={(e) => onChange({ ...data, [field]: e.target.value.split(',') })}
+      onBlur={(e) => onChange({ ...data, [field]: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })}
+      className={FIELD_INPUT}
+      placeholder={placeholder}
+    />
   </div>
 );
 
@@ -427,6 +475,7 @@ const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
         {isSaving ? 'Saving...' : 'Apply Weights'}
       </button>
     </div>
+    <p className="text-xs text-slate-500 -mt-3">How much each factor counts in a role&apos;s overall score. 100% is the default.</p>
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
       {[
@@ -438,14 +487,14 @@ const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
         <div key={factor.id} className="space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-[11px] font-bold text-[#10294D] uppercase tracking-widest">{factor.label}</span>
-            <span className="text-sm font-black text-[#10294D]">{( (weights?.[factor.id] || 0.5) * 100).toFixed(0)}%</span>
+            <span className="text-sm font-black text-[#10294D]">{((weights?.[factor.id] ?? 1) * 100).toFixed(0)}%</span>
           </div>
           <input 
             type="range" 
             min="0" 
             max="1" 
             step="0.1" 
-            value={weights?.[factor.id] || 0.5}
+            value={weights?.[factor.id] ?? 1}
             onChange={(e) => onChange({...weights, [factor.id]: parseFloat(e.target.value)})}
             className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#10294D]"
           />

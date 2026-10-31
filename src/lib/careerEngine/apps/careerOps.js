@@ -7,10 +7,56 @@ import path from 'path';
 // Internal demo workspace: config comes from the anonymised YAML seed files.
 const DEMO_TENANT_ID = 'KovW8P7K5O2537V8I3H1';
 
-const rolesText = (f) => (f.targetRoles.length ? f.targetRoles.join(', ') : f.currentRole || 'their target roles');
-const salaryRule = (f) => (f.minSalary
-  ? `Reward base salary at or above the candidate's floor of £${f.minSalary.toLocaleString('en-GB')}; penalise roles clearly below it.`
-  : 'No salary floor set — score neutrally unless pay is clearly out of line with the role level.');
+const gbp = (n) => `£${n.toLocaleString('en-GB')}`;
+const coreRolesText = (f) => (f.targetRoles.length ? f.targetRoles.join(', ') : f.currentRole || 'their target roles');
+const rolesText = (f) => coreRolesText(f) + (f.stretchRoles.length ? ` (stretch: ${f.stretchRoles.join(', ')})` : '');
+const salaryRule = (f) => {
+  if (!f.minSalary) return 'No salary floor set — score neutrally unless pay is clearly out of line with the role level.';
+  const target = f.targetSalary > f.minSalary ? `, target ${gbp(f.targetSalary)}` : '';
+  return `The candidate's base salary floor is ${gbp(f.minSalary)}${target}. Reward roles at or above the floor; ` +
+    'penalise roles clearly below it. An unstated salary is neutral, judged against typical pay for the level.';
+};
+
+// Level fit (D-SITE-074): stretch roles are a deliberate step up, so they are
+// judged on whether the evidence makes the step credible, never penalised for
+// seniority alone.
+const levelRule = (f) => {
+  const base = 'The role matches the candidate\'s target roles and seniority; penalise clearly junior roles.';
+  if (!f.stretchRoles.length) return `${base} Penalise roles clearly out of reach.`;
+  return `${base} Core targets: ${coreRolesText(f)}. Stretch targets: ${f.stretchRoles.join(', ')} — a deliberate step up. ` +
+    'For a stretch role, score how credibly the evidence supports the step (scope, leadership, strategy, executive exposure), ' +
+    'not whether the candidate already holds that title; name the specific gaps the CV would need to close.';
+};
+
+const sectorRule = (f) => {
+  const parts = [];
+  if (f.targetSectors.length) parts.push(`Preferred sectors: ${f.targetSectors.join(', ')} — reward overlap.`);
+  if (f.excludedSectors.length) parts.push(`Excluded sectors: ${f.excludedSectors.join(', ')} — if the employer or role is in one, score 1.0 and recommend Archive.`);
+  return parts.join(' ');
+};
+
+// Factor weights. Defaults reflect the High/Med/Low labels; the four factors
+// with sliders on the Config page are overridden by the user's saved weights.
+const FACTORS = [
+  { key: 'level', label: 'Role level fit', gate: true },
+  { key: 'domain', label: 'Domain fit', weight: 1.0, slider: 'domain_complexity' },
+  { key: 'core', label: 'Core responsibilities match', gate: true },
+  { key: 'tools', label: 'Tools & systems depth', weight: 1.0, slider: 'platform_data_depth' },
+  { key: 'regulatory', label: 'Regulatory / operational consequence', weight: 0.5 },
+  { key: 'stakeholder', label: 'Stakeholder complexity', weight: 0.5 },
+  { key: 'development', label: 'Development upside', weight: 0.5 },
+  { key: 'location', label: 'Location / remote feasibility', weight: 0.5 },
+  { key: 'compensation', label: 'Compensation', weight: 1.0, slider: 'compensation' },
+  { key: 'company', label: 'Company quality', weight: 0.5 },
+  { key: 'interview', label: 'Interview likelihood', weight: 1.0, slider: 'interview_likelihood' },
+  { key: 'energy', label: 'Personal energy', weight: 0.2 },
+];
+const factorWeight = (factor, weights = {}) => {
+  const v = factor.slider != null ? Number(weights[factor.slider]) : NaN;
+  return Number.isFinite(v) && v >= 0 && v <= 1 ? v : factor.weight;
+};
+const weightTable = (f) => FACTORS.filter((x) => !x.gate)
+  .map((x) => `- ${x.label}: ${factorWeight(x, f.weights).toFixed(1)}`).join('\n');
 
 export const careerOpsApp = {
   name: 'Career Ops',
@@ -65,22 +111,26 @@ Evaluate this job against the candidate (Candidate Profile, Evidence Library and
 ${jdData}
 
 ## Scoring Rules:
-- Role level fit (Gate): The role matches the candidate's target roles and seniority; penalise clearly junior or clearly out-of-reach roles.
-- Domain fit (High): Overlap between the role's sector/problem space and the domains in the candidate's evidence.
+- Role level fit (Gate): ${levelRule(f)}
+- Domain fit (High): Overlap between the role's sector/problem space and the domains in the candidate's evidence. ${sectorRule(f)}
 - Core responsibilities match (Gate): The day-to-day work is what the candidate has demonstrably done; flag roles that are mostly something else.
 - Tools & systems depth (High): Platforms, methods and technical depth named in the JD versus the candidate's evidence.
 - Regulatory / operational consequence (Med): Stakes and compliance context the candidate has handled before.
 - Stakeholder complexity (Med): Cross-functional orchestration the role needs versus the candidate's track record.
 - Development upside (Med): Room to grow into the candidate's stated direction.
-- Location / remote feasibility (Med): Against the candidate's location and working preferences.
+- Location / remote feasibility (Med): Against the candidate's location and working preferences${f.workPattern ? ` (${f.workPattern})` : ''}.
 - Compensation (High): ${salaryRule(f)}
 - Company quality (Med): Maturity, stability and culture signals in the JD.
 - Interview likelihood (High): Strength of the evidence match against the stated requirements.
 - Personal energy (Low): Likely resonance with what the candidate says they want.
 
+## Factor weights (for the overall score):
+${weightTable(f)}
+The two Gate factors are not weighted: if either scores 2.0 or below, the recommendation can be no higher than Selective.
+
 ## Output Requirements:
 1. Score for each factor (1.0 to 5.0).
-2. Overall weighted score, written as "Overall score: X.X / 5.0".
+2. Overall weighted score = sum(score × weight) / sum(weights) over the weighted factors above. Show it as one line starting "Weighted calculation:", then write "Overall score: X.X / 5.0".
 3. Fit Recommendation (Pursue Aggressively / Strong Target / Selective / Archive).
 4. Hard Positives (Evidence mapping).
 5. Hard Negatives (Gaps/Risks).
@@ -130,6 +180,13 @@ Brief rationale for changes.`,
       'shop assistant', 'cashier', 'receptionist', 'hairdresser', 'beautician', 'dental',
       'pharmacist', 'phlebotomist', 'social worker', 'sales executive', 'sales representative',
       'telesales', 'estate agent', 'recruitment consultant'],
-    rankBackground: (f) => (f.currentRole ? `currently ${f.currentRole}.` : ''),
+    rankBackground: (f) => [
+      f.currentRole ? `currently ${f.currentRole}.` : '',
+      f.stretchRoles.length ? `Also open to stretch roles: ${f.stretchRoles.join(', ')}.` : '',
+      f.targetSectors.length ? `Preferred sectors: ${f.targetSectors.join(', ')}.` : '',
+    ].filter(Boolean).join(' '),
+    rankRules: (f) => (f.excludedSectors.length
+      ? `Score 0 any listing whose employer or title is clearly in an excluded sector: ${f.excludedSectors.join(', ')}.`
+      : ''),
   },
 };

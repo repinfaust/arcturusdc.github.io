@@ -13,6 +13,7 @@ export async function searchJobs({
   defaultTerm,
   hardExclude = [],
   rankBackground = '',
+  rankRules = '', // extra app/profile ranking rules, e.g. excluded sectors
 }) {
   const results = [];
   const sourcesTried = new Set();
@@ -151,7 +152,8 @@ export async function searchJobs({
         (rankBackground ? `Their background: ${rankBackground}\n\n` : '\n') +
         `Score each listing 0-100 for how well its TITLE matches the candidate's target roles. ` +
         `Be generous to roles that are the same kind of work worded differently. ` +
-        `Score clearly-different disciplines low.\n\n` +
+        `Score clearly-different disciplines low.\n` +
+        (rankRules ? `${rankRules}\n` : '') + '\n' +
         `Listings:\n${list}\n\n` +
         `Return ONLY a JSON array of {"i": <index>, "score": <0-100>, "why": "<6 words max>"} for EVERY listing.`;
       const raw = await callAnthropic({

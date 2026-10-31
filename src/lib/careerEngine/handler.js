@@ -22,6 +22,10 @@ function configToText(v) {
 
 // Facts the prompts need from a profile that may be an object (Firestore) or a
 // YAML string (the local demo profile).
+// Profile list fields arrive as arrays (form) or comma-separated strings.
+const list = (v) => (Array.isArray(v) ? v : typeof v === 'string' ? v.split(',') : [])
+  .map((x) => String(x || '').trim()).filter(Boolean);
+
 export function profileFacts(profile) {
   if (profile && typeof profile === 'object') {
     return {
@@ -29,7 +33,12 @@ export function profileFacts(profile) {
       currentRole: profile.current_role || '',
       location: profile.location || '',
       minSalary: Number(profile.min_salary) || 0,
-      targetRoles: Array.isArray(profile.target_roles) ? profile.target_roles.filter(Boolean) : [],
+      targetSalary: Number(profile.target_salary) || 0,
+      targetRoles: list(profile.target_roles),
+      stretchRoles: list(profile.stretch_roles),
+      targetSectors: list(profile.target_sectors),
+      excludedSectors: list(profile.excluded_sectors),
+      workPattern: profile.work_pattern || '',
     };
   }
   const text = typeof profile === 'string' ? profile : '';
@@ -40,7 +49,12 @@ export function profileFacts(profile) {
     currentRole: field('current_role'),
     location: field('location'),
     minSalary: Number(field('min_salary')) || 0,
+    targetSalary: 0,
     targetRoles: rolesBlock.split('\n').map((l) => l.replace(/^\s*-\s*"?|"?\s*$/g, '')).filter(Boolean),
+    stretchRoles: [],
+    targetSectors: [],
+    excludedSectors: [],
+    workPattern: '',
   };
 }
 
@@ -89,11 +103,14 @@ export function createCareerHandler(app) {
     const extras = app.contextExtras ? app.contextExtras(doc) : '';
     const cv = withCv ? await getActiveCvText(tenantId) : '';
     const cvBlock = cv ? `\n\n## Candidate's CV (primary reference):\n${cv.slice(0, 12000)}` : '';
+    // Saved scoring weights travel with the facts so the evaluate prompt can
+    // apply them (D-SITE-074); they were saved but never read before.
+    const weights = doc.scoring_weights && typeof doc.scoring_weights === 'object' ? doc.scoring_weights : {};
     return {
       doc,
       profile,
       evidence,
-      facts: profileFacts(profile),
+      facts: { ...profileFacts(profile), weights },
       complete: !!profileText.trim() && !!evidenceText.trim(),
       cachedContext: `## Candidate Profile:\n${profileText}\n\n## Evidence Library:\n${evidenceText}${extras}${cvBlock}`,
     };
@@ -384,10 +401,12 @@ export function createCareerHandler(app) {
             salary_min,
             excludeEmployers,
             mode,
-            targetRoles: facts.targetRoles,
+            // Stretch roles are searched alongside the core targets.
+            targetRoles: [...facts.targetRoles, ...facts.stretchRoles],
             defaultTerm: app.search.defaultTerm,
             hardExclude: app.search.hardExclude,
             rankBackground: app.search.rankBackground(facts, profile),
+            rankRules: app.search.rankRules ? app.search.rankRules(facts) : '',
           });
         } catch (e) {
           if (e.status) return NextResponse.json({ error: e.message }, { status: e.status });
