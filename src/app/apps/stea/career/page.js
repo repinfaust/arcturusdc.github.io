@@ -930,6 +930,21 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     setApplySave({ state: 'pending' });
   };
 
+  // Employment history for forms: the saved copy if one exists, otherwise seeded
+  // from the evidence anchors ("Employer — Title (descriptor)" split into fields).
+  const seededRoles = useMemo(() => (Array.isArray(anchorsData) ? anchorsData : []).slice(0, 4).map((a) => {
+    const [employer, ...rest] = String(a?.company || '').split(' — ');
+    return {
+      employer: employer.trim(),
+      title: rest.join(' — ').replace(/\s*\([^)]*\)\s*$/, '').trim(),
+      period: a?.period || '',
+      summary: (Array.isArray(a?.bullets) ? a.bullets.filter(Boolean)[0] : '') || '',
+    };
+  }), [anchorsData]);
+  const applyRoles = Array.isArray(applyExtras.employment_history) ? applyExtras.employment_history : seededRoles;
+  const setApplyRoles = (next) => setExtra('employment_history', next);
+  const updateApplyRole = (i, key, val) => setApplyRoles(applyRoles.map((r, j) => (j === i ? { ...r, [key]: val } : r)));
+
   // Autosave shortly after typing stops, so leaving a field or reloading keeps it.
   useEffect(() => {
     if (applySave.state !== 'pending') return undefined;
@@ -1739,21 +1754,31 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </div>
           </div>
 
-          {/* Recent roles from evidence anchors */}
-          {Array.isArray(anchorsData) && anchorsData.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2 mb-4"><span className="material-symbols-outlined text-[#006C50]">work_history</span>Recent roles (for employment-history fields)</h4>
-              <div className="space-y-4">
-                {anchorsData.slice(0, 4).map((a, i) => (
-                  <div key={i} className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-4 border-b border-slate-50 last:border-0 last:pb-0">
-                    <CopyField label="Employer" value={a.company} />
-                    <CopyField label="Period" value={a.period} />
-                    <CopyField label="Summary" value={Array.isArray(a.bullets) ? a.bullets.filter(Boolean)[0] : ''} multiline />
-                  </div>
-                ))}
-              </div>
+          {/* Employment history for application forms (D-SITE-077): editable copy,
+              seeded from the evidence anchors; edits never change the anchors. */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">work_history</span>Recent roles (for employment-history fields)</h4>
+              <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
             </div>
-          )}
+            <p className="text-xs text-slate-500 mb-4">Edit these for application forms. Your evidence anchors in Config are not changed.</p>
+            <div className="space-y-4">
+              {applyRoles.map((r, i) => (
+                <div key={i} className="space-y-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <CopyField label="Employer" value={r.employer} editable onChange={(v) => updateApplyRole(i, 'employer', v)} />
+                    <CopyField label="Job title" value={r.title} editable onChange={(v) => updateApplyRole(i, 'title', v)} />
+                    <CopyField label="Period" value={r.period} editable onChange={(v) => updateApplyRole(i, 'period', v)} />
+                  </div>
+                  <CopyField label="Summary" value={r.summary} editable multiline onChange={(v) => updateApplyRole(i, 'summary', v)} />
+                  <button onClick={() => setApplyRoles(applyRoles.filter((_, j) => j !== i))}
+                    className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-red-600">Remove role</button>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setApplyRoles([...applyRoles, { employer: '', title: '', period: '', summary: '' }])}
+              className="mt-4 text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline">+ Add role</button>
+          </div>
 
           {/* Role picker — applies only to the cover letter + common answers below */}
           <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">

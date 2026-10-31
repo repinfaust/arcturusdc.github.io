@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-10-31 — Career Ops Apply Assist: editable employment history, separate from evidence (D-SITE-077)
+
+**Why:** "Recent roles (for employment-history fields)" showed the first four evidence anchors
+read-only. Employer was the anchor label ("ENSEK — Product Manager, PAYG (energy retail
+SaaS)") and Summary was the first evidence bullet, neither of which is what a form wants.
+
+**Decision:** Apply Assist keeps its own editable list, `apply_profile.employment_history`
+(`[{employer, title, period, summary}]`), which autosaves with the other Apply Assist fields
+(D-SITE-076). Until it is first edited, it is seeded from the first four anchors: the label is
+split at " — " into employer and job title, and a trailing "(descriptor)" is dropped. Roles can
+be added and removed. Evidence anchors, which the AI scores against, are never changed by these
+edits: form wording and scoring evidence serve different purposes.
+
 ## 2026-10-31 — Career Ops Apply Assist autosaves with a real save status (D-SITE-076)
 
 **Evidence:** David's Apply Assist entries survived tab changes but not a reload. No workspace
