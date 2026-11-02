@@ -1088,6 +1088,58 @@
   background: rgba(25, 20, 14, 0.88);
 }
 
+.inspectScrimExpanded {
+  padding: 14px 14px 12px;
+}
+
+/* Zoomed: the painting takes the whole window; the copy shrinks to a caption strip. */
+.inspectStageExpanded {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.inspectStageExpanded .inspectCopy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 18px;
+  row-gap: 4px;
+  max-height: none;
+  overflow: visible;
+  padding: 10px 6px 4px;
+  border-top: 1px solid rgba(244, 238, 224, 0.14);
+}
+
+.inspectStageExpanded .inspectYear {
+  margin: 0;
+  order: 2;
+}
+
+.inspectStageExpanded .inspectCopy h2 {
+  margin: 0;
+  order: 1;
+  font-size: clamp(20px, 2.2vw, 28px);
+}
+
+.inspectByline {
+  order: 3;
+  margin: 0;
+  color: rgba(244, 238, 224, 0.6);
+  font-size: 14px;
+}
+
+.inspectStageExpanded .inspectActions {
+  order: 4;
+  margin: 0 0 0 auto;
+}
+
+.inspectStageExpanded .inspectImage {
+  max-height: 100%;
+}
+
 @media (max-width: 860px) {
   .inspectStage {
     grid-template-columns: 1fr;

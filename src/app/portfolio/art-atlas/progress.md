@@ -20,6 +20,7 @@ Original prompt: create a new web app within /apps/stea called art-atlas. Attach
 - Expanded the artwork pass across all 45 artists: the Wikidata work query now pulls a larger deterministic result window, dedupes by Wikidata work ID/title, rejects raw Q-number labels, and conservatively parses dates. Added Wikimedia Commons fallback records/categories for source-limited modern artists including Frida Kahlo, Jackson Pollock, David Hockney, Magritte, Rothko, de Kooning, Warhol, and Kusama. Local API sweep returned same-origin proxied images for every artist; most artists return 12 works, while copyright/source-limited modern artists return only the credible Wikimedia records available rather than padded junk.
 
 - 2026-11-02 (D-SITE-078): moved to public `/portfolio/art-atlas` (308 from the old path). Fixed missing artwork (proxy now allows `thumb.wikimedia.org`). Added Bruegel and pinned key Dürer/Bruegel works. Real-scale hang with the warm contemporary look. Fixed texture/light budget. In-place deep zoom to 3840px. Timeline pinch no longer zooms the browser page.
+- 2026-11-02: when a work is zoomed in the inspect view, the painting takes the window and the copy collapses to a bottom caption strip; Fit or 100% restores the side-by-side layout.
 
 ## TODO
 

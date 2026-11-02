@@ -984,7 +984,7 @@ function undatedSourceLabel(work) {
 const ZOOM_DETAIL_WIDTH = 3840;
 const INSPECT_MAX_ZOOM = 8;
 
-function ZoomableArtwork({ work }) {
+function ZoomableArtwork({ work, onZoomedChange }) {
   const figureRef = useRef(null);
   const viewRef = useRef({ scale: 1, x: 0, y: 0 });
   const pointersRef = useRef(new Map());
@@ -1048,6 +1048,12 @@ function ZoomableArtwork({ work }) {
       figure.removeEventListener('gesturechange', onGestureChange);
     };
   }, [zoomAt]);
+
+  // Tell the lightbox when the work is zoomed so it can give the painting the window.
+  const zoomed = view.scale > 1;
+  useEffect(() => {
+    onZoomedChange?.(zoomed);
+  }, [zoomed, onZoomedChange]);
 
   // Fetch the larger rendering only once the visitor actually zooms in. The trigger and
   // the load are separate effects so further zooming can't cancel an in-flight load.
@@ -1153,6 +1159,8 @@ function ZoomableArtwork({ work }) {
 
 function InspectLightbox({ work, onClose }) {
   const [mounted, setMounted] = useState(false);
+  // Zoomed in: the painting takes the window and the copy becomes a bottom caption strip.
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true));
@@ -1168,7 +1176,7 @@ function InspectLightbox({ work, onClose }) {
 
   return (
     <div
-      className={`${styles.inspectScrim} ${mounted ? styles.inspectScrimIn : ''}`}
+      className={`${styles.inspectScrim} ${mounted ? styles.inspectScrimIn : ''} ${expanded ? styles.inspectScrimExpanded : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label={`${work.title} — inspect`}
@@ -1178,15 +1186,19 @@ function InspectLightbox({ work, onClose }) {
         <span className={styles.materialSymbol} aria-hidden>close</span>
       </button>
       <div
-        className={`${styles.inspectStage} ${mounted ? styles.inspectStageIn : ''}`}
+        className={`${styles.inspectStage} ${mounted ? styles.inspectStageIn : ''} ${expanded ? styles.inspectStageExpanded : ''}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <ZoomableArtwork work={work} />
+        <ZoomableArtwork work={work} onZoomedChange={setExpanded} />
         <aside className={styles.inspectCopy}>
-          <p className={styles.inspectYear}>{work.year ? work.year : undatedSourceLabel(work)}</p>
+          {/* In the zoomed caption strip, skip the year when the byline already gives it. */}
+          {!(expanded && work.year && work.fact?.includes(work.year)) && (
+            <p className={styles.inspectYear}>{work.year ? work.year : undatedSourceLabel(work)}</p>
+          )}
           <h2>{work.title}</h2>
-          {work.story && <p className={styles.inspectStory}>{work.story}</p>}
-          {work.fact && <p className={styles.inspectFact}>{work.fact}</p>}
+          {expanded && work.fact && <p className={styles.inspectByline}>{work.fact}</p>}
+          {!expanded && work.story && <p className={styles.inspectStory}>{work.story}</p>}
+          {!expanded && work.fact && <p className={styles.inspectFact}>{work.fact}</p>}
           <div className={styles.inspectActions}>
             <a href={work.sourceUrl} target="_blank" rel="noreferrer">Source record</a>
             {work.imageSource && <a href={work.imageSource} target="_blank" rel="noreferrer">Image file</a>}
