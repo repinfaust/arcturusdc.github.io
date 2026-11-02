@@ -21,6 +21,7 @@ Original prompt: create a new web app within /apps/stea called art-atlas. Attach
 
 - 2026-11-02 (D-SITE-078): moved to public `/portfolio/art-atlas` (308 from the old path). Fixed missing artwork (proxy now allows `thumb.wikimedia.org`). Added Bruegel and pinned key Dürer/Bruegel works. Real-scale hang with the warm contemporary look. Fixed texture/light budget. In-place deep zoom to 3840px. Timeline pinch no longer zooms the browser page.
 - 2026-11-02: when a work is zoomed in the inspect view, the painting takes the window and the copy collapses to a bottom caption strip; Fit or 100% restores the side-by-side layout.
+- 2026-11-02: movement is look-relative again (David). The June gallery-axis lock was masking a sign error in the forward vector (x used +sin yaw; correct is -sin yaw), which made turning right steer left. Position clamps keep the visitor off the walls. Inspect zoom: Fit now truly fits (definite grid row) and pan limits come from the image size, so tall works can be dragged edge to edge.
 
 ## TODO
 

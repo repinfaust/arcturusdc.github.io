@@ -998,9 +998,11 @@ function ZoomableArtwork({ work, onZoomedChange }) {
   const apply = useCallback((next) => {
     const scale = clamp(next.scale, 1, INSPECT_MAX_ZOOM);
     const figure = figureRef.current;
-    // Keep the image from being dragged away entirely: pan limited to its zoomed overhang.
-    const limitX = figure ? (figure.clientWidth * (scale - 1)) / 2 : 0;
-    const limitY = figure ? (figure.clientHeight * (scale - 1)) / 2 : 0;
+    const image = figure?.querySelector('img');
+    // Pan as far as the zoomed IMAGE overhangs the viewer, so every edge is reachable.
+    // (Limits based on the viewer box cut off tall works when image and viewer differ.)
+    const limitX = figure && image ? Math.max(0, (image.offsetWidth * scale - figure.clientWidth) / 2) : 0;
+    const limitY = figure && image ? Math.max(0, (image.offsetHeight * scale - figure.clientHeight) / 2) : 0;
     const view = scale === 1
       ? { scale: 1, x: 0, y: 0 }
       : { scale, x: clamp(next.x, -limitX, limitX), y: clamp(next.y, -limitY, limitY) };
@@ -1900,9 +1902,22 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
         // Free walk — only when not inspecting.
         const forwardIntent = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0);
         const strafeIntent = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
+        // Move relative to where the visitor is looking (yaw only; pitch never tilts
+        // movement). A camera with rotation.y = yaw faces (-sin yaw, 0, -cos yaw); the
+        // June 2026 version had the sign of x wrong, so turning right steered left, and
+        // it was then locked to the gallery axes instead. Walls are enforced by the
+        // position clamps below.
+        const yaw = cameraState.yaw;
+        let moveX = forwardIntent * -Math.sin(yaw) + strafeIntent * Math.cos(yaw);
+        let moveZ = forwardIntent * -Math.cos(yaw) + strafeIntent * -Math.sin(yaw);
+        const length = Math.hypot(moveX, moveZ);
+        if (length > 1) {
+          moveX /= length;
+          moveZ /= length;
+        }
         const speed = 3.2 * dt;
-        camera.position.z -= forwardIntent * speed;
-        camera.position.x += strafeIntent * speed;
+        camera.position.x += moveX * speed;
+        camera.position.z += moveZ * speed;
         camera.position.x = clamp(camera.position.x, -2.9, 2.9);
         camera.position.z = clamp(camera.position.z, backWallZ + 2.4, 2.5);
       }
@@ -1916,8 +1931,8 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
     const renderState = () => JSON.stringify({
       mode: 'art-atlas-gallery',
       artist: museum.artist.name,
-      coordinateSystem: 'Three.js world coordinates; x left/right, y height, z corridor depth; movement follows gallery axes; yaw changes look direction only.',
-      movementMode: 'gallery-axis',
+      coordinateSystem: 'Three.js world coordinates; x left/right, y height, z corridor depth; movement follows look direction (yaw); walls clamp position.',
+      movementMode: 'look-relative',
       entered: enteredRef.current,
       camera: {
         x: Number(camera.position.x.toFixed(2)),
