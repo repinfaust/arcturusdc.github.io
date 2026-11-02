@@ -19,6 +19,8 @@ Original prompt: create a new web app within /apps/stea called art-atlas. Attach
 - Verification: `npm run build` passes with the existing postbuild changelog leak test. The develop-web-game Playwright client could not be run in this checkout because the `playwright` package is not resolvable; local full walkthrough also still depends on valid Firebase client config and an authorised STEa session.
 - Expanded the artwork pass across all 45 artists: the Wikidata work query now pulls a larger deterministic result window, dedupes by Wikidata work ID/title, rejects raw Q-number labels, and conservatively parses dates. Added Wikimedia Commons fallback records/categories for source-limited modern artists including Frida Kahlo, Jackson Pollock, David Hockney, Magritte, Rothko, de Kooning, Warhol, and Kusama. Local API sweep returned same-origin proxied images for every artist; most artists return 12 works, while copyright/source-limited modern artists return only the credible Wikimedia records available rather than padded junk.
 
+- 2026-11-02 (D-SITE-078): moved to public `/portfolio/art-atlas` (308 from the old path). Fixed missing artwork (proxy now allows `thumb.wikimedia.org`). Added Bruegel and pinned key Dürer/Bruegel works. Real-scale hang with the warm contemporary look. Fixed texture/light budget. In-place deep zoom to 3840px. Timeline pinch no longer zooms the browser page.
+
 ## TODO
 
-- Full in-browser gallery walkthrough still requires a valid local Firebase client config and an authorised STEa session; the unauthorised/local-invalid state is now handled explicitly.
+- Check Safari trackpad pinch and touchscreen pinch on a real device (headless Chrome covered wheel/ctrl-wheel only).

@@ -17,7 +17,6 @@ export const SIGN_IN_PATH = '/apps/stea';
 export const PROTECTED_ROUTES = [
   { base: '/apps/stea/admin' },
   { base: '/apps/stea/automatedtestsdashboard' },
-  { base: '/apps/stea/art-atlas' },
   { base: '/apps/stea/autoproduct' },
   { base: '/apps/stea/career' },
   { base: '/apps/stea/squared' },

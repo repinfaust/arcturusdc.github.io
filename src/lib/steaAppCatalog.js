@@ -71,7 +71,7 @@ export const STEA_APP_CATALOG = [
     name: 'Art Atlas',
     description: 'Interactive art-history research atlas.',
     group: 'Specialist tools',
-    paths: ['/apps/stea/art-atlas'],
+    paths: ['/portfolio/art-atlas'],
   },
   {
     key: 'squared',

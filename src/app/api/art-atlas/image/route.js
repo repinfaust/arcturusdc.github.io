@@ -1,6 +1,9 @@
 const ALLOWED_IMAGE_HOSTS = new Set([
   'commons.wikimedia.org',
   'upload.wikimedia.org',
+  // Wikimedia serves scaled thumbnails from this host; Special:FilePath?width=N
+  // redirects here for any original larger than the requested width.
+  'thumb.wikimedia.org',
 ]);
 
 const IMAGE_HEADERS = {
@@ -8,14 +11,20 @@ const IMAGE_HEADERS = {
   'User-Agent': 'ArtAtlasPrototype/1.0 (https://www.arcturusdc.com)',
 };
 
-const COMMONS_TEXTURE_WIDTH = '1400';
+// Wikimedia only renders thumbnails at fixed steps and rounds other widths up, so the
+// client asks for one of these: 500 preview, 1280 near-wall, 1920 inspect, 3840 zoomed
+// inspect (the largest size Wikimedia renders) (D-SITE-078).
+const ALLOWED_WIDTHS = new Set(['500', '960', '1280', '1920', '3840']);
+const DEFAULT_WIDTH = '1280';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 604800;
 
 export async function GET(request) {
-  const target = parseAllowedImageUrl(new URL(request.url).searchParams.get('url'));
+  const params = new URL(request.url).searchParams;
+  const width = ALLOWED_WIDTHS.has(params.get('w')) ? params.get('w') : DEFAULT_WIDTH;
+  const target = sizedCommonsUrl(parseAllowedImageUrl(params.get('url')), width);
 
   if (!target) {
     return Response.json({ error: 'Unsupported Art Atlas image source.' }, { status: 400 });
@@ -59,6 +68,22 @@ export async function GET(request) {
   return new Response(upstream.body, { headers });
 }
 
+// Always fetch a sized thumbnail, never a full-resolution original (some Commons
+// originals are 6000px+, far beyond what a wall texture needs).
+function sizedCommonsUrl(url, width) {
+  if (!url) return null;
+  let fileName = '';
+  if (url.hostname === 'commons.wikimedia.org' && url.pathname.includes('/wiki/Special:FilePath/')) {
+    fileName = url.pathname.split('/wiki/Special:FilePath/')[1];
+  } else if (url.hostname === 'upload.wikimedia.org' && /^\/wikipedia\/commons\/[0-9a-f]\/[0-9a-f]{2}\/[^/]+$/.test(url.pathname)) {
+    fileName = url.pathname.split('/').pop();
+  }
+  if (!fileName) return url;
+  const sized = new URL(`https://commons.wikimedia.org/wiki/Special:FilePath/${fileName}`);
+  sized.searchParams.set('width', width);
+  return sized;
+}
+
 function parseAllowedImageUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== 'string') return null;
 
@@ -66,9 +91,6 @@ function parseAllowedImageUrl(rawUrl) {
     const url = new URL(rawUrl);
     if (url.protocol !== 'https:') return null;
     if (!ALLOWED_IMAGE_HOSTS.has(url.hostname)) return null;
-    if (url.hostname === 'commons.wikimedia.org' && url.pathname.includes('/wiki/Special:FilePath/') && !url.searchParams.has('width')) {
-      url.searchParams.set('width', COMMONS_TEXTURE_WIDTH);
-    }
     return url;
   } catch {
     return null;

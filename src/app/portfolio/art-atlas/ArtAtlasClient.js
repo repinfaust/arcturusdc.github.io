@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import * as THREE from 'three';
-import { useTenant } from '@/contexts/TenantContext';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { KNOWN_ARTWORKS } from '@/lib/art-atlas/data';
 import styles from './art-atlas.module.css';
 
@@ -134,49 +134,9 @@ function artistDates(artist) {
   return `${artist.birth || ''} - ${artist.death || 'present'}`;
 }
 
+// Public portfolio route: read-only, no sign-in and no user data (D-SITE-078).
 export default function ArtAtlasClient() {
-  return (
-    <SteaAccessGate>
-      <ArtAtlasExperience />
-    </SteaAccessGate>
-  );
-}
-
-function SteaAccessGate({ children }) {
-  const { availableTenants, loading: tenantLoading, error: tenantError, isSuperAdmin } = useTenant();
-  const hasSteaAccess = isSuperAdmin || availableTenants.length > 0;
-
-  if (tenantLoading) {
-    return (
-      <main className={styles.accessShell}>
-        <section className={styles.accessPanel}>
-          <p className={styles.placardKicker}>STEa Access</p>
-          <h1>Checking access</h1>
-          <p>Confirming your STEa membership before opening Art Atlas.</p>
-        </section>
-      </main>
-    );
-  }
-
-  if (!hasSteaAccess) {
-    return (
-      <main className={styles.accessShell}>
-        <section className={styles.accessPanel}>
-          <p className={styles.placardKicker}>STEa Access Required</p>
-          <h1>Art Atlas</h1>
-          <p>
-            This page is available to any signed-in STEa member, independent of the selected workspace.
-            {tenantError ? ` Access lookup returned: ${tenantError}` : ' Sign in with an authorised account to continue.'}
-          </p>
-          <a className={styles.accessButton} href="/apps/stea?next=/apps/stea/art-atlas">
-            Open STEa sign-in
-          </a>
-        </section>
-      </main>
-    );
-  }
-
-  return children;
+  return <ArtAtlasExperience />;
 }
 
 function ArtAtlasExperience() {
@@ -281,11 +241,9 @@ function ArtAtlasExperience() {
     };
   }, [catalog?.sourceMode, filteredPeriods, pan.x, pan.y, periodFilter, query, selectedArtist?.name, zoom]);
 
-  const handleWheel = useCallback((event) => {
-    event.preventDefault();
-    // Gentle, frame-rate-independent step; normalise across mouse-wheel vs trackpad deltas.
-    const intensity = clamp(Math.abs(event.deltaY) / 100, 0.2, 1.6);
-    const factor = event.deltaY > 0 ? 1 - 0.08 * intensity : 1 + 0.08 * intensity;
+  // Every zoom input (mouse wheel, trackpad pinch, Safari gesture, touch pinch) sets a
+  // target; one rAF loop eases the live zoom toward it.
+  const zoomBy = useCallback((factor) => {
     targetZoomRef.current = clamp(targetZoomRef.current * factor, ZOOM_MIN, ZOOM_MAX);
 
     if (zoomRafRef.current) return;
@@ -303,6 +261,49 @@ function ArtAtlasExperience() {
     };
     zoomRafRef.current = window.requestAnimationFrame(tick);
   }, []);
+
+  // Native, non-passive listeners. React attaches onWheel as passive, so its
+  // preventDefault was ignored and a trackpad pinch (ctrl+wheel) zoomed the whole
+  // browser page instead of the atlas. Safari reports trackpad pinch as gesture* events.
+  const stageRef = useRef(null);
+  const stageReady = !loading && !error && view === 'timeline';
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+    let gestureScale = 1;
+    const onWheel = (event) => {
+      event.preventDefault();
+      if (event.ctrlKey) {
+        // Trackpad pinch: small continuous deltas, so follow them proportionally.
+        zoomBy(Math.exp(-event.deltaY * 0.012));
+        return;
+      }
+      // Mouse wheel / two-finger scroll: gentle step, normalised across devices.
+      const intensity = clamp(Math.abs(event.deltaY) / 100, 0.2, 1.6);
+      zoomBy(event.deltaY > 0 ? 1 - 0.08 * intensity : 1 + 0.08 * intensity);
+    };
+    const onGestureStart = (event) => {
+      event.preventDefault();
+      gestureScale = event.scale || 1;
+    };
+    const onGestureChange = (event) => {
+      event.preventDefault();
+      const scale = event.scale || 1;
+      zoomBy(scale / gestureScale);
+      gestureScale = scale;
+    };
+    const onGestureEnd = (event) => event.preventDefault();
+    stage.addEventListener('wheel', onWheel, { passive: false });
+    stage.addEventListener('gesturestart', onGestureStart, { passive: false });
+    stage.addEventListener('gesturechange', onGestureChange, { passive: false });
+    stage.addEventListener('gestureend', onGestureEnd, { passive: false });
+    return () => {
+      stage.removeEventListener('wheel', onWheel);
+      stage.removeEventListener('gesturestart', onGestureStart);
+      stage.removeEventListener('gesturechange', onGestureChange);
+      stage.removeEventListener('gestureend', onGestureEnd);
+    };
+  }, [stageReady, zoomBy]);
 
   useEffect(() => () => {
     if (zoomRafRef.current) window.cancelAnimationFrame(zoomRafRef.current);
@@ -348,8 +349,24 @@ function ArtAtlasExperience() {
     if (focusRafRef.current) window.cancelAnimationFrame(focusRafRef.current);
   }, []);
 
+  // Touchscreen pinch: two active pointers zoom by the change in their distance.
+  const pointersRef = useRef(new Map());
+  const pinchRef = useRef(0);
+  const pinchDistance = () => {
+    const [a, b] = [...pointersRef.current.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+
   const handlePointerDown = useCallback((event) => {
     if (event.button !== 0) return;
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    if (pointersRef.current.size === 2) {
+      pinchRef.current = pinchDistance();
+      setDragging(false);
+      return;
+    }
+    if (pointersRef.current.size > 2) return;
     setDragging(true);
     dragRef.current = {
       x: event.clientX,
@@ -361,13 +378,24 @@ function ArtAtlasExperience() {
   }, [pan.x, pan.y]);
 
   const handlePointerMove = useCallback((event) => {
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+    if (pointersRef.current.size === 2 && pinchRef.current > 0) {
+      const distance = pinchDistance();
+      if (distance > 0) zoomBy(distance / pinchRef.current);
+      pinchRef.current = distance;
+      return;
+    }
     if (!dragging) return;
     const nextX = dragRef.current.panX + event.clientX - dragRef.current.x;
     const nextY = dragRef.current.panY + event.clientY - dragRef.current.y;
     setPan({ x: nextX, y: nextY });
-  }, [dragging]);
+  }, [dragging, zoomBy]);
 
   const endDrag = useCallback((event) => {
+    pointersRef.current.delete(event.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = 0;
     setDragging(false);
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   }, []);
@@ -463,8 +491,8 @@ function ArtAtlasExperience() {
 
       {!loading && !error && (
         <section
+          ref={stageRef}
           className={`${styles.atlasStage} ${dragging ? styles.atlasStageDragging : ''}`}
-          onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
@@ -949,6 +977,180 @@ function undatedSourceLabel(work) {
     : 'Undated in the returned Wikidata record';
 }
 
+// In-place deep look at a work: wheel/pinch to zoom about the pointer, drag to pan,
+// double-click to toggle. Starts at 1920px and, once zoomed past 1.5x, swaps to the
+// largest size Wikimedia renders (3840px) when the original is bigger than that
+// (D-SITE-078). Only one large image is ever held, and only while inspecting.
+const ZOOM_DETAIL_WIDTH = 3840;
+const INSPECT_MAX_ZOOM = 8;
+
+function ZoomableArtwork({ work }) {
+  const figureRef = useRef(null);
+  const viewRef = useRef({ scale: 1, x: 0, y: 0 });
+  const pointersRef = useRef(new Map());
+  const pinchRef = useRef(0);
+  const dragRef = useRef(null);
+  const [view, setView] = useState({ scale: 1, x: 0, y: 0 });
+  const [src, setSrc] = useState(`${work.image}&w=1920`);
+  const [detail, setDetail] = useState('standard');
+  const canUpgrade = !work.imagePixels || work.imagePixels.width > 1920;
+
+  const apply = useCallback((next) => {
+    const scale = clamp(next.scale, 1, INSPECT_MAX_ZOOM);
+    const figure = figureRef.current;
+    // Keep the image from being dragged away entirely: pan limited to its zoomed overhang.
+    const limitX = figure ? (figure.clientWidth * (scale - 1)) / 2 : 0;
+    const limitY = figure ? (figure.clientHeight * (scale - 1)) / 2 : 0;
+    const view = scale === 1
+      ? { scale: 1, x: 0, y: 0 }
+      : { scale, x: clamp(next.x, -limitX, limitX), y: clamp(next.y, -limitY, limitY) };
+    viewRef.current = view;
+    setView(view);
+  }, []);
+
+  // Zoom keeping the point under (clientX, clientY) fixed on screen.
+  const zoomAt = useCallback((factor, clientX, clientY) => {
+    const figure = figureRef.current;
+    if (!figure) return;
+    const rect = figure.getBoundingClientRect();
+    const px = clientX - (rect.left + rect.width / 2);
+    const py = clientY - (rect.top + rect.height / 2);
+    const current = viewRef.current;
+    const scale = clamp(current.scale * factor, 1, INSPECT_MAX_ZOOM);
+    const ratio = scale / current.scale;
+    apply({ scale, x: px - (px - current.x) * ratio, y: py - (py - current.y) * ratio });
+  }, [apply]);
+
+  useEffect(() => {
+    const figure = figureRef.current;
+    if (!figure) return undefined;
+    const onWheel = (event) => {
+      event.preventDefault();
+      const factor = event.ctrlKey ? Math.exp(-event.deltaY * 0.012) : Math.exp(-event.deltaY * 0.0022);
+      zoomAt(factor, event.clientX, event.clientY);
+    };
+    let gestureScale = 1;
+    const onGestureStart = (event) => {
+      event.preventDefault();
+      gestureScale = event.scale || 1;
+    };
+    const onGestureChange = (event) => {
+      event.preventDefault();
+      zoomAt((event.scale || 1) / gestureScale, event.clientX, event.clientY);
+      gestureScale = event.scale || 1;
+    };
+    figure.addEventListener('wheel', onWheel, { passive: false });
+    figure.addEventListener('gesturestart', onGestureStart, { passive: false });
+    figure.addEventListener('gesturechange', onGestureChange, { passive: false });
+    return () => {
+      figure.removeEventListener('wheel', onWheel);
+      figure.removeEventListener('gesturestart', onGestureStart);
+      figure.removeEventListener('gesturechange', onGestureChange);
+    };
+  }, [zoomAt]);
+
+  // Fetch the larger rendering only once the visitor actually zooms in. The trigger and
+  // the load are separate effects so further zooming can't cancel an in-flight load.
+  useEffect(() => {
+    if (canUpgrade && detail === 'standard' && view.scale >= 1.5) setDetail('loading');
+  }, [canUpgrade, detail, view.scale]);
+
+  useEffect(() => {
+    if (detail !== 'loading') return undefined;
+    const large = `${work.image}&w=${ZOOM_DETAIL_WIDTH}`;
+    const img = new Image();
+    let cancelled = false;
+    img.onload = () => {
+      if (cancelled) return;
+      setSrc(large);
+      setDetail('high');
+    };
+    img.onerror = () => {
+      if (!cancelled) setDetail('standard-only');
+    };
+    img.src = large;
+    return () => {
+      cancelled = true;
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [detail, work.image]);
+
+  const onPointerDown = (event) => {
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    if (pointersRef.current.size === 2) {
+      const [a, b] = [...pointersRef.current.values()];
+      pinchRef.current = Math.hypot(a.x - b.x, a.y - b.y);
+      dragRef.current = null;
+    } else {
+      dragRef.current = { x: event.clientX, y: event.clientY, ox: viewRef.current.x, oy: viewRef.current.y };
+    }
+  };
+  const onPointerMove = (event) => {
+    if (!pointersRef.current.has(event.pointerId)) return;
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointersRef.current.size === 2 && pinchRef.current > 0) {
+      const [a, b] = [...pointersRef.current.values()];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      zoomAt(distance / pinchRef.current, (a.x + b.x) / 2, (a.y + b.y) / 2);
+      pinchRef.current = distance;
+      return;
+    }
+    const drag = dragRef.current;
+    if (!drag || viewRef.current.scale === 1) return;
+    apply({ scale: viewRef.current.scale, x: drag.ox + event.clientX - drag.x, y: drag.oy + event.clientY - drag.y });
+  };
+  const onPointerUp = (event) => {
+    pointersRef.current.delete(event.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = 0;
+    dragRef.current = null;
+  };
+  const onDoubleClick = (event) => {
+    if (viewRef.current.scale > 1) apply({ scale: 1, x: 0, y: 0 });
+    else zoomAt(2.5, event.clientX, event.clientY);
+  };
+  const zoomCentre = (factor) => {
+    const rect = figureRef.current?.getBoundingClientRect();
+    if (rect) zoomAt(factor, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  };
+
+  const detailLabel = {
+    standard: canUpgrade ? '1920 px · zoom for more detail' : 'Full resolution',
+    loading: `Loading ${ZOOM_DETAIL_WIDTH} px detail…`,
+    high: `${ZOOM_DETAIL_WIDTH} px detail`,
+    'standard-only': '1920 px (larger size unavailable)',
+  }[detail];
+
+  return (
+    <figure
+      ref={figureRef}
+      className={`${styles.inspectFigure} ${view.scale > 1 ? styles.inspectFigureZoomed : ''}`}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onDoubleClick={onDoubleClick}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className={styles.inspectImage}
+        src={src}
+        alt={work.title}
+        draggable={false}
+        style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
+      />
+      <div className={styles.inspectZoomBar} onPointerDown={(event) => event.stopPropagation()}>
+        <button type="button" onClick={() => zoomCentre(1 / 1.6)} aria-label="Zoom out">−</button>
+        <span>{Math.round(view.scale * 100)}%</span>
+        <button type="button" onClick={() => zoomCentre(1.6)} aria-label="Zoom in">+</button>
+        <button type="button" onClick={() => apply({ scale: 1, x: 0, y: 0 })} aria-label="Reset zoom">Fit</button>
+        <em>{detailLabel}</em>
+      </div>
+    </figure>
+  );
+}
+
 function InspectLightbox({ work, onClose }) {
   const [mounted, setMounted] = useState(false);
 
@@ -979,10 +1181,7 @@ function InspectLightbox({ work, onClose }) {
         className={`${styles.inspectStage} ${mounted ? styles.inspectStageIn : ''}`}
         onClick={(event) => event.stopPropagation()}
       >
-        <figure className={styles.inspectFigure}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className={styles.inspectImage} src={work.image} alt={work.title} />
-        </figure>
+        <ZoomableArtwork work={work} />
         <aside className={styles.inspectCopy}>
           <p className={styles.inspectYear}>{work.year ? work.year : undatedSourceLabel(work)}</p>
           <h2>{work.title}</h2>
@@ -1027,32 +1226,60 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
 
     const works = museum.works || [];
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    // 1.5x is visually indistinguishable here and saves ~44% of the framebuffer on retina.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 0.92;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    // Bright, soft daylight room (National Gallery / Tate Britain), not a dark void.
-    scene.background = new THREE.Color(0xb9bcc0);
-    scene.fog = new THREE.Fog(0xb9bcc0, 22, 60);
+    // Warm contemporary gallery: cream plaster, warm-grey dado, light oak herringbone,
+    // cove-lit coffered skylight, black track spots, oak frames with white mats.
+    scene.background = new THREE.Color(0xe4dacd);
+    scene.fog = new THREE.Fog(0xe4dacd, 24, 60);
+    // One small prefiltered room environment gives gilt frames, glazing and marble
+    // believable reflections for a few MB of GPU memory (D-SITE-078).
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    const envTarget = pmrem.fromScene(roomEnvironment, 0.04);
+    roomEnvironment.dispose();
+    pmrem.dispose();
+    scene.environment = envTarget.texture;
+    scene.environmentIntensity = 0.42;
 
     const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 100);
     // Start just inside the room, facing down the corridor so the doors are behind you.
     camera.position.set(0, 1.72, 2.4);
     camera.rotation.order = 'YXZ';
 
-    // Paintings alternate walls, so each wall only holds half the works — spacing is
-    // per-side. Tighter spacing keeps the room intimate rather than a long tunnel.
-    const paintingSpacing = 2.35;
-    const firstPaintingZ = 1.0;
-    const perSideCount = Math.ceil(works.length / 2);
-    const lastPaintingZ = works.length > 0 ? firstPaintingZ - (perSideCount - 1) * paintingSpacing : firstPaintingZ;
-    // Back wall sits just past the last painting — corridor length follows content,
-    // no fixed minimum that leaves an empty void at the end.
-    const backWallZ = lastPaintingZ - 3.2;
+    // Hang every work at its real size (Wikidata dimensions, true image proportions),
+    // alternating walls, spaced by actual frame widths rather than a fixed step.
+    const WALL_GAP = 1.05;
+    const hung = works.map((work, index) => {
+      const size = physicalSize(work);
+      // Slim oak frame with a white mat for every work (warm contemporary hang).
+      const longEdge = Math.max(size.width, size.height);
+      const frameWidth = clamp(0.03 + 0.012 * longEdge, 0.035, 0.06);
+      const matPad = size.matted ? 0.07 + 0.22 * longEdge : clamp(0.05 + 0.06 * longEdge, 0.07, 0.18);
+      const outerW = size.width + 2 * (matPad + frameWidth);
+      const outerH = size.height + 2 * (matPad + frameWidth);
+      return { work, index, side: index % 2 === 0 ? -1 : 1, ...size, frameWidth, matPad, outerW, outerH };
+    });
+    // Right wall starts half a step later so the two walls stagger.
+    const wallCursor = { '-1': 1.9, '1': 1.25 };
+    hung.forEach((item) => {
+      item.z = wallCursor[item.side] - item.outerW / 2;
+      // Museum hang: centres near 1.55 m, never dropping onto the dado.
+      item.y = Math.max(1.6, 1.08 + item.outerH / 2);
+      wallCursor[item.side] -= item.outerW + WALL_GAP;
+    });
+    const lastPaintingZ = hung.length
+      ? Math.min(...hung.map((item) => item.z - item.outerW / 2))
+      : 1.0;
+    // Back wall sits just past the last work — corridor length follows content.
+    const backWallZ = lastPaintingZ - 1.8;
     const corridorLength = 3 - backWallZ;
     const centerZ = (3 + backWallZ) / 2;
     const paintingMeshes = [];
@@ -1073,11 +1300,12 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
 
     // Bright, even daylight: a strong cool sky from the glazed roof plus soft ambient.
     // The per-painting spots then add a gentle accent rather than carrying the whole room.
-    scene.add(new THREE.AmbientLight(0xeef0f2, 0.62));
-    const skyFill = new THREE.HemisphereLight(0xf2f4f7, 0xb9a884, 0.95);
+    // The environment map now supplies soft fill, so the flat lights are reduced.
+    scene.add(new THREE.AmbientLight(0xffead2, 0.18));
+    const skyFill = new THREE.HemisphereLight(0xfff0dc, 0xb88a55, 0.55);
     scene.add(skyFill);
     // Broad overhead daylight pouring through the skylight, lightly shadowing.
-    const daylight = new THREE.DirectionalLight(0xf3f1ec, 0.55);
+    const daylight = new THREE.DirectionalLight(0xfff3e2, 0.5);
     daylight.position.set(0.5, 9, centerZ + 3);
     daylight.target.position.set(0, 1, centerZ);
     daylight.castShadow = true;
@@ -1103,7 +1331,9 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
     // Light oak parquet floor (herringbone planks + grain).
     const floorTex = registerTexture(makeParquetTexture());
     floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
-    floorTex.repeat.set(Math.max(2, Math.round(corridorLength / 2)), Math.max(3, Math.round(corridorLength / 1.6)));
+    // Larger planks: a fine repeat shimmered at a distance.
+    // ~0.7 m planks: each tile spans 2.05 m across and 2.05 m along the corridor.
+    floorTex.repeat.set(4, Math.max(3, Math.round(corridorLength / 2.05)));
     floorTex.anisotropy = renderer.capabilities.getMaxAnisotropy?.() || 4;
     const floorMaterial = new THREE.MeshStandardMaterial({
       map: floorTex,
@@ -1122,23 +1352,20 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
 
     // Pale cream ceiling/cove.
     const ceilingMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe9e6dd,
+      color: 0xd9cdbf,
       roughness: 0.95,
     });
 
-    // Dark green-grey veined marble dado running along the wall base.
-    const dadoTex = registerTexture(makeMarbleTexture());
-    dadoTex.wrapS = dadoTex.wrapT = THREE.RepeatWrapping;
-    dadoTex.repeat.set(Math.max(2, Math.round(corridorLength / 3)), 1);
-    const dadoMaterial = new THREE.MeshStandardMaterial({
-      map: dadoTex,
-      roughness: 0.3,
-      metalness: 0.18,
-    });
+    // Warm-grey painted dado with a lighter moulded rail.
+    const dadoMaterial = new THREE.MeshStandardMaterial({ color: 0x9b9188, roughness: 0.82 });
+    const mouldingMaterial = new THREE.MeshStandardMaterial({ color: 0xb2a99f, roughness: 0.7 });
+    // Matte black for track rails and spot heads.
     const trimMaterial = new THREE.MeshStandardMaterial({
-      color: 0x161617,
+      color: 0x141312,
       roughness: 0.45,
+      metalness: 0.3,
     });
+    const ledMaterial = new THREE.MeshBasicMaterial({ color: 0xfff1d6, toneMapped: false });
     // Warm oak bench with grain.
     const benchTex = registerTexture(makeOakTexture());
     benchTex.wrapS = benchTex.wrapT = THREE.RepeatWrapping;
@@ -1155,23 +1382,33 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
     addBox(scene, [0.14, 4.2, corridorLength], [4.1, 2.05, centerZ], wallMaterial);
     addBox(scene, [8.2, 4.2, 0.14], [0, 2.05, backWallZ], wallMaterial);
     // Pale cove/ceiling either side of the skylight.
-    addBox(scene, [3.2, 0.1, corridorLength], [-2.55, 4.1, centerZ], ceilingMaterial);
-    addBox(scene, [3.2, 0.1, corridorLength], [2.55, 4.1, centerZ], ceilingMaterial);
+    addBox(scene, [3.0, 0.1, corridorLength], [-2.6, 4.15, centerZ], ceilingMaterial);
+    addBox(scene, [3.0, 0.1, corridorLength], [2.6, 4.15, centerZ], ceilingMaterial);
 
     // Marble dado band along the base of each wall.
-    const dadoHeight = 0.62;
+    const dadoHeight = 0.92;
     addBox(scene, [0.16, dadoHeight, corridorLength], [-4.04, dadoHeight / 2, centerZ], dadoMaterial);
     addBox(scene, [0.16, dadoHeight, corridorLength], [4.04, dadoHeight / 2, centerZ], dadoMaterial);
     addBox(scene, [8.2, dadoHeight, 0.16], [0, dadoHeight / 2, backWallZ + 0.05], dadoMaterial);
-    // Thin dark cap line on top of the dado.
-    addBox(scene, [0.18, 0.03, corridorLength], [-4.02, dadoHeight, centerZ], trimMaterial);
-    addBox(scene, [0.18, 0.03, corridorLength], [4.02, dadoHeight, centerZ], trimMaterial);
-    addBox(scene, [8.2, 0.03, 0.18], [0, dadoHeight, backWallZ + 0.05], trimMaterial);
+    // Moulded dado rail (stepped) and skirting.
+    [-1, 1].forEach((side) => {
+      addBox(scene, [0.2, 0.05, corridorLength], [side * 4.0, dadoHeight, centerZ], mouldingMaterial);
+      addBox(scene, [0.18, 0.03, corridorLength], [side * 4.01, dadoHeight + 0.04, centerZ], mouldingMaterial);
+      addBox(scene, [0.19, 0.1, corridorLength], [side * 4.0, 0.05, centerZ], mouldingMaterial);
+      // Cornice where wall meets ceiling, with a concealed warm LED strip beneath it.
+      addBox(scene, [0.24, 0.12, corridorLength], [side * 3.98, 3.98, centerZ], mouldingMaterial);
+      const led = addBox(scene, [0.02, 0.02, corridorLength], [side * 3.87, 3.91, centerZ], ledMaterial);
+      led.castShadow = false;
+      led.userData.skipRaycast = true;
+    });
+    addBox(scene, [8.2, 0.05, 0.2], [0, dadoHeight, backWallZ + 0.06], mouldingMaterial);
+    addBox(scene, [8.2, 0.1, 0.19], [0, 0.05, backWallZ + 0.06], mouldingMaterial);
+    addBox(scene, [8.2, 0.12, 0.24], [0, 3.98, backWallZ + 0.08], mouldingMaterial);
 
     // Oak benches down the centre.
-    addBox(scene, [1.1, 0.12, 2.4], [0, 0.46, centerZ + 1.4], benchMaterial);
-    addBox(scene, [0.9, 0.46, 0.16], [0, 0.23, centerZ + 0.3], benchMaterial);
-    addBox(scene, [0.9, 0.46, 0.16], [0, 0.23, centerZ + 2.5], benchMaterial);
+    const cushionMaterial = new THREE.MeshStandardMaterial({ color: 0xbdb2a5, roughness: 0.97 });
+    addBox(scene, [0.92, 0.32, 2.1], [0, 0.16, centerZ + 1.4], benchMaterial);
+    addBox(scene, [1.0, 0.13, 2.2], [0, 0.385, centerZ + 1.4], cushionMaterial);
 
     // ---- Entrance wall behind the visitor, with elegant oak double doors. ----
     const frontWallZ = 3.0;
@@ -1244,105 +1481,283 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
     wallTitle.position.set(0, 2.34, backWallZ + 0.08);
     scene.add(wallTitle);
 
-    // Bright glazed skylight panel running the length of the roof.
+    // Recessed, evenly glowing ceiling light box inside a stepped coffer.
     const skylight = addBox(
       scene,
-      [2.4, 0.04, corridorLength - 1.4],
-      [0, 4.14, centerZ],
-      new THREE.MeshBasicMaterial({ color: 0xf7f6f2 })
+      [2.2, 0.04, corridorLength - 1.4],
+      [0, 4.42, centerZ],
+      // Not tone-mapped: the light box should read as a glowing source, not grey paint.
+      new THREE.MeshBasicMaterial({ color: 0xfff6e6, toneMapped: false })
     );
     skylight.userData.skipRaycast = true;
-    // Faint mullion bars across the glazing for the gridded-roof look.
-    for (let z = centerZ - (corridorLength - 1.4) / 2 + 0.6; z < centerZ + (corridorLength - 1.4) / 2; z += 1.1) {
-      const bar = addBox(scene, [2.4, 0.05, 0.04], [0, 4.16, z], ceilingMaterial);
-      bar.userData.skipRaycast = true;
-    }
+    skylight.castShadow = false;
+    const cofferMaterial = new THREE.MeshStandardMaterial({ color: 0xf2ebe1, roughness: 0.9 });
+    [-1, 1].forEach((side) => {
+      const fascia = addBox(scene, [0.04, 0.32, corridorLength - 1.4], [side * 1.12, 4.28, centerZ], cofferMaterial);
+      fascia.castShadow = false;
+    });
+    [-1, 1].forEach((end) => {
+      const fascia = addBox(scene, [2.24, 0.32, 0.04], [0, 4.28, centerZ + end * (corridorLength - 1.4) / 2], cofferMaterial);
+      fascia.castShadow = false;
+    });
 
-    // Continuous track-lighting rails along each side of the skylight.
-    addBox(scene, [0.06, 0.06, corridorLength - 1], [-1.3, 4.0, centerZ], trimMaterial);
-    addBox(scene, [0.06, 0.06, corridorLength - 1], [1.3, 4.0, centerZ], trimMaterial);
+    // Continuous black track rails along each side of the coffer.
+    addBox(scene, [0.05, 0.04, corridorLength - 1], [-1.45, 4.08, centerZ], trimMaterial);
+    addBox(scene, [0.05, 0.04, corridorLength - 1], [1.45, 4.08, centerZ], trimMaterial);
+    // Warm wash grazing the upper walls from the cornice LEDs.
+    const washTexture = registerTexture(makeEdgeShadeTexture());
+    const washMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffd9a8,
+      alphaMap: washTexture,
+      transparent: true,
+      opacity: 0.22,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    [-1, 1].forEach((side) => {
+      const wash = new THREE.Mesh(new THREE.PlaneGeometry(corridorLength, 0.9), washMaterial);
+      wash.position.set(side * 4.026, 3.45, centerZ);
+      wash.rotation.set(Math.PI, side < 0 ? Math.PI / 2 : -Math.PI / 2, 0);
+      wash.userData.skipRaycast = true;
+      scene.add(wash);
+    });
 
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
-    works.forEach((work, index) => {
-      const side = index % 2 === 0 ? -1 : 1;
-      // Step per wall: paintings on the same side are one spacing apart; opposite
-      // walls are staggered by half a step so the room doesn't read as rigid rows.
-      const sideIndex = Math.floor(index / 2);
-      const stagger = side > 0 ? paintingSpacing * 0.5 : 0;
-      const z = firstPaintingZ - sideIndex * paintingSpacing - stagger;
-      const width = index % 3 === 0 ? 1.65 : 1.34;
-      const height = index % 3 === 0 ? 1.16 : 1.42;
+    // ---- Works ---------------------------------------------------------------
+    // Shared materials and textures: per-work cost is geometry plus one image texture.
+    const oakFrameMaterial = new THREE.MeshStandardMaterial({ color: 0xb27b45, roughness: 0.55, metalness: 0.02 });
+    const oakFrameEdgeMaterial = new THREE.MeshStandardMaterial({ color: 0x8c5b30, roughness: 0.6 });
+    const matBoardMaterial = new THREE.MeshStandardMaterial({ color: 0xf3efe6, roughness: 0.96 });
+    const glazingMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 0.04,
+      metalness: 0,
+      transparent: true,
+      opacity: 0.1,
+      envMapIntensity: 1.4,
+    });
+    // Warm scallop of light on the wall above each work: one shared texture, additive,
+    // so every painting reads as lit without a real light per work.
+    const lightPoolTexture = registerTexture(makeLightPoolTexture());
+    const lightPoolMaterial = new THREE.MeshBasicMaterial({
+      map: lightPoolTexture,
+      color: 0xffe2b8,
+      transparent: true,
+      opacity: 0.42,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    // Soft contact shading where walls meet floor and ceiling (cheap baked "AO").
+    const edgeShadeTexture = registerTexture(makeEdgeShadeTexture());
+    const edgeShadeMaterial = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      alphaMap: edgeShadeTexture,
+      transparent: true,
+      opacity: 0.38,
+      depthWrite: false,
+    });
+    [-1, 1].forEach((side) => {
+      const floorShade = new THREE.Mesh(new THREE.PlaneGeometry(corridorLength, 0.34), edgeShadeMaterial);
+      floorShade.position.set(side * 3.955, 0.17, centerZ);
+      floorShade.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+      floorShade.userData.skipRaycast = true;
+      scene.add(floorShade);
+      const ceilingShade = new THREE.Mesh(new THREE.PlaneGeometry(corridorLength, 0.5), edgeShadeMaterial);
+      ceilingShade.position.set(side * 4.025, 3.8, centerZ);
+      ceilingShade.rotation.set(Math.PI, side < 0 ? Math.PI / 2 : -Math.PI / 2, 0);
+      ceilingShade.userData.skipRaycast = true;
+      scene.add(ceilingShade);
+    });
+
+    const spotStemGeometry = new THREE.CylinderGeometry(0.012, 0.012, 0.1, 8);
+    const spotBodyGeometry = new THREE.CylinderGeometry(0.045, 0.045, 0.18, 16);
+    const spotLensGeometry = new THREE.CircleGeometry(0.038, 16);
+
+    const maxAnisotropy = Math.min(renderer.capabilities.getMaxAnisotropy?.() || 1, 8);
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.setCrossOrigin('anonymous');
+    let disposed = false;
+    const prepareTexture = (texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = maxAnisotropy;
+      return texture;
+    };
+    const showTexture = (item, texture) => {
+      item.material.map = texture;
+      item.material.color.set(0xffffff);
+      item.material.needsUpdate = true;
+    };
+
+    hung.forEach((item) => {
+      const { work, side, width, height, frameWidth, matPad, matted, outerW, outerH } = item;
       const group = new THREE.Group();
-      group.position.set(side * 3.96, 1.88, z);
+      // Group origin sits on the wall face; local +z points into the room.
+      group.position.set(side * 4.028, item.y, item.z);
       group.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
 
-      // Restrained aged-gold frame with a cream mount inside it.
-      const frame = new THREE.Mesh(
-        new THREE.BoxGeometry(width + 0.3, height + 0.3, 0.12),
-        new THREE.MeshStandardMaterial({ color: 0x9c7a3c, roughness: 0.44, metalness: 0.45 })
-      );
-      group.add(frame);
-      const mount = new THREE.Mesh(
-        new THREE.PlaneGeometry(width + 0.12, height + 0.12),
-        new THREE.MeshStandardMaterial({ color: 0xf2ece0, roughness: 0.9 })
-      );
-      mount.position.z = 0.061;
-      mount.userData.skipRaycast = true;
-      group.add(mount);
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(outerW + 1.3, outerH + 1.5), lightPoolMaterial);
+      pool.position.set(0, 0.22, 0.004);
+      pool.userData.skipRaycast = true;
+      group.add(pool);
 
-      const mat = new THREE.MeshStandardMaterial({ color: 0xe9dfca, roughness: 0.52, emissive: 0x000000 });
-      const image = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
-      image.position.z = 0.065;
+      const innerW = width + 2 * matPad;
+      const innerH = height + 2 * matPad;
+      // Oak box frame: a deeper outer band with a darker inner sight edge, then the mat.
+      addFrameRing(group, innerW, innerH, frameWidth, 0.05, 0.025, oakFrameMaterial);
+      addFrameRing(group, innerW, innerH, 0.008, 0.042, 0.021, oakFrameEdgeMaterial);
+      const mat = new THREE.Mesh(new THREE.PlaneGeometry(innerW, innerH), matBoardMaterial);
+      mat.position.z = 0.03;
+      mat.userData.skipRaycast = true;
+      group.add(mat);
+
+      const material = new THREE.MeshStandardMaterial({ color: 0x8b7e68, roughness: 0.62, metalness: 0 });
+      const image = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+      image.position.z = 0.032;
       image.userData.work = work;
       image.userData.clickable = true;
       group.add(image);
       paintingMeshes.push(image);
 
-      const glazing = new THREE.Mesh(
-        new THREE.PlaneGeometry(width, height),
-        new THREE.MeshPhysicalMaterial({
-          color: 0xffffff,
-          roughness: 0.08,
-          metalness: 0,
-          transparent: true,
-          opacity: 0.08,
-        })
+      if (matted) {
+        // Works on paper are glazed; oil paintings are not.
+        const glass = new THREE.Mesh(new THREE.PlaneGeometry(innerW, innerH), glazingMaterial);
+        glass.position.z = 0.04;
+        glass.userData.skipRaycast = true;
+        group.add(glass);
+      }
+
+      // Museum wall label beside the work.
+      const labelTexture = registerTexture(makeWallLabelTexture(work, museum.artist));
+      const label = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.3, 0.12),
+        new THREE.MeshStandardMaterial({ map: labelTexture, roughness: 0.9 })
       );
-      glazing.position.z = 0.071;
-      glazing.userData.skipRaycast = true;
-      group.add(glazing);
+      label.position.set(outerW / 2 + 0.3, Math.min(0, 1.42 - item.y), 0.006);
+      label.userData.skipRaycast = true;
+      group.add(label);
 
-      // A soft warm accent spot per painting — gentle in the already-bright daylight
-      // room, just enough to lift each canvas off the coloured wall.
-      const spot = new THREE.SpotLight(0xfff2da, 3.6, 7.5, Math.PI / 6.5, 0.6, 1.2);
-      spot.position.set(side * 2.6, 3.5, z);
-      spot.target.position.set(side * 3.95, 1.84, z);
-      scene.add(spot);
-      scene.add(spot.target);
-      // Visible track-light fixture above the painting.
-      addBox(scene, [0.14, 0.1, 0.14], [side * 1.3, 3.96, z], trimMaterial);
+      // Black cylindrical track spot aimed at the work.
+      const head = new THREE.Group();
+      head.position.set(side * 1.45, 3.98, item.z);
+      const stem = new THREE.Mesh(spotStemGeometry, trimMaterial);
+      stem.position.y = 0.05;
+      head.add(stem);
+      const body = new THREE.Mesh(spotBodyGeometry, trimMaterial);
+      body.rotation.x = Math.PI / 2;
+      const aim = new THREE.Group();
+      aim.add(body);
+      const lens = new THREE.Mesh(spotLensGeometry, ledMaterial);
+      lens.position.z = 0.095;
+      aim.add(lens);
+      head.add(aim);
+      scene.add(head);
+      aim.lookAt(side * 4, item.y, item.z);
+      head.traverse((obj) => { obj.userData.skipRaycast = true; });
 
-      loader.load(
-        work.image,
+      Object.assign(item, { material, mesh: image, low: null, high: null, highLoading: false });
+      // Every work starts with a 500px preview; nearby works upgrade (see updateDetail).
+      textureLoader.load(
+        `${work.image}&w=500`,
         (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy?.() || 1, 8);
-          mat.map = texture;
-          // Faint self-illumination so canvases stay legible between spotlight pools.
-          mat.emissive = new THREE.Color(0xffffff);
-          mat.emissiveMap = texture;
-          mat.emissiveIntensity = 0.16;
-          mat.needsUpdate = true;
+          if (disposed) {
+            texture.dispose();
+            return;
+          }
+          item.low = prepareTexture(texture);
+          if (!item.high) showTexture(item, item.low);
         },
         undefined,
         () => {
-          mat.color.set(0x9b8a6b);
+          material.color.set(0x9b8a6b);
         }
       );
 
       scene.add(group);
     });
+
+    // Detail budget: only the few works nearest the visitor (plus the one being
+    // inspected) hold a 1280px texture; the rest keep their preview. GPU texture
+    // memory therefore stays roughly constant however many works hang (D-SITE-078).
+    const HIGH_DETAIL_COUNT = 4;
+    const HIGH_DETAIL_RANGE = 7;
+    let highLoadsInFlight = 0;
+    const distanceTo = (item) => Math.hypot(camera.position.x - item.side * 4, camera.position.z - item.z);
+    function updateDetail() {
+      const ranked = [...hung].sort((a, b) => distanceTo(a) - distanceTo(b));
+      const wanted = new Set(
+        ranked.slice(0, HIGH_DETAIL_COUNT).filter((item) => distanceTo(item) < HIGH_DETAIL_RANGE)
+      );
+      const inspected = hung.find((item) => item.work === lastInspected);
+      if (inspected && inspectingRef.current) wanted.add(inspected);
+
+      hung.forEach((item) => {
+        if (!wanted.has(item) && item.high) {
+          if (item.low) showTexture(item, item.low);
+          item.high.dispose();
+          item.high = null;
+        }
+      });
+      wanted.forEach((item) => {
+        if (item.high || item.highLoading || highLoadsInFlight >= 2) return;
+        item.highLoading = true;
+        highLoadsInFlight += 1;
+        textureLoader.load(
+          `${item.work.image}&w=1280`,
+          (texture) => {
+            highLoadsInFlight -= 1;
+            item.highLoading = false;
+            if (disposed) {
+              texture.dispose();
+              return;
+            }
+            item.high = prepareTexture(texture);
+            showTexture(item, item.high);
+          },
+          undefined,
+          () => {
+            highLoadsInFlight -= 1;
+            item.highLoading = false;
+          }
+        );
+      });
+    }
+
+    // A fixed pool of four real spotlights follows the visitor to the nearest works.
+    // The light count never changes, so shaders never recompile and the per-pixel
+    // lighting cost is flat regardless of how many works hang.
+    const spotPool = Array.from({ length: 4 }, () => {
+      const spot = new THREE.SpotLight(0xfff0d6, 0, 8, Math.PI / 7, 0.55, 1.2);
+      spot.userData = { item: null, level: 0 };
+      scene.add(spot);
+      scene.add(spot.target);
+      return spot;
+    });
+    const SPOT_INTENSITY = 7;
+    function assignSpots() {
+      const nearest = [...hung].sort((a, b) => distanceTo(a) - distanceTo(b)).slice(0, spotPool.length);
+      const free = spotPool.filter((spot) => !nearest.includes(spot.userData.item));
+      nearest.forEach((item) => {
+        if (spotPool.some((spot) => spot.userData.item === item)) return;
+        const spot = free.shift();
+        if (!spot) return;
+        spot.userData.item = item;
+        spot.userData.level = 0; // fade in rather than pop
+        spot.position.set(item.side * 1.45, 3.92, item.z + 0.15);
+        spot.target.position.set(item.side * 4, item.y, item.z);
+      });
+    }
+    let detailClock = 0;
+    function updateGalleryLighting(dt) {
+      detailClock += dt;
+      if (detailClock > 0.3) {
+        detailClock = 0;
+        assignSpots();
+        updateDetail();
+      }
+      spotPool.forEach((spot) => {
+        spot.userData.level = Math.min(1, spot.userData.level + dt * 3);
+        spot.intensity = spot.userData.item ? SPOT_INTENSITY * spot.userData.level : 0;
+      });
+    }
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -1482,6 +1897,7 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
 
       camera.rotation.y = cameraState.yaw;
       camera.rotation.x = cameraState.pitch;
+      updateGalleryLighting(dt);
       renderer.render(scene, camera);
     }
 
@@ -1529,6 +1945,12 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
     animate(previousTime);
 
     return () => {
+      disposed = true;
+      hung.forEach((item) => {
+        item.low?.dispose();
+        item.high?.dispose();
+      });
+      envTarget.dispose();
       window.cancelAnimationFrame(frameId);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
@@ -1561,6 +1983,111 @@ function GalleryCanvas({ museum, entered, inspecting, onInspect, onExit }) {
   return <canvas ref={canvasRef} className={styles.galleryCanvas} aria-label={`${museum.artist.name} 3D gallery`} />;
 }
 
+// Real-world hanging size in metres. Wikidata dimensions set the scale; the image's own
+// pixel proportions set the shape (so a texture is never stretched even when the
+// recorded size includes a frame or differs slightly). Fitted to the wall height.
+function physicalSize(work) {
+  const cm = work.dimensionsCm;
+  const px = work.imagePixels;
+  const aspect = px?.width && px?.height ? px.width / px.height : cm?.width && cm?.height ? cm.width / cm.height : 1.25;
+  let height;
+  if (cm?.width && cm?.height) {
+    // Preserve the recorded surface area with the image's aspect ratio.
+    height = Math.sqrt(((cm.width / 100) * (cm.height / 100)) / aspect);
+  } else {
+    // Unknown size: a modest easel-painting scale.
+    height = Math.min(0.9, 1.5 / aspect);
+  }
+  let width = height * aspect;
+  const fit = Math.min(1, 2.5 / height, 3.4 / width);
+  width *= fit;
+  height *= fit;
+  // Very small prints stay at least 30 cm on the long edge so they can be found.
+  const longEdge = Math.max(width, height);
+  const realLongEdge = cm?.width && cm?.height ? Math.max(cm.width, cm.height) / 100 : null;
+  if (longEdge < 0.3) {
+    width *= 0.3 / longEdge;
+    height *= 0.3 / longEdge;
+  }
+  // Works under ~60 cm with a recorded size hang matted and glazed, like works on paper.
+  return { width, height, matted: realLongEdge !== null && realLongEdge < 0.6 };
+}
+
+// Four boxes forming a rectangular frame ring around an inner opening.
+function addFrameRing(group, innerW, innerH, band, depth, z, material) {
+  const outerW = innerW + band * 2;
+  const pieces = [
+    [outerW, band, 0, innerH / 2 + band / 2],
+    [outerW, band, 0, -(innerH / 2 + band / 2)],
+    [band, innerH, -(innerW / 2 + band / 2), 0],
+    [band, innerH, innerW / 2 + band / 2, 0],
+  ];
+  pieces.forEach(([w, h, x, y]) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, depth), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.userData.skipRaycast = true;
+    group.add(mesh);
+  });
+}
+
+function makeLightPoolTexture() {
+  const canvas = makeCanvas(256);
+  const ctx = canvas.getContext('2d');
+  // Elliptical scallop: brightest just above centre, fading to nothing at the edge.
+  ctx.save();
+  ctx.translate(128, 112);
+  ctx.scale(1, 1.15);
+  const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 120);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.45, 'rgba(255,255,255,0.55)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(-128, -128, 256, 256);
+  ctx.restore();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function makeEdgeShadeTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 4;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  // alphaMap reads the green channel: white (opaque shade) at the bottom edge.
+  const grad = ctx.createLinearGradient(0, 64, 0, 0);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(1, '#000000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 4, 64);
+  return new THREE.CanvasTexture(canvas);
+}
+
+function makeWallLabelTexture(work, artist) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 204;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f6f3ec';
+  ctx.fillRect(0, 0, 512, 204);
+  ctx.fillStyle = '#5c5246';
+  ctx.font = '22px ui-monospace, SFMono-Regular, Menlo, monospace';
+  ctx.fillText((artist?.name || '').toUpperCase(), 28, 48);
+  ctx.fillStyle = '#1f1a14';
+  ctx.font = 'italic 34px Georgia, Times New Roman, serif';
+  const title = String(work.title || '');
+  ctx.fillText(title.length > 26 ? `${title.slice(0, 25)}…` : title, 28, 104);
+  ctx.fillStyle = '#5c5246';
+  ctx.font = '24px Georgia, Times New Roman, serif';
+  const size = work.dimensionsCm ? ` · ${work.dimensionsCm.height} × ${work.dimensionsCm.width} cm` : '';
+  ctx.fillText(`${work.year || 'Undated'}${size}`, 28, 150);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
 function addBox(scene, size, position, material) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]), material);
   mesh.position.set(position[0], position[1], position[2]);
@@ -1577,57 +2104,61 @@ function makeCanvas(size) {
   return canvas;
 }
 
-// Herringbone oak parquet — the characteristic National Gallery / Tate floor.
+// Light oak chevron parquet. Four columns of 45-degree planks alternating direction;
+// sizes are chosen so the canvas tiles seamlessly in both directions.
 function makeParquetTexture() {
   const size = 512;
   const canvas = makeCanvas(size);
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#b9893f';
+  const columns = 4;
+  const columnWidth = size / columns;
+  const plankLength = columnWidth / Math.cos(Math.PI / 4);
+  const rows = 12;
+  const step = size / rows;
+  const plankWidth = step * Math.sin(Math.PI / 4);
+  const tones = ['#d8ad75', '#cfa36b', '#c99d64', '#dcb37d', '#c6975e', '#d4a870'];
+  ctx.fillStyle = '#cba06a';
   ctx.fillRect(0, 0, size, size);
-
-  const plankL = 120;
-  const plankW = 30;
-  const tones = ['#c89a52', '#bd8c45', '#b07e3a', '#c79248', '#a9763a'];
-  let t = 0;
-  // Lay planks at +/-45° in a herringbone weave.
-  for (let row = -1; row < size / plankW + 2; row += 1) {
-    for (let col = -1; col < size / plankW + 2; col += 1) {
-      const angle = (row + col) % 2 === 0 ? Math.PI / 4 : -Math.PI / 4;
-      const cx = col * plankW * 1.4;
-      const cy = row * plankW * 1.4;
+  for (let c = 0; c < columns; c += 1) {
+    const angle = c % 2 === 0 ? Math.PI / 4 : -Math.PI / 4;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(c * columnWidth, 0, columnWidth, size);
+    ctx.clip();
+    for (let k = -2; k <= rows + 2; k += 1) {
       ctx.save();
-      ctx.translate(cx, cy);
+      ctx.translate(c * columnWidth + columnWidth / 2, k * step);
       ctx.rotate(angle);
-      ctx.fillStyle = tones[t % tones.length];
-      t += 1;
-      ctx.fillRect(-plankL / 2, -plankW / 2, plankL, plankW);
-      // Grain streaks.
-      ctx.strokeStyle = 'rgba(80, 52, 24, 0.22)';
+      ctx.fillStyle = tones[(k * 7 + c * 3 + rows * 4) % tones.length];
+      ctx.fillRect(-plankLength / 2, -plankWidth / 2, plankLength, plankWidth);
+      // Soft grain along the plank.
+      ctx.strokeStyle = 'rgba(120, 80, 40, 0.12)';
       ctx.lineWidth = 1;
-      for (let g = 0; g < 4; g += 1) {
-        const gy = -plankW / 2 + (g + 1) * (plankW / 5);
+      for (let g = 1; g < 4; g += 1) {
+        const gy = -plankWidth / 2 + (g * plankWidth) / 4;
         ctx.beginPath();
-        ctx.moveTo(-plankL / 2, gy + Math.sin(g) * 1.5);
-        ctx.lineTo(plankL / 2, gy - Math.sin(g) * 1.5);
+        ctx.moveTo(-plankLength / 2, gy);
+        ctx.bezierCurveTo(-plankLength / 6, gy + 1.5, plankLength / 6, gy - 1.5, plankLength / 2, gy);
         ctx.stroke();
       }
-      // Plank edge.
-      ctx.strokeStyle = 'rgba(60, 40, 18, 0.5)';
-      ctx.strokeRect(-plankL / 2, -plankW / 2, plankL, plankW);
+      // Fine joint line.
+      ctx.strokeStyle = 'rgba(105, 68, 34, 0.35)';
+      ctx.strokeRect(-plankLength / 2, -plankWidth / 2, plankLength, plankWidth);
       ctx.restore();
     }
+    ctx.restore();
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
-// Blue-grey painted wall with a faint damask weave and plaster mottle.
+// Warm cream painted plaster with a soft hand-finished mottle.
 function makeWallTexture() {
   const size = 512;
   const canvas = makeCanvas(size);
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#6f7e88';
+  ctx.fillStyle = '#e3d4c1';
   ctx.fillRect(0, 0, size, size);
   // Soft mottle for hand-painted plaster.
   for (let i = 0; i < 1400; i += 1) {
@@ -1639,51 +2170,6 @@ function makeWallTexture() {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
-  }
-  // Very faint damask diamond lattice.
-  ctx.strokeStyle = 'rgba(255,255,255,0.035)';
-  ctx.lineWidth = 1;
-  const step = 64;
-  for (let x = -size; x < size * 2; x += step) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x + size, size);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x + size, 0);
-    ctx.lineTo(x, size);
-    ctx.stroke();
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-// Dark green-grey veined marble for the dado.
-function makeMarbleTexture() {
-  const size = 512;
-  const canvas = makeCanvas(size);
-  const ctx = canvas.getContext('2d');
-  const grad = ctx.createLinearGradient(0, 0, size, size);
-  grad.addColorStop(0, '#2c3833');
-  grad.addColorStop(0.5, '#384541');
-  grad.addColorStop(1, '#2a352f');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-  // Veins.
-  for (let i = 0; i < 26; i += 1) {
-    ctx.strokeStyle = `rgba(${190 + Math.random() * 40},${200 + Math.random() * 30},${195 + Math.random() * 30},${0.08 + Math.random() * 0.12})`;
-    ctx.lineWidth = Math.random() * 1.6 + 0.3;
-    ctx.beginPath();
-    let x = Math.random() * size;
-    let y = Math.random() * size;
-    ctx.moveTo(x, y);
-    for (let s = 0; s < 6; s += 1) {
-      x += (Math.random() - 0.5) * 140;
-      y += (Math.random() - 0.5) * 140;
-      ctx.lineTo(x, y);
-    }
-    ctx.stroke();
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -1719,16 +2205,13 @@ function makeWallTextTexture(artist) {
   const context = canvas.getContext('2d');
 
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = 'rgba(30, 25, 18, 0.62)';
-  context.font = '24px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
   context.textAlign = 'center';
-  context.fillText('WELCOME TO', 512, 96);
-  context.fillStyle = 'rgba(20, 18, 16, 0.92)';
-  context.font = '68px Georgia, Times New Roman, serif';
-  context.fillText(artist.name.toUpperCase(), 512, 166);
-  context.fillStyle = 'rgba(72, 55, 32, 0.74)';
-  context.font = '27px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
-  context.fillText(`${artist.birth || ''} - ${artist.death || 'present'}`, 512, 220);
+  context.fillStyle = 'rgba(58, 40, 26, 0.92)';
+  context.font = '76px Georgia, Times New Roman, serif';
+  context.fillText(artist.name.toUpperCase(), 512, 150);
+  context.fillStyle = 'rgba(92, 70, 48, 0.8)';
+  context.font = '28px Georgia, Times New Roman, serif';
+  context.fillText(`— ${artist.birth || ''} – ${artist.death || 'present'} —`, 512, 210);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;

@@ -200,10 +200,10 @@ export const portfolioItems = [
       'A source-attributed art-history atlas and walkable museum prototype using Wikipedia, Wikidata, Wikimedia Commons, and Three.js.',
     emphasis: 'Shows a richer exploratory interface while keeping sourcing visible and avoiding invented facts.',
     proof: ['Source attribution', '3D gallery', 'Local fallback catalogue', 'No user data collection'],
-    href: '/apps/stea/art-atlas',
+    href: '/portfolio/art-atlas',
     tags: ['Prototype', 'Sources', 'Three.js'],
     views: ['portfolio'],
-    requiresAuth: true,
+    requiresAuth: false,
   },
 ];
 

@@ -127,6 +127,180 @@ const FEATURED_WORKS_BY_ARTIST = {
       sourceUrl: 'https://commons.wikimedia.org/wiki/File:Westminster_Abbey_-_51370500850.jpg',
     }),
   ],
+  // Pieter Bruegel the Elder: pinned key works, IDs/files/articles taken from Wikidata (2026-11-02).
+  Q43270: [
+    featuredWork({
+      id: 'Q533619',
+      title: "Netherlandish Proverbs",
+      year: '1559',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20%28der%20%C3%84ltere%29%20%28ca.%201525%20-%201569%29%20-%20Die%20niederl%C3%A4ndischen%20Sprichw%C3%B6rter%20-%201720%20-%20Gem%C3%A4ldegalerie.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Netherlandish_Proverbs",
+    }),
+    featuredWork({
+      id: 'Q500985',
+      title: "The Hunters in the Snow",
+      year: '1565',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20the%20Elder%20-%20Hunters%20in%20the%20Snow%20%28Winter%29%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Hunters_in_the_Snow",
+    }),
+    featuredWork({
+      id: 'Q15293656',
+      title: "The Tower of Babel",
+      year: '1563',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20d.%20%C3%84.%2C%20Kunsthistorisches%20Museum%20Wien%2C%20Gem%C3%A4ldegalerie%20-%20Turmbau%20zu%20Babel%20-%20GG%201026%20-%20Kunsthistorisches%20Museum.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Tower_of_Babel_(Bruegels)",
+    }),
+    featuredWork({
+      id: 'Q603751',
+      title: "The Peasant Wedding",
+      year: '1568',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20the%20Elder%20-%20Peasant%20Wedding%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Peasant_Wedding",
+    }),
+    featuredWork({
+      id: 'Q644856',
+      title: "The Triumph of Death",
+      year: '1560',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/The%20Triumph%20of%20Death%20by%20Pieter%20Bruegel%20the%20Elder.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Triumph_of_Death",
+    }),
+    featuredWork({
+      id: 'Q697332',
+      title: "Children's Games",
+      year: '1560',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20the%20Elder%20-%20Children%E2%80%99s%20Games%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Children%27s_Games_(Bruegel)",
+    }),
+    featuredWork({
+      id: 'Q689236',
+      title: "The Fight Between Carnival and Lent",
+      year: '1559',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20d.%20%C3%84.%20066.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Fight_Between_Carnival_and_Lent",
+    }),
+    featuredWork({
+      id: 'Q776175',
+      title: "The Harvesters",
+      year: '1565',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20the%20Elder-%20The%20Harvesters%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Harvesters_(painting)",
+    }),
+    featuredWork({
+      id: 'Q1192570',
+      title: "The Blind Leading the Blind",
+      year: '1568',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Bruegel%2C%20Pieter%20%28I%29%20-%20Blind%20leading%20the%20blind%20Google%20Art%20Project.jpeg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Parable_of_the_Blind",
+    }),
+    featuredWork({
+      id: 'Q80869',
+      title: "Dull Gret",
+      year: '1561',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Dulle%20Griet%2C%20by%20Pieter%20Brueghel%20%28I%29.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Dull_Gret",
+    }),
+    featuredWork({
+      id: 'Q594406',
+      title: "The Fall of the Rebel Angels",
+      year: '1562',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20the%20Elder%20-%20The%20Fall%20of%20the%20Rebel%20Angels%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Fall_of_the_Rebel_Angels",
+    }),
+    featuredWork({
+      id: 'Q95562',
+      title: "The Peasant Dance",
+      year: '1568',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Bruegel%20The%20Peasant%20Dance.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Peasant_Dance",
+    }),
+  ],
+  // Albrecht Dürer: pinned key works, IDs/files/articles taken from Wikidata (2026-11-02).
+  Q5580: [
+    featuredWork({
+      id: 'Q2546309',
+      title: "Self-Portrait with Fur-Trimmed Robe",
+      year: '1500',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/D%C3%BCrer%20Alte%20Pinakothek.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Self-Portrait_(D%C3%BCrer,_Munich)",
+    }),
+    featuredWork({
+      id: 'Q699388',
+      title: "Young Hare",
+      year: '1502',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20Hare%2C%201502%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Young_Hare",
+    }),
+    featuredWork({
+      id: 'Q1362177',
+      title: "Melencolia I",
+      year: '1514',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20Melencolia%20I%20-%20Google%20Art%20Project%20%28427760%29.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Melencolia_I",
+    }),
+    featuredWork({
+      id: 'Q1755464',
+      title: "Knight, Death, and the Devil",
+      year: '1513',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%2C%20Knight%2C%20Death%20and%20Devil%2C%201513%2C%20NGA%206637.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Knight,_Death_and_the_Devil",
+    }),
+    featuredWork({
+      id: 'Q351300',
+      title: "Adam and Eve",
+      year: '1507',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20Adam%20and%20Eve%20%28Prado%29%202.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Adam_and_Eve_(D%C3%BCrer)",
+    }),
+    featuredWork({
+      id: 'Q748518',
+      title: "The Rhinoceros",
+      year: '1512',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%2C%20The%20Rhinoceros%2C%201515%2C%20NGA%2047903.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/D%C3%BCrer%27s_Rhinoceros",
+    }),
+    featuredWork({
+      id: 'Q829270',
+      title: "The Four Apostles",
+      year: '1526',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20The%20Four%20Apostles%2C%20Saints%20John%2C%20Peter%2C%20Mark%20and%20Paul.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/The_Four_Apostles",
+    }),
+    featuredWork({
+      id: 'Q699552',
+      title: "Praying Hands",
+      year: '1500',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20Praying%20Hands%2C%201508%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Praying_Hands_(D%C3%BCrer)",
+    }),
+    featuredWork({
+      id: 'Q254794',
+      title: "Great Piece of Turf",
+      year: '1503',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20The%20Large%20Piece%20of%20Turf%2C%201503%20-%20Google%20Art%20Project.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Great_Piece_of_Turf",
+    }),
+    featuredWork({
+      id: 'Q1170194',
+      title: "Feast of the Rosary",
+      year: '1506',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20Das%20Rosenkranzfest%20%281506%29.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Feast_of_the_Rosary",
+    }),
+    featuredWork({
+      id: 'Q1198912',
+      title: "St. Jerome in His Study",
+      year: '1514',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20-%20St.%20Jerome%20in%20His%20Study%20-%201989.232%20-%20Cleveland%20Museum%20of%20Art.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Saint_Jerome_in_His_Study_(D%C3%BCrer)",
+    }),
+    featuredWork({
+      id: 'Q2388965',
+      title: "Self-Portrait",
+      year: '1498',
+      image: "https://commons.wikimedia.org/wiki/Special:FilePath/Selbstportr%C3%A4t%2C%20by%20Albrecht%20D%C3%BCrer%2C%20from%20Prado%20in%20Google%20Earth.jpg",
+      sourceUrl: "https://en.wikipedia.org/wiki/Self-Portrait_(D%C3%BCrer,_Madrid)",
+    }),
+  ],
   Q130531: [
     featuredWork({
       id: 'Q321303',
@@ -293,7 +467,12 @@ export async function buildArtistMuseum(wikidataId) {
     fetchWikidataWorks(wikidataId),
     fetchCommonsFallbackWorks(wikidataId),
   ]);
-  const mergedWorks = mergeArtistWorks(wikidataId, [...wikidataWorks, ...commonsFallbackWorks]);
+  // Check candidates against Commons before taking the gallery's 12, so a deleted
+  // file never takes a wall slot, then attach real-world sizes (D-SITE-078).
+  const candidates = mergeArtistWorks(wikidataId, [...wikidataWorks, ...commonsFallbackWorks], 40);
+  const mergedWorks = await withWorkDimensions(
+    (await withVerifiedImages(candidates)).slice(0, ARTIST_WORK_LIMIT)
+  );
   // Pull a real gallery-label description for each work from its linked Wikipedia
   // article, so the inspect card reads like a museum wall text rather than a
   // generic "this work has a record" placeholder.
@@ -409,10 +588,15 @@ async function fetchWikidataWorks(wikidataId) {
       headers: SPARQL_HEADERS,
       next: { revalidate: 60 * 60 * 24 * 7 },
     });
-    if (!response.ok) return [];
+    // A failed query is not an empty gallery: throw so the route answers 503 uncached
+    // instead of caching a wall of nothing for a day.
+    if (!response.ok) throw new Error(`Wikidata works query failed (${response.status})`);
     const data = await response.json();
     return dedupeWorks(
-      data.results.bindings.map((binding) => {
+      data.results.bindings
+        // P18 can be an "unknown value" blank node rather than a Commons file.
+        .filter((binding) => binding.image?.type === 'uri' && /commons\.wikimedia\.org/.test(binding.image.value))
+        .map((binding) => {
         const year = formatWikidataYear(binding.inception?.value);
         return {
           id: binding.work.value.split('/').pop(),
@@ -433,8 +617,64 @@ async function fetchWikidataWorks(wikidataId) {
       })
     );
   } catch (error) {
-    return [];
+    throw new Error(`Wikidata works unavailable for ${wikidataId}: ${error?.message || error}`);
   }
+}
+
+// Real-world size (Wikidata P2048 height, P2049 width) so the gallery can hang each
+// work at true scale. Units vary per record (cm, mm, m, inch), so the unit is read
+// with each value and converted; implausible or missing sizes are left out and the
+// client falls back to the image's own aspect ratio (D-SITE-078).
+const LENGTH_UNIT_TO_CM = {
+  Q174728: 1, // centimetre
+  Q174789: 0.1, // millimetre
+  Q11573: 100, // metre
+  Q218593: 2.54, // inch
+};
+
+async function withWorkDimensions(works) {
+  const ids = works.map((work) => work.id).filter((id) => /^Q\d+$/.test(id || ''));
+  if (!ids.length) return works;
+  const query = `
+    SELECT ?work ?prop ?amount ?unit WHERE {
+      VALUES ?work { ${ids.map((id) => `wd:${id}`).join(' ')} }
+      VALUES (?prop ?p ?psv) { ("height" p:P2048 psv:P2048) ("width" p:P2049 psv:P2049) }
+      ?work ?p ?statement.
+      ?statement ?psv ?value.
+      ?value wikibase:quantityAmount ?amount; wikibase:quantityUnit ?unit.
+    }
+  `;
+  const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
+
+  let bindings = [];
+  try {
+    const response = await fetch(url, {
+      headers: SPARQL_HEADERS,
+      next: { revalidate: 60 * 60 * 24 * 7 },
+    });
+    if (!response.ok) return works;
+    bindings = (await response.json()).results.bindings;
+  } catch (error) {
+    return works;
+  }
+
+  const sizes = new Map();
+  for (const binding of bindings) {
+    const id = binding.work.value.split('/').pop();
+    const factor = LENGTH_UNIT_TO_CM[binding.unit.value.split('/').pop()];
+    const cm = Number(binding.amount.value) * factor;
+    if (!factor || !Number.isFinite(cm) || cm < 1 || cm > 1500) continue;
+    const entry = sizes.get(id) || {};
+    // First value wins: some records also list a framed or alternative size.
+    if (entry[binding.prop.value] === undefined) entry[binding.prop.value] = Math.round(cm * 10) / 10;
+    sizes.set(id, entry);
+  }
+
+  return works.map((work) => {
+    const size = sizes.get(work.id);
+    if (!size?.height || !size?.width) return work;
+    return { ...work, dimensionsCm: { height: size.height, width: size.width } };
+  });
 }
 
 async function fetchCommonsFallbackWorks(wikidataId) {
@@ -603,11 +843,61 @@ function commonsSpecialFilePath(title) {
   return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
 }
 
-function mergeArtistWorks(wikidataId, works) {
+const ARTIST_WORK_LIMIT = 12;
+
+function mergeArtistWorks(wikidataId, works, limit = ARTIST_WORK_LIMIT) {
   return dedupeWorks([
     ...(FEATURED_WORKS_BY_ARTIST[wikidataId] || []),
     ...works.map(withProxiedWorkImage),
-  ]).slice(0, 12);
+  ]).slice(0, limit);
+}
+
+function commonsFileName(imageSource) {
+  try {
+    const url = new URL(imageSource);
+    const marker = '/Special:FilePath/';
+    const raw = url.pathname.includes(marker)
+      ? url.pathname.slice(url.pathname.indexOf(marker) + marker.length)
+      : url.pathname.split('/').pop();
+    return decodeURIComponent(raw).replace(/_/g, ' ');
+  } catch {
+    return '';
+  }
+}
+
+// One Commons API call per gallery: drops works whose file has been deleted (Wikidata
+// P18 claims can outlive the file) and records the original pixel size so the client
+// can keep true proportions when Wikidata has no physical dimensions.
+async function withVerifiedImages(works) {
+  const named = works.map((work) => ({ work, file: commonsFileName(work.imageSource) }));
+  const titles = [...new Set(named.map((item) => item.file).filter(Boolean))].slice(0, 50);
+  if (!titles.length) return works;
+
+  const url = new URL('https://commons.wikimedia.org/w/api.php');
+  url.searchParams.set('action', 'query');
+  url.searchParams.set('titles', titles.map((title) => `File:${title}`).join('|'));
+  url.searchParams.set('prop', 'imageinfo');
+  url.searchParams.set('iiprop', 'size');
+  url.searchParams.set('format', 'json');
+  url.searchParams.set('formatversion', '2');
+
+  const response = await fetch(url, { headers: WIKI_HEADERS, next: { revalidate: 60 * 60 * 24 } });
+  if (!response.ok) throw new Error(`Commons image check failed (${response.status})`);
+  const data = await response.json();
+
+  const renamed = new Map((data?.query?.normalized || []).map((entry) => [entry.from, entry.to]));
+  const pages = new Map((data?.query?.pages || []).map((page) => [page.title, page]));
+
+  return named
+    .map(({ work, file }) => {
+      if (!file) return work;
+      const requested = `File:${file}`;
+      const page = pages.get(renamed.get(requested) || requested);
+      if (!page || page.missing || !page.imageinfo?.[0]) return null;
+      const { width, height } = page.imageinfo[0];
+      return width && height ? { ...work, imagePixels: { width, height } } : work;
+    })
+    .filter(Boolean);
 }
 
 function withProxiedWorkImage(work) {

@@ -1,5 +1,73 @@
 # Decisions
 
+## 2026-11-02 — Art Atlas goes public at `/portfolio/art-atlas`; real-scale hang, fixed GPU budget, in-place deep zoom (D-SITE-078)
+
+**Evidence:**
+- Dürer showed 2 paintings and van Eyck none (David's screenshots). Local proxy check: 10 of 12
+  Dürer images returned 502 "redirected to an unsupported host". Wikimedia now serves scaled
+  thumbnails from `thumb.wikimedia.org`, which the proxy allowlist didn't include. Only images
+  smaller than the requested width (served unscaled from `upload.wikimedia.org`) loaded. This hit
+  every artist.
+- A failed Wikidata query returned `[]`, the same as an artist with no works, and the artist route
+  is cached for a day. During a local sweep, Degas and Cassatt came back empty this way.
+- Trackpad pinch on the timeline zoomed the whole browser page (screenshot at 70%). React attaches
+  `onWheel` as a passive listener, so its `preventDefault()` was ignored. Safari pinch arrives as
+  `gesture*` events, which nothing handled.
+
+**Decisions:**
+- **Public route.** Moved from `/apps/stea/art-atlas` (signed-in) to `/portfolio/art-atlas` at
+  David's request. The server gate (`protectedRoutes.js`, now 16 bases), the client STEa gate and
+  the gate layout are removed for this route. `/apps/stea/art-atlas/*` gets a 308 redirect. The
+  portfolio card is `requiresAuth: false`. The STEa launcher card and the app-catalogue key stay,
+  pointing at the public URL. Still read-only, with no user data (D-2026-06-17 unchanged).
+- **Image proxy.** `thumb.wikimedia.org` is allowed. Widths are restricted to Wikimedia's own
+  thumbnail steps: 500, 960, 1280, 1920 and 3840 (others round up; default 1280). Original-file
+  URLs are rewritten to sized thumbnails, so a 6000px+ original is never proxied. Public exposure
+  is bounded by the host allowlist and these sizes.
+- **Fail loudly, never cache emptiness.** A Wikidata or Commons failure now throws, and the artist
+  route returns 503 with `no-store`.
+- **Commons check before hanging.** One Commons API call per gallery drops works whose file has
+  been deleted (Kahlo had two) and records pixel size. Wikidata "unknown value" images (a Magritte
+  blank node) are filtered out. The gallery limit stays 12 per artist (David: don't raise it).
+- **Bruegel added** (Q43270, Northern Renaissance). Twelve key works for Bruegel and twelve for
+  Dürer are pinned, with IDs, files and articles taken from a Wikidata query on 2026-11-02, not
+  typed by hand. *Landscape with the Fall of Icarus* is excluded because Wikidata doesn't credit it
+  to Bruegel (disputed attribution).
+- **Real scale.** Height/width (P2048/P2049) are read with their units and converted to cm (mm, m
+  and inch handled). The recorded area sets the scale and the image's pixel proportions set the
+  shape, so textures are never stretched. Works are fitted to the wall (max 2.5 m × 3.4 m) and
+  small prints have a 30 cm minimum. Spacing follows actual frame widths.
+- **Look: warm contemporary** (David chose this from four concepts). Cream plaster, warm-grey
+  dado with mouldings, light-oak chevron parquet, a coffered glowing light box, cornice LED wash,
+  black track spots, and slim oak frames with white mats. Works on paper are glazed. Wall labels
+  give title, year and size.
+- **Fixed rendering budget.** It no longer grows with the number of works:
+  - every work loads a 500px preview;
+  - only the 4 nearest works within 7 m (plus the one being inspected) hold a 1280px texture,
+    which is released when you walk away;
+  - 4 pooled spotlights follow the visitor, replacing one per work, so the light count is fixed
+    and shaders never recompile;
+  - light pools are a shared additive texture;
+  - one small `RoomEnvironment` reflection map, using `three/addons` from the existing `three`
+    dependency (no new dependency);
+  - pixel ratio capped at 1.5.
+- **Deep zoom in place.** Wheel, pinch or double-click zooms in the inspect view, and drag pans.
+  Past 1.5× it swaps to the 3840px rendering, the largest Wikimedia makes, and only one large
+  image is held at a time. Zooming beyond 3840px would need server-side tiling (new
+  infrastructure), so it isn't done.
+- **Timeline zoom.** Native non-passive `wheel`/`gesture*` listeners plus two-pointer touch
+  pinch, all through one `zoomBy`. Page zoom is never triggered.
+
+**Verified locally (2026-11-02):**
+- Proxy sweep across all 47 artists after the host fix: 476 of 479 images 200. The 3 failures were
+  the deleted Kahlo files and the Magritte blank node, now filtered out.
+- Headless Chrome on the public route: a pinch moved atlas zoom from 0.34 to 1.44 with page zoom
+  at 1. Bruegel, Dürer and van Eyck galleries render every work. Inspect zoom reached 521% with the
+  3840px label.
+- Gate tests 23/23 pass. `npm run build` passes, and so does the postbuild leak test.
+- **Not verified:** real Safari trackpad `gesture*` events and real touchscreen pinch. These need a
+  physical device.
+
 ## 2026-10-31 — Career Ops Apply Assist: editable employment history, separate from evidence (D-SITE-077)
 
 **Why:** "Recent roles (for employment-history fields)" showed the first four evidence anchors

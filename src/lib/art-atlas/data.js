@@ -1,4 +1,4 @@
-export const ART_ATLAS_VERSION = '2026-06-18-cosmos-v4-bacon';
+export const ART_ATLAS_VERSION = '2026-11-02-cosmos-v5-bruegel';
 
 export const ART_PERIODS = [
   {
@@ -47,6 +47,7 @@ export const ART_PERIODS = [
       artist('Jan van Eyck', 'Jan van Eyck', 'Q102272', 1390, 1441, -78, -26),
       artist('Albrecht Durer', 'Albrecht Dürer', 'Q5580', 1471, 1528, 20, -76),
       artist('Hieronymus Bosch', 'Hieronymus Bosch', 'Q130531', 1450, 1516, 62, 52),
+      artist('Pieter Bruegel the Elder', 'Pieter Bruegel the Elder', 'Q43270', 1526, 1569, -24, 74),
     ],
   },
   {
@@ -213,6 +214,17 @@ export const KNOWN_ARTWORKS = [
   ['Primavera', 'Q5669'],
   ['The Garden of Earthly Delights', 'Q130531'],
   ['The Haywain Triptych', 'Q130531'],
+  ['Netherlandish Proverbs', 'Q43270'],
+  ['The Hunters in the Snow', 'Q43270'],
+  ['The Tower of Babel', 'Q43270'],
+  ['The Peasant Wedding', 'Q43270'],
+  ['The Triumph of Death', 'Q43270'],
+  ["Children's Games", 'Q43270'],
+  ['Young Hare', 'Q5580'],
+  ['Melencolia I', 'Q5580'],
+  ['Praying Hands', 'Q5580'],
+  ['The Rhinoceros', 'Q5580'],
+  ['Knight, Death and the Devil', 'Q5580'],
   ['The Arnolfini Portrait', 'Q102272'],
   ['Ghent Altarpiece', 'Q102272'],
   ['The Calling of Saint Matthew', 'Q42207'],
@@ -247,6 +259,7 @@ export const KNOWN_ARTWORKS = [
 function artist(slug, name, wikidataId, birth, death, dx, dy) {
   const aliases = {
     Q130531: ['Hieronymous Bosch', 'Jheronimus Bosch'],
+    Q43270: ['Pieter Brueghel the Elder', 'Brueghel', 'Breughel'],
   };
 
   // Some artists need a disambiguated Wikipedia title that differs from the clean

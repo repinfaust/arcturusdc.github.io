@@ -14,6 +14,12 @@ const nextConfig = {
         destination: '/apps/stea/career/cv-library',
         permanent: true,
       },
+      // Art Atlas is public; it moved out of the signed-in STEa area (D-SITE-078)
+      {
+        source: '/apps/stea/art-atlas/:path*',
+        destination: '/portfolio/art-atlas/:path*',
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

@@ -100,7 +100,7 @@ const IN_SESSION_DESTINATIONS = [
   {
     label: 'Art Atlas',
     appKey: 'art-atlas',
-    href: '/apps/stea/art-atlas',
+    href: '/portfolio/art-atlas',
     description: 'Constellation art-history atlas with Wikipedia-sourced artist cards and walkable Wikimedia galleries.',
     gradient: 'from-stone-950/95 to-neutral-900/95',
     borderColor: 'border-amber-500/40',
