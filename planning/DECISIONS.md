@@ -15,7 +15,10 @@ on 3 November. Correct availability copy to Android available/iOS awaiting
 approval and use that exact listing URL. Production Next build and postbuild
 leak check pass before the final availability wording change; rerun the build
 for the final source. Initial local browser QA confirms visible support/email
-and guidance without login. Deployment uses the existing Vercel Git workflow.
+and guidance without login. Production was subsequently verified live. Mobile
+anchor QA found the fixed navigation overlapping the support heading; retain
+128px scroll clearance so the direct Support URL shows the whole heading.
+Deployment uses the existing Vercel Git workflow.
 
 ## 2026-11-02 — Art Atlas goes public at `/portfolio/art-atlas`; real-scale hang, fixed GPU budget, in-place deep zoom (D-SITE-078)
 

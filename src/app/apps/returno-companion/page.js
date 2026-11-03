@@ -34,7 +34,7 @@ export default function ReturnoCompanion() {
         </div>
       </header>
 
-      <section id="support" className="mt-4 scroll-mt-8 border border-[#08714d] bg-white p-6 md:p-8" aria-labelledby="support-heading">
+      <section id="support" className="mt-4 scroll-mt-32 border border-[#08714d] bg-white p-6 md:p-8" aria-labelledby="support-heading">
         <h2 id="support-heading" className="text-2xl font-extrabold">Returno Companion Support</h2>
         <p className="mt-3 max-w-3xl leading-relaxed">For questions, technical help or help with a purchase, contact the Returno team at Arcturus Digital Consulting.</p>
         <a href="mailto:info@returno.health?subject=Returno%20Companion%20support" className="mt-4 inline-block border border-[#08714d] bg-[#08714d] px-5 py-3 font-bold text-white">Email support: info@returno.health</a>
