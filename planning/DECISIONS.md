@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-11-03 — Returno Companion support contact visible without expanding FAQs (D-SITE-079)
+
+David authorised the Returno App Review remediation plan. Apple could not find
+an official contact at `/apps/returno-companion`; the email existed only inside
+a collapsed download FAQ. Put a prominent Support section immediately after
+the product header, with `info@returno.health`, purchase/restore and account
+deletion guidance. Link to it from the header and the mobile app. No form,
+data collection, backend, service or dependency is added. Do not request health
+content or credentials in support messages.
+
+The public Google Play listing returns HTTP 200 with Returno Companion's title
+on 3 November. Correct availability copy to Android available/iOS awaiting
+approval and use that exact listing URL. Production Next build and postbuild
+leak check pass before the final availability wording change; rerun the build
+for the final source. Initial local browser QA confirms visible support/email
+and guidance without login. Deployment uses the existing Vercel Git workflow.
+
 ## 2026-11-02 — Art Atlas goes public at `/portfolio/art-atlas`; real-scale hang, fixed GPU budget, in-place deep zoom (D-SITE-078)
 
 **Evidence:**

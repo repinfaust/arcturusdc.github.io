@@ -27,11 +27,24 @@ export default function ReturnoCompanion() {
       <header className="mt-2 flex items-start gap-4 border border-[#d1dbd3] bg-[#f3f1eb] p-5 md:p-6">
         <Image src="/img/returno-companion/icon.png" width={64} height={64} alt="Returno Companion logo" className="shrink-0" priority />
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#08714d]">iOS &amp; Android · In testing</p>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#08714d]">Android · iOS awaiting App Store approval</p>
           <h1 className="mt-1 text-2xl font-extrabold tracking-tight md:text-3xl">Returno Companion</h1>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed">A personal record of your return to what matters. Keep your goal in view, record how things feel, and make space to look back at your own journey.</p>
+          <a href="#support" className="mt-3 inline-block font-bold text-[#08714d] underline underline-offset-4">Contact Returno Companion support</a>
         </div>
       </header>
+
+      <section id="support" className="mt-4 scroll-mt-8 border border-[#08714d] bg-white p-6 md:p-8" aria-labelledby="support-heading">
+        <h2 id="support-heading" className="text-2xl font-extrabold">Returno Companion Support</h2>
+        <p className="mt-3 max-w-3xl leading-relaxed">For questions, technical help or help with a purchase, contact the Returno team at Arcturus Digital Consulting.</p>
+        <a href="mailto:info@returno.health?subject=Returno%20Companion%20support" className="mt-4 inline-block border border-[#08714d] bg-[#08714d] px-5 py-3 font-bold text-white">Email support: info@returno.health</a>
+        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#4b6055]">Describe what you need help with and whether you use iPhone or Android. Please do not send passwords, health records or your recovery history.</p>
+        <ul className="mt-5 list-disc space-y-3 pl-5 text-sm leading-relaxed">
+          <li><strong>Purchase or restore:</strong> Returno uses a single lifetime purchase after a 14-day trial, with no recurring subscription. In the app, open Settings and choose Restore purchases using the same store account that made the purchase. Email us if you still need help.</li>
+          <li><strong>Account or data:</strong> Settings offers separate actions to delete records or delete your account. For instructions without the app, see <Link href="/apps/returno-companion/delete-account" className="font-bold text-[#08714d] underline underline-offset-4">account and data deletion</Link>.</li>
+          <li><strong>General questions or problems:</strong> Email the support address above. You do not need to sign in to contact us.</li>
+        </ul>
+      </section>
 
       <section className="mt-4 overflow-hidden border border-[#d1dbd3] bg-[#f3f1eb]" aria-labelledby="inside-returno">
         <div className="bg-[#0e1211] px-6 py-10 text-[#f3f1eb] md:px-10 md:py-14">
@@ -79,7 +92,7 @@ export default function ReturnoCompanion() {
               <Faq question="How does Premium work?">A 14-day trial gives you full access. After that, a single lifetime purchase unlocks continued logging, editing and Reflect Insights. There is no recurring subscription. You can still read your existing records and delete records or your account if you choose not to buy. The app shows the current local store price before purchase.</Faq>
               <Faq question="Do I have to use AI or analytics?">Both are optional. AI goal help asks for permission and lets you review the text to be sent. It does not receive your stored check-ins or activity history. Analytics is off unless you opt in; health content is excluded. You can change these choices in Settings.</Faq>
               <Faq question="Where are my records kept?">On your device, with a private cloud copy linked to your Google sign-in. Signing out or uninstalling does not delete that cloud copy. Settings provides separate actions to delete records or delete your account; the deletion page below explains both.</Faq>
-              <Faq question="Can I download it yet?">Returno Companion is currently in testing on iOS and Android. Public store links will be added here when it launches. For questions, email <a href="mailto:info@returno.health" className="underline underline-offset-4">info@returno.health</a>.</Faq>
+              <Faq question="Can I download it yet?">Returno Companion is available on <a href="https://play.google.com/store/apps/details?id=com.arcturusdc.returno" className="font-bold underline underline-offset-4">Google Play for Android</a>. The iOS release is awaiting App Store approval. For availability questions, contact <a href="mailto:info@returno.health" className="underline underline-offset-4">info@returno.health</a>.</Faq>
             </div>
           </section>
         </div>
