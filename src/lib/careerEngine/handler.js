@@ -545,10 +545,10 @@ export function createCareerHandler(app) {
       }
 
       // Friendlies access code → unlimited actions for this workspace (no payment).
-      // The code lives only in Vercel env; redemption is disabled when unset (D-SITE-033).
+      // The code lives only in Vercel env; redemption is disabled when unset (D-SITE-033, D-SITE-080).
       if (action === 'redeem_code') {
         const { code = '' } = body;
-        const valid = process.env[app.accessCodeEnv] || '';
+        const valid = process.env[app.accessCodeEnv] || process.env.CAREER_ACCESS_CODE || '';
         if (!valid || (code || '').trim().toUpperCase() !== valid.toUpperCase()) {
           return NextResponse.json({ error: 'That code isn\'t valid.' }, { status: 400 });
         }

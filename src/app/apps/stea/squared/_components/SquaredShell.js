@@ -41,14 +41,14 @@ export default function SquaredShell({ children }) {
               <SteaAppsDropdown />
               <TenantSwitcher />
               <button onClick={handleSignOut}
-                className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-lg px-4 py-2 text-sm font-semibold transition-colors">
+                className="border border-[#22251f] bg-[#22251f] text-[#f8f4ea] hover:bg-[#4c5c3f] hover:border-[#4c5c3f] px-4 py-2 text-xs font-extrabold tracking-[0.06em] uppercase transition-colors">
                 Sign out
               </button>
             </div>
             {currentTenant && (
-              <div className="bg-white rounded-xl px-3 py-2 border border-[#D6E0F4] sm:text-right">
-                <div className="text-xs sm:text-[11px] text-[#94A3B8] font-bold uppercase">Workspace</div>
-                <div className="text-sm font-bold text-[#10294D]">{currentTenant.name}</div>
+              <div className="bg-[#fffdf8] px-3 py-2 border border-[#d7cebc] sm:text-right">
+                <div className="text-[11px] text-[#686c62] font-extrabold tracking-[0.14em] uppercase">Workspace</div>
+                <div className="text-sm font-bold text-[#22251f]">{currentTenant.name}</div>
               </div>
             )}
           </div>

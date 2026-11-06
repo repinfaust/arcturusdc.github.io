@@ -122,11 +122,21 @@ export default function ScansTab({ search, setSearch, searchJobs, searching, sea
           {debug && (
             <details className="mt-3 bg-[#fffdf8] border border-[#d7cebc] text-[13px] sm:text-xs">
               <summary className="cursor-pointer px-4 py-3 font-bold">Why these results? ({debug.ranked_count} of {debug.raw_count} raw)</summary>
-              <div className={`px-4 pb-4 ${MONO} text-xs sm:text-[11px] space-y-0.5 text-[#686c62]`}>
-                <div>queries: <b>{(debug.query?.terms || []).join(', ')}</b> · loc <b>{debug.query?.location}</b> · mode <b>{debug.query?.mode}</b></div>
+              <div className={`px-4 pb-4 ${MONO} text-xs sm:text-[11px] space-y-1 text-[#686c62]`}>
+                <div>queries: <b>{(debug.query?.terms || []).join(', ')}</b> · loc <b>{debug.query?.location}</b> · mode <b>{debug.query?.mode}</b> · min£ <b>{debug.query?.minSalary || 'none'}</b></div>
                 <div>sources: {Object.entries(debug.source_counts || {}).map(([s, n]) => `${s}=${n}`).join(' · ') || 'none returned'}</div>
                 <div>funnel: {debug.raw_count} raw → {debug.deduped_count} deduped → {debug.after_negative_filter} after filter → {debug.ranked_count} shown</div>
                 <div>ranker: {debug.ranker}</div>
+                {debug.dropped_by_negative_filter?.length > 0 && (
+                  <div>dropped by title filter: {debug.dropped_by_negative_filter.join(' · ')}</div>
+                )}
+                {debug.scores?.length > 0 && (
+                  <div className="pt-1 border-t border-[#ede5d4] space-y-0.5 max-h-48 overflow-y-auto">
+                    {debug.scores.map((s, i) => (
+                      <div key={i}><span className={s.score < 5 ? 'text-[#C63C00]' : 'text-[#4c5c3f]'}>{s.score ?? '?'}/10</span> {s.title} <span className="text-[#686c62]">— {s.why}</span></div>
+                    ))}
+                  </div>
+                )}
               </div>
             </details>
           )}

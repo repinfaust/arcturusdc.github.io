@@ -3,13 +3,14 @@
 // gaps, never overwrite what the user has set. No dependencies; client-safe.
 
 const isEmpty = (v) => v == null || v === '' || v === 0 || (Array.isArray(v) && v.filter(Boolean).length === 0);
+const isUnset = (k, v) => isEmpty(v) || (k === 'clearance' && v === 'None');
 
 // Fill only the profile fields that are currently empty.
 export function fillEmptyProfile(existing = {}, extracted = {}) {
   const out = { ...existing };
   for (const [k, v] of Object.entries(extracted || {})) {
-    if (isEmpty(v)) continue;
-    if (isEmpty(out[k])) out[k] = v;
+    if (isUnset(k, v)) continue;
+    if (isUnset(k, out[k])) out[k] = v;
   }
   return out;
 }

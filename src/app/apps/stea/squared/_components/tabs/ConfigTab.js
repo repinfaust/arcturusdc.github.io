@@ -343,16 +343,48 @@ export default function ConfigTab({
               <Field label="Home base">
                 <input value={profile.location || ''} onChange={(e) => set('location', e.target.value)} placeholder="e.g. Salisbury" className={INPUT} />
               </Field>
+              <Field label="Working pattern">
+                <input value={profile.work_pattern || ''} onChange={(e) => set('work_pattern', e.target.value)} placeholder="e.g. Hybrid, Salisbury or remote" className={INPUT} />
+              </Field>
+            </div>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3.5">
               <Field label="Salary floor (£)">
-                <input type="number" min={0} step={1000} value={profile.min_salary ?? ''} onChange={(e) => set('min_salary', e.target.value === '' ? '' : Number(e.target.value))} className={INPUT} />
+                <input type="number" min={0} step={5000} value={profile.min_salary ?? ''} onChange={(e) => set('min_salary', e.target.value === '' ? '' : Number(e.target.value))} placeholder="e.g. 45000" className={INPUT} />
+              </Field>
+              <Field label="Target salary (£)">
+                <input type="number" min={0} step={5000} value={profile.target_salary ?? ''} onChange={(e) => set('target_salary', e.target.value === '' ? '' : Number(e.target.value))} placeholder="e.g. 55000" className={INPUT} />
               </Field>
             </div>
             <Field label="Target roles (comma separated)">
               <textarea value={(profile.target_roles || []).join(', ')}
                 onChange={(e) => set('target_roles', e.target.value.split(',').map((s) => s.trimStart()))}
                 onBlur={(e) => set('target_roles', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
-                className={`${INPUT} h-[88px] resize-none leading-normal`} />
+                placeholder="e.g. Operations Manager, Project Manager, Logistics Manager"
+                className={`${INPUT} h-[72px] resize-none leading-normal`} />
             </Field>
+            <Field label="Stretch roles (step up, comma separated)" hint="Roles a level above your current grade that you want scored on transferable evidence rather than discounted.">
+              <input value={(profile.stretch_roles || []).join(', ')}
+                onChange={(e) => set('stretch_roles', e.target.value.split(',').map((s) => s.trimStart()))}
+                onBlur={(e) => set('stretch_roles', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                placeholder="e.g. Head of Operations, Programme Manager"
+                className={INPUT} />
+            </Field>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3.5">
+              <Field label="Preferred sectors (comma separated)">
+                <input value={(profile.target_sectors || []).join(', ')}
+                  onChange={(e) => set('target_sectors', e.target.value.split(',').map((s) => s.trimStart()))}
+                  onBlur={(e) => set('target_sectors', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                  placeholder="e.g. Defence, Aerospace, Logistics, Cyber"
+                  className={INPUT} />
+              </Field>
+              <Field label="Excluded sectors (comma separated)">
+                <input value={(profile.excluded_sectors || []).join(', ')}
+                  onChange={(e) => set('excluded_sectors', e.target.value.split(',').map((s) => s.trimStart()))}
+                  onBlur={(e) => set('excluded_sectors', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                  placeholder="e.g. Gambling, Retail"
+                  className={INPUT} />
+              </Field>
+            </div>
           </div>
         </Panel>
         <Anchors anchors={anchors} setAnchors={setAnchors} saveAnchors={saveAnchors} saving={saving} />

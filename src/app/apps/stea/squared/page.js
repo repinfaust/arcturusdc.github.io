@@ -3,12 +3,13 @@
 // Squared — job-search triage for people leaving the Armed Forces (D-SITE-034).
 // Same engine as Career Ops (src/lib/careerEngine) with its own collections,
 // prompts and forces features. Design: planning/design/career-ops-forces.
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { extractCvText } from '@/lib/careerEngine/cvParse';
+import { fillEmptyProfile, hasEvidence, mergeNewAnchors } from '@/lib/careerEngine/extractMerge';
 import { squaredApi, squaredCheckout } from './_components/api';
-import { MONO, CAPS } from './_components/ui';
+import { MONO, CAPS, DISPLAY, Modal, Btn } from './_components/ui';
 import Onboarding from './_components/Onboarding';
 import Paywall from './_components/Paywall';
 import PipelineTab from './_components/tabs/PipelineTab';
@@ -41,7 +42,8 @@ function useStages(active, count, ms) {
 }
 
 const EMPTY_PROFILE = {
-  name: '', location: '', current_role: '', min_salary: '', target_roles: [],
+  name: '', location: '', current_role: '', min_salary: '', target_salary: '',
+  target_roles: [], stretch_roles: [], work_pattern: '', target_sectors: [], excluded_sectors: [],
   service_branch: 'British Army', trade: '', rank: '', years_served: '', clearance: 'None',
   exit_date: '', notice_date: '',
 };
@@ -93,10 +95,12 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
   // CV uploads
   const [cvUploads, setCvUploads] = useState([]);
   const [cvBusy, setCvBusy] = useState(false);
+  const [pendingEvidence, setPendingEvidence] = useState(null);
 
   // Apply Assist
   const [applyExtras, setApplyExtras] = useState({});
-  const [applyDirty, setApplyDirty] = useState(false);
+  const [applySave, setApplySave] = useState({ state: 'idle' });
+  const applyEditVersion = useRef(0);
   const [applyRoleId, setApplyRoleId] = useState('');
   const [coverLetter, setCoverLetter] = useState('');
   const [coverLoading, setCoverLoading] = useState(false);
@@ -175,18 +179,23 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
     }
   }
 
-  const saveProfile = (what) => {
-    // Prompts read current_role; derive it from the service record if unset.
-    const derived = profile.current_role || [profile.rank, profile.trade].filter(Boolean).join(', ');
-    return saveConfig(what, { profile_obj: { ...profile, current_role: derived } });
-  };
+  // Save both profile and evidence together so clicking any Save button on
+  // Config persists the full setup and activates the Pipeline tab.
+  function buildConfigPayload(nextProfile = profile, nextAnchors = anchors) {
+    const derived = nextProfile.current_role || [nextProfile.rank, nextProfile.trade].filter(Boolean).join(', ');
+    const list = Array.isArray(nextAnchors) ? nextAnchors : anchors;
+    return {
+      profile_obj: { ...nextProfile, current_role: derived },
+      evidence_obj: list.map((a) => ({ ...a, bullets: (a.bullets || []).map((b) => b.trim()).filter(Boolean) })),
+    };
+  }
+
+  const saveProfile = (what) => saveConfig(what, buildConfigPayload(profile, anchors));
   // `next` lets a caller save a list it has just built, before state updates land.
   const saveAnchors = (next) => {
     const list = Array.isArray(next) ? next : anchors;
     if (Array.isArray(next)) setAnchors(next);
-    return saveConfig('anchors', {
-      evidence_obj: list.map((a) => ({ ...a, bullets: (a.bullets || []).map((b) => b.trim()).filter(Boolean) })),
-    });
+    return saveConfig('anchors', buildConfigPayload(profile, list));
   };
   const saveTranslations = (next) => {
     setTranslations(next);
@@ -313,14 +322,19 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
         const { res, data } = await api('extract_from_cv', { id: saved.data.id });
         if (handleLimit(res, data)) return;
         if (!res.ok) throw new Error(data.error || 'Extraction failed');
+        // Extraction only fills empty profile fields; it never overwrites ones the user set (D-SITE-075).
         if (data.profile) {
-          const filled = Object.fromEntries(Object.entries(data.profile).filter(([, v]) => v !== '' && v != null));
-          setProfile((p) => ({ ...p, ...filled }));
+          setProfile((p) => fillEmptyProfile(p, data.profile));
         }
-        if (Array.isArray(data.evidence) && data.evidence.length) setAnchors(data.evidence);
         loadUsage();
         setTab('settings');
-        alert('Filled from your CV. Review each section and hit Save.');
+        const extracted = Array.isArray(data.evidence) ? data.evidence : [];
+        if (extracted.length && hasEvidence(anchors)) {
+          setPendingEvidence(extracted);
+        } else {
+          if (extracted.length) setAnchors(extracted);
+          alert('Empty profile fields and evidence filled from your CV. Review each section and hit Save.');
+        }
       }
     } catch (err) {
       alert(err.message);
@@ -371,17 +385,39 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
     return data;
   }
 
-  // --- Apply Assist ---
+  // --- Apply Assist (autosaves with real status, D-SITE-076) ---
   async function loadApplyExtras() {
     const { res, data } = await api('get_apply_profile');
-    if (res.ok && data.apply_profile) setApplyExtras(data.apply_profile);
+    if (res.ok && data.apply_profile) {
+      setApplyExtras(data.apply_profile);
+      setApplySave({ state: data.apply_profile.updated_at ? 'saved' : 'idle' });
+    }
   }
   async function saveApplyExtras() {
-    const { res, data } = await api('save_apply_profile', { apply_profile: applyExtras });
-    if (!res.ok) { alert('Could not save: ' + (data.error || res.status)); return; }
-    setApplyDirty(false);
+    if (!tenantId) return;
+    const version = applyEditVersion.current;
+    setApplySave({ state: 'saving' });
+    try {
+      const { res, data } = await api('save_apply_profile', { apply_profile: applyExtras });
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      // An edit made while this save was in flight stays pending and saves next.
+      setApplySave({ state: applyEditVersion.current === version ? 'saved' : 'pending' });
+    } catch (err) {
+      setApplySave({ state: 'error', message: err.message });
+    }
   }
-  const setExtra = (key, val) => { setApplyExtras((e) => ({ ...e, [key]: val })); setApplyDirty(true); };
+  const setExtra = (key, val) => {
+    setApplyExtras((e) => ({ ...e, [key]: val }));
+    applyEditVersion.current += 1;
+    setApplySave({ state: 'pending' });
+  };
+
+  useEffect(() => {
+    if (applySave.state !== 'pending') return undefined;
+    const t = setTimeout(saveApplyExtras, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyExtras, applySave.state]);
 
   function openApplyAssist(id) {
     setApplyRoleId(id || '');
@@ -522,7 +558,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
       {tab === 'apply' && (
         <ApplyTab
           profile={profile} anchors={anchors} pipeline={pipeline}
-          applyExtras={applyExtras} setExtra={setExtra} applyDirty={applyDirty} saveApplyExtras={saveApplyExtras}
+          applyExtras={applyExtras} setExtra={setExtra} applySave={applySave} saveApplyExtras={saveApplyExtras}
           applyRoleId={applyRoleId} setApplyRoleId={setApplyRoleId}
           coverLetter={coverLetter} coverLoading={coverLoading} generateCoverLetter={generateCoverLetter}
           applyAnswers={applyAnswers} answersLoading={answersLoading} generateAnswers={generateAnswers}
@@ -540,6 +576,46 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
         />
       )}
 
+      {pendingEvidence && (
+        <Modal kicker="Evidence anchors" onClose={() => setPendingEvidence(null)} width={480}>
+          <h3 className={`m-0 ${DISPLAY} text-[28px] leading-[0.95] tracking-[-0.03em]`}>
+            You already have evidence anchors
+          </h3>
+          <p className="mt-4 text-sm leading-relaxed text-[#22251f]">
+            The CV gave {pendingEvidence.length} role{pendingEvidence.length === 1 ? '' : 's'}. Your existing anchors are
+            unchanged unless you choose to replace them. Empty profile fields were filled; nothing you had set was changed.
+            Nothing is saved until you press Save.
+          </p>
+          <div className="mt-6 flex flex-col gap-2.5">
+            <Btn
+              variant="primary"
+              className="h-11 px-4 text-xs uppercase tracking-wider"
+              onClick={() => {
+                const { anchors: merged, addedCount } = mergeNewAnchors(anchors, pendingEvidence);
+                setAnchors(merged);
+                setPendingEvidence(null);
+                alert(addedCount ? `Added ${addedCount} new role${addedCount === 1 ? '' : 's'}. Review and hit Save.` : 'No new roles found. Your anchors are unchanged.');
+              }}
+            >
+              Add only new roles
+            </Btn>
+            <Btn
+              variant="outline"
+              className="h-11 px-4 text-xs uppercase tracking-wider"
+              onClick={() => { setAnchors(pendingEvidence); setPendingEvidence(null); }}
+            >
+              Replace all my anchors
+            </Btn>
+            <Btn
+              variant="quiet"
+              className="h-10 px-4 text-xs uppercase tracking-wider"
+              onClick={() => setPendingEvidence(null)}
+            >
+              Keep my anchors
+            </Btn>
+          </div>
+        </Modal>
+      )}
       {showOnboarding && (
         <Onboarding
           onClose={() => setShowOnboarding(false)}

@@ -10,7 +10,30 @@ import { chunkText, validateLine, MAX_CHUNKS, CATEGORIES } from '../recordTransl
 // screen blocks the line until each is removed or confirmed by the user.
 const cleanAdded = (a) => (Array.isArray(a) ? a.filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim()) : []);
 
-const rolesText = (f) => (f.targetRoles.length ? f.targetRoles.join(', ') : 'civilian roles that fit their service');
+const gbp = (n) => `£${n.toLocaleString('en-GB')}`;
+const coreRolesText = (f) => (f.targetRoles.length ? f.targetRoles.join(', ') : 'civilian roles that fit their service');
+const rolesText = (f) => coreRolesText(f) + (f.stretchRoles?.length ? ` (stretch: ${f.stretchRoles.join(', ')})` : '');
+
+const salaryRule = (f) => {
+  if (!f.minSalary) return 'No floor set — score neutrally unless pay is clearly out of line.';
+  const target = f.targetSalary > f.minSalary ? `, target ${gbp(f.targetSalary)}` : '';
+  return `Against the candidate's floor of ${gbp(f.minSalary)}${target}. Reward roles at or above the floor; penalise roles clearly below it.`;
+};
+
+const levelRule = (f) => {
+  const base = "The work matches the candidate's target roles and a realistic civilian level for their rank and experience.";
+  if (!f.stretchRoles?.length) return `${base} Penalise roles clearly out of reach.`;
+  return `${base} Core targets: ${coreRolesText(f)}. Stretch targets: ${f.stretchRoles.join(', ')} — a deliberate step up. ` +
+    'For a stretch role, score how credibly their service leadership, scope and evidence support the step, ' +
+    'not whether their rank or title already matches it; name the specific gaps the CV would need to close.';
+};
+
+const sectorRule = (f) => {
+  const parts = [];
+  if (f.targetSectors?.length) parts.push(`Preferred sectors: ${f.targetSectors.join(', ')} — reward overlap.`);
+  if (f.excludedSectors?.length) parts.push(`Excluded sectors: ${f.excludedSectors.join(', ')} — if the employer or role is in one, score 1.0 and recommend skipping.`);
+  return parts.join(' ');
+};
 
 const SERVICE_RULES = `Rules for service leavers:
 - Translate military terms into civilian language an employer outside Defence understands (e.g. "detachment commander" -> "team leader"; "SJAR" -> "annual performance appraisal"). Expand any acronym you keep.
@@ -78,15 +101,15 @@ Evaluate this job for the candidate (Candidate Profile, Evidence Library, approv
 ${jdData}
 
 ## Scoring (12 factors, each 1.0-5.0):
-- Role fit (Gate): The work matches the candidate's target roles and a realistic civilian level for their rank and experience.
+- Role fit (Gate): ${levelRule(f)}
 - Transferable leadership (High): Leadership, people and responsibility in their evidence versus what the role needs.
 - Operational / technical match (High): Their trade and hands-on experience versus the core responsibilities.
 - Qualifications gap (High): Named civilian qualifications they hold versus what is required. Note any gap that a short course could close.
-- Sector familiarity (Med): Defence, security, public-sector or related experience the role values.
+- Sector familiarity (Med): Defence, security, public-sector or related experience the role values. ${sectorRule(f)}
 - Clearance fit (Med): Clearance required versus held (per the rules above).
 - Language gap (Med): How much translation their experience needs to read well to this employer.
-- Location / relocation (Med): Against the candidate's home base and preferences.
-- Compensation (High): ${f.minSalary ? `Against the candidate's floor of £${f.minSalary.toLocaleString('en-GB')}.` : 'No floor set — score neutrally unless pay is clearly out of line.'}
+- Location / relocation (Med): Against the candidate's home base and preferences${f.workPattern ? ` (${f.workPattern})` : ''}.
+- Compensation (High): ${salaryRule(f)}
 - Employer forces-friendliness (Low): Only what the JD states. Do not assume Armed Forces Covenant status.
 - Interview likelihood (High): Strength of the evidence match against the stated requirements.
 - Personal energy (Low): Likely resonance with what the candidate says they want.
@@ -158,8 +181,15 @@ ${cvText}`,
     rankBackground: (f, profile) => {
       const p = profile && typeof profile === 'object' ? profile : {};
       const bits = [p.rank, p.trade, p.service_branch].filter(Boolean).join(', ');
-      return `Armed Forces service leaver${bits ? ` (${bits})` : ''}. Military experience often maps to operations, logistics, engineering, security, project and people-management roles.`;
+      return [
+        `Armed Forces service leaver${bits ? ` (${bits})` : ''}. Military experience often maps to operations, logistics, engineering, security, project and people-management roles.`,
+        f?.stretchRoles?.length ? `Also open to stretch roles: ${f.stretchRoles.join(', ')}.` : '',
+        f?.targetSectors?.length ? `Preferred sectors: ${f.targetSectors.join(', ')}.` : '',
+      ].filter(Boolean).join(' ');
     },
+    rankRules: (f) => (f?.excludedSectors?.length
+      ? `Score 0 any listing whose employer or title is clearly in an excluded sector: ${f.excludedSectors.join(', ')}.`
+      : ''),
     enrich(jobs, profile) {
       const status = clearanceStatus(profile && typeof profile === 'object' ? profile : {});
       return jobs.map((j) => {

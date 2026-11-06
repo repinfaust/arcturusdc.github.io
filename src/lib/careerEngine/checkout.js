@@ -26,15 +26,20 @@ export function createCheckoutHandler(coffee) {
       }
 
       const stripe = await getStripe();
-      // Prefer the configured price id; fall back to looking one up from the product.
+      // Prefer the configured price id; fall back to looking one up from the product,
+      // then to inline price_data if provided on the route config.
       let priceId = coffee.priceId;
       if (!priceId && coffee.productId) {
         const prices = await stripe.prices.list({ product: coffee.productId, active: true, limit: 1 });
         priceId = prices.data[0]?.id;
       }
-      if (!priceId) {
+      if (!priceId && !coffee.priceData) {
         return NextResponse.json({ error: `No price configured for the ${coffee.label} coffee top-up.` }, { status: 500 });
       }
+
+      const lineItem = priceId
+        ? { price: priceId, quantity: 1 }
+        : { price_data: coffee.priceData, quantity: 1 };
 
       const origin = request.headers.get('origin')
         || request.headers.get('referer')?.split('/').slice(0, 3).join('/')
@@ -42,7 +47,7 @@ export function createCheckoutHandler(coffee) {
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
-        line_items: [{ price: priceId, quantity: 1 }],
+        line_items: [lineItem],
         success_url: `${origin}${coffee.returnPath}?coffee=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}${coffee.returnPath}?coffee=cancelled`,
         allow_promotion_codes: true,
