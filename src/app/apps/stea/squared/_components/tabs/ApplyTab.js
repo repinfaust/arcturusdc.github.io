@@ -34,6 +34,7 @@ export default function ApplyTab({
   const [coverEdit, setCoverEdit] = useState('');
   const [customQ, setCustomQ] = useState('');
   const [customGuidance, setCustomGuidance] = useState('');
+  const [editingContext, setEditingContext] = useState(false);
   const role = pipeline.find((r) => r.id === applyRoleId);
   const clearance = clearanceStatus(profile);
 
@@ -131,26 +132,48 @@ export default function ApplyTab({
         <Panel className="mt-5">
           <NumberedTitle n="04" title="Company & role context"
             right={
-              <SmallBtn dark onClick={() => researchCompany?.(applyRoleId, companyContext)} disabled={researchLoading}>
-                {researchLoading ? 'Researching…' : companyContext ? 'Refresh research' : 'Research company (1 action)'}
-              </SmallBtn>
+              <div className="flex items-center gap-3">
+                {companyContext && (
+                  <button onClick={() => setEditingContext((e) => !e)} className={`${CAPS} text-[#686c62] hover:underline`}>
+                    {editingContext ? 'Done editing' : 'Edit notes'}
+                  </button>
+                )}
+                <SmallBtn dark onClick={() => researchCompany?.(applyRoleId, companyContext)} disabled={researchLoading}>
+                  {researchLoading ? 'Researching…' : companyContext ? 'Refresh research' : 'Research company (1 action)'}
+                </SmallBtn>
+              </div>
             }
           />
           <p className="mt-1.5 text-[13px] text-[#686c62]">
             Pull live employer research or add your own intel (hiring manager, programme, angle). Automatically used by Cover Letter, Application Answers, and Interview Prep below.
           </p>
-          <textarea
-            value={companyContext ?? ''}
-            onChange={(e) => setCompanyContext?.(e.target.value)}
-            placeholder="Type your own notes about the employer/role or click 'Research company' above…"
-            rows={companyContext ? 5 : 2}
-            className={`${INPUT} mt-3 text-xs leading-relaxed`}
-          />
-          <div className="flex justify-end mt-2">
-            <button onClick={() => saveCompanyContext?.(applyRoleId, companyContext || '')} disabled={contextSaving} className={`${CAPS} text-[#4c5c3f] hover:underline`}>
-              {contextSaving ? 'Saving…' : 'Save context notes'}
-            </button>
-          </div>
+          {companyContext && !editingContext ? (
+            <div className="mt-3 pt-3 border-t border-[#ede5d4]">
+              <Md>{companyContext}</Md>
+            </div>
+          ) : (
+            <>
+              <textarea
+                value={companyContext ?? ''}
+                onChange={(e) => setCompanyContext?.(e.target.value)}
+                placeholder="Type your own notes about the employer/role or click 'Research company' above…"
+                rows={companyContext ? 6 : 2}
+                className={`${INPUT} mt-3 text-xs leading-relaxed`}
+              />
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={async () => {
+                    await saveCompanyContext?.(applyRoleId, companyContext || '');
+                    setEditingContext(false);
+                  }}
+                  disabled={contextSaving}
+                  className={`${CAPS} text-[#4c5c3f] hover:underline`}
+                >
+                  {contextSaving ? 'Saving…' : 'Save context notes'}
+                </button>
+              </div>
+            </>
+          )}
         </Panel>
       )}
 

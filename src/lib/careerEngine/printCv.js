@@ -1,6 +1,17 @@
 // Print a Markdown CV / letter as an A4 PDF via the browser print dialog.
 // Shared by Career Ops and Squared (client-side only).
 
+// Strip outer or stray ```markdown / ``` code-fence lines that LLMs sometimes
+// wrap around generated CVs, briefings, or evaluations.
+export function cleanMarkdown(md) {
+  if (!md || typeof md !== 'string') return '';
+  return md
+    .replace(/^\s*```(?:markdown|md)?\s*\r?\n/gim, '')
+    .replace(/\r?\n\s*```\s*$/gim, '')
+    .replace(/^\s*```\s*$/gm, '')
+    .trim();
+}
+
 /* Minimal, ATS-friendly Markdown -> HTML for the print/PDF view.
    Produces selectable text, single column, standard headings. The AI output
    often includes a CV + cover note + rationale; we only print up to the
@@ -9,11 +20,16 @@ function markdownToPrintHtml(md) {
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const inline = (s) =>
     esc(s)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
+        const cleanHref = href.trim();
+        if (!cleanHref || cleanHref === '#') return label;
+        return `<a href="${cleanHref}" style="color:#111;text-decoration:none;">${label}</a>`;
+      })
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/`(.+?)`/g, '<code>$1</code>');
 
-  const lines = (md || '').split('\n');
+  const lines = cleanMarkdown(md).split('\n');
   const out = [];
   let inList = false, inTable = false;
   const closeList = () => { if (inList) { out.push('</ul>'); inList = false; } };

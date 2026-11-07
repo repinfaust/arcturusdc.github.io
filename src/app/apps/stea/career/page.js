@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { extractCvText } from '@/lib/careerEngine/cvParse';
 import { useTenant } from '@/contexts/TenantContext';
 import { auth } from '@/lib/firebase';
-import { printCvAsPdf } from '@/lib/careerEngine/printCv';
+import { printCvAsPdf, cleanMarkdown } from '@/lib/careerEngine/printCv';
 import { fillEmptyProfile, hasEvidence, mergeNewAnchors } from '@/lib/careerEngine/extractMerge';
 import AdzunaCredit from '@/components/AdzunaCredit';
 import ReactMarkdown from 'react-markdown';
@@ -31,19 +31,20 @@ async function apiHeaders() {
 /* ---------------- Markdown renderer for the AI fit narrative ---------------- */
 function FitNarrative({ markdown }) {
   return (
-    <div className="career-md text-sm text-slate-700 leading-relaxed">
+    <div className="career-md min-w-0 overflow-hidden break-words text-sm text-slate-700 leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: (p) => <h1 className="text-xl font-bold text-[#10294D] mt-6 mb-3 first:mt-0" {...p} />,
           h2: (p) => <h2 className="text-base font-bold text-[#10294D] mt-6 mb-2 pb-1 border-b border-slate-200" {...p} />,
           h3: (p) => <h3 className="text-sm font-bold text-[#006C50] uppercase tracking-wide mt-4 mb-2" {...p} />,
-          p:  (p) => <p className="my-2" {...p} />,
+          p:  (p) => <p className="my-2 break-words" {...p} />,
           ul: (p) => <ul className="list-disc pl-5 my-2 space-y-1" {...p} />,
           ol: (p) => <ol className="list-decimal pl-5 my-2 space-y-1" {...p} />,
           strong: (p) => <strong className="font-bold text-[#10294D]" {...p} />,
           blockquote: (p) => <blockquote className="border-l-4 border-[#006C50] bg-teal-50/50 pl-4 py-2 my-3 rounded-r text-[#10294D]" {...p} />,
-          code: (p) => <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[13px] font-mono" {...p} />,
+          pre: (p) => <pre className="bg-slate-50 border border-slate-200 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words text-xs font-mono my-2" {...p} />,
+          code: (p) => <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[13px] font-mono break-words" {...p} />,
           table: (p) => <div className="overflow-x-auto my-4"><table className="w-full text-xs border-collapse" {...p} /></div>,
           thead: (p) => <thead className="bg-slate-100" {...p} />,
           th: (p) => <th className="border border-slate-200 px-3 py-2 text-left font-bold text-[#10294D]" {...p} />,
@@ -52,7 +53,7 @@ function FitNarrative({ markdown }) {
           a:  (p) => <a className="text-[#006C50] underline" target="_blank" rel="noreferrer" {...p} />,
         }}
       >
-        {markdown || ''}
+        {cleanMarkdown(markdown || '')}
       </ReactMarkdown>
     </div>
   );
@@ -61,7 +62,7 @@ function FitNarrative({ markdown }) {
 /* Splits a long markdown doc at "## " headings into collapsible sections so the
    page isn't one giant scroll. The first `openCount` sections start expanded. */
 function CollapsibleNarrative({ markdown, openCount = 2 }) {
-  const md = markdown || '';
+  const md = cleanMarkdown(markdown || '');
   // Preserve any content before the first "## " as an always-shown intro.
   const parts = md.split(/\n(?=##\s)/g);
   const intro = parts[0] && !/^##\s/.test(parts[0]) ? parts.shift() : null;
@@ -1015,10 +1016,18 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   // Company context & Interview brief for the active role.
   const [companyContext, setCompanyContext] = useState('');
   const [companyNotes, setCompanyNotes] = useState('');
+  const [editingContext, setEditingContext] = useState(false);
+  const [editingApplyContext, setEditingApplyContext] = useState(false);
   const [researchLoading, setResearchLoading] = useState(false);
   const [contextSaving, setContextSaving] = useState(false);
   const [interviewBrief, setInterviewBrief] = useState('');
   const [briefLoading, setBriefLoading] = useState(false);
+
+  // LinkedIn Morning Scout queue (harvested from open Chrome/Safari LinkedIn tab).
+  const [scoutJobs, setScoutJobs] = useState([]);
+  const [scoutBatchRunning, setScoutBatchRunning] = useState(false);
+  const [scoutProgress, setScoutProgress] = useState('');
+  const [showScoutSetup, setShowScoutSetup] = useState(false);
 
   async function handleApplyAnswers() {
     if (!currentTenant?.id || !applyRoleId) { alert('Select a role first.'); return; }
@@ -1271,28 +1280,147 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     { id: 'settings', label: 'Config', icon: '⚙️' },
   ];
 
-  async function handleAnalyse(overrideText) {
+  async function handleAnalyse(overrideText, overrideUrl = '') {
     const input = (typeof overrideText === 'string' ? overrideText : jdText).trim();
-    if (!input || !currentTenant?.id) return;
+    if (!input || !currentTenant?.id) return null;
     setLoading(true);
     setResults(null);
+    setEditingContext(false);
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: await apiHeaders(),
-        body: JSON.stringify({ action: 'analyse', jd_text: input, tenantId: currentTenant.id }),
+        body: JSON.stringify({ action: 'analyse', jd_text: input, url: overrideUrl || undefined, tenantId: currentTenant.id }),
       });
       const data = await res.json();
-      if (handleLimit(res, data)) return;
+      if (handleLimit(res, data)) return null;
       if (!res.ok) throw new Error(data.error || 'Analyse failed');
       setResults(data);
       loadAnalyses(); // refresh the pipeline with the newly-saved role
       loadUsage();
+      return data;
     } catch (err) {
       console.error(err);
       alert(err.message);
+      return null;
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Normalise a LinkedIn / ATS job URL or company+title for deduplication against pipeline.
+  function extractJobId(url = '') {
+    const m = String(url).match(/\/jobs\/view\/(\d+)/) || String(url).match(/currentJobId=(\d+)/);
+    return m ? `li:${m[1]}` : String(url).split('?')[0].replace(/\/+$/, '').toLowerCase();
+  }
+
+  function findExistingInPipeline(job) {
+    if (!job || !Array.isArray(pipeline)) return null;
+    const jobKey = job.url ? extractJobId(job.url) : '';
+    const normTitle = String(job.title || '').toLowerCase().trim();
+    const normComp = String(job.company || '').toLowerCase().trim();
+    return pipeline.find((p) => {
+      if (jobKey && p.source_url && extractJobId(p.source_url) === jobKey) return true;
+      if (normTitle && normComp && String(p.role || '').toLowerCase().trim() === normTitle && String(p.company || '').toLowerCase().trim() === normComp) return true;
+      return false;
+    }) || null;
+  }
+
+  function persistScoutJobs(next) {
+    setScoutJobs(next);
+    if (typeof window !== 'undefined' && currentTenant?.id) {
+      try { window.localStorage.setItem(`career_ops_scout_${currentTenant.id}`, JSON.stringify(next)); } catch {}
+    }
+  }
+
+  function importScoutJobs(incoming = []) {
+    if (!Array.isArray(incoming) || incoming.length === 0) return;
+    setScoutJobs((prev) => {
+      const map = new Map();
+      for (const item of prev) {
+        const k = item.url ? extractJobId(item.url) : `${item.company}-${item.title}`.toLowerCase();
+        map.set(k, item);
+      }
+      for (const raw of incoming) {
+        if (!raw || (!raw.jd_text && !raw.url)) continue;
+        const cleanUrl = raw.url || '';
+        const k = cleanUrl ? extractJobId(cleanUrl) : `${raw.company || ''}-${raw.title || ''}`.toLowerCase();
+        map.set(k, {
+          title: (raw.title || 'Role').trim(),
+          company: (raw.company || 'Company').trim(),
+          location: (raw.location || '').trim(),
+          url: cleanUrl,
+          jd_text: (raw.jd_text || '').trim(),
+          harvestedAt: raw.harvestedAt || new Date().toISOString(),
+        });
+      }
+      const merged = Array.from(map.values());
+      if (typeof window !== 'undefined' && currentTenant?.id) {
+        try { window.localStorage.setItem(`career_ops_scout_${currentTenant.id}`, JSON.stringify(merged)); } catch {}
+      }
+      return merged;
+    });
+  }
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !currentTenant?.id) return;
+    try {
+      const saved = window.localStorage.getItem(`career_ops_scout_${currentTenant.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setScoutJobs(parsed);
+      }
+    } catch {}
+
+    // Expose global bridge for local macOS AppleScript / Chrome / Safari scout runner
+    window.__careerOpsImportJobs = (jobs) => {
+      importScoutJobs(jobs);
+      return { ok: true, count: Array.isArray(jobs) ? jobs.length : 0 };
+    };
+
+    const onMessage = (ev) => {
+      if (ev?.data?.type === 'CAREER_OPS_SCOUT_JOBS' && Array.isArray(ev.data.jobs)) {
+        importScoutJobs(ev.data.jobs);
+        try { ev.source?.postMessage({ type: 'CAREER_OPS_SCOUT_ACK', count: ev.data.jobs.length }, '*'); } catch {}
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTenant?.id]);
+
+  async function handleAnalyseScoutJob(job) {
+    if (!job) return;
+    setActiveTab('pipeline');
+    const payload = job.jd_text
+      ? `Role: ${job.title || ''}\nCompany: ${job.company || ''}\nLocation: ${job.location || ''}\nSource URL: ${job.url || ''}\n\n${job.jd_text}`
+      : job.url;
+    setJdText(payload);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await handleAnalyse(payload, job.url || '');
+  }
+
+  async function handleAnalyseAllScoutJobs() {
+    const unanalysed = scoutJobs.filter((j) => !findExistingInPipeline(j));
+    if (unanalysed.length === 0) return;
+    setScoutBatchRunning(true);
+    setActiveTab('pipeline');
+    try {
+      for (let i = 0; i < unanalysed.length; i++) {
+        const job = unanalysed[i];
+        setScoutProgress(`Scoring ${i + 1} of ${unanalysed.length}: ${job.title} @ ${job.company}…`);
+        const payload = job.jd_text
+          ? `Role: ${job.title || ''}\nCompany: ${job.company || ''}\nLocation: ${job.location || ''}\nSource URL: ${job.url || ''}\n\n${job.jd_text}`
+          : job.url;
+        const res = await handleAnalyse(payload, job.url || '');
+        if (!res) break; // stopped by limit or error
+      }
+    } finally {
+      setScoutBatchRunning(false);
+      setScoutProgress('');
+      loadAnalyses();
     }
   }
 
@@ -1406,6 +1534,155 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         </div>
       )}
 
+      {/* LinkedIn Morning Scout — Pipeline & Live Scans tabs */}
+      {(activeTab === 'pipeline' || activeTab === 'scans') && (
+        <section className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#006C50] flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined">radar</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-[#10294D] text-sm">LinkedIn &amp; Browser Morning Scout</h3>
+                  {scoutJobs.length > 0 && (
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-teal-50 text-[#006C50]">
+                      {scoutJobs.filter((j) => !findExistingInPipeline(j)).length} new · {scoutJobs.length} harvested
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Harvest full job descriptions straight from your logged-in Chrome or Safari LinkedIn Jobs tab — zero login walls or copy-pasting.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {scoutJobs.filter((j) => !findExistingInPipeline(j)).length > 0 && (
+                <button
+                  onClick={handleAnalyseAllScoutJobs}
+                  disabled={scoutBatchRunning || loading}
+                  className={`h-10 px-4 bg-[#006C50] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${(scoutBatchRunning || loading) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  {scoutBatchRunning ? (
+                    <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>{scoutProgress || 'Scoring batch…'}</>
+                  ) : (
+                    <><span className="material-symbols-outlined text-sm">bolt</span>Analyse All New ({scoutJobs.filter((j) => !findExistingInPipeline(j)).length})</>
+                  )}
+                </button>
+              )}
+              {scoutJobs.length > 0 && (
+                <button
+                  onClick={() => persistScoutJobs([])}
+                  disabled={scoutBatchRunning}
+                  className="h-10 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50"
+                >
+                  Clear queue
+                </button>
+              )}
+              <button
+                onClick={() => setShowScoutSetup((s) => !s)}
+                className="h-10 px-3.5 border border-slate-200 rounded-xl text-xs font-bold text-[#10294D] hover:bg-slate-50 inline-flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">bookmark_add</span>
+                {showScoutSetup ? 'Hide setup' : 'Morning button setup'}
+              </button>
+            </div>
+          </div>
+
+          {showScoutSetup && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-xs text-slate-600">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-lg p-3.5 border border-slate-200 space-y-2">
+                  <div className="font-bold text-[#10294D] flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-[#006C50]">terminal</span>
+                    Option 1 — Mac Morning Scout Button (Chrome or Safari)
+                  </div>
+                  <p className="leading-relaxed">
+                    Keep your LinkedIn Jobs search tab open in Chrome or Safari and keep this Career Ops tab open. Double-click <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono">scripts/LinkedIn Morning Scout.command</code> (or run <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono">npm run career:scout</code>).
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    It automatically clicks through each job card in your open LinkedIn tab, extracts the full JD text, and drops the batch into this queue ready to score.
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg p-3.5 border border-slate-200 space-y-2">
+                  <div className="font-bold text-[#10294D] flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-[#006C50]">bookmark</span>
+                    Option 2 — 1-Click Browser Bookmarklet (Any Job Page)
+                  </div>
+                  <p className="leading-relaxed">
+                    Drag this button to your Chrome or Safari Bookmarks Bar, then click it while viewing any LinkedIn, Greenhouse, Ashby, or Workday role:
+                  </p>
+                  <div className="pt-1">
+                    <a
+                      href={`javascript:(function(){var t=document.querySelector('.job-details-jobs-unified-top-card__job-title,.jobs-unified-top-card__job-title,h1');var c=document.querySelector('.job-details-jobs-unified-top-card__company-name,.jobs-unified-top-card__company-name,[data-test="employer-name"]');var b=document.querySelector('#job-details,.jobs-description__content,main,article')||document.body;var job={title:t?t.innerText.trim():document.title,company:c?c.innerText.trim():location.hostname,location:'',url:location.href,jd_text:(b.innerText||'').slice(0,15000)};var w=window.open('${typeof window !== 'undefined' ? window.location.origin : 'https://www.arcturusdc.com'}/apps/stea/career','career_ops_tab');setTimeout(function(){w.postMessage({type:'CAREER_OPS_SCOUT_JOBS',jobs:[job]},'*');},1800);})();`}
+                      onClick={(e) => { e.preventDefault(); alert('Drag this button up to your Chrome/Safari Bookmarks Bar — then click it while on LinkedIn Jobs!'); }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#10294D] text-white font-bold text-xs shadow-sm hover:bg-[#001432]"
+                    >
+                      ✦ Send Job → Career Ops
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {scoutJobs.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-slate-100 max-h-80 overflow-y-auto">
+              {scoutJobs.map((job, idx) => {
+                const existing = findExistingInPipeline(job);
+                return (
+                  <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-[#10294D] text-sm truncate">{job.title}</p>
+                        {existing && (
+                          <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                            In Pipeline{typeof existing.score === 'number' ? ` (${existing.score.toFixed(1)})` : ''}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 truncate">
+                        {job.company}{job.location ? ` · ${job.location}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {job.url && (
+                        <a href={job.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:underline">
+                          Link
+                        </a>
+                      )}
+                      {existing ? (
+                        <button
+                          onClick={() => openAnalysis(existing.id)}
+                          className="h-8 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-[#10294D] hover:bg-slate-100"
+                        >
+                          Open
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAnalyseScoutJob(job)}
+                          disabled={loading || scoutBatchRunning}
+                          className="h-8 px-3 rounded-lg bg-[#10294D] text-white text-[11px] font-bold hover:bg-[#001432] disabled:opacity-50"
+                        >
+                          Analyse
+                        </button>
+                      )}
+                      <button
+                        onClick={() => persistScoutJobs(scoutJobs.filter((_, j) => j !== idx))}
+                        title="Remove from queue"
+                        className="text-slate-400 hover:text-red-500 p-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Role Input Terminal — Pipeline tab only */}
       {activeTab === 'pipeline' && (
       <section className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm">
@@ -1512,36 +1789,55 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         Research the employer or add your own notes (hiring manager, strategy, platform). Automatically feeds into CV tailoring, cover letters, and interview prep.
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleResearchCompany(results.id, companyNotes)}
-                      disabled={researchLoading}
-                      className={`h-9 px-4 bg-[#10294D] text-white rounded-lg text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      {researchLoading ? (
-                        <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
-                      ) : (
-                        <><span className="material-symbols-outlined text-sm">travel_explore</span>{results.company_context ? 'Refresh research' : 'Research company'}</>
+                    <div className="flex items-center gap-3">
+                      {results.company_context && (
+                        <button
+                          onClick={() => setEditingContext((e) => !e)}
+                          className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:underline"
+                        >
+                          {editingContext ? 'Done editing' : 'Edit notes'}
+                        </button>
                       )}
-                    </button>
-                  </div>
-                  <div className="mt-3 flex flex-col gap-2">
-                    <textarea
-                      value={results.company_context ?? ''}
-                      onChange={(e) => setResults((r) => ({ ...r, company_context: e.target.value }))}
-                      placeholder="Add your own notes or click 'Research company' (1 action) to pull live employer context…"
-                      rows={results.company_context ? 5 : 2}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
-                    />
-                    <div className="flex justify-end">
                       <button
-                        onClick={() => handleSaveCompanyContext(results.id, results.company_context || '')}
-                        disabled={contextSaving}
-                        className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
+                        onClick={() => handleResearchCompany(results.id, results.company_context || companyNotes)}
+                        disabled={researchLoading}
+                        className={`h-9 px-4 bg-[#10294D] text-white rounded-lg text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
-                        {contextSaving ? 'Saving…' : 'Save context notes'}
+                        {researchLoading ? (
+                          <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
+                        ) : (
+                          <><span className="material-symbols-outlined text-sm">travel_explore</span>{results.company_context ? 'Refresh research' : 'Research company'}</>
+                        )}
                       </button>
                     </div>
                   </div>
+                  {results.company_context && !editingContext ? (
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      <CollapsibleNarrative markdown={results.company_context} openCount={3} />
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex flex-col gap-2">
+                      <textarea
+                        value={results.company_context ?? ''}
+                        onChange={(e) => setResults((r) => ({ ...r, company_context: e.target.value }))}
+                        placeholder="Add your own notes or click 'Research company' (1 action) to pull live employer context…"
+                        rows={results.company_context ? 6 : 2}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          onClick={async () => {
+                            await handleSaveCompanyContext(results.id, results.company_context || '');
+                            setEditingContext(false);
+                          }}
+                          disabled={contextSaving}
+                          className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
+                        >
+                          {contextSaving ? 'Saving…' : 'Save context notes'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. Tailored CV */}
@@ -2130,34 +2426,55 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     Pull live employer research or add your own notes (hiring manager, product focus, why you care). Automatically used by Cover Letter, Application Answers, and Interview Prep below.
                   </p>
                 </div>
-                <button
-                  onClick={() => handleResearchCompany(applyRoleId, companyContext)}
-                  disabled={researchLoading}
-                  className={`h-10 px-4 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                >
-                  {researchLoading ? (
-                    <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
-                  ) : (
-                    <><span className="material-symbols-outlined text-sm">travel_explore</span>{companyContext ? 'Refresh company research' : 'Research company (1 action)'}</>
+                <div className="flex items-center gap-3">
+                  {companyContext && (
+                    <button
+                      onClick={() => setEditingApplyContext((e) => !e)}
+                      className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:underline"
+                    >
+                      {editingApplyContext ? 'Done editing' : 'Edit notes'}
+                    </button>
                   )}
-                </button>
+                  <button
+                    onClick={() => handleResearchCompany(applyRoleId, companyContext)}
+                    disabled={researchLoading}
+                    className={`h-10 px-4 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    {researchLoading ? (
+                      <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
+                    ) : (
+                      <><span className="material-symbols-outlined text-sm">travel_explore</span>{companyContext ? 'Refresh company research' : 'Research company (1 action)'}</>
+                    )}
+                  </button>
+                </div>
               </div>
-              <textarea
-                value={companyContext}
-                onChange={(e) => setCompanyContext(e.target.value)}
-                placeholder="Type your own notes about the company/role or click 'Research company' above…"
-                rows={companyContext ? 5 : 2}
-                className="w-full mt-2 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
-              />
-              <div className="flex justify-end mt-2">
-                <button
-                  onClick={() => handleSaveCompanyContext(applyRoleId, companyContext)}
-                  disabled={contextSaving}
-                  className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
-                >
-                  {contextSaving ? 'Saving…' : 'Save context notes'}
-                </button>
-              </div>
+              {companyContext && !editingApplyContext ? (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <CollapsibleNarrative markdown={companyContext} openCount={3} />
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    value={companyContext}
+                    onChange={(e) => setCompanyContext(e.target.value)}
+                    placeholder="Type your own notes about the company/role or click 'Research company' above…"
+                    rows={companyContext ? 6 : 2}
+                    className="w-full mt-2 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
+                  />
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={async () => {
+                        await handleSaveCompanyContext(applyRoleId, companyContext);
+                        setEditingApplyContext(false);
+                      }}
+                      disabled={contextSaving}
+                      className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
+                    >
+                      {contextSaving ? 'Saving…' : 'Save context notes'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

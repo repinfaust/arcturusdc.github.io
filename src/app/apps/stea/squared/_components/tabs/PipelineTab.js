@@ -80,11 +80,13 @@ function Reasoning({
   const [open, setOpen] = useState({ 0: true, 1: true });
   const [cvEdit, setCvEdit] = useState('');
   const [editingCv, setEditingCv] = useState(false);
+  const [editingContext, setEditingContext] = useState(false);
   const [cvDraft, setCvDraft] = useState('');
   const [cvSaving, setCvSaving] = useState(false);
   useEffect(() => {
     setOpen({ 0: true, 1: true });
     setEditingCv(false);
+    setEditingContext(false);
     setCvEdit('');
   }, [results.id]);
 
@@ -127,26 +129,47 @@ function Reasoning({
                   Research the employer or add your own intel. Automatically feeds into CV tailoring, cover letters, and interview prep.
                 </p>
               </div>
-              <SmallBtn dark onClick={() => researchCompany?.(results.id, results.company_context || '')} disabled={researchLoading}>
-                {researchLoading ? 'Researching…' : results.company_context ? 'Refresh research' : 'Research company'}
-              </SmallBtn>
+              <div className="flex items-center gap-3">
+                {results.company_context && (
+                  <button
+                    onClick={() => setEditingContext((e) => !e)}
+                    className={`${CAPS} text-[#686c62] hover:underline`}
+                  >
+                    {editingContext ? 'Done editing' : 'Edit notes'}
+                  </button>
+                )}
+                <SmallBtn dark onClick={() => researchCompany?.(results.id, results.company_context || '')} disabled={researchLoading}>
+                  {researchLoading ? 'Researching…' : results.company_context ? 'Refresh research' : 'Research company'}
+                </SmallBtn>
+              </div>
             </div>
-            <textarea
-              value={results.company_context ?? ''}
-              onChange={(e) => setResults?.((r) => ({ ...r, company_context: e.target.value }))}
-              placeholder="Add your own notes about the employer/role or click 'Research company' (1 action)…"
-              rows={results.company_context ? 5 : 2}
-              className={`${INPUT} mt-3 text-xs leading-relaxed`}
-            />
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={() => saveCompanyContext?.(results.id, results.company_context || '')}
-                disabled={contextSaving}
-                className={`${CAPS} text-[#4c5c3f] hover:underline`}
-              >
-                {contextSaving ? 'Saving…' : 'Save context notes'}
-              </button>
-            </div>
+            {results.company_context && !editingContext ? (
+              <div className="mt-3 pt-3 border-t border-[#ede5d4]">
+                <Md>{results.company_context}</Md>
+              </div>
+            ) : (
+              <>
+                <textarea
+                  value={results.company_context ?? ''}
+                  onChange={(e) => setResults?.((r) => ({ ...r, company_context: e.target.value }))}
+                  placeholder="Add your own notes about the employer/role or click 'Research company' (1 action)…"
+                  rows={results.company_context ? 6 : 2}
+                  className={`${INPUT} mt-3 text-xs leading-relaxed`}
+                />
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={async () => {
+                      await saveCompanyContext?.(results.id, results.company_context || '');
+                      setEditingContext(false);
+                    }}
+                    disabled={contextSaving}
+                    className={`${CAPS} text-[#4c5c3f] hover:underline`}
+                  >
+                    {contextSaving ? 'Saving…' : 'Save context notes'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* 2. Tailored CV */}

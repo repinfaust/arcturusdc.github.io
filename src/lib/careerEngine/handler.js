@@ -14,6 +14,15 @@ export const FREE_ACTIONS = 20;    // free allowance per tenant, per app
 export const FIRST_USER_ACTIONS = 250; // extended allowance for invited early workspaces (e.g. Wayne)
 export const COFFEE_BUNDLE = 50;   // actions granted per £5 top-up
 
+function stripMarkdownFences(md) {
+  if (!md || typeof md !== 'string') return '';
+  return md
+    .replace(/^\s*```(?:markdown|md)?\s*\r?\n/gim, '')
+    .replace(/\r?\n\s*```\s*$/gim, '')
+    .replace(/^\s*```\s*$/gm, '')
+    .trim();
+}
+
 // Normalise config (string YAML or object/array) to readable text for prompts.
 function configToText(v) {
   if (v == null) return '';
@@ -289,12 +298,12 @@ export function createCareerHandler(app) {
 
         // 2. Evaluate against the candidate. Profile + evidence + CV are identical
         // across calls, so they go in cachedContext (cache_control).
-        const evaluation = await callAnthropic({
+        const evaluation = stripMarkdownFences(await callAnthropic({
           system: app.prompts.evaluateSystem(cand.facts),
           cachedContext: cand.cachedContext,
           prompt: app.prompts.evaluate(jdData, cand.facts),
           maxTokens: 3000,
-        });
+        }));
 
         await incrementUsage(tenantId); // one analyse = one action
 
@@ -385,12 +394,12 @@ export function createCareerHandler(app) {
             `Preserve the markdown structure (tailored CV followed by \`---\` and \`### What was tailored\`).`
           : app.prompts.tailor(jdBlock, cand.facts);
 
-        const tailoredCv = await callAnthropic({
+        const tailoredCv = stripMarkdownFences(await callAnthropic({
           system: app.prompts.tailorSystem(cand.facts),
           cachedContext: cand.cachedContext,
           prompt,
           maxTokens: 4000,
-        });
+        }));
 
         await ref.set({ tailored_cv: tailoredCv, tailored_cv_at: new Date(), status: 'Applying' }, { merge: true });
         await incrementUsage(tenantId); // one tailor / revision = one action
@@ -403,8 +412,9 @@ export function createCareerHandler(app) {
         if (!tailored_cv.trim()) return NextResponse.json({ error: 'Tailored CV cannot be empty.' }, { status: 400 });
         const { ref, error } = await getAnalysisOr404(tenantId, body.id);
         if (error) return error;
-        await ref.set({ tailored_cv, tailored_cv_at: new Date() }, { merge: true });
-        return NextResponse.json({ id: body.id, tailored_cv });
+        const cleaned = stripMarkdownFences(tailored_cv);
+        await ref.set({ tailored_cv: cleaned, tailored_cv_at: new Date() }, { merge: true });
+        return NextResponse.json({ id: body.id, tailored_cv: cleaned });
       }
 
       // Save user-edited company / role context notes (free — no AI call).
@@ -426,7 +436,7 @@ export function createCareerHandler(app) {
         const roleTitle = analysis.role || analysis.jd_data?.role_title || 'Role';
         const jd = JSON.stringify(analysis.jd_data || {}, null, 2);
 
-        const companyContext = await callAnthropic({
+        const companyContext = stripMarkdownFences(await callAnthropic({
           system:
             'You are a sharp career research analyst. Use web search when helpful to find current, factual context about the employer, their products/programmes, regulatory or commercial pressures, and what matters most for this role. Be concise, specific, and practical — no generic filler.',
           prompt:
@@ -442,7 +452,7 @@ export function createCareerHandler(app) {
             (user_notes.trim() ? `\n- **Candidate notes incorporated:** keep the candidate's own notes intact.` : ''),
           maxTokens: 1500,
           tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
-        });
+        }));
 
         await ref.set({ company_context: companyContext, company_context_at: new Date() }, { merge: true });
         await incrementUsage(tenantId);
@@ -462,7 +472,7 @@ export function createCareerHandler(app) {
         const jdBlock = JSON.stringify(analysis.jd_data || {}, null, 2) +
           (analysis.company_context ? `\n\nCOMPANY & ROLE CONTEXT:\n${analysis.company_context}` : '');
 
-        const brief = await callAnthropic({
+        const brief = stripMarkdownFences(await callAnthropic({
           system:
             'You prepare a candidate for an interview using ONLY their real profile, evidence anchors, and CV. Never invent experience. Be direct, practical, and specific.',
           cachedContext: cand.cachedContext,
@@ -476,7 +486,7 @@ export function createCareerHandler(app) {
             `## 3. How to Handle Flagged Gaps / Watch-outs\nDirect, honest ways to frame any gaps or risks identified in the evaluation without bluffing.\n\n` +
             `## 4. Sharp Questions to Ask the Panel\n3 specific questions tailored to this role and organisation.`,
           maxTokens: 2800,
-        });
+        }));
 
         await ref.set({ interview_brief: brief, interview_brief_at: new Date() }, { merge: true });
         await incrementUsage(tenantId);
