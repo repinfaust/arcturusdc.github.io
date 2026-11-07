@@ -447,6 +447,54 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
     loadCvUploads();
   }
 
+  // Guided "No CV yet? Build one in 3 minutes" builder (D-SITE-082).
+  async function buildFirstCv(formData) {
+    setCvBusy(true);
+    try {
+      const { res, data } = await api('build_first_cv', formData);
+      if (handleLimit(res, data)) return null;
+      if (!res.ok) throw new Error(data.error || 'Could not build your CV');
+
+      if (data.cv_markdown) {
+        await api('save_cv', {
+          label: 'Civilian Master CV (Built in Squared)',
+          cv_text: data.cv_markdown,
+          make_active: true,
+        });
+        await loadCvUploads();
+      }
+
+      const nextProfile = {
+        ...fillEmptyProfile(profile, data.profile || {}),
+        ...(data.profile?.name ? { name: data.profile.name } : {}),
+        ...(data.profile?.location ? { location: data.profile.location } : {}),
+        ...(data.profile?.work_pattern ? { work_pattern: data.profile.work_pattern } : {}),
+        ...(data.profile?.service_branch ? { service_branch: data.profile.service_branch } : {}),
+        ...(data.profile?.rank ? { rank: data.profile.rank } : {}),
+        ...(data.profile?.trade ? { trade: data.profile.trade } : {}),
+        ...(data.profile?.years_served !== '' && data.profile?.years_served != null ? { years_served: data.profile.years_served } : {}),
+        ...(data.profile?.clearance ? { clearance: data.profile.clearance } : {}),
+        ...(data.profile?.min_salary ? { min_salary: data.profile.min_salary } : {}),
+      };
+      setProfile(nextProfile);
+
+      const extracted = Array.isArray(data.evidence) && data.evidence.length > 0 ? data.evidence : anchors;
+      const nextAnchors = hasEvidence(anchors) && Array.isArray(data.evidence) && data.evidence.length > 0
+        ? mergeNewAnchors(anchors, data.evidence).anchors
+        : extracted;
+      setAnchors(nextAnchors);
+
+      await saveConfig('profile', buildConfigPayload(nextProfile, nextAnchors));
+      loadUsage();
+      return data;
+    } catch (err) {
+      alert(err.message);
+      return null;
+    } finally {
+      setCvBusy(false);
+    }
+  }
+
   // --- Skills translator ---
   async function translateLine(text) {
     const { res, data } = await api('translate_skill', { text });
@@ -694,6 +742,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
           saving={saving}
           cvUploads={cvUploads} cvBusy={cvBusy} handleCvFile={handleCvFile} saveCvAndExtract={saveCvAndExtract}
           setActiveCv={setActiveCv} relabelCv={relabelCv} deleteCv={deleteCv}
+          buildFirstCv={buildFirstCv}
         />
       )}
 

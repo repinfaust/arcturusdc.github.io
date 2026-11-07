@@ -576,6 +576,7 @@ export function createCareerHandler(app) {
           return {
             id: d.id, label: v.label, active: !!v.active,
             preview: (v.cv_text || '').slice(0, 160),
+            cv_text: v.cv_text || '',
             createdAt: toIso(v.createdAt),
           };
         }).sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));

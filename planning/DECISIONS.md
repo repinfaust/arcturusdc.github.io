@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-11-07 — Squared: Guided "No CV yet? Build one in 3 minutes" onboarding for service leavers without a CV or JPA reports (D-SITE-082)
+
+Wayne (first service-leaver user) noted that he does not yet have a CV, is anxious about civilian ATS scanners rejecting CVs, and has not downloaded his SJAR/OJAR appraisal reports from JPA because doing so is cumbersome. Previously, Step `01 Your CV` on Squared's `Config` tab (`src/app/apps/stea/squared/_components/tabs/ConfigTab.js`) assumed the user already had a CV or JPA extract ready to upload.
+
+**Decisions:**
+- **Backend (`build_first_cv` in `src/lib/careerEngine/apps/squared.js`):** Added an `extraActions.build_first_cv` action (`1 action`) that accepts 4 plain-English military inputs (1. name, location, branch, rank, trade, years served, clearance; 2. rough notes on their last 2–3 postings and what they ran; 3. courses, tickets, and qualifications; 4. target civilian work or open to suggestions). Using `SERVICE_RULES` and strict grounding (zero invented numbers or qualifications), it returns a complete single-column ATS-friendly civilian Master CV in Markdown (`cv_markdown`), a populated `profile` (including suggested civilian `target_roles` and `stretch_roles` mapped from their trade), and structured `evidence` anchors (`[{ company, period, bullets }]`).
+- **Frontend (`src/app/apps/stea/squared/_components/tabs/ConfigTab.js`, `src/app/apps/stea/squared/page.js`, `src/lib/careerEngine/handler.js`):** Added a prominent callout and 4-question guided form in `01 Your CV` (`"Build my first CV in 3 mins →"` / `"No CV yet? Build from scratch →"`). Submitting saves the generated civilian Master CV as the active CV in `01 Your CV`, auto-fills and persists `02 Service record`, `04 Candidate profile`, and `05 Evidence anchors`, and exposes inline `View CV` and `Download PDF` buttons on every CV in `01 Your CV`.
+
 ## 2026-11-07 — Career Ops & Squared: in-UI company research, tailored CV revision & inline editing, custom portal Q&A, and interview prep briefs (D-SITE-081)
 
 David requested bringing the full application and interview workflow directly into the Career Ops (`/apps/stea/career`) and Squared (`/apps/stea/squared`) web UIs so there is no need to drop into the terminal when researching employers, revising tailored CVs, answering bespoke portal questions, or preparing for interviews.

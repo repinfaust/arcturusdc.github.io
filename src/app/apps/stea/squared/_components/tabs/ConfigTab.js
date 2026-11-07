@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { TabHeading, Panel, NumberedTitle, Field, Segmented, SmallBtn, Btn, INPUT, DISPLAY, MONO, CAPS } from '../ui';
+import { TabHeading, Panel, NumberedTitle, Field, Segmented, SmallBtn, Btn, Md, INPUT, DISPLAY, MONO, CAPS } from '../ui';
 import RecordTranslator from '../RecordTranslator';
 import { unresolvedClaims } from '@/lib/careerEngine/recordTranslate';
 import { clearanceStatus } from '@/lib/careerEngine/clearance';
+import { printCvAsPdf } from '@/lib/careerEngine/printCv';
 
 const BRANCHES = ['British Army', 'Royal Navy', 'Royal Air Force', 'Royal Marines'];
 const CLEARANCES = ['None', 'BPSS', 'CTC', 'SC', 'DV'];
@@ -214,11 +215,17 @@ export default function ConfigTab({
   profile, setProfile, saveProfile, anchors, setAnchors, saveAnchors,
   translations, saveTranslations, translateLine, translateRecord, usage, saving,
   cvUploads, cvBusy, handleCvFile, saveCvAndExtract, setActiveCv, relabelCv, deleteCv,
+  buildFirstCv,
 }) {
   const set = (k, v) => setProfile((p) => ({ ...p, [k]: v }));
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [pasteLabel, setPasteLabel] = useState('');
+  const [buildOpen, setBuildOpen] = useState(false);
+  const [buildPostings, setBuildPostings] = useState('');
+  const [buildQuals, setBuildQuals] = useState('');
+  const [buildTargets, setBuildTargets] = useState('');
+  const [viewingCvId, setViewingCvId] = useState(null);
 
   return (
     <div>
@@ -236,19 +243,141 @@ export default function ConfigTab({
       <Panel accent className="mt-7">
         <NumberedTitle n="01" title="Your CV" />
         <p className="mt-2 text-sm leading-relaxed text-[#686c62] max-w-[820px]">
-          Upload your CV (PDF or DOCX). The <strong className="text-[#22251f]">active</strong> CV is the reference Squared uses to analyse roles, search and tailor — and we&apos;ll fill your service record, profile and evidence from it.
+          Upload your CV (PDF or DOCX), paste rough notes, or <strong className="text-[#22251f]">build your first civilian CV from scratch</strong> below. The <strong className="text-[#22251f]">active</strong> CV is the reference Squared uses to analyse roles, search and tailor — and we&apos;ll fill your service record, profile and evidence from it.
         </p>
         <p className="mt-2 text-[13px] sm:text-xs leading-relaxed text-[#5a3c2f] max-w-[820px]">
           <strong className="text-[#C63C00]">OPSEC:</strong> before uploading, take out operation names, deployment locations, unit details and anything you wouldn&apos;t say to a civilian employer.
         </p>
+
+        {cvUploads.length === 0 && !buildOpen && (
+          <div className="mt-4 p-4 border-2 border-[#4c5c3f] bg-[#f8f4ea] flex flex-wrap items-center justify-between gap-3">
+            <div className="max-w-[620px]">
+              <div className="text-sm font-extrabold text-[#22251f]">No CV yet — or haven&apos;t pulled your SJARs off JPA?</div>
+              <p className="mt-1 text-[13px] text-[#5a5e54] leading-relaxed">
+                Don&apos;t sweat it. Answer 4 plain-English questions about what you did in service (military slang is fine) and we&apos;ll build your first ATS-friendly civilian CV, suggest civilian job titles that match your trade, and fill your profile in one go.
+              </p>
+            </div>
+            <Btn variant="olive" className="h-[44px] px-4 text-sm shrink-0" onClick={() => { setBuildOpen(true); setPasteOpen(false); }}>
+              Build my first CV in 3 mins →
+            </Btn>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2.5 mt-4">
           <label className={`inline-flex items-center h-[46px] px-5 text-sm font-extrabold ${cvBusy ? 'bg-[#d7cebc] text-[#686c62] cursor-not-allowed' : 'bg-[#4c5c3f] text-[#f8f4ea] shadow-[4px_4px_0_#22251f] cursor-pointer'}`}>
-            {cvBusy ? 'Reading…' : 'Upload CV (PDF/DOCX)'}
+            {cvBusy ? 'Working…' : 'Upload CV (PDF/DOCX)'}
             <input type="file" accept=".pdf,.docx,.txt,application/pdf" className="hidden" disabled={cvBusy}
               onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleCvFile(f); }} />
           </label>
-          <button onClick={() => setPasteOpen((o) => !o)} className="h-[46px] px-4 bg-[#fffdf8] border border-[#22251f] text-sm font-bold">or paste text</button>
+          <button onClick={() => { setPasteOpen((o) => !o); setBuildOpen(false); }} className="h-[46px] px-4 bg-[#fffdf8] border border-[#22251f] text-sm font-bold">or paste text</button>
+          <button onClick={() => { setBuildOpen((o) => !o); setPasteOpen(false); }} className="h-[46px] px-4 bg-[#22251f] text-[#f8f4ea] text-sm font-extrabold">
+            {buildOpen ? 'Close CV builder ✕' : 'No CV yet? Build from scratch →'}
+          </button>
         </div>
+
+        {buildOpen && (
+          <div className="mt-4 p-5 border-2 border-[#22251f] bg-[#f8f4ea] space-y-4">
+            <div className="flex flex-wrap justify-between items-start gap-2">
+              <div>
+                <div className={`${CAPS} text-[#4c5c3f]`}>Guided First-CV Builder · No JPA downloads needed</div>
+                <h4 className="mt-1 text-lg font-extrabold text-[#22251f]">Tell us what you did in your own words</h4>
+                <p className="mt-0.5 text-[13px] text-[#686c62]">
+                  Write in normal military shorthand — ranks, trades, kit, troop/platoon sizes. Squared translates it into an ATS-clean civilian CV, fills your profile below, and never invents a single number.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Field label="1. Your name & home base">
+                <input value={profile.name || ''} onChange={(e) => set('name', e.target.value)} placeholder="Your full name" className={`${INPUT} bg-[#fffdf8]`} />
+                <input value={profile.location || ''} onChange={(e) => set('location', e.target.value)} placeholder="Town / city (e.g. Nottingham, Tidworth)" className={`${INPUT} bg-[#fffdf8] mt-1.5`} />
+              </Field>
+              <Field label="Rank & Trade / Branch">
+                <input value={profile.rank || ''} onChange={(e) => set('rank', e.target.value)} placeholder="e.g. Sgt / SSgt / CPO / Flt Sgt" className={`${INPUT} bg-[#fffdf8]`} />
+                <input value={profile.trade || ''} onChange={(e) => set('trade', e.target.value)} placeholder="e.g. REME Vehicle Mechanic / RLC Logs / Signals" className={`${INPUT} bg-[#fffdf8] mt-1.5`} />
+              </Field>
+              <Field label="Years served & Clearance">
+                <input type="number" min={0} max={50} value={profile.years_served ?? ''} onChange={(e) => set('years_served', e.target.value)} placeholder="Years served (e.g. 12)" className={`${INPUT} bg-[#fffdf8]`} />
+                <select value={profile.clearance || 'None'} onChange={(e) => set('clearance', e.target.value)} className={`${INPUT} bg-[#fffdf8] mt-1.5`}>
+                  {CLEARANCES.map((c) => <option key={c} value={c}>Clearance: {c}</option>)}
+                </select>
+              </Field>
+            </div>
+
+            <Field
+              label="2. Your last 2–3 postings & what you actually ran"
+              hint="Rough bullet points or a paragraph: how many people you led, what kit/vehicles/comms/accounts you were responsible for, any inspections, exercises, training delivered, or problems fixed."
+            >
+              <textarea
+                value={buildPostings}
+                onChange={(e) => setBuildPostings(e.target.value)}
+                rows={5}
+                placeholder="e.g. 2022–2026: Troop SSgt, ran a 28-person workshop maintaining 65 armoured & B-fleet vehicles. Hit 94% availability ahead of brigade deployment. Managed £1.2m spares account and ran weekly H&S / JAMES inspections…"
+                className={`${INPUT} bg-[#fffdf8] leading-relaxed`}
+              />
+            </Field>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field
+                label="3. Courses, tickets, licences & quals"
+                hint="Include military courses, ELC/SLC quals, driving licences, H&S, management or trade tickets."
+              >
+                <textarea
+                  value={buildQuals}
+                  onChange={(e) => setBuildQuals(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. IOSH Managing Safely, Level 5 Leadership & Management (CMI), Cat C+E, PRINCE2 Foundation, Defence Train the Trainer…"
+                  className={`${INPUT} bg-[#fffdf8] leading-relaxed`}
+                />
+              </Field>
+              <Field
+                label="4. What civilian work are you aiming for? (or leave blank for suggestions)"
+                hint="Job types, sectors, hybrid/remote preference, or rough salary floor."
+              >
+                <textarea
+                  value={buildTargets}
+                  onChange={(e) => setBuildTargets(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Operations Manager, Fleet/Logistics Manager, or Project Delivery around £50k+. Not 100% sure what titles fit me — suggest good matches."
+                  className={`${INPUT} bg-[#fffdf8] leading-relaxed`}
+                />
+              </Field>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <span className="text-xs text-[#686c62]">
+                Uses 1 action · Creates your active civilian Master CV + fills sections 02, 04 and 05 below.
+              </span>
+              <Btn
+                variant="olive"
+                className="h-[46px] px-6 text-sm"
+                disabled={cvBusy || (!buildPostings.trim() && !(profile.trade || '').trim())}
+                onClick={async () => {
+                  const res = await buildFirstCv?.({
+                    name: profile.name,
+                    location: profile.location,
+                    work_pattern: profile.work_pattern,
+                    service_branch: profile.service_branch,
+                    rank: profile.rank,
+                    trade: profile.trade,
+                    years_served: profile.years_served,
+                    clearance: profile.clearance,
+                    min_salary: profile.min_salary,
+                    postings: buildPostings,
+                    quals: buildQuals,
+                    targets: buildTargets,
+                  });
+                  if (res) {
+                    setBuildOpen(false);
+                  }
+                }}
+              >
+                {cvBusy ? 'Building your civilian CV & profile…' : 'Build my civilian CV & profile (1 action) →'}
+              </Btn>
+            </div>
+          </div>
+        )}
+
         {pasteOpen && (
           <div className="mt-4 flex flex-col gap-2.5">
             <input value={pasteLabel} onChange={(e) => setPasteLabel(e.target.value)} placeholder="Label (e.g. Resettlement CV v2)" className={INPUT} />
@@ -264,17 +393,40 @@ export default function ConfigTab({
         {cvUploads.length > 0 && (
           <div className="mt-4 flex flex-col gap-2">
             {cvUploads.map((cv) => (
-              <div key={cv.id} className={`flex flex-wrap items-center gap-3 sm:gap-4 px-4 py-3.5 border ${cv.active ? 'border-[#4c5c3f] bg-[#f8f4ea]' : 'border-[#d7cebc]'}`}>
-                <div className="flex-1 min-w-[200px]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold truncate">{cv.label}</span>
-                    {cv.active && <span className={`px-1.5 py-0.5 bg-[#4c5c3f] text-[#f8f4ea] ${CAPS} !text-[11px]`}>Active</span>}
+              <div key={cv.id} className={`border ${cv.active ? 'border-[#4c5c3f] bg-[#f8f4ea]' : 'border-[#d7cebc]'}`}>
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 px-4 py-3.5">
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold truncate">{cv.label}</span>
+                      {cv.active && <span className={`px-1.5 py-0.5 bg-[#4c5c3f] text-[#f8f4ea] ${CAPS} !text-[11px]`}>Active</span>}
+                    </div>
+                    <div className="mt-0.5 text-[13px] sm:text-xs text-[#686c62] truncate">{cv.preview}…</div>
                   </div>
-                  <div className="mt-0.5 text-[13px] sm:text-xs text-[#686c62] truncate">{cv.preview}…</div>
+                  {cv.cv_text && (
+                    <>
+                      <button
+                        onClick={() => setViewingCvId(viewingCvId === cv.id ? null : cv.id)}
+                        className={`${CAPS} text-[#22251f] underline`}
+                      >
+                        {viewingCvId === cv.id ? 'Hide CV' : 'View CV'}
+                      </button>
+                      <button
+                        onClick={() => printCvAsPdf({ name: profile.name || 'Candidate', role: cv.label || 'Master CV', cvMarkdown: cv.cv_text })}
+                        className={`${CAPS} text-[#4c5c3f]`}
+                      >
+                        Download PDF
+                      </button>
+                    </>
+                  )}
+                  {!cv.active && <button onClick={() => setActiveCv(cv.id)} className={`${CAPS} text-[#4c5c3f]`}>Set active</button>}
+                  <button onClick={() => relabelCv(cv.id, cv.label)} className={`${CAPS} text-[#686c62]`}>Rename</button>
+                  <button onClick={() => deleteCv(cv.id)} className={`${CAPS} text-[#C63C00]`}>Delete</button>
                 </div>
-                {!cv.active && <button onClick={() => setActiveCv(cv.id)} className={`${CAPS} text-[#4c5c3f]`}>Set active</button>}
-                <button onClick={() => relabelCv(cv.id, cv.label)} className={`${CAPS} text-[#686c62]`}>Rename</button>
-                <button onClick={() => deleteCv(cv.id)} className={`${CAPS} text-[#C63C00]`}>Delete</button>
+                {viewingCvId === cv.id && cv.cv_text && (
+                  <div className="px-5 py-4 border-t border-[#d7cebc] bg-[#fffdf8] max-h-[460px] overflow-y-auto">
+                    <Md>{cv.cv_text}</Md>
+                  </div>
+                )}
               </div>
             ))}
           </div>

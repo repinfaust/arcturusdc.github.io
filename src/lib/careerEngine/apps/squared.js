@@ -284,5 +284,117 @@ ${chunk}`;
       await incrementUsage();
       return NextResponse.json({ mil: line, civ: out.civ || '', added: cleanAdded(out.added), note: out.note || '' });
     },
+
+    // Guided "No CV yet? Build one in 3 minutes" builder (D-SITE-082).
+    // Takes a service leaver's plain-English military brain-dump (no CV or JPA
+    // report downloads required) and generates:
+    //   1. An ATS-clean civilian Master CV in markdown (`cv_markdown`),
+    //   2. A structured `profile` (including suggested civilian target_roles),
+    //   3. Structured `evidence` anchors (`[{ company, period, bullets }]`).
+    async build_first_cv({ body, assertActionAvailable, incrementUsage }) {
+      const {
+        name = '',
+        location = '',
+        work_pattern = '',
+        service_branch = 'British Army',
+        rank = '',
+        trade = '',
+        years_served = '',
+        clearance = 'None',
+        postings = '',
+        quals = '',
+        targets = '',
+        min_salary = '',
+      } = body;
+
+      if (!postings.trim() && !trade.trim()) {
+        return NextResponse.json({ error: 'Tell us your trade/branch and a few lines on what you did in your postings so we have real facts to build from.' }, { status: 400 });
+      }
+
+      await assertActionAvailable();
+
+      const system =
+        'You help UK Armed Forces service leavers build their very first ATS-friendly civilian CV and career profile from rough military notes. ' +
+        'Use ONLY the facts, numbers, postings, and qualifications the user provided — NEVER invent metrics, employers, dates, or qualifications. ' +
+        'Translate military ranks, units, kit, and abbreviations into clear civilian language that passes ATS scanners and makes sense to a civilian hiring manager. ' +
+        'Respond with ONLY valid JSON.\n\n' + SERVICE_RULES;
+
+      const prompt =
+        `Build a complete first civilian Master CV, structured candidate profile, and evidence anchors from these rough service notes:\n\n` +
+        `Name: ${name || 'Candidate'}\n` +
+        `Home base / location: ${location || 'UK'}\n` +
+        `Preferred working pattern: ${work_pattern || 'Flexible / Hybrid'}\n` +
+        `Service branch: ${service_branch || 'British Army'}\n` +
+        `Rank on exit: ${rank || 'Not specified'}\n` +
+        `Trade / branch / specialisation: ${trade || 'Not specified'}\n` +
+        `Years served: ${years_served || 'Not specified'}\n` +
+        `Security clearance: ${clearance || 'None'}\n` +
+        `Salary floor (£): ${min_salary || 'Not specified'}\n\n` +
+        `POSTINGS & WHAT THEY ACTUALLY DID (in their own words):\n${postings || 'None provided'}\n\n` +
+        `COURSES, TICKETS & QUALIFICATIONS:\n${quals || 'None provided'}\n\n` +
+        `WHAT THEY WANT TO DO NEXT (or open to suggestions):\n${targets || 'Suggest civilian roles that fit this trade and rank'}\n\n` +
+        `Return ONLY a valid JSON object with this exact shape:\n` +
+        `{\n` +
+        `  "cv_markdown": "<Full, single-column ATS-friendly civilian CV in clean Markdown (do NOT wrap in backtick fences). Start with '# Name', a bold civilian headline line, location, then '## Profile' (3–4 sentences in plain civilian language), '## Core Skills & Qualifications' (bulleted), '## Career History' (each posting/role with civilian-friendly title + military rank/service in brackets, dates if known, and 3–5 civilian-translated achievement bullets), and '## Courses, Qualifications & Clearance'.>",\n` +
+        `  "profile": {\n` +
+        `    "name": "<name>",\n` +
+        `    "location": "<location>",\n` +
+        `    "work_pattern": "<work pattern>",\n` +
+        `    "service_branch": "<British Army | Royal Navy | Royal Air Force | Royal Marines>",\n` +
+        `    "rank": "<rank>",\n` +
+        `    "trade": "<trade>",\n` +
+        `    "years_served": "<years as number or string>",\n` +
+        `    "clearance": "<None | BPSS | CTC | SC | DV>",\n` +
+        `    "min_salary": <number or empty string>,\n` +
+        `    "target_Roles_list": ["<3 to 5 concrete civilian job titles that match their rank, trade, and preferences>"],\n` +
+        `    "stretch_roles": ["<2 step-up civilian job titles>"],\n` +
+        `    "target_sectors": ["<3 to 4 suitable civilian sectors>"]\n` +
+        `  },\n` +
+        `  "evidence": [\n` +
+        `    {\n` +
+        `      "company": "<Posting / Unit / Service — Civilian-friendly role title>",\n` +
+        `      "period": "<dates or years if mentioned, else 'Service'>",\n` +
+        `      "bullets": ["<civilian-translated achievement bullet grounded strictly in their notes>"]\n` +
+        `    }\n` +
+        `  ]\n` +
+        `}`;
+
+      const raw = await callAnthropic({
+        system,
+        prompt,
+        maxTokens: 3500,
+      });
+
+      let parsed;
+      try {
+        parsed = JSON.parse(stripJsonFences(raw));
+      } catch {
+        return NextResponse.json({ error: 'Could not build the CV from those notes. Try adding a bit more detail and run again.' }, { status: 422 });
+      }
+
+      await incrementUsage();
+
+      const p = parsed.profile || {};
+      const normProfile = {
+        name: p.name || name,
+        location: p.location || location,
+        work_pattern: p.work_pattern || work_pattern,
+        service_branch: p.service_branch || service_branch,
+        rank: p.rank || rank,
+        trade: p.trade || trade,
+        years_served: p.years_served ?? years_served,
+        clearance: p.clearance || clearance || 'None',
+        min_salary: p.min_salary || (min_salary ? Number(min_salary) : ''),
+        target_roles: Array.isArray(p.target_Roles_list) ? p.target_Roles_list : (Array.isArray(p.target_roles) ? p.target_roles : []),
+        stretch_roles: Array.isArray(p.stretch_roles) ? p.stretch_roles : [],
+        target_sectors: Array.isArray(p.target_sectors) ? p.target_sectors : [],
+      };
+
+      return NextResponse.json({
+        cv_markdown: (parsed.cv_markdown || '').trim(),
+        profile: normProfile,
+        evidence: Array.isArray(parsed.evidence) ? parsed.evidence : [],
+      });
+    },
   },
 };

@@ -18,7 +18,9 @@ Go to **https://www.arcturusdc.com/apps/stea/squared** and sign in with your Goo
 
 When you first sign in, it'll walk you through setting up your profile on the **05 Config** tab:
 
-1. **Upload your CV:** Drop in your current CV (PDF or Word) and click **Save & extract**. It reads your CV and fills in your profile and past roles for you so you don't have to type them from scratch.
+1. **Build or upload your CV:**
+   - **Don't have a CV or your SJARs downloaded yet?** Click **Build my first CV in 3 mins** right at the top of **01 Your CV**. Answer 4 quick plain-English questions about your rank, trade, postings, and courses (normal military shorthand is fine) — Squared will write your first ATS-friendly civilian Master CV, suggest civilian job titles that match your trade, and fill your profile in one go.
+   - **Already have a CV?** Drop in your PDF or Word file and click **Save & extract**.
    *(Quick OPSEC note: before uploading a CV or SJAR, strip out any operation names, unit locations, or detail you wouldn't put in front of a civilian employer.)*
 2. **Check your Service Record:** Fill in your branch, rank, trade, years served, security clearance, and roughly what year your clearance was granted or renewed (it uses that to tell you how long your SC/DV transfer window has left). Put in your exit date if you have one.
 3. **Translate your SJARs / OJARs (optional, but really useful):** If you have appraisal reports or military bullets that sound too "forces", upload or paste them into the **Military → Civilian Translator**. It turns them into plain-English achievements and lets you add the good ones straight into your evidence list with one click.
