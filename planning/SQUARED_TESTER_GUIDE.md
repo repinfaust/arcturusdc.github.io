@@ -1,99 +1,69 @@
 # Squared — Getting Started
 
-A job-search triage tool built for service leavers and veterans. It reads your CV or appraisal reports (SJAR / OJAR), translates military jargon into plain civilian language, scores job ads against your real experience, and drafts tailored CVs and cover letters. Nothing it writes is invented — everything is grounded in your record.
+Squared is a tool built for people leaving the forces. It reads your CV and appraisal write-ups (SJAR / OJAR), translates military language into plain civilian English, scores job ads against your actual experience, and drafts tailored CVs and cover letters for the roles worth going for.
 
-Your workspace is yours alone. Nobody else can see what you upload, and you can't see anyone else's.
+Nothing it writes is made up — everything is grounded in what's in your record.
+
+Your workspace is **wayne - squared**. It's private to you — nobody else can see what you upload.
 
 ---
 
 ## 1. Sign in
 
-Go to **https://www.arcturusdc.com/apps/stea/squared**
-
-Sign in with the Google account attached to your workspace.
+Go to **https://www.arcturusdc.com/apps/stea/squared** and sign in with your Google account.
 
 ---
 
-## 2. Set up your record (do this first)
+## 2. Set up your record (do this first — takes ~5 minutes)
 
-Open the **05 Config** tab (it opens automatically on your first visit).
+When you first sign in, it'll walk you through setting up your profile on the **05 Config** tab:
 
-> **OPSEC check before you upload:** Do not include classified project names, live force-protection detail, callsigns, crypto/COMSEC references, or unit postcodes/locations that shouldn't be on a commercial server. Describe the scale, leadership, and outcome — not the operation name.
+1. **Upload your CV:** Drop in your current CV (PDF or Word) and click **Save & extract**. It reads your CV and fills in your profile and past roles for you so you don't have to type them from scratch.
+   *(Quick OPSEC note: before uploading a CV or SJAR, strip out any operation names, unit locations, or detail you wouldn't put in front of a civilian employer.)*
+2. **Check your Service Record:** Fill in your branch, rank, trade, years served, security clearance, and roughly what year your clearance was granted or renewed (it uses that to tell you how long your SC/DV transfer window has left). Put in your exit date if you have one.
+3. **Translate your SJARs / OJARs (optional, but really useful):** If you have appraisal reports or military bullets that sound too "forces", upload or paste them into the **Military → Civilian Translator**. It turns them into plain-English achievements and lets you add the good ones straight into your evidence list with one click.
+4. **Target roles & salary:** Add the kinds of roles you're aiming for, any **stretch roles** (step-up roles you'd go for if your experience transfers across), and your minimum/target salary. Hit **Save**.
 
-1. **01 Base CV:** Upload your current CV (`.pdf`, `.docx`, `.txt`, or `.md`), or paste the text in, then hit **Save & extract**. It fills in any empty fields in your Service Record, Candidate Profile, and Evidence Anchors without overwriting anything you've already typed.
-2. **02 Service record & Resettlement:** Check your branch, rank on exit, trade/specialisation, years served, security clearance, and **clearance granted/renewed year** (used to check whether your SC/DV is still within the 10-year / 7-year transfer window or has lapsed since leaving). Set your exit date and ELCAS/CTP details if relevant.
-3. **03 Military → Civilian Translator:** Paste a single bullet or upload up to 3 SJARs / OJARs at once to translate your write-ups into plain English. Click **+ Add to evidence** on any translated bullet to drop it straight into your Evidence Anchors.
-4. **04 Candidate profile & 05 Evidence anchors:** Check your target roles, **stretch roles** (step-up roles a grade above your current equivalent that you want scored on transferable evidence rather than discounted), preferred/excluded sectors, salary floor, and target salary. Hit **Save**.
-
----
-
-## 3. Find or add a role
-
-Two ways in:
-
-**02 Live Scans** — enter keywords, a location, work mode, and a minimum salary. It searches Reed and Adzuna, strips out unrelated role types, tags security-clearance wording against your clearance status, and ranks what's left against your target and stretch roles.
-
-> **Civil Service & Defence primes:** Many veteran-friendly roles sit directly on **Civil Service Jobs** (including the *Great Place to Work for Veterans* scheme) or on employer portals (BAE, Babcock, QinetiQ, MBDA, Thales) rather than Reed/Adzuna. When you find one there, copy the job description text and paste it into **01 Pipeline**.
-
-**01 Pipeline (Paste a job you've already found)** — drop in the full job description text, or the URL of the ad.
-
-> On URLs: it works on most job boards, but some sites block automated reading or sit behind a login. If it can't read the link it'll tell you — just copy the job description text and paste that instead. Pasting the full text always gives the better result anyway.
+It's worth spending five minutes checking what it pulled out of your CV — every job score and tailored CV comes from this.
 
 ---
 
-## 4. Analyse it
+## 3. Find or paste a job
 
-Hit **Analyse & score**. You get back:
+Two ways to look at roles:
 
-- A **score out of 5** (`A` Apply now, `B` Worth applying, `C` Stretch, `D` Skip)
-- A breakdown across Role fit, Sector familiarity, Location/work pattern, Compensation, and Evidence match
-- Where your service record transfers well, where you're light, and what's worth addressing in a cover letter
-
-The role is saved to your pipeline so it's still there when you come back.
+- **02 Live Scans (Search):** Type in keywords, where you want to work, and a minimum salary. It searches live UK job boards (Reed and Adzuna), filters out the noise, flags any security-clearance mentions, and ranks the best matches.
+- **01 Pipeline (Paste a job you've spotted elsewhere):** A lot of the best veteran-friendly roles are on **Civil Service Jobs** (which has the *Great Place to Work for Veterans* guaranteed Stage 2 scheme) or directly on defence/engineering company sites (BAE, Babcock, QinetiQ, etc.). When you see one, copy the job description text and paste it into **01 Pipeline**.
 
 ---
 
-## 5. Tailor a CV, cover letter, and application form answers
+## 4. Score it before you spend hours applying
 
-On a role you want to apply for:
+Hit **Analyse & score**. In about 15 seconds you'll get:
 
-- **Tailor CV** (from **01 Pipeline** or **03 CV Tailor**) — a version of your CV rewritten in plain civilian English to emphasise what this employer is asking for, plus a short note on what was changed and why. Downloadable as a clean PDF.
-- **04 Apply Assist** —
-  - Copy-ready standard fields, address/notice extras, and editable recent roles (split into Employer/Unit, Job Title/Rank, Period, and Summary for multi-field application portals). Edits save automatically.
-  - **Cover letter** — 250–350 words, tailored to the role. You can ask for revisions in plain English ("make it shorter", "lead with the team size").
-  - **Common application answers** — drafts for the usual free-text questions ("why this role", "why us", "what makes you a good fit").
+- An honest verdict (**Apply now**, **Worth applying**, **Stretch**, or **Skip**) and a score out of 5
+- Where your service background matches well, where you're light, and how to handle any gaps if you decide to apply
 
-Important: it re-emphasises what's already in your evidence anchors and base CV. It will not invent a posting, a metric, or a qualification you don't have. If a draft looks thin for a role, go back to **05 Config** and add more detail or translate another SJAR/OJAR.
+Every role you score stays saved in your pipeline so you can come back to it.
 
 ---
 
-## 6. Your allowance
+## 5. Tailor your CV, cover letter, and form answers
 
-You get **20 free actions**. An action is anything that costs AI time: a search, an analysis, a tailored CV, a cover letter, application answers, a translation, or the CV extraction in step 2.
+When you find a role you want to go for:
 
-Uploading, editing, reading, and saving are free.
-
-If you run out, there's an access code you can enter — **ask David for it** rather than paying anything. You're testing, not buying.
-
----
-
-## Suggested first run
-
-1. Sign in at `https://www.arcturusdc.com/apps/stea/squared`
-2. Upload your CV on **05 Config**, hit **Save & extract**, check your Service Record and Candidate Profile, and save
-3. Try translating a real SJAR/OJAR paragraph in **03 Military → Civilian Translator** and add the best bullets to your evidence
-4. Paste in one real job you'd genuinely consider applying for on **01 Pipeline**
-5. Analyse it — does the score and rationale match your own gut feel?
-6. Tailor a CV and cover letter for it — does it read like a capable civilian version of you, or does it still sound either too military or too generic?
+- **Tailor CV:** Rewrites your CV in civilian language to highlight what *that* specific employer is asking for, and lets you download it as a clean PDF.
+- **04 Apply Assist:**
+  - Gives you a **250–350 word cover letter** for the role (you can tell it how to tweak it in plain English — e.g. *"make it shorter"* or *"lead with managing a team of 30"*).
+  - Drafts answers to the standard application questions (*"Why this role?"*, *"What makes you a good fit?"*).
+  - Keeps all your standard form details and recent roles ready to copy-paste box by box into annoying application portals.
 
 ---
 
-## What's useful to feed back
+## Free allowance & access code
 
-- Did the Military → Civilian Translator capture what you actually did without losing the weight of the responsibility?
-- Did the role score agree with your own instinct? Where it disagreed, which was right?
-- Did the tailored CV and cover letter sound like you?
-- Did it ever state something about you that isn't true? **This one matters most — flag it immediately.**
-- Anything confusing, slow, or broken on mobile or desktop
+You get **20 free actions** to start with (searching, scoring a job, translating a report, or drafting a CV/cover letter each count as 1 action; editing and saving are free).
 
-Send it to **help@arcturusdc.com**, or straight to David.
+When you run low, don't pay the £5 top-up — click **"Have an access code?"** and enter the code from David to unlock unlimited use.
+
+If anything feels confusing, gets something wrong about your background, or doesn't sound like you, just drop David a message.

@@ -683,20 +683,26 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     }
   }
 
-  // Generate a role-tailored CV for an analysed role, save it, and show it.
-  async function handleTailorCv(id) {
+  // Generate or revise a role-tailored CV for an analysed role, save it, and show it.
+  const [cvEdit, setCvEdit] = useState('');
+  const [cvEditingId, setCvEditingId] = useState(null);
+  const [cvDraftText, setCvDraftText] = useState('');
+  const [cvSaving, setCvSaving] = useState(false);
+
+  async function handleTailorCv(id, editInstruction = '') {
     if (!currentTenant?.id || !id) return;
     setTailoring(true);
     try {
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: await apiHeaders(),
-        body: JSON.stringify({ action: 'tailor_cv', tenantId: currentTenant.id, id }),
+        body: JSON.stringify({ action: 'tailor_cv', tenantId: currentTenant.id, id, edit_instruction: editInstruction }),
       });
       const data = await res.json();
       if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Tailoring failed');
-      setResults((r) => ({ ...r, tailored_cv: data.tailored_cv }));
+      setResults((r) => (r && r.id === id ? { ...r, tailored_cv: data.tailored_cv } : r));
+      setCvEdit('');
       loadAnalyses();
       loadCvs();
       loadUsage();
@@ -705,6 +711,27 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       alert(err.message);
     } finally {
       setTailoring(false);
+    }
+  }
+
+  async function handleSaveTailoredCv(id, nextText) {
+    if (!currentTenant?.id || !id || !nextText?.trim()) return;
+    setCvSaving(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'save_tailored_cv', tenantId: currentTenant.id, id, tailored_cv: nextText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      setResults((r) => (r && r.id === id ? { ...r, tailored_cv: data.tailored_cv } : r));
+      setCvEditingId(null);
+      loadCvs();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setCvSaving(false);
     }
   }
 
@@ -978,9 +1005,21 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       setCoverLoading(false);
     }
   }
-  // Common application answers (A3).
+  // Common & custom application answers (A3).
   const [applyAnswers, setApplyAnswers] = useState([]);
   const [answersLoading, setAnswersLoading] = useState(false);
+  const [customQ, setCustomQ] = useState('');
+  const [customGuidance, setCustomGuidance] = useState('');
+  const [customLoading, setCustomLoading] = useState(false);
+
+  // Company context & Interview brief for the active role.
+  const [companyContext, setCompanyContext] = useState('');
+  const [companyNotes, setCompanyNotes] = useState('');
+  const [researchLoading, setResearchLoading] = useState(false);
+  const [contextSaving, setContextSaving] = useState(false);
+  const [interviewBrief, setInterviewBrief] = useState('');
+  const [briefLoading, setBriefLoading] = useState(false);
+
   async function handleApplyAnswers() {
     if (!currentTenant?.id || !applyRoleId) { alert('Select a role first.'); return; }
     setAnswersLoading(true);
@@ -997,10 +1036,100 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     } catch (err) { alert(err.message); } finally { setAnswersLoading(false); }
   }
 
-  // When the selected role changes, load any saved cover letter + answers for it.
+  async function handleCustomQuestion() {
+    if (!currentTenant?.id || !applyRoleId) { alert('Select a role first.'); return; }
+    if (!customQ.trim()) return;
+    setCustomLoading(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({
+          action: 'custom_question',
+          tenantId: currentTenant.id,
+          id: applyRoleId,
+          question: customQ,
+          guidance: customGuidance,
+        }),
+      });
+      const data = await res.json();
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Failed to draft answer');
+      setApplyAnswers(data.apply_answers || []);
+      setCustomQ('');
+      setCustomGuidance('');
+      loadUsage();
+    } catch (err) { alert(err.message); } finally { setCustomLoading(false); }
+  }
+
+  async function handleSaveApplyAnswers(nextAnswers) {
+    setApplyAnswers(nextAnswers);
+    if (!currentTenant?.id || !applyRoleId) return;
+    try {
+      await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'save_apply_answers', tenantId: currentTenant.id, id: applyRoleId, apply_answers: nextAnswers }),
+      });
+    } catch (err) { console.error('Failed to save answers', err); }
+  }
+
+  async function handleResearchCompany(roleId, notes = '') {
+    const targetId = roleId || applyRoleId || results?.id;
+    if (!currentTenant?.id || !targetId) { alert('Select a role first.'); return; }
+    setResearchLoading(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'research_company', tenantId: currentTenant.id, id: targetId, user_notes: notes }),
+      });
+      const data = await res.json();
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Research failed');
+      if (targetId === applyRoleId) setCompanyContext(data.company_context || '');
+      if (results?.id === targetId) setResults((r) => ({ ...r, company_context: data.company_context }));
+      loadUsage();
+    } catch (err) { alert(err.message); } finally { setResearchLoading(false); }
+  }
+
+  async function handleSaveCompanyContext(roleId, text) {
+    const targetId = roleId || applyRoleId || results?.id;
+    if (!currentTenant?.id || !targetId) return;
+    setContextSaving(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'save_company_context', tenantId: currentTenant.id, id: targetId, company_context: text }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      if (targetId === applyRoleId) setCompanyContext(data.company_context || '');
+      if (results?.id === targetId) setResults((r) => ({ ...r, company_context: data.company_context }));
+    } catch (err) { alert(err.message); } finally { setContextSaving(false); }
+  }
+
+  async function handleInterviewBrief(roleId) {
+    const targetId = roleId || applyRoleId || results?.id;
+    if (!currentTenant?.id || !targetId) { alert('Select a role first.'); return; }
+    setBriefLoading(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'interview_brief', tenantId: currentTenant.id, id: targetId }),
+      });
+      const data = await res.json();
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Failed to generate interview brief');
+      if (targetId === applyRoleId) setInterviewBrief(data.interview_brief || '');
+      if (results?.id === targetId) setResults((r) => ({ ...r, interview_brief: data.interview_brief }));
+      loadUsage();
+    } catch (err) { alert(err.message); } finally { setBriefLoading(false); }
+  }
+
+  // When the selected role changes, load any saved cover letter, answers, context + brief for it.
   useEffect(() => {
     setCoverLetter('');
     setApplyAnswers([]);
+    setCompanyContext('');
+    setInterviewBrief('');
     if (!currentTenant?.id || !applyRoleId) return;
     (async () => {
       try {
@@ -1012,6 +1141,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         if (res.ok) {
           if (data.cover_letter) setCoverLetter(data.cover_letter);
           if (Array.isArray(data.apply_answers)) setApplyAnswers(data.apply_answers);
+          if (data.company_context) setCompanyContext(data.company_context);
+          if (data.interview_brief) setInterviewBrief(data.interview_brief);
         }
       } catch {}
     })();
@@ -1046,7 +1177,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setResults({ jd_data: data.jd_data, evaluation: data.evaluation, score: data.score });
+        setResults({
+          id: data.id,
+          jd_data: data.jd_data,
+          evaluation: data.evaluation,
+          score: data.score,
+          tailored_cv: data.tailored_cv,
+          company_context: data.company_context,
+          interview_brief: data.interview_brief,
+        });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err) {
@@ -1358,9 +1497,54 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             <p className="text-xs text-slate-400 mb-5">This is where the real value is — the why behind the score. The number above is just a quick triage signal.</p>
             <CollapsibleNarrative markdown={results.evaluation} openCount={2} />
 
-            {/* Proceed-to-apply: generate a role-tailored CV */}
+            {/* Company research, Tailored CV & Interview Brief for the analysed role */}
             {results.id && (
-              <div className="mt-8 pt-6 border-t border-slate-200">
+              <div className="mt-8 pt-6 border-t border-slate-200 space-y-6">
+                {/* 1. Company & role context */}
+                <div className="bg-white rounded-xl p-5 border border-slate-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div>
+                      <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#006C50] text-base">travel_explore</span>
+                        Company &amp; Role Context
+                      </h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Research the employer or add your own notes (hiring manager, strategy, platform). Automatically feeds into CV tailoring, cover letters, and interview prep.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleResearchCompany(results.id, companyNotes)}
+                      disabled={researchLoading}
+                      className={`h-9 px-4 bg-[#10294D] text-white rounded-lg text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
+                      {researchLoading ? (
+                        <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
+                      ) : (
+                        <><span className="material-symbols-outlined text-sm">travel_explore</span>{results.company_context ? 'Refresh research' : 'Research company'}</>
+                      )}
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-col gap-2">
+                    <textarea
+                      value={results.company_context ?? ''}
+                      onChange={(e) => setResults((r) => ({ ...r, company_context: e.target.value }))}
+                      placeholder="Add your own notes or click 'Research company' (1 action) to pull live employer context…"
+                      rows={results.company_context ? 5 : 2}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleSaveCompanyContext(results.id, results.company_context || '')}
+                        disabled={contextSaving}
+                        className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
+                      >
+                        {contextSaving ? 'Saving…' : 'Save context notes'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Tailored CV */}
                 {!results.tailored_cv ? (
                   <>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1405,6 +1589,19 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       </h4>
                       <div className="flex items-center gap-3">
                         <button
+                          onClick={() => {
+                            if (cvEditingId === results.id) {
+                              setCvEditingId(null);
+                            } else {
+                              setCvEditingId(results.id);
+                              setCvDraftText(results.tailored_cv || '');
+                            }
+                          }}
+                          className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:underline"
+                        >
+                          {cvEditingId === results.id ? 'Cancel edit' : 'Edit text'}
+                        </button>
+                        <button
                           onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: results.jd_data?.role_title || 'Role', cvMarkdown: results.tailored_cv })}
                           className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"
                         >
@@ -1418,8 +1615,40 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         </button>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl p-6 border border-slate-200">
-                      <CollapsibleNarrative markdown={results.tailored_cv} openCount={1} />
+                    {cvEditingId === results.id ? (
+                      <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-3">
+                        <textarea
+                          value={cvDraftText}
+                          onChange={(e) => setCvDraftText(e.target.value)}
+                          rows={16}
+                          className="w-full font-mono text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3 leading-relaxed"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
+                          <button onClick={() => handleSaveTailoredCv(results.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-lg text-xs font-bold bg-[#006C50] text-white hover:bg-[#005840]">
+                            {cvSaving ? 'Saving…' : 'Save CV edits'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-xl p-6 border border-slate-200">
+                        <CollapsibleNarrative markdown={results.tailored_cv} openCount={1} />
+                      </div>
+                    )}
+                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                      <input
+                        value={cvEdit}
+                        onChange={(e) => setCvEdit(e.target.value)}
+                        placeholder='Suggest a CV revision, e.g. "bring the AI Act / Orbit work higher" or "tighten summary to 3 lines"'
+                        className="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100"
+                      />
+                      <button
+                        onClick={() => handleTailorCv(results.id, cvEdit)}
+                        disabled={tailoring || !cvEdit.trim()}
+                        className={`h-11 px-5 bg-[#10294D] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#001432] transition-colors ${(tailoring || !cvEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {tailoring ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise CV
+                      </button>
                     </div>
                     <AiReviewWarning what="CV" />
                     <p className="text-[11px] text-slate-400 mt-2">
@@ -1428,6 +1657,55 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     </p>
                   </div>
                 )}
+
+                {/* 3. Interview Prep Brief */}
+                <div className="bg-white rounded-xl p-5 border border-slate-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div>
+                      <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#006C50] text-base">record_voice_over</span>
+                        Interview Prep Brief
+                      </h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        60-second pitch, top 5 likely questions mapped to your evidence anchors, how to handle flagged gaps, and questions to ask them.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {results.interview_brief && (
+                        <>
+                          <button
+                            onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: `${results.jd_data?.role_title || 'Role'} — Interview Brief`, cvMarkdown: results.interview_brief })}
+                            className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-sm">download</span>PDF
+                          </button>
+                          <button
+                            onClick={() => navigator.clipboard?.writeText(results.interview_brief)}
+                            className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline"
+                          >
+                            Copy
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleInterviewBrief(results.id)}
+                        disabled={briefLoading}
+                        className={`h-9 px-4 bg-[#006C50] text-white rounded-lg text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${briefLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        {briefLoading ? (
+                          <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Preparing…</>
+                        ) : (
+                          <><span className="material-symbols-outlined text-sm">record_voice_over</span>{results.interview_brief ? 'Regenerate brief' : 'Generate interview brief'}</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  {results.interview_brief && (
+                    <div className="mt-3 bg-slate-50 rounded-xl p-5 border border-slate-100">
+                      <CollapsibleNarrative markdown={results.interview_brief} openCount={4} />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1685,12 +1963,57 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   <div className="px-6 pb-6 pt-2 border-t border-slate-100">
                     <div className="flex justify-end mb-3">
                       <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => {
+                            if (cvEditingId === cv.id) {
+                              setCvEditingId(null);
+                            } else {
+                              setCvEditingId(cv.id);
+                              setCvDraftText(cv.tailored_cv || '');
+                            }
+                          }}
+                          className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:underline"
+                        >
+                          {cvEditingId === cv.id ? 'Cancel edit' : 'Edit text'}
+                        </button>
                         <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: cv.role || 'Role', cvMarkdown: cv.tailored_cv })} className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>Download PDF</button>
                         <button onClick={() => navigator.clipboard?.writeText(cv.tailored_cv)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Copy</button>
                       </div>
                     </div>
-                    <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
-                      <FitNarrative markdown={cv.tailored_cv} />
+                    {cvEditingId === cv.id ? (
+                      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+                        <textarea
+                          value={cvDraftText}
+                          onChange={(e) => setCvDraftText(e.target.value)}
+                          rows={16}
+                          className="w-full font-mono text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-3 leading-relaxed"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
+                          <button onClick={() => handleSaveTailoredCv(cv.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-lg text-xs font-bold bg-[#006C50] text-white hover:bg-[#005840]">
+                            {cvSaving ? 'Saving…' : 'Save CV edits'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                        <FitNarrative markdown={cv.tailored_cv} />
+                      </div>
+                    )}
+                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                      <input
+                        value={cvEdit}
+                        onChange={(e) => setCvEdit(e.target.value)}
+                        placeholder='Suggest a CV revision, e.g. "emphasise AI governance" or "make the summary shorter"'
+                        className="flex-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100"
+                      />
+                      <button
+                        onClick={() => handleTailorCv(cv.id, cvEdit)}
+                        disabled={tailoring || !cvEdit.trim()}
+                        className={`h-11 px-5 bg-[#10294D] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#001432] transition-colors ${(tailoring || !cvEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {tailoring ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise CV
+                      </button>
                     </div>
                   </div>
                 </details>
@@ -1780,9 +2103,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               className="mt-4 text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline">+ Add role</button>
           </div>
 
-          {/* Role picker — applies only to the cover letter + common answers below */}
+          {/* Role picker — applies to company context, cover letter, answers & interview brief below */}
           <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Applying for — pick a role to draft a cover letter &amp; answers</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Applying for — pick a role to research, draft cover letters, answer portal questions &amp; prep for interviews</label>
             {pipeline.length > 0 ? (
               <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)}
                 className="block w-full mt-1 bg-white border border-slate-200 rounded-xl p-3 text-sm text-[#10294D]">
@@ -1793,6 +2116,50 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               <p className="text-xs text-slate-400 mt-1">Analyse a role first (Pipeline or Live Scans) — then pick it here to generate a cover letter and answers.</p>
             )}
           </div>
+
+          {/* Company & role context (in Apply Assist when a role is selected) */}
+          {applyRoleId && (
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div>
+                  <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#006C50]">travel_explore</span>
+                    Company &amp; Role Context
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Pull live employer research or add your own notes (hiring manager, product focus, why you care). Automatically used by Cover Letter, Application Answers, and Interview Prep below.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleResearchCompany(applyRoleId, companyContext)}
+                  disabled={researchLoading}
+                  className={`h-10 px-4 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  {researchLoading ? (
+                    <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
+                  ) : (
+                    <><span className="material-symbols-outlined text-sm">travel_explore</span>{companyContext ? 'Refresh company research' : 'Research company (1 action)'}</>
+                  )}
+                </button>
+              </div>
+              <textarea
+                value={companyContext}
+                onChange={(e) => setCompanyContext(e.target.value)}
+                placeholder="Type your own notes about the company/role or click 'Research company' above…"
+                rows={companyContext ? 5 : 2}
+                className="w-full mt-2 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
+              />
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => handleSaveCompanyContext(applyRoleId, companyContext)}
+                  disabled={contextSaving}
+                  className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
+                >
+                  {contextSaving ? 'Saving…' : 'Save context notes'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Cover letter (A2) — needs a selected role */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
@@ -1832,33 +2199,138 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             )}
           </div>
 
-          {/* Common application answers (A3) */}
+          {/* Common & Custom application answers (A3) */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-1">
-              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">quiz</span>Common application answers</h4>
+              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">quiz</span>Application form answers (common &amp; custom portal questions)</h4>
               {applyAnswers.length > 0 && applyRoleId && (
-                <button onClick={handleApplyAnswers} disabled={answersLoading} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Regenerate</button>
+                <button onClick={handleApplyAnswers} disabled={answersLoading} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Regenerate common answers</button>
               )}
             </div>
             {!applyRoleId ? (
-              <p className="text-sm text-slate-400 py-6 text-center">Select a role above to draft answers to the usual "why this role / why us / good fit" questions.</p>
-            ) : applyAnswers.length === 0 ? (
-              <div className="py-6 text-center">
-                <p className="text-sm text-slate-500 mb-4">Draft the common free-text answers for this role. Each is copyable. Uses one action.</p>
-                <button onClick={handleApplyAnswers} disabled={answersLoading}
-                  className={`h-12 px-6 bg-[#006C50] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#005840] transition-colors ${answersLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                  {answersLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined">quiz</span>Draft answers</>)}
-                </button>
-              </div>
+              <p className="text-sm text-slate-400 py-6 text-center">Select a role above to draft answers to common or custom application questions.</p>
             ) : (
-              <div className="mt-3 space-y-3">
-                {applyAnswers.map((qa, i) => (
-                  <CopyField key={i} label={qa.q} value={qa.a} multiline />
-                ))}
-                <AiReviewWarning what="answer" />
+              <div className="mt-3 space-y-4">
+                {applyAnswers.length === 0 ? (
+                  <div className="py-4 text-center">
+                    <p className="text-sm text-slate-500 mb-3">Draft the 4 standard free-text answers ("why this role / why us / good fit / relevant experience"), or ask a custom portal question below.</p>
+                    <button onClick={handleApplyAnswers} disabled={answersLoading}
+                      className={`h-11 px-5 bg-[#006C50] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#005840] transition-colors ${answersLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                      {answersLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined">quiz</span>Draft common answers (1 action)</>)}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {applyAnswers.map((qa, i) => (
+                      <div key={i} className="space-y-1">
+                        <CopyField
+                          label={qa.q}
+                          value={qa.a}
+                          multiline
+                          editable
+                          onChange={(v) => {
+                            const next = applyAnswers.map((item, j) => (j === i ? { ...item, a: v } : item));
+                            handleSaveApplyAnswers(next);
+                          }}
+                        />
+                        {qa.custom && (
+                          <div className="flex justify-end">
+                            <button
+                              onClick={() => handleSaveApplyAnswers(applyAnswers.filter((_, j) => j !== i))}
+                              className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-red-600"
+                            >
+                              Remove question
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    <AiReviewWarning what="answer" />
+                  </div>
+                )}
+
+                {/* Custom portal question box */}
+                <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                  <div className="text-xs font-bold text-[#10294D]">Answer a custom portal question</div>
+                  <p className="text-[11px] text-slate-500">Paste any bespoke question from Workday, Greenhouse, Ashby, or Civil Service Jobs. Grounded strictly in your evidence library.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      value={customQ}
+                      onChange={(e) => setCustomQ(e.target.value)}
+                      placeholder='e.g. "Describe a complex regulatory or platform delivery you led"'
+                      className="sm:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-[#10294D]"
+                    />
+                    <input
+                      value={customGuidance}
+                      onChange={(e) => setCustomGuidance(e.target.value)}
+                      placeholder='Optional: "max 200 words, STAR format"'
+                      className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-[#10294D]"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleCustomQuestion}
+                      disabled={customLoading || !customQ.trim()}
+                      className={`h-10 px-5 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 hover:bg-[#001432] transition-colors ${(customLoading || !customQ.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {customLoading ? (<><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined text-sm">edit_square</span>Answer question (1 action)</>)}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Interview Prep Brief (in Apply Assist when a role is selected) */}
+          {applyRoleId && (
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div>
+                  <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#006C50]">record_voice_over</span>
+                    Interview Prep Brief
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    60-second pitch, top 5 likely questions mapped to your evidence anchors, how to handle flagged gaps, and questions to ask them.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {interviewBrief && (
+                    <>
+                      <button
+                        onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: `${pipeline.find(r => r.id === applyRoleId)?.role || 'Role'} — Interview Brief`, cvMarkdown: interviewBrief })}
+                        className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">download</span>PDF
+                      </button>
+                      <button
+                        onClick={() => navigator.clipboard?.writeText(interviewBrief)}
+                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline"
+                      >
+                        Copy
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => handleInterviewBrief(applyRoleId)}
+                    disabled={briefLoading}
+                    className={`h-10 px-4 bg-[#006C50] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${briefLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  >
+                    {briefLoading ? (
+                      <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Preparing…</>
+                    ) : (
+                      <><span className="material-symbols-outlined text-sm">record_voice_over</span>{interviewBrief ? 'Regenerate brief' : 'Generate interview brief (1 action)'}</>
+                    )}
+                  </button>
+                </div>
+              </div>
+              {interviewBrief && (
+                <div className="mt-3 bg-slate-50 rounded-xl p-5 border border-slate-100">
+                  <CollapsibleNarrative markdown={interviewBrief} openCount={4} />
+                </div>
+              )}
+            </div>
+          )}
         </section>
       )}
 

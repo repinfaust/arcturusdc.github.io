@@ -11,6 +11,7 @@ import { isUrl, fetchJdFromUrl } from './jd';
 import { searchJobs } from './jobSearch';
 
 export const FREE_ACTIONS = 20;    // free allowance per tenant, per app
+export const FIRST_USER_ACTIONS = 250; // extended allowance for invited early workspaces (e.g. Wayne)
 export const COFFEE_BUNDLE = 50;   // actions granted per £5 top-up
 
 // Normalise config (string YAML or object/array) to readable text for prompts.
@@ -122,10 +123,27 @@ export function createCareerHandler(app) {
       return { used: 0, granted: Infinity, remaining: Infinity, unlimited: true };
     }
     const { db } = getFirebaseAdmin();
-    const snap = await opsDoc(db, tenantId, 'usage').get();
+    const usageRef = opsDoc(db, tenantId, 'usage');
+    const snap = await usageRef.get();
     const v = snap.exists ? snap.data() : {};
     const used = v.actions_used || 0;
-    const granted = (v.actions_granted ?? FREE_ACTIONS);
+    let granted = v.actions_granted ?? FREE_ACTIONS;
+
+    // Auto-grant 250 actions to Wayne's workspace on first check so he has full
+    // runway without needing to enter an access code (D-SITE-081).
+    if (granted <= FREE_ACTIONS && !v.early_user_checked) {
+      try {
+        const tSnap = await tenantRef(db, tenantId).get();
+        const tName = String(tSnap.exists ? (tSnap.data()?.name || '') : '');
+        if (/\bwayne\b/i.test(tName)) {
+          granted = FIRST_USER_ACTIONS;
+          await usageRef.set({ actions_granted: FIRST_USER_ACTIONS, early_user_checked: true, updated_at: new Date() }, { merge: true });
+        } else if (snap.exists) {
+          await usageRef.set({ early_user_checked: true }, { merge: true });
+        }
+      } catch {}
+    }
+
     return { used, granted, remaining: Math.max(0, granted - used) };
   }
 
@@ -345,8 +363,10 @@ export function createCareerHandler(app) {
       }
 
       // Role-tailored CV for an analysed role, saved against that role.
+      // Supports an optional `edit_instruction` to revise an existing tailored CV.
       if (action === 'tailor_cv') {
         await assertActionAvailable(tenantId);
+        const { edit_instruction = '' } = body;
         const { ref, analysis, error } = await getAnalysisOr404(tenantId, body.id);
         if (error) return error;
         const cand = await loadCandidate(tenantId);
@@ -354,16 +374,113 @@ export function createCareerHandler(app) {
           return NextResponse.json({ error: 'Set up your profile and evidence library before tailoring a CV.' }, { status: 400 });
         }
 
+        const jdBlock = JSON.stringify(analysis.jd_data || {}, null, 2) +
+          (analysis.company_context ? `\n\nCOMPANY & ROLE CONTEXT (research / notes):\n${analysis.company_context}` : '');
+        const existingCv = analysis.tailored_cv || '';
+        const prompt = edit_instruction.trim() && existingCv
+          ? `Here is the current tailored CV for this role:\n\n${existingCv}\n\n` +
+            `Role context:\n${jdBlock}\n\n` +
+            `Revise the tailored CV per this instruction: "${edit_instruction.trim()}". ` +
+            `Keep every claim strictly grounded in the candidate's real evidence and base CV — never invent a role, metric, or qualification. ` +
+            `Preserve the markdown structure (tailored CV followed by \`---\` and \`### What was tailored\`).`
+          : app.prompts.tailor(jdBlock, cand.facts);
+
         const tailoredCv = await callAnthropic({
           system: app.prompts.tailorSystem(cand.facts),
           cachedContext: cand.cachedContext,
-          prompt: app.prompts.tailor(JSON.stringify(analysis.jd_data || {}, null, 2), cand.facts),
+          prompt,
           maxTokens: 4000,
         });
 
         await ref.set({ tailored_cv: tailoredCv, tailored_cv_at: new Date(), status: 'Applying' }, { merge: true });
-        await incrementUsage(tenantId); // one tailor = one action
+        await incrementUsage(tenantId); // one tailor / revision = one action
         return NextResponse.json({ id: body.id, tailored_cv: tailoredCv, status: 'Applying' });
+      }
+
+      // Save a user's manual inline edits to a tailored CV (free — no AI call).
+      if (action === 'save_tailored_cv') {
+        const { tailored_cv = '' } = body;
+        if (!tailored_cv.trim()) return NextResponse.json({ error: 'Tailored CV cannot be empty.' }, { status: 400 });
+        const { ref, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        await ref.set({ tailored_cv, tailored_cv_at: new Date() }, { merge: true });
+        return NextResponse.json({ id: body.id, tailored_cv });
+      }
+
+      // Save user-edited company / role context notes (free — no AI call).
+      if (action === 'save_company_context') {
+        const { company_context = '' } = body;
+        const { ref, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        await ref.set({ company_context, company_context_at: new Date() }, { merge: true });
+        return NextResponse.json({ id: body.id, company_context });
+      }
+
+      // Research the company and role context (web search + JD synthesis, 1 action).
+      if (action === 'research_company') {
+        await assertActionAvailable(tenantId);
+        const { user_notes = '' } = body;
+        const { ref, analysis, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        const company = analysis.company || analysis.jd_data?.company_name || 'Unknown company';
+        const roleTitle = analysis.role || analysis.jd_data?.role_title || 'Role';
+        const jd = JSON.stringify(analysis.jd_data || {}, null, 2);
+
+        const companyContext = await callAnthropic({
+          system:
+            'You are a sharp career research analyst. Use web search when helpful to find current, factual context about the employer, their products/programmes, regulatory or commercial pressures, and what matters most for this role. Be concise, specific, and practical — no generic filler.',
+          prompt:
+            `Research the employer and role below to help the candidate tailor their application and prepare for interviews.\n\n` +
+            `Company: ${company}\nRole: ${roleTitle}\n` +
+            (analysis.source_url ? `Source URL: ${analysis.source_url}\n` : '') +
+            (user_notes.trim() ? `Candidate's own notes / angle: ${user_notes.trim()}\n` : '') +
+            `\nExtracted JD:\n${jd}\n\n` +
+            `Return a concise markdown briefing with:\n` +
+            `- **What they do & current focus:** 2–3 bullets on the organisation, recent product/programme priorities, or sector pressures.\n` +
+            `- **What this role is really solving:** 2–3 bullets reading between the lines of the JD.\n` +
+            `- **Hooks to weave into CV / cover letter:** 2–3 concrete angles connecting the company's context to the role.` +
+            (user_notes.trim() ? `\n- **Candidate notes incorporated:** keep the candidate's own notes intact.` : ''),
+          maxTokens: 1500,
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
+        });
+
+        await ref.set({ company_context: companyContext, company_context_at: new Date() }, { merge: true });
+        await incrementUsage(tenantId);
+        return NextResponse.json({ id: body.id, company_context: companyContext });
+      }
+
+      // Generate an interview preparation brief for an analysed role (1 action).
+      if (action === 'interview_brief') {
+        await assertActionAvailable(tenantId);
+        const { ref, analysis, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        const cand = await loadCandidate(tenantId, { withCv: true });
+        if (!cand.complete) {
+          return NextResponse.json({ error: 'Set up your profile and evidence library first.' }, { status: 400 });
+        }
+
+        const jdBlock = JSON.stringify(analysis.jd_data || {}, null, 2) +
+          (analysis.company_context ? `\n\nCOMPANY & ROLE CONTEXT:\n${analysis.company_context}` : '');
+
+        const brief = await callAnthropic({
+          system:
+            'You prepare a candidate for an interview using ONLY their real profile, evidence anchors, and CV. Never invent experience. Be direct, practical, and specific.',
+          cachedContext: cand.cachedContext,
+          prompt:
+            `Prepare a 1-page interview briefing for ${cand.facts.name} interviewing for ${analysis.role || 'this role'} at ${analysis.company || 'this employer'}.\n\n` +
+            `ROLE & COMPANY CONTEXT:\n${jdBlock}\n\n` +
+            `PRIOR FIT EVALUATION (including any flagged gaps/risks):\n${analysis.evaluation || 'None'}\n\n` +
+            `Structure the briefing in clean markdown with these sections:\n` +
+            `## 1. Your 60-Second Pitch for This Role\nA tight opening positioning statement grounded in their real record.\n\n` +
+            `## 2. Likely Questions & Which Evidence to Lead With\n5 role-specific questions the panel is likely to ask. For each, name the exact role/project from the candidate's evidence to use and 2–3 bullet talking points.\n\n` +
+            `## 3. How to Handle Flagged Gaps / Watch-outs\nDirect, honest ways to frame any gaps or risks identified in the evaluation without bluffing.\n\n` +
+            `## 4. Sharp Questions to Ask the Panel\n3 specific questions tailored to this role and organisation.`,
+          maxTokens: 2800,
+        });
+
+        await ref.set({ interview_brief: brief, interview_brief_at: new Date() }, { merge: true });
+        await incrementUsage(tenantId);
+        return NextResponse.json({ id: body.id, interview_brief: brief });
       }
 
       // Saved tailored CVs: analyses that have one.
@@ -571,11 +688,12 @@ export function createCareerHandler(app) {
           return NextResponse.json({ error: 'Set up your profile and evidence library first.' }, { status: 400 });
         }
 
-        const jd = JSON.stringify(analysis.jd_data || {}, null, 2);
+        const jd = JSON.stringify(analysis.jd_data || {}, null, 2) +
+          (analysis.company_context ? `\n\nCOMPANY & ROLE CONTEXT:\n${analysis.company_context}` : '');
         const existing = analysis.cover_letter || '';
         const prompt = edit_instruction && existing
-          ? `Here is the current cover letter:\n\n${existing}\n\nRevise it per this instruction: "${edit_instruction}". Keep it grounded in the candidate's real evidence — do not invent anything. Return ONLY the revised cover letter.`
-          : `Write a tailored cover letter for this role:\n\n${jd}\n\nGround every claim in the candidate's profile and evidence above. 250-350 words, professional but human, no clichés, address it "Dear Hiring Manager,". Return ONLY the cover letter.`;
+          ? `Here is the current cover letter:\n\n${existing}\n\nRole & company context:\n${jd}\n\nRevise it per this instruction: "${edit_instruction}". Keep it grounded in the candidate's real evidence — do not invent anything. Return ONLY the revised cover letter.`
+          : `Write a tailored cover letter for this role:\n\n${jd}\n\nGround every claim in the candidate's profile and evidence above. If company context is provided, weave it in naturally. 250-350 words, professional but human, no clichés, address it "Dear Hiring Manager,". Return ONLY the cover letter.`;
 
         const coverLetter = await callAnthropic({
           system: app.prompts.coverSystem(cand.facts),
@@ -596,10 +714,16 @@ export function createCareerHandler(app) {
         if (error) return error;
         const cand = await loadCandidate(tenantId, { withCv: false });
 
+        const jd = JSON.stringify(analysis.jd_data || {}, null, 2) +
+          (analysis.company_context ? `\n\nCOMPANY & ROLE CONTEXT:\n${analysis.company_context}` : '');
+        const existingCustom = Array.isArray(analysis.apply_answers)
+          ? analysis.apply_answers.filter((qa) => qa?.custom)
+          : [];
+
         const raw = await callAnthropic({
           system: app.prompts.answersSystem(cand.facts),
           cachedContext: cand.cachedContext,
-          prompt: `For this role:\n${JSON.stringify(analysis.jd_data || {}, null, 2)}\n\n` +
+          prompt: `For this role:\n${jd}\n\n` +
             `Draft concise, specific answers (2-4 sentences each, first person, no clichés) to the common application questions. ` +
             `Return ONLY a JSON array of {"q": "<question>", "a": "<answer>"} for: ` +
             `"Why are you interested in this role?", "Why do you want to work here?", "What makes you a good fit?", "What is your relevant experience?".`,
@@ -608,10 +732,58 @@ export function createCareerHandler(app) {
         const cleaned = stripJsonFences(raw);
         let answers = [];
         try { answers = JSON.parse(cleaned); } catch { answers = [{ q: 'Draft answers', a: cleaned }]; }
+        const merged = [...answers, ...existingCustom];
 
-        await ref.set({ apply_answers: answers, apply_answers_at: new Date() }, { merge: true });
+        await ref.set({ apply_answers: merged, apply_answers_at: new Date() }, { merge: true });
         await incrementUsage(tenantId);
-        return NextResponse.json({ id: body.id, apply_answers: answers });
+        return NextResponse.json({ id: body.id, apply_answers: merged });
+      }
+
+      // Draft an answer to a custom portal application question for a role (1 action).
+      if (action === 'custom_question') {
+        await assertActionAvailable(tenantId);
+        const { question = '', guidance = '' } = body;
+        if (!question.trim()) {
+          return NextResponse.json({ error: 'Enter the application question to answer.' }, { status: 400 });
+        }
+        const { ref, analysis, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        const cand = await loadCandidate(tenantId, { withCv: true });
+        if (!cand.complete) {
+          return NextResponse.json({ error: 'Set up your profile and evidence library first.' }, { status: 400 });
+        }
+
+        const jd = JSON.stringify(analysis.jd_data || {}, null, 2) +
+          (analysis.company_context ? `\n\nCOMPANY & ROLE CONTEXT:\n${analysis.company_context}` : '');
+
+        const answer = await callAnthropic({
+          system: app.prompts.answersSystem(cand.facts),
+          cachedContext: cand.cachedContext,
+          prompt:
+            `Role & company context:\n${jd}\n\n` +
+            `Application form question: "${question.trim()}"\n` +
+            (guidance.trim() ? `Word limit / angle / guidance: "${guidance.trim()}"\n` : '') +
+            `\nWrite a direct, first-person answer grounded strictly in the candidate's real evidence anchors and CV above. ` +
+            `Do not invent any metric, employer, qualification, or project. Avoid AI clichés. Return ONLY the answer text.`,
+          maxTokens: 1200,
+        });
+
+        const existing = Array.isArray(analysis.apply_answers) ? analysis.apply_answers : [];
+        const label = guidance.trim() ? `${question.trim()} (${guidance.trim()})` : question.trim();
+        const nextAnswers = [...existing, { q: label, a: answer.trim(), custom: true }];
+
+        await ref.set({ apply_answers: nextAnswers, apply_answers_at: new Date() }, { merge: true });
+        await incrementUsage(tenantId);
+        return NextResponse.json({ id: body.id, apply_answers: nextAnswers });
+      }
+
+      // Save edited or deleted application answers on a role (free — no AI call).
+      if (action === 'save_apply_answers') {
+        const { apply_answers = [] } = body;
+        const { ref, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        await ref.set({ apply_answers: Array.isArray(apply_answers) ? apply_answers : [], apply_answers_at: new Date() }, { merge: true });
+        return NextResponse.json({ id: body.id, apply_answers });
       }
 
       // App-specific actions (e.g. Squared's skills translator).

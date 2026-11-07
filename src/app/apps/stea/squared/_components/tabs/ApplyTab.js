@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { printCvAsPdf } from '@/lib/careerEngine/printCv';
 import { clearanceStatus } from '@/lib/careerEngine/clearance';
-import { TabHeading, Panel, NumberedTitle, CopyField, AiReviewWarning, Btn, INPUT, CAPS } from '../ui';
+import { TabHeading, Panel, NumberedTitle, CopyField, AiReviewWarning, Btn, SmallBtn, Md, INPUT, CAPS } from '../ui';
 
 function ApplySaveStatus({ status, onRetry }) {
   if (!status || status.state === 'idle') return null;
@@ -27,8 +27,13 @@ export default function ApplyTab({
   applyRoleId, setApplyRoleId,
   coverLetter, coverLoading, generateCoverLetter,
   applyAnswers, answersLoading, generateAnswers,
+  answerCustomQuestion, customLoading, saveApplyAnswers,
+  companyContext, setCompanyContext, researchCompany, researchLoading, saveCompanyContext, contextSaving,
+  interviewBrief, generateInterviewBrief, briefLoading,
 }) {
   const [coverEdit, setCoverEdit] = useState('');
+  const [customQ, setCustomQ] = useState('');
+  const [customGuidance, setCustomGuidance] = useState('');
   const role = pipeline.find((r) => r.id === applyRoleId);
   const clearance = clearanceStatus(profile);
 
@@ -111,7 +116,7 @@ export default function ApplyTab({
       </Panel>
 
       <div className="mt-5 p-5 border border-[#22251f] bg-[#fffdf8]">
-        <div className={`${CAPS} text-[#686c62] mb-2`}>Applying for — pick a role to draft a cover letter &amp; answers</div>
+        <div className={`${CAPS} text-[#686c62] mb-2`}>Applying for — pick a role to research, draft cover letters, answer portal questions &amp; prep for interviews</div>
         {pipeline.length > 0 ? (
           <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)} className={INPUT}>
             <option value="">— select a role —</option>
@@ -122,8 +127,35 @@ export default function ApplyTab({
         )}
       </div>
 
+      {applyRoleId && (
+        <Panel className="mt-5">
+          <NumberedTitle n="04" title="Company & role context"
+            right={
+              <SmallBtn dark onClick={() => researchCompany?.(applyRoleId, companyContext)} disabled={researchLoading}>
+                {researchLoading ? 'Researching…' : companyContext ? 'Refresh research' : 'Research company (1 action)'}
+              </SmallBtn>
+            }
+          />
+          <p className="mt-1.5 text-[13px] text-[#686c62]">
+            Pull live employer research or add your own intel (hiring manager, programme, angle). Automatically used by Cover Letter, Application Answers, and Interview Prep below.
+          </p>
+          <textarea
+            value={companyContext ?? ''}
+            onChange={(e) => setCompanyContext?.(e.target.value)}
+            placeholder="Type your own notes about the employer/role or click 'Research company' above…"
+            rows={companyContext ? 5 : 2}
+            className={`${INPUT} mt-3 text-xs leading-relaxed`}
+          />
+          <div className="flex justify-end mt-2">
+            <button onClick={() => saveCompanyContext?.(applyRoleId, companyContext || '')} disabled={contextSaving} className={`${CAPS} text-[#4c5c3f] hover:underline`}>
+              {contextSaving ? 'Saving…' : 'Save context notes'}
+            </button>
+          </div>
+        </Panel>
+      )}
+
       <Panel accent className="mt-5">
-        <NumberedTitle n="04" title="Cover letter"
+        <NumberedTitle n={applyRoleId ? '05' : '04'} title="Cover letter"
           right={coverLetter ? (
             <div className="flex gap-4">
               <button onClick={() => navigator.clipboard?.writeText(coverLetter)} className={`${CAPS} text-[#686c62]`}>Copy</button>
@@ -157,26 +189,113 @@ export default function ApplyTab({
       </Panel>
 
       <Panel className="mt-5">
-        <NumberedTitle n="05" title="Common application answers"
+        <NumberedTitle n={applyRoleId ? '06' : '05'} title="Application form answers (common & custom portal questions)"
           right={applyAnswers.length > 0 && applyRoleId ? (
-            <button onClick={generateAnswers} disabled={answersLoading} className={`${CAPS} text-[#686c62]`}>Regenerate</button>
+            <button onClick={generateAnswers} disabled={answersLoading} className={`${CAPS} text-[#686c62]`}>Regenerate common answers</button>
           ) : null} />
         {!applyRoleId ? (
-          <p className="py-6 text-center text-sm text-[#686c62]">Select a role above to draft the usual &ldquo;why this role / why us / good fit&rdquo; answers.</p>
-        ) : applyAnswers.length === 0 ? (
-          <div className="py-6 text-center">
-            <p className="text-sm text-[#686c62] mb-4">Draft the common free-text answers for this role. Each is copyable. Uses one action.</p>
-            <Btn variant="olive" className="h-12 px-6 text-sm" onClick={generateAnswers} disabled={answersLoading}>
-              {answersLoading ? 'Drafting…' : 'Draft answers'}
-            </Btn>
-          </div>
+          <p className="py-6 text-center text-sm text-[#686c62]">Select a role above to draft answers to common or custom application questions.</p>
         ) : (
-          <div className="mt-4 flex flex-col gap-3.5">
-            {applyAnswers.map((qa, i) => <CopyField key={i} label={qa.q} value={qa.a} multiline />)}
-            <AiReviewWarning what="answer" />
+          <div className="mt-4 space-y-4">
+            {applyAnswers.length === 0 ? (
+              <div className="py-4 text-center">
+                <p className="text-sm text-[#686c62] mb-4">Draft the 4 standard free-text answers for this role, or ask a custom portal question below.</p>
+                <Btn variant="olive" className="h-11 px-5 text-sm" onClick={generateAnswers} disabled={answersLoading}>
+                  {answersLoading ? 'Drafting…' : 'Draft common answers (1 action)'}
+                </Btn>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3.5">
+                {applyAnswers.map((qa, i) => (
+                  <div key={i} className="space-y-1">
+                    <CopyField
+                      label={qa.q}
+                      value={qa.a}
+                      multiline
+                      editable
+                      onChange={(v) => {
+                        const next = applyAnswers.map((item, j) => (j === i ? { ...item, a: v } : item));
+                        saveApplyAnswers?.(next);
+                      }}
+                    />
+                    {qa.custom && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => saveApplyAnswers?.(applyAnswers.filter((_, j) => j !== i))}
+                          className={`${CAPS} text-[#686c62] hover:text-[#C63C00]`}
+                        >
+                          Remove question
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <AiReviewWarning what="answer" />
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-[#ede5d4] space-y-2.5">
+              <div className="text-xs font-extrabold text-[#22251f]">Answer a custom portal question</div>
+              <p className="text-xs text-[#686c62]">Paste any bespoke question from Civil Service Jobs, Workday, or an employer portal. Grounded strictly in your service record and evidence.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <input
+                  value={customQ}
+                  onChange={(e) => setCustomQ(e.target.value)}
+                  placeholder='e.g. "Give an example of leading operational change under pressure"'
+                  className={`${INPUT} sm:col-span-2`}
+                />
+                <input
+                  value={customGuidance}
+                  onChange={(e) => setCustomGuidance(e.target.value)}
+                  placeholder='Optional: "250 words, STAR format"'
+                  className={INPUT}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Btn
+                  variant="dark"
+                  className="h-10 px-5 text-xs"
+                  disabled={customLoading || !customQ.trim()}
+                  onClick={async () => {
+                    const ok = await answerCustomQuestion?.(customQ, customGuidance);
+                    if (ok) { setCustomQ(''); setCustomGuidance(''); }
+                  }}
+                >
+                  {customLoading ? 'Drafting…' : 'Answer question (1 action) →'}
+                </Btn>
+              </div>
+            </div>
           </div>
         )}
       </Panel>
+
+      {applyRoleId && (
+        <Panel className="mt-5">
+          <NumberedTitle n="07" title="Interview prep brief"
+            right={
+              <div className="flex items-center gap-3">
+                {interviewBrief && (
+                  <>
+                    <button onClick={() => printCvAsPdf({ name: profile?.name || 'Candidate', role: `${role?.role || 'Role'} — Interview Brief`, cvMarkdown: interviewBrief })} className={`${CAPS} text-[#4c5c3f]`}>PDF</button>
+                    <button onClick={() => navigator.clipboard?.writeText(interviewBrief)} className={`${CAPS} text-[#686c62]`}>Copy</button>
+                  </>
+                )}
+                <SmallBtn dark onClick={() => generateInterviewBrief?.(applyRoleId)} disabled={briefLoading}>
+                  {briefLoading ? 'Preparing…' : interviewBrief ? 'Regenerate brief' : 'Generate interview brief (1 action)'}
+                </SmallBtn>
+              </div>
+            }
+          />
+          <p className="mt-1.5 text-[13px] text-[#686c62]">
+            60-second pitch, top 5 likely questions mapped to your service evidence, how to frame flagged gaps, and questions to ask the panel.
+          </p>
+          {interviewBrief && (
+            <div className="mt-3 bg-[#f8f4ea] border border-[#ede5d4] p-4 sm:p-5">
+              <Md>{interviewBrief}</Md>
+            </div>
+          )}
+        </Panel>
+      )}
     </div>
   );
 }

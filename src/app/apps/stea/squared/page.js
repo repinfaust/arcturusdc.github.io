@@ -106,6 +106,12 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
   const [coverLoading, setCoverLoading] = useState(false);
   const [applyAnswers, setApplyAnswers] = useState([]);
   const [answersLoading, setAnswersLoading] = useState(false);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [companyContext, setCompanyContext] = useState('');
+  const [researchLoading, setResearchLoading] = useState(false);
+  const [contextSaving, setContextSaving] = useState(false);
+  const [interviewBrief, setInterviewBrief] = useState('');
+  const [briefLoading, setBriefLoading] = useState(false);
 
   // Metering + onboarding
   const [usage, setUsage] = useState(null);
@@ -246,19 +252,27 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
     setTab('pipeline');
     const { res, data } = await api('get_analysis', { id });
     if (res.ok) {
-      setResults({ id: data.id, jd_data: data.jd_data, evaluation: data.evaluation, score: data.score, tailored_cv: data.tailored_cv });
+      setResults({
+        id: data.id,
+        jd_data: data.jd_data,
+        evaluation: data.evaluation,
+        score: data.score,
+        tailored_cv: data.tailored_cv,
+        company_context: data.company_context,
+        interview_brief: data.interview_brief,
+      });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
-  async function tailorCv(id) {
+  async function tailorCv(id, editInstruction = '') {
     if (!id) return;
     setTailoring(true);
     try {
-      const { res, data } = await api('tailor_cv', { id });
+      const { res, data } = await api('tailor_cv', { id, edit_instruction: editInstruction });
       if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Tailoring failed');
-      setResults((r) => ({ ...r, tailored_cv: data.tailored_cv }));
+      setResults((r) => (r && r.id === id ? { ...r, tailored_cv: data.tailored_cv } : r));
       loadAnalyses();
       loadCvs();
       loadUsage();
@@ -266,6 +280,72 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
       alert(err.message);
     } finally {
       setTailoring(false);
+    }
+  }
+
+  async function saveTailoredCv(id, nextText) {
+    if (!id || !nextText?.trim()) return false;
+    try {
+      const { res, data } = await api('save_tailored_cv', { id, tailored_cv: nextText });
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      setResults((r) => (r && r.id === id ? { ...r, tailored_cv: data.tailored_cv } : r));
+      loadCvs();
+      return true;
+    } catch (err) {
+      alert(err.message);
+      return false;
+    }
+  }
+
+  async function researchCompany(roleId, notes = '') {
+    const targetId = roleId || applyRoleId || results?.id;
+    if (!targetId) { alert('Select a role first.'); return; }
+    setResearchLoading(true);
+    try {
+      const { res, data } = await api('research_company', { id: targetId, user_notes: notes });
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Research failed');
+      if (targetId === applyRoleId) setCompanyContext(data.company_context || '');
+      if (results?.id === targetId) setResults((r) => ({ ...r, company_context: data.company_context }));
+      loadUsage();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setResearchLoading(false);
+    }
+  }
+
+  async function saveCompanyContext(roleId, text) {
+    const targetId = roleId || applyRoleId || results?.id;
+    if (!targetId) return;
+    setContextSaving(true);
+    try {
+      const { res, data } = await api('save_company_context', { id: targetId, company_context: text });
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      if (targetId === applyRoleId) setCompanyContext(data.company_context || '');
+      if (results?.id === targetId) setResults((r) => ({ ...r, company_context: data.company_context }));
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setContextSaving(false);
+    }
+  }
+
+  async function generateInterviewBrief(roleId) {
+    const targetId = roleId || applyRoleId || results?.id;
+    if (!targetId) { alert('Select a role first.'); return; }
+    setBriefLoading(true);
+    try {
+      const { res, data } = await api('interview_brief', { id: targetId });
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Failed to generate interview brief');
+      if (targetId === applyRoleId) setInterviewBrief(data.interview_brief || '');
+      if (results?.id === targetId) setResults((r) => ({ ...r, interview_brief: data.interview_brief }));
+      loadUsage();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBriefLoading(false);
     }
   }
 
@@ -428,12 +508,16 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
   useEffect(() => {
     setCoverLetter('');
     setApplyAnswers([]);
+    setCompanyContext('');
+    setInterviewBrief('');
     if (!tenantId || !applyRoleId) return;
     (async () => {
       const { res, data } = await api('get_analysis', { id: applyRoleId });
       if (res.ok) {
         if (data.cover_letter) setCoverLetter(data.cover_letter);
         if (Array.isArray(data.apply_answers)) setApplyAnswers(data.apply_answers);
+        if (data.company_context) setCompanyContext(data.company_context);
+        if (data.interview_brief) setInterviewBrief(data.interview_brief);
       }
     })();
   }, [applyRoleId, tenantId]);
@@ -467,6 +551,29 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
     } finally {
       setAnswersLoading(false);
     }
+  }
+  async function answerCustomQuestion(question, guidance = '') {
+    if (!applyRoleId) { alert('Select a role first.'); return false; }
+    if (!question?.trim()) return false;
+    setCustomLoading(true);
+    try {
+      const { res, data } = await api('custom_question', { id: applyRoleId, question, guidance });
+      if (handleLimit(res, data)) return false;
+      if (!res.ok) throw new Error(data.error || 'Failed to draft answer');
+      setApplyAnswers(data.apply_answers || []);
+      loadUsage();
+      return true;
+    } catch (err) {
+      alert(err.message);
+      return false;
+    } finally {
+      setCustomLoading(false);
+    }
+  }
+  async function saveApplyAnswers(nextAnswers) {
+    setApplyAnswers(nextAnswers);
+    if (!applyRoleId) return;
+    await api('save_apply_answers', { id: applyRoleId, apply_answers: nextAnswers });
   }
 
   // --- Paywall ---
@@ -539,9 +646,12 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
           hasConfig={configStatus.has_config}
           jdText={jdText} setJdText={setJdText}
           analyse={analyse} analysing={analysing} analyseStage={analyseStage}
-          results={results} clearResults={() => setResults(null)}
+          results={results} setResults={setResults} clearResults={() => setResults(null)}
           pipeline={pipeline} openAnalysis={openAnalysis} openApplyAssist={openApplyAssist}
-          tailorCv={tailorCv} tailoring={tailoring} tailorStage={tailorStage}
+          tailorCv={tailorCv} saveTailoredCv={saveTailoredCv} tailoring={tailoring} tailorStage={tailorStage}
+          researchCompany={researchCompany} researchLoading={researchLoading}
+          saveCompanyContext={saveCompanyContext} contextSaving={contextSaving}
+          generateInterviewBrief={generateInterviewBrief} briefLoading={briefLoading}
           profile={profile} goCvs={() => setTab('cvs')}
           openOnboarding={() => setShowOnboarding(true)}
         />
@@ -554,7 +664,13 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
           serviceBranch={profile.service_branch}
         />
       )}
-      {tab === 'cvs' && <CvTab cvLibrary={cvLibrary} profile={profile} goPipeline={() => setTab('pipeline')} />}
+      {tab === 'cvs' && (
+        <CvTab
+          cvLibrary={cvLibrary} profile={profile}
+          tailorCv={tailorCv} saveTailoredCv={saveTailoredCv} tailoring={tailoring}
+          goPipeline={() => setTab('pipeline')}
+        />
+      )}
       {tab === 'apply' && (
         <ApplyTab
           profile={profile} anchors={anchors} pipeline={pipeline}
@@ -562,6 +678,11 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
           applyRoleId={applyRoleId} setApplyRoleId={setApplyRoleId}
           coverLetter={coverLetter} coverLoading={coverLoading} generateCoverLetter={generateCoverLetter}
           applyAnswers={applyAnswers} answersLoading={answersLoading} generateAnswers={generateAnswers}
+          answerCustomQuestion={answerCustomQuestion} customLoading={customLoading} saveApplyAnswers={saveApplyAnswers}
+          companyContext={companyContext} setCompanyContext={setCompanyContext}
+          researchCompany={researchCompany} researchLoading={researchLoading}
+          saveCompanyContext={saveCompanyContext} contextSaving={contextSaving}
+          interviewBrief={interviewBrief} generateInterviewBrief={generateInterviewBrief} briefLoading={briefLoading}
         />
       )}
       {tab === 'settings' && (

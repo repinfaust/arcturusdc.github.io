@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { printCvAsPdf } from '@/lib/careerEngine/printCv';
-import { Panel, Btn, StageBar, Md, AiReviewWarning, DISPLAY, MONO, CAPS } from '../ui';
+import { Panel, Btn, SmallBtn, StageBar, Md, AiReviewWarning, DISPLAY, MONO, CAPS, INPUT } from '../ui';
 import { parseEvaluation, verdictFor, scoreColor } from '../evaluation';
 
 const ANALYSE_STAGES = [
@@ -69,10 +69,24 @@ function Verdict({ results, onClear }) {
   );
 }
 
-function Reasoning({ results, tailorCv, tailoring, tailorStage, profile, goCvs }) {
+function Reasoning({
+  results, setResults,
+  tailorCv, saveTailoredCv, tailoring, tailorStage,
+  researchCompany, researchLoading, saveCompanyContext, contextSaving,
+  generateInterviewBrief, briefLoading,
+  profile, goCvs,
+}) {
   const { sections } = parseEvaluation(results.evaluation);
   const [open, setOpen] = useState({ 0: true, 1: true });
-  useEffect(() => { setOpen({ 0: true, 1: true }); }, [results.id]);
+  const [cvEdit, setCvEdit] = useState('');
+  const [editingCv, setEditingCv] = useState(false);
+  const [cvDraft, setCvDraft] = useState('');
+  const [cvSaving, setCvSaving] = useState(false);
+  useEffect(() => {
+    setOpen({ 0: true, 1: true });
+    setEditingCv(false);
+    setCvEdit('');
+  }, [results.id]);
 
   return (
     <div className="flex-[2_1_460px] min-w-0 bg-[#ede5d4] border border-[#d7cebc] p-5 sm:p-6">
@@ -103,7 +117,39 @@ function Reasoning({ results, tailorCv, tailoring, tailorStage, profile, goCvs }
       )}
 
       {results.id && (
-        <div className="mt-5 pt-4 border-t border-[#d7cebc]">
+        <div className="mt-5 pt-4 border-t border-[#d7cebc] space-y-5">
+          {/* 1. Company & role context */}
+          <div className="bg-[#fffdf8] border border-[#d7cebc] p-4">
+            <div className="flex flex-wrap justify-between items-center gap-2">
+              <div>
+                <div className="text-sm font-extrabold">Company &amp; role context</div>
+                <p className="mt-0.5 text-[13px] sm:text-xs text-[#686c62]">
+                  Research the employer or add your own intel. Automatically feeds into CV tailoring, cover letters, and interview prep.
+                </p>
+              </div>
+              <SmallBtn dark onClick={() => researchCompany?.(results.id, results.company_context || '')} disabled={researchLoading}>
+                {researchLoading ? 'Researching…' : results.company_context ? 'Refresh research' : 'Research company'}
+              </SmallBtn>
+            </div>
+            <textarea
+              value={results.company_context ?? ''}
+              onChange={(e) => setResults?.((r) => ({ ...r, company_context: e.target.value }))}
+              placeholder="Add your own notes about the employer/role or click 'Research company' (1 action)…"
+              rows={results.company_context ? 5 : 2}
+              className={`${INPUT} mt-3 text-xs leading-relaxed`}
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => saveCompanyContext?.(results.id, results.company_context || '')}
+                disabled={contextSaving}
+                className={`${CAPS} text-[#4c5c3f] hover:underline`}
+              >
+                {contextSaving ? 'Saving…' : 'Save context notes'}
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Tailored CV */}
           {!results.tailored_cv ? (
             <>
               <div className="flex flex-wrap justify-between items-center gap-3.5">
@@ -122,17 +168,100 @@ function Reasoning({ results, tailorCv, tailoring, tailorStage, profile, goCvs }
               <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
                 <span className="text-sm font-extrabold">Tailored CV</span>
                 <div className="flex gap-4">
+                  <button
+                    onClick={() => {
+                      if (editingCv) {
+                        setEditingCv(false);
+                      } else {
+                        setCvDraft(results.tailored_cv || '');
+                        setEditingCv(true);
+                      }
+                    }}
+                    className={`${CAPS} text-[#686c62]`}
+                  >
+                    {editingCv ? 'Cancel edit' : 'Edit text'}
+                  </button>
                   <button onClick={() => printCvAsPdf({ name: profile?.name || 'Candidate', role: results.jd_data?.role_title || 'Role', cvMarkdown: results.tailored_cv })} className={`${CAPS} text-[#4c5c3f]`}>Download PDF</button>
                   <button onClick={() => navigator.clipboard?.writeText(results.tailored_cv)} className={`${CAPS} text-[#686c62]`}>Copy</button>
                 </div>
               </div>
-              <div className="bg-[#fffdf8] border border-[#d7cebc] p-4 sm:p-5 max-h-[520px] overflow-y-auto"><Md>{results.tailored_cv}</Md></div>
+              {editingCv ? (
+                <div className="bg-[#fffdf8] border border-[#d7cebc] p-4 space-y-3">
+                  <textarea
+                    value={cvDraft}
+                    onChange={(e) => setCvDraft(e.target.value)}
+                    rows={16}
+                    className={`${INPUT} ${MONO} text-xs leading-relaxed`}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <SmallBtn onClick={() => setEditingCv(false)}>Cancel</SmallBtn>
+                    <SmallBtn
+                      dark
+                      disabled={cvSaving}
+                      onClick={async () => {
+                        setCvSaving(true);
+                        const ok = await saveTailoredCv?.(results.id, cvDraft);
+                        setCvSaving(false);
+                        if (ok) setEditingCv(false);
+                      }}
+                    >
+                      {cvSaving ? 'Saving…' : 'Save CV edits'}
+                    </SmallBtn>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-[#fffdf8] border border-[#d7cebc] p-4 sm:p-5 max-h-[520px] overflow-y-auto"><Md>{results.tailored_cv}</Md></div>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2.5">
+                <input
+                  value={cvEdit}
+                  onChange={(e) => setCvEdit(e.target.value)}
+                  placeholder='Suggest a CV edit, e.g. "lead with logistics scale" or "shorten summary"'
+                  className={`${INPUT} flex-1 min-w-[240px] w-auto`}
+                />
+                <Btn
+                  variant="dark"
+                  className="h-[46px] px-5 text-[13px]"
+                  disabled={tailoring || !cvEdit.trim()}
+                  onClick={async () => { await tailorCv(results.id, cvEdit); setCvEdit(''); }}
+                >
+                  {tailoring ? 'Revising…' : 'Revise CV →'}
+                </Btn>
+              </div>
               <AiReviewWarning what="CV" />
               <p className="text-xs sm:text-[11px] text-[#686c62] mt-2">
                 Saved to your <button onClick={goCvs} className="font-bold underline text-[#4c5c3f]">CV library</button>.
               </p>
             </div>
           )}
+
+          {/* 3. Interview Prep Brief */}
+          <div className="bg-[#fffdf8] border border-[#d7cebc] p-4">
+            <div className="flex flex-wrap justify-between items-center gap-2">
+              <div>
+                <div className="text-sm font-extrabold">Interview prep brief</div>
+                <p className="mt-0.5 text-[13px] sm:text-xs text-[#686c62]">
+                  60-second pitch, top 5 likely questions mapped to your service evidence, how to frame flagged gaps, and questions to ask them.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                {results.interview_brief && (
+                  <>
+                    <button onClick={() => printCvAsPdf({ name: profile?.name || 'Candidate', role: `${results.jd_data?.role_title || 'Role'} — Interview Brief`, cvMarkdown: results.interview_brief })} className={`${CAPS} text-[#4c5c3f]`}>PDF</button>
+                    <button onClick={() => navigator.clipboard?.writeText(results.interview_brief)} className={`${CAPS} text-[#686c62]`}>Copy</button>
+                  </>
+                )}
+                <SmallBtn dark onClick={() => generateInterviewBrief?.(results.id)} disabled={briefLoading}>
+                  {briefLoading ? 'Preparing…' : results.interview_brief ? 'Regenerate brief' : 'Generate interview brief'}
+                </SmallBtn>
+              </div>
+            </div>
+            {results.interview_brief && (
+              <div className="mt-3 bg-[#f8f4ea] border border-[#ede5d4] p-4 max-h-[480px] overflow-y-auto">
+                <Md>{results.interview_brief}</Md>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
