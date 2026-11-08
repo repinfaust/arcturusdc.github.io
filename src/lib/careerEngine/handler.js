@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { verifySteaWorkspaceAccess } from '@/lib/steaAccessServer';
 import { callAnthropic, stripJsonFences } from './anthropic';
-import { isUrl, fetchJdFromUrl } from './jd';
+import { isUrl, fetchJdFromUrl, extractLinkedInJobId, fetchLinkedInJobDetail } from './jd';
 import { searchJobs } from './jobSearch';
 
 export const FREE_ACTIONS = 20;    // free allowance per tenant, per app
@@ -268,8 +268,9 @@ export function createCareerHandler(app) {
           return NextResponse.json({ error: 'Workspace configuration is incomplete. Please set up your profile and evidence library first.' }, { status: 400 });
         }
 
-        // Resolve the actual JD text. A bare URL is fetched server-side — the
-        // LLM can't browse, so passing it through would only score the title.
+        // Resolve the actual JD text. A bare URL (or a short search-card snippet
+        // accompanied by a job URL) is fetched server-side — the LLM can't browse,
+        // so passing only a title/snippet would under-score the role.
         let resolvedJd = (jd_text || '').trim();
         const looksLikeUrlOnly = isUrl(resolvedJd) && resolvedJd.length < 300 && !resolvedJd.includes('\n');
         if (!resolvedJd || looksLikeUrlOnly) {
@@ -283,6 +284,11 @@ export function createCareerHandler(app) {
                 error: "Couldn't read the job description from that link (the site may block automated access or require login). Please copy the full job description text and paste it into the box instead — that gives the most accurate analysis.",
               }, { status: 422 });
             }
+          }
+        } else if (resolvedJd.length < 350 && isUrl(url || '')) {
+          const fetched = await fetchJdFromUrl(url);
+          if (fetched && fetched.length > resolvedJd.length) {
+            resolvedJd = fetched;
           }
         }
         if (!resolvedJd) {
@@ -542,6 +548,158 @@ export function createCareerHandler(app) {
         if (app.search.enrich) result.jobs = app.search.enrich(result.jobs, profile);
         await incrementUsage(tenantId); // one search = one action
         return NextResponse.json(result);
+      }
+
+      // --- Morning Scout Queue (persisted per workspace in Firestore) ---
+      if (action === 'get_scout_queue') {
+        const { db } = getFirebaseAdmin();
+        const snap = await opsDoc(db, tenantId, 'scout_queue').get();
+        const data = snap.exists ? snap.data() : {};
+        return NextResponse.json({
+          jobs: Array.isArray(data.jobs) ? data.jobs : [],
+          last_run_at: toIso(data.last_run_at),
+          sources: Array.isArray(data.sources) ? data.sources : [],
+        });
+      }
+
+      if (action === 'save_scout_queue') {
+        const { jobs = [] } = body;
+        const { db } = getFirebaseAdmin();
+        await opsDoc(db, tenantId, 'scout_queue').set(
+          { jobs: Array.isArray(jobs) ? jobs.slice(0, 40) : [], updated_at: new Date() },
+          { merge: true }
+        );
+        return NextResponse.json({ success: true });
+      }
+
+      // Server-side Morning Scout Agent (1 action): searches LinkedIn Jobs
+      // (`jobs-guest` public API) + Reed + Adzuna against the candidate's
+      // target & stretch roles, filters out roles already in the pipeline,
+      // ranks the best matches, and pulls the full LinkedIn JD for each match.
+      if (action === 'morning_scout') {
+        await assertActionAvailable(tenantId);
+        const { linkedin_url = '', keywords = '' } = body;
+        const doc = await getConfigDoc(tenantId);
+        const profile = await getConfigField(tenantId, 'candidate_profile', doc);
+        const evidence = await getConfigField(tenantId, 'evidence_library', doc);
+        const facts = profileFacts(profile);
+
+        // Current/most-recent employer exclusion so we don't scout their own company.
+        const currentEmployer = Array.isArray(evidence) && evidence[0]?.company ? [evidence[0].company] : [];
+
+        // Load existing pipeline + existing scout queue for deduplication.
+        const { db } = getFirebaseAdmin();
+        const [analysesSnap, queueSnap] = await Promise.all([
+          listAnalysisDocs(tenantId),
+          opsDoc(db, tenantId, 'scout_queue').get(),
+        ]);
+        const existingPipelineKeys = new Set(
+          analysesSnap.docs.map((d) => {
+            const v = d.data();
+            return `${String(v.role || '').toLowerCase().trim()}|${String(v.company || '').toLowerCase().trim()}`;
+          })
+        );
+        const existingQueue = queueSnap.exists && Array.isArray(queueSnap.data()?.jobs)
+          ? queueSnap.data().jobs
+          : [];
+
+        const directJobs = [];
+        const singleLinkedInId = extractLinkedInJobId(linkedin_url);
+        if (singleLinkedInId && !/\/jobs\/search/i.test(linkedin_url)) {
+          const detail = await fetchLinkedInJobDetail(singleLinkedInId);
+          if (detail) {
+            directJobs.push({
+              source: 'LinkedIn',
+              title: detail.title,
+              company: detail.company,
+              location: detail.location,
+              url: detail.url,
+              jd_text: detail.fullText,
+              relevance: 95,
+              why: 'Direct LinkedIn URL',
+              harvestedAt: new Date().toISOString(),
+            });
+          }
+        }
+
+        const mode =
+          /remote/i.test(facts.workPattern || '') && !/hybrid|onsite/i.test(facts.workPattern || '')
+            ? 'remote'
+            : 'both';
+
+        const searchRes = await searchJobs({
+          keywords,
+          location: facts.location || 'United Kingdom',
+          salary_min: undefined, // keep salary-unlisted LinkedIn/ATS roles in the pool
+          excludeEmployers: currentEmployer,
+          mode,
+          targetRoles: [...facts.targetRoles, ...facts.stretchRoles],
+          defaultTerm: app.search.defaultTerm,
+          hardExclude: app.search.hardExclude,
+          rankBackground: app.search.rankBackground(facts, profile),
+          rankRules: app.search.rankRules ? app.search.rankRules(facts) : '',
+          linkedInSearchUrl: /linkedin\.com\/jobs\/search/i.test(linkedin_url) ? linkedin_url : '',
+        });
+
+        // Filter out roles already analysed in pipeline and take top 10 fresh matches.
+        const freshCandidates = (searchRes.jobs || [])
+          .filter((j) => {
+            const key = `${String(j.title || '').toLowerCase().trim()}|${String(j.company || '').toLowerCase().trim()}`;
+            return !existingPipelineKeys.has(key);
+          })
+          .slice(0, 10);
+
+        // Fetch full LinkedIn JDs in parallel for all LinkedIn matches.
+        const enrichedFresh = await Promise.all(
+          freshCandidates.map(async (j) => {
+            const liId = j.jobId || extractLinkedInJobId(j.url);
+            let fullJd = j.description || '';
+            if (liId) {
+              const detail = await fetchLinkedInJobDetail(liId);
+              if (detail?.fullText) fullJd = detail.fullText;
+            }
+            return {
+              source: j.source || (liId ? 'LinkedIn' : 'Job Board'),
+              title: j.title || 'Untitled role',
+              company: j.company || 'Unknown company',
+              location: j.location || '',
+              salary: j.salary || '',
+              url: j.url || '',
+              jd_text: fullJd || `${j.title} at ${j.company}`,
+              relevance: j.relevance ?? null,
+              why: j.why || '',
+              harvestedAt: new Date().toISOString(),
+            };
+          })
+        );
+
+        const seen = new Set();
+        const merged = [];
+        for (const item of [...directJobs, ...enrichedFresh, ...existingQueue]) {
+          const key = `${String(item.title || '').toLowerCase().trim()}|${String(item.company || '').toLowerCase().trim()}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          merged.push(item);
+        }
+        const finalQueue = merged.slice(0, 30);
+        const now = new Date();
+        await opsDoc(db, tenantId, 'scout_queue').set(
+          {
+            jobs: finalQueue,
+            last_run_at: now,
+            sources: searchRes.sources || ['linkedin'],
+            updated_at: now,
+          },
+          { merge: true }
+        );
+        await incrementUsage(tenantId);
+
+        return NextResponse.json({
+          jobs: finalQueue,
+          added_count: directJobs.length + enrichedFresh.length,
+          last_run_at: now.toISOString(),
+          sources: searchRes.sources || ['linkedin'],
+        });
       }
 
       // --- CV library (uploaded CVs; the source of truth for the candidate) ---

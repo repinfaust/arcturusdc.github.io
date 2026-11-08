@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-11-08 — Career Ops & Squared: 1-Click Cloud Morning Scout Agent and direct LinkedIn `jobs-guest` integration (D-SITE-084)
+
+David noted that the previous local `.mjs`/`.command` Finder script and `javascript:` browser bookmarklet were brittle and anti-agentic: macOS Finder opened `.mjs` files as source text in Safari, and React 18 sanitized `href="javascript:..."` links when dragged to Safari's Bookmarks Bar.
+
+**Evidence & Root Cause:**
+- LinkedIn's public guest endpoints (`/jobs-guest/jobs/api/seeMoreJobPostings/search` and `/jobs-guest/jobs/api/jobPosting/{jobId}`) return `HTTP 200` with structured job cards and full 5,000–8,000 character job descriptions directly from server-side Node `fetch` without requiring login cookies, local AppleScript, or bookmarklets.
+- Previously, `fetchJdFromUrl` in `src/lib/careerEngine/jd.js` fetched `linkedin.com/jobs/view/...` directly (hitting LinkedIn's authwall) instead of rewriting the job ID to `jobs-guest/jobs/api/jobPosting/{jobId}`, and `searchJobs` in `src/lib/careerEngine/jobSearch.js` only queried Reed and Adzuna while checking `process.env.ANTHROPIC_API_KEY` instead of `CAREER_OPENAI_API_KEY || OPENAI_API_KEY || ANTHROPIC_API_KEY` before running the LLM relevance ranker.
+
+**Decisions:**
+- **Remove Finder scripts & bookmarklet:** Deleted `scripts/linkedin-morning-scout.mjs`, `scripts/LinkedIn Morning Scout.command`, and the `career:scout` script in `package.json`, and removed the setup/bookmarklet instructions from `src/app/apps/stea/career/page.js`.
+- **Direct LinkedIn `jobs-guest` search & full-JD extraction (`src/lib/careerEngine/jd.js`, `src/lib/careerEngine/jobSearch.js`):** Added `extractLinkedInJobId`, `fetchLinkedInJobDetail`, and `searchLinkedInGuest` in `jd.js`. Pasting any LinkedIn job URL (`linkedin.com/jobs/view/...` or `linkedin.com/jobs/search/?currentJobId=...`) now fetches the full JD server-side. Added `fetchLinkedIn` to `jobSearch.js` alongside Reed and Adzuna and enabled the LLM relevance ranker whenever OpenAI or Anthropic keys are configured.
+- **1-Click Cloud `Run Morning Scout` (`morning_scout`, `get_scout_queue`, `save_scout_queue` in `src/lib/careerEngine/handler.js`):** Added a server-side `morning_scout` action (`1 action`) that reads the candidate's target & stretch roles, location, work pattern, and existing pipeline (`career_ops_analyses`), searches LinkedIn Jobs + Reed + Adzuna, deduplicates against the pipeline, ranks matches via `gpt-4o-mini`, fetches full LinkedIn job descriptions in parallel for the top matches, and persists the queue in Firestore (`career_ops/scout_queue`) across devices.
+
 ## 2026-11-08 — STEa Home: register Career Ops in catalogue, scope Repinfaust & WorkspacePulse out of dedicated workspaces, and enforce namesake shelf defaults (D-SITE-083)
 
 When David selected `David Loake Career Ops` on `/apps/stea`, the launchpad displayed only `Repinfaust` and `WorkspacePulse` instead of `Career Ops`. Root cause: `career` (`/apps/stea/career`) had never been added to `STEA_APP_CATALOG` (`src/lib/steaAppCatalog.js`) or `IN_SESSION_DESTINATIONS` (`src/app/apps/stea/page.js`), so `David Loake Career Ops` was created with an empty `allowedSteaApps` array; meanwhile `isSteaAppAllowed` returned `true` for `repinfaust` solely on `userEmail === 'repinfaust@gmail.com'` regardless of the active workspace, and `<WorkspacePulse />` rendered unconditionally even when no core studio board apps were enabled.

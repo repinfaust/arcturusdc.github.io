@@ -1023,11 +1023,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [interviewBrief, setInterviewBrief] = useState('');
   const [briefLoading, setBriefLoading] = useState(false);
 
-  // LinkedIn Morning Scout queue (harvested from open Chrome/Safari LinkedIn tab).
+  // Morning Scout Agent queue (persisted in Firestore per workspace).
   const [scoutJobs, setScoutJobs] = useState([]);
+  const [scoutLastRunAt, setScoutLastRunAt] = useState(null);
+  const [scoutRunning, setScoutRunning] = useState(false);
+  const [scoutUrl, setScoutUrl] = useState('');
   const [scoutBatchRunning, setScoutBatchRunning] = useState(false);
   const [scoutProgress, setScoutProgress] = useState('');
-  const [showScoutSetup, setShowScoutSetup] = useState(false);
 
   async function handleApplyAnswers() {
     if (!currentTenant?.id || !applyRoleId) { alert('Select a role first.'); return; }
@@ -1326,68 +1328,64 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     }) || null;
   }
 
-  function persistScoutJobs(next) {
+  async function persistScoutJobs(next) {
     setScoutJobs(next);
-    if (typeof window !== 'undefined' && currentTenant?.id) {
-      try { window.localStorage.setItem(`career_ops_scout_${currentTenant.id}`, JSON.stringify(next)); } catch {}
+    if (!currentTenant?.id) return;
+    try {
+      await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'save_scout_queue', tenantId: currentTenant.id, jobs: next }),
+      });
+    } catch {}
+  }
+
+  async function loadScoutQueue() {
+    if (!currentTenant?.id) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'get_scout_queue', tenantId: currentTenant.id }),
+      });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.jobs)) {
+        setScoutJobs(data.jobs);
+        if (data.last_run_at) setScoutLastRunAt(data.last_run_at);
+      }
+    } catch {}
+  }
+
+  async function handleRunMorningScout() {
+    if (!currentTenant?.id) return;
+    setScoutRunning(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: await apiHeaders(),
+        body: JSON.stringify({
+          action: 'morning_scout',
+          tenantId: currentTenant.id,
+          linkedin_url: scoutUrl.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Morning Scout failed');
+      setScoutJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      if (data.last_run_at) setScoutLastRunAt(data.last_run_at);
+      setScoutUrl('');
+      loadUsage();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setScoutRunning(false);
     }
   }
 
-  function importScoutJobs(incoming = []) {
-    if (!Array.isArray(incoming) || incoming.length === 0) return;
-    setScoutJobs((prev) => {
-      const map = new Map();
-      for (const item of prev) {
-        const k = item.url ? extractJobId(item.url) : `${item.company}-${item.title}`.toLowerCase();
-        map.set(k, item);
-      }
-      for (const raw of incoming) {
-        if (!raw || (!raw.jd_text && !raw.url)) continue;
-        const cleanUrl = raw.url || '';
-        const k = cleanUrl ? extractJobId(cleanUrl) : `${raw.company || ''}-${raw.title || ''}`.toLowerCase();
-        map.set(k, {
-          title: (raw.title || 'Role').trim(),
-          company: (raw.company || 'Company').trim(),
-          location: (raw.location || '').trim(),
-          url: cleanUrl,
-          jd_text: (raw.jd_text || '').trim(),
-          harvestedAt: raw.harvestedAt || new Date().toISOString(),
-        });
-      }
-      const merged = Array.from(map.values());
-      if (typeof window !== 'undefined' && currentTenant?.id) {
-        try { window.localStorage.setItem(`career_ops_scout_${currentTenant.id}`, JSON.stringify(merged)); } catch {}
-      }
-      return merged;
-    });
-  }
-
   useEffect(() => {
-    if (typeof window === 'undefined' || !currentTenant?.id) return;
-    try {
-      const saved = window.localStorage.getItem(`career_ops_scout_${currentTenant.id}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) setScoutJobs(parsed);
-      }
-    } catch {}
-
-    // Expose global bridge for local macOS AppleScript / Chrome / Safari scout runner
-    window.__careerOpsImportJobs = (jobs) => {
-      importScoutJobs(jobs);
-      return { ok: true, count: Array.isArray(jobs) ? jobs.length : 0 };
-    };
-
-    const onMessage = (ev) => {
-      if (ev?.data?.type === 'CAREER_OPS_SCOUT_JOBS' && Array.isArray(ev.data.jobs)) {
-        importScoutJobs(ev.data.jobs);
-        try { ev.source?.postMessage({ type: 'CAREER_OPS_SCOUT_ACK', count: ev.data.jobs.length }, '*'); } catch {}
-      }
-    };
-    window.addEventListener('message', onMessage);
-    return () => {
-      window.removeEventListener('message', onMessage);
-    };
+    if (!currentTenant?.id) return;
+    loadScoutQueue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTenant?.id]);
 
@@ -1534,7 +1532,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         </div>
       )}
 
-      {/* LinkedIn Morning Scout — Pipeline & Live Scans tabs */}
+      {/* Morning Scout Agent — Pipeline & Live Scans tabs */}
       {(activeTab === 'pipeline' || activeTab === 'scans') && (
         <section className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1543,25 +1541,41 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 <span className="material-symbols-outlined">radar</span>
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-[#10294D] text-sm">LinkedIn &amp; Browser Morning Scout</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-bold text-[#10294D] text-sm">Morning Scout Agent</h3>
                   {scoutJobs.length > 0 && (
                     <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-teal-50 text-[#006C50]">
-                      {scoutJobs.filter((j) => !findExistingInPipeline(j)).length} new · {scoutJobs.length} harvested
+                      {scoutJobs.filter((j) => !findExistingInPipeline(j)).length} new · {scoutJobs.length} in queue
+                    </span>
+                  )}
+                  {scoutLastRunAt && (
+                    <span className="text-[10px] text-slate-400">
+                      Last scouted {new Date(scoutLastRunAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Harvest full job descriptions straight from your logged-in Chrome or Safari LinkedIn Jobs tab — zero login walls or copy-pasting.
+                  Scouts LinkedIn Jobs, Reed, and Adzuna in the cloud against your target &amp; stretch roles, skips roles already in your pipeline, and pulls full LinkedIn job descriptions automatically.
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleRunMorningScout}
+                disabled={scoutRunning || scoutBatchRunning || !configStatus.has_config}
+                className={`h-10 px-4 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${(scoutRunning || scoutBatchRunning || !configStatus.has_config) ? 'opacity-60 cursor-not-allowed' : ''}`}
+              >
+                {scoutRunning ? (
+                  <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Scouting LinkedIn + job boards…</>
+                ) : (
+                  <><span className="material-symbols-outlined text-sm">radar</span>Run Morning Scout (1 action)</>
+                )}
+              </button>
               {scoutJobs.filter((j) => !findExistingInPipeline(j)).length > 0 && (
                 <button
                   onClick={handleAnalyseAllScoutJobs}
-                  disabled={scoutBatchRunning || loading}
-                  className={`h-10 px-4 bg-[#006C50] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${(scoutBatchRunning || loading) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  disabled={scoutBatchRunning || scoutRunning || loading}
+                  className={`h-10 px-4 bg-[#006C50] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${(scoutBatchRunning || scoutRunning || loading) ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   {scoutBatchRunning ? (
                     <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>{scoutProgress || 'Scoring batch…'}</>
@@ -1573,58 +1587,23 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               {scoutJobs.length > 0 && (
                 <button
                   onClick={() => persistScoutJobs([])}
-                  disabled={scoutBatchRunning}
+                  disabled={scoutBatchRunning || scoutRunning}
                   className="h-10 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50"
                 >
                   Clear queue
                 </button>
               )}
-              <button
-                onClick={() => setShowScoutSetup((s) => !s)}
-                className="h-10 px-3.5 border border-slate-200 rounded-xl text-xs font-bold text-[#10294D] hover:bg-slate-50 inline-flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-sm">bookmark_add</span>
-                {showScoutSetup ? 'Hide setup' : 'Morning button setup'}
-              </button>
             </div>
           </div>
 
-          {showScoutSetup && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-xs text-slate-600">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg p-3.5 border border-slate-200 space-y-2">
-                  <div className="font-bold text-[#10294D] flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm text-[#006C50]">terminal</span>
-                    Option 1 — Mac Morning Scout Button (Chrome or Safari)
-                  </div>
-                  <p className="leading-relaxed">
-                    Keep your LinkedIn Jobs search tab open in Chrome or Safari and keep this Career Ops tab open. Double-click <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono">scripts/LinkedIn Morning Scout.command</code> (or run <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono">npm run career:scout</code>).
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    It automatically clicks through each job card in your open LinkedIn tab, extracts the full JD text, and drops the batch into this queue ready to score.
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-3.5 border border-slate-200 space-y-2">
-                  <div className="font-bold text-[#10294D] flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm text-[#006C50]">bookmark</span>
-                    Option 2 — 1-Click Browser Bookmarklet (Any Job Page)
-                  </div>
-                  <p className="leading-relaxed">
-                    Drag this button to your Chrome or Safari Bookmarks Bar, then click it while viewing any LinkedIn, Greenhouse, Ashby, or Workday role:
-                  </p>
-                  <div className="pt-1">
-                    <a
-                      href={`javascript:(function(){var t=document.querySelector('.job-details-jobs-unified-top-card__job-title,.jobs-unified-top-card__job-title,h1');var c=document.querySelector('.job-details-jobs-unified-top-card__company-name,.jobs-unified-top-card__company-name,[data-test="employer-name"]');var b=document.querySelector('#job-details,.jobs-description__content,main,article')||document.body;var job={title:t?t.innerText.trim():document.title,company:c?c.innerText.trim():location.hostname,location:'',url:location.href,jd_text:(b.innerText||'').slice(0,15000)};var w=window.open('${typeof window !== 'undefined' ? window.location.origin : 'https://www.arcturusdc.com'}/apps/stea/career','career_ops_tab');setTimeout(function(){w.postMessage({type:'CAREER_OPS_SCOUT_JOBS',jobs:[job]},'*');},1800);})();`}
-                      onClick={(e) => { e.preventDefault(); alert('Drag this button up to your Chrome/Safari Bookmarks Bar — then click it while on LinkedIn Jobs!'); }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#10294D] text-white font-bold text-xs shadow-sm hover:bg-[#001432]"
-                    >
-                      ✦ Send Job → Career Ops
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              value={scoutUrl}
+              onChange={(e) => setScoutUrl(e.target.value)}
+              placeholder="Optional: paste a LinkedIn Jobs search URL or specific LinkedIn role URL to include in this scout run…"
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-[#10294D] focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
 
           {scoutJobs.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-slate-100 max-h-80 overflow-y-auto">
@@ -1633,16 +1612,26 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 return (
                   <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {job.source && (
+                          <span className="shrink-0 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
+                            {job.source}
+                          </span>
+                        )}
                         <p className="font-bold text-[#10294D] text-sm truncate">{job.title}</p>
+                        {typeof job.relevance === 'number' && (
+                          <span className="shrink-0 text-[10px] font-mono font-bold text-[#006C50]">
+                            {job.relevance}%{job.why ? ` · ${job.why}` : ''}
+                          </span>
+                        )}
                         {existing && (
                           <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
                             In Pipeline{typeof existing.score === 'number' ? ` (${existing.score.toFixed(1)})` : ''}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 truncate">
-                        {job.company}{job.location ? ` · ${job.location}` : ''}
+                      <p className="text-xs text-slate-500 truncate mt-0.5">
+                        {job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -1661,7 +1650,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       ) : (
                         <button
                           onClick={() => handleAnalyseScoutJob(job)}
-                          disabled={loading || scoutBatchRunning}
+                          disabled={loading || scoutBatchRunning || scoutRunning}
                           className="h-8 px-3 rounded-lg bg-[#10294D] text-white text-[11px] font-bold hover:bg-[#001432] disabled:opacity-50"
                         >
                           Analyse
@@ -2080,10 +2069,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         <section className="space-y-6 animate-in fade-in duration-300">
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Find Roles</h3>
-            <p className="text-sm text-slate-500 mt-1">Search live UK job boards (Reed + Adzuna), then analyse any role against your profile.</p>
+            <p className="text-sm text-slate-500 mt-1">Search live UK job boards (LinkedIn + Reed + Adzuna), then analyse any role against your profile.</p>
             <p className="text-xs text-slate-400 mt-1.5 flex items-start gap-1.5">
               <span className="material-symbols-outlined text-sm">info</span>
-              We search Reed + Adzuna — a good slice of UK roles, but not all (direct-employer and some boards aren't covered). Found a job elsewhere? Paste it on the Pipeline tab and Analyse it directly.
+              Searches LinkedIn Jobs, Reed, and Adzuna in one pass. Found a role on a direct employer career site? Paste its URL or text on the Pipeline tab to score it directly.
             </p>
           </div>
 

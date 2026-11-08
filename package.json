@@ -14,8 +14,7 @@
     "paygo:seed-docs": "node scripts/seed-paygo-poc-docs.js",
     "test:rules": "firebase emulators:exec --only firestore \"jest --config jest.rules.config.js\"",
     "test:orbit": "node --import ./__tests__/orbit/fakes/loader.mjs --test \"__tests__/orbit/*.test.mjs\"",
-    "test:mandrake-deletion": "node --import ./__tests__/mandrake-deletion/register.mjs --test \"__tests__/mandrake-deletion/*.test.mjs\"",
-    "career:scout": "node scripts/linkedin-morning-scout.mjs"
+    "test:mandrake-deletion": "node --import ./__tests__/mandrake-deletion/register.mjs --test \"__tests__/mandrake-deletion/*.test.mjs\""
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",

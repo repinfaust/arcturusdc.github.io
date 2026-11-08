@@ -1,7 +1,8 @@
-// Live job search: Reed + Adzuna, deduped, obvious-mismatch culling, then an
-// LLM relevance ranking of what survives. App-specific inputs (culling list,
-// candidate background for the ranker) come from the app config.
+// Live job search: LinkedIn + Reed + Adzuna, deduped, obvious-mismatch culling,
+// then an LLM relevance ranking of what survives. App-specific inputs (culling
+// list, candidate background for the ranker) come from the app config.
 import { callAnthropic, stripJsonFences } from './anthropic';
+import { searchLinkedInGuest } from './jd';
 
 export async function searchJobs({
   keywords = '',
@@ -14,6 +15,7 @@ export async function searchJobs({
   hardExclude = [],
   rankBackground = '',
   rankRules = '', // extra app/profile ranking rules, e.g. excluded sectors
+  linkedInSearchUrl = '',
 }) {
   const results = [];
   const sourcesTried = new Set();
@@ -22,10 +24,23 @@ export async function searchJobs({
   const reedKey = process.env.REED_API_KEY;
   const adzId = process.env.ADZUNA_APP_ID;
   const adzKey = process.env.ADZUNA_APP_KEY;
-  if (!reedKey && !(adzId && adzKey)) {
-    const err = new Error('No job-search sources configured. Add REED_API_KEY and/or ADZUNA_APP_ID + ADZUNA_APP_KEY in Vercel.');
-    err.status = 400;
-    throw err;
+
+  async function fetchLinkedIn(query, loc, isRemote = false) {
+    try {
+      const items = await searchLinkedInGuest({
+        keywords: query,
+        location: loc || 'United Kingdom',
+        remoteOnly: isRemote,
+        searchUrl: linkedInSearchUrl,
+      });
+      if (items.length > 0) {
+        sourcesTried.add('linkedin');
+        sourceCounts.linkedin = (sourceCounts.linkedin || 0) + items.length;
+        results.push(...items);
+      }
+    } catch (e) {
+      console.error('LinkedIn guest search failed', e?.message);
+    }
   }
 
   // One query against Reed; loc='' means UK-wide (used for remote).
@@ -89,12 +104,17 @@ export async function searchJobs({
   if (queryTerms.length === 0 && defaultTerm) queryTerms.push(defaultTerm);
 
   const tasks = [];
+  if (linkedInSearchUrl) {
+    tasks.push(fetchLinkedIn('', location || 'United Kingdom', mode === 'remote'));
+  }
   for (const term of queryTerms) {
     if (mode === 'location' || mode === 'both') {
+      tasks.push(fetchLinkedIn(term, location || 'United Kingdom', false));
       tasks.push(fetchReed(term, location));
       tasks.push(fetchAdzuna(term, location));
     }
     if (mode === 'remote' || mode === 'both') {
+      tasks.push(fetchLinkedIn(term, 'United Kingdom', true));
       // Reed: include "remote" in keywords; Adzuna: where=remote.
       tasks.push(fetchReed(`${term} remote`, ''));
       tasks.push(fetchAdzuna(term, 'remote'));
@@ -143,8 +163,13 @@ export async function searchJobs({
 
   // --- Stage 2: LLM relevance ranking of the survivors ---
   let ranked = stage1.map((r) => ({ ...r })); // default if ranker fails
+  const hasLlmKey = Boolean(
+    process.env.CAREER_OPENAI_API_KEY ||
+      process.env.OPENAI_API_KEY ||
+      process.env.ANTHROPIC_API_KEY
+  );
   try {
-    if (process.env.ANTHROPIC_API_KEY && stage1.length > 0) {
+    if (hasLlmKey && stage1.length > 0) {
       const rankable = stage1.slice(0, 60);
       const list = rankable.map((r, i) => `${i}. ${r.title} @ ${r.company} (${r.location})`).join('\n');
       const rankPrompt =
