@@ -74,6 +74,13 @@ export const STEA_APP_CATALOG = [
     paths: ['/portfolio/art-atlas'],
   },
   {
+    key: 'career',
+    name: 'Career Ops',
+    description: 'Honest job-search triage, CV tailoring, and interview co-pilot.',
+    group: 'Specialist tools',
+    paths: ['/apps/stea/career'],
+  },
+  {
     key: 'squared',
     name: 'Squared',
     description: 'Job-search triage for Armed Forces service leavers.',
@@ -166,13 +173,37 @@ export function tenantUsesLegacyAppAccess(tenant) {
   return !Array.isArray(tenant?.allowedSteaApps);
 }
 
+// Compute the effective allowed app keys for a workspace, including automatic
+// namesake app inclusion for dedicated Career Ops / Squared workspaces that
+// were created before `career` was in the catalogue or with an empty shelf.
+export function effectiveAllowedSteaApps(tenant) {
+  if (!tenant) return [];
+  if (tenantUsesLegacyAppAccess(tenant)) return [...STEA_APP_KEYS];
+  const base = normalizeAllowedSteaApps(tenant.allowedSteaApps);
+  const name = typeof tenant.name === 'string' ? tenant.name.trim() : '';
+  const merged = new Set(base);
+  if (/\bcareer\b/i.test(name)) merged.add('career');
+  if (/\bsquared\b/i.test(name)) merged.add('squared');
+  return [...merged];
+}
+
 export function isSteaAppAllowed({ appKey, tenant, userEmail, isSuperAdmin = false }) {
   if (!appKey) return true;
 
   const normalizedEmail = typeof userEmail === 'string' ? userEmail.trim().toLowerCase() : '';
   const ownerOnlyApp = OWNER_ONLY_STEA_APPS.find((app) => app.key === appKey);
   if (ownerOnlyApp) {
-    return ownerOnlyApp.allowedEmails.includes(normalizedEmail);
+    if (!ownerOnlyApp.allowedEmails.includes(normalizedEmail)) return false;
+    // Direct route access (SteaAppAccessGate passes isSuperAdmin=true for owner)
+    // is always permitted for the owner. On the workspace launchpad shelf
+    // (isSuperAdmin=false), only show Repinfaust in legacy/all-app workspaces
+    // or workspaces explicitly named Arcturus / Repinfaust, never inside
+    // dedicated single-purpose workspaces (e.g. David Loake Career Ops).
+    if (isSuperAdmin) return true;
+    if (!tenant) return false;
+    if (tenantUsesLegacyAppAccess(tenant)) return true;
+    const tenantName = typeof tenant.name === 'string' ? tenant.name.trim() : '';
+    return /\b(arcturus|repinfaust)\b/i.test(tenantName);
   }
 
   // Routes and fixed-tenant tools that are not launchpad cards are outside the
@@ -184,5 +215,5 @@ export function isSteaAppAllowed({ appKey, tenant, userEmail, isSuperAdmin = fal
 
   if (tenantUsesLegacyAppAccess(tenant)) return true;
 
-  return normalizeAllowedSteaApps(tenant.allowedSteaApps).includes(appKey);
+  return effectiveAllowedSteaApps(tenant).includes(appKey);
 }

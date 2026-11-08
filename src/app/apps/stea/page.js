@@ -107,6 +107,14 @@ const IN_SESSION_DESTINATIONS = [
     textLight: true,
   },
   {
+    label: 'Career Ops',
+    appKey: 'career',
+    href: '/apps/stea/career',
+    description: 'Honest job-search triage: 12-factor role scoring, company intel, tailored CVs, portal Q&A, and interview briefings.',
+    gradient: 'from-emerald-50/80 to-teal-50/30',
+    borderColor: 'border-emerald-300',
+  },
+  {
     label: 'Squared',
     appKey: 'squared',
     href: '/apps/stea/squared',
@@ -533,8 +541,10 @@ export default function SteaAccessPage() {
         ))}
       </div>
 
-      {/* Workspace Pulse Dashboard */}
-      <WorkspacePulse />
+      {/* Workspace Pulse Dashboard — only shown when core studio board/testing apps are enabled */}
+      {['filo', 'harls', 'hans', 'ruby', 'autoproduct'].some((appKey) =>
+        isSteaAppAllowed({ appKey, tenant: currentTenant, userEmail, isSuperAdmin: false })
+      ) && <WorkspacePulse />}
     </div>
   );
 }

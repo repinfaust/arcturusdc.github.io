@@ -44,10 +44,10 @@ service cloud.firestore {
     }
 
     function validAllowedSteaApps(apps) {
-      return apps is list && apps.size() <= 15 && [
+      return apps is list && apps.size() <= 18 && [
         'harls', 'autoproduct', 'filo', 'hans', 'ruby', 'automated-tests',
-        'explore-stea', 'orbit-poc', 'orbit-ai-act', 'art-atlas', 'wc26',
-        'rider-management', 'dialled-mtb-promo', 'dialled-mtb-calendar', 'sidestand'
+        'explore-stea', 'orbit-poc', 'orbit-ai-act', 'art-atlas', 'career', 'squared', 'wc26',
+        'rider-management', 'dialled-mtb-promo', 'dialled-mtb-calendar', 'dialled-mtb-dashboard', 'sidestand'
       ].hasAll(apps);
     }
 

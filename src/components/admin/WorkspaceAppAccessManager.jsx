@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { updateTenant } from '@/lib/tenantUtils';
-import { normalizeAllowedSteaApps, STEA_APP_KEYS, tenantUsesLegacyAppAccess } from '@/lib/steaAppCatalog';
+import { effectiveAllowedSteaApps, normalizeAllowedSteaApps, STEA_APP_KEYS, tenantUsesLegacyAppAccess } from '@/lib/steaAppCatalog';
 import SteaAppSelector from './SteaAppSelector';
 
 export default function WorkspaceAppAccessManager({ tenant, onSaved }) {
@@ -16,7 +16,7 @@ export default function WorkspaceAppAccessManager({ tenant, onSaved }) {
     setSelectedKeys(
       tenantUsesLegacyAppAccess(tenant)
         ? [...STEA_APP_KEYS]
-        : normalizeAllowedSteaApps(tenant?.allowedSteaApps)
+        : effectiveAllowedSteaApps(tenant)
     );
     setMessage(null);
   }, [tenant]);

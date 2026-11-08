@@ -16,6 +16,8 @@ const APP_ICONS = {
   'orbit-poc': '◎',
   'orbit-ai-act': '◇',
   'art-atlas': '✧',
+  career: '◈',
+  squared: '▣',
   wc26: '⚽',
   'rider-management': '△',
   'dialled-mtb-promo': '↗',
