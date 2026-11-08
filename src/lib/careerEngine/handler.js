@@ -8,7 +8,7 @@ import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { verifySteaWorkspaceAccess } from '@/lib/steaAccessServer';
 import { callAnthropic, stripJsonFences } from './anthropic';
 import { isUrl, fetchJdFromUrl, extractLinkedInJobId, fetchLinkedInJobDetail } from './jd';
-import { searchJobs } from './jobSearch';
+import { searchJobs, cleanLocationList } from './jobSearch';
 
 export const FREE_ACTIONS = 20;    // free allowance per tenant, per app
 export const FIRST_USER_ACTIONS = 250; // extended allowance for invited early workspaces (e.g. Wayne)
@@ -550,7 +550,7 @@ export function createCareerHandler(app) {
         return NextResponse.json(result);
       }
 
-      // --- Morning Scout Queue (persisted per workspace in Firestore) ---
+      // --- Morning Scout Queue & Preferences (persisted per workspace in Firestore) ---
       if (action === 'get_scout_queue') {
         const { db } = getFirebaseAdmin();
         const snap = await opsDoc(db, tenantId, 'scout_queue').get();
@@ -559,26 +559,40 @@ export function createCareerHandler(app) {
           jobs: Array.isArray(data.jobs) ? data.jobs : [],
           last_run_at: toIso(data.last_run_at),
           sources: Array.isArray(data.sources) ? data.sources : [],
+          prefs: data.prefs || null,
         });
       }
 
       if (action === 'save_scout_queue') {
-        const { jobs = [] } = body;
+        const { jobs = [], prefs } = body;
+        const { db } = getFirebaseAdmin();
+        const payload = {
+          jobs: Array.isArray(jobs) ? jobs.slice(0, 40) : [],
+          updated_at: new Date(),
+        };
+        if (prefs && typeof prefs === 'object') payload.prefs = prefs;
+        await opsDoc(db, tenantId, 'scout_queue').set(payload, { merge: true });
+        return NextResponse.json({ success: true });
+      }
+
+      if (action === 'save_scout_prefs') {
+        const { prefs = {} } = body;
         const { db } = getFirebaseAdmin();
         await opsDoc(db, tenantId, 'scout_queue').set(
-          { jobs: Array.isArray(jobs) ? jobs.slice(0, 40) : [], updated_at: new Date() },
+          { prefs, updated_at: new Date() },
           { merge: true }
         );
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, prefs });
       }
 
       // Server-side Morning Scout Agent (1 action): searches LinkedIn Jobs
       // (`jobs-guest` public API) + Reed + Adzuna against the candidate's
-      // target & stretch roles, filters out roles already in the pipeline,
-      // ranks the best matches, and pulls the full LinkedIn JD for each match.
+      // honed target roles, locations, source toggles, and steering instructions,
+      // filters out roles already in the pipeline, ranks the best matches, and
+      // pulls the full LinkedIn JD for each match.
       if (action === 'morning_scout') {
         await assertActionAvailable(tenantId);
-        const { linkedin_url = '', keywords = '' } = body;
+        const { linkedin_url = '', keywords = '', prefs: incomingPrefs, replace_queue = true } = body;
         const doc = await getConfigDoc(tenantId);
         const profile = await getConfigField(tenantId, 'candidate_profile', doc);
         const evidence = await getConfigField(tenantId, 'evidence_library', doc);
@@ -599,9 +613,47 @@ export function createCareerHandler(app) {
             return `${String(v.role || '').toLowerCase().trim()}|${String(v.company || '').toLowerCase().trim()}`;
           })
         );
-        const existingQueue = queueSnap.exists && Array.isArray(queueSnap.data()?.jobs)
-          ? queueSnap.data().jobs
-          : [];
+        const queueData = queueSnap.exists ? (queueSnap.data() || {}) : {};
+        const existingQueue = Array.isArray(queueData.jobs) ? queueData.jobs : [];
+        const savedPrefs = queueData.prefs || {};
+        const activePrefs = incomingPrefs && typeof incomingPrefs === 'object'
+          ? { ...savedPrefs, ...incomingPrefs }
+          : savedPrefs;
+
+        // Build effective target roles: prefer honed `activePrefs.roles`, otherwise
+        // combine currentRole + targetRoles + stretchRoles with senior titles first.
+        const rawProfileRoles = [
+          facts.currentRole,
+          ...(facts.targetRoles || []),
+          ...(facts.stretchRoles || []),
+        ].map((r) => String(r || '').trim()).filter(Boolean);
+        const seniorFirstProfileRoles = [
+          ...rawProfileRoles.filter((r) => /\b(senior|lead|principal|founding|head|director|vp|group)\b/i.test(r)),
+          ...rawProfileRoles.filter((r) => !/\b(senior|lead|principal|founding|head|director|vp|group)\b/i.test(r)),
+        ];
+        const effectiveRoles = Array.isArray(activePrefs.roles) && activePrefs.roles.length > 0
+          ? activePrefs.roles.map((r) => String(r || '').trim()).filter(Boolean)
+          : [...new Set(seniorFirstProfileRoles)];
+
+        const effectiveLocations = cleanLocationList(
+          facts.location || 'United Kingdom',
+          Array.isArray(activePrefs.locations) ? activePrefs.locations : []
+        );
+
+        const includeRemote = activePrefs.include_remote !== undefined
+          ? Boolean(activePrefs.include_remote)
+          : /remote|hybrid/i.test(facts.workPattern || '') || /remote/i.test(facts.location || '');
+
+        const mode = includeRemote
+          ? (effectiveLocations.length > 0 ? 'both' : 'remote')
+          : 'location';
+
+        const enabledSources = Array.isArray(activePrefs.sources) && activePrefs.sources.length > 0
+          ? activePrefs.sources
+          : ['linkedin', 'reed', 'adzuna'];
+
+        const steering = typeof activePrefs.steering === 'string' ? activePrefs.steering.trim() : '';
+        const excludedTitles = Array.isArray(activePrefs.excluded_titles) ? activePrefs.excluded_titles : [];
 
         const directJobs = [];
         const singleLinkedInId = extractLinkedInJobId(linkedin_url);
@@ -622,32 +674,32 @@ export function createCareerHandler(app) {
           }
         }
 
-        const mode =
-          /remote/i.test(facts.workPattern || '') && !/hybrid|onsite/i.test(facts.workPattern || '')
-            ? 'remote'
-            : 'both';
-
         const searchRes = await searchJobs({
           keywords,
-          location: facts.location || 'United Kingdom',
+          location: effectiveLocations[0] || 'United Kingdom',
+          locations: effectiveLocations,
           salary_min: undefined, // keep salary-unlisted LinkedIn/ATS roles in the pool
           excludeEmployers: currentEmployer,
           mode,
-          targetRoles: [...facts.targetRoles, ...facts.stretchRoles],
+          targetRoles: effectiveRoles,
           defaultTerm: app.search.defaultTerm,
           hardExclude: app.search.hardExclude,
+          excludedTitles,
+          enabledSources,
+          steering,
+          minScore: 55,
           rankBackground: app.search.rankBackground(facts, profile),
           rankRules: app.search.rankRules ? app.search.rankRules(facts) : '',
           linkedInSearchUrl: /linkedin\.com\/jobs\/search/i.test(linkedin_url) ? linkedin_url : '',
         });
 
-        // Filter out roles already analysed in pipeline and take top 10 fresh matches.
+        // Filter out roles already analysed in pipeline and take top 12 fresh matches.
         const freshCandidates = (searchRes.jobs || [])
           .filter((j) => {
             const key = `${String(j.title || '').toLowerCase().trim()}|${String(j.company || '').toLowerCase().trim()}`;
             return !existingPipelineKeys.has(key);
           })
-          .slice(0, 10);
+          .slice(0, 12);
 
         // Fetch full LinkedIn JDs in parallel for all LinkedIn matches.
         const enrichedFresh = await Promise.all(
@@ -675,17 +727,27 @@ export function createCareerHandler(app) {
 
         const seen = new Set();
         const merged = [];
-        for (const item of [...directJobs, ...enrichedFresh, ...existingQueue]) {
+        const baseQueue = replace_queue ? [...directJobs, ...enrichedFresh] : [...directJobs, ...enrichedFresh, ...existingQueue];
+        for (const item of baseQueue) {
           const key = `${String(item.title || '').toLowerCase().trim()}|${String(item.company || '').toLowerCase().trim()}`;
           if (seen.has(key)) continue;
           seen.add(key);
           merged.push(item);
         }
         const finalQueue = merged.slice(0, 30);
+        const persistedPrefs = {
+          roles: effectiveRoles,
+          locations: effectiveLocations,
+          include_remote: includeRemote,
+          sources: enabledSources,
+          steering,
+          excluded_titles: excludedTitles,
+        };
         const now = new Date();
         await opsDoc(db, tenantId, 'scout_queue').set(
           {
             jobs: finalQueue,
+            prefs: persistedPrefs,
             last_run_at: now,
             sources: searchRes.sources || ['linkedin'],
             updated_at: now,
@@ -696,9 +758,11 @@ export function createCareerHandler(app) {
 
         return NextResponse.json({
           jobs: finalQueue,
+          prefs: persistedPrefs,
           added_count: directJobs.length + enrichedFresh.length,
           last_run_at: now.toISOString(),
           sources: searchRes.sources || ['linkedin'],
+          debug: searchRes.debug || null,
         });
       }
 

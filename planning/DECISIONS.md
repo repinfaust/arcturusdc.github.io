@@ -1,5 +1,19 @@
 # Decisions
 
+## 2026-11-08 — Career Ops: Morning Scout LinkedIn prioritisation, seniority ranking, and in-UI Hone & Refine tool (D-SITE-085)
+
+When David ran `Run Morning Scout` on `/apps/stea/career`, the queue returned only 4 generic Reed listings (`Product Marketing Manager`, `Product Manager/ Solutions Architect`, `Product Owner`, `Head of Operations`) and zero LinkedIn roles, even though LinkedIn's `jobs-guest` endpoint returned strong matches (`Principal Product Manager @ Harvey Nash`, `Senior Manager - Digital Product @ Capital One`, `Lead Digital Product Manager @ Capital One`).
+
+**Evidence & Root Cause:**
+- In `src/lib/careerEngine/jobSearch.js`, `fetchReed` requested `resultsToTake: '50'` per query and resolved before `fetchLinkedIn`, pushing 100+ Reed listings to the front of `results[]`. At line 173, `stage1.slice(0, 60)` sliced only the first 60 items (100% Reed) and discarded all LinkedIn results before the Stage 2 LLM ranker ran.
+- Parenthetical location text (`"Nottingham (Hybrid or UK remote)"`) was passed raw to search endpoints instead of being cleaned and split into multiple locations (`['Nottingham', 'London']`).
+- The Stage 2 ranker prompt instructed the model to *"Be generous to roles that are the same kind of work worded differently"* without enforcing seniority (`Senior / Lead / Principal / Founding / Head`) or user-defined steering rules.
+
+**Decisions:**
+- **Prioritise LinkedIn & expand rankable pool (`src/lib/careerEngine/jobSearch.js`):** `fetchLinkedIn` now pulls 2 pages (`start=0` and `start=10`, up to 20 LinkedIn listings per query/location) and `orderedRaw` places all `source === 'LinkedIn'` listings before Reed and Adzuna prior to deduplication and `stage1.slice(0, 80)` so Reed can never push LinkedIn jobs out of the rankable window.
+- **Multi-location cleaning, source toggles, seniority enforcement & steering rules (`src/lib/careerEngine/jobSearch.js`, `src/lib/careerEngine/handler.js`):** Added `cleanLocationList`, `locations`, `enabledSources` (`['linkedin', 'reed', 'adzuna']`), `steering` (natural-language refinement instructions injected at highest priority into the Stage 2 ranker), `excludedTitles` (dismissed role titles), and seniority enforcement (scoring generic mid/junior `Product Owner`, `Product Marketing Manager`, and `Solutions Architect` roles below 45 when targeting Senior/Lead/Principal roles).
+- **In-UI Hone & Refine Scout panel + "Not like this" dismissal (`src/app/apps/stea/career/page.js`, `src/lib/careerEngine/handler.js`):** Added a `Tune Scout` drawer inside the Morning Scout Agent card (persisted per workspace in `scout_queue.prefs` via `save_scout_prefs` / `morning_scout`) with editable Target Role Titles, Locations + `+ UK Remote`, source toggle pills (`LinkedIn Jobs`, `Reed`, `Adzuna`), a free-text Steering / Refinement Rules box, and removable Excluded Role Titles chips, plus a 1-click `Not like this` button on each queued job card.
+
 ## 2026-11-08 — Career Ops & Squared: 1-Click Cloud Morning Scout Agent and direct LinkedIn `jobs-guest` integration (D-SITE-084)
 
 David noted that the previous local `.mjs`/`.command` Finder script and `javascript:` browser bookmarklet were brittle and anti-agentic: macOS Finder opened `.mjs` files as source text in Safari, and React 18 sanitized `href="javascript:..."` links when dragged to Safari's Bookmarks Bar.

@@ -1023,13 +1023,22 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [interviewBrief, setInterviewBrief] = useState('');
   const [briefLoading, setBriefLoading] = useState(false);
 
-  // Morning Scout Agent queue (persisted in Firestore per workspace).
+  // Morning Scout Agent queue & Honing/Refinement prefs (persisted in Firestore per workspace).
   const [scoutJobs, setScoutJobs] = useState([]);
   const [scoutLastRunAt, setScoutLastRunAt] = useState(null);
   const [scoutRunning, setScoutRunning] = useState(false);
   const [scoutUrl, setScoutUrl] = useState('');
   const [scoutBatchRunning, setScoutBatchRunning] = useState(false);
   const [scoutProgress, setScoutProgress] = useState('');
+  const [showScoutTune, setShowScoutTune] = useState(false);
+  const [scoutPrefsLoaded, setScoutPrefsLoaded] = useState(false);
+  const [scoutRolesText, setScoutRolesText] = useState('');
+  const [scoutLocationsText, setScoutLocationsText] = useState('');
+  const [scoutIncludeRemote, setScoutIncludeRemote] = useState(true);
+  const [scoutSources, setScoutSources] = useState(['linkedin', 'reed', 'adzuna']);
+  const [scoutSteering, setScoutSteering] = useState('');
+  const [scoutExcludedTitles, setScoutExcludedTitles] = useState([]);
+  const [scoutSavingPrefs, setScoutSavingPrefs] = useState(false);
 
   async function handleApplyAnswers() {
     if (!currentTenant?.id || !applyRoleId) { alert('Select a role first.'); return; }
@@ -1328,16 +1337,163 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     }) || null;
   }
 
-  async function persistScoutJobs(next) {
+  function buildCurrentScoutPrefs(override = {}) {
+    const roles = scoutRolesText
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const locations = scoutLocationsText
+      .split(',')
+      .map((s) => s.replace(/\([^)]*\)/g, '').trim())
+      .filter(Boolean);
+    return {
+      roles,
+      locations: locations.length > 0 ? locations : ['United Kingdom'],
+      include_remote: scoutIncludeRemote,
+      sources: scoutSources.length > 0 ? scoutSources : ['linkedin'],
+      steering: scoutSteering.trim(),
+      excluded_titles: scoutExcludedTitles,
+      ...override,
+    };
+  }
+
+  function applyScoutPrefsToState(prefs, fallbackProfile) {
+    if (prefs && typeof prefs === 'object') {
+      if (Array.isArray(prefs.roles) && prefs.roles.length > 0) {
+        setScoutRolesText(prefs.roles.join(', '));
+      }
+      if (Array.isArray(prefs.locations) && prefs.locations.length > 0) {
+        setScoutLocationsText(prefs.locations.join(', '));
+      }
+      if (prefs.include_remote !== undefined) {
+        setScoutIncludeRemote(Boolean(prefs.include_remote));
+      }
+      if (Array.isArray(prefs.sources) && prefs.sources.length > 0) {
+        setScoutSources(prefs.sources);
+      }
+      if (typeof prefs.steering === 'string') {
+        setScoutSteering(prefs.steering);
+      }
+      if (Array.isArray(prefs.excluded_titles)) {
+        setScoutExcludedTitles(prefs.excluded_titles);
+      }
+      setScoutPrefsLoaded(true);
+      return;
+    }
+
+    // Seed smart defaults from profile when no saved scout prefs exist yet.
+    const p = fallbackProfile || profileData || {};
+    const toArr = (v) =>
+      Array.isArray(v)
+        ? v.map((s) => String(s || '').trim()).filter(Boolean)
+        : typeof v === 'string'
+        ? v.split(',').map((s) => s.trim()).filter(Boolean)
+        : [];
+    const rawRoles = [
+      p.current_role || '',
+      ...toArr(p.target_roles),
+      ...toArr(p.stretch_roles),
+    ].map((s) => String(s || '').trim()).filter(Boolean);
+
+    const hasPm = rawRoles.some((r) => /product manager/i.test(r));
+    const seededRoles = hasPm
+      ? [
+          ...new Set([
+            'Senior Product Manager',
+            'Principal Product Manager',
+            'Lead Product Manager',
+            'Founding Product Manager',
+            'Senior Digital Product Manager',
+            ...rawRoles.filter((r) => !/^product manager$/i.test(r)),
+          ]),
+        ]
+      : [...new Set(rawRoles)];
+
+    if (seededRoles.length > 0) {
+      setScoutRolesText(seededRoles.slice(0, 6).join(', '));
+    }
+
+    const cleanLoc = String(p.location || '')
+      .replace(/\([^)]*\)/g, '')
+      .split(',')[0]
+      .trim();
+    if (cleanLoc) {
+      setScoutLocationsText(
+        /nottingham/i.test(cleanLoc) ? 'Nottingham, London' : cleanLoc
+      );
+    } else {
+      setScoutLocationsText('Nottingham, London');
+    }
+
+    if (hasPm && !scoutSteering) {
+      setScoutSteering(
+        'Senior, Lead, Principal, Founding or Head-level Product roles only; skip Product Marketing, Solutions Architect, and mid-level Product Owner roles.'
+      );
+    }
+    setScoutPrefsLoaded(true);
+  }
+
+  async function persistScoutJobs(next, nextPrefs) {
     setScoutJobs(next);
     if (!currentTenant?.id) return;
     try {
       await fetch('/api/stea/career', {
         method: 'POST',
         headers: await apiHeaders(),
-        body: JSON.stringify({ action: 'save_scout_queue', tenantId: currentTenant.id, jobs: next }),
+        body: JSON.stringify({
+          action: 'save_scout_queue',
+          tenantId: currentTenant.id,
+          jobs: next,
+          ...(nextPrefs ? { prefs: nextPrefs } : {}),
+        }),
       });
     } catch {}
+  }
+
+  async function handleSaveScoutPrefs(override) {
+    if (!currentTenant?.id) return;
+    const prefs = buildCurrentScoutPrefs(override);
+    setScoutSavingPrefs(true);
+    try {
+      await fetch('/api/stea/career', {
+        method: 'POST',
+        headers: await apiHeaders(),
+        body: JSON.stringify({
+          action: 'save_scout_prefs',
+          tenantId: currentTenant.id,
+          prefs,
+        }),
+      });
+    } catch {} finally {
+      setScoutSavingPrefs(false);
+    }
+  }
+
+  async function handleNotLikeThis(job, idx) {
+    const dismissedTitle = String(job?.title || '').trim();
+    const nextExcluded = dismissedTitle && !scoutExcludedTitles.includes(dismissedTitle)
+      ? [...scoutExcludedTitles, dismissedTitle]
+      : scoutExcludedTitles;
+    setScoutExcludedTitles(nextExcluded);
+    const nextJobs = scoutJobs.filter(
+      (j, i) => i !== idx && String(j?.title || '').toLowerCase().trim() !== dismissedTitle.toLowerCase()
+    );
+    const prefs = buildCurrentScoutPrefs({ excluded_titles: nextExcluded });
+    await persistScoutJobs(nextJobs, prefs);
+  }
+
+  function removeExcludedTitle(titleToRemove) {
+    const nextExcluded = scoutExcludedTitles.filter((t) => t !== titleToRemove);
+    setScoutExcludedTitles(nextExcluded);
+    handleSaveScoutPrefs({ excluded_titles: nextExcluded });
+  }
+
+  function toggleScoutSource(src) {
+    setScoutSources((prev) => {
+      const exists = prev.includes(src);
+      const next = exists ? prev.filter((s) => s !== src) : [...prev, src];
+      return next.length > 0 ? next : ['linkedin'];
+    });
   }
 
   async function loadScoutQueue() {
@@ -1349,9 +1505,14 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         body: JSON.stringify({ action: 'get_scout_queue', tenantId: currentTenant.id }),
       });
       const data = await res.json();
-      if (res.ok && Array.isArray(data.jobs)) {
-        setScoutJobs(data.jobs);
+      if (res.ok) {
+        if (Array.isArray(data.jobs)) setScoutJobs(data.jobs);
         if (data.last_run_at) setScoutLastRunAt(data.last_run_at);
+        if (data.prefs) {
+          applyScoutPrefsToState(data.prefs, profileData);
+        } else {
+          applyScoutPrefsToState(null, profileData);
+        }
       }
     } catch {}
   }
@@ -1360,6 +1521,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     if (!currentTenant?.id) return;
     setScoutRunning(true);
     try {
+      const prefs = buildCurrentScoutPrefs();
       const res = await fetch('/api/stea/career', {
         method: 'POST',
         headers: await apiHeaders(),
@@ -1367,12 +1529,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           action: 'morning_scout',
           tenantId: currentTenant.id,
           linkedin_url: scoutUrl.trim(),
+          prefs,
+          replace_queue: true,
         }),
       });
       const data = await res.json();
       if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Morning Scout failed');
       setScoutJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      if (data.prefs) applyScoutPrefsToState(data.prefs, profileData);
       if (data.last_run_at) setScoutLastRunAt(data.last_run_at);
       setScoutUrl('');
       loadUsage();
@@ -1388,6 +1553,14 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     loadScoutQueue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTenant?.id]);
+
+  // Seed default honing fields once profileData arrives if no saved prefs were loaded.
+  useEffect(() => {
+    if (profileData && !scoutRolesText && !scoutPrefsLoaded) {
+      applyScoutPrefsToState(null, profileData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileData]);
 
   async function handleAnalyseScoutJob(job) {
     if (!job) return;
@@ -1555,8 +1728,21 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Scouts LinkedIn Jobs, Reed, and Adzuna in the cloud against your target &amp; stretch roles, skips roles already in your pipeline, and pulls full LinkedIn job descriptions automatically.
+                  Scouts LinkedIn Jobs, Reed, and Adzuna in the cloud against your honed target roles &amp; locations, skips roles already in your pipeline, and pulls full LinkedIn job descriptions automatically.
                 </p>
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px] text-slate-500">
+                  <span className="font-bold text-[#10294D]">
+                    {scoutSources.map((s) => (s === 'linkedin' ? 'LinkedIn' : s === 'reed' ? 'Reed' : 'Adzuna')).join(' + ')}
+                  </span>
+                  <span>·</span>
+                  <span>{scoutLocationsText || 'United Kingdom'}{scoutIncludeRemote ? ' + UK Remote' : ''}</span>
+                  {scoutExcludedTitles.length > 0 && (
+                    <>
+                      <span>·</span>
+                      <span className="text-amber-700 font-semibold">{scoutExcludedTitles.length} excluded title{scoutExcludedTitles.length === 1 ? '' : 's'}</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -1570,6 +1756,17 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 ) : (
                   <><span className="material-symbols-outlined text-sm">radar</span>Run Morning Scout (1 action)</>
                 )}
+              </button>
+              <button
+                onClick={() => setShowScoutTune((v) => !v)}
+                className={`h-10 px-3.5 rounded-xl text-xs font-bold border inline-flex items-center gap-1.5 transition-colors ${
+                  showScoutTune
+                    ? 'bg-teal-50 border-[#006C50]/30 text-[#006C50]'
+                    : 'bg-white border-slate-200 text-[#10294D] hover:bg-slate-50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">tune</span>
+                {showScoutTune ? 'Hide Tuning' : 'Tune Scout'}
               </button>
               {scoutJobs.filter((j) => !findExistingInPipeline(j)).length > 0 && (
                 <button
@@ -1596,6 +1793,130 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </div>
           </div>
 
+          {showScoutTune && (
+            <div className="rounded-xl bg-slate-50/90 border border-slate-200 p-4 space-y-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-xs font-bold text-[#10294D] uppercase tracking-wider">Hone &amp; Refine Scout</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Tune exact role titles, locations, job sources, and ranker instructions. Clicking <strong className="text-[#10294D]">Run Morning Scout</strong> applies and saves these settings automatically.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleSaveScoutPrefs()}
+                  disabled={scoutSavingPrefs}
+                  className="h-8 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-[#10294D] hover:bg-slate-100"
+                >
+                  {scoutSavingPrefs ? 'Saving…' : 'Save Tuning'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Target Role Titles (comma-separated)
+                  </label>
+                  <input
+                    value={scoutRolesText}
+                    onChange={(e) => setScoutRolesText(e.target.value)}
+                    placeholder="Senior Product Manager, Principal Product Manager, Lead Product Manager, Founding Product Manager"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Locations (comma-separated, e.g. Nottingham, London)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={scoutLocationsText}
+                      onChange={(e) => setScoutLocationsText(e.target.value)}
+                      placeholder="Nottingham, London"
+                      className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
+                    />
+                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-[#10294D] cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={scoutIncludeRemote}
+                        onChange={(e) => setScoutIncludeRemote(e.target.checked)}
+                        className="rounded border-slate-300 text-[#006C50]"
+                      />
+                      + UK Remote
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Job Sources
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { id: 'linkedin', label: 'LinkedIn Jobs' },
+                      { id: 'reed', label: 'Reed' },
+                      { id: 'adzuna', label: 'Adzuna' },
+                    ].map((src) => {
+                      const active = scoutSources.includes(src.id);
+                      return (
+                        <button
+                          key={src.id}
+                          type="button"
+                          onClick={() => toggleScoutSource(src.id)}
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                            active
+                              ? 'bg-[#10294D] text-white border-[#10294D]'
+                              : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {active ? '✓ ' : ''}{src.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Steering / Refinement Rules (tells the AI ranker what to boost or skip)
+                  </label>
+                  <input
+                    value={scoutSteering}
+                    onChange={(e) => setScoutSteering(e.target.value)}
+                    placeholder="e.g. Senior, Lead, Principal or Founding PM roles only; prioritise regulated, fintech, energy, platform & AI; skip Product Marketing & Solutions Architect"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
+                  />
+                </div>
+              </div>
+
+              {scoutExcludedTitles.length > 0 && (
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Excluded Role Titles (dismissed via &ldquo;Not like this&rdquo;)
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {scoutExcludedTitles.map((title) => (
+                      <span
+                        key={title}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-600"
+                      >
+                        {title}
+                        <button
+                          type="button"
+                          onClick={() => removeExcludedTitle(title)}
+                          className="text-slate-400 hover:text-red-500 font-bold"
+                          title="Stop excluding this title"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               value={scoutUrl}
@@ -1606,7 +1927,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           </div>
 
           {scoutJobs.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-slate-100 max-h-80 overflow-y-auto">
+            <div className="space-y-2 pt-2 border-t border-slate-100 max-h-96 overflow-y-auto">
               {scoutJobs.map((job, idx) => {
                 const existing = findExistingInPipeline(job);
                 return (
@@ -1614,7 +1935,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {job.source && (
-                          <span className="shrink-0 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
+                          <span className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                            job.source === 'LinkedIn'
+                              ? 'bg-blue-50 border-blue-200 text-blue-800'
+                              : 'bg-white border-slate-200 text-slate-600'
+                          }`}>
                             {job.source}
                           </span>
                         )}
@@ -1656,6 +1981,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                           Analyse
                         </button>
                       )}
+                      <button
+                        onClick={() => handleNotLikeThis(job, idx)}
+                        title="Remove and exclude this role title from future scout runs"
+                        className="h-8 px-2.5 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:text-amber-800 hover:border-amber-200 hover:bg-amber-50"
+                      >
+                        Not like this
+                      </button>
                       <button
                         onClick={() => persistScoutJobs(scoutJobs.filter((_, j) => j !== idx))}
                         title="Remove from queue"
