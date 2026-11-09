@@ -1035,6 +1035,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [scoutRolesText, setScoutRolesText] = useState('');
   const [scoutLocationsText, setScoutLocationsText] = useState('');
   const [scoutIncludeRemote, setScoutIncludeRemote] = useState(true);
+  const [scoutIncludeHybrid, setScoutIncludeHybrid] = useState(false);
   const [scoutSources, setScoutSources] = useState(['linkedin', 'reed', 'adzuna']);
   const [scoutSteering, setScoutSteering] = useState('');
   const [scoutExcludedTitles, setScoutExcludedTitles] = useState([]);
@@ -1350,6 +1351,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       roles,
       locations: locations.length > 0 ? locations : ['United Kingdom'],
       include_remote: scoutIncludeRemote,
+      include_hybrid: scoutIncludeHybrid,
       sources: scoutSources.length > 0 ? scoutSources : ['linkedin'],
       steering: scoutSteering.trim(),
       excluded_titles: scoutExcludedTitles,
@@ -1365,6 +1367,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       if (Array.isArray(prefs.locations) && prefs.locations.length > 0) {
         setScoutLocationsText(prefs.locations.join(', '));
       }
+      setScoutIncludeHybrid(Boolean(prefs.include_hybrid));
       if (prefs.include_remote !== undefined) {
         setScoutIncludeRemote(Boolean(prefs.include_remote));
       }
@@ -1381,6 +1384,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       return;
     }
 
+    setScoutIncludeHybrid(false);
     // Seed smart defaults from profile when no saved scout prefs exist yet.
     const p = fallbackProfile || profileData || {};
     const toArr = (v) =>
@@ -1735,7 +1739,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     {scoutSources.map((s) => (s === 'linkedin' ? 'LinkedIn' : s === 'reed' ? 'Reed' : 'Adzuna')).join(' + ')}
                   </span>
                   <span>·</span>
-                  <span>{scoutLocationsText || 'United Kingdom'}{scoutIncludeRemote ? ' + UK Remote' : ''}</span>
+                  <span>{scoutLocationsText || 'United Kingdom'}{scoutIncludeRemote ? ' + UK Remote' : ''}{scoutIncludeHybrid ? ' + Hybrid' : ''}</span>
                   {scoutExcludedTitles.length > 0 && (
                     <>
                       <span>·</span>
@@ -1827,12 +1831,12 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
                     Locations (comma-separated, e.g. Nottingham, London)
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input
                       value={scoutLocationsText}
                       onChange={(e) => setScoutLocationsText(e.target.value)}
                       placeholder="Nottingham, London"
-                      className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
+                      className="flex-1 min-w-0 basis-48 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
                     />
                     <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-[#10294D] cursor-pointer shrink-0">
                       <input
@@ -1842,6 +1846,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         className="rounded border-slate-300 text-[#006C50]"
                       />
                       + UK Remote
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-[#10294D] cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={scoutIncludeHybrid}
+                        onChange={(e) => setScoutIncludeHybrid(e.target.checked)}
+                        className="rounded border-slate-300 text-[#006C50]"
+                      />
+                      + Hybrid
                     </label>
                   </div>
                 </div>

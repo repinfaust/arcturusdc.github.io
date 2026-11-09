@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-11-09 — Career Ops: optional Hybrid searches in Morning Scout tuning (D-SITE-086)
+
+David requested a Hybrid option alongside UK Remote in the Hone & Refine Scout tuner.
+- Add an independent `+ Hybrid` checkbox and show its selection in the scout summary.
+- Save and restore `include_hybrid` in the existing workspace `scout_queue.prefs`, including when running Morning Scout. Existing preferences default to off.
+- When enabled, add hybrid-keyword searches on the existing LinkedIn, Reed and Adzuna sources for each selected location, and describe that preference to the ranker. This broadens the existing local search; it is not a strict work-pattern filter or a guarantee of employer attendance terms.
+- Keep UK-wide remote searches independent. Use the existing engine, tenant storage and access checks.
+
 ## 2026-11-08 — Career Ops: Morning Scout LinkedIn prioritisation, seniority ranking, and in-UI Hone & Refine tool (D-SITE-085)
 
 When David ran `Run Morning Scout` on `/apps/stea/career`, the queue returned only 4 generic Reed listings (`Product Marketing Manager`, `Product Manager/ Solutions Architect`, `Product Owner`, `Head of Operations`) and zero LinkedIn roles, even though LinkedIn's `jobs-guest` endpoint returned strong matches (`Principal Product Manager @ Harvey Nash`, `Senior Manager - Digital Product @ Capital One`, `Lead Digital Product Manager @ Capital One`).

@@ -23,6 +23,7 @@ export async function searchJobs({
   salary_min,
   excludeEmployers = [],
   mode = 'both', // 'location' | 'remote' | 'both'
+  includeHybrid = false,
   targetRoles = [],
   defaultTerm,
   hardExclude = [],
@@ -158,6 +159,14 @@ export async function searchJobs({
         tasks.push(fetchAdzuna(term, loc));
       }
     }
+    if (includeHybrid) {
+      // Hybrid roles need a commutable office location, unlike UK-wide remote work.
+      for (const loc of locList) {
+        tasks.push(fetchLinkedIn(`${term} hybrid`, loc));
+        tasks.push(fetchReed(`${term} hybrid`, loc));
+        tasks.push(fetchAdzuna(`${term} hybrid`, loc));
+      }
+    }
     if (mode === 'remote' || mode === 'both') {
       tasks.push(fetchLinkedIn(term, 'United Kingdom', true));
       // Reed: include "remote" in keywords; Adzuna: where=remote.
@@ -200,7 +209,7 @@ export async function searchJobs({
 
   // Debug trace so the UI can show *why* the result set is what it is.
   const debug = {
-    query: { terms: queryTerms, locations: locList, mode, salary_min: salary_min || '(none)' },
+    query: { terms: queryTerms, locations: locList, mode, include_hybrid: includeHybrid, salary_min: salary_min || '(none)' },
     sources_tried: [...sourcesTried],
     source_counts: sourceCounts,
     raw_count: results.length,
@@ -238,7 +247,7 @@ export async function searchJobs({
         : '';
       const rankPrompt =
         `The candidate is targeting these roles: ${targetRoles.join(', ') || keywords}.\n` +
-        `Target locations: ${locList.join(', ')}${mode !== 'location' ? ' (+ UK Remote)' : ''}.\n` +
+        `Target locations: ${locList.join(', ')}${mode !== 'location' ? ' (+ UK Remote)' : ''}${includeHybrid ? ' (+ Hybrid in the target locations)' : ''}.\n` +
         (rankBackground ? `Their background: ${rankBackground}\n\n` : '\n') +
         `Score each listing 0-100 for how well its TITLE, SENIORITY, and COMPANY/LOCATION fit the candidate's target roles.\n` +
         seniorityRule +

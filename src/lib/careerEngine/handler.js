@@ -644,6 +644,8 @@ export function createCareerHandler(app) {
           ? Boolean(activePrefs.include_remote)
           : /remote|hybrid/i.test(facts.workPattern || '') || /remote/i.test(facts.location || '');
 
+        const includeHybrid = Boolean(activePrefs.include_hybrid);
+
         const mode = includeRemote
           ? (effectiveLocations.length > 0 ? 'both' : 'remote')
           : 'location';
@@ -678,6 +680,7 @@ export function createCareerHandler(app) {
           keywords,
           location: effectiveLocations[0] || 'United Kingdom',
           locations: effectiveLocations,
+          includeHybrid,
           salary_min: undefined, // keep salary-unlisted LinkedIn/ATS roles in the pool
           excludeEmployers: currentEmployer,
           mode,
@@ -739,6 +742,7 @@ export function createCareerHandler(app) {
           roles: effectiveRoles,
           locations: effectiveLocations,
           include_remote: includeRemote,
+          include_hybrid: includeHybrid,
           sources: enabledSources,
           steering,
           excluded_titles: excludedTitles,
