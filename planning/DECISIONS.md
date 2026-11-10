@@ -9,7 +9,8 @@ Safari reproduced a stuck Career Ops launch: the original tab remained on `/apps
 - A sessionStorage timestamp bounds automatic handoff to once per destination per 30 seconds. An immediate server bounce produces a visible error instead of an automatic reload loop. Signing out resets the marker so a fresh sign-in can retry immediately. No credentials are stored in this marker.
 - Reject external, backslash/control-character and sign-in self-redirect destinations before document navigation.
 - Preserve D-SITE-064's server-layout verification, revocation checks, cookie policy, existing sign-in providers and tenant isolation. No auth mechanism or infrastructure is added.
-- Verification: all 9 session-handoff regression tests and 23 existing server-gate tests passed; production build and postbuild leak check passed. Production Safari verification follows deployment.
+- Verification: all 9 session-handoff regression tests and 23 existing server-gate tests passed; production build and postbuild leak check passed.
+- Production verification (10 November, after Vercel successfully deployed `f656593`): reloaded the previously stuck Safari tab at `?next=...career` and it completed the handoff. Opened STEa Home, confirmed the new session-ready text, and clicked Career Ops: Network recorded a fresh document request with HTTP 200 and zero redirects, followed by HTTP 200 Career API reads. An independent signed-out request still received HTTP 307 to sign-in. No sign-out, cookie deletion or data reset was needed.
 
 ## 2026-11-09 — Career Ops: optional Hybrid searches in Morning Scout tuning (D-SITE-086)
 
