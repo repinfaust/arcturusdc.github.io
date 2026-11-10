@@ -30,9 +30,14 @@ async function apiHeaders() {
 }
 
 /* Plain-text rendering of a tailored CV for the copy-straight-out embed:
-   markdown structure markers stripped so pasted text is portal-clean. */
+   markdown structure markers stripped so pasted text is portal-clean, and the
+   bundled cover note / rationale cut off (same boundary the PDF print uses) —
+   the embed is the CV itself, nothing an application form shouldn't receive. */
 function cvPlainText(md) {
-  return cleanMarkdown(md || '')
+  let cv = cleanMarkdown(md || '');
+  const boundary = cv.search(/^#{1,3}\s*(cover note|rationale)\b/im);
+  if (boundary > 0) cv = cv.slice(0, boundary);
+  return cv
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*\n]+)\*/g, '$1')
@@ -2637,10 +2642,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     { k: 'BRF', on: item.has_brief },
                   ];
                   const submitted = ['Applied', 'Interview', 'Offer'].includes(item.status);
-                  const [next, nextStage] = !item.has_cv ? ['Tailor CV', 'cv']
-                    : !(item.has_letter || item.has_answers) ? ['Apply pack', 'pack']
-                    : !item.has_brief ? ['Interview brief', 'brief']
-                    : !submitted ? ['Mark submitted', 'top'] : ['Open', 'top'];
+                  const next = !item.has_cv ? 'Tailor CV'
+                    : !(item.has_letter || item.has_answers) ? 'Apply pack'
+                    : !item.has_brief ? 'Interview brief'
+                    : !submitted ? 'Mark submitted' : 'Open';
                   return (
                     <tr key={item.id} className="group cursor-pointer transition-colors hover:bg-[#e9ebee]" onClick={() => openAnalysis(item.id)}>
                       <td className="px-4 sm:px-5 py-4 font-mono text-[0.65rem] text-[#1c1c1a]/40">
@@ -2681,7 +2686,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       <td className="px-4 sm:px-5 py-4 text-right whitespace-nowrap">
                         <button
                           className="border border-[#1c1c1a]/30 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a] transition-colors group-hover:border-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#f6f7f8]"
-                          onClick={(e) => { e.stopPropagation(); openAnalysis(item.id, nextStage); }}
+                          onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}
                         >
                           {next} →
                         </button>

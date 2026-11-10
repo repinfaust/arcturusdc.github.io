@@ -141,7 +141,9 @@ The two Gate factors are not weighted: if either scores 2.0 or below, the recomm
       'Output clean GitHub-flavored Markdown. NEVER invent metrics, roles, dates or skills — only ' +
       'reuse and re-emphasise what is in the Evidence Library, Candidate Profile and CV. ' +
       "The headline under the candidate's name is their ACTUAL current role from the Candidate Profile — " +
-      "never the advertised role's title presented as their own. Produce: " +
+      "never the advertised role's title presented as their own. " +
+      "Write in the candidate's own register: match the plain, direct wording of their CV (the primary reference) " +
+      'rather than "upgrading" it into CV-speak. Produce: ' +
       '(1) a full tailored CV, (2) a 150-220 word cover note, (3) a short rationale of changes.',
     tailor: (jdSummary) => `# CV Tailoring
 Task: Tailor the candidate's CV (Candidate Profile, Evidence Library and CV above) for this specific role.
@@ -159,15 +161,23 @@ ${jdSummary}
 ## Constraints:
 - DO NOT invent metrics, roles, or dates.
 - The header/headline under the candidate's name states the candidate's ACTUAL current role and title from the Candidate Profile — NEVER the advertised role's title. The target role may be referenced in the summary narrative, not presented as the candidate's own title.
+- CAREER HISTORY FIDELITY: reproduce EVERY role from the CV and Evidence Library with its exact employer, title(s) and dates as given. Never merge roles, change dates, compress a progression into one title, or drop an employer. Most recent first.
+- OMIT, NEVER PLACEHOLDER: if the sources do not state something (education, certifications, a metric), leave that section or line out entirely. Never write "TBA", "N/A" or an inferred value.
+- ATTRIBUTION: only claim outcomes the sources attribute to the candidate personally. Do not credit them with team, platform or programme results that predate their tenure or sit outside their stated contribution.
+- PROFILE: maximum 3-4 lines, concrete and specific. No generic self-praise ("known for strategic foresight", "proven track record").
+- VOICE: plain, direct English in the candidate's own register — reuse their CV's phrasing where it already says the thing well; tailoring means reordering and emphasis, not rewriting their voice. Short sentences. Facts and numbers over adjectives.
+- BANNED CV-SPEAK: spearheaded, leveraged/leverage, orchestrated, seamless, culminating, realising, adept, passionate, dynamic, synergy, utilise, "high-stakes", "strategic foresight". Use the plain verb instead: led, built, ran, shipped, cut, grew, moved.
 - Keep output in Markdown format.
-- Maintain the candidate's authentic professional voice.
+- If the posting is from a recruiter or agency rather than the hiring company, the cover note addresses the recruiter and refers to "your client" — never treats the agency as the employer.
 
 ## Output:
 Full Markdown CV.
 150-220 word direct cover note.
 Brief rationale for changes.`,
 
-    coverSystem: (f) => `You write concise, specific, honest cover letters for candidates targeting ${rolesText(f)} roles. Never invent facts, metrics, or experience.`,
+    coverSystem: (f) => `You write concise, specific, honest cover letters for candidates targeting ${rolesText(f)} roles. Never invent facts, metrics, or experience. ` +
+      'Only claim outcomes the evidence attributes to the candidate personally. If the posting is from a recruiter or agency rather than the hiring company, address the recruiter and refer to "your client" — never treat the agency as the employer. ' +
+      "Plain, direct English in the candidate's own register — no spearheaded/leveraged/seamless/passionate CV-speak, no \"I am excited about the opportunity\" filler. Specific examples over claims.",
     answersSystem: () => 'You draft application form answers for a job candidate. Ground everything in their real evidence — never invent. Respond with ONLY a JSON array.',
     cvExtract: (cvText) => `From this CV, extract JSON:\n{\n  "profile": {"name": "", "current_role": "", "location": "", "target_roles": ["",""], "min_salary": null},\n  "evidence": [{"company": "", "period": "", "bullets": ["",""]}]\n}\nFor target_roles, infer 2-4 sensible targets from their experience. For min_salary use a number if stated, else null. For evidence, one entry per role (most recent first), bullets = their real achievements.\n\nCV:\n${cvText}`,
   },

@@ -112,7 +112,9 @@ export function createCareerHandler(app) {
     const evidenceText = configToText(evidence);
     const extras = app.contextExtras ? app.contextExtras(doc) : '';
     const cv = withCv ? await getActiveCvText(tenantId) : '';
-    const cvBlock = cv ? `\n\n## Candidate's CV (primary reference):\n${cv.slice(0, 12000)}` : '';
+    // 24k chars, not 12k: education/certifications sit at the END of a CV, and
+    // the old truncation dropped them — the model then invented "TBA" sections.
+    const cvBlock = cv ? `\n\n## Candidate's CV (primary reference):\n${cv.slice(0, 24000)}` : '';
     // Saved scoring weights travel with the facts so the evaluate prompt can
     // apply them (D-SITE-074); they were saved but never read before.
     const weights = doc.scoring_weights && typeof doc.scoring_weights === 'object' ? doc.scoring_weights : {};
