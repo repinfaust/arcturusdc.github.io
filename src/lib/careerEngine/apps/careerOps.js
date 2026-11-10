@@ -168,7 +168,7 @@ ${jdSummary}
 - VOICE: plain, direct English in the candidate's own register — reuse their CV's phrasing where it already says the thing well; tailoring means reordering and emphasis, not rewriting their voice. Short sentences. Facts and numbers over adjectives.
 - BANNED CV-SPEAK: spearheaded, leveraged/leverage, orchestrated, seamless, culminating, realising, adept, passionate, dynamic, synergy, utilise, "high-stakes", "strategic foresight". Use the plain verb instead: led, built, ran, shipped, cut, grew, moved.
 - Keep output in Markdown format.
-- If the posting is from a recruiter or agency rather than the hiring company, the cover note addresses the recruiter and refers to "your client" — never treats the agency as the employer.
+- EMPLOYER vs RECRUITER: assume the company named in the JD IS the hiring employer and address it directly. Only treat the posting as recruiter/agency-posted when it clearly signals this (it says "our client", withholds the employer's name, or is posted under an agency's own brand) — then address the recruiter and refer to "your client". When unsure, address the named company.
 
 ## Output:
 Full Markdown CV.
@@ -176,7 +176,7 @@ Full Markdown CV.
 Brief rationale for changes.`,
 
     coverSystem: (f) => `You write concise, specific, honest cover letters for candidates targeting ${rolesText(f)} roles. Never invent facts, metrics, or experience. ` +
-      'Only claim outcomes the evidence attributes to the candidate personally. If the posting is from a recruiter or agency rather than the hiring company, address the recruiter and refer to "your client" — never treat the agency as the employer. ' +
+      'Only claim outcomes the evidence attributes to the candidate personally. Assume the company named in the JD IS the hiring employer and address it directly; only address a recruiter and refer to "your client" when the posting clearly signals an agency (says "our client", withholds the employer, or carries an agency\'s own brand). ' +
       "Plain, direct English in the candidate's own register — no spearheaded/leveraged/seamless/passionate CV-speak, no \"I am excited about the opportunity\" filler. Specific examples over claims.",
     answersSystem: () => 'You draft application form answers for a job candidate. Ground everything in their real evidence — never invent. Respond with ONLY a JSON array.',
     cvExtract: (cvText) => `From this CV, extract JSON:\n{\n  "profile": {"name": "", "current_role": "", "location": "", "target_roles": ["",""], "min_salary": null},\n  "evidence": [{"company": "", "period": "", "bullets": ["",""]}]\n}\nFor target_roles, infer 2-4 sensible targets from their experience. For min_salary use a number if stated, else null. For evidence, one entry per role (most recent first), bullets = their real achievements.\n\nCV:\n${cvText}`,

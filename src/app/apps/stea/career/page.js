@@ -29,15 +29,23 @@ async function apiHeaders() {
   return headers;
 }
 
+/* The tailor output bundles the CV with trailing sections (cover note,
+   rationale, and "What was tailored" on revisions). Split them so the CV
+   embed, PDF and copy carry the CV only, and the notes render separately
+   beneath the Revise box. */
+function splitCvDoc(md) {
+  const cleaned = cleanMarkdown(md || '');
+  const boundary = cleaned.search(/^#{1,4}\s*(cover note|rationale|what was tailored)\b/im);
+  return boundary > 0
+    ? { cv: cleaned.slice(0, boundary).trim(), notes: cleaned.slice(boundary).trim() }
+    : { cv: cleaned, notes: '' };
+}
+
 /* Plain-text rendering of a tailored CV for the copy-straight-out embed:
-   markdown structure markers stripped so pasted text is portal-clean, and the
-   bundled cover note / rationale cut off (same boundary the PDF print uses) —
-   the embed is the CV itself, nothing an application form shouldn't receive. */
+   trailing sections cut off and markdown structure markers stripped so
+   pasted text is portal-clean. */
 function cvPlainText(md) {
-  let cv = cleanMarkdown(md || '');
-  const boundary = cv.search(/^#{1,3}\s*(cover note|rationale)\b/im);
-  if (boundary > 0) cv = cv.slice(0, boundary);
-  return cv
+  return splitCvDoc(md).cv
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*\n]+)\*/g, '$1')
@@ -2371,13 +2379,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                           {cvEditingId === results.id ? 'Cancel edit' : 'Edit text'}
                         </button>
                         <button
-                          onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: results.jd_data?.role_title || 'Role', cvMarkdown: results.tailored_cv })}
+                          onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: results.jd_data?.role_title || 'Role', cvMarkdown: splitCvDoc(results.tailored_cv).cv })}
                           className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1"
                         >
                           <span className="material-symbols-outlined text-sm">download</span>Download PDF
                         </button>
                         <button
-                          onClick={() => navigator.clipboard?.writeText(results.tailored_cv)}
+                          onClick={() => navigator.clipboard?.writeText(cvPlainText(results.tailored_cv))}
                           className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline"
                         >
                           Copy
@@ -2420,6 +2428,16 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         {tailoring ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise CV
                       </button>
                     </div>
+                    {splitCvDoc(results.tailored_cv).notes && (
+                      <details className="mt-3 border border-[#1c1c1a]/15 bg-[#ffffff]">
+                        <summary className="cursor-pointer list-none px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-[#1c1c1a]/60 hover:text-[#1c1c1a]">
+                          /Tailoring notes — what was changed (not part of the CV)
+                        </summary>
+                        <div className="px-4 pb-4 pt-1 border-t border-[#1c1c1a]/10">
+                          <FitNarrative markdown={splitCvDoc(results.tailored_cv).notes} />
+                        </div>
+                      </details>
+                    )}
                     <AiReviewWarning what="CV" />
                     <p className="text-[11px] text-[#1c1c1a]/45 mt-2">
                       Saved to your{' '}
@@ -2897,8 +2915,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         >
                           {cvEditingId === cv.id ? 'Cancel edit' : 'Edit text'}
                         </button>
-                        <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: cv.role || 'Role', cvMarkdown: cv.tailored_cv })} className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>Download PDF</button>
-                        <button onClick={() => navigator.clipboard?.writeText(cv.tailored_cv)} className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline">Copy</button>
+                        <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: cv.role || 'Role', cvMarkdown: splitCvDoc(cv.tailored_cv).cv })} className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>Download PDF</button>
+                        <button onClick={() => navigator.clipboard?.writeText(cvPlainText(cv.tailored_cv))} className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline">Copy</button>
                       </div>
                     </div>
                     {cvEditingId === cv.id ? (
@@ -2936,6 +2954,16 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         {tailoring ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise CV
                       </button>
                     </div>
+                    {splitCvDoc(cv.tailored_cv).notes && (
+                      <details className="mt-3 border border-[#1c1c1a]/15 bg-[#ffffff]">
+                        <summary className="cursor-pointer list-none px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-[#1c1c1a]/60 hover:text-[#1c1c1a]">
+                          /Tailoring notes — what was changed (not part of the CV)
+                        </summary>
+                        <div className="px-4 pb-4 pt-1 border-t border-[#1c1c1a]/10">
+                          <FitNarrative markdown={splitCvDoc(cv.tailored_cv).notes} />
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </details>
               ))}

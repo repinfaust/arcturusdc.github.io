@@ -13,9 +13,10 @@ export function cleanMarkdown(md) {
 }
 
 /* Minimal, ATS-friendly Markdown -> HTML for the print/PDF view.
-   Produces selectable text, single column, standard headings. The AI output
-   often includes a CV + cover note + rationale; we only print up to the
-   "rationale"/"cover note" boundary if present, else the whole thing. */
+   Produces selectable text, single column, standard headings. This renders
+   the WHOLE markdown it is given — callers printing a tailored CV must cut
+   the bundled cover note / rationale / "what was tailored" sections first
+   (Career Ops does this via splitCvDoc in career/page.js). */
 function markdownToPrintHtml(md) {
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const inline = (s) =>
