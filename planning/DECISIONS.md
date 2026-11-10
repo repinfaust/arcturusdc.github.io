@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-11-10 — Career Ops: Role Dossier flow with graphic progress tracker, and arcturusdc editorial design system (D-SITE-088)
+
+David reviewed `/apps/stea/career` after the Morning Scout improvements: results were good but the next steps after analysing a role felt clunky and the UI looked dated. He approved carrying the arcturusdc home/`/apps` design language across (adapted, not lifted) and asked for a graphic representation of progress from analysis through to submission.
+
+**Problems identified:**
+- The analyse→apply journey was split and duplicated: research/CV/brief lived in the Pipeline results view while the Apply tab re-implemented research, cover letter, answers and brief behind a role-picker dropdown — same role, two places, no shared state display.
+- No visible per-role progression; the pipeline table showed only a status badge, not which artefacts (CV / letter / brief) existed.
+- "Analyse All New" ended on whichever analysis ran last, with no ranked summary.
+
+**Decisions:**
+- **One active role dossier (`src/app/apps/stea/career/page.js`):** `applyRoleId` is the single active-role source; its effect loads the full saved analysis (verdict, CV, context, cover letter, answers, brief) into `results`. `openAnalysis` and a successful analyse both select the dossier. Pipeline and Apply Assist render the same dossier body; the Apply tab keeps the role picker plus the copy-ready fields (now collapsed accordions, picker moved to the top). The duplicated Apply-tab research/letter/answers/brief blocks were removed; cover letter + portal answers moved into the dossier as stage 04.
+- **DossierTracker (`_components/DossierTracker.js`):** ink-panel graphic tracker with six stages — 01 Scored, 02 Research, 03 Tailored CV, 04 Apply pack, 05 Interview brief, 06 Submitted — clickable jump-nodes, completion percentage numeral, a status select and a "Mark submitted" action. Stages reflect what exists; research/brief are optional and never block.
+- **Additive engine changes (`src/lib/careerEngine/handler.js`), shared with Squared and backward-compatible:** `list_analyses` now returns artefact booleans (`has_context`, `has_cv`, `has_letter`, `has_answers`, `has_brief`); new free `set_status` action (`Evaluated | Applying | Applied | Interview | Offer | Rejected`) so submission and interview progress can be recorded. No other API or engine behaviour changed; Squared's UI is untouched and ignores the extra fields.
+- **Pipeline table:** `/SN` serials, semantic fit colouring (GO ≥4 green / CARE ≥3 amber / NO-GO red), per-row artefact chips (CV / LTR / BRF), status dot, and a "next step" button (Tailor CV → Apply pack → Interview brief → Mark submitted) that opens the dossier.
+- **Batch summary:** "Analyse All New" now ends on a ranked GO / CARE / NO-GO panel with open links, dismissible.
+- **Editorial design system (full-editorial depth, approved):** ink `#1c1c1a` on cream `#ece6d8`/`#e3dcc9`/`#f7f3e8`/`#faf7ef`, red accent `#f0452f`, green `#2f9d55` for done/GO; mono uppercase `/microlabels`; heavy black headings with red full stop; square corners and 1px ink borders replacing rounded cards and drop shadows; tab strip with ink-inversion active state; verdict restyled as a GO / CARE / NO-GO stamp; fit gauge as numeral + bar. `CareerOpsShell` rebuilt to the home-page header pattern (grid-paper backdrop, `/Career Ops` masthead, bordered sign-out). Applied across all five tabs. Career Ops is web-only; no mobile platform impact.
+
 ## 2026-11-10 — STEa session handoff uses document navigation (D-SITE-087)
 
 Safari reproduced a stuck Career Ops launch: the original tab remained on `/apps/stea?next=...career` after repeated card clicks, while a fresh tab opened Career Ops using the same browser session. A captured same-origin RSC request carried `__session`; the original tab's console showed no authentication error. This supports stale client route state as the immediate failure mechanism; the event that originally populated that state was not captured.

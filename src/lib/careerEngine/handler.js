@@ -358,6 +358,13 @@ export function createCareerHandler(app) {
               score: v.score ?? null,
               status: v.status || 'Evaluated',
               source_url: v.source_url || '',
+              // Artefact flags so the UI can show per-role progress without
+              // fetching each full analysis (booleans only — never the content).
+              has_context: Boolean(v.company_context),
+              has_cv: Boolean(v.tailored_cv),
+              has_letter: Boolean(v.cover_letter),
+              has_answers: Array.isArray(v.apply_answers) && v.apply_answers.length > 0,
+              has_brief: Boolean(v.interview_brief),
               _ms: toMs(v.createdAt),
               createdAt: toIso(v.createdAt),
             };
@@ -365,6 +372,20 @@ export function createCareerHandler(app) {
           .sort((a, b) => b._ms - a._ms)
           .map(({ _ms, ...rest }) => rest);
         return NextResponse.json({ analyses });
+      }
+
+      // Set a role's pipeline status (free — no AI call). Lets the user record
+      // progress through to submission and beyond from the role dossier.
+      if (action === 'set_status') {
+        const ALLOWED_STATUSES = ['Evaluated', 'Applying', 'Applied', 'Interview', 'Offer', 'Rejected'];
+        const { status } = body;
+        if (!ALLOWED_STATUSES.includes(status)) {
+          return NextResponse.json({ error: `status must be one of: ${ALLOWED_STATUSES.join(', ')}` }, { status: 400 });
+        }
+        const { ref, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        await ref.set({ status, status_at: new Date() }, { merge: true });
+        return NextResponse.json({ id: body.id, status });
       }
 
       if (action === 'get_analysis') {

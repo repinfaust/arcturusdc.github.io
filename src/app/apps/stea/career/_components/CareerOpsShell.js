@@ -7,18 +7,8 @@ import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
-const TOKENS = {
-  surface: '#F8F9FF',
-  surfaceLow: '#EFF4FF',
-  surfaceCard: '#FFFFFF',
-  text: '#0B1C30',
-  textSoft: '#4C5D74',
-  primary: '#001432',
-  primaryContainer: '#10294D',
-  secondary: '#006C50',
-  secondarySoft: '#53FDC7',
-};
-
+/* Career Ops shell — arcturusdc editorial system (D-SITE-088): ink on cream,
+   mono microlabels, hard borders, no rounded cards or drop shadows. */
 export default function CareerOpsShell({ activeTab, title, subtitle, children }) {
   const { currentTenant } = useTenant();
   const router = useRouter();
@@ -34,57 +24,44 @@ export default function CareerOpsShell({ activeTab, title, subtitle, children })
   };
 
   return (
-    <div className="max-w-[1160px] mx-auto my-4 sm:my-6 p-4 sm:p-6 rounded-2xl" style={{ background: TOKENS.surface, boxShadow: '0 26px 86px rgba(0,20,50,0.18)' }}>
-      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] tracking-[0.1em] uppercase font-bold mb-2" style={{ color: TOKENS.secondary }}>
-            Career Ops {currentTenant ? `| ${currentTenant.name}` : ''}
-          </div>
-          <h1 className="text-3xl sm:text-5xl leading-tight" style={{ margin: '6px 0 0', color: TOKENS.primary, fontFamily: 'var(--font-controlui-display)' }}>
-            {title}
-          </h1>
-          <p className="text-sm sm:text-[17px] mt-2 max-w-[860px]" style={{ color: TOKENS.textSoft }}>{subtitle}</p>
-        </div>
-
-        <div className="flex flex-col items-start sm:items-end gap-3 shrink-0 w-full sm:w-auto">
-          <div className="flex flex-wrap items-center gap-2">
-            <SteaAppsDropdown />
-            <TenantSwitcher />
-            <button
-              onClick={handleSignOut}
-              style={{
-                background: '#3B82F6',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: 8,
-                padding: '8px 16px',
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#2563EB'}
-              onMouseOut={(e) => e.currentTarget.style.background = '#3B82F6'}
-            >
-              Sign out
-            </button>
-          </div>
-          
-          {currentTenant && (
-            <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '8px 12px', border: '1px solid #D6E0F4', textAlign: 'right', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div>
-                <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Workspace</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#10294D' }}>{currentTenant.name}</div>
-              </div>
+    <div className="w-screen -ml-[calc(50vw-50%)] bg-[#ece6d8] text-[#1c1c1a]">
+      <div className="relative isolate overflow-hidden border-b-2 border-[#1c1c1a]">
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(28,28,26,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(28,28,26,0.07)_1px,transparent_1px)] bg-[size:72px_72px]" />
+        <header className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1c1c1a]/50 pb-4 font-mono text-xs uppercase tracking-[0.14em]">
+            <span>
+              /Career Ops{currentTenant ? ` · ${currentTenant.name}` : ''}
+            </span>
+            <div className="flex flex-wrap items-center gap-2 normal-case tracking-normal">
+              <SteaAppsDropdown />
+              <TenantSwitcher />
+              <button
+                onClick={handleSignOut}
+                className="border border-[#1c1c1a] px-3 py-2 font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[#1c1c1a] transition-colors hover:bg-[#1c1c1a] hover:text-[#ece6d8]"
+              >
+                Sign out
+              </button>
             </div>
-          )}
-        </div>
-      </header>
+          </div>
 
-      {/* Tab navigation is handled inside the page (in-page state), so no nav here.
-          The previous <Link> nav pointed at /cvs /config /history routes that
-          don't exist and produced 404 prefetches. */}
-      <section className="mt-6">{children}</section>
+          <div className="mt-7 grid items-end gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+            <div>
+              <p className="mb-3 font-mono text-xs uppercase tracking-[0.16em] text-[#f0452f]">
+                /Honest job-search triage
+              </p>
+              <h1 className="text-5xl font-black uppercase leading-[0.9] tracking-tight sm:text-7xl">
+                {title}
+                <span className="text-[#f0452f]">.</span>
+              </h1>
+            </div>
+            <div className="border-l-2 border-[#f0452f] pl-5">
+              <p className="text-sm leading-6 text-[#1c1c1a]/70 sm:text-base sm:leading-7">{subtitle}</p>
+            </div>
+          </div>
+        </header>
+      </div>
+
+      <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">{children}</section>
     </div>
   );
 }

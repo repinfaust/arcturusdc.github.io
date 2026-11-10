@@ -8,6 +8,7 @@ import { auth } from '@/lib/firebase';
 import { printCvAsPdf, cleanMarkdown } from '@/lib/careerEngine/printCv';
 import { fillEmptyProfile, hasEvidence, mergeNewAnchors } from '@/lib/careerEngine/extractMerge';
 import AdzunaCredit from '@/components/AdzunaCredit';
+import DossierTracker from './_components/DossierTracker';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -31,26 +32,26 @@ async function apiHeaders() {
 /* ---------------- Markdown renderer for the AI fit narrative ---------------- */
 function FitNarrative({ markdown }) {
   return (
-    <div className="career-md min-w-0 overflow-hidden break-words text-sm text-slate-700 leading-relaxed">
+    <div className="career-md min-w-0 overflow-hidden break-words text-sm text-[#1c1c1a]/80 leading-relaxed">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          h1: (p) => <h1 className="text-xl font-bold text-[#10294D] mt-6 mb-3 first:mt-0" {...p} />,
-          h2: (p) => <h2 className="text-base font-bold text-[#10294D] mt-6 mb-2 pb-1 border-b border-slate-200" {...p} />,
-          h3: (p) => <h3 className="text-sm font-bold text-[#006C50] uppercase tracking-wide mt-4 mb-2" {...p} />,
+          h1: (p) => <h1 className="text-xl font-bold text-[#1c1c1a] mt-6 mb-3 first:mt-0" {...p} />,
+          h2: (p) => <h2 className="text-base font-bold text-[#1c1c1a] mt-6 mb-2 pb-1 border-b border-[#1c1c1a]/25" {...p} />,
+          h3: (p) => <h3 className="text-sm font-bold text-[#f0452f] uppercase tracking-wide mt-4 mb-2" {...p} />,
           p:  (p) => <p className="my-2 break-words" {...p} />,
           ul: (p) => <ul className="list-disc pl-5 my-2 space-y-1" {...p} />,
           ol: (p) => <ol className="list-decimal pl-5 my-2 space-y-1" {...p} />,
-          strong: (p) => <strong className="font-bold text-[#10294D]" {...p} />,
-          blockquote: (p) => <blockquote className="border-l-4 border-[#006C50] bg-teal-50/50 pl-4 py-2 my-3 rounded-r text-[#10294D]" {...p} />,
-          pre: (p) => <pre className="bg-slate-50 border border-slate-200 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap break-words text-xs font-mono my-2" {...p} />,
-          code: (p) => <code className="bg-slate-100 px-1.5 py-0.5 rounded text-[13px] font-mono break-words" {...p} />,
+          strong: (p) => <strong className="font-bold text-[#1c1c1a]" {...p} />,
+          blockquote: (p) => <blockquote className="border-l-4 border-[#1c1c1a] bg-[#e3dcc9]/50 pl-4 py-2 my-3 rounded-r text-[#1c1c1a]" {...p} />,
+          pre: (p) => <pre className="bg-[#f7f3e8] border border-[#1c1c1a]/25 p-3 rounded-none overflow-x-auto whitespace-pre-wrap break-words text-xs font-mono my-2" {...p} />,
+          code: (p) => <code className="bg-[#e3dcc9] px-1.5 py-0.5 rounded text-[13px] font-mono break-words" {...p} />,
           table: (p) => <div className="overflow-x-auto my-4"><table className="w-full text-xs border-collapse" {...p} /></div>,
-          thead: (p) => <thead className="bg-slate-100" {...p} />,
-          th: (p) => <th className="border border-slate-200 px-3 py-2 text-left font-bold text-[#10294D]" {...p} />,
-          td: (p) => <td className="border border-slate-200 px-3 py-2 align-top" {...p} />,
-          hr: () => <hr className="my-5 border-slate-200" />,
-          a:  (p) => <a className="text-[#006C50] underline" target="_blank" rel="noreferrer" {...p} />,
+          thead: (p) => <thead className="bg-[#e3dcc9]" {...p} />,
+          th: (p) => <th className="border border-[#1c1c1a]/25 px-3 py-2 text-left font-bold text-[#1c1c1a]" {...p} />,
+          td: (p) => <td className="border border-[#1c1c1a]/25 px-3 py-2 align-top" {...p} />,
+          hr: () => <hr className="my-5 border-[#1c1c1a]/25" />,
+          a:  (p) => <a className="text-[#f0452f] underline" target="_blank" rel="noreferrer" {...p} />,
         }}
       >
         {cleanMarkdown(markdown || '')}
@@ -84,13 +85,13 @@ function CollapsibleNarrative({ markdown, openCount = 2 }) {
         <details
           key={i}
           open={i < openCount}
-          className="group border border-slate-200 rounded-xl bg-white overflow-hidden"
+          className="group border border-[#1c1c1a]/25 rounded-none bg-[#faf7ef] overflow-hidden"
         >
-          <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between hover:bg-slate-50 font-bold text-[#10294D] text-sm">
+          <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between hover:bg-[#f7f3e8] font-bold text-[#1c1c1a] text-sm">
             <span>{sectionTitle(block)}</span>
-            <span className="material-symbols-outlined text-slate-400 transition-transform group-open:rotate-180">expand_more</span>
+            <span className="material-symbols-outlined text-[#1c1c1a]/45 transition-transform group-open:rotate-180">expand_more</span>
           </summary>
-          <div className="px-4 pb-4 pt-1 border-t border-slate-100">
+          <div className="px-4 pb-4 pt-1 border-t border-[#1c1c1a]/10">
             <FitNarrative markdown={sectionBody(block)} />
           </div>
         </details>
@@ -102,10 +103,10 @@ function CollapsibleNarrative({ markdown, openCount = 2 }) {
 /* A labelled value with a one-click copy button (Apply Assist). */
 // Apply Assist save state; shows nothing until something has been saved.
 function ApplySaveStatus({ status, onRetry }) {
-  const cls = 'text-[10px] font-bold uppercase tracking-widest';
-  if (status.state === 'pending') return <span className={`${cls} text-slate-400`}>Unsaved changes</span>;
-  if (status.state === 'saving') return <span className={`${cls} text-slate-400`}>Saving…</span>;
-  if (status.state === 'saved') return <span className={`${cls} text-[#006C50]`}>Saved</span>;
+  const cls = 'text-[10px] font-bold font-mono uppercase tracking-widest';
+  if (status.state === 'pending') return <span className={`${cls} text-[#1c1c1a]/45`}>Unsaved changes</span>;
+  if (status.state === 'saving') return <span className={`${cls} text-[#1c1c1a]/45`}>Saving…</span>;
+  if (status.state === 'saved') return <span className={`${cls} text-[#f0452f]`}>Saved</span>;
   if (status.state === 'error') {
     return (
       <button onClick={onRetry} title={status.message} className={`${cls} text-red-600 hover:underline`}>
@@ -127,21 +128,21 @@ function CopyField({ label, value, editable, onChange, multiline }) {
   return (
     <div className="flex items-start gap-2">
       <div className="flex-1 min-w-0">
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{label}</label>
+        <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">{label}</label>
         {editable ? (
           multiline ? (
             <textarea value={value || ''} onChange={(e) => onChange(e.target.value)}
-              className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100 resize-none h-20" />
+              className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none h-20" />
           ) : (
             <input value={value || ''} onChange={(e) => onChange(e.target.value)}
-              className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+              className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
           )
         ) : (
-          <div className="mt-1 bg-slate-50 rounded-xl p-3 text-sm text-[#10294D] min-h-[44px] break-words whitespace-pre-wrap">{value || <span className="text-slate-300">—</span>}</div>
+          <div className="mt-1 bg-[#f7f3e8] rounded-none p-3 text-sm text-[#1c1c1a] min-h-[44px] break-words whitespace-pre-wrap">{value || <span className="text-[#1c1c1a]/30">—</span>}</div>
         )}
       </div>
       <button onClick={doCopy} disabled={!value} title="Copy"
-        className={`mt-6 shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${value ? 'bg-teal-50 text-[#006C50] hover:bg-[#006C50] hover:text-white' : 'bg-slate-50 text-slate-300 cursor-not-allowed'}`}>
+        className={`mt-6 shrink-0 w-10 h-10 rounded-none flex items-center justify-center transition-colors ${value ? 'bg-[#e3dcc9] text-[#f0452f] hover:bg-[#1c1c1a] hover:text-white' : 'bg-[#f7f3e8] text-[#1c1c1a]/30 cursor-not-allowed'}`}>
         <span className="material-symbols-outlined text-base">{copied ? 'check' : 'content_copy'}</span>
       </button>
     </div>
@@ -152,7 +153,7 @@ function CopyField({ label, value, editable, onChange, multiline }) {
    invented line on someone's CV is a reputational risk, not a UX nit. */
 function AiReviewWarning({ what = 'document' }) {
   return (
-    <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+    <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-none px-4 py-3">
       <span className="material-symbols-outlined text-amber-600 text-lg">warning</span>
       <p className="text-xs text-amber-900 leading-relaxed">
         <span className="font-bold">Check this before you use it.</span> AI can get details wrong or overstate things. Read every line of this {what} and make sure it's accurate and genuinely yours before sending it anywhere.
@@ -201,31 +202,31 @@ function OnboardingModal({ onClose, onDismiss, onFinish, onCta }) {
   const last = i === ONBOARDING_CARDS.length - 1;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[#faf7ef] rounded-none max-w-lg w-full p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start">
           <div className="text-4xl mb-3">{card.icon}</div>
-          <button onClick={onClose} className="text-slate-300 hover:text-slate-500"><span className="material-symbols-outlined">close</span></button>
+          <button onClick={onClose} className="text-[#1c1c1a]/30 hover:text-[#1c1c1a]/60"><span className="material-symbols-outlined">close</span></button>
         </div>
-        <h3 className="text-xl font-bold text-[#10294D]">{card.title}</h3>
-        <p className="text-sm text-slate-600 mt-3 leading-relaxed whitespace-pre-line min-h-[150px]">{card.body}</p>
+        <h3 className="text-xl font-bold text-[#1c1c1a]">{card.title}</h3>
+        <p className="text-sm text-[#1c1c1a]/70 mt-3 leading-relaxed whitespace-pre-line min-h-[150px]">{card.body}</p>
         {card.cta && (
-          <button onClick={() => onCta(card.cta.tab)} className="mt-1 mb-2 text-sm font-bold text-[#006C50] hover:underline inline-flex items-center gap-1">
+          <button onClick={() => onCta(card.cta.tab)} className="mt-1 mb-2 text-sm font-bold text-[#f0452f] hover:underline inline-flex items-center gap-1">
             {card.cta.label} <span className="material-symbols-outlined text-base">arrow_forward</span>
           </button>
         )}
         <div className="flex items-center justify-center gap-1.5 my-5">
           {ONBOARDING_CARDS.map((_, n) => (
-            <span key={n} className={`h-1.5 rounded-full transition-all ${n === i ? 'w-6 bg-[#006C50]' : 'w-1.5 bg-slate-200'}`}></span>
+            <span key={n} className={`h-1.5 rounded-full transition-all ${n === i ? 'w-6 bg-[#1c1c1a]' : 'w-1.5 bg-[#d8d1bd]'}`}></span>
           ))}
         </div>
         <div className="flex items-center justify-between gap-3">
-          <button onClick={onDismiss} className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Don't show again</button>
+          <button onClick={onDismiss} className="text-xs font-bold text-[#1c1c1a]/45 hover:text-[#1c1c1a]/70 font-mono uppercase tracking-widest">Don't show again</button>
           <div className="flex gap-2">
-            {i > 0 && <button onClick={() => setI(i - 1)} className="px-4 h-10 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm">Back</button>}
+            {i > 0 && <button onClick={() => setI(i - 1)} className="px-4 h-10 border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold rounded-none hover:bg-[#f7f3e8] text-sm">Back</button>}
             {last ? (
-              <button onClick={onFinish} className="px-5 h-10 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] text-sm">Get started</button>
+              <button onClick={onFinish} className="px-5 h-10 bg-[#1c1c1a] text-white font-bold rounded-none hover:bg-[#f0452f] text-sm">Get started</button>
             ) : (
-              <button onClick={() => setI(i + 1)} className="px-5 h-10 bg-[#10294D] text-white font-bold rounded-xl hover:bg-[#001432] text-sm">Next</button>
+              <button onClick={() => setI(i + 1)} className="px-5 h-10 bg-[#1c1c1a] text-white font-bold rounded-none hover:bg-[#f0452f] text-sm">Next</button>
             )}
           </div>
         </div>
@@ -240,9 +241,9 @@ function OnboardingModal({ onClose, onDismiss, onFinish, onCta }) {
 function VerdictPanel({ score, evaluation }) {
   const s = typeof score === 'number' ? score : 0;
   let rag;
-  if (s >= 4.0) rag = { label: 'GO — Strong fit', cls: 'bg-green-50 border-green-200 text-green-800', dot: 'bg-green-500', sub: 'Apply — tailor and submit.' };
-  else if (s >= 3.0) rag = { label: 'PROCEED WITH CARE', cls: 'bg-amber-50 border-amber-200 text-amber-800', dot: 'bg-amber-500', sub: 'Selective — apply only with a strong tailored narrative.' };
-  else rag = { label: 'NO-GO — Weak fit', cls: 'bg-red-50 border-red-200 text-red-800', dot: 'bg-red-500', sub: 'Skip unless you have a specific reason.' };
+  if (s >= 4.0) rag = { label: 'GO', detail: 'Strong fit', color: '#2f9d55', sub: 'Apply — tailor and submit.' };
+  else if (s >= 3.0) rag = { label: 'CARE', detail: 'Proceed with care', color: '#b45309', sub: 'Selective — apply only with a strong tailored narrative.' };
+  else rag = { label: 'NO-GO', detail: 'Weak fit', color: '#f0452f', sub: 'Skip unless you have a specific reason.' };
 
   // Pull the model's own recommended action / one-line verdict if present.
   const action =
@@ -251,15 +252,17 @@ function VerdictPanel({ score, evaluation }) {
     null;
 
   return (
-    <div className={`mt-6 rounded-xl border p-4 ${rag.cls}`}>
-      <div className="flex items-center gap-2">
-        <span className={`w-2.5 h-2.5 rounded-full ${rag.dot}`}></span>
-        <span className="text-sm font-bold uppercase tracking-wide">{rag.label}</span>
+    <div className="mt-6 border-2 p-4" style={{ borderColor: rag.color }}>
+      <div className="flex items-baseline gap-3">
+        <span className="text-4xl font-black uppercase leading-none tracking-tight" style={{ color: rag.color }}>
+          {rag.label}
+        </span>
+        <span className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-[#1c1c1a]/60">{rag.detail}</span>
       </div>
-      <p className="text-xs mt-2 opacity-90">{rag.sub}</p>
+      <p className="mt-2 text-xs text-[#1c1c1a]/70">{rag.sub}</p>
       {action && (
-        <p className="text-[11px] mt-3 pt-3 border-t border-current/10 leading-relaxed opacity-90">
-          <span className="font-bold">Recommendation: </span>{action.replace(/\*\*/g, '')}
+        <p className="mt-3 border-t border-dashed border-[#1c1c1a]/25 pt-3 text-[11px] leading-relaxed text-[#1c1c1a]/80">
+          <span className="font-mono font-bold uppercase tracking-[0.1em]">Recommendation: </span>{action.replace(/\*\*/g, '')}
         </p>
       )}
     </div>
@@ -269,29 +272,18 @@ function VerdictPanel({ score, evaluation }) {
 // Deliberately small/secondary: an LLM fit score is a rough estimate, not a
 // precise verdict. The reasoning (VerdictPanel + narrative) is the real signal.
 const FitGauge = ({ score }) => {
-  const percentage = (score / 5) * 100;
-  const strokeDasharray = 333; // for r=53
-  const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
+  const percentage = Math.max(0, Math.min(100, (score / 5) * 100));
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative h-28 w-28 shrink-0">
-        <svg className="h-full w-full transform -rotate-90">
-          <circle className="text-slate-100" cx="56" cy="56" fill="transparent" r="53" stroke="currentColor" strokeWidth="6"></circle>
-          <circle cx="56" cy="56" fill="transparent" r="53" stroke="url(#gradient-success)" strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} strokeLinecap="round" strokeWidth="6"></circle>
-          <defs>
-            <linearGradient id="gradient-success" x1="0%" x2="100%" y1="0%" y2="0%">
-              <stop offset="0%" stopColor="#006C50"></stop>
-              <stop offset="100%" stopColor="#82d7b5"></stop>
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-extrabold text-[#10294D]">{score.toFixed(1)}</span>
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">/ 5</span>
+    <div className="flex items-center gap-5">
+      <div className="shrink-0">
+        <span className="text-4xl font-black leading-none tracking-tight text-[#1c1c1a]">{score.toFixed(1)}</span>
+        <span className="ml-1 font-mono text-[0.65rem] uppercase tracking-[0.14em] text-[#1c1c1a]/45">/ 5</span>
+        <div className="mt-2 h-1.5 w-28 bg-[#1c1c1a]/10">
+          <div className="h-full bg-[#1c1c1a]" style={{ width: `${percentage}%` }} />
         </div>
       </div>
-      <div className="text-[11px] text-slate-500 leading-relaxed">
-        <span className="font-bold text-[#10294D]">Rough fit estimate.</span> This is an AI's opinion to help you triage — read the reasoning below, don't take the number as gospel.
+      <div className="text-[11px] leading-relaxed text-[#1c1c1a]/60">
+        <span className="font-bold text-[#1c1c1a]">Rough fit estimate.</span> This is an AI's opinion to help you triage — read the reasoning below, don't take the number as gospel.
       </div>
     </div>
   );
@@ -300,16 +292,16 @@ const FitGauge = ({ score }) => {
 /* ---------------- Configuration & Onboarding Components ---------------- */
 
 const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
-  <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
+  <div className="bg-[#faf7ef] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <span className="material-symbols-outlined text-[#10294D]">account_circle</span>
-        <h3 className="font-bold text-[#10294D] text-lg tracking-tight">Candidate Profile</h3>
+        <span className="material-symbols-outlined text-[#1c1c1a]">account_circle</span>
+        <h3 className="font-bold text-[#1c1c1a] text-lg tracking-tight">Candidate Profile</h3>
       </div>
       <button 
         onClick={onSave}
         disabled={isSaving}
-        className="px-6 py-2 bg-[#10294D] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50 shadow-lg shadow-blue-900/10"
+        className="px-6 py-2 bg-[#1c1c1a] text-white rounded-none font-bold text-xs font-mono uppercase tracking-widest hover:bg-[#f0452f] transition-all disabled:opacity-50"
       >
         {isSaving ? 'Saving...' : 'Save Profile'}
       </button>
@@ -317,48 +309,48 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
     
     <div className="grid grid-cols-1 gap-5">
       <div className="space-y-2">
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+        <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Full Name</label>
         <input 
           type="text" 
           value={data?.name || ''} 
           onChange={(e) => onChange({...data, name: e.target.value})}
-          className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
+          className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
           placeholder="e.g. Tom Granger"
         />
       </div>
       
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Current Role</label>
+          <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Current Role</label>
           <input 
             type="text" 
             value={data?.current_role || ''} 
             onChange={(e) => onChange({...data, current_role: e.target.value})}
-            className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
+            className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
             placeholder="e.g. Product Owner"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Salary Floor (£)</label>
+          <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Salary Floor (£)</label>
           <input
             type="number"
             step={5000}
             min={0}
             value={data?.min_salary || ''}
             onChange={(e) => onChange({...data, min_salary: e.target.value})}
-            className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100"
+            className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
             placeholder="e.g. 65000"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Target Roles (Comma separated)</label>
+        <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Target Roles (Comma separated)</label>
         <textarea
           value={Array.isArray(data?.target_roles) ? data.target_roles.join(',') : (data?.target_roles || '')}
           onChange={(e) => onChange({...data, target_roles: e.target.value.split(',')})}
           onBlur={(e) => onChange({...data, target_roles: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
-          className="w-full h-24 bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100 resize-none"
+          className="w-full h-24 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none"
           placeholder="e.g. Product Owner, Senior Product Owner, Product Manager"
         />
       </div>
@@ -382,8 +374,8 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
   </div>
 );
 
-const FIELD_LABEL = 'text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1';
-const FIELD_INPUT = 'w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-medium text-[#10294D] focus:ring-2 focus:ring-blue-100';
+const FIELD_LABEL = 'text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1';
+const FIELD_INPUT = 'w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]';
 
 const TextField = ({ label, field, data, onChange, placeholder, type = 'text' }) => (
   <div className="space-y-2">
@@ -415,23 +407,23 @@ const ListField = ({ label, field, data, onChange, placeholder }) => (
 );
 
 const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving }) => (
-  <section className="bg-slate-50 rounded-2xl p-5 sm:p-8 border border-slate-100 flex flex-col gap-6">
+  <section className="bg-[#f7f3e8] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/10 flex flex-col gap-6">
     <div className="flex items-center justify-between">
-      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-lg tracking-tight">
-        <span className="material-symbols-outlined text-[#10294D]">deployed_code</span>
+      <h3 className="font-bold text-[#1c1c1a] flex items-center gap-2 text-lg tracking-tight">
+        <span className="material-symbols-outlined text-[#1c1c1a]">deployed_code</span>
         Evidence Anchors
       </h3>
       <div className="flex gap-3">
         <button 
           onClick={onAdd}
-          className="px-4 py-2 bg-white border border-slate-200 text-[#10294D] rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all"
+          className="px-4 py-2 bg-[#faf7ef] border border-[#1c1c1a]/25 text-[#1c1c1a] rounded-none font-bold text-[10px] font-mono uppercase tracking-widest hover:bg-[#e3dcc9] transition-all"
         >
           + Add Anchor
         </button>
         <button 
           onClick={onSave}
           disabled={isSaving}
-          className="px-6 py-2 bg-[#10294D] text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50"
+          className="px-6 py-2 bg-[#1c1c1a] text-white rounded-none font-bold text-[10px] font-mono uppercase tracking-widest hover:bg-[#f0452f] transition-all disabled:opacity-50"
         >
           {isSaving ? 'Saving...' : 'Save All'}
         </button>
@@ -440,10 +432,10 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
     
     <div className="grid grid-cols-1 gap-4">
       {anchors?.map((anchor, i) => (
-        <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group relative">
+        <div key={i} className="bg-[#faf7ef] p-6 rounded-none border border-[#1c1c1a]/25 group relative">
           <button 
             onClick={() => onDelete(i)}
-            className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+            className="absolute top-4 right-4 text-[#1c1c1a]/30 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
           >
             <span className="material-symbols-outlined text-sm">delete</span>
           </button>
@@ -451,13 +443,13 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1 space-y-4">
               <input 
-                className="w-full font-bold text-[#10294D] border-b border-slate-100 focus:border-blue-400 focus:ring-0 text-sm" 
+                className="w-full font-bold text-[#1c1c1a] border-b border-[#1c1c1a]/10 focus:border-[#f0452f] focus:ring-0 text-sm" 
                 placeholder="Company Name" 
                 value={anchor.company || ''}
                 onChange={(e) => onUpdate(i, {...anchor, company: e.target.value})}
               />
               <input 
-                className="w-full text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 focus:border-blue-400 focus:ring-0" 
+                className="w-full text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest border-b border-[#1c1c1a]/10 focus:border-[#f0452f] focus:ring-0" 
                 placeholder="Period (e.g. 2021-Present)" 
                 value={anchor.period || ''}
                 onChange={(e) => onUpdate(i, {...anchor, period: e.target.value})}
@@ -465,7 +457,7 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
             </div>
             <div className="md:col-span-2">
               <textarea 
-                className="w-full h-24 bg-slate-50 border-none rounded-xl p-3 text-[11px] text-slate-600 font-medium leading-relaxed resize-none" 
+                className="w-full h-24 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-[11px] text-[#1c1c1a]/70 font-medium leading-relaxed resize-none" 
                 placeholder="List your key outcomes and proof points..."
                 value={anchor.bullets?.join('\n') || ''}
                 onChange={(e) => onUpdate(i, {...anchor, bullets: e.target.value.split('\n')})}
@@ -479,21 +471,21 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
 );
 
 const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
-  <section className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
+  <section className="bg-[#faf7ef] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 flex flex-col gap-6">
     <div className="flex items-center justify-between">
-      <h3 className="font-bold text-[#10294D] flex items-center gap-2 text-lg tracking-tight">
-        <span className="material-symbols-outlined text-[#10294D]">tune</span>
+      <h3 className="font-bold text-[#1c1c1a] flex items-center gap-2 text-lg tracking-tight">
+        <span className="material-symbols-outlined text-[#1c1c1a]">tune</span>
         Scoring Model Tuning
       </h3>
       <button 
         onClick={onSave}
         disabled={isSaving}
-        className="px-6 py-2 bg-[#10294D] text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#001432] transition-all disabled:opacity-50 shadow-lg shadow-blue-900/10"
+        className="px-6 py-2 bg-[#1c1c1a] text-white rounded-none font-bold text-[10px] font-mono uppercase tracking-widest hover:bg-[#f0452f] transition-all disabled:opacity-50"
       >
         {isSaving ? 'Saving...' : 'Apply Weights'}
       </button>
     </div>
-    <p className="text-xs text-slate-500 -mt-3">How much each factor counts in a role&apos;s overall score. 100% is the default.</p>
+    <p className="text-xs text-[#1c1c1a]/60 -mt-3">How much each factor counts in a role&apos;s overall score. 100% is the default.</p>
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
       {[
@@ -504,8 +496,8 @@ const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
       ].map((factor) => (
         <div key={factor.id} className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-[11px] font-bold text-[#10294D] uppercase tracking-widest">{factor.label}</span>
-            <span className="text-sm font-black text-[#10294D]">{((weights?.[factor.id] ?? 1) * 100).toFixed(0)}%</span>
+            <span className="text-[11px] font-bold text-[#1c1c1a] font-mono uppercase tracking-widest">{factor.label}</span>
+            <span className="text-sm font-black text-[#1c1c1a]">{((weights?.[factor.id] ?? 1) * 100).toFixed(0)}%</span>
           </div>
           <input 
             type="range" 
@@ -514,7 +506,7 @@ const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
             step="0.1" 
             value={weights?.[factor.id] ?? 1}
             onChange={(e) => onChange({...weights, [factor.id]: parseFloat(e.target.value)})}
-            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#10294D]"
+            className="w-full h-2 bg-[#e3dcc9] rounded-none appearance-none cursor-pointer accent-[#1c1c1a]"
           />
         </div>
       ))}
@@ -702,7 +694,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       const data = await res.json();
       if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Tailoring failed');
-      setResults((r) => (r && r.id === id ? { ...r, tailored_cv: data.tailored_cv } : r));
+      setResults((r) => (r && r.id === id ? { ...r, tailored_cv: data.tailored_cv, status: data.status || r.status } : r));
       setCvEdit('');
       loadAnalyses();
       loadCvs();
@@ -998,8 +990,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Cover letter failed');
       setCoverLetter(data.cover_letter || '');
+      setResults((r) => (r && r.id === applyRoleId ? { ...r, cover_letter: data.cover_letter } : r));
       setCoverEdit('');
       loadUsage();
+      loadAnalyses();
     } catch (err) {
       alert(err.message);
     } finally {
@@ -1017,7 +1011,6 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [companyContext, setCompanyContext] = useState('');
   const [companyNotes, setCompanyNotes] = useState('');
   const [editingContext, setEditingContext] = useState(false);
-  const [editingApplyContext, setEditingApplyContext] = useState(false);
   const [researchLoading, setResearchLoading] = useState(false);
   const [contextSaving, setContextSaving] = useState(false);
   const [interviewBrief, setInterviewBrief] = useState('');
@@ -1030,6 +1023,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [scoutUrl, setScoutUrl] = useState('');
   const [scoutBatchRunning, setScoutBatchRunning] = useState(false);
   const [scoutProgress, setScoutProgress] = useState('');
+  // Ranked outcome of the last "Analyse All New" run, so a batch ends on a
+  // GO / CARE / NO-GO summary instead of whichever analysis happened to run last.
+  const [scoutBatchSummary, setScoutBatchSummary] = useState(null);
   const [showScoutTune, setShowScoutTune] = useState(false);
   const [scoutPrefsLoaded, setScoutPrefsLoaded] = useState(false);
   const [scoutRolesText, setScoutRolesText] = useState('');
@@ -1053,7 +1049,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Failed');
       setApplyAnswers(data.apply_answers || []);
+      setResults((r) => (r && r.id === applyRoleId ? { ...r, apply_answers: data.apply_answers } : r));
       loadUsage();
+      loadAnalyses();
     } catch (err) { alert(err.message); } finally { setAnswersLoading(false); }
   }
 
@@ -1076,6 +1074,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       if (handleLimit(res, data)) return;
       if (!res.ok) throw new Error(data.error || 'Failed to draft answer');
       setApplyAnswers(data.apply_answers || []);
+      setResults((r) => (r && r.id === applyRoleId ? { ...r, apply_answers: data.apply_answers } : r));
       setCustomQ('');
       setCustomGuidance('');
       loadUsage();
@@ -1145,13 +1144,16 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     } catch (err) { alert(err.message); } finally { setBriefLoading(false); }
   }
 
-  // When the selected role changes, load any saved cover letter, answers, context + brief for it.
+  // One active role dossier (D-SITE-088): when the selected role changes, load
+  // the full saved analysis — verdict, CV, context, cover letter, answers and
+  // brief — so Pipeline and Apply Assist show the same dossier state.
   useEffect(() => {
     setCoverLetter('');
     setApplyAnswers([]);
     setCompanyContext('');
     setInterviewBrief('');
-    if (!currentTenant?.id || !applyRoleId) return;
+    if (!applyRoleId) { setResults(null); return; }
+    if (!currentTenant?.id) return;
     (async () => {
       try {
         const res = await fetch('/api/stea/career', {
@@ -1160,6 +1162,20 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         });
         const data = await res.json();
         if (res.ok) {
+          setResults({
+            id: data.id,
+            jd_data: data.jd_data,
+            evaluation: data.evaluation,
+            score: data.score,
+            status: data.status,
+            tailored_cv: data.tailored_cv,
+            company_context: data.company_context,
+            interview_brief: data.interview_brief,
+            cover_letter: data.cover_letter,
+            apply_answers: data.apply_answers,
+            company: data.company,
+            role: data.role,
+          });
           if (data.cover_letter) setCoverLetter(data.cover_letter);
           if (Array.isArray(data.apply_answers)) setApplyAnswers(data.apply_answers);
           if (data.company_context) setCompanyContext(data.company_context);
@@ -1176,6 +1192,34 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // Record where a role is up to (free). Drives the dossier tracker's
+  // "Submitted" stage and the pipeline status column.
+  const [statusSaving, setStatusSaving] = useState(false);
+  async function handleSetStatus(id, status) {
+    if (!currentTenant?.id || !id) return;
+    setStatusSaving(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'set_status', tenantId: currentTenant.id, id, status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update status');
+      setResults((r) => (r && r.id === id ? { ...r, status } : r));
+      loadAnalyses();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setStatusSaving(false);
+    }
+  }
+
+  // Scroll to a dossier stage section (tracker nodes are jump links).
+  function jumpToStage(stageId) {
+    const el = typeof document !== 'undefined' ? document.getElementById(`dossier-${stageId}`) : null;
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   // Returns true if a response was the usage limit (402); shows the paywall.
   function handleLimit(res, data) {
     if (res.status === 402 || data?.limit_reached) {
@@ -1186,32 +1230,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     return false;
   }
 
-  // Re-open a saved analysis: load it and show its evaluation in the results view.
-  async function openAnalysis(id) {
+  // Re-open a saved analysis: select it as the active dossier (the applyRoleId
+  // effect loads the full saved analysis, including apply-pack artefacts).
+  function openAnalysis(id) {
     if (!currentTenant?.id || !id) return;
     setActiveTab('pipeline');
-    try {
-      const res = await fetch('/api/stea/career', {
-        method: 'POST',
-        headers: await apiHeaders(),
-        body: JSON.stringify({ action: 'get_analysis', tenantId: currentTenant.id, id }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setResults({
-          id: data.id,
-          jd_data: data.jd_data,
-          evaluation: data.evaluation,
-          score: data.score,
-          tailored_cv: data.tailored_cv,
-          company_context: data.company_context,
-          interview_brief: data.interview_brief,
-        });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    } catch (err) {
-      console.error('Failed to open analysis', err);
-    }
+    setApplyRoleId(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function checkConfig() {
@@ -1285,11 +1310,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   };
 
   const tabs = [
-    { id: 'pipeline', label: 'Pipeline', icon: '📋' },
-    { id: 'scans', label: 'Live Scans', icon: '📡' },
-    { id: 'cvs', label: 'CV Tailoring', icon: '📄' },
-    { id: 'apply', label: 'Apply Assist', icon: '✍️' },
-    { id: 'settings', label: 'Config', icon: '⚙️' },
+    { id: 'pipeline', label: 'Pipeline', num: '01' },
+    { id: 'scans', label: 'Live Scans', num: '02' },
+    { id: 'cvs', label: 'CV Tailoring', num: '03' },
+    { id: 'apply', label: 'Apply Assist', num: '04' },
+    { id: 'settings', label: 'Config', num: '05' },
   ];
 
   async function handleAnalyse(overrideText, overrideUrl = '') {
@@ -1308,6 +1333,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       if (handleLimit(res, data)) return null;
       if (!res.ok) throw new Error(data.error || 'Analyse failed');
       setResults(data);
+      if (data.id) setApplyRoleId(data.id); // make it the active dossier
       loadAnalyses(); // refresh the pipeline with the newly-saved role
       loadUsage();
       return data;
@@ -1581,7 +1607,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     const unanalysed = scoutJobs.filter((j) => !findExistingInPipeline(j));
     if (unanalysed.length === 0) return;
     setScoutBatchRunning(true);
+    setScoutBatchSummary(null);
     setActiveTab('pipeline');
+    const outcomes = [];
     try {
       for (let i = 0; i < unanalysed.length; i++) {
         const job = unanalysed[i];
@@ -1591,10 +1619,19 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           : job.url;
         const res = await handleAnalyse(payload, job.url || '');
         if (!res) break; // stopped by limit or error
+        outcomes.push({
+          id: res.id,
+          title: res.jd_data?.role_title || job.title || 'Role',
+          company: res.jd_data?.company || job.company || '',
+          score: typeof res.score === 'number' ? res.score : null,
+        });
       }
     } finally {
       setScoutBatchRunning(false);
       setScoutProgress('');
+      if (outcomes.length > 0) {
+        setScoutBatchSummary(outcomes.slice().sort((a, b) => (b.score ?? -1) - (a.score ?? -1)));
+      }
       loadAnalyses();
     }
   }
@@ -1643,66 +1680,66 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   }
 
   if (tenantLoading || configStatus.loading) {
-    return <div className="p-10 text-center text-slate-500 font-medium">Initialising Career Ops...</div>;
+    return <div className="p-10 text-center text-[#1c1c1a]/60 font-medium">Initialising Career Ops...</div>;
   }
 
   return (
     <div className="flex flex-col gap-10">
       {/* Tab navigation + usage meter */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <nav className="bg-slate-100/70 rounded-2xl p-1.5 flex flex-wrap gap-1 flex-1">
-          {tabs.map((tab) => (
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+        <nav className="flex flex-1 flex-wrap border border-[#1c1c1a] bg-[#ece6d8]">
+          {tabs.map((tab, i) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+              className={`flex items-center gap-2 px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] transition-colors ${i ? 'border-l border-[#1c1c1a]/25' : ''} ${
                 activeTab === tab.id
-                  ? 'bg-white text-[#10294D] shadow-sm'
-                  : 'text-slate-500 hover:text-[#10294D]'
+                  ? 'bg-[#1c1c1a] text-[#ece6d8]'
+                  : 'text-[#1c1c1a]/60 hover:bg-[#e3dcc9] hover:text-[#1c1c1a]'
               }`}
             >
-              <span>{tab.icon}</span>
+              <span className={activeTab === tab.id ? 'text-[#f0452f]' : 'text-[#1c1c1a]/35'}>/{tab.num}</span>
               {tab.label}
             </button>
           ))}
         </nav>
         {usage && !usage.unlimited && (
           <button onClick={() => setShowPaywall(true)} title="Analyses, CV tailoring and searches each use one action"
-            className={`shrink-0 text-xs font-bold px-3 py-2 rounded-xl border transition-colors ${
-              usage.remaining <= 0 ? 'bg-amber-50 border-amber-200 text-amber-800' :
-              usage.remaining <= 3 ? 'bg-amber-50 border-amber-100 text-amber-700' :
-              'bg-white border-slate-200 text-slate-500'}`}>
-            {usage.remaining > 0 ? `${usage.remaining} actions left` : 'No actions left — buy a coffee'} ☕
+            className={`shrink-0 border px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
+              usage.remaining <= 0 ? 'border-[#f0452f] bg-[#f0452f] text-white' :
+              usage.remaining <= 3 ? 'border-[#f0452f] text-[#f0452f]' :
+              'border-[#1c1c1a] text-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#ece6d8]'}`}>
+            /Actions {usage.remaining > 0 ? String(usage.remaining).padStart(2, '0') : '00 — buy a coffee ☕'}
           </button>
         )}
         {usage?.unlimited && (
-          <span className="shrink-0 text-xs font-bold px-3 py-2 rounded-xl border bg-white border-slate-200 text-slate-400">Unlimited (admin)</span>
+          <span className="shrink-0 border border-[#1c1c1a]/30 px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1c1c1a]/50">/Actions ∞</span>
         )}
         <button onClick={() => setShowOnboarding(true)} title="How it works"
-          className="shrink-0 w-9 h-9 rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-[#10294D] flex items-center justify-center">
-          <span className="material-symbols-outlined text-base">help</span>
+          className="shrink-0 border border-[#1c1c1a] px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1c1c1a] transition-colors hover:bg-[#1c1c1a] hover:text-[#ece6d8]">
+          ?
         </button>
       </div>
 
       {/* Privacy reassurance (home / pipeline tab) */}
       {activeTab === 'pipeline' && (
-        <p className="-mt-4 text-[11px] text-slate-400 flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-sm text-[#006C50]">lock</span>
+        <p className="-mt-4 text-[11px] text-[#1c1c1a]/45 flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm text-[#f0452f]">lock</span>
           Private to your Arcturus DC workspace · we never sell your data or use it for marketing · shared only with the AI and job boards that run your search ·{' '}
-          <button onClick={() => setShowOnboarding(true)} className="underline hover:text-slate-600">how it works</button>
+          <button onClick={() => setShowOnboarding(true)} className="underline hover:text-[#1c1c1a]/70">how it works</button>
         </p>
       )}
 
       {/* Onboarding Alert */}
       {!configStatus.has_config && activeTab !== 'settings' && (
-        <div className="bg-[#FFF7ED] border border-[#FED7AA] rounded-2xl p-6 flex justify-between items-center shadow-sm">
+        <div className="bg-[#FFF7ED] border border-[#FED7AA] rounded-none p-6 flex justify-between items-center">
           <div>
             <div className="font-bold text-[#9A3412] text-sm tracking-tight">Workspace Setup Required</div>
             <p className="text-[#C2410C] text-sm mt-1 opacity-90">Please configure your PM profile and evidence library before running diagnostics.</p>
           </div>
           <button 
             onClick={() => setActiveTab('settings')}
-            className="bg-[#EA580C] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-orange-700/10 hover:bg-[#C2410C] transition-all"
+            className="bg-[#EA580C] text-white px-5 py-2 rounded-none text-sm font-bold hover:bg-[#C2410C] transition-all"
           >
             Go to Config
           </button>
@@ -1711,31 +1748,31 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
       {/* Morning Scout Agent — Pipeline & Live Scans tabs */}
       {(activeTab === 'pipeline' || activeTab === 'scans') && (
-        <section className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+        <section className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#006C50] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-none bg-[#e3dcc9] text-[#f0452f] flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined">radar</span>
               </div>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-bold text-[#10294D] text-sm">Morning Scout Agent</h3>
+                  <h3 className="font-bold text-[#1c1c1a] text-sm">Morning Scout Agent</h3>
                   {scoutJobs.length > 0 && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-teal-50 text-[#006C50]">
+                    <span className="text-[10px] font-bold font-mono uppercase tracking-widest px-2 py-0.5 border border-[#f0452f] text-[#f0452f]">
                       {scoutJobs.filter((j) => !findExistingInPipeline(j)).length} new · {scoutJobs.length} in queue
                     </span>
                   )}
                   {scoutLastRunAt && (
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-[#1c1c1a]/45">
                       Last scouted {new Date(scoutLastRunAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#1c1c1a]/60 mt-0.5">
                   Scouts LinkedIn Jobs, Reed, and Adzuna in the cloud against your honed target roles &amp; locations, skips roles already in your pipeline, and pulls full LinkedIn job descriptions automatically.
                 </p>
-                <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px] text-slate-500">
-                  <span className="font-bold text-[#10294D]">
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px] text-[#1c1c1a]/60">
+                  <span className="font-bold text-[#1c1c1a]">
                     {scoutSources.map((s) => (s === 'linkedin' ? 'LinkedIn' : s === 'reed' ? 'Reed' : 'Adzuna')).join(' + ')}
                   </span>
                   <span>·</span>
@@ -1753,7 +1790,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               <button
                 onClick={handleRunMorningScout}
                 disabled={scoutRunning || scoutBatchRunning || !configStatus.has_config}
-                className={`h-10 px-4 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${(scoutRunning || scoutBatchRunning || !configStatus.has_config) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                className={`h-10 px-4 bg-[#1c1c1a] text-white rounded-none text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#f0452f] transition-colors ${(scoutRunning || scoutBatchRunning || !configStatus.has_config) ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 {scoutRunning ? (
                   <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Scouting LinkedIn + job boards…</>
@@ -1763,10 +1800,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               </button>
               <button
                 onClick={() => setShowScoutTune((v) => !v)}
-                className={`h-10 px-3.5 rounded-xl text-xs font-bold border inline-flex items-center gap-1.5 transition-colors ${
+                className={`h-10 px-3.5 rounded-none text-xs font-bold border inline-flex items-center gap-1.5 transition-colors ${
                   showScoutTune
-                    ? 'bg-teal-50 border-[#006C50]/30 text-[#006C50]'
-                    : 'bg-white border-slate-200 text-[#10294D] hover:bg-slate-50'
+                    ? 'bg-[#e3dcc9] border-[#1c1c1a]/30 text-[#f0452f]'
+                    : 'bg-[#faf7ef] border-[#1c1c1a]/25 text-[#1c1c1a] hover:bg-[#f7f3e8]'
                 }`}
               >
                 <span className="material-symbols-outlined text-sm">tune</span>
@@ -1776,7 +1813,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 <button
                   onClick={handleAnalyseAllScoutJobs}
                   disabled={scoutBatchRunning || scoutRunning || loading}
-                  className={`h-10 px-4 bg-[#006C50] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${(scoutBatchRunning || scoutRunning || loading) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  className={`h-10 px-4 bg-[#1c1c1a] text-white rounded-none text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#f0452f] transition-colors ${(scoutBatchRunning || scoutRunning || loading) ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   {scoutBatchRunning ? (
                     <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>{scoutProgress || 'Scoring batch…'}</>
@@ -1789,7 +1826,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 <button
                   onClick={() => persistScoutJobs([])}
                   disabled={scoutBatchRunning || scoutRunning}
-                  className="h-10 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50"
+                  className="h-10 px-3 border border-[#1c1c1a]/25 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#f7f3e8]"
                 >
                   Clear queue
                 </button>
@@ -1798,18 +1835,18 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           </div>
 
           {showScoutTune && (
-            <div className="rounded-xl bg-slate-50/90 border border-slate-200 p-4 space-y-3.5">
+            <div className="rounded-none bg-[#f7f3e8]/90 border border-[#1c1c1a]/25 p-4 space-y-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h4 className="text-xs font-bold text-[#10294D] uppercase tracking-wider">Hone &amp; Refine Scout</h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Tune exact role titles, locations, job sources, and ranker instructions. Clicking <strong className="text-[#10294D]">Run Morning Scout</strong> applies and saves these settings automatically.
+                  <h4 className="text-xs font-bold text-[#1c1c1a] uppercase tracking-wider">Hone &amp; Refine Scout</h4>
+                  <p className="text-[11px] text-[#1c1c1a]/60 mt-0.5">
+                    Tune exact role titles, locations, job sources, and ranker instructions. Clicking <strong className="text-[#1c1c1a]">Run Morning Scout</strong> applies and saves these settings automatically.
                   </p>
                 </div>
                 <button
                   onClick={() => handleSaveScoutPrefs()}
                   disabled={scoutSavingPrefs}
-                  className="h-8 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-[#10294D] hover:bg-slate-100"
+                  className="h-8 px-3 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-[11px] font-bold text-[#1c1c1a] hover:bg-[#e3dcc9]"
                 >
                   {scoutSavingPrefs ? 'Saving…' : 'Save Tuning'}
                 </button>
@@ -1817,18 +1854,18 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1c1c1a]/60 mb-1">
                     Target Role Titles (comma-separated)
                   </label>
                   <input
                     value={scoutRolesText}
                     onChange={(e) => setScoutRolesText(e.target.value)}
                     placeholder="Senior Product Manager, Principal Product Manager, Lead Product Manager, Founding Product Manager"
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
+                    className="w-full bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1c1c1a]/60 mb-1">
                     Locations (comma-separated, e.g. Nottingham, London)
                   </label>
                   <div className="flex flex-wrap items-center gap-2">
@@ -1836,23 +1873,23 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       value={scoutLocationsText}
                       onChange={(e) => setScoutLocationsText(e.target.value)}
                       placeholder="Nottingham, London"
-                      className="flex-1 min-w-0 basis-48 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
+                      className="flex-1 min-w-0 basis-48 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
                     />
-                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-[#10294D] cursor-pointer shrink-0">
+                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-xs font-semibold text-[#1c1c1a] cursor-pointer shrink-0">
                       <input
                         type="checkbox"
                         checked={scoutIncludeRemote}
                         onChange={(e) => setScoutIncludeRemote(e.target.checked)}
-                        className="rounded border-slate-300 text-[#006C50]"
+                        className="rounded border-[#1c1c1a]/30 text-[#f0452f]"
                       />
                       + UK Remote
                     </label>
-                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-[#10294D] cursor-pointer shrink-0">
+                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-xs font-semibold text-[#1c1c1a] cursor-pointer shrink-0">
                       <input
                         type="checkbox"
                         checked={scoutIncludeHybrid}
                         onChange={(e) => setScoutIncludeHybrid(e.target.checked)}
-                        className="rounded border-slate-300 text-[#006C50]"
+                        className="rounded border-[#1c1c1a]/30 text-[#f0452f]"
                       />
                       + Hybrid
                     </label>
@@ -1862,7 +1899,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1c1c1a]/60 mb-1">
                     Job Sources
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -1877,10 +1914,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                           key={src.id}
                           type="button"
                           onClick={() => toggleScoutSource(src.id)}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                          className={`px-2.5 py-1.5 rounded-none text-xs font-bold border transition-colors ${
                             active
-                              ? 'bg-[#10294D] text-white border-[#10294D]'
-                              : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-[#1c1c1a] text-white border-[#1c1c1a]'
+                              : 'bg-[#faf7ef] text-[#1c1c1a]/60 border-[#1c1c1a]/25 hover:bg-[#e3dcc9]'
                           }`}
                         >
                           {active ? '✓ ' : ''}{src.label}
@@ -1890,34 +1927,34 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1c1c1a]/60 mb-1">
                     Steering / Refinement Rules (tells the AI ranker what to boost or skip)
                   </label>
                   <input
                     value={scoutSteering}
                     onChange={(e) => setScoutSteering(e.target.value)}
                     placeholder="e.g. Senior, Lead, Principal or Founding PM roles only; prioritise regulated, fintech, energy, platform & AI; skip Product Marketing & Solutions Architect"
-                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-[#10294D]"
+                    className="w-full bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
                   />
                 </div>
               </div>
 
               {scoutExcludedTitles.length > 0 && (
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1c1c1a]/60 mb-1">
                     Excluded Role Titles (dismissed via &ldquo;Not like this&rdquo;)
                   </label>
                   <div className="flex flex-wrap gap-1.5">
                     {scoutExcludedTitles.map((title) => (
                       <span
                         key={title}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-medium text-slate-600"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#faf7ef] border border-[#1c1c1a]/25 text-[11px] font-medium text-[#1c1c1a]/70"
                       >
                         {title}
                         <button
                           type="button"
                           onClick={() => removeExcludedTitle(title)}
-                          className="text-slate-400 hover:text-red-500 font-bold"
+                          className="text-[#1c1c1a]/45 hover:text-red-500 font-bold"
                           title="Stop excluding this title"
                         >
                           ×
@@ -1935,53 +1972,53 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               value={scoutUrl}
               onChange={(e) => setScoutUrl(e.target.value)}
               placeholder="Optional: paste a LinkedIn Jobs search URL or specific LinkedIn role URL to include in this scout run…"
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-[#10294D] focus:ring-2 focus:ring-blue-100"
+              className="flex-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none px-3.5 py-2 text-xs text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
             />
           </div>
 
           {scoutJobs.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-slate-100 max-h-96 overflow-y-auto">
+            <div className="space-y-2 pt-2 border-t border-[#1c1c1a]/10 max-h-96 overflow-y-auto">
               {scoutJobs.map((job, idx) => {
                 const existing = findExistingInPipeline(job);
                 return (
-                  <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-none bg-[#f7f3e8] border border-[#1c1c1a]/25/80">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {job.source && (
-                          <span className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                          <span className={`shrink-0 text-[9px] font-bold font-mono uppercase tracking-widest px-1.5 py-0.5 rounded border ${
                             job.source === 'LinkedIn'
-                              ? 'bg-blue-50 border-blue-200 text-blue-800'
-                              : 'bg-white border-slate-200 text-slate-600'
+                              ? 'bg-[#1c1c1a] border-[#1c1c1a] text-[#ece6d8]'
+                              : 'bg-[#faf7ef] border-[#1c1c1a]/25 text-[#1c1c1a]/70'
                           }`}>
                             {job.source}
                           </span>
                         )}
-                        <p className="font-bold text-[#10294D] text-sm truncate">{job.title}</p>
+                        <p className="font-bold text-[#1c1c1a] text-sm truncate">{job.title}</p>
                         {typeof job.relevance === 'number' && (
-                          <span className="shrink-0 text-[10px] font-mono font-bold text-[#006C50]">
+                          <span className={`shrink-0 text-[10px] font-mono font-bold ${job.relevance >= 75 ? 'text-[#2f9d55]' : 'text-[#1c1c1a]/60'}`}>
                             {job.relevance}%{job.why ? ` · ${job.why}` : ''}
                           </span>
                         )}
                         {existing && (
-                          <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                          <span className="shrink-0 text-[10px] font-bold font-mono uppercase tracking-widest px-2 py-0.5 bg-[#d8d1bd] text-[#1c1c1a]/70">
                             In Pipeline{typeof existing.score === 'number' ? ` (${existing.score.toFixed(1)})` : ''}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">
+                      <p className="text-xs text-[#1c1c1a]/60 truncate mt-0.5">
                         {job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {job.url && (
-                        <a href={job.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:underline">
+                        <a href={job.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 hover:underline">
                           Link
                         </a>
                       )}
                       {existing ? (
                         <button
                           onClick={() => openAnalysis(existing.id)}
-                          className="h-8 px-3 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-[#10294D] hover:bg-slate-100"
+                          className="h-8 px-3 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-[11px] font-bold text-[#1c1c1a] hover:bg-[#e3dcc9]"
                         >
                           Open
                         </button>
@@ -1989,7 +2026,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         <button
                           onClick={() => handleAnalyseScoutJob(job)}
                           disabled={loading || scoutBatchRunning || scoutRunning}
-                          className="h-8 px-3 rounded-lg bg-[#10294D] text-white text-[11px] font-bold hover:bg-[#001432] disabled:opacity-50"
+                          className="h-8 px-3 rounded-none bg-[#1c1c1a] text-white text-[11px] font-bold hover:bg-[#f0452f] disabled:opacity-50"
                         >
                           Analyse
                         </button>
@@ -1997,14 +2034,14 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       <button
                         onClick={() => handleNotLikeThis(job, idx)}
                         title="Remove and exclude this role title from future scout runs"
-                        className="h-8 px-2.5 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:text-amber-800 hover:border-amber-200 hover:bg-amber-50"
+                        className="h-8 px-2.5 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-[10px] font-bold text-[#1c1c1a]/60 hover:text-amber-800 hover:border-amber-200 hover:bg-amber-50"
                       >
                         Not like this
                       </button>
                       <button
                         onClick={() => persistScoutJobs(scoutJobs.filter((_, j) => j !== idx))}
                         title="Remove from queue"
-                        className="text-slate-400 hover:text-red-500 p-1"
+                        className="text-[#1c1c1a]/45 hover:text-red-500 p-1"
                       >
                         <span className="material-symbols-outlined text-sm">close</span>
                       </button>
@@ -2019,24 +2056,23 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
       {/* Role Input Terminal — Pipeline tab only */}
       {activeTab === 'pipeline' && (
-      <section className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm">
+      <section className="bg-[#faf7ef] p-5 sm:p-8 border border-[#1c1c1a]">
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-2 text-slate-400">
-            <span className="material-symbols-outlined text-sm">terminal</span>
-            <span className="uppercase tracking-[0.2em] text-[10px] font-bold">Input Terminal</span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono uppercase tracking-[0.16em] text-[10px] font-bold text-[#f0452f]">/Input terminal</span>
           </div>
           <div className="flex flex-col lg:flex-row gap-6 items-end">
             <textarea 
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
-              className="w-full h-32 bg-slate-50 border-none rounded-xl p-5 font-mono text-sm focus:ring-2 focus:ring-slate-200 placeholder:text-slate-300 resize-none"
+              className="w-full h-32 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-5 font-mono text-sm focus:ring-0 focus:border-[#1c1c1a] placeholder:text-[#1c1c1a]/30 resize-none"
               placeholder="Paste Job Description text or a LinkedIn URL to begin high-precision AI analysis..."
               disabled={!configStatus.has_config}
             />
             <button
               onClick={handleAnalyse}
               disabled={loading || !configStatus.has_config}
-              className={`min-w-[180px] h-14 bg-[#10294D] text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-[#001432] transition-all shadow-xl shadow-blue-900/10 group ${(!configStatus.has_config || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`min-w-[180px] h-14 bg-[#1c1c1a] text-white rounded-none font-bold flex items-center justify-center gap-3 hover:bg-[#f0452f] transition-all group ${(!configStatus.has_config || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {loading ? (
                 <>
@@ -2055,41 +2091,101 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           {loading && (
             <div className="mt-2">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-[#10294D] flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#006C50] animate-pulse"></span>
+                <span className="text-xs font-medium text-[#1c1c1a] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1c1c1a] animate-pulse"></span>
                   {ANALYSE_STAGES[progressStage]}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest">
                   Step {progressStage + 1} / {ANALYSE_STAGES.length}
                 </span>
               </div>
-              <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-[#1c1c1a]/10 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#006C50] to-[#53FDC7] rounded-full transition-all duration-700 ease-out"
+                  className="h-full bg-gradient-to-r from-[#f0452f] to-[#ff8a73] transition-all duration-700 ease-out"
                   style={{ width: `${((progressStage + 1) / ANALYSE_STAGES.length) * 100}%` }}
                 ></div>
               </div>
-              <p className="text-[10px] text-slate-400 mt-1.5">This usually takes 15–30 seconds. The AI is reading the role and scoring it against your profile.</p>
+              <p className="text-[10px] text-[#1c1c1a]/45 mt-1.5">This usually takes 15–30 seconds. The AI is reading the role and scoring it against your profile.</p>
             </div>
           )}
         </div>
       </section>
       )}
 
-      {/* Analysis Results View — Pipeline tab only */}
-      {activeTab === 'pipeline' && results && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 flex flex-col shadow-sm">
+      {/* Ranked summary of the last scout batch — lands the user on an overview
+          instead of whichever analysis happened to run last. */}
+      {activeTab === 'pipeline' && scoutBatchSummary && !scoutBatchRunning && (
+        <section className="border border-[#1c1c1a] bg-[#e3dcc9]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1c1c1a]/20 px-5 py-4 sm:px-6">
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-[#f0452f]">/Scout batch scored</p>
+              <h3 className="mt-1 text-xl font-black tracking-tight">
+                {scoutBatchSummary.filter((o) => (o.score ?? 0) >= 4).length} go
+                <span className="text-[#1c1c1a]/40"> · </span>
+                {scoutBatchSummary.filter((o) => (o.score ?? 0) >= 3 && o.score < 4).length} with care
+                <span className="text-[#1c1c1a]/40"> · </span>
+                {scoutBatchSummary.filter((o) => (o.score ?? 5) < 3).length} no-go
+                <span className="text-[#f0452f]">.</span>
+              </h3>
+            </div>
+            <button
+              onClick={() => setScoutBatchSummary(null)}
+              className="font-mono text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#1c1c1a]/50 hover:text-[#f0452f]"
+            >
+              Dismiss ×
+            </button>
+          </div>
+          <div className="divide-y divide-[#1c1c1a]/10">
+            {scoutBatchSummary.map((o) => {
+              const verdict = (o.score ?? 0) >= 4 ? { t: 'GO', c: '#2f9d55' } : (o.score ?? 0) >= 3 ? { t: 'CARE', c: '#b45309' } : { t: 'NO-GO', c: '#f0452f' };
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => openAnalysis(o.id)}
+                  className="group flex w-full items-center justify-between gap-4 px-5 py-3 text-left transition-colors hover:bg-[#1c1c1a] hover:text-[#ece6d8] sm:px-6"
+                >
+                  <span className="min-w-0 truncate text-sm font-bold">
+                    {o.title}
+                    <span className="opacity-50"> · {o.company}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-3 font-mono text-[0.68rem] font-bold uppercase tracking-[0.12em]">
+                    {typeof o.score === 'number' && <span>{o.score.toFixed(1)}</span>}
+                    <span style={{ color: verdict.c }}>{verdict.t}</span>
+                    <span className="opacity-40 transition-colors group-hover:text-[#f0452f] group-hover:opacity-100">Open →</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Role Dossier — the active role's journey from analysis to submission.
+          Rendered on Pipeline and Apply Assist (same dossier, one source of truth). */}
+      {(activeTab === 'pipeline' || activeTab === 'apply') && results && (
+        <DossierTracker
+          role={results}
+          onJump={jumpToStage}
+          onSetStatus={(s) => handleSetStatus(results.id, s)}
+          statusSaving={statusSaving}
+        />
+      )}
+
+      {/* Analysis Results View — the dossier body */}
+      {(activeTab === 'pipeline' || activeTab === 'apply') && results && (
+        <>
+        <div id="dossier-verdict" className="grid grid-cols-1 lg:grid-cols-12 gap-8 scroll-mt-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="lg:col-span-4 bg-[#faf7ef] p-5 sm:p-8 border border-[#1c1c1a] flex flex-col">
             {/* The verdict (reasoning-led) is the primary signal. */}
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">The verdict</h3>
+            <h3 className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 mb-3">/01 · The verdict</h3>
             <VerdictPanel score={results.score} evaluation={results.evaluation} />
 
             {/* Secondary: the rough numeric estimate, clearly framed as such. */}
-            <div className="mt-5 pt-5 border-t border-slate-100">
+            <div className="mt-5 pt-5 border-t border-[#1c1c1a]/10">
               <FitGauge score={typeof results.score === 'number' ? results.score : 0} />
             </div>
 
-            <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
+            <div className="mt-4 p-4 rounded-none bg-red-50 border border-red-100 flex gap-3">
               <span className="text-red-500 font-bold">!</span>
               <div>
                 <h4 className="text-xs font-bold text-red-900">Watch-out</h4>
@@ -2100,26 +2196,28 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </div>
           </div>
 
-          <div className="lg:col-span-8 bg-slate-50 rounded-2xl p-5 sm:p-8 border border-slate-100 flex flex-col shadow-inner">
+          <div className="lg:col-span-8 bg-[#f7f3e8] p-5 sm:p-8 border border-[#1c1c1a] flex flex-col">
             <div className="flex justify-between items-start mb-2">
-              <h3 className="text-2xl font-bold text-[#10294D] italic tracking-tight">The reasoning</h3>
-              <div className="px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-[10px] font-bold uppercase tracking-widest" title="An AI's structured opinion — the strength is in the reasoning, not the precision of the number.">AI assessment</div>
+              <h3 className="text-2xl font-black text-[#1c1c1a] tracking-tight">The reasoning<span className="text-[#f0452f]">.</span></h3>
+              <div className="px-3 py-1 bg-[#1c1c1a] text-[#ece6d8] text-[10px] font-bold font-mono uppercase tracking-widest" title="An AI's structured opinion — the strength is in the reasoning, not the precision of the number.">AI assessment</div>
             </div>
-            <p className="text-xs text-slate-400 mb-5">This is where the real value is — the why behind the score. The number above is just a quick triage signal.</p>
+            <p className="text-xs text-[#1c1c1a]/45 mb-5">This is where the real value is — the why behind the score. The number above is just a quick triage signal.</p>
             <CollapsibleNarrative markdown={results.evaluation} openCount={2} />
+          </div>
+        </div>
 
-            {/* Company research, Tailored CV & Interview Brief for the analysed role */}
-            {results.id && (
-              <div className="mt-8 pt-6 border-t border-slate-200 space-y-6">
+        {/* Dossier stages 02–05: research, tailored CV, apply pack, interview brief */}
+        {results.id && (
+              <div className="space-y-6">
                 {/* 1. Company & role context */}
-                <div className="bg-white rounded-xl p-5 border border-slate-200">
+                <div id="dossier-research" className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div>
-                      <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#006C50] text-base">travel_explore</span>
+                      <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2">
+                        <span className="font-mono text-base text-[#f0452f]">/02</span>
                         Company &amp; Role Context
                       </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-[#1c1c1a]/60 mt-0.5">
                         Research the employer or add your own notes (hiring manager, strategy, platform). Automatically feeds into CV tailoring, cover letters, and interview prep.
                       </p>
                     </div>
@@ -2127,7 +2225,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       {results.company_context && (
                         <button
                           onClick={() => setEditingContext((e) => !e)}
-                          className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:underline"
+                          className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/60 hover:underline"
                         >
                           {editingContext ? 'Done editing' : 'Edit notes'}
                         </button>
@@ -2135,7 +2233,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       <button
                         onClick={() => handleResearchCompany(results.id, results.company_context || companyNotes)}
                         disabled={researchLoading}
-                        className={`h-9 px-4 bg-[#10294D] text-white rounded-lg text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        className={`h-9 px-4 bg-[#1c1c1a] text-white rounded-none text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#f0452f] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
                         {researchLoading ? (
                           <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
@@ -2146,7 +2244,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     </div>
                   </div>
                   {results.company_context && !editingContext ? (
-                    <div className="mt-3 pt-3 border-t border-slate-100">
+                    <div className="mt-3 pt-3 border-t border-[#1c1c1a]/10">
                       <CollapsibleNarrative markdown={results.company_context} openCount={3} />
                     </div>
                   ) : (
@@ -2156,7 +2254,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         onChange={(e) => setResults((r) => ({ ...r, company_context: e.target.value }))}
                         placeholder="Add your own notes or click 'Research company' (1 action) to pull live employer context…"
                         rows={results.company_context ? 6 : 2}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
+                        className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-xs text-[#1c1c1a]/80 leading-relaxed focus:ring-0 focus:border-[#1c1c1a]"
                       />
                       <div className="flex justify-end">
                         <button
@@ -2165,7 +2263,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                             setEditingContext(false);
                           }}
                           disabled={contextSaving}
-                          className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
+                          className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#f0452f] hover:underline"
                         >
                           {contextSaving ? 'Saving…' : 'Save context notes'}
                         </button>
@@ -2175,46 +2273,47 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 </div>
 
                 {/* 2. Tailored CV */}
+                <div id="dossier-cv" className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
                 {!results.tailored_cv ? (
                   <>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <p className="font-bold text-[#10294D] text-sm">Decided to apply for this role?</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Generate a CV tailored to this job, grounded in your real evidence. It's saved to your CV library.</p>
+                      <p className="font-bold text-[#1c1c1a] text-sm"><span className="font-mono text-[#f0452f]">/03</span> Decided to apply for this role?</p>
+                      <p className="text-xs text-[#1c1c1a]/60 mt-0.5">Generate a CV tailored to this job, grounded in your real evidence. It's saved to your CV library.</p>
                     </div>
                     <button
                       onClick={() => handleTailorCv(results.id)}
                       disabled={tailoring}
-                      className={`min-w-[190px] h-12 bg-[#006C50] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#005840] transition-all ${tailoring ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      className={`min-w-[190px] h-12 bg-[#1c1c1a] text-white rounded-none font-bold flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-all ${tailoring ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                       {tailoring ? (
                         <><span className="material-symbols-outlined animate-spin">progress_activity</span>Tailoring CV…</>
                       ) : (
-                        <><span className="material-symbols-outlined">description</span>Proceed to Apply</>
+                        <>Tailor CV for this role<span className="material-symbols-outlined">description</span></>
                       )}
                     </button>
                   </div>
                   {tailoring && (
                     <div className="mt-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-[#10294D] flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#006C50] animate-pulse"></span>
+                        <span className="text-xs font-medium text-[#1c1c1a] flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#1c1c1a] animate-pulse"></span>
                           {TAILOR_STAGES[tailorStage]}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Step {tailorStage + 1} / {TAILOR_STAGES.length}</span>
+                        <span className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest">Step {tailorStage + 1} / {TAILOR_STAGES.length}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-[#006C50] to-[#53FDC7] rounded-full transition-all duration-700 ease-out" style={{ width: `${((tailorStage + 1) / TAILOR_STAGES.length) * 100}%` }}></div>
+                      <div className="h-1.5 w-full bg-[#1c1c1a]/10 overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-[#f0452f] to-[#ff8a73] transition-all duration-700 ease-out" style={{ width: `${((tailorStage + 1) / TAILOR_STAGES.length) * 100}%` }}></div>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1.5">Writing a CV tailored to this role from your real evidence. Usually 20–40 seconds.</p>
+                      <p className="text-[10px] text-[#1c1c1a]/45 mt-1.5">Writing a CV tailored to this role from your real evidence. Usually 20–40 seconds.</p>
                     </div>
                   )}
                   </>
                 ) : (
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-[#10294D] flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#006C50]">description</span>
+                      <h4 className="font-bold text-[#1c1c1a] flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#f0452f]">description</span>
                         Tailored CV
                       </h4>
                       <div className="flex items-center gap-3">
@@ -2227,41 +2326,41 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                               setCvDraftText(results.tailored_cv || '');
                             }
                           }}
-                          className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:underline"
+                          className="text-[10px] font-bold text-[#1c1c1a]/60 font-mono uppercase tracking-widest hover:underline"
                         >
                           {cvEditingId === results.id ? 'Cancel edit' : 'Edit text'}
                         </button>
                         <button
                           onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: results.jd_data?.role_title || 'Role', cvMarkdown: results.tailored_cv })}
-                          className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"
+                          className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1"
                         >
                           <span className="material-symbols-outlined text-sm">download</span>Download PDF
                         </button>
                         <button
                           onClick={() => navigator.clipboard?.writeText(results.tailored_cv)}
-                          className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline"
+                          className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline"
                         >
                           Copy
                         </button>
                       </div>
                     </div>
                     {cvEditingId === results.id ? (
-                      <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-3">
+                      <div className="bg-[#faf7ef] rounded-none p-4 border border-[#1c1c1a]/25 space-y-3">
                         <textarea
                           value={cvDraftText}
                           onChange={(e) => setCvDraftText(e.target.value)}
                           rows={16}
-                          className="w-full font-mono text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3 leading-relaxed"
+                          className="w-full font-mono text-xs text-[#1c1c1a]/80 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 leading-relaxed"
                         />
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-                          <button onClick={() => handleSaveTailoredCv(results.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-lg text-xs font-bold bg-[#006C50] text-white hover:bg-[#005840]">
+                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#e3dcc9]">Cancel</button>
+                          <button onClick={() => handleSaveTailoredCv(results.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-none text-xs font-bold bg-[#1c1c1a] text-white hover:bg-[#f0452f]">
                             {cvSaving ? 'Saving…' : 'Save CV edits'}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-xl p-6 border border-slate-200">
+                      <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25">
                         <CollapsibleNarrative markdown={results.tailored_cv} openCount={1} />
                       </div>
                     )}
@@ -2270,33 +2369,155 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         value={cvEdit}
                         onChange={(e) => setCvEdit(e.target.value)}
                         placeholder='Suggest a CV revision, e.g. "bring the AI Act / Orbit work higher" or "tighten summary to 3 lines"'
-                        className="flex-1 bg-white border border-slate-200 rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100"
+                        className="flex-1 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
                       />
                       <button
                         onClick={() => handleTailorCv(results.id, cvEdit)}
                         disabled={tailoring || !cvEdit.trim()}
-                        className={`h-11 px-5 bg-[#10294D] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#001432] transition-colors ${(tailoring || !cvEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`h-11 px-5 bg-[#1c1c1a] text-white rounded-none font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-colors ${(tailoring || !cvEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {tailoring ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise CV
                       </button>
                     </div>
                     <AiReviewWarning what="CV" />
-                    <p className="text-[11px] text-slate-400 mt-2">
+                    <p className="text-[11px] text-[#1c1c1a]/45 mt-2">
                       Saved to your{' '}
-                      <button onClick={() => setActiveTab('cvs')} className="text-[#006C50] font-bold underline hover:no-underline">CV library</button>.
+                      <button onClick={() => setActiveTab('cvs')} className="text-[#f0452f] font-bold underline hover:no-underline">CV library</button>.
                     </p>
                   </div>
                 )}
+                </div>
 
-                {/* 3. Interview Prep Brief */}
-                <div className="bg-white rounded-xl p-5 border border-slate-200">
+                {/* 3. Apply pack — cover letter + portal answers for this role */}
+                <div id="dossier-pack" className="scroll-mt-24 space-y-6">
+                  {/* Cover letter */}
+                  <div className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a]">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="font-mono text-base text-[#f0452f]">/04</span>Cover letter</h4>
+                      {coverLetter && (
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => navigator.clipboard?.writeText(coverLetter)} className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline">Copy</button>
+                          <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: results.jd_data?.role_title || 'Cover letter', cvMarkdown: coverLetter })} className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>PDF</button>
+                        </div>
+                      )}
+                    </div>
+                    {!coverLetter ? (
+                      <div className="py-6 text-center">
+                        <p className="text-sm text-[#1c1c1a]/60 mb-4">Generate a cover letter tailored to this role from your CV and evidence. Uses one action.</p>
+                        <button onClick={() => handleCoverLetter()} disabled={coverLoading}
+                          className={`h-12 px-6 bg-[#1c1c1a] text-white rounded-none font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-colors ${coverLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                          {coverLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Writing…</>) : (<><span className="material-symbols-outlined">mail</span>Generate cover letter</>)}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-3">
+                        <div className="bg-[#f7f3e8] rounded-none p-5 text-sm text-[#1c1c1a]/80 whitespace-pre-wrap leading-relaxed">{coverLetter}</div>
+                        <AiReviewWarning what="cover letter" />
+                        <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                          <input value={coverEdit} onChange={(e) => setCoverEdit(e.target.value)} placeholder='Suggest an edit, e.g. "make it shorter" or "emphasise the 50% metric"'
+                            className="flex-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+                          <button onClick={() => handleCoverLetter(coverEdit)} disabled={coverLoading || !coverEdit.trim()}
+                            className={`h-11 px-5 bg-[#1c1c1a] text-white rounded-none font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-colors ${(coverLoading || !coverEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            {coverLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-[#1c1c1a]/45 mt-2">Each revision uses one action.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Application form answers */}
+                  <div className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a]">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="font-mono text-base text-[#f0452f]">/04b</span>Application form answers</h4>
+                      {applyAnswers.length > 0 && (
+                        <button onClick={handleApplyAnswers} disabled={answersLoading} className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline">Regenerate common answers</button>
+                      )}
+                    </div>
+                    <div className="mt-3 space-y-4">
+                      {applyAnswers.length === 0 ? (
+                        <div className="py-4 text-center">
+                          <p className="text-sm text-[#1c1c1a]/60 mb-3">Draft the 4 standard free-text answers ("why this role / why us / good fit / relevant experience"), or ask a custom portal question below.</p>
+                          <button onClick={handleApplyAnswers} disabled={answersLoading}
+                            className={`h-11 px-5 bg-[#1c1c1a] text-white rounded-none font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-colors ${answersLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                            {answersLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined">quiz</span>Draft common answers (1 action)</>)}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {applyAnswers.map((qa, i) => (
+                            <div key={i} className="space-y-1">
+                              <CopyField
+                                label={qa.q}
+                                value={qa.a}
+                                multiline
+                                editable
+                                onChange={(v) => {
+                                  const next = applyAnswers.map((item, j) => (j === i ? { ...item, a: v } : item));
+                                  handleSaveApplyAnswers(next);
+                                }}
+                              />
+                              {qa.custom && (
+                                <div className="flex justify-end">
+                                  <button
+                                    onClick={() => handleSaveApplyAnswers(applyAnswers.filter((_, j) => j !== i))}
+                                    className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 hover:text-red-600"
+                                  >
+                                    Remove question
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          <AiReviewWarning what="answer" />
+                        </div>
+                      )}
+
+                      {/* Custom portal question box */}
+                      <div className="pt-4 border-t border-[#1c1c1a]/10 space-y-2.5">
+                        <div className="text-xs font-bold text-[#1c1c1a]">Answer a custom portal question</div>
+                        <p className="text-[11px] text-[#1c1c1a]/60">Paste any bespoke question from Workday, Greenhouse, Ashby, or Civil Service Jobs. Grounded strictly in your evidence library.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input
+                            value={customQ}
+                            onChange={(e) => setCustomQ(e.target.value)}
+                            placeholder='e.g. "Describe a complex regulatory or platform delivery you led"'
+                            className="sm:col-span-2 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]"
+                          />
+                          <input
+                            value={customGuidance}
+                            onChange={(e) => setCustomGuidance(e.target.value)}
+                            placeholder='Optional: "max 200 words, STAR format"'
+                            className="bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]"
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            onClick={handleCustomQuestion}
+                            disabled={customLoading || !customQ.trim()}
+                            className={`h-10 px-5 bg-[#1c1c1a] text-white rounded-none text-xs font-bold inline-flex items-center gap-2 hover:bg-[#f0452f] transition-colors ${(customLoading || !customQ.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {customLoading ? (<><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined text-sm">edit_square</span>Answer question (1 action)</>)}
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#1c1c1a]/45">
+                        Need your standard details (address, notice period, employment history)?{' '}
+                        <button onClick={() => openApplyAssist(results.id)} className="text-[#f0452f] font-bold underline hover:no-underline">Open Apply Assist</button> for copy-ready fields.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Interview Prep Brief */}
+                <div id="dossier-brief" className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div>
-                      <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#006C50] text-base">record_voice_over</span>
+                      <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2">
+                        <span className="font-mono text-base text-[#f0452f]">/05</span>
                         Interview Prep Brief
                       </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+                      <p className="text-[11px] text-[#1c1c1a]/60 mt-0.5">
                         60-second pitch, top 5 likely questions mapped to your evidence anchors, how to handle flagged gaps, and questions to ask them.
                       </p>
                     </div>
@@ -2305,13 +2526,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         <>
                           <button
                             onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: `${results.jd_data?.role_title || 'Role'} — Interview Brief`, cvMarkdown: results.interview_brief })}
-                            className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"
+                            className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1"
                           >
                             <span className="material-symbols-outlined text-sm">download</span>PDF
                           </button>
                           <button
                             onClick={() => navigator.clipboard?.writeText(results.interview_brief)}
-                            className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline"
+                            className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline"
                           >
                             Copy
                           </button>
@@ -2320,7 +2541,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       <button
                         onClick={() => handleInterviewBrief(results.id)}
                         disabled={briefLoading}
-                        className={`h-9 px-4 bg-[#006C50] text-white rounded-lg text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${briefLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        className={`h-9 px-4 bg-[#1c1c1a] text-white rounded-none text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#f0452f] transition-colors ${briefLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
                         {briefLoading ? (
                           <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Preparing…</>
@@ -2331,78 +2552,104 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     </div>
                   </div>
                   {results.interview_brief && (
-                    <div className="mt-3 bg-slate-50 rounded-xl p-5 border border-slate-100">
+                    <div className="mt-3 bg-[#f7f3e8] rounded-none p-5 border border-[#1c1c1a]/10">
                       <CollapsibleNarrative markdown={results.interview_brief} openCount={4} />
                     </div>
                   )}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+        )}
+        </>
       )}
 
       {/* Pipeline Table */}
       {activeTab === 'pipeline' && (
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Active Pipeline</h3>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors">Filter</button>
+        <section className="space-y-4">
+          <div className="flex items-end justify-between border-b border-[#1c1c1a] pb-3">
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-[#f0452f]">/Active pipeline</p>
+              <h3 className="mt-1 text-3xl font-black tracking-tight">Roles<span className="text-[#f0452f]">.</span></h3>
             </div>
+            <p className="font-mono text-[0.62rem] uppercase tracking-[0.12em] text-[#1c1c1a]/45">
+              {pipeline.length} analysed
+            </p>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-            <table className="w-full text-left min-w-[640px]">
-              <thead className="bg-slate-50 border-b border-slate-100">
-                <tr>
-                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Company / Role</th>
-                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Score</th>
-                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Status</th>
-                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400">Analysed</th>
-                  <th className="px-4 sm:px-6 py-4 text-[10px] font-bold uppercase text-slate-400 text-right">Actions</th>
+          <div className="border border-[#1c1c1a] bg-[#f7f3e8] overflow-x-auto">
+            <table className="w-full text-left min-w-[760px]">
+              <thead className="border-b border-[#1c1c1a]">
+                <tr className="font-mono text-[0.62rem] uppercase tracking-[0.12em] text-[#1c1c1a]/50">
+                  <th className="px-4 sm:px-5 py-3 font-bold">/SN</th>
+                  <th className="px-4 sm:px-5 py-3 font-bold">Company / Role</th>
+                  <th className="px-4 sm:px-5 py-3 font-bold">Fit</th>
+                  <th className="px-4 sm:px-5 py-3 font-bold">Dossier</th>
+                  <th className="px-4 sm:px-5 py-3 font-bold">Status</th>
+                  <th className="px-4 sm:px-5 py-3 font-bold text-right">Next</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-[#1c1c1a]/15">
                 {pipeline.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-400">
-                      No roles analysed yet. Paste a job description above and run an analysis to populate your pipeline.
+                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-[#1c1c1a]/45">
+                      No roles analysed yet. Run the Morning Scout or paste a job description above to populate your pipeline.
                     </td>
                   </tr>
                 )}
-                {pipeline.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => openAnalysis(item.id)}>
-                    <td className="px-4 sm:px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold">
-                          {(item.company || '?').charAt(0).toUpperCase()}
+                {pipeline.map((item, idx) => {
+                  const chips = [
+                    { k: 'CV', on: item.has_cv },
+                    { k: 'LTR', on: item.has_letter || item.has_answers },
+                    { k: 'BRF', on: item.has_brief },
+                  ];
+                  const submitted = ['Applied', 'Interview', 'Offer'].includes(item.status);
+                  const next = !item.has_cv ? 'Tailor CV' : !(item.has_letter || item.has_answers) ? 'Apply pack' : !item.has_brief ? 'Interview brief' : !submitted ? 'Mark submitted' : 'Open';
+                  return (
+                    <tr key={item.id} className="group cursor-pointer transition-colors hover:bg-[#e3dcc9]" onClick={() => openAnalysis(item.id)}>
+                      <td className="px-4 sm:px-5 py-4 font-mono text-[0.65rem] text-[#1c1c1a]/40">
+                        {String(idx + 1).padStart(3, '0')}
+                      </td>
+                      <td className="px-4 sm:px-5 py-4">
+                        <p className="font-bold text-[#1c1c1a] text-sm">{item.company}</p>
+                        <p className="text-xs text-[#1c1c1a]/50">{item.role}</p>
+                      </td>
+                      <td className="px-4 sm:px-5 py-4">
+                        <span className={`font-mono font-bold ${typeof item.score === 'number' ? (item.score >= 4 ? 'text-[#2f9d55]' : item.score >= 3 ? 'text-[#b45309]' : 'text-[#f0452f]') : 'text-[#1c1c1a]/30'}`}>
+                          {typeof item.score === 'number' ? item.score.toFixed(1) : '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-5 py-4">
+                        <div className="flex gap-1">
+                          {chips.map((c) => (
+                            <span key={c.k} className={`border px-1.5 py-0.5 font-mono text-[0.58rem] font-bold uppercase tracking-[0.08em] ${c.on ? 'border-[#2f9d55] text-[#2f9d55]' : 'border-[#1c1c1a]/20 text-[#1c1c1a]/30'}`}>
+                              {c.on ? '✓ ' : ''}{c.k}
+                            </span>
+                          ))}
                         </div>
-                        <div>
-                          <p className="font-bold text-[#10294D] text-sm">{item.company}</p>
-                          <p className="text-xs text-slate-400">{item.role}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-5">
-                      <span className="font-mono font-bold text-[#006C50]">{typeof item.score === 'number' ? item.score.toFixed(1) : '—'}</span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                        item.status === 'Interview' ? 'bg-green-100 text-green-700' :
-                        item.status === 'Applied' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-5">
-                      <p className="text-xs font-semibold text-slate-600">{item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'}</p>
-                    </td>
-                    <td className="px-4 sm:px-6 py-5 text-right whitespace-nowrap">
-                      <button className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline mr-4" onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}>View</button>
-                      <button className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline" onClick={(e) => { e.stopPropagation(); openApplyAssist(item.id); }}>Apply</button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 sm:px-5 py-4">
+                        <span className={`inline-flex items-center gap-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] ${
+                          item.status === 'Interview' || item.status === 'Offer' ? 'text-[#2f9d55]' :
+                          item.status === 'Applied' ? 'text-[#1c1c1a]' :
+                          item.status === 'Rejected' ? 'text-[#f0452f]' : 'text-[#1c1c1a]/50'
+                        }`}>
+                          <span className={`inline-block h-1.5 w-1.5 rounded-full ${
+                            item.status === 'Interview' || item.status === 'Offer' ? 'bg-[#2f9d55]' :
+                            item.status === 'Applied' ? 'bg-[#1c1c1a]' :
+                            item.status === 'Rejected' ? 'bg-[#f0452f]' : 'bg-[#1c1c1a]/30'
+                          }`} aria-hidden="true" />
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-5 py-4 text-right whitespace-nowrap">
+                        <button
+                          className="border border-[#1c1c1a]/30 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a] transition-colors group-hover:border-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#ece6d8]"
+                          onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}
+                        >
+                          {next} →
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -2413,52 +2660,52 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {activeTab === 'scans' && (
         <section className="space-y-6 animate-in fade-in duration-300">
           <div>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Find Roles</h3>
-            <p className="text-sm text-slate-500 mt-1">Search live UK job boards (LinkedIn + Reed + Adzuna), then analyse any role against your profile.</p>
-            <p className="text-xs text-slate-400 mt-1.5 flex items-start gap-1.5">
+            <h3 className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#f0452f]">/Find roles</h3>
+            <p className="text-sm text-[#1c1c1a]/60 mt-1">Search live UK job boards (LinkedIn + Reed + Adzuna), then analyse any role against your profile.</p>
+            <p className="text-xs text-[#1c1c1a]/45 mt-1.5 flex items-start gap-1.5">
               <span className="material-symbols-outlined text-sm">info</span>
               Searches LinkedIn Jobs, Reed, and Adzuna in one pass. Found a role on a direct employer career site? Paste its URL or text on the Pipeline tab to score it directly.
             </p>
           </div>
 
           {/* Search form */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Keywords</label>
+                <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Keywords</label>
                 <input value={searchKeywords} onChange={(e) => setSearchKeywords(e.target.value)} placeholder="e.g. Product Owner energy billing"
-                  className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+                  className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
+                <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Location</label>
                 <input value={searchLocation} onChange={(e) => setSearchLocation(e.target.value)} placeholder="e.g. Nottingham"
-                  className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+                  className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Min salary (£) — optional</label>
+                <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Min salary (£) — optional</label>
                 <input type="number" value={searchSalary} onChange={(e) => setSearchSalary(e.target.value)} placeholder="leave blank" step={5000} min={0}
-                  className="w-full mt-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
-                <p className="text-[10px] text-slate-400 mt-1 ml-1">Setting this hides jobs with no listed salary (most of them). Leave blank for the widest results.</p>
+                  className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+                <p className="text-[10px] text-[#1c1c1a]/45 mt-1 ml-1">Setting this hides jobs with no listed salary (most of them). Leave blank for the widest results.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
               <div className="flex flex-col gap-2">
-                <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-bold self-start">
+                <div className="inline-flex rounded-none bg-[#e3dcc9] p-0.5 text-xs font-bold self-start">
                   {[['both', 'Local + Remote'], ['location', 'Local only'], ['remote', 'Remote only']].map(([m, label]) => (
                     <button key={m} onClick={() => setSearchMode(m)}
-                      className={`px-3 py-1.5 rounded-md transition-colors ${searchMode === m ? 'bg-white text-[#10294D] shadow-sm' : 'text-slate-500 hover:text-[#10294D]'}`}>
+                      className={`px-3 py-1.5 rounded-none transition-colors ${searchMode === m ? 'bg-[#faf7ef] text-[#1c1c1a]' : 'text-[#1c1c1a]/60 hover:text-[#1c1c1a]'}`}>
                       {label}
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+                <label className="flex items-center gap-2 text-xs text-[#1c1c1a]/70 cursor-pointer select-none">
                   <input type="checkbox" checked={excludeCurrentEmployer} onChange={(e) => setExcludeCurrentEmployer(e.target.checked)}
-                    className="w-4 h-4 text-[#006C50] border-slate-300 rounded focus:ring-[#006C50]" />
+                    className="w-4 h-4 text-[#f0452f] border-[#1c1c1a]/30 rounded focus:ring-[#1c1c1a]" />
                   Exclude my current / most recent employer{currentEmployer ? ` (${currentEmployer})` : ''}
                 </label>
               </div>
               <button onClick={handleSearchJobs} disabled={searching}
-                className={`min-w-[160px] h-12 bg-[#10294D] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#001432] transition-all ${searching ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                className={`min-w-[160px] h-12 bg-[#1c1c1a] text-white rounded-none font-bold flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-all ${searching ? 'opacity-60 cursor-not-allowed' : ''}`}>
                 {searching ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Searching…</>) : (<><span className="material-symbols-outlined">search</span>Search</>)}
               </button>
             </div>
@@ -2466,14 +2713,14 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             {searching && (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-[#10294D] flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#006C50] animate-pulse"></span>
+                  <span className="text-xs font-medium text-[#1c1c1a] flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#1c1c1a] animate-pulse"></span>
                     {SEARCH_STAGES[searchStage]}
                   </span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Step {searchStage + 1} / {SEARCH_STAGES.length}</span>
+                  <span className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest">Step {searchStage + 1} / {SEARCH_STAGES.length}</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#006C50] to-[#53FDC7] rounded-full transition-all duration-700 ease-out" style={{ width: `${((searchStage + 1) / SEARCH_STAGES.length) * 100}%` }}></div>
+                <div className="h-1.5 w-full bg-[#1c1c1a]/10 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#f0452f] to-[#ff8a73] transition-all duration-700 ease-out" style={{ width: `${((searchStage + 1) / SEARCH_STAGES.length) * 100}%` }}></div>
                 </div>
               </div>
             )}
@@ -2481,27 +2728,27 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
           {/* What's excluded — transparency (read-only) */}
           {excludedTerms.length > 0 && (
-            <details className="text-[11px] text-slate-400">
-              <summary className="cursor-pointer list-none hover:text-slate-600 inline-flex items-center gap-1">
+            <details className="text-[11px] text-[#1c1c1a]/45">
+              <summary className="cursor-pointer list-none hover:text-[#1c1c1a]/70 inline-flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">info</span>
                 Some role types are excluded from results — what's filtered out?
               </summary>
               <p className="mt-2 leading-relaxed">
                 To keep results relevant, job titles containing these terms are automatically hidden (they're never product, operations or delivery roles):
               </p>
-              <p className="mt-1.5 leading-relaxed text-slate-500">{excludedTerms.join(' · ')}</p>
+              <p className="mt-1.5 leading-relaxed text-[#1c1c1a]/60">{excludedTerms.join(' · ')}</p>
             </details>
           )}
 
           {/* Search debug — "why these results?" thought process */}
           {searchDebug && (
-            <details className="bg-slate-50 rounded-xl border border-slate-200 text-xs">
-              <summary className="cursor-pointer px-4 py-3 font-bold text-[#10294D] list-none flex items-center justify-between">
+            <details className="bg-[#f7f3e8] rounded-none border border-[#1c1c1a]/25 text-xs">
+              <summary className="cursor-pointer px-4 py-3 font-bold text-[#1c1c1a] list-none flex items-center justify-between">
                 <span>Why these results? ({searchDebug.ranked_count} of {searchDebug.raw_count} raw)</span>
-                <span className="material-symbols-outlined text-slate-400">expand_more</span>
+                <span className="material-symbols-outlined text-[#1c1c1a]/45">expand_more</span>
               </summary>
-              <div className="px-4 pb-4 space-y-2 text-slate-600">
-                <div className="font-mono text-[11px] bg-white rounded-lg p-3 border border-slate-100 space-y-0.5">
+              <div className="px-4 pb-4 space-y-2 text-[#1c1c1a]/70">
+                <div className="font-mono text-[11px] bg-[#faf7ef] rounded-none p-3 border border-[#1c1c1a]/10 space-y-0.5">
                   <div>queries: <b>{(searchDebug.query?.terms || []).join(', ')}</b> · loc <b>{searchDebug.query?.location}</b> · mode <b>{searchDebug.query?.mode}</b> · min£ <b>{searchDebug.query?.salary_min}</b></div>
                   <div>sources: {Object.entries(searchDebug.source_counts || {}).map(([s, n]) => `${s}=${n}`).join(' · ') || 'none returned'}</div>
                   <div>funnel: {searchDebug.raw_count} raw → {searchDebug.deduped_count} deduped → {searchDebug.after_negative_filter} after filter → {searchDebug.ranked_count} shown</div>
@@ -2509,10 +2756,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   {searchDebug.dropped_by_negative_filter?.length > 0 && <div>dropped (wrong discipline): {searchDebug.dropped_by_negative_filter.join(', ')}</div>}
                 </div>
                 {searchDebug.scores?.length > 0 && (
-                  <div className="bg-white rounded-lg p-3 border border-slate-100">
-                    <div className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mb-1">Relevance scores (all candidates)</div>
+                  <div className="bg-[#faf7ef] rounded-none p-3 border border-[#1c1c1a]/10">
+                    <div className="font-bold text-[10px] font-mono uppercase tracking-widest text-[#1c1c1a]/45 mb-1">Relevance scores (all candidates)</div>
                     {searchDebug.scores.map((s, i) => (
-                      <div key={i} className="flex justify-between gap-3 py-0.5 border-b border-slate-50 last:border-0">
+                      <div key={i} className="flex justify-between gap-3 py-0.5 border-b border-[#1c1c1a]/10 last:border-0">
                         <span className="truncate">{s.title}</span>
                         <span className="shrink-0 font-mono"><b>{s.score}</b>{s.why ? ` · ${s.why}` : ''}</span>
                       </div>
@@ -2526,32 +2773,32 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           {/* Results */}
           {searchResults.length > 0 && (
             <div className="space-y-3">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#1c1c1a]/60">
                 {searchResults.length} relevant {searchResults.length === 1 ? 'role' : 'roles'}
                 {searchTotalRaw > searchResults.length ? ` (filtered from ${searchTotalRaw}, ranked by relevance to your targets)` : ''}. Click "Analyse" to score one against your profile.
               </p>
               {searchResults.map((job, i) => (
-                <div key={i} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center justify-between gap-4">
+                <div key={i} className="bg-[#faf7ef] rounded-none border border-[#1c1c1a]/25 p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0 flex items-center gap-3">
                     {typeof job.relevance === 'number' && (
-                      <div className={`shrink-0 w-11 h-11 rounded-lg flex flex-col items-center justify-center font-bold ${job.relevance >= 75 ? 'bg-green-50 text-green-700' : job.relevance >= 60 ? 'bg-teal-50 text-[#006C50]' : 'bg-amber-50 text-amber-700'}`}>
+                      <div className={`shrink-0 w-11 h-11 border-2 flex flex-col items-center justify-center font-mono font-bold ${job.relevance >= 75 ? 'border-[#2f9d55] text-[#2f9d55]' : job.relevance >= 60 ? 'border-[#1c1c1a] text-[#1c1c1a]' : 'border-[#b45309] text-[#b45309]'}`}>
                         <span className="text-sm leading-none">{job.relevance}</span>
-                        <span className="text-[7px] uppercase tracking-widest mt-0.5">match</span>
+                        <span className="text-[7px] font-mono uppercase tracking-widest mt-0.5">match</span>
                       </div>
                     )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-[#10294D] text-sm truncate">{job.title}</p>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{job.source}</span>
+                        <p className="font-bold text-[#1c1c1a] text-sm truncate">{job.title}</p>
+                        <span className="text-[9px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 bg-[#e3dcc9] px-1.5 py-0.5 rounded">{job.source}</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">{job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}</p>
+                      <p className="text-xs text-[#1c1c1a]/45 mt-0.5 truncate">{job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}</p>
                       {job.source === 'Adzuna' && <AdzunaCredit className="mt-1" />}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    {job.url && <a href={job.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">View</a>}
+                    {job.url && <a href={job.url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline">View</a>}
                     <button onClick={() => analyseFromSearch(job)} disabled={loading}
-                      className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1">
+                      className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1">
                       <span className="material-symbols-outlined text-sm">bolt</span>Analyse
                     </button>
                   </div>
@@ -2566,31 +2813,31 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {activeTab === 'cvs' && (
         <section className="space-y-6 animate-in fade-in duration-300">
           <div>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">CV Library</h3>
-            <p className="text-sm text-slate-500 mt-1">Role-tailored CVs you've generated. Analyse a role and choose "Proceed to Apply" to add one.</p>
+            <h3 className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#f0452f]">/CV library</h3>
+            <p className="text-sm text-[#1c1c1a]/60 mt-1">Role-tailored CVs you've generated. Analyse a role and choose "Proceed to Apply" to add one.</p>
           </div>
 
           {cvLibrary.length === 0 ? (
-            <div className="bg-slate-50 rounded-2xl p-12 border border-slate-100 text-center text-sm text-slate-400">
+            <div className="bg-[#f7f3e8] rounded-none p-12 border border-[#1c1c1a]/10 text-center text-sm text-[#1c1c1a]/45">
               No tailored CVs yet. Analyse a role in the Pipeline tab, then click "Proceed to Apply" to generate one.
             </div>
           ) : (
             <div className="space-y-4">
               {cvLibrary.map((cv) => (
-                <details key={cv.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden group">
-                  <summary className="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-slate-50 list-none">
+                <details key={cv.id} className="bg-[#faf7ef] rounded-none border border-[#1c1c1a]/25 overflow-hidden group">
+                  <summary className="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-[#f7f3e8] list-none">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-teal-50 flex items-center justify-center text-[#006C50]">
+                      <div className="h-10 w-10 rounded-none bg-[#e3dcc9] flex items-center justify-center text-[#f0452f]">
                         <span className="material-symbols-outlined">description</span>
                       </div>
                       <div>
-                        <p className="font-bold text-[#10294D] text-sm">{cv.role}</p>
-                        <p className="text-xs text-slate-400">{cv.company} · {cv.tailored_cv_at ? new Date(cv.tailored_cv_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</p>
+                        <p className="font-bold text-[#1c1c1a] text-sm">{cv.role}</p>
+                        <p className="text-xs text-[#1c1c1a]/45">{cv.company} · {cv.tailored_cv_at ? new Date(cv.tailored_cv_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700">{cv.status}</span>
+                    <span className="px-3 py-1 text-[10px] font-bold font-mono uppercase tracking-widest bg-[#1c1c1a] text-[#ece6d8]">{cv.status}</span>
                   </summary>
-                  <div className="px-6 pb-6 pt-2 border-t border-slate-100">
+                  <div className="px-6 pb-6 pt-2 border-t border-[#1c1c1a]/10">
                     <div className="flex justify-end mb-3">
                       <div className="flex items-center gap-3">
                         <button
@@ -2602,31 +2849,31 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                               setCvDraftText(cv.tailored_cv || '');
                             }
                           }}
-                          className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:underline"
+                          className="text-[10px] font-bold text-[#1c1c1a]/60 font-mono uppercase tracking-widest hover:underline"
                         >
                           {cvEditingId === cv.id ? 'Cancel edit' : 'Edit text'}
                         </button>
-                        <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: cv.role || 'Role', cvMarkdown: cv.tailored_cv })} className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>Download PDF</button>
-                        <button onClick={() => navigator.clipboard?.writeText(cv.tailored_cv)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Copy</button>
+                        <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: cv.role || 'Role', cvMarkdown: cv.tailored_cv })} className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>Download PDF</button>
+                        <button onClick={() => navigator.clipboard?.writeText(cv.tailored_cv)} className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline">Copy</button>
                       </div>
                     </div>
                     {cvEditingId === cv.id ? (
-                      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+                      <div className="bg-[#f7f3e8] rounded-none p-4 border border-[#1c1c1a]/25 space-y-3">
                         <textarea
                           value={cvDraftText}
                           onChange={(e) => setCvDraftText(e.target.value)}
                           rows={16}
-                          className="w-full font-mono text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-3 leading-relaxed"
+                          className="w-full font-mono text-xs text-[#1c1c1a]/80 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none p-3 leading-relaxed"
                         />
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-                          <button onClick={() => handleSaveTailoredCv(cv.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-lg text-xs font-bold bg-[#006C50] text-white hover:bg-[#005840]">
+                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#e3dcc9]">Cancel</button>
+                          <button onClick={() => handleSaveTailoredCv(cv.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-none text-xs font-bold bg-[#1c1c1a] text-white hover:bg-[#f0452f]">
                             {cvSaving ? 'Saving…' : 'Save CV edits'}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                      <div className="bg-[#f7f3e8] rounded-none p-6 border border-[#1c1c1a]/10">
                         <FitNarrative markdown={cv.tailored_cv} />
                       </div>
                     )}
@@ -2635,12 +2882,12 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         value={cvEdit}
                         onChange={(e) => setCvEdit(e.target.value)}
                         placeholder='Suggest a CV revision, e.g. "emphasise AI governance" or "make the summary shorter"'
-                        className="flex-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100"
+                        className="flex-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
                       />
                       <button
                         onClick={() => handleTailorCv(cv.id, cvEdit)}
                         disabled={tailoring || !cvEdit.trim()}
-                        className={`h-11 px-5 bg-[#10294D] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#001432] transition-colors ${(tailoring || !cvEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`h-11 px-5 bg-[#1c1c1a] text-white rounded-none font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-colors ${(tailoring || !cvEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {tailoring ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise CV
                       </button>
@@ -2657,18 +2904,38 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {activeTab === 'apply' && (
         <section className="space-y-6 animate-in fade-in duration-300">
           <div>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Apply Assist</h3>
-            <p className="text-sm text-slate-500 mt-1">Your details, ready to copy field-by-field into any application form. Fill the extras once — they're saved for next time.</p>
+            <h3 className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#f0452f]">/Apply assist</h3>
+            <p className="text-sm text-[#1c1c1a]/60 mt-1">Pick a role to work its dossier above — cover letter, portal answers, research and interview prep. Your copy-ready details live below.</p>
           </div>
 
+          {/* Role picker — drives the dossier rendered above this section */}
+          <div className="bg-[#f7f3e8] rounded-none p-5 border border-[#1c1c1a]/25">
+            <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Applying for</label>
+            {pipeline.length > 0 ? (
+              <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)}
+                className="block w-full mt-1 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]">
+                <option value="">— select a role —</option>
+                {pipeline.map((r) => <option key={r.id} value={r.id}>{r.role} @ {r.company}</option>)}
+              </select>
+            ) : (
+              <p className="text-xs text-[#1c1c1a]/45 mt-1">Analyse a role first (Pipeline or Live Scans) — then pick it here to open its dossier.</p>
+            )}
+          </div>
+
+          <details className="group border border-[#1c1c1a]/25 rounded-none bg-[#faf7ef]">
+            <summary className="cursor-pointer list-none px-6 py-4 flex items-center justify-between">
+              <span className="text-sm font-bold text-[#1c1c1a]">Your copy-ready details <span className="text-[#1c1c1a]/45 font-normal">— name, contact, address, notice period (set once)</span></span>
+              <span className="material-symbols-outlined text-[#1c1c1a]/45 transition-transform group-open:rotate-180">expand_more</span>
+            </summary>
+            <div className="px-6 pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Standard fields from profile + CV */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">badge</span>Standard fields</h4>
+                <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#f0452f]">badge</span>Standard fields</h4>
                 <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
               </div>
-              <p className="text-xs text-slate-500 -mt-2">Name, location, current role and salary come from Config.</p>
+              <p className="text-xs text-[#1c1c1a]/60 -mt-2">Name, location, current role and salary come from Config.</p>
               <CopyField label="Full name" value={profileData?.name} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <CopyField label="Email" value={profileData?.email || applyExtras.email} editable onChange={(v) => setExtra('email', v)} />
@@ -2686,9 +2953,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </div>
 
             {/* User-filled extras (persisted) */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">edit_note</span>Your extras</h4>
+                <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#f0452f]">edit_note</span>Your extras</h4>
                 <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2706,18 +2973,24 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               <CopyField label="How did you hear about us?" value={applyExtras.referral} editable onChange={(v) => setExtra('referral', v)} />
             </div>
           </div>
+            </div>
+          </details>
 
           {/* Employment history for application forms (D-SITE-077): editable copy,
               seeded from the evidence anchors; edits never change the anchors. */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-1">
-              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">work_history</span>Recent roles (for employment-history fields)</h4>
-              <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
-            </div>
-            <p className="text-xs text-slate-500 mb-4">Edit these for application forms. Your evidence anchors in Config are not changed.</p>
+          <details className="group border border-[#1c1c1a]/25 rounded-none bg-[#faf7ef]">
+            <summary className="cursor-pointer list-none px-6 py-4 flex items-center justify-between">
+              <span className="text-sm font-bold text-[#1c1c1a]">Recent roles <span className="text-[#1c1c1a]/45 font-normal">— for employment-history form fields</span></span>
+              <div className="flex items-center gap-3">
+                <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
+                <span className="material-symbols-outlined text-[#1c1c1a]/45 transition-transform group-open:rotate-180">expand_more</span>
+              </div>
+            </summary>
+            <div className="px-6 pb-6">
+            <p className="text-xs text-[#1c1c1a]/60 mb-4">Edit these for application forms. Your evidence anchors in Config are not changed.</p>
             <div className="space-y-4">
               {applyRoles.map((r, i) => (
-                <div key={i} className="space-y-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                <div key={i} className="space-y-3 pb-4 border-b border-[#1c1c1a]/10 last:border-0 last:pb-0">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <CopyField label="Employer" value={r.employer} editable onChange={(v) => updateApplyRole(i, 'employer', v)} />
                     <CopyField label="Job title" value={r.title} editable onChange={(v) => updateApplyRole(i, 'title', v)} />
@@ -2725,263 +2998,16 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   </div>
                   <CopyField label="Summary" value={r.summary} editable multiline onChange={(v) => updateApplyRole(i, 'summary', v)} />
                   <button onClick={() => setApplyRoles(applyRoles.filter((_, j) => j !== i))}
-                    className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-red-600">Remove role</button>
+                    className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 hover:text-red-600">Remove role</button>
                 </div>
               ))}
             </div>
             <button onClick={() => setApplyRoles([...applyRoles, { employer: '', title: '', period: '', summary: '' }])}
-              className="mt-4 text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline">+ Add role</button>
-          </div>
-
-          {/* Role picker — applies to company context, cover letter, answers & interview brief below */}
-          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Applying for — pick a role to research, draft cover letters, answer portal questions &amp; prep for interviews</label>
-            {pipeline.length > 0 ? (
-              <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)}
-                className="block w-full mt-1 bg-white border border-slate-200 rounded-xl p-3 text-sm text-[#10294D]">
-                <option value="">— select a role —</option>
-                {pipeline.map((r) => <option key={r.id} value={r.id}>{r.role} @ {r.company}</option>)}
-              </select>
-            ) : (
-              <p className="text-xs text-slate-400 mt-1">Analyse a role first (Pipeline or Live Scans) — then pick it here to generate a cover letter and answers.</p>
-            )}
-          </div>
-
-          {/* Company & role context (in Apply Assist when a role is selected) */}
-          {applyRoleId && (
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <div>
-                  <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#006C50]">travel_explore</span>
-                    Company &amp; Role Context
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Pull live employer research or add your own notes (hiring manager, product focus, why you care). Automatically used by Cover Letter, Application Answers, and Interview Prep below.
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {companyContext && (
-                    <button
-                      onClick={() => setEditingApplyContext((e) => !e)}
-                      className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:underline"
-                    >
-                      {editingApplyContext ? 'Done editing' : 'Edit notes'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleResearchCompany(applyRoleId, companyContext)}
-                    disabled={researchLoading}
-                    className={`h-10 px-4 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#001432] transition-colors ${researchLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    {researchLoading ? (
-                      <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Researching…</>
-                    ) : (
-                      <><span className="material-symbols-outlined text-sm">travel_explore</span>{companyContext ? 'Refresh company research' : 'Research company (1 action)'}</>
-                    )}
-                  </button>
-                </div>
-              </div>
-              {companyContext && !editingApplyContext ? (
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <CollapsibleNarrative markdown={companyContext} openCount={3} />
-                </div>
-              ) : (
-                <>
-                  <textarea
-                    value={companyContext}
-                    onChange={(e) => setCompanyContext(e.target.value)}
-                    placeholder="Type your own notes about the company/role or click 'Research company' above…"
-                    rows={companyContext ? 6 : 2}
-                    className="w-full mt-2 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-100"
-                  />
-                  <div className="flex justify-end mt-2">
-                    <button
-                      onClick={async () => {
-                        await handleSaveCompanyContext(applyRoleId, companyContext);
-                        setEditingApplyContext(false);
-                      }}
-                      disabled={contextSaving}
-                      className="text-[10px] font-bold uppercase tracking-widest text-[#006C50] hover:underline"
-                    >
-                      {contextSaving ? 'Saving…' : 'Save context notes'}
-                    </button>
-                  </div>
-                </>
-              )}
+              className="mt-4 text-[10px] font-bold font-mono uppercase tracking-widest text-[#f0452f] hover:underline">+ Add role</button>
             </div>
-          )}
+          </details>
 
-          {/* Cover letter (A2) — needs a selected role */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-1">
-              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">mail</span>Cover letter</h4>
-              {coverLetter && (
-                <div className="flex items-center gap-3">
-                  <button onClick={() => navigator.clipboard?.writeText(coverLetter)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Copy</button>
-                  <button onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: pipeline.find(r => r.id === applyRoleId)?.role || 'Cover letter', cvMarkdown: coverLetter })} className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">download</span>PDF</button>
-                </div>
-              )}
-            </div>
-            {!applyRoleId ? (
-              <p className="text-sm text-slate-400 py-6 text-center">Select a role above to generate a tailored cover letter (grounded in your real evidence).</p>
-            ) : !coverLetter ? (
-              <div className="py-6 text-center">
-                <p className="text-sm text-slate-500 mb-4">Generate a cover letter tailored to this role from your CV and evidence. Uses one action.</p>
-                <button onClick={() => handleCoverLetter()} disabled={coverLoading}
-                  className={`h-12 px-6 bg-[#006C50] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#005840] transition-colors ${coverLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                  {coverLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Writing…</>) : (<><span className="material-symbols-outlined">mail</span>Generate cover letter</>)}
-                </button>
-              </div>
-            ) : (
-              <div className="mt-3">
-                <div className="bg-slate-50 rounded-xl p-5 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{coverLetter}</div>
-                <AiReviewWarning what="cover letter" />
-                <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                  <input value={coverEdit} onChange={(e) => setCoverEdit(e.target.value)} placeholder='Suggest an edit, e.g. "make it shorter" or "emphasise the 50% metric"'
-                    className="flex-1 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
-                  <button onClick={() => handleCoverLetter(coverEdit)} disabled={coverLoading || !coverEdit.trim()}
-                    className={`h-11 px-5 bg-[#10294D] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#001432] transition-colors ${(coverLoading || !coverEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    {coverLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2">Each revision uses one action.</p>
-              </div>
-            )}
-          </div>
 
-          {/* Common & Custom application answers (A3) */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-1">
-              <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#006C50]">quiz</span>Application form answers (common &amp; custom portal questions)</h4>
-              {applyAnswers.length > 0 && applyRoleId && (
-                <button onClick={handleApplyAnswers} disabled={answersLoading} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Regenerate common answers</button>
-              )}
-            </div>
-            {!applyRoleId ? (
-              <p className="text-sm text-slate-400 py-6 text-center">Select a role above to draft answers to common or custom application questions.</p>
-            ) : (
-              <div className="mt-3 space-y-4">
-                {applyAnswers.length === 0 ? (
-                  <div className="py-4 text-center">
-                    <p className="text-sm text-slate-500 mb-3">Draft the 4 standard free-text answers ("why this role / why us / good fit / relevant experience"), or ask a custom portal question below.</p>
-                    <button onClick={handleApplyAnswers} disabled={answersLoading}
-                      className={`h-11 px-5 bg-[#006C50] text-white rounded-xl font-bold inline-flex items-center justify-center gap-2 hover:bg-[#005840] transition-colors ${answersLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                      {answersLoading ? (<><span className="material-symbols-outlined animate-spin">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined">quiz</span>Draft common answers (1 action)</>)}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {applyAnswers.map((qa, i) => (
-                      <div key={i} className="space-y-1">
-                        <CopyField
-                          label={qa.q}
-                          value={qa.a}
-                          multiline
-                          editable
-                          onChange={(v) => {
-                            const next = applyAnswers.map((item, j) => (j === i ? { ...item, a: v } : item));
-                            handleSaveApplyAnswers(next);
-                          }}
-                        />
-                        {qa.custom && (
-                          <div className="flex justify-end">
-                            <button
-                              onClick={() => handleSaveApplyAnswers(applyAnswers.filter((_, j) => j !== i))}
-                              className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-red-600"
-                            >
-                              Remove question
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    <AiReviewWarning what="answer" />
-                  </div>
-                )}
-
-                {/* Custom portal question box */}
-                <div className="pt-4 border-t border-slate-100 space-y-2.5">
-                  <div className="text-xs font-bold text-[#10294D]">Answer a custom portal question</div>
-                  <p className="text-[11px] text-slate-500">Paste any bespoke question from Workday, Greenhouse, Ashby, or Civil Service Jobs. Grounded strictly in your evidence library.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input
-                      value={customQ}
-                      onChange={(e) => setCustomQ(e.target.value)}
-                      placeholder='e.g. "Describe a complex regulatory or platform delivery you led"'
-                      className="sm:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-[#10294D]"
-                    />
-                    <input
-                      value={customGuidance}
-                      onChange={(e) => setCustomGuidance(e.target.value)}
-                      placeholder='Optional: "max 200 words, STAR format"'
-                      className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-[#10294D]"
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleCustomQuestion}
-                      disabled={customLoading || !customQ.trim()}
-                      className={`h-10 px-5 bg-[#10294D] text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 hover:bg-[#001432] transition-colors ${(customLoading || !customQ.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      {customLoading ? (<><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Drafting…</>) : (<><span className="material-symbols-outlined text-sm">edit_square</span>Answer question (1 action)</>)}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Interview Prep Brief (in Apply Assist when a role is selected) */}
-          {applyRoleId && (
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <div>
-                  <h4 className="font-bold text-[#10294D] text-sm flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#006C50]">record_voice_over</span>
-                    Interview Prep Brief
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    60-second pitch, top 5 likely questions mapped to your evidence anchors, how to handle flagged gaps, and questions to ask them.
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {interviewBrief && (
-                    <>
-                      <button
-                        onClick={() => printCvAsPdf({ name: profileData?.name || 'Candidate', role: `${pipeline.find(r => r.id === applyRoleId)?.role || 'Role'} — Interview Brief`, cvMarkdown: interviewBrief })}
-                        className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline flex items-center gap-1"
-                      >
-                        <span className="material-symbols-outlined text-sm">download</span>PDF
-                      </button>
-                      <button
-                        onClick={() => navigator.clipboard?.writeText(interviewBrief)}
-                        className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline"
-                      >
-                        Copy
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => handleInterviewBrief(applyRoleId)}
-                    disabled={briefLoading}
-                    className={`h-10 px-4 bg-[#006C50] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#005840] transition-colors ${briefLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    {briefLoading ? (
-                      <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Preparing…</>
-                    ) : (
-                      <><span className="material-symbols-outlined text-sm">record_voice_over</span>{interviewBrief ? 'Regenerate brief' : 'Generate interview brief (1 action)'}</>
-                    )}
-                  </button>
-                </div>
-              </div>
-              {interviewBrief && (
-                <div className="mt-3 bg-slate-50 rounded-xl p-5 border border-slate-100">
-                  <CollapsibleNarrative markdown={interviewBrief} openCount={4} />
-                </div>
-              )}
-            </div>
-          )}
         </section>
       )}
 
@@ -2990,40 +3016,41 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         <section className="animate-in fade-in duration-300">
            {/* Validation Banner */}
            {!configStatus.has_config && (
-             <div className="mb-8 flex items-center justify-between bg-red-50 text-red-900 px-6 py-3 rounded-xl border border-red-100">
+             <div className="mb-8 flex items-center justify-between bg-red-50 text-red-900 px-6 py-3 rounded-none border border-red-100">
                <div className="flex items-center gap-3">
                  <span className="material-symbols-outlined text-red-500">report</span>
                  <span className="text-xs font-bold uppercase tracking-wider">Validation Alert:</span>
                  <span className="text-xs font-medium">Missing Target Salary floor and Evidence Anchors in profile configuration.</span>
                </div>
-               <button className="text-[10px] font-bold underline decoration-2 underline-offset-4 uppercase tracking-widest">Fix Now</button>
+               <button className="text-[10px] font-bold underline decoration-2 underline-offset-4 font-mono uppercase tracking-widest">Fix Now</button>
              </div>
            )}
 
            <header className="mb-10">
-             <h3 className="text-3xl font-bold text-[#10294D] tracking-tight">Onboarding & Configuration.</h3>
-             <p className="text-slate-500 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
-             <div className="mt-3 inline-flex items-start gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 max-w-2xl">
-               <span className="material-symbols-outlined text-[#006C50] text-base">lock</span>
+             <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-[#f0452f] mb-2">/Config</p>
+             <h3 className="text-3xl font-black text-[#1c1c1a] tracking-tight">Onboarding &amp; configuration<span className="text-[#f0452f]">.</span></h3>
+             <p className="text-[#1c1c1a]/60 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
+             <div className="mt-3 inline-flex items-start gap-2 text-xs text-[#1c1c1a]/60 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none px-3 py-2 max-w-2xl">
+               <span className="material-symbols-outlined text-[#f0452f] text-base">lock</span>
                <span>Your details stay in your own private Arcturus DC workspace. We never sell your data or use it for marketing. It's shared only with the AI and job-board services that run your search, then stored securely here.</span>
              </div>
            </header>
            
            {/* CV Library — upload your CV; the active one is the reference for analyse & search */}
            
-           <div className="bg-white rounded-2xl p-5 sm:p-8 border border-slate-200 shadow-sm mb-8">
+           <div className="bg-[#faf7ef] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 mb-8">
            
-             <h3 className="font-bold text-[#10294D] text-lg tracking-tight flex items-center gap-2 mb-1">
+             <h3 className="font-bold text-[#1c1c1a] text-lg tracking-tight flex items-center gap-2 mb-1">
            
-               <span className="material-symbols-outlined text-[#006C50]">description</span> Your CV
+               <span className="material-symbols-outlined text-[#f0452f]">description</span> Your CV
            
              </h3>
            
-             <p className="text-sm text-slate-500 mb-4">Upload your CV (PDF or DOCX). The <span className="font-bold">active</span> CV is the reference Career Ops uses to analyse roles, search, and tailor — and we&apos;ll auto-fill your profile &amp; evidence from it.</p>
+             <p className="text-sm text-[#1c1c1a]/60 mb-4">Upload your CV (PDF or DOCX). The <span className="font-bold">active</span> CV is the reference Career Ops uses to analyse roles, search, and tailor — and we&apos;ll auto-fill your profile &amp; evidence from it.</p>
            
              <div className="flex flex-wrap gap-3 items-center">
            
-               <label className={`inline-flex items-center gap-2 h-11 px-5 rounded-xl font-bold text-sm cursor-pointer transition-colors ${cvBusy ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#006C50] text-white hover:bg-[#005840]'}`}>
+               <label className={`inline-flex items-center gap-2 h-11 px-5 rounded-none font-bold text-sm cursor-pointer transition-colors ${cvBusy ? 'bg-[#e3dcc9] text-[#1c1c1a]/45 cursor-not-allowed' : 'bg-[#1c1c1a] text-white hover:bg-[#f0452f]'}`}>
            
                  {cvBusy ? <span className="material-symbols-outlined animate-spin text-base">progress_activity</span> : <span className="material-symbols-outlined text-base">upload_file</span>}
            
@@ -3035,7 +3062,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
                </label>
            
-               <button onClick={() => setCvPasteOpen((o) => !o)} className="h-11 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50">or paste text</button>
+               <button onClick={() => setCvPasteOpen((o) => !o)} className="h-11 px-4 rounded-none border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold text-sm hover:bg-[#f7f3e8]">or paste text</button>
            
              </div>
            
@@ -3043,11 +3070,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
                <div className="mt-4 space-y-2">
            
-                 <input value={cvPasteLabel} onChange={(e) => setCvPasteLabel(e.target.value)} placeholder="Label (e.g. Energy PO version)" className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100" />
+                 <input value={cvPasteLabel} onChange={(e) => setCvPasteLabel(e.target.value)} placeholder="Label (e.g. Energy PO version)" className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
            
-                 <textarea value={cvPasteText} onChange={(e) => setCvPasteText(e.target.value)} placeholder="Paste your full CV text here…" className="w-full h-40 bg-slate-50 border-none rounded-xl p-3 text-sm text-[#10294D] focus:ring-2 focus:ring-blue-100 resize-none" />
+                 <textarea value={cvPasteText} onChange={(e) => setCvPasteText(e.target.value)} placeholder="Paste your full CV text here…" className="w-full h-40 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none" />
            
-                 <button onClick={async () => { await saveCvAndExtract(cvPasteLabel || 'My CV', cvPasteText); setCvPasteText(''); setCvPasteLabel(''); setCvPasteOpen(false); }} disabled={cvBusy || !cvPasteText.trim()} className={`h-11 px-5 rounded-xl font-bold text-sm ${(cvBusy || !cvPasteText.trim()) ? 'bg-slate-100 text-slate-400' : 'bg-[#10294D] text-white hover:bg-[#001432]'}`}>Save CV</button>
+                 <button onClick={async () => { await saveCvAndExtract(cvPasteLabel || 'My CV', cvPasteText); setCvPasteText(''); setCvPasteLabel(''); setCvPasteOpen(false); }} disabled={cvBusy || !cvPasteText.trim()} className={`h-11 px-5 rounded-none font-bold text-sm ${(cvBusy || !cvPasteText.trim()) ? 'bg-[#e3dcc9] text-[#1c1c1a]/45' : 'bg-[#1c1c1a] text-white hover:bg-[#f0452f]'}`}>Save CV</button>
            
                </div>
            
@@ -3059,29 +3086,29 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
                  {cvUploads.map((cv) => (
            
-                   <div key={cv.id} className={`flex items-center justify-between gap-3 p-3 rounded-xl border ${cv.active ? 'border-[#006C50] bg-teal-50/40' : 'border-slate-200'}`}>
+                   <div key={cv.id} className={`flex items-center justify-between gap-3 p-3 rounded-none border ${cv.active ? 'border-[#1c1c1a] bg-[#e3dcc9]/40' : 'border-[#1c1c1a]/25'}`}>
            
                      <div className="min-w-0">
            
                        <div className="flex items-center gap-2">
            
-                         <p className="font-bold text-[#10294D] text-sm truncate">{cv.label}</p>
+                         <p className="font-bold text-[#1c1c1a] text-sm truncate">{cv.label}</p>
            
-                         {cv.active && <span className="text-[9px] font-bold uppercase tracking-widest bg-[#006C50] text-white px-1.5 py-0.5 rounded">Active</span>}
+                         {cv.active && <span className="text-[9px] font-bold font-mono uppercase tracking-widest bg-[#1c1c1a] text-white px-1.5 py-0.5 rounded">Active</span>}
            
                        </div>
            
-                       <p className="text-xs text-slate-400 truncate">{cv.preview}…</p>
+                       <p className="text-xs text-[#1c1c1a]/45 truncate">{cv.preview}…</p>
            
                      </div>
            
                      <div className="flex items-center gap-3 shrink-0">
            
-                       {!cv.active && <button onClick={() => setActiveCv(cv.id)} className="text-[10px] font-bold text-[#006C50] uppercase tracking-widest hover:underline">Set active</button>}
+                       {!cv.active && <button onClick={() => setActiveCv(cv.id)} className="text-[10px] font-bold text-[#f0452f] font-mono uppercase tracking-widest hover:underline">Set active</button>}
            
-                       <button onClick={() => relabelCv(cv.id, cv.label)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:underline">Rename</button>
+                       <button onClick={() => relabelCv(cv.id, cv.label)} className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest hover:underline">Rename</button>
            
-                       <button onClick={() => deleteCv(cv.id)} className="text-slate-300 hover:text-red-500"><span className="material-symbols-outlined text-sm">delete</span></button>
+                       <button onClick={() => deleteCv(cv.id)} className="text-[#1c1c1a]/30 hover:text-red-500"><span className="material-symbols-outlined text-sm">delete</span></button>
            
                      </div>
            
@@ -3129,9 +3156,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* First-run onboarding walkthrough */}
       {pendingEvidence && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl flex flex-col gap-4">
-            <h3 className="font-bold text-[#10294D] text-lg">You already have evidence anchors</h3>
-            <p className="text-sm text-slate-600">
+          <div className="bg-[#faf7ef] rounded-none p-6 max-w-md w-full flex flex-col gap-4">
+            <h3 className="font-bold text-[#1c1c1a] text-lg">You already have evidence anchors</h3>
+            <p className="text-sm text-[#1c1c1a]/70">
               The CV gave {pendingEvidence.length} role{pendingEvidence.length === 1 ? '' : 's'}. Your existing anchors are
               unchanged unless you choose to replace them. Empty profile fields were filled; nothing you had set was changed.
               Nothing is saved until you press Save.
@@ -3143,19 +3170,19 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 setPendingEvidence(null);
                 alert(addedCount ? `Added ${addedCount} new role${addedCount === 1 ? '' : 's'}. Review and hit Save.` : 'No new roles found. Your anchors are unchanged.');
               }}
-              className="px-4 py-3 bg-[#10294D] text-white rounded-xl font-bold text-xs uppercase tracking-widest"
+              className="px-4 py-3 bg-[#1c1c1a] text-white rounded-none font-bold text-xs font-mono uppercase tracking-widest"
             >
               Add only new roles
             </button>
             <button
               onClick={() => { setAnchorsData(pendingEvidence); setPendingEvidence(null); }}
-              className="px-4 py-3 bg-slate-100 text-[#10294D] rounded-xl font-bold text-xs uppercase tracking-widest"
+              className="px-4 py-3 bg-[#e3dcc9] text-[#1c1c1a] rounded-none font-bold text-xs font-mono uppercase tracking-widest"
             >
               Replace all my anchors
             </button>
             <button
               onClick={() => setPendingEvidence(null)}
-              className="px-4 py-3 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest"
+              className="px-4 py-3 text-[#1c1c1a]/70 rounded-none font-bold text-xs font-mono uppercase tracking-widest"
             >
               Keep my anchors
             </button>
@@ -3175,25 +3202,25 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* Buy-a-coffee paywall */}
       {showPaywall && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowPaywall(false)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#faf7ef] rounded-none max-w-md w-full p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
             <div className="text-4xl mb-3">☕</div>
-            <h3 className="text-xl font-bold text-[#10294D]">{usage?.remaining > 0 ? 'Enjoying Career Ops?' : "You've used your free actions"}</h3>
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+            <h3 className="text-xl font-bold text-[#1c1c1a]">{usage?.remaining > 0 ? 'Enjoying Career Ops?' : "You've used your free actions"}</h3>
+            <p className="text-sm text-[#1c1c1a]/70 mt-2 leading-relaxed">
               Career Ops is free for your first {usage?.free_actions || 20} actions (analyses, CV tailoring and searches).
               {usage?.remaining > 0 ? ` You have ${usage.remaining} left.` : ' To keep going, buy us a coffee.'}
             </p>
-            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+            <p className="text-xs text-[#1c1c1a]/45 mt-3 leading-relaxed">
               This isn't about profit — it just covers the AI costs of running your job search. A £5 coffee unlocks another {usage?.bundle || 50} actions.
             </p>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => handleBuyCoffee()} className="flex-1 h-12 bg-[#006C50] text-white rounded-xl font-bold hover:bg-[#005840] transition-colors flex items-center justify-center gap-2">
+              <button onClick={() => handleBuyCoffee()} className="flex-1 h-12 bg-[#1c1c1a] text-white rounded-none font-bold hover:bg-[#f0452f] transition-colors flex items-center justify-center gap-2">
                 <span>☕</span> Buy a coffee — £5
               </button>
-              <button onClick={() => setShowPaywall(false)} className="px-5 h-12 border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">
+              <button onClick={() => setShowPaywall(false)} className="px-5 h-12 border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold rounded-none hover:bg-[#f7f3e8] transition-colors">
                 Maybe later
               </button>
             </div>
-            <button onClick={handleRedeemCode} className="mt-4 w-full text-center text-xs text-slate-400 hover:text-slate-600 underline">
+            <button onClick={handleRedeemCode} className="mt-4 w-full text-center text-xs text-[#1c1c1a]/45 hover:text-[#1c1c1a]/70 underline">
               Have an access code? Enter it here
             </button>
           </div>
