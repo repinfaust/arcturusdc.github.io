@@ -376,6 +376,38 @@ export function createCareerHandler(app) {
         return NextResponse.json({ analyses });
       }
 
+      // Permanently remove an analysed role from the pipeline (free). Also
+      // removes its tailored CV from the CV library, since that lives on the
+      // same document.
+      if (action === 'delete_analysis') {
+        const { ref, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        await ref.delete();
+        return NextResponse.json({ id: body.id, deleted: true });
+      }
+
+      // Reset a role's dossier (free): clear every generated artefact and put
+      // the status back to Evaluated. The analysis itself (score, evaluation,
+      // JD) is kept; spent actions are not refunded.
+      if (action === 'reset_analysis') {
+        const { ref, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        await ref.set({
+          tailored_cv: null,
+          tailored_cv_at: null,
+          cover_letter: null,
+          cover_letter_at: null,
+          apply_answers: null,
+          apply_answers_at: null,
+          interview_brief: null,
+          interview_brief_at: null,
+          company_context: null,
+          status: 'Evaluated',
+          status_at: new Date(),
+        }, { merge: true });
+        return NextResponse.json({ id: body.id, reset: true, status: 'Evaluated' });
+      }
+
       // Set a role's pipeline status (free — no AI call). Lets the user record
       // progress through to submission and beyond from the role dossier.
       if (action === 'set_status') {

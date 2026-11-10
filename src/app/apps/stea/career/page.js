@@ -1248,6 +1248,54 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     }
   }
 
+  // Remove a role from the pipeline entirely (free; also drops its tailored
+  // CV from the library, which lives on the same document).
+  async function handleDeleteAnalysis(item) {
+    if (!currentTenant?.id || !item?.id) return;
+    if (!window.confirm(`Remove "${item.role}" at ${item.company} from your pipeline?\n\nThis deletes the analysis and any tailored CV, cover letter, answers and brief for it. It cannot be undone (spent actions are not refunded).`)) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'delete_analysis', tenantId: currentTenant.id, id: item.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Remove failed');
+      if (applyRoleId === item.id) setApplyRoleId(''); // clears the open dossier
+      loadAnalyses();
+      loadCvs();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  // Reset a role's dossier: clear generated artefacts, status back to
+  // Evaluated. Keeps the analysis and score.
+  async function handleResetAnalysis(item) {
+    if (!currentTenant?.id || !item?.id) return;
+    if (!window.confirm(`Reset the dossier for "${item.role}" at ${item.company}?\n\nThis clears the tailored CV, cover letter, answers, interview brief and company research, and sets the status back to Evaluated. The analysis and score are kept. Spent actions are not refunded.`)) return;
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'reset_analysis', tenantId: currentTenant.id, id: item.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Reset failed');
+      if (applyRoleId === item.id) {
+        setResults((r) => (r && r.id === item.id
+          ? { ...r, tailored_cv: null, cover_letter: null, apply_answers: null, interview_brief: null, company_context: null, status: 'Evaluated' }
+          : r));
+        setCoverLetter('');
+        setApplyAnswers([]);
+        setCompanyContext('');
+        setInterviewBrief('');
+      }
+      loadAnalyses();
+      loadCvs();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   // Scroll to a dossier stage section (tracker nodes are jump links).
   function jumpToStage(stageId) {
     const el = typeof document !== 'undefined' ? document.getElementById(`dossier-${stageId}`) : null;
@@ -2702,12 +2750,28 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         </span>
                       </td>
                       <td className="px-4 sm:px-5 py-4 text-right whitespace-nowrap">
-                        <button
-                          className="border border-[#1c1c1a]/30 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a] transition-colors group-hover:border-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#f6f7f8]"
-                          onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}
-                        >
-                          {next} →
-                        </button>
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            className="border border-[#1c1c1a]/30 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a] transition-colors group-hover:border-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#f6f7f8]"
+                            onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}
+                          >
+                            {next} →
+                          </button>
+                          <button
+                            title="Reset dossier — clear the generated CV, letter, answers and brief; keep the analysis"
+                            className="border border-[#1c1c1a]/20 px-2.5 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a]/50 transition-colors hover:border-[#b45309] hover:text-[#b45309]"
+                            onClick={(e) => { e.stopPropagation(); handleResetAnalysis(item); }}
+                          >
+                            Reset
+                          </button>
+                          <button
+                            title="Remove this role from the pipeline"
+                            className="border border-[#1c1c1a]/20 px-2.5 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a]/50 transition-colors hover:border-[#f0452f] hover:bg-[#f0452f] hover:text-white"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteAnalysis(item); }}
+                          >
+                            ×
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
