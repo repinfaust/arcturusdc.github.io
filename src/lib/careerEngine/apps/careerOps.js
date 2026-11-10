@@ -139,7 +139,9 @@ The two Gate factors are not weighted: if either scores 2.0 or below, the recomm
 
     tailorSystem: (f) => `You are an expert CV writer for candidates targeting ${rolesText(f)} roles. ` +
       'Output clean GitHub-flavored Markdown. NEVER invent metrics, roles, dates or skills — only ' +
-      'reuse and re-emphasise what is in the Evidence Library, Candidate Profile and CV. Produce: ' +
+      'reuse and re-emphasise what is in the Evidence Library, Candidate Profile and CV. ' +
+      "The headline under the candidate's name is their ACTUAL current role from the Candidate Profile — " +
+      "never the advertised role's title presented as their own. Produce: " +
       '(1) a full tailored CV, (2) a 150-220 word cover note, (3) a short rationale of changes.',
     tailor: (jdSummary) => `# CV Tailoring
 Task: Tailor the candidate's CV (Candidate Profile, Evidence Library and CV above) for this specific role.
@@ -156,6 +158,7 @@ ${jdSummary}
 
 ## Constraints:
 - DO NOT invent metrics, roles, or dates.
+- The header/headline under the candidate's name states the candidate's ACTUAL current role and title from the Candidate Profile — NEVER the advertised role's title. The target role may be referenced in the summary narrative, not presented as the candidate's own title.
 - Keep output in Markdown format.
 - Maintain the candidate's authentic professional voice.
 

@@ -24,7 +24,7 @@ export default function CareerOpsShell({ activeTab, title, subtitle, children })
   };
 
   return (
-    <div className="w-screen -ml-[calc(50vw-50%)] bg-[#ece6d8] text-[#1c1c1a]">
+    <div className="w-screen -ml-[calc(50vw-50%)] bg-[#f6f7f8] text-[#1c1c1a]">
       <div className="relative isolate overflow-hidden border-b-2 border-[#1c1c1a]">
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(28,28,26,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(28,28,26,0.07)_1px,transparent_1px)] bg-[size:72px_72px]" />
         <header className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
@@ -37,7 +37,7 @@ export default function CareerOpsShell({ activeTab, title, subtitle, children })
               <TenantSwitcher />
               <button
                 onClick={handleSignOut}
-                className="border border-[#1c1c1a] px-3 py-2 font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[#1c1c1a] transition-colors hover:bg-[#1c1c1a] hover:text-[#ece6d8]"
+                className="border border-[#1c1c1a] px-3 py-2 font-mono text-[0.65rem] uppercase tracking-[0.12em] text-[#1c1c1a] transition-colors hover:bg-[#1c1c1a] hover:text-[#f6f7f8]"
               >
                 Sign out
               </button>

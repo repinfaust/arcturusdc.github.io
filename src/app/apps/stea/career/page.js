@@ -29,6 +29,19 @@ async function apiHeaders() {
   return headers;
 }
 
+/* Plain-text rendering of a tailored CV for the copy-straight-out embed:
+   markdown structure markers stripped so pasted text is portal-clean. */
+function cvPlainText(md) {
+  return cleanMarkdown(md || '')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/^[-*]\s+/gm, '• ')
+    .replace(/^---+\s*$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 /* ---------------- Markdown renderer for the AI fit narrative ---------------- */
 function FitNarrative({ markdown }) {
   return (
@@ -43,11 +56,11 @@ function FitNarrative({ markdown }) {
           ul: (p) => <ul className="list-disc pl-5 my-2 space-y-1" {...p} />,
           ol: (p) => <ol className="list-decimal pl-5 my-2 space-y-1" {...p} />,
           strong: (p) => <strong className="font-bold text-[#1c1c1a]" {...p} />,
-          blockquote: (p) => <blockquote className="border-l-4 border-[#1c1c1a] bg-[#e3dcc9]/50 pl-4 py-2 my-3 rounded-r text-[#1c1c1a]" {...p} />,
-          pre: (p) => <pre className="bg-[#f7f3e8] border border-[#1c1c1a]/25 p-3 rounded-none overflow-x-auto whitespace-pre-wrap break-words text-xs font-mono my-2" {...p} />,
-          code: (p) => <code className="bg-[#e3dcc9] px-1.5 py-0.5 rounded text-[13px] font-mono break-words" {...p} />,
+          blockquote: (p) => <blockquote className="border-l-4 border-[#1c1c1a] bg-[#e9ebee]/50 pl-4 py-2 my-3 rounded-r text-[#1c1c1a]" {...p} />,
+          pre: (p) => <pre className="bg-[#f3f4f6] border border-[#1c1c1a]/25 p-3 rounded-none overflow-x-auto whitespace-pre-wrap break-words text-xs font-mono my-2" {...p} />,
+          code: (p) => <code className="bg-[#e9ebee] px-1.5 py-0.5 rounded text-[13px] font-mono break-words" {...p} />,
           table: (p) => <div className="overflow-x-auto my-4"><table className="w-full text-xs border-collapse" {...p} /></div>,
-          thead: (p) => <thead className="bg-[#e3dcc9]" {...p} />,
+          thead: (p) => <thead className="bg-[#e9ebee]" {...p} />,
           th: (p) => <th className="border border-[#1c1c1a]/25 px-3 py-2 text-left font-bold text-[#1c1c1a]" {...p} />,
           td: (p) => <td className="border border-[#1c1c1a]/25 px-3 py-2 align-top" {...p} />,
           hr: () => <hr className="my-5 border-[#1c1c1a]/25" />,
@@ -85,9 +98,9 @@ function CollapsibleNarrative({ markdown, openCount = 2 }) {
         <details
           key={i}
           open={i < openCount}
-          className="group border border-[#1c1c1a]/25 rounded-none bg-[#faf7ef] overflow-hidden"
+          className="group border border-[#1c1c1a]/25 rounded-none bg-[#ffffff] overflow-hidden"
         >
-          <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between hover:bg-[#f7f3e8] font-bold text-[#1c1c1a] text-sm">
+          <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between hover:bg-[#f3f4f6] font-bold text-[#1c1c1a] text-sm">
             <span>{sectionTitle(block)}</span>
             <span className="material-symbols-outlined text-[#1c1c1a]/45 transition-transform group-open:rotate-180">expand_more</span>
           </summary>
@@ -132,17 +145,17 @@ function CopyField({ label, value, editable, onChange, multiline }) {
         {editable ? (
           multiline ? (
             <textarea value={value || ''} onChange={(e) => onChange(e.target.value)}
-              className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none h-20" />
+              className="w-full mt-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none h-20" />
           ) : (
             <input value={value || ''} onChange={(e) => onChange(e.target.value)}
-              className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+              className="w-full mt-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
           )
         ) : (
-          <div className="mt-1 bg-[#f7f3e8] rounded-none p-3 text-sm text-[#1c1c1a] min-h-[44px] break-words whitespace-pre-wrap">{value || <span className="text-[#1c1c1a]/30">—</span>}</div>
+          <div className="mt-1 bg-[#f3f4f6] rounded-none p-3 text-sm text-[#1c1c1a] min-h-[44px] break-words whitespace-pre-wrap">{value || <span className="text-[#1c1c1a]/30">—</span>}</div>
         )}
       </div>
       <button onClick={doCopy} disabled={!value} title="Copy"
-        className={`mt-6 shrink-0 w-10 h-10 rounded-none flex items-center justify-center transition-colors ${value ? 'bg-[#e3dcc9] text-[#f0452f] hover:bg-[#1c1c1a] hover:text-white' : 'bg-[#f7f3e8] text-[#1c1c1a]/30 cursor-not-allowed'}`}>
+        className={`mt-6 shrink-0 w-10 h-10 rounded-none flex items-center justify-center transition-colors ${value ? 'bg-[#e9ebee] text-[#f0452f] hover:bg-[#1c1c1a] hover:text-white' : 'bg-[#f3f4f6] text-[#1c1c1a]/30 cursor-not-allowed'}`}>
         <span className="material-symbols-outlined text-base">{copied ? 'check' : 'content_copy'}</span>
       </button>
     </div>
@@ -202,7 +215,7 @@ function OnboardingModal({ onClose, onDismiss, onFinish, onCta }) {
   const last = i === ONBOARDING_CARDS.length - 1;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="bg-[#faf7ef] rounded-none max-w-lg w-full p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[#ffffff] rounded-none max-w-lg w-full p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-start">
           <div className="text-4xl mb-3">{card.icon}</div>
           <button onClick={onClose} className="text-[#1c1c1a]/30 hover:text-[#1c1c1a]/60"><span className="material-symbols-outlined">close</span></button>
@@ -216,13 +229,13 @@ function OnboardingModal({ onClose, onDismiss, onFinish, onCta }) {
         )}
         <div className="flex items-center justify-center gap-1.5 my-5">
           {ONBOARDING_CARDS.map((_, n) => (
-            <span key={n} className={`h-1.5 rounded-full transition-all ${n === i ? 'w-6 bg-[#1c1c1a]' : 'w-1.5 bg-[#d8d1bd]'}`}></span>
+            <span key={n} className={`h-1.5 rounded-full transition-all ${n === i ? 'w-6 bg-[#1c1c1a]' : 'w-1.5 bg-[#dfe2e6]'}`}></span>
           ))}
         </div>
         <div className="flex items-center justify-between gap-3">
           <button onClick={onDismiss} className="text-xs font-bold text-[#1c1c1a]/45 hover:text-[#1c1c1a]/70 font-mono uppercase tracking-widest">Don't show again</button>
           <div className="flex gap-2">
-            {i > 0 && <button onClick={() => setI(i - 1)} className="px-4 h-10 border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold rounded-none hover:bg-[#f7f3e8] text-sm">Back</button>}
+            {i > 0 && <button onClick={() => setI(i - 1)} className="px-4 h-10 border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold rounded-none hover:bg-[#f3f4f6] text-sm">Back</button>}
             {last ? (
               <button onClick={onFinish} className="px-5 h-10 bg-[#1c1c1a] text-white font-bold rounded-none hover:bg-[#f0452f] text-sm">Get started</button>
             ) : (
@@ -292,7 +305,7 @@ const FitGauge = ({ score }) => {
 /* ---------------- Configuration & Onboarding Components ---------------- */
 
 const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
-  <div className="bg-[#faf7ef] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 flex flex-col gap-6">
+  <div className="bg-[#ffffff] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-[#1c1c1a]">account_circle</span>
@@ -314,7 +327,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
           type="text" 
           value={data?.name || ''} 
           onChange={(e) => onChange({...data, name: e.target.value})}
-          className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
+          className="w-full bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
           placeholder="e.g. Tom Granger"
         />
       </div>
@@ -326,7 +339,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
             type="text" 
             value={data?.current_role || ''} 
             onChange={(e) => onChange({...data, current_role: e.target.value})}
-            className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
+            className="w-full bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
             placeholder="e.g. Product Owner"
           />
         </div>
@@ -338,7 +351,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
             min={0}
             value={data?.min_salary || ''}
             onChange={(e) => onChange({...data, min_salary: e.target.value})}
-            className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
+            className="w-full bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
             placeholder="e.g. 65000"
           />
         </div>
@@ -350,7 +363,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
           value={Array.isArray(data?.target_roles) ? data.target_roles.join(',') : (data?.target_roles || '')}
           onChange={(e) => onChange({...data, target_roles: e.target.value.split(',')})}
           onBlur={(e) => onChange({...data, target_roles: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
-          className="w-full h-24 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none"
+          className="w-full h-24 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none"
           placeholder="e.g. Product Owner, Senior Product Owner, Product Manager"
         />
       </div>
@@ -375,7 +388,7 @@ const ProfileForm = ({ data, onChange, onSave, isSaving }) => (
 );
 
 const FIELD_LABEL = 'text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1';
-const FIELD_INPUT = 'w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]';
+const FIELD_INPUT = 'w-full bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-4 text-sm font-medium text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]';
 
 const TextField = ({ label, field, data, onChange, placeholder, type = 'text' }) => (
   <div className="space-y-2">
@@ -407,7 +420,7 @@ const ListField = ({ label, field, data, onChange, placeholder }) => (
 );
 
 const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving }) => (
-  <section className="bg-[#f7f3e8] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/10 flex flex-col gap-6">
+  <section className="bg-[#f3f4f6] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/10 flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <h3 className="font-bold text-[#1c1c1a] flex items-center gap-2 text-lg tracking-tight">
         <span className="material-symbols-outlined text-[#1c1c1a]">deployed_code</span>
@@ -416,7 +429,7 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
       <div className="flex gap-3">
         <button 
           onClick={onAdd}
-          className="px-4 py-2 bg-[#faf7ef] border border-[#1c1c1a]/25 text-[#1c1c1a] rounded-none font-bold text-[10px] font-mono uppercase tracking-widest hover:bg-[#e3dcc9] transition-all"
+          className="px-4 py-2 bg-[#ffffff] border border-[#1c1c1a]/25 text-[#1c1c1a] rounded-none font-bold text-[10px] font-mono uppercase tracking-widest hover:bg-[#e9ebee] transition-all"
         >
           + Add Anchor
         </button>
@@ -432,7 +445,7 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
     
     <div className="grid grid-cols-1 gap-4">
       {anchors?.map((anchor, i) => (
-        <div key={i} className="bg-[#faf7ef] p-6 rounded-none border border-[#1c1c1a]/25 group relative">
+        <div key={i} className="bg-[#ffffff] p-6 rounded-none border border-[#1c1c1a]/25 group relative">
           <button 
             onClick={() => onDelete(i)}
             className="absolute top-4 right-4 text-[#1c1c1a]/30 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
@@ -457,7 +470,7 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
             </div>
             <div className="md:col-span-2">
               <textarea 
-                className="w-full h-24 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-[11px] text-[#1c1c1a]/70 font-medium leading-relaxed resize-none" 
+                className="w-full h-24 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-[11px] text-[#1c1c1a]/70 font-medium leading-relaxed resize-none" 
                 placeholder="List your key outcomes and proof points..."
                 value={anchor.bullets?.join('\n') || ''}
                 onChange={(e) => onUpdate(i, {...anchor, bullets: e.target.value.split('\n')})}
@@ -471,7 +484,7 @@ const EvidenceManager = ({ anchors, onAdd, onDelete, onUpdate, onSave, isSaving 
 );
 
 const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
-  <section className="bg-[#faf7ef] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 flex flex-col gap-6">
+  <section className="bg-[#ffffff] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 flex flex-col gap-6">
     <div className="flex items-center justify-between">
       <h3 className="font-bold text-[#1c1c1a] flex items-center gap-2 text-lg tracking-tight">
         <span className="material-symbols-outlined text-[#1c1c1a]">tune</span>
@@ -506,7 +519,7 @@ const VisualWeightEditor = ({ weights, onChange, onSave, isSaving }) => (
             step="0.1" 
             value={weights?.[factor.id] ?? 1}
             onChange={(e) => onChange({...weights, [factor.id]: parseFloat(e.target.value)})}
-            className="w-full h-2 bg-[#e3dcc9] rounded-none appearance-none cursor-pointer accent-[#1c1c1a]"
+            className="w-full h-2 bg-[#e9ebee] rounded-none appearance-none cursor-pointer accent-[#1c1c1a]"
           />
         </div>
       ))}
@@ -601,6 +614,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
   const [applySave, setApplySave] = useState({ state: 'idle' });
   const applyEditVersion = useRef(0);
   const [applyRoleId, setApplyRoleId] = useState('');
+  // Dossier stage to scroll to once the newly-selected role's dossier renders.
+  const pendingScrollRef = useRef(null);
 
   // CV library (uploaded CVs — the candidate's source of truth).
   const [cvUploads, setCvUploads] = useState([]);
@@ -1180,6 +1195,12 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           if (Array.isArray(data.apply_answers)) setApplyAnswers(data.apply_answers);
           if (data.company_context) setCompanyContext(data.company_context);
           if (data.interview_brief) setInterviewBrief(data.interview_brief);
+          if (pendingScrollRef.current) {
+            const stage = pendingScrollRef.current;
+            pendingScrollRef.current = null;
+            // Let React commit the dossier to the DOM before scrolling to it.
+            setTimeout(() => scrollToDossier(stage), 120);
+          }
         }
       } catch {}
     })();
@@ -1230,13 +1251,27 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     return false;
   }
 
+  // Scroll to the dossier tracker, or a specific stage section within it.
+  function scrollToDossier(stage = 'top') {
+    if (typeof document === 'undefined') return;
+    const el = document.getElementById(stage === 'top' ? 'dossier-top' : `dossier-${stage}`)
+      || document.getElementById('dossier-top');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   // Re-open a saved analysis: select it as the active dossier (the applyRoleId
-  // effect loads the full saved analysis, including apply-pack artefacts).
-  function openAnalysis(id) {
+  // effect loads the full saved analysis, including apply-pack artefacts) and
+  // land on the tracker — or a specific stage — not the top of the page.
+  function openAnalysis(id, stage = 'top') {
     if (!currentTenant?.id || !id) return;
     setActiveTab('pipeline');
-    setApplyRoleId(id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (applyRoleId === id) {
+      scrollToDossier(stage);
+    } else {
+      pendingScrollRef.current = stage; // dossier not loaded yet — scroll after it renders
+      setApplyRoleId(id);
+    }
   }
 
   async function checkConfig() {
@@ -1687,15 +1722,15 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     <div className="flex flex-col gap-10">
       {/* Tab navigation + usage meter */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
-        <nav className="flex flex-1 flex-wrap border border-[#1c1c1a] bg-[#ece6d8]">
+        <nav className="flex flex-1 flex-wrap border border-[#1c1c1a] bg-[#f6f7f8]">
           {tabs.map((tab, i) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] transition-colors ${i ? 'border-l border-[#1c1c1a]/25' : ''} ${
                 activeTab === tab.id
-                  ? 'bg-[#1c1c1a] text-[#ece6d8]'
-                  : 'text-[#1c1c1a]/60 hover:bg-[#e3dcc9] hover:text-[#1c1c1a]'
+                  ? 'bg-[#1c1c1a] text-[#f6f7f8]'
+                  : 'text-[#1c1c1a]/60 hover:bg-[#e9ebee] hover:text-[#1c1c1a]'
               }`}
             >
               <span className={activeTab === tab.id ? 'text-[#f0452f]' : 'text-[#1c1c1a]/35'}>/{tab.num}</span>
@@ -1708,7 +1743,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             className={`shrink-0 border px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
               usage.remaining <= 0 ? 'border-[#f0452f] bg-[#f0452f] text-white' :
               usage.remaining <= 3 ? 'border-[#f0452f] text-[#f0452f]' :
-              'border-[#1c1c1a] text-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#ece6d8]'}`}>
+              'border-[#1c1c1a] text-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#f6f7f8]'}`}>
             /Actions {usage.remaining > 0 ? String(usage.remaining).padStart(2, '0') : '00 — buy a coffee ☕'}
           </button>
         )}
@@ -1716,7 +1751,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           <span className="shrink-0 border border-[#1c1c1a]/30 px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1c1c1a]/50">/Actions ∞</span>
         )}
         <button onClick={() => setShowOnboarding(true)} title="How it works"
-          className="shrink-0 border border-[#1c1c1a] px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1c1c1a] transition-colors hover:bg-[#1c1c1a] hover:text-[#ece6d8]">
+          className="shrink-0 border border-[#1c1c1a] px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-[#1c1c1a] transition-colors hover:bg-[#1c1c1a] hover:text-[#f6f7f8]">
           ?
         </button>
       </div>
@@ -1748,10 +1783,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
       {/* Morning Scout Agent — Pipeline & Live Scans tabs */}
       {(activeTab === 'pipeline' || activeTab === 'scans') && (
-        <section className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] space-y-4">
+        <section className="bg-[#ffffff] p-5 sm:p-6 border border-[#1c1c1a] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-none bg-[#e3dcc9] text-[#f0452f] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-none bg-[#e9ebee] text-[#f0452f] flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined">radar</span>
               </div>
               <div>
@@ -1802,8 +1837,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 onClick={() => setShowScoutTune((v) => !v)}
                 className={`h-10 px-3.5 rounded-none text-xs font-bold border inline-flex items-center gap-1.5 transition-colors ${
                   showScoutTune
-                    ? 'bg-[#e3dcc9] border-[#1c1c1a]/30 text-[#f0452f]'
-                    : 'bg-[#faf7ef] border-[#1c1c1a]/25 text-[#1c1c1a] hover:bg-[#f7f3e8]'
+                    ? 'bg-[#e9ebee] border-[#1c1c1a]/30 text-[#f0452f]'
+                    : 'bg-[#ffffff] border-[#1c1c1a]/25 text-[#1c1c1a] hover:bg-[#f3f4f6]'
                 }`}
               >
                 <span className="material-symbols-outlined text-sm">tune</span>
@@ -1826,7 +1861,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 <button
                   onClick={() => persistScoutJobs([])}
                   disabled={scoutBatchRunning || scoutRunning}
-                  className="h-10 px-3 border border-[#1c1c1a]/25 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#f7f3e8]"
+                  className="h-10 px-3 border border-[#1c1c1a]/25 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#f3f4f6]"
                 >
                   Clear queue
                 </button>
@@ -1835,7 +1870,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           </div>
 
           {showScoutTune && (
-            <div className="rounded-none bg-[#f7f3e8]/90 border border-[#1c1c1a]/25 p-4 space-y-3.5">
+            <div className="rounded-none bg-[#f3f4f6]/90 border border-[#1c1c1a]/25 p-4 space-y-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h4 className="text-xs font-bold text-[#1c1c1a] uppercase tracking-wider">Hone &amp; Refine Scout</h4>
@@ -1846,7 +1881,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 <button
                   onClick={() => handleSaveScoutPrefs()}
                   disabled={scoutSavingPrefs}
-                  className="h-8 px-3 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-[11px] font-bold text-[#1c1c1a] hover:bg-[#e3dcc9]"
+                  className="h-8 px-3 rounded-none bg-[#ffffff] border border-[#1c1c1a]/25 text-[11px] font-bold text-[#1c1c1a] hover:bg-[#e9ebee]"
                 >
                   {scoutSavingPrefs ? 'Saving…' : 'Save Tuning'}
                 </button>
@@ -1861,7 +1896,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     value={scoutRolesText}
                     onChange={(e) => setScoutRolesText(e.target.value)}
                     placeholder="Senior Product Manager, Principal Product Manager, Lead Product Manager, Founding Product Manager"
-                    className="w-full bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
+                    className="w-full bg-[#ffffff] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
                   />
                 </div>
                 <div>
@@ -1873,9 +1908,9 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       value={scoutLocationsText}
                       onChange={(e) => setScoutLocationsText(e.target.value)}
                       placeholder="Nottingham, London"
-                      className="flex-1 min-w-0 basis-48 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
+                      className="flex-1 min-w-0 basis-48 bg-[#ffffff] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
                     />
-                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-xs font-semibold text-[#1c1c1a] cursor-pointer shrink-0">
+                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-none bg-[#ffffff] border border-[#1c1c1a]/25 text-xs font-semibold text-[#1c1c1a] cursor-pointer shrink-0">
                       <input
                         type="checkbox"
                         checked={scoutIncludeRemote}
@@ -1884,7 +1919,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       />
                       + UK Remote
                     </label>
-                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-xs font-semibold text-[#1c1c1a] cursor-pointer shrink-0">
+                    <label className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-none bg-[#ffffff] border border-[#1c1c1a]/25 text-xs font-semibold text-[#1c1c1a] cursor-pointer shrink-0">
                       <input
                         type="checkbox"
                         checked={scoutIncludeHybrid}
@@ -1917,7 +1952,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                           className={`px-2.5 py-1.5 rounded-none text-xs font-bold border transition-colors ${
                             active
                               ? 'bg-[#1c1c1a] text-white border-[#1c1c1a]'
-                              : 'bg-[#faf7ef] text-[#1c1c1a]/60 border-[#1c1c1a]/25 hover:bg-[#e3dcc9]'
+                              : 'bg-[#ffffff] text-[#1c1c1a]/60 border-[#1c1c1a]/25 hover:bg-[#e9ebee]'
                           }`}
                         >
                           {active ? '✓ ' : ''}{src.label}
@@ -1934,7 +1969,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     value={scoutSteering}
                     onChange={(e) => setScoutSteering(e.target.value)}
                     placeholder="e.g. Senior, Lead, Principal or Founding PM roles only; prioritise regulated, fintech, energy, platform & AI; skip Product Marketing & Solutions Architect"
-                    className="w-full bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
+                    className="w-full bg-[#ffffff] border border-[#1c1c1a]/25 rounded-none px-3 py-2 text-xs text-[#1c1c1a]"
                   />
                 </div>
               </div>
@@ -1948,7 +1983,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     {scoutExcludedTitles.map((title) => (
                       <span
                         key={title}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#faf7ef] border border-[#1c1c1a]/25 text-[11px] font-medium text-[#1c1c1a]/70"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#ffffff] border border-[#1c1c1a]/25 text-[11px] font-medium text-[#1c1c1a]/70"
                       >
                         {title}
                         <button
@@ -1972,7 +2007,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               value={scoutUrl}
               onChange={(e) => setScoutUrl(e.target.value)}
               placeholder="Optional: paste a LinkedIn Jobs search URL or specific LinkedIn role URL to include in this scout run…"
-              className="flex-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none px-3.5 py-2 text-xs text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
+              className="flex-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none px-3.5 py-2 text-xs text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
             />
           </div>
 
@@ -1981,14 +2016,14 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               {scoutJobs.map((job, idx) => {
                 const existing = findExistingInPipeline(job);
                 return (
-                  <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-none bg-[#f7f3e8] border border-[#1c1c1a]/25/80">
+                  <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-none bg-[#f3f4f6] border border-[#1c1c1a]/25/80">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {job.source && (
                           <span className={`shrink-0 text-[9px] font-bold font-mono uppercase tracking-widest px-1.5 py-0.5 rounded border ${
                             job.source === 'LinkedIn'
-                              ? 'bg-[#1c1c1a] border-[#1c1c1a] text-[#ece6d8]'
-                              : 'bg-[#faf7ef] border-[#1c1c1a]/25 text-[#1c1c1a]/70'
+                              ? 'bg-[#1c1c1a] border-[#1c1c1a] text-[#f6f7f8]'
+                              : 'bg-[#ffffff] border-[#1c1c1a]/25 text-[#1c1c1a]/70'
                           }`}>
                             {job.source}
                           </span>
@@ -2000,7 +2035,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                           </span>
                         )}
                         {existing && (
-                          <span className="shrink-0 text-[10px] font-bold font-mono uppercase tracking-widest px-2 py-0.5 bg-[#d8d1bd] text-[#1c1c1a]/70">
+                          <span className="shrink-0 text-[10px] font-bold font-mono uppercase tracking-widest px-2 py-0.5 bg-[#dfe2e6] text-[#1c1c1a]/70">
                             In Pipeline{typeof existing.score === 'number' ? ` (${existing.score.toFixed(1)})` : ''}
                           </span>
                         )}
@@ -2018,7 +2053,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       {existing ? (
                         <button
                           onClick={() => openAnalysis(existing.id)}
-                          className="h-8 px-3 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-[11px] font-bold text-[#1c1c1a] hover:bg-[#e3dcc9]"
+                          className="h-8 px-3 rounded-none bg-[#ffffff] border border-[#1c1c1a]/25 text-[11px] font-bold text-[#1c1c1a] hover:bg-[#e9ebee]"
                         >
                           Open
                         </button>
@@ -2034,7 +2069,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       <button
                         onClick={() => handleNotLikeThis(job, idx)}
                         title="Remove and exclude this role title from future scout runs"
-                        className="h-8 px-2.5 rounded-none bg-[#faf7ef] border border-[#1c1c1a]/25 text-[10px] font-bold text-[#1c1c1a]/60 hover:text-amber-800 hover:border-amber-200 hover:bg-amber-50"
+                        className="h-8 px-2.5 rounded-none bg-[#ffffff] border border-[#1c1c1a]/25 text-[10px] font-bold text-[#1c1c1a]/60 hover:text-amber-800 hover:border-amber-200 hover:bg-amber-50"
                       >
                         Not like this
                       </button>
@@ -2056,7 +2091,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
       {/* Role Input Terminal — Pipeline tab only */}
       {activeTab === 'pipeline' && (
-      <section className="bg-[#faf7ef] p-5 sm:p-8 border border-[#1c1c1a]">
+      <section className="bg-[#ffffff] p-5 sm:p-8 border border-[#1c1c1a]">
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-2">
             <span className="font-mono uppercase tracking-[0.16em] text-[10px] font-bold text-[#f0452f]">/Input terminal</span>
@@ -2065,7 +2100,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             <textarea 
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
-              className="w-full h-32 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-5 font-mono text-sm focus:ring-0 focus:border-[#1c1c1a] placeholder:text-[#1c1c1a]/30 resize-none"
+              className="w-full h-32 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-5 font-mono text-sm focus:ring-0 focus:border-[#1c1c1a] placeholder:text-[#1c1c1a]/30 resize-none"
               placeholder="Paste Job Description text or a LinkedIn URL to begin high-precision AI analysis..."
               disabled={!configStatus.has_config}
             />
@@ -2115,7 +2150,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* Ranked summary of the last scout batch — lands the user on an overview
           instead of whichever analysis happened to run last. */}
       {activeTab === 'pipeline' && scoutBatchSummary && !scoutBatchRunning && (
-        <section className="border border-[#1c1c1a] bg-[#e3dcc9]">
+        <section className="border border-[#1c1c1a] bg-[#e9ebee]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1c1c1a]/20 px-5 py-4 sm:px-6">
             <div>
               <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-[#f0452f]">/Scout batch scored</p>
@@ -2142,7 +2177,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 <button
                   key={o.id}
                   onClick={() => openAnalysis(o.id)}
-                  className="group flex w-full items-center justify-between gap-4 px-5 py-3 text-left transition-colors hover:bg-[#1c1c1a] hover:text-[#ece6d8] sm:px-6"
+                  className="group flex w-full items-center justify-between gap-4 px-5 py-3 text-left transition-colors hover:bg-[#1c1c1a] hover:text-[#f6f7f8] sm:px-6"
                 >
                   <span className="min-w-0 truncate text-sm font-bold">
                     {o.title}
@@ -2175,7 +2210,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {(activeTab === 'pipeline' || activeTab === 'apply') && results && (
         <>
         <div id="dossier-verdict" className="grid grid-cols-1 lg:grid-cols-12 gap-8 scroll-mt-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="lg:col-span-4 bg-[#faf7ef] p-5 sm:p-8 border border-[#1c1c1a] flex flex-col">
+          <div className="lg:col-span-4 bg-[#ffffff] p-5 sm:p-8 border border-[#1c1c1a] flex flex-col">
             {/* The verdict (reasoning-led) is the primary signal. */}
             <h3 className="text-[10px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 mb-3">/01 · The verdict</h3>
             <VerdictPanel score={results.score} evaluation={results.evaluation} />
@@ -2196,10 +2231,10 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </div>
           </div>
 
-          <div className="lg:col-span-8 bg-[#f7f3e8] p-5 sm:p-8 border border-[#1c1c1a] flex flex-col">
+          <div className="lg:col-span-8 bg-[#f3f4f6] p-5 sm:p-8 border border-[#1c1c1a] flex flex-col">
             <div className="flex justify-between items-start mb-2">
               <h3 className="text-2xl font-black text-[#1c1c1a] tracking-tight">The reasoning<span className="text-[#f0452f]">.</span></h3>
-              <div className="px-3 py-1 bg-[#1c1c1a] text-[#ece6d8] text-[10px] font-bold font-mono uppercase tracking-widest" title="An AI's structured opinion — the strength is in the reasoning, not the precision of the number.">AI assessment</div>
+              <div className="px-3 py-1 bg-[#1c1c1a] text-[#f6f7f8] text-[10px] font-bold font-mono uppercase tracking-widest" title="An AI's structured opinion — the strength is in the reasoning, not the precision of the number.">AI assessment</div>
             </div>
             <p className="text-xs text-[#1c1c1a]/45 mb-5">This is where the real value is — the why behind the score. The number above is just a quick triage signal.</p>
             <CollapsibleNarrative markdown={results.evaluation} openCount={2} />
@@ -2210,7 +2245,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         {results.id && (
               <div className="space-y-6">
                 {/* 1. Company & role context */}
-                <div id="dossier-research" className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
+                <div id="dossier-research" className="bg-[#ffffff] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div>
                       <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2">
@@ -2254,7 +2289,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         onChange={(e) => setResults((r) => ({ ...r, company_context: e.target.value }))}
                         placeholder="Add your own notes or click 'Research company' (1 action) to pull live employer context…"
                         rows={results.company_context ? 6 : 2}
-                        className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-xs text-[#1c1c1a]/80 leading-relaxed focus:ring-0 focus:border-[#1c1c1a]"
+                        className="w-full bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-xs text-[#1c1c1a]/80 leading-relaxed focus:ring-0 focus:border-[#1c1c1a]"
                       />
                       <div className="flex justify-end">
                         <button
@@ -2273,7 +2308,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 </div>
 
                 {/* 2. Tailored CV */}
-                <div id="dossier-cv" className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
+                <div id="dossier-cv" className="bg-[#ffffff] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
                 {!results.tailored_cv ? (
                   <>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -2345,23 +2380,24 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       </div>
                     </div>
                     {cvEditingId === results.id ? (
-                      <div className="bg-[#faf7ef] rounded-none p-4 border border-[#1c1c1a]/25 space-y-3">
+                      <div className="bg-[#ffffff] rounded-none p-4 border border-[#1c1c1a]/25 space-y-3">
                         <textarea
                           value={cvDraftText}
                           onChange={(e) => setCvDraftText(e.target.value)}
                           rows={16}
-                          className="w-full font-mono text-xs text-[#1c1c1a]/80 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 leading-relaxed"
+                          className="w-full font-mono text-xs text-[#1c1c1a]/80 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 leading-relaxed"
                         />
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#e3dcc9]">Cancel</button>
+                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#e9ebee]">Cancel</button>
                           <button onClick={() => handleSaveTailoredCv(results.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-none text-xs font-bold bg-[#1c1c1a] text-white hover:bg-[#f0452f]">
                             {cvSaving ? 'Saving…' : 'Save CV edits'}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25">
-                        <CollapsibleNarrative markdown={results.tailored_cv} openCount={1} />
+                      <div className="bg-[#f3f4f6] border border-[#1c1c1a]/25 p-5 max-h-[34rem] overflow-y-auto">
+                        {/* Full CV as one selectable block — copy the whole thing straight from here. */}
+                        <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-[#1c1c1a]/85">{cvPlainText(results.tailored_cv)}</pre>
                       </div>
                     )}
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
@@ -2369,7 +2405,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         value={cvEdit}
                         onChange={(e) => setCvEdit(e.target.value)}
                         placeholder='Suggest a CV revision, e.g. "bring the AI Act / Orbit work higher" or "tighten summary to 3 lines"'
-                        className="flex-1 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
+                        className="flex-1 bg-[#ffffff] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
                       />
                       <button
                         onClick={() => handleTailorCv(results.id, cvEdit)}
@@ -2391,7 +2427,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 {/* 3. Apply pack — cover letter + portal answers for this role */}
                 <div id="dossier-pack" className="scroll-mt-24 space-y-6">
                   {/* Cover letter */}
-                  <div className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a]">
+                  <div className="bg-[#ffffff] p-5 sm:p-6 border border-[#1c1c1a]">
                     <div className="flex items-center justify-between mb-1">
                       <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="font-mono text-base text-[#f0452f]">/04</span>Cover letter</h4>
                       {coverLetter && (
@@ -2411,11 +2447,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       </div>
                     ) : (
                       <div className="mt-3">
-                        <div className="bg-[#f7f3e8] rounded-none p-5 text-sm text-[#1c1c1a]/80 whitespace-pre-wrap leading-relaxed">{coverLetter}</div>
+                        <div className="bg-[#f3f4f6] rounded-none p-5 text-sm text-[#1c1c1a]/80 whitespace-pre-wrap leading-relaxed">{coverLetter}</div>
                         <AiReviewWarning what="cover letter" />
                         <div className="mt-4 flex flex-col sm:flex-row gap-2">
                           <input value={coverEdit} onChange={(e) => setCoverEdit(e.target.value)} placeholder='Suggest an edit, e.g. "make it shorter" or "emphasise the 50% metric"'
-                            className="flex-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+                            className="flex-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
                           <button onClick={() => handleCoverLetter(coverEdit)} disabled={coverLoading || !coverEdit.trim()}
                             className={`h-11 px-5 bg-[#1c1c1a] text-white rounded-none font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f0452f] transition-colors ${(coverLoading || !coverEdit.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             {coverLoading ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined">auto_fix_high</span>}Revise
@@ -2427,7 +2463,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   </div>
 
                   {/* Application form answers */}
-                  <div className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a]">
+                  <div className="bg-[#ffffff] p-5 sm:p-6 border border-[#1c1c1a]">
                     <div className="flex items-center justify-between mb-1">
                       <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="font-mono text-base text-[#f0452f]">/04b</span>Application form answers</h4>
                       {applyAnswers.length > 0 && (
@@ -2482,13 +2518,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                             value={customQ}
                             onChange={(e) => setCustomQ(e.target.value)}
                             placeholder='e.g. "Describe a complex regulatory or platform delivery you led"'
-                            className="sm:col-span-2 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]"
+                            className="sm:col-span-2 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]"
                           />
                           <input
                             value={customGuidance}
                             onChange={(e) => setCustomGuidance(e.target.value)}
                             placeholder='Optional: "max 200 words, STAR format"'
-                            className="bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]"
+                            className="bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]"
                           />
                         </div>
                         <div className="flex justify-end">
@@ -2510,7 +2546,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 </div>
 
                 {/* 4. Interview Prep Brief */}
-                <div id="dossier-brief" className="bg-[#faf7ef] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
+                <div id="dossier-brief" className="bg-[#ffffff] p-5 sm:p-6 border border-[#1c1c1a] scroll-mt-24">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div>
                       <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2">
@@ -2552,7 +2588,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     </div>
                   </div>
                   {results.interview_brief && (
-                    <div className="mt-3 bg-[#f7f3e8] rounded-none p-5 border border-[#1c1c1a]/10">
+                    <div className="mt-3 bg-[#f3f4f6] rounded-none p-5 border border-[#1c1c1a]/10">
                       <CollapsibleNarrative markdown={results.interview_brief} openCount={4} />
                     </div>
                   )}
@@ -2574,7 +2610,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               {pipeline.length} analysed
             </p>
           </div>
-          <div className="border border-[#1c1c1a] bg-[#f7f3e8] overflow-x-auto">
+          <div className="border border-[#1c1c1a] bg-[#f3f4f6] overflow-x-auto">
             <table className="w-full text-left min-w-[760px]">
               <thead className="border-b border-[#1c1c1a]">
                 <tr className="font-mono text-[0.62rem] uppercase tracking-[0.12em] text-[#1c1c1a]/50">
@@ -2601,9 +2637,12 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     { k: 'BRF', on: item.has_brief },
                   ];
                   const submitted = ['Applied', 'Interview', 'Offer'].includes(item.status);
-                  const next = !item.has_cv ? 'Tailor CV' : !(item.has_letter || item.has_answers) ? 'Apply pack' : !item.has_brief ? 'Interview brief' : !submitted ? 'Mark submitted' : 'Open';
+                  const [next, nextStage] = !item.has_cv ? ['Tailor CV', 'cv']
+                    : !(item.has_letter || item.has_answers) ? ['Apply pack', 'pack']
+                    : !item.has_brief ? ['Interview brief', 'brief']
+                    : !submitted ? ['Mark submitted', 'top'] : ['Open', 'top'];
                   return (
-                    <tr key={item.id} className="group cursor-pointer transition-colors hover:bg-[#e3dcc9]" onClick={() => openAnalysis(item.id)}>
+                    <tr key={item.id} className="group cursor-pointer transition-colors hover:bg-[#e9ebee]" onClick={() => openAnalysis(item.id)}>
                       <td className="px-4 sm:px-5 py-4 font-mono text-[0.65rem] text-[#1c1c1a]/40">
                         {String(idx + 1).padStart(3, '0')}
                       </td>
@@ -2641,8 +2680,8 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       </td>
                       <td className="px-4 sm:px-5 py-4 text-right whitespace-nowrap">
                         <button
-                          className="border border-[#1c1c1a]/30 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a] transition-colors group-hover:border-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#ece6d8]"
-                          onClick={(e) => { e.stopPropagation(); openAnalysis(item.id); }}
+                          className="border border-[#1c1c1a]/30 px-3 py-1.5 font-mono text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#1c1c1a] transition-colors group-hover:border-[#1c1c1a] hover:bg-[#1c1c1a] hover:text-[#f6f7f8]"
+                          onClick={(e) => { e.stopPropagation(); openAnalysis(item.id, nextStage); }}
                         >
                           {next} →
                         </button>
@@ -2669,31 +2708,31 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           </div>
 
           {/* Search form */}
-          <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25">
+          <div className="bg-[#ffffff] rounded-none p-6 border border-[#1c1c1a]/25">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Keywords</label>
                 <input value={searchKeywords} onChange={(e) => setSearchKeywords(e.target.value)} placeholder="e.g. Product Owner energy billing"
-                  className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+                  className="w-full mt-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Location</label>
                 <input value={searchLocation} onChange={(e) => setSearchLocation(e.target.value)} placeholder="e.g. Nottingham"
-                  className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+                  className="w-full mt-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Min salary (£) — optional</label>
                 <input type="number" value={searchSalary} onChange={(e) => setSearchSalary(e.target.value)} placeholder="leave blank" step={5000} min={0}
-                  className="w-full mt-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+                  className="w-full mt-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
                 <p className="text-[10px] text-[#1c1c1a]/45 mt-1 ml-1">Setting this hides jobs with no listed salary (most of them). Leave blank for the widest results.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
               <div className="flex flex-col gap-2">
-                <div className="inline-flex rounded-none bg-[#e3dcc9] p-0.5 text-xs font-bold self-start">
+                <div className="inline-flex rounded-none bg-[#e9ebee] p-0.5 text-xs font-bold self-start">
                   {[['both', 'Local + Remote'], ['location', 'Local only'], ['remote', 'Remote only']].map(([m, label]) => (
                     <button key={m} onClick={() => setSearchMode(m)}
-                      className={`px-3 py-1.5 rounded-none transition-colors ${searchMode === m ? 'bg-[#faf7ef] text-[#1c1c1a]' : 'text-[#1c1c1a]/60 hover:text-[#1c1c1a]'}`}>
+                      className={`px-3 py-1.5 rounded-none transition-colors ${searchMode === m ? 'bg-[#ffffff] text-[#1c1c1a]' : 'text-[#1c1c1a]/60 hover:text-[#1c1c1a]'}`}>
                       {label}
                     </button>
                   ))}
@@ -2742,13 +2781,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
           {/* Search debug — "why these results?" thought process */}
           {searchDebug && (
-            <details className="bg-[#f7f3e8] rounded-none border border-[#1c1c1a]/25 text-xs">
+            <details className="bg-[#f3f4f6] rounded-none border border-[#1c1c1a]/25 text-xs">
               <summary className="cursor-pointer px-4 py-3 font-bold text-[#1c1c1a] list-none flex items-center justify-between">
                 <span>Why these results? ({searchDebug.ranked_count} of {searchDebug.raw_count} raw)</span>
                 <span className="material-symbols-outlined text-[#1c1c1a]/45">expand_more</span>
               </summary>
               <div className="px-4 pb-4 space-y-2 text-[#1c1c1a]/70">
-                <div className="font-mono text-[11px] bg-[#faf7ef] rounded-none p-3 border border-[#1c1c1a]/10 space-y-0.5">
+                <div className="font-mono text-[11px] bg-[#ffffff] rounded-none p-3 border border-[#1c1c1a]/10 space-y-0.5">
                   <div>queries: <b>{(searchDebug.query?.terms || []).join(', ')}</b> · loc <b>{searchDebug.query?.location}</b> · mode <b>{searchDebug.query?.mode}</b> · min£ <b>{searchDebug.query?.salary_min}</b></div>
                   <div>sources: {Object.entries(searchDebug.source_counts || {}).map(([s, n]) => `${s}=${n}`).join(' · ') || 'none returned'}</div>
                   <div>funnel: {searchDebug.raw_count} raw → {searchDebug.deduped_count} deduped → {searchDebug.after_negative_filter} after filter → {searchDebug.ranked_count} shown</div>
@@ -2756,7 +2795,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                   {searchDebug.dropped_by_negative_filter?.length > 0 && <div>dropped (wrong discipline): {searchDebug.dropped_by_negative_filter.join(', ')}</div>}
                 </div>
                 {searchDebug.scores?.length > 0 && (
-                  <div className="bg-[#faf7ef] rounded-none p-3 border border-[#1c1c1a]/10">
+                  <div className="bg-[#ffffff] rounded-none p-3 border border-[#1c1c1a]/10">
                     <div className="font-bold text-[10px] font-mono uppercase tracking-widest text-[#1c1c1a]/45 mb-1">Relevance scores (all candidates)</div>
                     {searchDebug.scores.map((s, i) => (
                       <div key={i} className="flex justify-between gap-3 py-0.5 border-b border-[#1c1c1a]/10 last:border-0">
@@ -2778,7 +2817,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                 {searchTotalRaw > searchResults.length ? ` (filtered from ${searchTotalRaw}, ranked by relevance to your targets)` : ''}. Click "Analyse" to score one against your profile.
               </p>
               {searchResults.map((job, i) => (
-                <div key={i} className="bg-[#faf7ef] rounded-none border border-[#1c1c1a]/25 p-4 flex items-center justify-between gap-4">
+                <div key={i} className="bg-[#ffffff] rounded-none border border-[#1c1c1a]/25 p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0 flex items-center gap-3">
                     {typeof job.relevance === 'number' && (
                       <div className={`shrink-0 w-11 h-11 border-2 flex flex-col items-center justify-center font-mono font-bold ${job.relevance >= 75 ? 'border-[#2f9d55] text-[#2f9d55]' : job.relevance >= 60 ? 'border-[#1c1c1a] text-[#1c1c1a]' : 'border-[#b45309] text-[#b45309]'}`}>
@@ -2789,7 +2828,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-[#1c1c1a] text-sm truncate">{job.title}</p>
-                        <span className="text-[9px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 bg-[#e3dcc9] px-1.5 py-0.5 rounded">{job.source}</span>
+                        <span className="text-[9px] font-bold font-mono uppercase tracking-widest text-[#1c1c1a]/45 bg-[#e9ebee] px-1.5 py-0.5 rounded">{job.source}</span>
                       </div>
                       <p className="text-xs text-[#1c1c1a]/45 mt-0.5 truncate">{job.company}{job.location ? ` · ${job.location}` : ''}{job.salary ? ` · ${job.salary}` : ''}</p>
                       {job.source === 'Adzuna' && <AdzunaCredit className="mt-1" />}
@@ -2818,16 +2857,16 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           </div>
 
           {cvLibrary.length === 0 ? (
-            <div className="bg-[#f7f3e8] rounded-none p-12 border border-[#1c1c1a]/10 text-center text-sm text-[#1c1c1a]/45">
+            <div className="bg-[#f3f4f6] rounded-none p-12 border border-[#1c1c1a]/10 text-center text-sm text-[#1c1c1a]/45">
               No tailored CVs yet. Analyse a role in the Pipeline tab, then click "Proceed to Apply" to generate one.
             </div>
           ) : (
             <div className="space-y-4">
               {cvLibrary.map((cv) => (
-                <details key={cv.id} className="bg-[#faf7ef] rounded-none border border-[#1c1c1a]/25 overflow-hidden group">
-                  <summary className="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-[#f7f3e8] list-none">
+                <details key={cv.id} className="bg-[#ffffff] rounded-none border border-[#1c1c1a]/25 overflow-hidden group">
+                  <summary className="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-[#f3f4f6] list-none">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-none bg-[#e3dcc9] flex items-center justify-center text-[#f0452f]">
+                      <div className="h-10 w-10 rounded-none bg-[#e9ebee] flex items-center justify-center text-[#f0452f]">
                         <span className="material-symbols-outlined">description</span>
                       </div>
                       <div>
@@ -2835,7 +2874,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         <p className="text-xs text-[#1c1c1a]/45">{cv.company} · {cv.tailored_cv_at ? new Date(cv.tailored_cv_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 text-[10px] font-bold font-mono uppercase tracking-widest bg-[#1c1c1a] text-[#ece6d8]">{cv.status}</span>
+                    <span className="px-3 py-1 text-[10px] font-bold font-mono uppercase tracking-widest bg-[#1c1c1a] text-[#f6f7f8]">{cv.status}</span>
                   </summary>
                   <div className="px-6 pb-6 pt-2 border-t border-[#1c1c1a]/10">
                     <div className="flex justify-end mb-3">
@@ -2858,23 +2897,23 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                       </div>
                     </div>
                     {cvEditingId === cv.id ? (
-                      <div className="bg-[#f7f3e8] rounded-none p-4 border border-[#1c1c1a]/25 space-y-3">
+                      <div className="bg-[#f3f4f6] rounded-none p-4 border border-[#1c1c1a]/25 space-y-3">
                         <textarea
                           value={cvDraftText}
                           onChange={(e) => setCvDraftText(e.target.value)}
                           rows={16}
-                          className="w-full font-mono text-xs text-[#1c1c1a]/80 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none p-3 leading-relaxed"
+                          className="w-full font-mono text-xs text-[#1c1c1a]/80 bg-[#ffffff] border border-[#1c1c1a]/25 rounded-none p-3 leading-relaxed"
                         />
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#e3dcc9]">Cancel</button>
+                          <button onClick={() => setCvEditingId(null)} className="px-4 py-2 rounded-none text-xs font-bold text-[#1c1c1a]/60 hover:bg-[#e9ebee]">Cancel</button>
                           <button onClick={() => handleSaveTailoredCv(cv.id, cvDraftText)} disabled={cvSaving} className="px-4 py-2 rounded-none text-xs font-bold bg-[#1c1c1a] text-white hover:bg-[#f0452f]">
                             {cvSaving ? 'Saving…' : 'Save CV edits'}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-[#f7f3e8] rounded-none p-6 border border-[#1c1c1a]/10">
-                        <FitNarrative markdown={cv.tailored_cv} />
+                      <div className="bg-[#f3f4f6] border border-[#1c1c1a]/10 p-5 max-h-[34rem] overflow-y-auto">
+                        <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-[#1c1c1a]/85">{cvPlainText(cv.tailored_cv)}</pre>
                       </div>
                     )}
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
@@ -2882,7 +2921,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         value={cvEdit}
                         onChange={(e) => setCvEdit(e.target.value)}
                         placeholder='Suggest a CV revision, e.g. "emphasise AI governance" or "make the summary shorter"'
-                        className="flex-1 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
+                        className="flex-1 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]"
                       />
                       <button
                         onClick={() => handleTailorCv(cv.id, cvEdit)}
@@ -2909,11 +2948,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
           </div>
 
           {/* Role picker — drives the dossier rendered above this section */}
-          <div className="bg-[#f7f3e8] rounded-none p-5 border border-[#1c1c1a]/25">
+          <div className="bg-[#f3f4f6] rounded-none p-5 border border-[#1c1c1a]/25">
             <label className="text-[10px] font-bold text-[#1c1c1a]/45 font-mono uppercase tracking-widest ml-1">Applying for</label>
             {pipeline.length > 0 ? (
               <select value={applyRoleId} onChange={(e) => setApplyRoleId(e.target.value)}
-                className="block w-full mt-1 bg-[#faf7ef] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]">
+                className="block w-full mt-1 bg-[#ffffff] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a]">
                 <option value="">— select a role —</option>
                 {pipeline.map((r) => <option key={r.id} value={r.id}>{r.role} @ {r.company}</option>)}
               </select>
@@ -2922,7 +2961,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             )}
           </div>
 
-          <details className="group border border-[#1c1c1a]/25 rounded-none bg-[#faf7ef]">
+          <details className="group border border-[#1c1c1a]/25 rounded-none bg-[#ffffff]">
             <summary className="cursor-pointer list-none px-6 py-4 flex items-center justify-between">
               <span className="text-sm font-bold text-[#1c1c1a]">Your copy-ready details <span className="text-[#1c1c1a]/45 font-normal">— name, contact, address, notice period (set once)</span></span>
               <span className="material-symbols-outlined text-[#1c1c1a]/45 transition-transform group-open:rotate-180">expand_more</span>
@@ -2930,7 +2969,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             <div className="px-6 pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Standard fields from profile + CV */}
-            <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25 space-y-4">
+            <div className="bg-[#ffffff] rounded-none p-6 border border-[#1c1c1a]/25 space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#f0452f]">badge</span>Standard fields</h4>
                 <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
@@ -2953,7 +2992,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </div>
 
             {/* User-filled extras (persisted) */}
-            <div className="bg-[#faf7ef] rounded-none p-6 border border-[#1c1c1a]/25 space-y-4">
+            <div className="bg-[#ffffff] rounded-none p-6 border border-[#1c1c1a]/25 space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-[#1c1c1a] text-sm flex items-center gap-2"><span className="material-symbols-outlined text-[#f0452f]">edit_note</span>Your extras</h4>
                 <ApplySaveStatus status={applySave} onRetry={saveApplyExtras} />
@@ -2978,7 +3017,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
           {/* Employment history for application forms (D-SITE-077): editable copy,
               seeded from the evidence anchors; edits never change the anchors. */}
-          <details className="group border border-[#1c1c1a]/25 rounded-none bg-[#faf7ef]">
+          <details className="group border border-[#1c1c1a]/25 rounded-none bg-[#ffffff]">
             <summary className="cursor-pointer list-none px-6 py-4 flex items-center justify-between">
               <span className="text-sm font-bold text-[#1c1c1a]">Recent roles <span className="text-[#1c1c1a]/45 font-normal">— for employment-history form fields</span></span>
               <div className="flex items-center gap-3">
@@ -3030,7 +3069,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
              <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-[#f0452f] mb-2">/Config</p>
              <h3 className="text-3xl font-black text-[#1c1c1a] tracking-tight">Onboarding &amp; configuration<span className="text-[#f0452f]">.</span></h3>
              <p className="text-[#1c1c1a]/60 text-sm mt-1">Fine-tune your professional persona and algorithmic alignment.</p>
-             <div className="mt-3 inline-flex items-start gap-2 text-xs text-[#1c1c1a]/60 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none px-3 py-2 max-w-2xl">
+             <div className="mt-3 inline-flex items-start gap-2 text-xs text-[#1c1c1a]/60 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none px-3 py-2 max-w-2xl">
                <span className="material-symbols-outlined text-[#f0452f] text-base">lock</span>
                <span>Your details stay in your own private Arcturus DC workspace. We never sell your data or use it for marketing. It's shared only with the AI and job-board services that run your search, then stored securely here.</span>
              </div>
@@ -3038,7 +3077,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
            {/* CV Library — upload your CV; the active one is the reference for analyse & search */}
            
-           <div className="bg-[#faf7ef] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 mb-8">
+           <div className="bg-[#ffffff] rounded-none p-5 sm:p-8 border border-[#1c1c1a]/25 mb-8">
            
              <h3 className="font-bold text-[#1c1c1a] text-lg tracking-tight flex items-center gap-2 mb-1">
            
@@ -3050,7 +3089,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
              <div className="flex flex-wrap gap-3 items-center">
            
-               <label className={`inline-flex items-center gap-2 h-11 px-5 rounded-none font-bold text-sm cursor-pointer transition-colors ${cvBusy ? 'bg-[#e3dcc9] text-[#1c1c1a]/45 cursor-not-allowed' : 'bg-[#1c1c1a] text-white hover:bg-[#f0452f]'}`}>
+               <label className={`inline-flex items-center gap-2 h-11 px-5 rounded-none font-bold text-sm cursor-pointer transition-colors ${cvBusy ? 'bg-[#e9ebee] text-[#1c1c1a]/45 cursor-not-allowed' : 'bg-[#1c1c1a] text-white hover:bg-[#f0452f]'}`}>
            
                  {cvBusy ? <span className="material-symbols-outlined animate-spin text-base">progress_activity</span> : <span className="material-symbols-outlined text-base">upload_file</span>}
            
@@ -3062,7 +3101,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
                </label>
            
-               <button onClick={() => setCvPasteOpen((o) => !o)} className="h-11 px-4 rounded-none border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold text-sm hover:bg-[#f7f3e8]">or paste text</button>
+               <button onClick={() => setCvPasteOpen((o) => !o)} className="h-11 px-4 rounded-none border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold text-sm hover:bg-[#f3f4f6]">or paste text</button>
            
              </div>
            
@@ -3070,11 +3109,11 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
                <div className="mt-4 space-y-2">
            
-                 <input value={cvPasteLabel} onChange={(e) => setCvPasteLabel(e.target.value)} placeholder="Label (e.g. Energy PO version)" className="w-full bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
+                 <input value={cvPasteLabel} onChange={(e) => setCvPasteLabel(e.target.value)} placeholder="Label (e.g. Energy PO version)" className="w-full bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a]" />
            
-                 <textarea value={cvPasteText} onChange={(e) => setCvPasteText(e.target.value)} placeholder="Paste your full CV text here…" className="w-full h-40 bg-[#f7f3e8] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none" />
+                 <textarea value={cvPasteText} onChange={(e) => setCvPasteText(e.target.value)} placeholder="Paste your full CV text here…" className="w-full h-40 bg-[#f3f4f6] border border-[#1c1c1a]/25 rounded-none p-3 text-sm text-[#1c1c1a] focus:ring-0 focus:border-[#1c1c1a] resize-none" />
            
-                 <button onClick={async () => { await saveCvAndExtract(cvPasteLabel || 'My CV', cvPasteText); setCvPasteText(''); setCvPasteLabel(''); setCvPasteOpen(false); }} disabled={cvBusy || !cvPasteText.trim()} className={`h-11 px-5 rounded-none font-bold text-sm ${(cvBusy || !cvPasteText.trim()) ? 'bg-[#e3dcc9] text-[#1c1c1a]/45' : 'bg-[#1c1c1a] text-white hover:bg-[#f0452f]'}`}>Save CV</button>
+                 <button onClick={async () => { await saveCvAndExtract(cvPasteLabel || 'My CV', cvPasteText); setCvPasteText(''); setCvPasteLabel(''); setCvPasteOpen(false); }} disabled={cvBusy || !cvPasteText.trim()} className={`h-11 px-5 rounded-none font-bold text-sm ${(cvBusy || !cvPasteText.trim()) ? 'bg-[#e9ebee] text-[#1c1c1a]/45' : 'bg-[#1c1c1a] text-white hover:bg-[#f0452f]'}`}>Save CV</button>
            
                </div>
            
@@ -3086,7 +3125,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
            
                  {cvUploads.map((cv) => (
            
-                   <div key={cv.id} className={`flex items-center justify-between gap-3 p-3 rounded-none border ${cv.active ? 'border-[#1c1c1a] bg-[#e3dcc9]/40' : 'border-[#1c1c1a]/25'}`}>
+                   <div key={cv.id} className={`flex items-center justify-between gap-3 p-3 rounded-none border ${cv.active ? 'border-[#1c1c1a] bg-[#e9ebee]/40' : 'border-[#1c1c1a]/25'}`}>
            
                      <div className="min-w-0">
            
@@ -3156,7 +3195,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* First-run onboarding walkthrough */}
       {pendingEvidence && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-[#faf7ef] rounded-none p-6 max-w-md w-full flex flex-col gap-4">
+          <div className="bg-[#ffffff] rounded-none p-6 max-w-md w-full flex flex-col gap-4">
             <h3 className="font-bold text-[#1c1c1a] text-lg">You already have evidence anchors</h3>
             <p className="text-sm text-[#1c1c1a]/70">
               The CV gave {pendingEvidence.length} role{pendingEvidence.length === 1 ? '' : 's'}. Your existing anchors are
@@ -3176,7 +3215,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
             </button>
             <button
               onClick={() => { setAnchorsData(pendingEvidence); setPendingEvidence(null); }}
-              className="px-4 py-3 bg-[#e3dcc9] text-[#1c1c1a] rounded-none font-bold text-xs font-mono uppercase tracking-widest"
+              className="px-4 py-3 bg-[#e9ebee] text-[#1c1c1a] rounded-none font-bold text-xs font-mono uppercase tracking-widest"
             >
               Replace all my anchors
             </button>
@@ -3202,7 +3241,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       {/* Buy-a-coffee paywall */}
       {showPaywall && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowPaywall(false)}>
-          <div className="bg-[#faf7ef] rounded-none max-w-md w-full p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#ffffff] rounded-none max-w-md w-full p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
             <div className="text-4xl mb-3">☕</div>
             <h3 className="text-xl font-bold text-[#1c1c1a]">{usage?.remaining > 0 ? 'Enjoying Career Ops?' : "You've used your free actions"}</h3>
             <p className="text-sm text-[#1c1c1a]/70 mt-2 leading-relaxed">
@@ -3216,7 +3255,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
               <button onClick={() => handleBuyCoffee()} className="flex-1 h-12 bg-[#1c1c1a] text-white rounded-none font-bold hover:bg-[#f0452f] transition-colors flex items-center justify-center gap-2">
                 <span>☕</span> Buy a coffee — £5
               </button>
-              <button onClick={() => setShowPaywall(false)} className="px-5 h-12 border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold rounded-none hover:bg-[#f7f3e8] transition-colors">
+              <button onClick={() => setShowPaywall(false)} className="px-5 h-12 border border-[#1c1c1a]/25 text-[#1c1c1a]/70 font-bold rounded-none hover:bg-[#f3f4f6] transition-colors">
                 Maybe later
               </button>
             </div>
