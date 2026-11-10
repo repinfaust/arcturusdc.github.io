@@ -10,6 +10,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import WorkspacePulse from '@/components/workspace/WorkspacePulse';
 import { isSteaAppAllowed } from '@/lib/steaAppCatalog';
+import { handoffSteaSession, resetSteaSessionHandoff, sanitizeSteaNext } from '@/lib/steaSessionHandoff.mjs';
 
 // Tenant ID for ApexTwin-exclusive workspace
 const APEXTWIN_TENANT_ID = 'DL7ScScEhvAcFpAmmS8h';
@@ -200,13 +201,10 @@ const IN_SESSION_DESTINATIONS = [
   },
 ];
 
-function sanitizeNext(raw) {
-  if (!raw) return null;
-  if (typeof raw !== 'string') return null;
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return null;
-  if (!raw.startsWith('/') || raw.startsWith('//')) return null;
-  if (raw === '/apps/stea' || raw === '/stea') return null;
-  return raw;
+function DestinationLink({ href, ...props }) {
+  // App launches must see the current server session, not a cached redirect.
+  if (href.startsWith('/apps/stea/')) return <a href={href} {...props} />;
+  return <Link href={href} {...props} />;
 }
 
 export default function SteaAccessPage() {
@@ -215,7 +213,7 @@ export default function SteaAccessPage() {
   const nextParam = searchParams?.get('next') || '';
   const deniedApp = searchParams?.get('denied') || '';
 
-  const destination = useMemo(() => sanitizeNext(nextParam), [nextParam]);
+  const destination = useMemo(() => sanitizeSteaNext(nextParam), [nextParam]);
   const { currentTenant, availableTenants, loading: tenantLoading, userEmail } = useTenant();
 
   const [user, setUser] = useState(null);
@@ -268,17 +266,25 @@ export default function SteaAccessPage() {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
-      setAuthReady(true);
+      setAuthReady(false);
 
       if (!firebaseUser) {
         cookieUidRef.current = null;
+        if (destination) resetSteaSessionHandoff(destination, window.sessionStorage);
+        setAuthReady(true);
         return;
       }
 
       try {
         await ensureSessionCookie(firebaseUser);
         if (destination) {
-          router.replace(destination);
+          const redirected = handoffSteaSession(destination, {
+            location: window.location,
+            storage: window.sessionStorage,
+          });
+          if (!redirected) {
+            setError('Your session was created, but the app redirected you back to sign-in. Automatic retries have stopped. Please sign out and sign in again.');
+          }
         }
       } catch (err) {
         console.error('Failed to establish STEa session', err);
@@ -288,6 +294,8 @@ export default function SteaAccessPage() {
         } catch (logoutErr) {
           console.error('Failed to sign out after session error', logoutErr);
         }
+      } finally {
+        setAuthReady(true);
       }
     });
 
@@ -448,7 +456,7 @@ export default function SteaAccessPage() {
             </div>
             <h1 className="mt-1 text-3xl font-semibold text-neutral-900">Welcome back, {user.displayName || user.email || 'teammate'}.</h1>
             <p className="mt-2 max-w-xl text-sm text-neutral-600">
-              Choose where you&apos;d like to work today. Your Google session is active and server access has been granted.
+              Choose where you&apos;d like to work today. Your sign-in session is ready; each app checks access when it opens.
             </p>
             {currentTenant && (
               <div className="mt-3 flex items-center gap-2 text-sm text-neutral-600">
@@ -520,7 +528,7 @@ export default function SteaAccessPage() {
             return true;
           })
           .map((dest) => (
-          <Link
+          <DestinationLink
             key={dest.href}
             href={dest.href}
             className={`group relative flex flex-col gap-3 rounded-3xl border ${dest.borderColor || 'border-neutral-200'} bg-gradient-to-b ${dest.gradient || 'from-white/80 to-white/80'} p-6 shadow-sm shadow-neutral-800/5 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-neutral-800/10 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:ring-offset-2 focus:ring-offset-white overflow-hidden`}
@@ -537,7 +545,7 @@ export default function SteaAccessPage() {
               </span>
             </div>
             <p className={`text-sm ${dest.textLight ? 'text-neutral-300' : 'text-neutral-600'}`}>{dest.description}</p>
-          </Link>
+          </DestinationLink>
         ))}
       </div>
 

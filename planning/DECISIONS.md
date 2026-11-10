@@ -1,5 +1,16 @@
 # Decisions
 
+## 2026-11-10 — STEa session handoff uses document navigation (D-SITE-087)
+
+Safari reproduced a stuck Career Ops launch: the original tab remained on `/apps/stea?next=...career` after repeated card clicks, while a fresh tab opened Career Ops using the same browser session. A captured same-origin RSC request carried `__session`; the original tab's console showed no authentication error. This supports stale client route state as the immediate failure mechanism; the event that originally populated that state was not captured.
+
+- After the existing `/api/auth/login` succeeds, follow the sanitised `next` destination with `window.location.replace`, crossing the authentication boundary with a fresh server request instead of a potentially cached RSC redirect.
+- STEa launchpad app cards use native links for `/apps/stea/...` destinations; public portfolio links retain Next.js navigation. Do not expose the shelf before initial session creation finishes.
+- A sessionStorage timestamp bounds automatic handoff to once per destination per 30 seconds. An immediate server bounce produces a visible error instead of an automatic reload loop. Signing out resets the marker so a fresh sign-in can retry immediately. No credentials are stored in this marker.
+- Reject external, backslash/control-character and sign-in self-redirect destinations before document navigation.
+- Preserve D-SITE-064's server-layout verification, revocation checks, cookie policy, existing sign-in providers and tenant isolation. No auth mechanism or infrastructure is added.
+- Verification: all 9 session-handoff regression tests and 23 existing server-gate tests passed; production build and postbuild leak check passed. Production Safari verification follows deployment.
+
 ## 2026-11-09 — Career Ops: optional Hybrid searches in Morning Scout tuning (D-SITE-086)
 
 David requested a Hybrid option alongside UK Remote in the Hone & Refine Scout tuner.
