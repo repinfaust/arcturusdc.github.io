@@ -1,5 +1,38 @@
 # Decisions
 
+## 2026-11-11 — AssumeZero/TruthNet v0.3.1: deck rebalance + verify-as-habit scoring (D-SITE-091)
+
+Approved by David 2026-11-11. Evidence base: technique-based prebunking meta-analyses
+(d≈0.76 discernment, 49 studies) and replicated lateral-reading classroom trials; the
+Jigsaw/Cambridge field study's five-technique taxonomy. Rationale discussed in session;
+supersedes the deck balance in `~/dev/AssumeZero/truthnet-build-brief-v2.md` build scope.
+
+- **Deck externalised** to `public/games/truthnet/cards.json`; the engine
+  (`public/games/truthnet/index.html`) renders whatever the deck provides. Content now
+  scales without engine edits.
+- **Deck rebalanced 5 → 14 cards in three acts**: Act 1 provenance warm-up (3 cards,
+  ~20% — AI-spotting is the on-ramp, not the lesson, because detection decays), Act 2
+  framing (6), Act 3 feeling/system (5). Tactic taxonomy extended to
+  `ai | framing | context | numbers | outrage | scapegoat | urgency | system` —
+  outrage/scapegoat/urgency are the Jigsaw prebunking techniques, which is how "hateful
+  content" is covered: as manufactured-feeling tactics with **fictional targets only**
+  (hard rule: no real school, place, group or person on any card).
+- **Verify promoted from one button to the core habit** (lateral reading): every Act 2/3
+  card carries a 3-line SOURCE CHECK panel; scoring rewards process — checked-correct = 2
+  tokens vs fast-correct = 1, and a wrong call after checking keeps the streak ("right
+  process, wrong call"). One card (`flood-context`) is undecidable from pixels alone so
+  the check is load-bearing. End screen reports "checked before calling: X/Y".
+- **Rug-pull endgame built** (was specified in the brief, never shipped): after the feed,
+  TruthNet reveals the "real" veracity cards were AI-made — "judge intent, not pixels."
+  Honesty dependency: `card-birthday-real.png` and `card-bakery-real.png` are AI-generated
+  (they are); Act 1's `card-puppy-real.png` must stay a genuine camera photo.
+- **Sting gate**: system sting now unlocks on 2 correct calls across the feeling-tier
+  tactic family (system/outrage/scapegoat/urgency), not 1 system card — faithful to the
+  brief's "tactic-gated, a few times" with a deck big enough to support it.
+- Pending assets (David, Gemini): 8 new card images at the exact paths named in
+  `cards.json`; those cards render with a gradient placeholder background until the PNGs
+  land.
+
 ## 2026-11-11 — MLB: opener resolution remedy + committed gate-evaluation script; gate operationalisations fixed blind (D-SITE-090)
 
 Approved by David 2026-11-11, before any forward-window scoring — the only moment these
