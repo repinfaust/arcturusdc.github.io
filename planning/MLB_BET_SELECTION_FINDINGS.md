@@ -425,3 +425,55 @@ already settled by D-SITE-022.
 
 **Standing position unchanged: no gate evaluated, nothing scored, no bet authorised.
 "No edge, do not bet" remains the most likely honest outcome and is a success.**
+
+---
+
+## 2026-11-11 (same day, later) — Opener-matching issue DIAGNOSED: dead-even openers, not missing data
+
+**Status: NO GATE EVALUATED. NO SCORING PERFORMED.** Diagnostic script
+(`scripts/mlb-diagnose-opener-matching.mjs`, committed, read-only) classified every
+unresolvable game. It reads predictor prices, timestamps and structural fields only, and
+never queries `correct`, `push`, `finalTotal`, or any `pnl`/`ev` field.
+
+### Result: one cause, 76 of 76 games
+
+| cause | sandbox | forward |
+|---|---|---|
+| `h1_even_market` — no `openerPick` exists because the opener's de-vigged P(Over) was exactly 0.5 | 34 | 42 |
+| H2 (timestamp mismatch / orphan-doc snapshot) | 0 | 0 |
+| H3 (snapshot found, consensus unusable) | 0 | 0 |
+
+**No data is missing.** Every one of the 76 games has snapshots (5–30 each) and a usable
+earliest pre-first-pitch snapshot. The chain: `buildPick` (`functions/mlb/service.js:93-94`)
+returns no pick when P(Over) is exactly 0.5 (no side exists — correct, by design, for
+*pick grading*); with no `openerPick`, the pick-record-dependent resolution used by the
+scoring/count scripts (`openerPick.capturedAtIso` → exact snapshot match) finds nothing and
+the game was reported "unresolvable". The 2dp rounding of consensus prices makes exactly-even
+books common, hence the ~8–11% rate. This is a **measurement-script artifact, not a
+collection fault** — same family as the 2026-09-26 "even market at T-2h" finding (15 games,
+by design), now confirmed as the entirety of the opener-side issue too.
+
+The exclusion was systematic, exactly as feared: it removed precisely the games whose market
+opened dead even. The direction of any bias is still unknowable without outcomes (none read),
+but it no longer matters — the games are fully recoverable.
+
+### Proposed remedy (pending David's final sign-off; agreed in principle 2026-11-11)
+
+For F2's predictor computation, resolve the opener as the **earliest pre-first-pitch
+snapshot per gameId** (the same selection rule `finalizeDayImpl` uses), independent of the
+pick record. This is faithful to the registration, not a change to it: §2 defines F2 on
+`P(Over)` at two snapshots — a pick record was never required. `F1_revision` is untouched
+(an even-market opener genuinely has no side; F1 stays undefined there by design), and no
+stored data changes.
+
+**Measured impact, predictor-only (no outcomes read):** all 76 games resolve; their opener
+P(Over) is exactly 0.5 in every case (76 of 76), so for them F2 reduces to
+`|P(Over)@T-2h − 0.5| >= θ`. Under the remedy F2 selects **3 more forward games
+(132 → 135 of 519 eligible)** and 0 more sandbox games. F4b is unaffected (T-2h side
+resolves 237 of 237 regardless).
+
+Decided now, blind, while no outcome on any affected game has been seen — which is the only
+time this decision can be made cleanly. On sign-off it gets a D-number alongside the task-2
+evaluation-script build, which will implement it; a validation step there is re-scoring the
+**sandbox** (the only legal scoring target) with the remedy applied, sandbox resolvable set
+281 → 315.
