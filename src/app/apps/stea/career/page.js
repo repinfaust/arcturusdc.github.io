@@ -1221,9 +1221,13 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
 
   // Open Apply Assist for a specific role (from the pipeline button).
   function openApplyAssist(roleId) {
-    setApplyRoleId(roleId || '');
     setActiveTab('apply');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (roleId && roleId !== applyRoleId) {
+      pendingScrollRef.current = 'pack';
+      setApplyRoleId(roleId);
+    } else {
+      setTimeout(() => scrollToDossier('pack'), 120);
+    }
   }
 
   // Record where a role is up to (free). Drives the dossier tracker's
@@ -1436,7 +1440,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     { id: 'settings', label: 'Config', num: '05' },
   ];
 
-  async function handleAnalyse(overrideText, overrideUrl = '') {
+  async function handleAnalyse(overrideText, overrideUrl = '', scrollToResult = true) {
     const input = (typeof overrideText === 'string' ? overrideText : jdText).trim();
     if (!input || !currentTenant?.id) return null;
     setLoading(true);
@@ -1452,7 +1456,12 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       if (handleLimit(res, data)) return null;
       if (!res.ok) throw new Error(data.error || 'Analyse failed');
       setResults(data);
-      if (data.id) setApplyRoleId(data.id); // make it the active dossier
+      if (data.id) {
+        // Make it the active dossier; openAnalysis scrolls the view to the
+        // dossier once it has rendered (suppressed during scout batch runs).
+        if (scrollToResult) openAnalysis(data.id);
+        else setApplyRoleId(data.id);
+      }
       loadAnalyses(); // refresh the pipeline with the newly-saved role
       loadUsage();
       return data;
@@ -1718,7 +1727,6 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
       ? `Role: ${job.title || ''}\nCompany: ${job.company || ''}\nLocation: ${job.location || ''}\nSource URL: ${job.url || ''}\n\n${job.jd_text}`
       : job.url;
     setJdText(payload);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     await handleAnalyse(payload, job.url || '');
   }
 
@@ -1736,7 +1744,7 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
         const payload = job.jd_text
           ? `Role: ${job.title || ''}\nCompany: ${job.company || ''}\nLocation: ${job.location || ''}\nSource URL: ${job.url || ''}\n\n${job.jd_text}`
           : job.url;
-        const res = await handleAnalyse(payload, job.url || '');
+        const res = await handleAnalyse(payload, job.url || '', false);
         if (!res) break; // stopped by limit or error
         outcomes.push({
           id: res.id,
@@ -1794,7 +1802,6 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     if (!job?.url) { alert('This listing has no link to analyse. Open it and paste the description instead.'); return; }
     setActiveTab('pipeline');
     setJdText(job.url);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     handleAnalyse(job.url);
   }
 

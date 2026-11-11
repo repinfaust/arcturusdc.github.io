@@ -616,6 +616,8 @@ export function createCareerHandler(app) {
             role: v.role,
             status: v.status || 'Applying',
             tailored_cv: v.tailored_cv,
+            coverage: v.coverage || null,
+            coverage_at: toIso(v.coverage_at),
             _ms: toMs(v.tailored_cv_at),
             tailored_cv_at: toIso(v.tailored_cv_at),
           }))

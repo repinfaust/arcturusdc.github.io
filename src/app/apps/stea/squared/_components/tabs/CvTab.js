@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { printCvAsPdf } from '@/lib/careerEngine/printCv';
 import { TabHeading, Md, AiReviewWarning, Btn, SmallBtn, DISPLAY, CAPS, INPUT, MONO } from '../ui';
 
+// Coverage verdict colours in Squared's palette (D-SITE-089).
+const MET_DOT = { yes: '#4c5c3f', partial: '#5a3c2f' };
+
 // Not in the design export; built in the same language (D-SITE-034).
-export default function CvTab({ cvLibrary, profile, tailorCv, saveTailoredCv, tailoring, goPipeline }) {
+export default function CvTab({ cvLibrary, profile, tailorCv, saveTailoredCv, tailoring, coverageCheck, coverageChecking, goPipeline }) {
   const [openId, setOpenId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [draftText, setDraftText] = useState('');
@@ -95,6 +98,49 @@ export default function CvTab({ cvLibrary, profile, tailorCv, saveTailoredCv, ta
                     ) : (
                       <div className="bg-[#f8f4ea] border border-[#ede5d4] p-4 sm:p-5"><Md>{cv.tailored_cv}</Md></div>
                     )}
+                    <div className="mt-4 bg-[#f8f4ea] border border-[#ede5d4] p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <div className="text-[15px] font-bold">Requirements coverage</div>
+                          <p className="text-[13px] text-[#686c62] mt-0.5">Checks the role&apos;s requirements against your real evidence, and whether this CV says it in the advert&apos;s own words — what their screening software matches on.</p>
+                        </div>
+                        <SmallBtn dark disabled={coverageChecking} onClick={() => coverageCheck?.(cv.id)}>
+                          {coverageChecking ? 'Checking…' : cv.coverage ? 'Re-check coverage (1 action)' : 'Check coverage (1 action)'}
+                        </SmallBtn>
+                      </div>
+                      {Array.isArray(cv.coverage) && cv.coverage.length > 0 && (() => {
+                        const fixes = cv.coverage.filter((c) => c && c.met !== 'no' && (c.in_cv === false || (c.fix && String(c.fix).trim())));
+                        return (
+                          <>
+                            <div className="mt-3 flex flex-col divide-y divide-[#ede5d4] border-t border-[#ede5d4]">
+                              {cv.coverage.map((c, i) => (
+                                <div key={i} className="py-2.5 flex items-start justify-between gap-4">
+                                  <div className="min-w-0">
+                                    <div className="flex items-start gap-2">
+                                      <span className="mt-1.5 w-2 h-2 shrink-0 rounded-full" style={{ background: MET_DOT[c.met] || '#C63C00' }} />
+                                      <span className="text-[14px] font-bold leading-snug">{c.requirement}</span>
+                                    </div>
+                                    {c.evidence ? <div className="ml-4 text-[13px] text-[#686c62] mt-0.5">{c.evidence}</div> : null}
+                                    {c.fix ? <div className="ml-4 text-[13px] text-[#5a3c2f] mt-0.5">Say it their way: {c.fix}</div> : null}
+                                  </div>
+                                  <span className={`${CAPS} !text-[11px] shrink-0 mt-0.5 ${c.met === 'no' ? 'text-[#C63C00]' : c.in_cv ? 'text-[#4c5c3f]' : 'text-[#686c62]'}`}>
+                                    {c.met === 'no' ? 'Gap' : c.in_cv ? 'In CV' : 'Not in CV'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            {fixes.length > 0 && (
+                              <button
+                                onClick={() => setCvEdit(`Work these requirements into the CV using the advert's own wording, grounded strictly in my real evidence — do not invent anything: ${fixes.map((c) => c.fix || c.requirement).join('; ')}`)}
+                                className={`${CAPS} mt-3 text-[#4c5c3f] underline`}
+                              >
+                                Work {fixes.length} missing {fixes.length === 1 ? 'term' : 'terms'} into the CV → (prefills the revision box below)
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-2.5">
                       <input
                         value={cvEdit}

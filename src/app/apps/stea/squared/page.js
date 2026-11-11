@@ -82,6 +82,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
   const [pipeline, setPipeline] = useState([]);
   const [tailoring, setTailoring] = useState(false);
   const [cvLibrary, setCvLibrary] = useState([]);
+  const [coverageChecking, setCoverageChecking] = useState(false);
   const analyseStage = useStages(analysing, 5, 4000);
   const tailorStage = useStages(tailoring, 5, 5000);
 
@@ -280,6 +281,25 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
       alert(err.message);
     } finally {
       setTailoring(false);
+    }
+  }
+
+  // Requirements coverage check (D-SITE-089): audits the role's requirements
+  // against real evidence and whether the tailored CV says it in the advert's
+  // own words. Shared engine action; result lives on the analysis doc.
+  async function coverageCheck(id) {
+    if (!id) return;
+    setCoverageChecking(true);
+    try {
+      const { res, data } = await api('coverage_check', { id });
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Coverage check failed');
+      setCvLibrary((l) => l.map((cv) => (cv.id === id ? { ...cv, coverage: data.coverage } : cv)));
+      loadUsage();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setCoverageChecking(false);
     }
   }
 
@@ -716,6 +736,7 @@ export default function SquaredApp({ initialTab = 'pipeline' }) {
         <CvTab
           cvLibrary={cvLibrary} profile={profile}
           tailorCv={tailorCv} saveTailoredCv={saveTailoredCv} tailoring={tailoring}
+          coverageCheck={coverageCheck} coverageChecking={coverageChecking}
           goPipeline={() => setTab('pipeline')}
         />
       )}
