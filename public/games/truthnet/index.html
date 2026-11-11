@@ -257,7 +257,9 @@
 // tactic taxonomy: ai | framing | context | numbers | outrage | scapegoat | urgency | system
 //   Acts: 1 = provenance warm-up (KS1), 2 = framing (KS2), 3 = feeling/system (KS3).
 let cards = [];
-const deckReady = fetch('cards.json')
+// Absolute path: Vercel 308-redirects /games/truthnet/ -> /games/truthnet, which
+// rebases relative URLs to /games/ and 404s them. All assets here are absolute.
+const deckReady = fetch('/games/truthnet/cards.json')
   .then(r => { if(!r.ok) throw new Error('deck HTTP '+r.status); return r.json(); })
   .then(d => { cards = d.cards; });
 
