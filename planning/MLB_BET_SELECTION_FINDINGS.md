@@ -477,3 +477,44 @@ time this decision can be made cleanly. On sign-off it gets a D-number alongside
 evaluation-script build, which will implement it; a validation step there is re-scoring the
 **sandbox** (the only legal scoring target) with the remedy applied, sandbox resolvable set
 281 → 315.
+
+---
+
+## 2026-11-11 (same day, later still) — Gate-evaluation script built, validated; remedy signed off (D-SITE-090)
+
+**Status: NO GATE EVALUATED. Both forward tests remain unspent.** David signed off the
+opener-resolution remedy and the evaluation-script build same day. The 2026-09-10 scratch
+scorer is retired: everything evaluative now runs through
+`scripts/mlb-evaluate-gates.mjs` (committed). Gate operationalisations were fixed blind at
+the same time — breakeven formula, G2 on consensus, G4 equal-halves rule, G5 on worst — in
+the registration's 2026-11-11 method note, where they cannot drift.
+
+**Safety:** the script scores the sandbox by default (hard `date <= 2026-08-16`). A forward
+run refuses without `--evaluate-gate f2|f4b --i-understand-one-shot --confirm "SPEND THE
+F2|F4B FORWARD TEST"` verbatim. Every win rate prints with n and its Wilson 95% CI.
+
+**Validation 1 — self-test (offline, synthetic fixtures):** `--self-test` final line:
+`SELF-TEST PASSED: all checks ok` (16 checks). It caught one real bug before first use: the
+-110 breakeven constant was written as 100/210 (47.6%) instead of 110/210 (52.38%) — exactly
+the class of silent error this build exists to prevent.
+
+**Validation 2 — reproduction of the 2026-09-10 published tables:** with
+`--opener-resolution pick-record --split-date 2026-08-04`, the script reproduces the
+published sandbox accuracy, P&L and stability tables **cell-for-cell** (315 eligible, 281
+resolvable, 34 opener-unresolved; F0 51.5% / CI 45.5–57.4 / −10.67u consensus … F5 63.6% /
++15.43% ROI). The exercise also recovered an undocumented semantic of the published
+stability table — its n values are graded counts and 2026-08-04 itself sits in H2 — now
+recorded in the registration note so it cannot be mis-read later.
+
+**Validation 3 — sandbox re-scored under the remedy** (legal: the sandbox is permanently
+gate-ineligible). Resolvable 281 → **315 of 315, zero unresolved**. As the predictor-only
+check predicted: F2 selections unchanged (58; the recovered games' opener sits exactly at
+0.5, and none reached θ), F1 and F5 unchanged, the 34 recovered games flow into F0 (now
+53.3%, n=302 graded, CI 47.7–58.9, −1.83u consensus), F3 (6 → 8) and F4 (55 → 63, 59.0%,
+CI 46.5–70.5). The recovered subset's apparent lift on F0 is 34 games of small-sample noise
+on calibration data and is evidence of nothing; the CI straddles both 50% and the vig line.
+No sandbox number is a benchmark (PURPOSE, above).
+
+**The 2027 evaluation path is now fixed:** when F2's forward sample reaches ~250 selections
+(~May–June 2027), the gate run is one command, its method is frozen, and its output is
+pasted here verbatim. Until then there is nothing to run and nothing to watch.

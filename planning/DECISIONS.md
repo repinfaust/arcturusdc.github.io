@@ -1,5 +1,41 @@
 # Decisions
 
+## 2026-11-11 — MLB: opener resolution remedy + committed gate-evaluation script; gate operationalisations fixed blind (D-SITE-090)
+
+Approved by David 2026-11-11, before any forward-window scoring — the only moment these
+choices can be made cleanly. Full evidence: `MLB_BET_SELECTION_FINDINGS.md` (2026-11-11
+entries); method note appended to `MLB_FILTER_REGISTRATION.md` (additive, no frozen value
+touched).
+
+- **Opener resolution remedy.** The season-close diagnosis (`scripts/mlb-diagnose-opener-matching.mjs`,
+  commit `755df8f`) proved all 76 "unresolvable" games (34 sandbox / 42 forward) share one
+  cause: a dead-even opener (de-vigged P(Over) exactly 0.5) means `buildPick` writes no
+  `openerPick`, so pick-record-based snapshot resolution finds nothing. No data is missing.
+  **Decision: for predictor computation, the opener is the earliest pre-first-pitch snapshot
+  with usable consensus, independent of the pick record.** Faithful to registration §2 (F2 is
+  defined on P(Over) at two snapshots, not on a pick existing); F1 unchanged (an even opener
+  genuinely has no side); no stored data changes. Measured impact, predictor-only: F2 forward
+  selections 132 → 135 of 519; sandbox selections unchanged.
+- **Gate operationalisations fixed now, blind** (registration §4 left them underspecified):
+  breakeven = max(52.38%, 1/mean worst-book decimal odds of graded selections); G2 on
+  consensus pnl; G4 = equal halves by date order, both halves win rate > breakeven AND
+  worst-book pnl > 0; G5 = worst-book pnl > 0. Recorded in the registration note.
+- **Committed evaluation script** `scripts/mlb-evaluate-gates.mjs` (D-SITE-090) replaces the
+  2026-09-10 scratch scorer. Sandbox-only by default (hard `date <= 2026-08-16`); a forward
+  run demands `--evaluate-gate f2|f4b --i-understand-one-shot --confirm "SPEND THE F2|F4B
+  FORWARD TEST"` and refuses anything less. Every win rate prints with n + Wilson 95% CI.
+  `--self-test` runs offline synthetic fixtures — and caught a real bug pre-use (breakeven
+  constant written as 100/210 instead of 110/210).
+- **Validated against the published sandbox tables:** with `--opener-resolution pick-record
+  --split-date 2026-08-04` it reproduces the 2026-09-10 accuracy, P&L and stability tables
+  cell-for-cell. Reproduction also established the published split table's semantics (graded
+  counts, H1 strictly before the split date), now documented in the script. The remedy
+  re-score of the sandbox (legal; gate-ineligible) resolves 315/315 and is recorded in
+  FINDINGS.
+
+**No gate was evaluated. Both forward tests remain unspent.** Standing position unchanged:
+no bet until all five gates pass on a pre-registered primary.
+
 ## 2026-11-10 — Career Ops: ATS/AI-screening counters — smart model tier for judgment-heavy calls and requirements coverage check (D-SITE-089)
 
 David's framing: the app exists to counter recruiter-side AI/ATS — enable application volume and survive their screening. Agreed: no dark patterns (no hidden/white-text keyword stuffing, no prompt injection aimed at screeners — detectable and reputationally fatal; this is a standing constraint). Approved: a requirements coverage check and a higher model for judgment-heavy calls.

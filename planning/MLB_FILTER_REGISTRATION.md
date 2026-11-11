@@ -341,3 +341,34 @@ Separately, 5 eligible games in the F2 window had their opener captured 0.5–1.
 because a stale deployment wrote the earliest price to an orphan doc (D-SITE-030). Their
 openers are left as captured. They are listed in `MLB_BET_SELECTION_FINDINGS.md` (2026-09-26).
 
+---
+
+## 2026-11-11 — Measurement-method note (additive; no frozen value touched; D-SITE-090)
+
+Fixed now, **before any forward-window scoring**, so none of it can be chosen in knowledge
+of a result. θ, φ, φ_b, both primary designations, both windows and the five gates stand
+exactly as frozen.
+
+**1. Opener resolution for predictor computation.** The opener snapshot is the **earliest
+pre-first-pitch snapshot with usable consensus prices** for the game, independent of the
+pick record. The former method (resolve via `openerPick.capturedAtIso`) silently excluded
+every game whose opener was priced dead even — P(Over) exactly 0.5 writes no `openerPick` —
+which was all 76 of the "unresolvable" games (diagnosis: `MLB_BET_SELECTION_FINDINGS.md`
+2026-11-11). §2 defines F2 on `P(Over)` at two snapshots; a pick record was never required.
+`F1_revision` is unchanged: an even opener has no side, so F1 remains undefined there by
+design. Measured impact (predictor distribution only, no outcomes read): F2 forward
+selections 132 → 135 of 519 eligible; sandbox F2 selections unchanged.
+
+**2. Gate operationalisations** (§4 restated as computable rules): breakeven
+`b = max(0.52381, 1 / mean worst-book decimal odds of the graded selections)`;
+G1 win rate > b; G2 cumulative flat-1u pnl at **consensus** > 0; G3 Wilson 95% CI lower
+bound > b; G4 selections sorted by date and split into two equal halves — **both** halves
+win rate > b **and** worst-book pnl > 0; G5 cumulative worst-book pnl > 0.
+
+**3. Reference implementation:** `scripts/mlb-evaluate-gates.mjs` (committed, D-SITE-090).
+Sandbox-only by default; forward runs require explicit one-shot confirmation flags.
+Validated by reproducing the 2026-09-10 published sandbox tables cell-for-cell under
+`--opener-resolution pick-record`. For the record: the 2026-09-10 stability table's n
+values are **graded** counts and its "split date 2026-08-04" assigned 2026-08-04 itself to
+H2 (H1 is strictly before the split date).
+
