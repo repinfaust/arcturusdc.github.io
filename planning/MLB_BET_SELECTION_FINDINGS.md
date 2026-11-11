@@ -331,3 +331,97 @@ the even-market case above. The second came from querying a non-existent collect
 Filter selection counts were **not** computed. At the observed ~21–22% selection rates, they
 imply roughly 100 F2 and 37 F4b selections — against ~250+ each for gate 3. Neither
 concludes in 2026.
+
+---
+
+## 2026-11-11 — Season-1 close review (no scoring performed)
+
+**Status: NO GATE EVALUATED. NO FORWARD-WINDOW CORRECTNESS, WIN RATE OR P&L COMPUTED.**
+The review script read predictor prices, timestamps and metadata only — `correct`, win
+rate and P&L were never queried on any game finalizing on or after 2026-08-17. Both
+forward tests remain unspent.
+
+### Where the season ended (verified live)
+
+- **1,023 finalized games**, 2026-07-18 → **2026-10-28** (Jul 205 / Aug 414 / Sep 364 /
+  Oct 32, postseason included). Last finalized game 2026-10-28.
+- **Collector idle and healthy.** Crons still fire daily; the free schedule gate spends
+  nothing (`lastRunNote: "no games today — no credit spent"`, `oddsCalls: 0` on
+  2026-11-11). 233 odds credits remaining; `lastError` null since 2026-07-31. The
+  offseason idle check required by `MLB_2027_FOLLOWON_SPEC.md` §9 is **passing** — no
+  shutoff work needed.
+
+### Forward-window counts at season close (counts only — no scoring)
+
+| | `F2_pmove` (≥ 2026-08-17) | `F4b_conf` (≥ 2026-09-11) |
+|---|---|---|
+| Eligible (final, `t2hPick.evGradeable`) | 519 | 237 |
+| Resolvable (snapshots matched) | 477 | 237 |
+| **Selections** | **132 (27.7% of resolvable)** | **23 (9.7%)** |
+| Design selectivity | ~20% | ~21.2% |
+| Gate-3 target | ~250+ | ~250+ |
+
+Method: full-precision `impliedOverProb` on snapshot consensus prices, exact
+`capturedAtIso` matching, frozen θ = 0.0274 / φ_b = 0.0222 — per registration §2/A1.
+**Caveat:** computed by a fresh read-only script, not cross-validated against the
+2026-09-10 scratch scorer. Treat exact figures as provisional until the committed gate
+evaluation script exists (see below).
+
+### Three findings from the counts
+
+**1. F2's realized selectivity has drifted up** — 27.7% vs ~20% design (21.9% on
+2026-09-10). The September/postseason distribution shift that registration §3 warned
+about appears real. θ stays frozen; the registration's prescribed remedy is reporting
+realized selectivity alongside any result, which this entry does and gate evaluation
+must repeat.
+
+**2. F4b is accruing at under half its design rate** — 23 selections across its entire
+first window (9.7% vs 21.2% on calibration). The warning sign was recorded at
+registration (A2: conviction distribution coarse at the top, p80/p85/p90 sharing
+0.0222); the forward distribution has evidently compressed below the threshold. At
+~0.4 selections/slate-day, gate 3 lands **~2028–29, not 2027**. φ_b stays frozen — this
+is a timeline finding, not a licence to recalibrate.
+
+**3. F2 reaches a gradeable sample sooner than estimated.** ~118 selections short; at
+the realized rate that is ~40–50 slate-days, so gate evaluation becomes possible
+**~mid-May to June 2027** rather than late 2027.
+
+### Opener-matching issue: still open, still ~8%
+
+42 of 519 F2-window games (8.1%) do not resolve an opener snapshot; F4b resolves
+237 of 237, re-confirming the 2026-09-10 finding that the failure is opener-side only.
+**Unchanged open item and the top pre-2027 engineering task**: silently dropping 8% of
+games biases the selected set in an unknown direction, so it must be diagnosed (read-side
+work, no collection change) before any gate evaluation.
+
+### Method review — season-1 verdict on the instrument itself
+
+- **The null benchmark landed on theory** (F0_all 51.5%, n=268, CI 45.5–57.4 ≈ the vig),
+  which is the proof the instrument is calibrated. Still the project's best result.
+- **Pre-registration held under temptation twice, in opposite directions**: F2 looking
+  poor in the sandbox was not amended; F4 looking good was re-registered cleanly as F4b
+  rather than bet or discarded.
+- **The instrument caught four directional faults before any analysis rested on them**
+  (status_change duplicates; D-SITE-011 orphaning incl. the stale-deploy recurrence;
+  closing-line contamination, 288/408 recovered; T-2h early-day coverage gap).
+- **Process risks to carry into 2027**: partial `--only` deploys ran two versions of one
+  function for six weeks (fixed by D-SITE-030's bundle rule); the selection spec sat on
+  an orphan branch for three weeks; one same-day verbal fault report was wrong before
+  correction. All recorded with lessons at the time.
+
+### Pre-2027 actions arising (each needs its own plan + approval before code)
+
+1. Diagnose the opener-snapshot matching failure (~8%), read-side only.
+2. Build the gate-evaluation script as committed, reviewed code — validated against the
+   already-scored sandbox (the only place scoring is legal) — so the 2027 evaluation
+   does not run on a scratch script.
+3. Decide the 2027 follow-on (`MLB_2027_FOLLOWON_SPEC.md` §10: primary, weather
+   provider approval, calibration length, exploratory scope) in time for a spring
+   training dry run (late Feb–Mar 2027).
+
+No D-number for this entry: it records an event and counts, not a decision (SoRR rule —
+a decision gets a D-number; an event does not). Scoring-at-season-close policy was
+already settled by D-SITE-022.
+
+**Standing position unchanged: no gate evaluated, nothing scored, no bet authorised.
+"No edge, do not bet" remains the most likely honest outcome and is a success.**
