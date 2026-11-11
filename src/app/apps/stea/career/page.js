@@ -1296,6 +1296,29 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
     }
   }
 
+  // Requirements coverage check (D-SITE-089): how a screener's ATS/AI reads
+  // the tailored CV against the JD's own wording.
+  const [coverageLoading, setCoverageLoading] = useState(false);
+  async function handleCoverageCheck(id) {
+    if (!currentTenant?.id || !id) return;
+    setCoverageLoading(true);
+    try {
+      const res = await fetch('/api/stea/career', {
+        method: 'POST', headers: await apiHeaders(),
+        body: JSON.stringify({ action: 'coverage_check', tenantId: currentTenant.id, id }),
+      });
+      const data = await res.json();
+      if (handleLimit(res, data)) return;
+      if (!res.ok) throw new Error(data.error || 'Coverage check failed');
+      setResults((r) => (r && r.id === id ? { ...r, coverage: data.coverage } : r));
+      loadUsage();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setCoverageLoading(false);
+    }
+  }
+
   // Scroll to a dossier stage section (tracker nodes are jump links).
   function jumpToStage(stageId) {
     const el = typeof document !== 'undefined' ? document.getElementById(`dossier-${stageId}`) : null;
@@ -2461,6 +2484,65 @@ export default function CareerOpsDashboard({ initialTab = 'pipeline' }) {
                         <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-[#1c1c1a]/85">{cvPlainText(results.tailored_cv)}</pre>
                       </div>
                     )}
+
+                    {/* Requirements coverage — how a screener's ATS/AI reads this CV */}
+                    <div className="mt-4 border-t border-[#1c1c1a]/10 pt-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <h5 className="font-bold text-[#1c1c1a] text-sm"><span className="font-mono text-[#f0452f]">/03b</span> Requirements coverage</h5>
+                          <p className="text-[11px] text-[#1c1c1a]/60 mt-0.5">
+                            Checks the JD's requirements against your real evidence, and whether this CV says it in the JD's own words — what their ATS/AI actually matches on.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleCoverageCheck(results.id)}
+                          disabled={coverageLoading}
+                          className={`h-9 px-4 bg-[#1c1c1a] text-white rounded-none text-xs font-bold inline-flex items-center gap-1.5 hover:bg-[#f0452f] transition-colors ${coverageLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                          {coverageLoading ? (
+                            <><span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>Checking…</>
+                          ) : (
+                            <>{Array.isArray(results.coverage) && results.coverage.length > 0 ? 'Re-check coverage (1 action)' : 'Check coverage (1 action)'}</>
+                          )}
+                        </button>
+                      </div>
+                      {Array.isArray(results.coverage) && results.coverage.length > 0 && (() => {
+                        const fixes = results.coverage.filter((c) => c && c.met !== 'no' && (c.in_cv === false || (c.fix && String(c.fix).trim())));
+                        return (
+                          <>
+                            <div className="mt-3 border border-[#1c1c1a]/20 divide-y divide-[#1c1c1a]/10 bg-[#ffffff]">
+                              {results.coverage.map((c, i) => (
+                                <div key={i} className="px-3.5 py-2.5 flex items-start gap-3 text-xs">
+                                  <span
+                                    className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full"
+                                    style={{ background: c.met === 'yes' ? '#2f9d55' : c.met === 'partial' ? '#b45309' : '#f0452f' }}
+                                    aria-hidden="true"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="font-bold text-[#1c1c1a]">{c.requirement}</div>
+                                    {c.evidence && <div className="mt-0.5 text-[#1c1c1a]/60">{c.evidence}</div>}
+                                    {c.fix && String(c.fix).trim() && (
+                                      <div className="mt-0.5 text-[#b45309]">Say it their way: {c.fix}</div>
+                                    )}
+                                  </div>
+                                  <span className={`shrink-0 font-mono text-[0.6rem] font-bold uppercase tracking-[0.1em] ${c.in_cv ? 'text-[#2f9d55]' : 'text-[#1c1c1a]/35'}`}>
+                                    {c.in_cv ? '✓ In CV' : c.met === 'no' ? 'Gap' : 'Not in CV'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            {fixes.length > 0 && (
+                              <button
+                                onClick={() => setCvEdit(`Work these requirements into the CV using the JD's own wording, grounded strictly in my real evidence — do not invent anything: ${fixes.map((c) => (c.fix && String(c.fix).trim()) || c.requirement).join('; ')}`)}
+                                className="mt-2 font-mono text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[#f0452f] hover:underline"
+                              >
+                                Work {fixes.length} missing term{fixes.length === 1 ? '' : 's'} into the CV → (prefills the revision box below)
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
                       <input
                         value={cvEdit}

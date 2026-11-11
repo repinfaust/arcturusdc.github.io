@@ -6,7 +6,18 @@
 const OPENAI_MODEL = process.env.CAREER_OPENAI_MODEL || 'gpt-4o';
 const ANTHROPIC_MODEL = process.env.CAREER_ANTHROPIC_MODEL || 'claude-sonnet-4-6';
 
-async function callOpenAI({ apiKey, system, prompt, maxTokens = 2000, cachedContext, tools }) {
+// Smart tier (D-SITE-089) for judgment-heavy calls — evaluate, tailor CV,
+// cover letters, answers, interview briefs, coverage checks. Preference:
+// 1. CAREER_OPENAI_MODEL_SMART (explicit OpenAI override) when an OpenAI key exists;
+// 2. otherwise Claude (CAREER_ANTHROPIC_MODEL_SMART || claude-sonnet-5-5) when
+//    ANTHROPIC_API_KEY exists;
+// 3. otherwise — or if the smart call fails — the standard path, unchanged.
+// A missing key or bad model id therefore degrades to today's behaviour,
+// never to an error.
+const OPENAI_MODEL_SMART = process.env.CAREER_OPENAI_MODEL_SMART || '';
+const ANTHROPIC_MODEL_SMART = process.env.CAREER_ANTHROPIC_MODEL_SMART || 'claude-sonnet-5-5';
+
+async function callOpenAI({ apiKey, system, prompt, maxTokens = 2000, cachedContext, tools, model = OPENAI_MODEL }) {
   const wantsWebSearch = Array.isArray(tools) && tools.some((t) => String(t?.type || t?.name || '').includes('web_search'));
 
   // When web search is requested (e.g. `research_company`), try OpenAI's Responses
@@ -25,7 +36,7 @@ async function callOpenAI({ apiKey, system, prompt, maxTokens = 2000, cachedCont
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: OPENAI_MODEL,
+          model,
           input,
           tools: [{ type: 'web_search_preview' }],
           max_output_tokens: maxTokens,
@@ -62,7 +73,7 @@ async function callOpenAI({ apiKey, system, prompt, maxTokens = 2000, cachedCont
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: OPENAI_MODEL,
+      model,
       max_tokens: maxTokens,
       messages,
     }),
@@ -71,14 +82,14 @@ async function callOpenAI({ apiKey, system, prompt, maxTokens = 2000, cachedCont
   if (!res.ok) {
     const detail = payload?.error?.message || res.statusText;
     const code = payload?.error?.code ? ` (${payload.error.code})` : '';
-    const err = new Error(`OpenAI API ${res.status}${code}: ${detail} [model=${OPENAI_MODEL}]`);
+    const err = new Error(`OpenAI API ${res.status}${code}: ${detail} [model=${model}]`);
     err.status = res.status;
     throw err;
   }
   return payload.choices?.[0]?.message?.content ?? '';
 }
 
-async function callClaude({ apiKey, system, prompt, maxTokens = 2000, cachedContext, tools }) {
+async function callClaude({ apiKey, system, prompt, maxTokens = 2000, cachedContext, tools, model = ANTHROPIC_MODEL }) {
   const content = [];
   if (cachedContext) {
     content.push({ type: 'text', text: cachedContext, cache_control: { type: 'ephemeral' } });
@@ -87,7 +98,7 @@ async function callClaude({ apiKey, system, prompt, maxTokens = 2000, cachedCont
 
   async function send(withTools) {
     const body = {
-      model: ANTHROPIC_MODEL,
+      model,
       max_tokens: maxTokens,
       system,
       messages: [{ role: 'user', content }],
@@ -116,7 +127,7 @@ async function callClaude({ apiKey, system, prompt, maxTokens = 2000, cachedCont
   if (!res.ok) {
     const detail = payload?.error?.message || res.statusText;
     const type = payload?.error?.type ? ` (${payload.error.type})` : '';
-    throw new Error(`Anthropic API ${res.status}${type}: ${detail} [model=${ANTHROPIC_MODEL}]`);
+    throw new Error(`Anthropic API ${res.status}${type}: ${detail} [model=${model}]`);
   }
   if (Array.isArray(payload.content)) {
     const texts = payload.content
@@ -129,11 +140,27 @@ async function callClaude({ apiKey, system, prompt, maxTokens = 2000, cachedCont
 }
 
 export async function callAnthropic(opts) {
+  const { tier, ...rest } = opts;
   const openaiKey = process.env.CAREER_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
   if (!openaiKey && !anthropicKey) {
     throw new Error('Missing OPENAI_API_KEY (or ANTHROPIC_API_KEY) on server. Add it in Vercel project environment variables.');
+  }
+
+  // Judgment-heavy calls try the smart tier first, then degrade to the
+  // standard path below on any failure.
+  if (tier === 'smart') {
+    try {
+      if (OPENAI_MODEL_SMART && openaiKey) {
+        return await callOpenAI({ ...rest, apiKey: openaiKey, model: OPENAI_MODEL_SMART });
+      }
+      if (anthropicKey) {
+        return await callClaude({ ...rest, apiKey: anthropicKey, model: ANTHROPIC_MODEL_SMART });
+      }
+    } catch (err) {
+      console.warn('careerEngine smart-tier call failed; falling back to standard model:', err.message);
+    }
   }
 
   if (openaiKey) {

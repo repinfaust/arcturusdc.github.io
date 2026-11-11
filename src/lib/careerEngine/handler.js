@@ -311,6 +311,7 @@ export function createCareerHandler(app) {
           cachedContext: cand.cachedContext,
           prompt: app.prompts.evaluate(jdData, cand.facts),
           maxTokens: 3000,
+          tier: 'smart',
         }));
 
         await incrementUsage(tenantId); // one analyse = one action
@@ -402,10 +403,57 @@ export function createCareerHandler(app) {
           interview_brief: null,
           interview_brief_at: null,
           company_context: null,
+          coverage: null,
+          coverage_at: null,
           status: 'Evaluated',
           status_at: new Date(),
         }, { merge: true });
         return NextResponse.json({ id: body.id, reset: true, status: 'Evaluated' });
+      }
+
+      // Requirements coverage check (D-SITE-089, 1 action): audits the JD's
+      // explicit requirements against the candidate's real evidence AND
+      // whether the tailored CV states each met requirement in the JD's own
+      // vocabulary — what a screener's ATS/AI will actually match on. Honest
+      // by design: it never claims an unmet requirement, and the fix-ups it
+      // suggests are grounded phrasing changes, not keyword stuffing.
+      if (action === 'coverage_check') {
+        await assertActionAvailable(tenantId);
+        const { ref, analysis, error } = await getAnalysisOr404(tenantId, body.id);
+        if (error) return error;
+        const cand = await loadCandidate(tenantId);
+        if (!cand.complete) {
+          return NextResponse.json({ error: 'Set up your profile and evidence library first.' }, { status: 400 });
+        }
+        const jdBlock = JSON.stringify(analysis.jd_data || {}, null, 2);
+        const cvText = analysis.tailored_cv || '';
+        const raw = await callAnthropic({
+          system: 'You audit how well a candidate covers a job description\'s requirements, as a screener\'s ATS/AI would read them. Be strict and honest: never claim a requirement is met without real evidence from the candidate\'s profile, evidence library or CV. Respond with ONLY a JSON array.',
+          cachedContext: cand.cachedContext,
+          prompt:
+            `# Requirements coverage check\n\nJOB (parsed JD):\n${jdBlock}\n\n` +
+            (cvText ? `TAILORED CV (what the screener will read):\n${cvText}\n\n` : '') +
+            `List the JD's explicit requirements and strong preferences (max 12, most important first). ` +
+            `Assess each against the candidate's REAL profile, evidence and CV above.\n` +
+            `Respond with ONLY a JSON array of objects:\n` +
+            `{"requirement": "<the JD's own wording, short>", ` +
+            `"met": "yes" | "partial" | "no", ` +
+            `"evidence": "<one line naming the real role/metric that proves it, or empty if unmet>", ` +
+            `"in_cv": true | false (does the ${cvText ? 'tailored CV above' : "candidate's CV"} state this using terminology a screener would match to the JD's wording?), ` +
+            `"fix": "<only when met but in_cv is false or worded differently from the JD: a short grounded phrase to work in using the JD's vocabulary; else empty>"}`,
+          maxTokens: 2200,
+          tier: 'smart',
+        });
+        let coverage;
+        try { coverage = JSON.parse(stripJsonFences(raw)); } catch {
+          return NextResponse.json({ error: 'Coverage check returned an unreadable result. Try again.' }, { status: 422 });
+        }
+        if (!Array.isArray(coverage)) {
+          return NextResponse.json({ error: 'Coverage check returned an unreadable result. Try again.' }, { status: 422 });
+        }
+        await ref.set({ coverage, coverage_at: new Date() }, { merge: true });
+        await incrementUsage(tenantId);
+        return NextResponse.json({ id: body.id, coverage });
       }
 
       // Set a role's pipeline status (free — no AI call). Lets the user record
@@ -460,6 +508,7 @@ export function createCareerHandler(app) {
           cachedContext: cand.cachedContext,
           prompt,
           maxTokens: 4000,
+          tier: 'smart',
         }));
 
         await ref.set({ tailored_cv: tailoredCv, tailored_cv_at: new Date(), status: 'Applying' }, { merge: true });
@@ -547,6 +596,7 @@ export function createCareerHandler(app) {
             `## 3. How to Handle Flagged Gaps / Watch-outs\nDirect, honest ways to frame any gaps or risks identified in the evaluation without bluffing.\n\n` +
             `## 4. Sharp Questions to Ask the Panel\n3 specific questions tailored to this role and organisation.`,
           maxTokens: 2800,
+          tier: 'smart',
         }));
 
         await ref.set({ interview_brief: brief, interview_brief_at: new Date() }, { merge: true });
@@ -992,6 +1042,7 @@ export function createCareerHandler(app) {
           cachedContext: cand.cachedContext,
           prompt,
           maxTokens: 1500,
+          tier: 'smart',
         });
 
         await ref.set({ cover_letter: coverLetter, cover_letter_at: new Date() }, { merge: true });
@@ -1020,6 +1071,7 @@ export function createCareerHandler(app) {
             `Return ONLY a JSON array of {"q": "<question>", "a": "<answer>"} for: ` +
             `"Why are you interested in this role?", "Why do you want to work here?", "What makes you a good fit?", "What is your relevant experience?".`,
           maxTokens: 1500,
+          tier: 'smart',
         });
         const cleaned = stripJsonFences(raw);
         let answers = [];
@@ -1057,6 +1109,7 @@ export function createCareerHandler(app) {
             (guidance.trim() ? `Word limit / angle / guidance: "${guidance.trim()}"\n` : '') +
             `\nWrite a direct, first-person answer grounded strictly in the candidate's real evidence anchors and CV above. ` +
             `Do not invent any metric, employer, qualification, or project. Avoid AI clichés. Return ONLY the answer text.`,
+          tier: 'smart',
           maxTokens: 1200,
         });
 
