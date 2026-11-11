@@ -21,6 +21,10 @@
   .stats{display:flex; gap:14px; font-weight:700; font-size:14px}
   .stats .tok{color:var(--gold)} .stats .strk{color:var(--cyan)}
 
+  /* run progress — one thin bar across pre-check, feed and final check */
+  .progress{height:4px; background:#1c2430; border-radius:2px; overflow:hidden; margin:0 4px 10px}
+  .progress-fill{height:100%; width:0%; background:var(--cyan); border-radius:2px; transition:width .3s ease}
+
   .stage{position:relative; flex:1; display:flex; align-items:center; justify-content:center}
 
   .card{position:absolute; width:100%; background:var(--panel); border:1px solid var(--line);
@@ -171,6 +175,7 @@
     <div class="brand"><span class="dot"></span> TRUTHNET</div>
     <div class="stats"><span class="tok" id="tok">🪙 0</span><span class="strk" id="strk">🔥 0</span></div>
   </div>
+  <div class="progress"><div class="progress-fill" id="pfill"></div></div>
 
   <div class="stage" id="stage">
     <!-- cards injected here -->
@@ -283,6 +288,13 @@ const stage=document.getElementById('stage');
 const tokEl=document.getElementById('tok'), strkEl=document.getElementById('strk');
 const controls=document.getElementById('controls'), hint=document.getElementById('hint');
 
+// run progress: judged cards over the whole run (pre + feed + post)
+function totalSteps(){ return cards.length + (measure ? measure.pre.length + measure.post.length : 0); }
+function updateProgress(done){
+  const f=document.getElementById('pfill');
+  if(f) f.style.width = Math.min(100, Math.round(done/totalSteps()*100)) + '%';
+}
+
 function renderCard(){
   document.querySelectorAll('.card').forEach(c=>c.remove());
   if(i>=cards.length){ finishFeed(); return; }
@@ -313,6 +325,7 @@ function renderCard(){
   controls.style.display='flex'; hint.style.display='block';
   // per-card question reframes the call: picture? framing? feeling?
   hint.textContent = c.question ? c.question + '  ·  swipe or tap' : 'Trust your gut. Swipe or tap.';
+  updateProgress((measure ? measure.pre.length : 0) + i);
 }
 
 // Guardrail 1, promoted: verifying is a playable 5-second lateral-reading moment,
@@ -420,6 +433,7 @@ function renderMeasure(){
   stage.appendChild(el);
   controls.style.display='flex'; hint.style.display='block';
   hint.textContent = c.question + (phase==='pre' ? '  ·  warm-up, gut call' : '  ·  final check');
+  updateProgress(phase==='pre' ? mIdx : measure.pre.length + cards.length + mIdx);
 }
 function measureDecide(choice){
   const c=measure[phase][mIdx];
@@ -506,7 +520,11 @@ function closeCreator(){
 }
 
 function showEnd(){
+  // the last measurement card arrives straight before the end screen — clear it,
+  // same as every other full-screen state (rug/creator/sting) does
+  document.querySelectorAll('.card').forEach(c=>c.remove());
   controls.style.display='none'; hint.style.display='none';
+  updateProgress(totalSteps());
   document.getElementById('endtok').textContent='🪙 '+tokens;
   document.getElementById('endmsg').textContent = tokens>=10 ? 'Sharp eyes. Round clear.' : 'Round clear — replay to beat your score';
   const ms=document.getElementById('mstat');
@@ -534,6 +552,7 @@ function resetState(){
   for(const k of Object.keys(competence)) delete competence[k];
   bHasCap=false; bHasArrow=false; verifiedThisCard=false; vSeen=0; vChecked=0;
   tokEl.textContent='🪙 0'; strkEl.textContent='🔥 0';
+  const f=document.getElementById('pfill'); if(f) f.style.width='0%';
   document.getElementById('end').classList.remove('show');
   document.getElementById('sting').classList.remove('show');
   document.getElementById('rug').classList.remove('show');
