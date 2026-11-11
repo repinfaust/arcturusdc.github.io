@@ -235,6 +235,7 @@
       <h2 id="endmsg">Round clear</h2>
       <p style="color:var(--dim);max-width:300px;line-height:1.5" id="endhook">
         "Someone's flooding the feed with fakes on purpose. Next time, we find out who."</p>
+      <div class="vstat" id="mstat" style="border-color:rgba(255,211,78,.35);background:rgba(255,211,78,.07)"></div>
       <div class="vstat" id="vstat"></div>
       <div class="booster" id="booster">
         🛡️ Your spotting fades a little every day. Come back tomorrow for a
@@ -256,14 +257,17 @@
 // Deck lives in cards.json (D-SITE-091) so content scales without touching the engine.
 // tactic taxonomy: ai | framing | context | numbers | outrage | scapegoat | urgency | system
 //   Acts: 1 = provenance warm-up (KS1), 2 = framing (KS2), 3 = feeling/system (KS3).
-let cards = [];
+let cards = [], measure = null;
 // Absolute path: Vercel 308-redirects /games/truthnet/ -> /games/truthnet, which
 // rebases relative URLs to /games/ and 404s them. All assets here are absolute.
 const deckReady = fetch('/games/truthnet/cards.json')
   .then(r => { if(!r.ok) throw new Error('deck HTTP '+r.status); return r.json(); })
-  .then(d => { cards = d.cards; });
+  .then(d => { cards = d.cards; measure = d.measure || null; });
 
 let i=0, tokens=0, streak=0, unlockedSting=false, rugDone=false, creatorDone=false;
+// C1 measurement state: phase 'pre' -> 'feed' -> 'post'; mScore holds the delta.
+let phase='pre', mIdx=0;
+const mScore = { pre:0, post:0 };
 // per-tactic competence: correct calls clocked for each tactic (keys created on demand).
 const competence = {};
 // The system-level sting is gated on demonstrated competence with the FEELING-tier
@@ -327,6 +331,7 @@ function closeVerify(){
 }
 
 function decide(choice){
+  if(phase!=='feed'){ measureDecide(choice); return; }
   const c=cards[i];
   const correct = choice===c.truth;
   const flash=document.getElementById('flash');
@@ -379,10 +384,58 @@ function advance(){
   renderCard();
 }
 
-// Feed finished → rug-pull → Creator Mode → end screen, in that order.
+// Feed finished → rug-pull → Creator Mode → post-measure → end screen, in that order.
 function finishFeed(){
   if(!rugDone){ showRug(); return; }
   if(!creatorDone){ showCreator(); return; }
+  startPost();
+}
+
+// — C1 learning measurement (D-SITE-092): matched novel cards, cold at the start,
+// fresh at the end. No reveals, no tokens, no streak, no verify: pre answers are
+// banked before any teaching, post answers after all of it; the delta shows on the
+// end screen. Balanced real/fake per pair so blanket scepticism scores 1/2, not 2/2.
+function startRun(){ phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0; renderMeasure(); }
+function startPost(){ phase='post'; mIdx=0; renderMeasure(); }
+function renderMeasure(){
+  document.querySelectorAll('.card').forEach(c=>c.remove());
+  if(!measure || !measure[phase] || !measure[phase].length){
+    if(phase==='pre'){ phase='feed'; renderCard(); } else { showEnd(); }
+    return;
+  }
+  const c=measure[phase][mIdx];
+  const el=document.createElement('div');
+  el.className='card';
+  el.innerHTML=`
+    <div class="media"><span class="tag">${c.tag}</span><img class="photo" src="${c.img}" alt=""></div>
+    <div class="cap"><span class="handle">${c.handle}</span> ${c.cap}</div>
+    <div class="meta"><span>♡ like</span><span>💬 comment</span><span>↗ share</span></div>
+    <div class="swipeflash" id="flash"></div>
+    <div class="reveal" id="reveal">
+      <div class="verdict ok" id="verdict">✓ Logged</div>
+      <div class="tn"><span class="dot"></span> ${phase==='pre'?'WARM-UP':'FINAL CHECK'}</div>
+      <div class="tell" id="tell">${phase==='pre'?"No answers yet — they'd spoil the game. Let's play.":"Banked. Let's see how your detector did…"}</div>
+      <button class="next" onclick="measureAdvance()">Next →</button>
+    </div>`;
+  stage.appendChild(el);
+  controls.style.display='flex'; hint.style.display='block';
+  hint.textContent = c.question + (phase==='pre' ? '  ·  warm-up, gut call' : '  ·  final check');
+}
+function measureDecide(choice){
+  const c=measure[phase][mIdx];
+  if(choice===c.truth) mScore[phase]++;
+  const flash=document.getElementById('flash');
+  flash.style.background = choice==='fake'
+    ? 'linear-gradient(90deg, rgba(255,92,108,.5), transparent)'
+    : 'linear-gradient(270deg, rgba(46,204,113,.5), transparent)';
+  flash.style.opacity=1; setTimeout(()=>flash.style.opacity=0,180);
+  controls.style.display='none'; hint.style.display='none';
+  document.getElementById('reveal').classList.add('show');
+}
+function measureAdvance(){
+  mIdx++;
+  if(mIdx < measure[phase].length){ renderMeasure(); return; }
+  if(phase==='pre'){ phase='feed'; i=0; renderCard(); return; }
   showEnd();
 }
 
@@ -449,13 +502,24 @@ function bInflate(){
 function closeCreator(){
   creatorDone=true;
   document.getElementById('creator').classList.remove('show');
-  showEnd();
+  startPost();
 }
 
 function showEnd(){
   controls.style.display='none'; hint.style.display='none';
   document.getElementById('endtok').textContent='🪙 '+tokens;
   document.getElementById('endmsg').textContent = tokens>=10 ? 'Sharp eyes. Round clear.' : 'Round clear — replay to beat your score';
+  const ms=document.getElementById('mstat');
+  if(measure && measure.pre && measure.pre.length){
+    const p=mScore.pre, q=mScore.post, n=measure.pre.length;
+    let msg;
+    if(q>p) msg='Your detector improved — you caught more of the fresh fakes.';
+    else if(p===n && q===n) msg='Sharp from the start — and still sharp at the end.';
+    else if(q===p) msg="Held steady. Tomorrow's booster is how it climbs.";
+    else msg="Fresh fakes are harder — that's normal. Tomorrow's booster is the fix.";
+    ms.style.display='block';
+    ms.innerHTML=`🎯 <strong>Your detector — before: ${p}/${n} · after: ${q}/${measure.post.length}</strong><br>${msg}`;
+  } else { ms.style.display='none'; }
   const vs=document.getElementById('vstat');
   if(vSeen>0){
     vs.style.display='block';
@@ -466,6 +530,7 @@ function showEnd(){
 }
 function resetState(){
   i=0; tokens=0; streak=0; unlockedSting=false; rugDone=false; creatorDone=false;
+  phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0;
   for(const k of Object.keys(competence)) delete competence[k];
   bHasCap=false; bHasArrow=false; verifiedThisCard=false; vSeen=0; vChecked=0;
   tokEl.textContent='🪙 0'; strkEl.textContent='🔥 0';
@@ -474,20 +539,20 @@ function resetState(){
   document.getElementById('rug').classList.remove('show');
   document.getElementById('creator').classList.remove('show');
 }
-function restart(){ resetState(); renderCard(); }
+function restart(){ resetState(); startRun(); }
 
 // Day 2 booster — same tactics, the streak/return loop made legible (prototype only, no real scheduling)
 function day2(){
   resetState();
   document.querySelector('.brand').innerHTML='<span class="dot"></span> TRUTHNET · DAY 2';
-  renderCard();
+  startRun();
 }
 
 // one-tap front door: don't render the feed until PLAY is tapped (and the deck has loaded)
 function start(){
   deckReady.then(()=>{
     document.getElementById('start').classList.add('hide');
-    renderCard();
+    startRun();
   }).catch(e=>{
     document.querySelector('.start p').textContent='Could not load the deck ('+e.message+'). Check your connection and refresh.';
   });

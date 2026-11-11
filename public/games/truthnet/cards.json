@@ -1,6 +1,52 @@
 {
-  "version": "0.3.1",
-  "notes": "Deck for TruthNet v0.3.1 (D-SITE-091). Acts: 1 = provenance warm-up (KS1), 2 = framing (KS2), 3 = feeling/system (KS3). All Act 2/3 cards carry a verify block (lateral-reading panel). truth refers to what the card ASKS: provenance cards = the picture, veracity cards = the story/feeling. Outrage/scapegoat/urgency cards use fictional targets only — never a real school, place, group or person.",
+  "version": "0.3.2",
+  "notes": "Deck for TruthNet v0.3.2 (D-SITE-091, D-SITE-092). Acts: 1 = provenance warm-up (KS1), 2 = framing (KS2), 3 = feeling/system (KS3). All Act 2/3 cards carry a verify block (lateral-reading panel). truth refers to what the card ASKS: provenance cards = the picture, veracity cards = the story/feeling. Outrage/scapegoat/urgency cards use fictional targets only — never a real school, place, group or person. measure = the C1 learning instrument: matched novel pairs (one framing-fake + one plain-real each) answered cold before the deck and fresh after it, no reveals, no tokens; balanced real/fake so blanket scepticism scores 1/2, not 2/2.",
+  "measure": {
+    "pre": [
+      {
+        "id": "m-pre-trampoline",
+        "img": "/img/assumezero/truthnet/card-m-pre-trampoline.png",
+        "tag": "@gardenfails · 1.6M likes",
+        "handle": "@gardenfails",
+        "tactic": "framing",
+        "cap": "DISASTER struck 2 seconds after this 😱 you won't BELIEVE what happened",
+        "truth": "fake",
+        "question": "Is the STORY real?"
+      },
+      {
+        "id": "m-pre-carrots",
+        "img": "/img/assumezero/truthnet/card-m-pre-carrots.png",
+        "tag": "@plot14allotment · 57 likes",
+        "handle": "@plot14allotment",
+        "tactic": "framing",
+        "cap": "first carrots out of the ground this morning 🥕",
+        "truth": "real",
+        "question": "Real, or made to fool you?"
+      }
+    ],
+    "post": [
+      {
+        "id": "m-post-cat",
+        "img": "/img/assumezero/truthnet/card-m-post-cat.png",
+        "tag": "@whiskerworld · 2.8M likes",
+        "handle": "@whiskerworld",
+        "tactic": "framing",
+        "cap": "my cat did something TERRIFYING right after this 😱 (not clickbait)",
+        "truth": "fake",
+        "question": "Is the STORY real?"
+      },
+      {
+        "id": "m-post-dogwalk",
+        "img": "/img/assumezero/truthnet/card-m-post-dogwalk.png",
+        "tag": "@mollyandbruno · 73 likes",
+        "handle": "@mollyandbruno",
+        "tactic": "framing",
+        "cap": "muddy one this morning 🐾",
+        "truth": "real",
+        "question": "Real, or made to fool you?"
+      }
+    ]
+  },
   "cards": [
     {
       "id": "puppy-fake",

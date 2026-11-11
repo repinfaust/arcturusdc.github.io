@@ -1,5 +1,28 @@
 # Decisions
 
+## 2026-11-11 — AssumeZero/TruthNet v0.3.2: in-game learning measurement (D-SITE-092)
+
+Approved by David 2026-11-11 ("go - build C1"). The pilot's evidence instrument, built
+into the game itself: a pre/post delta on matched novel cards, all client-side, no
+accounts, no data leaving the browser.
+
+- **Design:** two "warm-up" cards answered cold before the deck (no reveal, no tokens,
+  no streak — a reveal would teach and contaminate the pre-test) and two matched
+  "final check" cards after the rug-pull and Creator Mode. Delta shown on the end
+  screen ("Your detector — before X/2 · after Y/2").
+- **Each pair is one framing-fake + one plain-real**, matched for difficulty, so blanket
+  scepticism ("swipe FAKE on everything") scores 1/2, not 2/2 — the instrument measures
+  discernment, not suspicion. Measurement cards live in `cards.json` under `measure`
+  and never enter tokens, streak, competence or the verify stat.
+- **Pilot use:** the child's end screen is the data point; the teacher/parent records
+  before/after on paper. No persistence by design (safeguarding posture: "no accounts,
+  no data collection" stays literally true).
+- Honest limit, kept on the record: n=2 items per phase is a signal, not a measure —
+  enough for direction-of-travel in a pilot, not for claims. Expanding the item bank
+  is the upgrade path if a partner wants real effect data.
+- Pending assets (David, Gemini): 4 measurement card images
+  (`card-m-pre-trampoline/carrots`, `card-m-post-cat/dogwalk`).
+
 ## 2026-11-11 — AssumeZero/TruthNet v0.3.1: deck rebalance + verify-as-habit scoring (D-SITE-091)
 
 Approved by David 2026-11-11. Evidence base: technique-based prebunking meta-analyses
