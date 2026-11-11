@@ -83,9 +83,11 @@
   /* red arrow pointing at nothing (clickbait framing tell) */
   .redarrow{position:absolute; right:34px; top:60px; color:var(--red); font-size:64px; font-weight:900;
     text-shadow:0 2px 8px rgba(0,0,0,.5); transform:rotate(8deg); z-index:2}
-  /* verify / check-source button — rewards slowing down */
-  .verifybtn{margin-left:auto; background:transparent; border:1px solid var(--cyan); color:var(--cyan);
-    border-radius:12px; padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer}
+  /* verify / check-source button — a game control, not part of the post */
+  .verifyrow{display:none; justify-content:center; padding-top:12px}
+  .verifybtn{background:transparent; border:1px solid var(--cyan); color:var(--cyan);
+    border-radius:20px; padding:9px 18px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:.3px}
+  .verifybtn:active{transform:scale(.96)}
   .verifybtn.done{border-color:var(--green); color:var(--green)}
 
   /* SOURCE CHECK panel — lateral reading made playable */
@@ -251,6 +253,9 @@
     </div>
   </div>
 
+  <div class="verifyrow" id="verifyrow">
+    <button class="verifybtn" id="verifybtn" onclick="openVerify()">🔍 check source</button>
+  </div>
   <div class="controls" id="controls">
     <button class="btn fake" onclick="decide('fake')">FAKE</button>
     <button class="btn real" onclick="decide('real')">REAL</button>
@@ -305,7 +310,7 @@ function renderCard(){
   el.innerHTML=`
     <div class="media"><span class="tag">${c.tag}</span><img class="photo" src="${c.img}" alt="">${c.arrow?'<span class="redarrow">↘</span>':''}</div>
     <div class="cap"><span class="handle">${c.handle}</span> ${c.cap}</div>
-    <div class="meta"><span>♡ like</span><span>💬 comment</span><span>↗ share</span>${c.verify?'<button class="verifybtn" id="verifybtn" onclick="openVerify()">🔍 check source</button>':''}</div>
+    <div class="meta"><span>♡ like</span><span>💬 comment</span><span>↗ share</span></div>
     <div class="swipeflash" id="flash"></div>
     ${c.verify?`
     <div class="vpanel" id="vpanel">
@@ -325,7 +330,16 @@ function renderCard(){
   controls.style.display='flex'; hint.style.display='block';
   // per-card question reframes the call: picture? framing? feeling?
   hint.textContent = c.question ? c.question + '  ·  swipe or tap' : 'Trust your gut. Swipe or tap.';
+  const vb=document.getElementById('verifybtn');
+  if(c.verify){
+    vb.textContent='🔍 check source'; vb.disabled=false; vb.classList.remove('done');
+    setVerifyRow(true);
+  } else setVerifyRow(false);
   updateProgress((measure ? measure.pre.length : 0) + i);
+}
+
+function setVerifyRow(show){
+  document.getElementById('verifyrow').style.display = show ? 'flex' : 'none';
 }
 
 // Guardrail 1, promoted: verifying is a playable 5-second lateral-reading moment,
@@ -383,7 +397,7 @@ function decide(choice){
   }
   verifiedThisCard=false;
   tokEl.textContent='🪙 '+tokens; strkEl.textContent='🔥 '+streak;
-  controls.style.display='none'; hint.style.display='none';
+  controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
   reveal.classList.add('show');
 }
 
@@ -431,7 +445,7 @@ function renderMeasure(){
       <button class="next" onclick="measureAdvance()">Next →</button>
     </div>`;
   stage.appendChild(el);
-  controls.style.display='flex'; hint.style.display='block';
+  controls.style.display='flex'; hint.style.display='block'; setVerifyRow(false);
   hint.textContent = c.question + (phase==='pre' ? '  ·  warm-up, gut call' : '  ·  final check');
   updateProgress(phase==='pre' ? mIdx : measure.pre.length + cards.length + mIdx);
 }
@@ -443,7 +457,7 @@ function measureDecide(choice){
     ? 'linear-gradient(90deg, rgba(255,92,108,.5), transparent)'
     : 'linear-gradient(270deg, rgba(46,204,113,.5), transparent)';
   flash.style.opacity=1; setTimeout(()=>flash.style.opacity=0,180);
-  controls.style.display='none'; hint.style.display='none';
+  controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
   document.getElementById('reveal').classList.add('show');
 }
 function measureAdvance(){
@@ -455,7 +469,7 @@ function measureAdvance(){
 
 function showSting(){
   document.querySelectorAll('.card').forEach(c=>c.remove());
-  controls.style.display='none'; hint.style.display='none';
+  controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
   document.getElementById('sting').classList.add('show');
   const v=document.getElementById('stingvid');
   if(v){ try{ v.currentTime=0; v.play(); }catch(e){} }
@@ -472,7 +486,7 @@ function closeSting(){
 // Honesty dependency: card-birthday-real.png and card-bakery-real.png ARE AI-made.
 function showRug(){
   document.querySelectorAll('.card').forEach(c=>c.remove());
-  controls.style.display='none'; hint.style.display='none';
+  controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
   document.getElementById('rug').classList.add('show');
 }
 function closeRug(){
@@ -485,7 +499,7 @@ function closeRug(){
 let bHasCap=false, bHasArrow=false;
 function showCreator(){
   document.querySelectorAll('.card').forEach(c=>c.remove());
-  controls.style.display='none'; hint.style.display='none';
+  controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
   document.getElementById('sting').classList.remove('show');
   document.getElementById('creator').classList.add('show');
 }
@@ -523,7 +537,7 @@ function showEnd(){
   // the last measurement card arrives straight before the end screen — clear it,
   // same as every other full-screen state (rug/creator/sting) does
   document.querySelectorAll('.card').forEach(c=>c.remove());
-  controls.style.display='none'; hint.style.display='none';
+  controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
   updateProgress(totalSteps());
   document.getElementById('endtok').textContent='🪙 '+tokens;
   document.getElementById('endmsg').textContent = tokens>=10 ? 'Sharp eyes. Round clear.' : 'Round clear — replay to beat your score';
