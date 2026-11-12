@@ -1,5 +1,27 @@
 # Decisions
 
+## 2026-11-12 — AssumeZero/TruthNet: measurement runs once; warm-up owns its identity (D-SITE-097)
+
+David flagged the v0.4 flow reading as broken: the check-source button appears
+unexplained in the warm-up, vanishes for Act 1, then was announced as "NEW MOVE
+UNLOCKED". Decisions, after discussing his tutorial proposal:
+
+- **The warm-up stays a cold instrument, never a tutorial.** Teaching before the
+  pre-measure would invalidate the before/after delta — the one number headed for
+  educators. The unexplained button in the warm-up is deliberate baseline data
+  (does a child check unprompted?), now documented in the engine.
+- **The intro overlay stops lying** (amends D-SITE-093): header is now "THAT 🔍
+  BUTTON FROM THE WARM-UP?" — just-in-time tutorial, anchored to the moment the
+  button first pays, instead of claiming novelty the child can contradict.
+- **First warm-up card names itself**: "Warm-up — no points yet, just your gut".
+- **Replays skip measurement entirely** (amends D-SITE-092/095): pre and post only
+  mean something once per session (items aren't novel on replay), so Play again /
+  Day 2 go straight to the feed (26 decisions -> 20), the end screen drops the
+  detector stat on replays, and the progress bar spans feed-only. Session-scoped
+  flag, no storage — the no-data architecture is untouched.
+- Root-cause fix en route: closeCreator() called startPost() directly, bypassing
+  the finishFeed() routing gate; it now routes through finishFeed().
+
 ## 2026-11-12 — AssumeZero Ukrainian edition: opportunity recorded; implementation gated (D-SITE-096)
 
 David requested a build specification following the Ukrainian-edition review and

@@ -295,16 +295,20 @@ const feelingScore = () => FEELING_TACTICS.reduce((s,t)=>s+(competence[t]||0),0)
 
 // verify habit tracking for the end-screen stat
 let vSeen=0, vChecked=0, verifiedThisCard=false;
-// one-time "new move" intro the first time a checkable card appears (Felix test:
-// neither child found the button unprompted)
+// one-time intro the first time a checkable FEED card appears (Felix test: neither
+// child found the button unprompted). The warm-up shows the button unexplained on
+// purpose — unprompted checking there is baseline data, not a UX bug.
 let verifyIntroDone=false;
+// Measurement runs once per session: the pre/post delta only means something the
+// first time (items aren't novel on a replay), so replays go straight to the feed.
+let firstRun=true;
 
 const stage=document.getElementById('stage');
 const tokEl=document.getElementById('tok'), strkEl=document.getElementById('strk');
 const controls=document.getElementById('controls'), hint=document.getElementById('hint');
 
 // run progress: judged cards over the whole run (pre + feed + post)
-function totalSteps(){ return cards.length + (measure ? measure.pre.length + measure.post.length : 0); }
+function totalSteps(){ return cards.length + (firstRun && measure ? measure.pre.length + measure.post.length : 0); }
 function updateProgress(done){
   if(!totalSteps()) return;
   const pct = Math.min(100, Math.round(done/totalSteps()*100)) + '%';
@@ -332,9 +336,9 @@ function renderCard(){
     </div>`:''}
     ${c.verify && !verifyIntroDone?`
     <div class="vpanel show" id="vintro">
-      <div class="vhead"><span class="dot"></span> NEW MOVE UNLOCKED</div>
+      <div class="vhead"><span class="dot"></span> THAT 🔍 BUTTON FROM THE WARM-UP?</div>
       <ul>
-        <li>🔍 You can now peek behind a post before you answer</li>
+        <li>🔍 It peeks behind a post before you answer</li>
         <li>🪙 Right answer after checking = <b>double tokens</b></li>
         <li>🛡️ Get it wrong after checking? Your streak is safe</li>
       </ul>
@@ -358,7 +362,7 @@ function renderCard(){
     vb.textContent='🔍 check source'; vb.disabled=false; vb.classList.remove('done'); vb.classList.remove('pulse');
     setVerifyRow(true);
   } else setVerifyRow(false);
-  updateProgress((measure ? measure.pre.length : 0) + i);
+  updateProgress((firstRun && measure ? measure.pre.length : 0) + i);
 }
 
 function setVerifyRow(show){
@@ -457,7 +461,7 @@ function advance(){
 function finishFeed(){
   if(!rugDone){ showRug(); return; }
   if(!creatorDone){ showCreator(); return; }
-  startPost();
+  if(firstRun) startPost(); else showEnd();
 }
 
 // — C1 learning measurement (D-SITE-092, amended D-SITE-095): matched novel cards,
@@ -465,7 +469,10 @@ function finishFeed(){
 // verify button IS available and silently counted, so the instrument gives children
 // an opportunity to check. Each set holds a loud-true, a quiet-false and a loud-fake,
 // so a style-matcher scores 1/3, not full marks.
-function startRun(){ phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0; renderMeasure(); }
+function startRun(){
+  if(!firstRun){ phase='feed'; i=0; renderCard(); return; } // replay: skip measurement
+  phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0; renderMeasure();
+}
 function startPost(){ phase='post'; mIdx=0; renderMeasure(); }
 function renderMeasure(){
   document.querySelectorAll('.card').forEach(c=>c.remove());
@@ -496,7 +503,9 @@ function renderMeasure(){
     </div>`;
   stage.appendChild(el);
   controls.style.display='flex'; hint.style.display='block';
-  hint.textContent = c.question + (phase==='pre' ? '  ·  warm-up, your call' : '  ·  final check');
+  hint.textContent = phase==='pre'
+    ? (mIdx===0 ? 'Warm-up — no points yet, just your gut' : c.question + '  ·  warm-up, your call')
+    : c.question + '  ·  final check';
   const vb=document.getElementById('verifybtn');
   if(c.verify){
     vb.textContent='🔍 check source'; vb.disabled=false; vb.classList.remove('done'); vb.classList.remove('pulse');
@@ -584,7 +593,7 @@ function bInflate(){
 function closeCreator(){
   creatorDone=true;
   document.getElementById('creator').classList.remove('show');
-  startPost();
+  finishFeed(); // routes to the final check on a first run, straight to the end on a replay
 }
 
 function showEnd(){
@@ -596,7 +605,7 @@ function showEnd(){
   document.getElementById('endtok').textContent='🪙 '+tokens;
   document.getElementById('endmsg').textContent = tokens>=10 ? 'Sharp eyes. Round clear.' : 'Round clear — replay to beat your score';
   const ms=document.getElementById('mstat');
-  if(measure && measure.pre && measure.pre.length){
+  if(firstRun && measure && measure.pre && measure.pre.length){
     const p=mScore.pre, q=mScore.post, n=measure.pre.length;
     let msg;
     if(q>p) msg='You caught more of the brand-new posts this time.';
@@ -627,10 +636,11 @@ function resetState(){
   document.getElementById('rug').classList.remove('show');
   document.getElementById('creator').classList.remove('show');
 }
-function restart(){ resetState(); startRun(); }
+function restart(){ firstRun=false; resetState(); startRun(); }
 
 // Day 2 booster — same tactics, the streak/return loop made legible (prototype only, no real scheduling)
 function day2(){
+  firstRun=false;
   resetState();
   document.querySelector('.brand').innerHTML='<span class="dot"></span> TRUTHNET · DAY 2';
   startRun();
