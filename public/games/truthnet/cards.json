@@ -1,49 +1,111 @@
 {
-  "version": "0.3.3",
-  "notes": "Deck for TruthNet v0.3.3 (D-SITE-091, D-SITE-092, D-SITE-093). Acts: 1 = provenance warm-up (KS1), 2 = framing (KS2), 3 = feeling/system (KS3). All Act 2/3 cards carry a verify block (lateral-reading panel; 3 short lines, trimmed after Felix test). truth refers to what the card ASKS: provenance cards = the picture, veracity cards = the story/feeling. Outrage/scapegoat/urgency cards use fictional targets only — never a real school, place, group or person. Act 3 order puts the giveaway late so the sting (anchored to it) lands on its card. measure = the C1 learning instrument: matched novel pairs (one framing-fake + one plain-real each) answered cold before the deck and fresh after it, no reveals, no tokens; balanced real/fake so blanket scepticism scores 1/2, not 2/2.",
+  "version": "0.4.0",
+  "notes": "Deck for TruthNet v0.4.0 (D-SITE-091..095). Acts: 1 = provenance warm-up (KS1), 2 = framing/context (KS2), 3 = feeling/system (KS3). truth takes three values: fake | real | unsure. 'unsure' marks a genuinely undecidable card — checking turns up nothing either way, and CAN'T TELL is the rewarded answer. The flood card is NOT unsure: it is undecidable from pixels but decided by checking (verify load-bearing). v0.4 counterexamples break the style shortcut: loud-but-true (football, trip), calm-but-false (museum), honest ad (zapp), labelled AI used honestly (library). Base rate 11 fake / 8 real / 1 unsure, so blanket scepticism scores 55%, down from 71%. All Act 2/3 cards carry a verify block; tells are written in claim-and-evidence language, never 'quiet means true'. Outrage/scapegoat/urgency cards use fictional targets only — never a real school, place, group or person. Act 3 keeps the giveaway late so the sting (anchored to it) lands on its card. measure = the C1 instrument, v2: 3 pre + 3 post novel items (loud-true, quiet-false, loud-fake in each set) so a style-matcher scores 1/3, not full marks; measurement cards now CARRY verify blocks — checking is allowed and silently counted, but there are no reveals and no tokens (D-SITE-092 amended by D-SITE-095).",
   "measure": {
     "pre": [
       {
-        "id": "m-pre-trampoline",
-        "img": "/img/assumezero/truthnet/card-m-pre-trampoline.png",
-        "tag": "@gardenfails · 1.6M likes",
-        "handle": "@gardenfails",
+        "id": "m-pre-volcano",
+        "img": "/img/assumezero/truthnet/card-m-pre-volcano.png",
+        "tag": "@excitedbigsis · 214 likes",
+        "handle": "@excitedbigsis",
         "tactic": "framing",
-        "cap": "DISASTER struck 2 seconds after this 😱 you won't BELIEVE what happened",
-        "truth": "fake",
-        "question": "Is the STORY real?"
+        "cap": "NO WAY!!! my little sister's volcano just WON the whole science fair 🌋🔥 SO PROUD",
+        "truth": "real",
+        "question": "Real, or made to fool you?",
+        "verify": {
+          "lines": [
+            "🏫 School page lists her as the winner",
+            "📰 Local paper photographed the fair",
+            "📅 The fair really was yesterday"
+          ]
+        }
       },
       {
-        "id": "m-pre-carrots",
-        "img": "/img/assumezero/truthnet/card-m-pre-carrots.png",
-        "tag": "@plot14allotment · 57 likes",
-        "handle": "@plot14allotment",
+        "id": "m-pre-lostcat",
+        "img": "/img/assumezero/truthnet/card-m-pre-lostcat.png",
+        "tag": "@help.find.smokey · 41 likes",
+        "handle": "@help.find.smokey",
+        "tactic": "context",
+        "cap": "Smokey is still missing near Elm Park, please keep an eye out 🐱",
+        "truth": "fake",
+        "question": "Real, or made to fool you?",
+        "verify": {
+          "lines": [
+            "📅 Poster photo first posted 2 years ago",
+            "🐱 Owner wrote 'FOUND, thank you!' back then",
+            "🔁 Re-shared this week by a stranger"
+          ]
+        }
+      },
+      {
+        "id": "m-pre-carrot",
+        "img": "/img/assumezero/truthnet/card-m-pre-carrot.png",
+        "tag": "@megaveg.wow · 1.9M likes",
+        "handle": "@megaveg.wow",
         "tactic": "framing",
-        "cap": "first carrots out of the ground this morning 🥕",
-        "truth": "real",
-        "question": "Real, or made to fool you?"
+        "cap": "WORLD RECORD carrot grown in a NORMAL garden?! 😱🥕",
+        "truth": "fake",
+        "question": "Real, or made to fool you?",
+        "verify": {
+          "lines": [
+            "📏 Held close to the camera to look giant",
+            "🏆 No record list mentions it anywhere",
+            "🗂️ A 'world record' veg every single week"
+          ]
+        }
       }
     ],
     "post": [
       {
-        "id": "m-post-cat",
-        "img": "/img/assumezero/truthnet/card-m-post-cat.png",
-        "tag": "@whiskerworld · 2.8M likes",
-        "handle": "@whiskerworld",
+        "id": "m-post-sunset",
+        "img": "/img/assumezero/truthnet/card-m-post-sunset.png",
+        "tag": "@skywatch.jess · 523 likes",
+        "handle": "@skywatch.jess",
         "tactic": "framing",
-        "cap": "my cat did something TERRIFYING right after this 😱 (not clickbait)",
-        "truth": "fake",
-        "question": "Is the STORY real?"
+        "cap": "THE SKY WAS ON FIRE LAST NIGHT 😱🔥 no filter I promise",
+        "truth": "real",
+        "question": "Real, or made to fool you?",
+        "verify": {
+          "lines": [
+            "📸 Dozens posted the same sky that evening",
+            "🌦️ Weather report logged the red sunset",
+            "🖼️ No edits found on the photo"
+          ]
+        }
       },
       {
-        "id": "m-post-dogwalk",
-        "img": "/img/assumezero/truthnet/card-m-post-dogwalk.png",
-        "tag": "@mollyandbruno · 73 likes",
-        "handle": "@mollyandbruno",
+        "id": "m-post-bakesale",
+        "img": "/img/assumezero/truthnet/card-m-post-bakesale.png",
+        "tag": "@hallcakes · 38 likes",
+        "handle": "@hallcakes",
+        "tactic": "context",
+        "cap": "Bake sale this Saturday in the church hall, all welcome ☕",
+        "truth": "fake",
+        "question": "Real, or made to fool you?",
+        "verify": {
+          "lines": [
+            "📅 This sale happened a month ago",
+            "🏠 The hall's calendar shows nothing this Saturday",
+            "🔁 Same photo as last month's post"
+          ]
+        }
+      },
+      {
+        "id": "m-post-skater",
+        "img": "/img/assumezero/truthnet/card-m-post-skater.png",
+        "tag": "@xtreme.clipz · 3.1M likes",
+        "handle": "@xtreme.clipz",
         "tactic": "framing",
-        "cap": "muddy one this morning 🐾",
-        "truth": "real",
-        "question": "Real, or made to fool you?"
+        "cap": "13-year-old jumps a WHOLE BUS on a skateboard 😳 insane",
+        "truth": "fake",
+        "question": "Real, or made to fool you?",
+        "verify": {
+          "lines": [
+            "🕴️ The shadows don't match the sun",
+            "🛹 Pro skaters say the jump is impossible",
+            "🎬 The clip cuts right at the landing"
+          ]
+        }
       }
     ]
   },
@@ -60,7 +122,7 @@
       "truth": "fake",
       "question": "Real photo, or made by a computer?",
       "tellOk": "Count the legs — there are more than four. And the grass melts into mush at the edges. No real dog looks like this; a computer drew it.",
-      "tellNo": "Count the legs — more than four. The grass melts into mush around the paws too. Classic signs a computer made the picture."
+      "tellNo": "Count the legs — more than four. The grass melts into mush around the paws too. Clues like these give this one away — though good fakes won't always be this careless."
     },
     {
       "id": "puppy-real",
@@ -73,8 +135,8 @@
       "cap": "first proper run in the garden 🐾",
       "truth": "real",
       "question": "Real photo, or made by a computer?",
-      "tellOk": "Four legs, real fur, a real blurry background where the camera focused on the puppy. This one's a genuine photo.",
-      "tellNo": "This one's real — four legs, natural fur, and the soft out-of-focus background a real camera lens makes. Nothing a computer faked."
+      "tellOk": "Four legs, real fur, nothing melting or scrambled. This one's a genuine photo — but remember, good fakes get better every year. That's why the later tricks matter more than this one.",
+      "tellNo": "This one's real — four legs, natural fur, nothing melting or scrambled. Careful though: fakes get better every year, so spotting glitches won't always save you. The later tricks will."
     },
     {
       "id": "sign-fake",
@@ -87,8 +149,8 @@
       "cap": "new sweet shop opened in town today 🍬",
       "truth": "fake",
       "question": "Real photo, or made by a computer?",
-      "tellOk": "Read the sign — the letters are mushed-up nonsense. Computers are great at drawing sweets and terrible at spelling. A real shop has real words on it.",
-      "tellNo": "Look closer at the shop sign — the letters melt into made-up squiggles. Computers still can't spell on signs. A real photo has real words."
+      "tellOk": "Read the sign — the letters are mushed-up nonsense. Computer-made pictures often scramble writing. It's a clue, not a rule — but here it gives the game away.",
+      "tellNo": "Look closer at the shop sign — the letters melt into made-up squiggles. Computer-made pictures often scramble writing. A clue worth checking, not a rule — but here it gives the game away."
     },
     {
       "id": "cereal-framing",
@@ -123,13 +185,34 @@
       "tactic": "framing",
       "truth": "real",
       "question": "Real, or a story bolted on?",
-      "tellOk": "No drama, no arrow, no ALL-CAPS panic. Just a normal post. When nothing's trying to yank your feelings, it's usually just... true.",
-      "tellNo": "This one's real and plain. Notice there's nothing trying to grab you — no shock face, no arrow. The absence of bait is itself a signal.",
+      "tellOk": "The claim is tiny and checkable — a named bakery, baking bread, like it has for six years. That's what true usually looks like: small, specific, easy to check.",
+      "tellNo": "This one's true — not because it's quiet, but because it checks out: a real bakery, the same bread, six years of posts. Quiet isn't proof. Checkable is.",
       "verify": {
         "lines": [
           "🥖 Same loaves, same oven, six years",
           "💰 Nobody gains if you share this",
-          "😐 No caps, no arrows, no panic"
+          "🧾 A named shop you could walk past and check"
+        ]
+      }
+    },
+    {
+      "id": "museum-calmfalse",
+      "act": 2,
+      "band": "KS2",
+      "img": "/img/assumezero/truthnet/card-museum-calmfalse.png",
+      "tag": "@days.out.deals · 112 likes",
+      "handle": "@days.out.deals",
+      "tactic": "context",
+      "truth": "fake",
+      "cap": "Heads up — the town museum is free every Sunday now 🎟️",
+      "question": "Calm and helpful… but is it true?",
+      "tellOk": "Checked: the museum's own page says Sunday tickets cost the same as ever. No drama, no caps — and still false. Calm posts can be wrong too; the style never settles it.",
+      "tellNo": "Feels believable, doesn't it? Quiet, helpful, no hype. But the museum's own page says Sundays aren't free. Calm isn't evidence — checking is.",
+      "verify": {
+        "lines": [
+          "🏛️ Museum's own page: normal prices on Sundays",
+          "👤 Account posts 'deals' from everywhere, often wrong",
+          "📅 No date, no link, no source given"
         ]
       }
     },
@@ -141,7 +224,6 @@
       "tag": "@stormwatchuk · 1.1M likes",
       "handle": "@stormwatchuk",
       "tactic": "context",
-      "undecidable": true,
       "cap": "HAPPENING NOW — Bramblebrook high street UNDER WATER 🌊 share so everyone knows!!",
       "truth": "fake",
       "question": "Looks real… but is it from TODAY?",
@@ -198,6 +280,27 @@
       }
     },
     {
+      "id": "football-hypedtrue",
+      "act": 2,
+      "band": "KS2",
+      "img": "/img/assumezero/truthnet/card-football-hypedtrue.png",
+      "tag": "@mosslane.u10s · 221 likes",
+      "handle": "@mosslane.u10s",
+      "tactic": "framing",
+      "truth": "real",
+      "cap": "ABSOLUTE SCENES!!! 😱🔥 last-second winner in the cup final, GET IN!!!",
+      "question": "All that shouting… real or fake?",
+      "tellOk": "It's real — the league posted the same score, and the club films every match. Excited isn't the same as fake. People genuinely shout about things that genuinely happened.",
+      "tellNo": "The caps and fire emojis made it look like bait — but the league's results page shows the same score. Loud doesn't mean fake. The claim checks out, and that's what settles it.",
+      "verify": {
+        "lines": [
+          "🏆 League results page shows the same score",
+          "🎥 The club posts every match, win or lose",
+          "📍 Named team, named cup — checkable"
+        ]
+      }
+    },
+    {
       "id": "birthday-real",
       "act": 2,
       "band": "KS2",
@@ -208,13 +311,13 @@
       "cap": "someone turned seven today 🎂",
       "truth": "real",
       "question": "Real moment, or made up?",
-      "tellOk": "An ordinary party, 64 likes, nothing yanking your feelings and nothing to gain from your share. Nothing here is trying to trick you.",
-      "tellNo": "Nothing here is baiting you — no drama, no arrows, no ask to share, 64 likes. Ordinary, quiet posts with nothing to gain are usually just what they look like.",
+      "tellOk": "A family account claiming almost nothing — someone turned seven. Nobody gains from your share, and there's nothing here worth faking. Small, ordinary claims mostly are what they look like.",
+      "tellNo": "Nothing here was trying to trick you — a family post claiming almost nothing. Careful though: it's not true because it's quiet. It's true because the claim is tiny and nobody gains from the lie.",
       "verify": {
         "lines": [
           "👪 Family posts a few times a year",
           "💰 Nobody gains if you share this",
-          "😐 No panic, no countdown, no arrows"
+          "🎂 Claims almost nothing — just a birthday"
         ]
       }
     },
@@ -228,7 +331,7 @@
       "tactic": "outrage",
       "cap": "This school just BANNED break time 😡 SHARE if you think this is WRONG",
       "truth": "fake",
-      "question": "Is the ANGER real?",
+      "question": "Is the ANGER earned?",
       "tellOk": "Anger is the product. No school is named, no rule is shown — just an empty playground and 'SHARE if you're angry'. Rage makes you share before you think, and shares are the payout.",
       "tellNo": "Count the facts: no school named, no letter, no rule — just a photo of an empty playground and an instruction to be angry. The story is a feeling with nothing under it. Manufactured outrage is a tactic: anger spreads faster than checking.",
       "verify": {
@@ -236,6 +339,27 @@
           "🏫 No school is named anywhere",
           "📰 Account is 3 weeks old — not a news site",
           "💰 It earns money when posts go viral"
+        ]
+      }
+    },
+    {
+      "id": "trip-loudtrue",
+      "act": 3,
+      "band": "KS3",
+      "img": "/img/assumezero/truthnet/card-trip-loudtrue.png",
+      "tag": "@y6parents.group · 183 likes",
+      "handle": "@y6parents.group",
+      "tactic": "outrage",
+      "truth": "real",
+      "cap": "FUMING 😡 the Year 6 residential is CANCELLED — coach company went bust. Kids are gutted.",
+      "question": "Real anger about a real thing?",
+      "tellOk": "Real — the school's own letter is in the replies, and the coach firm really closed. Anger isn't proof of a lie. Sometimes people are loud because something true happened to them.",
+      "tellNo": "It looked like rage-bait — but the school's letter confirms it, and the coach company really shut. The anger is real AND the story is real. Loud feelings don't make a thing false; missing evidence does.",
+      "verify": {
+        "lines": [
+          "📄 The school's own letter confirms it",
+          "📰 Coach company closure in the local news",
+          "👪 A real parent group, posting for years"
         ]
       }
     },
@@ -282,6 +406,48 @@
       }
     },
     {
+      "id": "zapp-ad",
+      "act": 3,
+      "band": "KS3",
+      "img": "/img/assumezero/truthnet/card-zapp-ad.png",
+      "tag": "@tommy.talks · 48K likes",
+      "handle": "@tommy.talks",
+      "tactic": "system",
+      "truth": "real",
+      "cap": "AD | ZAPP sent me their new flavour to try. It's decent — bit sweet for me tbh. #ad #gifted",
+      "question": "He's being paid… so is it all fake?",
+      "tellOk": "Being paid doesn't make it a lie. He says AD up front and tells you what he didn't like. Honest ads exist — the tell isn't the money, it's whether they hide it.",
+      "tellNo": "Tempting to call paid = fake — but he told you it was an ad, and even said it was too sweet. The dishonest version hides the #ad and fakes the love. Declared and balanced is as honest as an advert gets.",
+      "verify": {
+        "lines": [
+          "🏷️ 'AD' declared right at the start",
+          "👎 He criticises the product — hidden ads never do",
+          "📜 His other sponsored posts are labelled too"
+        ]
+      }
+    },
+    {
+      "id": "library-illustration",
+      "act": 3,
+      "band": "KS3",
+      "img": "/img/assumezero/truthnet/card-library-illustration.png",
+      "tag": "@branby.library · 97 likes",
+      "handle": "@branby.library",
+      "tactic": "ai",
+      "truth": "real",
+      "cap": "Summer Reading Club starts Saturday! 🌳📚 (picture: AI illustration)",
+      "question": "Computer-made picture… honest post?",
+      "tellOk": "The picture IS computer-made — and the post says so. The reading club is real. AI isn't the lie; hiding it is. A labelled illustration is just a picture, like a drawing on a poster.",
+      "tellNo": "The image is AI — but they TOLD you, and the club is real. 'Computer-made' and 'dishonest' aren't the same thing. The question is never just how a picture was made; it's what the post claims — and this claim is true.",
+      "verify": {
+        "lines": [
+          "🖼️ Labelled 'AI illustration' — nothing hidden",
+          "📚 The club is on the library's own site",
+          "🏛️ A real library, posting for years"
+        ]
+      }
+    },
+    {
       "id": "giveaway-system",
       "act": 3,
       "band": "KS3",
@@ -293,14 +459,35 @@
       "bonus": true,
       "cap": "I gave a stranger £100,000 and changed his life forever ❤️",
       "truth": "fake",
-      "question": "Is the FEELING real?",
-      "tellOk": "Follow the money. The giving isn't the kindness — it's the footage. The stranger is a prop, the emotion is the product, and 8 million views is the real payout. Ask who profits from you feeling this.",
-      "tellNo": "Don't judge the man — judge the system. The giving isn't the kindness, it's the content. The person is a prop and the emotion is the product. The tell isn't in the picture; it's in who profits from you feeling this.",
+      "question": "Kindness, or content?",
+      "tellOk": "Follow the money. The £100,000 may be real — the kindness isn't the point of it. The stranger is a prop, the emotion is the product, and 8 million views is the payout. Ask who profits from you feeling this.",
+      "tellNo": "Don't judge the man — judge the system. The money may be real, but the giving isn't kindness, it's content. The person is a prop and the emotion is the product. The tell isn't in the picture; it's in who profits from you feeling this.",
       "verify": {
         "lines": [
           "💰 Ads earn more than he gives away",
           "🎬 A 12-person film crew in the credits",
           "📈 The 'stranger' is in 3 other videos"
+        ]
+      }
+    },
+    {
+      "id": "crowd-unsure",
+      "act": 3,
+      "band": "KS3",
+      "img": "/img/assumezero/truthnet/card-crowd-nosource.png",
+      "tag": "@milbury.gossip · 24K likes",
+      "handle": "@milbury.gossip",
+      "tactic": "context",
+      "truth": "unsure",
+      "cap": "Everyone's saying HALF the shops in Milbury are closing down 😳 look at this",
+      "question": "Can anyone actually tell from this?",
+      "tellOk": "Right call. The photo shows… a street with people on it. 'Everyone's saying' names nobody, and checking turns up nothing either way. When even checking settles nothing, 'can't tell yet' is the honest answer — and not worth sharing until someone can.",
+      "tellNo": "Trick question — nobody could tell. The photo's just a street; 'everyone' is no one; and checking finds nothing solid either way. Calling it REAL spreads a rumour; calling it FAKE is still a guess. CAN'T TELL was the smart move.",
+      "verify": {
+        "lines": [
+          "👤 'Everyone' = nobody named, ever",
+          "📰 No news story confirms it — none denies it",
+          "📸 The photo shows… a normal street"
         ]
       }
     },
@@ -315,8 +502,8 @@
       "tactic": "system",
       "truth": "real",
       "question": "Real, or engineered?",
-      "tellOk": "Past tense, a real small number, a named place, and no ask to share. When nobody is farming your feelings, it's usually just true.",
-      "tellNo": "This one's real — £214, past tense, nothing begging to go viral. Compare it with the £100,000 giveaway: the difference isn't the kindness, it's who the camera is for.",
+      "tellOk": "Past tense, an exact number, a named shelter you can look up — and no ask to share. Real usually looks checkable, not just quiet.",
+      "tellNo": "This one's real — £214, already finished, a charity you can look up. Compare the £100,000 giveaway: the difference isn't loud versus quiet. It's who the camera is for, and what checking finds.",
       "verify": {
         "lines": [
           "🏠 A real charity you can look up",

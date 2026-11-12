@@ -50,6 +50,7 @@
     cursor:pointer; color:#0e1116; transition:transform .08s}
   .btn:active{transform:scale(.96)}
   .btn.fake{background:var(--red)} .btn.real{background:var(--green)}
+  .btn.unsure{background:var(--gold); font-size:13px; flex:0.9}
   .hint{text-align:center; color:var(--dim); font-size:12px; padding-top:10px}
 
   /* TruthNet reveal overlay */
@@ -173,7 +174,7 @@
 <div class="start" id="start">
   <div class="logo"><span class="dot"></span> TRUTHNET</div>
   <h1>Real, or made to fool you?</h1>
-  <p>Some posts are real. Some are out to trick you. Spot which is which, learn the tricks — then have a go at making one yourself.</p>
+  <p>Some posts are real. Some are out to trick you. Spot which is which, learn the tricks — then have a go at making one yourself. And when nobody could tell? Saying so is a win too.</p>
   <button class="play" onclick="start()">▶ PLAY</button>
   <div class="sub">A demo from AssumeZero · <a href="https://www.arcturusdc.com/contact">educators &amp; funders →</a></div>
 </div>
@@ -263,6 +264,7 @@
   </div>
   <div class="controls" id="controls">
     <button class="btn fake" onclick="decide('fake')">FAKE</button>
+    <button class="btn unsure" onclick="decide('unsure')">CAN'T TELL</button>
     <button class="btn real" onclick="decide('real')">REAL</button>
   </div>
   <div class="hint" id="hint">Trust your gut. Tap FAKE or REAL.</div>
@@ -384,14 +386,19 @@ function closeVerify(){
   }
 }
 
+// truth takes three values (D-SITE-095): fake | real | unsure. 'unsure' marks a card
+// where even checking settles nothing, and CAN'T TELL is the rewarded answer.
+function flashFor(choice){
+  return choice==='fake' ? 'linear-gradient(90deg, rgba(255,92,108,.5), transparent)'
+       : choice==='real' ? 'linear-gradient(270deg, rgba(46,204,113,.5), transparent)'
+       : 'radial-gradient(circle, rgba(255,211,78,.45), transparent)';
+}
 function decide(choice){
   if(phase!=='feed'){ measureDecide(choice); return; }
   const c=cards[i];
   const correct = choice===c.truth;
   const flash=document.getElementById('flash');
-  flash.style.background = choice==='fake'
-    ? 'linear-gradient(90deg, rgba(255,92,108,.5), transparent)'
-    : 'linear-gradient(270deg, rgba(46,204,113,.5), transparent)';
+  flash.style.background = flashFor(choice);
   flash.style.opacity=1; setTimeout(()=>flash.style.opacity=0,180);
 
   const reveal=document.getElementById('reveal');
@@ -405,7 +412,8 @@ function decide(choice){
     // Scoring rewards the process: a checked correct call is worth double a fast one.
     const gain = (verifiedThisCard?2:1) + (c.bonus?1:0);
     tokens += gain;
-    verdict.textContent='✓ Good call'; verdict.className='verdict ok';
+    verdict.textContent = c.truth==='unsure' ? '✓ Smart — not enough to go on' : '✓ Good call';
+    verdict.className='verdict ok';
     tell.textContent=c.tellOk;
     award.textContent=`+${gain} token${gain>1?'s':''}`
       + (verifiedThisCard?' · checked first 🔍':'')
@@ -413,12 +421,16 @@ function decide(choice){
       + `   🔥 streak ${streak}`;
   } else if(verifiedThisCard){
     // Right process, wrong call: the check IS the skill, so the streak survives.
-    verdict.textContent='✗ Got you'; verdict.className='verdict no';
+    verdict.textContent = c.truth==='unsure' ? '✗ Nobody could know yet'
+                        : choice==='unsure' ? '✗ The clues were there' : '✗ Got you';
+    verdict.className='verdict no';
     tell.textContent=c.tellNo;
     award.textContent='Streak safe — you checked first. Right process, wrong call.';
   } else {
     streak=0;
-    verdict.textContent='✗ Got you'; verdict.className='verdict no';
+    verdict.textContent = c.truth==='unsure' ? '✗ Nobody could know yet'
+                        : choice==='unsure' ? '✗ The clues were there' : '✗ Got you';
+    verdict.className='verdict no';
     tell.textContent=c.tellNo;
     award.textContent='Streak reset — but now you know the tell';
   }
@@ -448,10 +460,11 @@ function finishFeed(){
   startPost();
 }
 
-// — C1 learning measurement (D-SITE-092): matched novel cards, cold at the start,
-// fresh at the end. No reveals, no tokens, no streak, no verify: pre answers are
-// banked before any teaching, post answers after all of it; the delta shows on the
-// end screen. Balanced real/fake per pair so blanket scepticism scores 1/2, not 2/2.
+// — C1 learning measurement (D-SITE-092, amended D-SITE-095): matched novel cards,
+// cold at the start, fresh at the end. No reveals, no tokens, no streak — but the
+// verify button IS available and silently counted, so the instrument gives children
+// an opportunity to check. Each set holds a loud-true, a quiet-false and a loud-fake,
+// so a style-matcher scores 1/3, not full marks.
 function startRun(){ phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0; renderMeasure(); }
 function startPost(){ phase='post'; mIdx=0; renderMeasure(); }
 function renderMeasure(){
@@ -461,6 +474,7 @@ function renderMeasure(){
     return;
   }
   const c=measure[phase][mIdx];
+  if(c.verify) vSeen++;
   const el=document.createElement('div');
   el.className='card';
   el.innerHTML=`
@@ -468,24 +482,34 @@ function renderMeasure(){
     <div class="cap"><span class="handle">${c.handle}</span> ${c.cap}</div>
     <div class="meta"><span>♡ like</span><span>💬 comment</span><span>↗ share</span></div>
     <div class="swipeflash" id="flash"></div>
+    ${c.verify?`
+    <div class="vpanel" id="vpanel">
+      <div class="vhead"><span class="dot"></span> SOURCE CHECK</div>
+      <ul>${c.verify.lines.map(l=>'<li>'+l+'</li>').join('')}</ul>
+      <button class="next" onclick="closeVerify()">Back</button>
+    </div>`:''}
     <div class="reveal" id="reveal">
       <div class="verdict ok" id="verdict">✓ Logged</div>
       <div class="tn"><span class="dot"></span> ${phase==='pre'?'WARM-UP':'FINAL CHECK'}</div>
-      <div class="tell" id="tell">${phase==='pre'?"No answers yet — they'd spoil the game. Let's play.":"Banked. Let's see how your detector did…"}</div>
+      <div class="tell" id="tell">${phase==='pre'?"No answers yet — they'd spoil the game. Let's play.":"Banked. Let's see how you did…"}</div>
       <button class="next" onclick="measureAdvance()">Next →</button>
     </div>`;
   stage.appendChild(el);
-  controls.style.display='flex'; hint.style.display='block'; setVerifyRow(false);
-  hint.textContent = c.question + (phase==='pre' ? '  ·  warm-up, gut call' : '  ·  final check');
+  controls.style.display='flex'; hint.style.display='block';
+  hint.textContent = c.question + (phase==='pre' ? '  ·  warm-up, your call' : '  ·  final check');
+  const vb=document.getElementById('verifybtn');
+  if(c.verify){
+    vb.textContent='🔍 check source'; vb.disabled=false; vb.classList.remove('done'); vb.classList.remove('pulse');
+    setVerifyRow(true);
+  } else setVerifyRow(false);
   updateProgress(phase==='pre' ? mIdx : measure.pre.length + cards.length + mIdx);
 }
 function measureDecide(choice){
   const c=measure[phase][mIdx];
   if(choice===c.truth) mScore[phase]++;
+  verifiedThisCard=false; // checks are counted, never rewarded, and never leak into the feed
   const flash=document.getElementById('flash');
-  flash.style.background = choice==='fake'
-    ? 'linear-gradient(90deg, rgba(255,92,108,.5), transparent)'
-    : 'linear-gradient(270deg, rgba(46,204,113,.5), transparent)';
+  flash.style.background = flashFor(choice);
   flash.style.opacity=1; setTimeout(()=>flash.style.opacity=0,180);
   controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
   document.getElementById('reveal').classList.add('show');
