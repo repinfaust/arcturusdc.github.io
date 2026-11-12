@@ -24,11 +24,12 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // D-SITE-098: adult review uses the shared static game in local development.
-      ...(process.env.NODE_ENV === 'development' ? [{
+      // D-SITE-098 (amended): adult-review route live on production — unlinked,
+      // noindex (see headers), draft-labelled in the UI. Still gated for children.
+      {
         source: '/apps/assumezero/ukraine',
         destination: '/games/truthnet/index.html',
-      }] : []),
+      },
       {
         source: '/games/truthnet',
         destination: '/games/truthnet/index.html',

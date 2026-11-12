@@ -1,5 +1,16 @@
 # Decisions
 
+## 2026-11-12 — D-SITE-098 amendment: Ukrainian adult-review route live on production
+
+David hit the intended 404 at /apps/assumezero/ukraine on the live site and
+explicitly asked for the route to be live ("make it live please"). The dev-only
+rewrite in next.config.js is now unconditional. Risk accepted: the content was
+already publicly fetchable as static files; the route is unlinked, carries
+X-Robots-Tag noindex/nofollow, and the UI labels it an adult-review draft in
+Ukrainian. This changes the review surface only — G3/G4 still gate any child
+testing and any announced deployment, and the content remains machine-written,
+not native-educator-reviewed.
+
 ## 2026-11-12 — AssumeZero Ukrainian edition: local prototype approved (D-SITE-098)
 
 David explicitly overruled the UK learning and Ukrainian partnership prerequisites
