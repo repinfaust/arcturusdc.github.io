@@ -1,12 +1,19 @@
 import { createDeckRun, loadDeck } from './core.js';
 
 const conclusions = {
-  supported: 'Є підтвердження',
-  contradicted: 'Докази суперечать допису',
+  supported: 'Докази підтверджують',
+  contradicted: 'Докази кажуть інше',
   unresolved: 'Поки не знаємо',
 };
 const postCount = new Intl.PluralRules('uk');
 const postForms = { one: 'допис', few: 'дописи', many: 'дописів', other: 'допису' };
+const cardSymbols = {
+  snow: '❄️', chess: '♟️', cat: '🐈', museum: '🏛️', poster: '🎨', seed: '🌱',
+  score: '⚽', craft: '✂️', bird: '🐦', advert: '✏️', books: '📚', drawing: '🖍️',
+  puzzle: '🧩', music: '🥁', frog: '🐸', board: '🎲',
+};
+const choiceSymbols = { supported: '✓', contradicted: '≠', unresolved: '?' };
+const sessionSymbols = { first: '🔎', second: '🧩', more: '✨' };
 
 const html = value => String(value).replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -32,6 +39,10 @@ function validateDeck(deck) {
         throw new Error(`Invalid card: ${card.id}`);
       }
       cardIds.add(card.id);
+      if (card.imageAlt !== undefined && (session.kind !== 'practice' ||
+          !/^[a-z0-9-]+$/.test(card.id) || typeof card.imageAlt !== 'string' || !card.imageAlt.trim())) {
+        throw new Error(`Invalid illustration on card: ${card.id}`);
+      }
       const evidenceIds = new Set();
       for (const evidence of card.evidence) {
         if (!evidence.id || evidenceIds.has(evidence.id) || !evidence.label || !evidence.excerpt || typeof evidence.relevant !== 'boolean') {
@@ -62,10 +73,14 @@ export async function mount(root) {
     </div></header>
     <main class="ua-wrap ua-main" id="ua-screen"></main>
     <dialog class="ua-dialog" id="ua-help" aria-labelledby="ua-help-title">
+      <div class="ua-pause" aria-hidden="true">Ⅱ</div>
       <h2 id="ua-help-title">Можна зробити перерву</h2>
-      <p>Якщо хочеш, покажи допис дорослому, якому довіряєш. Ви можете разом подумати, що вже відомо.</p>
-      <p>Якщо поруч нікого немає, можна повернутися, пропустити допис або завершити вправу.</p>
-      <form method="dialog" class="ua-actions"><button class="ua-primary" autofocus>Повернутися</button></form>
+      <p>Можеш показати допис дорослому, якому довіряєш. Або повернися, пропусти допис чи заверши вправу.</p>
+      <form method="dialog" class="ua-actions">
+        <button class="ua-primary" autofocus>Повернутися</button>
+        <button type="button" data-action="help-skip">Пропустити допис</button>
+        <button type="button" data-action="help-stop" class="ua-quiet">Завершити</button>
+      </form>
     </dialog>`;
 
   const screen = document.getElementById('ua-screen');
@@ -97,6 +112,7 @@ export async function mount(root) {
     responses = [];
     const sessionButton = item => `
       <button class="ua-session" type="button" data-action="start" data-value="${html(item.id)}">
+        ${sessionSymbols[item.id] ? `<span class="ua-session-symbol" aria-hidden="true">${sessionSymbols[item.id]}</span>` : ''}
         <span><strong>${html(item.title)}</strong><small>${html(item.description)}</small></span>
         <span class="ua-session-end">${item.cards.length} ${postForms[postCount.select(item.cards.length)]} <span aria-hidden="true">→</span></span>
       </button>`;
@@ -130,6 +146,10 @@ export async function mount(root) {
     mode = 'card';
     const card = run.current;
     const assessment = session.kind === 'assessment';
+    const symbol = cardSymbols[card.id];
+    const visual = !assessment && (card.imageAlt
+      ? `<img class="ua-card-image" src="/img/assumezero/ukraine/${html(card.id)}.webp" alt="${html(card.imageAlt)}" width="1200" height="640">`
+      : symbol ? `<div class="ua-card-symbol" data-scene="${run.index % 3}" aria-hidden="true">${symbol}</div>` : '');
     const orderedEvidence = run.index % 2 === 0 ? card.evidence : [...card.evidence].reverse();
     const evidence = checkOpen ? `
       <section class="ua-check" aria-labelledby="ua-check-heading">
@@ -166,24 +186,24 @@ export async function mount(root) {
 
     show(`
       <div class="ua-gamebar"><div><p>${html(session.title)} · ${run.index + 1} / ${run.length}</p>
-        <progress max="${run.length}" value="${run.index}" aria-label="Виконано"></progress></div>
+        <div class="ua-steps" aria-hidden="true">${Array.from({ length: run.length }, (_, index) => `<span data-step="${index < run.index ? 'done' : index === run.index ? 'current' : 'next'}"></span>`).join('')}</div></div>
         ${button('Завершити', 'stop', '', 'ua-quiet')}
       </div>
       <div class="ua-game-grid">
-        <div><article class="ua-post"><header><span class="ua-avatar" aria-hidden="true">${html(card.author.charAt(0))}</span>
-          <div><strong>${html(card.author)}</strong><small>Вигаданий допис</small></div></header>
-          <h1 tabindex="-1">${html(card.claim)}</h1></article>${evidence}
-        </div>
+        <article class="ua-post"><header><span class="ua-avatar" aria-hidden="true">${html(card.author.charAt(0))}</span>
+          <div><strong>${html(card.author)}</strong><small>Вигаданий допис</small></div></header>${visual}
+          <h1 tabindex="-1">${html(card.claim)}</h1></article>
         <section class="ua-decisions">
-          <h2>Що можна сказати про цей допис?</h2>
-          <div class="ua-actions ua-choices">
-            ${Object.entries(conclusions).map(([value, label]) => `<button type="button" data-action="choose" data-value="${value}" aria-pressed="${choice === value}">${label}</button>`).join('')}
-          </div>
-          ${response}
-          <div class="ua-actions">
-            <button type="button" data-action="check" aria-expanded="${checkOpen}">${checkOpen ? 'Згорнути матеріали' : 'Перевірити'}</button>
+          <div class="ua-actions ua-tools">
+            <button class="ua-check-button" type="button" data-action="check" aria-expanded="${checkOpen}"><span aria-hidden="true">🔎</span> ${checkOpen ? 'Згорнути підказки' : 'Перевірити джерело'}</button>
             ${button('Попросити дорослого', 'help')}
           </div>
+          ${evidence}
+          <h2>Що ми знаємо?</h2>
+          <div class="ua-actions ua-choices">
+            ${Object.entries(conclusions).map(([value, label]) => `<button type="button" data-action="choose" data-value="${value}" aria-pressed="${choice === value}"><span aria-hidden="true">${choiceSymbols[value]}</span>${label}</button>`).join('')}
+          </div>
+          ${response}
           <div class="ua-actions ua-nav">
             ${button('Пропустити', 'skip', '', 'ua-quiet')}
             ${choice ? button('Далі →', 'next', '', 'ua-primary') : ''}
@@ -233,7 +253,9 @@ export async function mount(root) {
   root.addEventListener('click', event => {
     const control = event.target.closest('button[data-action]');
     if (!control) return;
-    const { action, value } = control.dataset;
+    const { action: requestedAction, value } = control.dataset;
+    const action = requestedAction.replace(/^help-/, '');
+    if (action !== requestedAction) dialog.close();
     if (action === 'start' && mode === 'home' && sessions.has(value)) {
       session = sessions.get(value);
       run = createDeckRun(session.cards);
