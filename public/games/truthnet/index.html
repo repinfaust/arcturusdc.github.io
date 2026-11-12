@@ -89,6 +89,8 @@
     border-radius:20px; padding:9px 18px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:.3px}
   .verifybtn:active{transform:scale(.96)}
   .verifybtn.done{border-color:var(--green); color:var(--green)}
+  .verifybtn.pulse{animation:vpulse 1.1s ease-in-out 3}
+  @keyframes vpulse{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,0)} 50%{box-shadow:0 0 0 7px rgba(34,211,238,.25)}}
 
   /* SOURCE CHECK panel — lateral reading made playable */
   .vpanel{position:absolute; inset:0; background:rgba(8,11,16,.95); border-radius:22px; display:none;
@@ -288,6 +290,9 @@ const feelingScore = () => FEELING_TACTICS.reduce((s,t)=>s+(competence[t]||0),0)
 
 // verify habit tracking for the end-screen stat
 let vSeen=0, vChecked=0, verifiedThisCard=false;
+// one-time "new move" intro the first time a checkable card appears (Felix test:
+// neither child found the button unprompted)
+let verifyIntroDone=false;
 
 const stage=document.getElementById('stage');
 const tokEl=document.getElementById('tok'), strkEl=document.getElementById('strk');
@@ -316,8 +321,17 @@ function renderCard(){
     <div class="vpanel" id="vpanel">
       <div class="vhead"><span class="dot"></span> SOURCE CHECK</div>
       <ul>${c.verify.lines.map(l=>'<li>'+l+'</li>').join('')}</ul>
-      <div class="vfoot">This is what checking looks like: leave the post, look at who's behind it.</div>
-      <button class="next" onclick="closeVerify()">Got it — back to the post</button>
+      <button class="next" onclick="closeVerify()">Back</button>
+    </div>`:''}
+    ${c.verify && !verifyIntroDone?`
+    <div class="vpanel show" id="vintro">
+      <div class="vhead"><span class="dot"></span> NEW MOVE UNLOCKED</div>
+      <ul>
+        <li>🔍 You can now peek behind a post before you answer</li>
+        <li>🪙 Right answer after checking = <b>double tokens</b></li>
+        <li>🛡️ Get it wrong after checking? Your streak is safe</li>
+      </ul>
+      <button class="next" onclick="closeVerifyIntro()">Show me the button</button>
     </div>`:''}
     <div class="reveal" id="reveal">
       <div class="verdict" id="verdict"></div>
@@ -332,7 +346,7 @@ function renderCard(){
   hint.textContent = c.question ? c.question + '  ·  swipe or tap' : 'Trust your gut. Swipe or tap.';
   const vb=document.getElementById('verifybtn');
   if(c.verify){
-    vb.textContent='🔍 check source'; vb.disabled=false; vb.classList.remove('done');
+    vb.textContent='🔍 check source'; vb.disabled=false; vb.classList.remove('done'); vb.classList.remove('pulse');
     setVerifyRow(true);
   } else setVerifyRow(false);
   updateProgress((measure ? measure.pre.length : 0) + i);
@@ -346,6 +360,12 @@ function setVerifyRow(show){
 // available on every Act 2/3 card, and the scoring rewards the habit (see decide()).
 function openVerify(){
   const p=document.getElementById('vpanel'); if(p) p.classList.add('show');
+}
+function closeVerifyIntro(){
+  verifyIntroDone=true;
+  const p=document.getElementById('vintro'); if(p) p.remove();
+  const vb=document.getElementById('verifybtn'); if(vb) vb.classList.add('pulse');
+  hint.textContent='Tap 🔍 check source — then call it.';
 }
 function closeVerify(){
   const p=document.getElementById('vpanel'); if(p) p.classList.remove('show');
@@ -402,10 +422,13 @@ function decide(choice){
 }
 
 function advance(){
-  // The system sting is TACTIC-GATED on the feeling-tier family (system/outrage/
-  // scapegoat/urgency): you earn "how generosity is engineered" by clocking the
-  // tactics it explains, not by grinding tokens.
-  if(!unlockedSting && feelingScore() >= SYSTEM_GATE){ unlockedSting=true; showSting(); return; }
+  // The sting is ANCHORED to the giveaway card it explains (Felix test: firing on
+  // family competence alone made it land two cards late, reading as random) and
+  // still gated on feeling-tier competence. Act 3 puts the giveaway late enough
+  // that the gate is normally met by the time it's judged.
+  if(!unlockedSting && cards[i] && cards[i].id==='giveaway-system' && feelingScore() >= SYSTEM_GATE){
+    unlockedSting=true; showSting(); return;
+  }
   i++;
   if(i>=cards.length){ finishFeed(); return; }
   renderCard();
@@ -562,7 +585,7 @@ function showEnd(){
 }
 function resetState(){
   i=0; tokens=0; streak=0; unlockedSting=false; rugDone=false; creatorDone=false;
-  phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0;
+  phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0; verifyIntroDone=false;
   for(const k of Object.keys(competence)) delete competence[k];
   bHasCap=false; bHasArrow=false; verifiedThisCard=false; vSeen=0; vChecked=0;
   tokEl.textContent='🪙 0'; strkEl.textContent='🔥 0';

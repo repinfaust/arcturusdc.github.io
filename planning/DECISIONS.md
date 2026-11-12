@@ -1,5 +1,25 @@
 # Decisions
 
+## 2026-11-12 — AssumeZero/TruthNet v0.3.3: Felix-test remedies — verify onboarding, sting anchored to its card (D-SITE-093)
+
+Driven by the first v0.3.2 Felix test (2026-11-11, Felix 10 and Harley 6 — both needed
+prompting to find check-source; the sting landed two cards after the giveaway it
+explains, reading as random). David requested all three changes.
+
+- **Verify onboarding:** one-time "NEW MOVE UNLOCKED" overlay on the first checkable
+  card (peek behind the post / double tokens / streak safe), then the button pulses.
+  Resets per run.
+- **Source panel trimmed:** footer sentence cut, all verify lines shortened to one
+  clause, button "Back". Three points of interest kept (David: "3 points is good").
+- **Sting anchored to the giveaway card** (amends D-SITE-091's trigger): fires only on
+  advancing from `giveaway-system` AND feelingScore ≥ 2. Act 3 reordered
+  outrage → scapegoat → urgency → giveaway → fundraiser so the gate is normally met by
+  the time the giveaway is judged. Competence gating kept; the reveal now lands on the
+  card it explains. If the gate is unmet there, the sting simply doesn't fire (as before).
+- Felix-test observations recorded: Harley (6) checked 7/11 and out-scored Felix (10)
+  23–16 (checking pays double — mechanic works); Felix checked 2/11; Felix pre 2/2 →
+  measurement has a ceiling for KS2+ — harder measurement items are the known upgrade.
+
 ## 2026-11-11 — AssumeZero/TruthNet v0.3.2: in-game learning measurement (D-SITE-092)
 
 Approved by David 2026-11-11 ("go - build C1"). The pilot's evidence instrument, built

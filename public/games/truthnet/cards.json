@@ -1,6 +1,6 @@
 {
-  "version": "0.3.2",
-  "notes": "Deck for TruthNet v0.3.2 (D-SITE-091, D-SITE-092). Acts: 1 = provenance warm-up (KS1), 2 = framing (KS2), 3 = feeling/system (KS3). All Act 2/3 cards carry a verify block (lateral-reading panel). truth refers to what the card ASKS: provenance cards = the picture, veracity cards = the story/feeling. Outrage/scapegoat/urgency cards use fictional targets only — never a real school, place, group or person. measure = the C1 learning instrument: matched novel pairs (one framing-fake + one plain-real each) answered cold before the deck and fresh after it, no reveals, no tokens; balanced real/fake so blanket scepticism scores 1/2, not 2/2.",
+  "version": "0.3.3",
+  "notes": "Deck for TruthNet v0.3.3 (D-SITE-091, D-SITE-092, D-SITE-093). Acts: 1 = provenance warm-up (KS1), 2 = framing (KS2), 3 = feeling/system (KS3). All Act 2/3 cards carry a verify block (lateral-reading panel; 3 short lines, trimmed after Felix test). truth refers to what the card ASKS: provenance cards = the picture, veracity cards = the story/feeling. Outrage/scapegoat/urgency cards use fictional targets only — never a real school, place, group or person. Act 3 order puts the giveaway late so the sting (anchored to it) lands on its card. measure = the C1 learning instrument: matched novel pairs (one framing-fake + one plain-real each) answered cold before the deck and fresh after it, no reveals, no tokens; balanced real/fake so blanket scepticism scores 1/2, not 2/2.",
   "measure": {
     "pre": [
       {
@@ -106,8 +106,8 @@
       "tellNo": "The picture's ordinary, but the story isn't. The shocked caption and red arrow pointing at nothing are bolted on to make you click. A true picture can carry a false story.",
       "verify": {
         "lines": [
-          "📸 Same kid, same kitchen — 30 'WORST morning' posts this year",
-          "🏷️ The cereal brand pays for these posts",
+          "📸 30 'WORST morning' posts this year",
+          "🏷️ A cereal brand pays for these posts",
           "➡️ The arrow points at… nothing"
         ]
       }
@@ -126,9 +126,9 @@
       "tellNo": "This one's real and plain. Notice there's nothing trying to grab you — no shock face, no arrow. The absence of bait is itself a signal.",
       "verify": {
         "lines": [
-          "🥖 A village bakery posting the same loaves for six years",
-          "💰 Nobody gains anything if you share this",
-          "😐 No caps, no arrows, no panic words"
+          "🥖 Same loaves, same oven, six years",
+          "💰 Nobody gains if you share this",
+          "😐 No caps, no arrows, no panic"
         ]
       }
     },
@@ -148,9 +148,9 @@
       "tellNo": "Tricky — the photo is completely real. But it's nine years old, and 'HAPPENING NOW' was bolted on today. You can't see that in the pixels — only a source check shows it. An old truth, re-posted as new, is a lie.",
       "verify": {
         "lines": [
-          "📅 This photo first appeared online 9 years ago",
-          "📍 It was taken in a different county",
-          "🔁 It gets re-posted every time it rains hard"
+          "📅 Photo first posted 9 years ago",
+          "📍 Taken in a different county",
+          "🔁 Re-posted every time it rains"
         ]
       }
     },
@@ -169,9 +169,9 @@
       "tellNo": "Check the maths: '9 out of 10 can't' means 10% can — so where did 'the 1%' come from? Nobody counted anything. Made-up numbers dressed as facts are a tactic: they sound precise, so you don't check.",
       "verify": {
         "lines": [
-          "🧾 No quiz, study or count is linked anywhere",
-          "📊 This account posts a '9 out of 10' claim every single day",
-          "💬 Every post ends with 'are YOU…?' to farm comments"
+          "🧾 No quiz or count linked anywhere",
+          "📊 A '9 out of 10' claim every single day",
+          "💬 Every post begs for comments"
         ]
       }
     },
@@ -191,8 +191,8 @@
       "verify": {
         "lines": [
           "🕑 Posted at 2pm, not the morning",
-          "🏷️ The tray brand paid for this post — there's a tiny #ad in the tags",
-          "🗂️ 14 near-identical 'just woke up' posts this month"
+          "🏷️ The tray brand paid — tiny #ad in the tags",
+          "🗂️ 14 'just woke up' posts this month"
         ]
       }
     },
@@ -211,9 +211,72 @@
       "tellNo": "Nothing here is baiting you — no drama, no arrows, no ask to share, 64 likes. Ordinary, quiet posts with nothing to gain are usually just what they look like.",
       "verify": {
         "lines": [
-          "👪 This account posts family moments a few times a year",
+          "👪 Family posts a few times a year",
           "💰 Nobody gains if you share this",
-          "😐 No panic words, no countdown, no arrows"
+          "😐 No panic, no countdown, no arrows"
+        ]
+      }
+    },
+    {
+      "id": "ban-outrage",
+      "act": 3,
+      "band": "KS3",
+      "img": "/img/assumezero/truthnet/card-ban-outrage.png",
+      "tag": "@ukschoolnews24 · 3.4M likes",
+      "handle": "@ukschoolnews24",
+      "tactic": "outrage",
+      "cap": "This school just BANNED break time 😡 SHARE if you think this is WRONG",
+      "truth": "fake",
+      "question": "Is the ANGER real?",
+      "tellOk": "Anger is the product. No school is named, no rule is shown — just an empty playground and 'SHARE if you're angry'. Rage makes you share before you think, and shares are the payout.",
+      "tellNo": "Count the facts: no school named, no letter, no rule — just a photo of an empty playground and an instruction to be angry. The story is a feeling with nothing under it. Manufactured outrage is a tactic: anger spreads faster than checking.",
+      "verify": {
+        "lines": [
+          "🏫 No school is named anywhere",
+          "📰 Account is 3 weeks old — not a news site",
+          "💰 It earns money when posts go viral"
+        ]
+      }
+    },
+    {
+      "id": "park-scapegoat",
+      "act": 3,
+      "band": "KS3",
+      "img": "/img/assumezero/truthnet/card-park-scapegoat.png",
+      "tag": "@proudofourpark · 89K likes",
+      "handle": "@proudofourpark",
+      "tactic": "scapegoat",
+      "cap": "Our park was PERFECT until the new lot from Grimley Road moved in 😤 everything's worse now",
+      "truth": "fake",
+      "question": "Who's really being blamed?",
+      "tellOk": "Look at the evidence: some litter. Look at the claim: a whole group of people ruined everything. Nothing connects them. Blaming a group for everything is a tactic with a name — scapegoating — and it works because anger feels like evidence.",
+      "tellNo": "The evidence is a messy bin. The claim is that a whole group ruined everything — with no proof, just 'them'. That tactic is called scapegoating: pick a group, pin every problem on them, and let anger do the thinking.",
+      "verify": {
+        "lines": [
+          "🗑️ Same litter problem for years",
+          "👤 Only ever posts about 'the new lot'",
+          "🤝 Grimley Road is never asked"
+        ]
+      }
+    },
+    {
+      "id": "codes-urgency",
+      "act": 3,
+      "band": "KS3",
+      "img": "/img/assumezero/truthnet/card-codes-urgency.png",
+      "tag": "@gamecodes.flash · 5.6M likes",
+      "handle": "@gamecodes.flash",
+      "tactic": "urgency",
+      "cap": "FREE game credit codes 🎮 DELETING IN 1 HOUR ⏰ share with 3 friends to unlock",
+      "truth": "fake",
+      "question": "Why the countdown?",
+      "tellOk": "The clock is the trick. 'One hour' exists to stop you thinking, and 'share with 3 friends' is the real goal — you're the advert. There are no codes.",
+      "tellNo": "Real giveaways don't need a panic timer. The countdown exists so you don't stop to check, and 'share with 3 friends' is the point — the post spreads itself through you. The codes never existed.",
+      "verify": {
+        "lines": [
+          "⏰ The '1 hour' post is 6 days old",
+          "🎮 The game says codes aren't given this way",
+          "🔁 Thousands shared and got nothing"
         ]
       }
     },
@@ -234,72 +297,9 @@
       "tellNo": "Don't judge the man — judge the system. The giving isn't the kindness, it's the content. The person is a prop and the emotion is the product. The tell isn't in the picture; it's in who profits from you feeling this.",
       "verify": {
         "lines": [
-          "💰 Each video earns more in ad money than it gives away",
-          "🎬 A 12-person film crew is thanked in the small print",
-          "📈 The 'stranger' appears in three other videos"
-        ]
-      }
-    },
-    {
-      "id": "ban-outrage",
-      "act": 3,
-      "band": "KS3",
-      "img": "/img/assumezero/truthnet/card-ban-outrage.png",
-      "tag": "@ukschoolnews24 · 3.4M likes",
-      "handle": "@ukschoolnews24",
-      "tactic": "outrage",
-      "cap": "This school just BANNED break time 😡 SHARE if you think this is WRONG",
-      "truth": "fake",
-      "question": "Is the ANGER real?",
-      "tellOk": "Anger is the product. No school is named, no rule is shown — just an empty playground and 'SHARE if you're angry'. Rage makes you share before you think, and shares are the payout.",
-      "tellNo": "Count the facts: no school named, no letter, no rule — just a photo of an empty playground and an instruction to be angry. The story is a feeling with nothing under it. Manufactured outrage is a tactic: anger spreads faster than checking.",
-      "verify": {
-        "lines": [
-          "🏫 No school is named anywhere in the post",
-          "📰 'ukschoolnews24' isn't a news site — the account is 3 weeks old",
-          "💰 It earns ad money on every post that goes viral"
-        ]
-      }
-    },
-    {
-      "id": "park-scapegoat",
-      "act": 3,
-      "band": "KS3",
-      "img": "/img/assumezero/truthnet/card-park-scapegoat.png",
-      "tag": "@proudofourpark · 89K likes",
-      "handle": "@proudofourpark",
-      "tactic": "scapegoat",
-      "cap": "Our park was PERFECT until the new lot from Grimley Road moved in 😤 everything's worse now",
-      "truth": "fake",
-      "question": "Who's really being blamed?",
-      "tellOk": "Look at the evidence: some litter. Look at the claim: a whole group of people ruined everything. Nothing connects them. Blaming a group for everything is a tactic with a name — scapegoating — and it works because anger feels like evidence.",
-      "tellNo": "The evidence is a messy bin. The claim is that a whole group ruined everything — with no proof, just 'them'. That tactic is called scapegoating: pick a group, pin every problem on them, and let anger do the thinking.",
-      "verify": {
-        "lines": [
-          "🗑️ The council has logged the same litter problem for years",
-          "👤 This account only ever posts about 'the new lot'",
-          "🤝 Nobody from Grimley Road is ever quoted or asked"
-        ]
-      }
-    },
-    {
-      "id": "codes-urgency",
-      "act": 3,
-      "band": "KS3",
-      "img": "/img/assumezero/truthnet/card-codes-urgency.png",
-      "tag": "@gamecodes.flash · 5.6M likes",
-      "handle": "@gamecodes.flash",
-      "tactic": "urgency",
-      "cap": "FREE game credit codes 🎮 DELETING IN 1 HOUR ⏰ share with 3 friends to unlock",
-      "truth": "fake",
-      "question": "Why the countdown?",
-      "tellOk": "The clock is the trick. 'One hour' exists to stop you thinking, and 'share with 3 friends' is the real goal — you're the advert. There are no codes.",
-      "tellNo": "Real giveaways don't need a panic timer. The countdown exists so you don't stop to check, and 'share with 3 friends' is the point — the post spreads itself through you. The codes never existed.",
-      "verify": {
-        "lines": [
-          "⏰ The 'deleting in 1 hour' post has been up for six days",
-          "🎮 The game's real account says codes are never shared this way",
-          "🔁 Thousands of replies say they shared and got nothing"
+          "💰 Ads earn more than he gives away",
+          "🎬 A 12-person film crew in the credits",
+          "📈 The 'stranger' is in 3 other videos"
         ]
       }
     },
@@ -317,9 +317,9 @@
       "tellNo": "This one's real — £214, past tense, nothing begging to go viral. Compare it with the £100,000 giveaway: the difference isn't the kindness, it's who the camera is for.",
       "verify": {
         "lines": [
-          "🏠 The shelter is a real registered charity you can look up",
-          "📅 The account posts the same quiet updates all year",
-          "💰 No 'share to help' — the event already happened"
+          "🏠 A real charity you can look up",
+          "📅 Quiet posts like this all year",
+          "💰 No 'share to help' — it already happened"
         ]
       }
     }
