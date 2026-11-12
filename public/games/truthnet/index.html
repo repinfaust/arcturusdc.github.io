@@ -482,6 +482,7 @@ function renderMeasure(){
   }
   const c=measure[phase][mIdx];
   if(c.verify) vSeen++;
+  const lastM = mIdx === measure[phase].length-1; // only tease what actually comes next
   const el=document.createElement('div');
   el.className='card';
   el.innerHTML=`
@@ -498,7 +499,9 @@ function renderMeasure(){
     <div class="reveal" id="reveal">
       <div class="verdict ok" id="verdict">✓ Logged</div>
       <div class="tn"><span class="dot"></span> ${phase==='pre'?'WARM-UP':'FINAL CHECK'}</div>
-      <div class="tell" id="tell">${phase==='pre'?"No answers yet — they'd spoil the game. Let's play.":"Banked. Let's see how you did…"}</div>
+      <div class="tell" id="tell">${phase==='pre'
+        ? (lastM ? "No answers yet — they'd spoil the game. Let's play." : "No answers yet — they'd spoil the game. Next one…")
+        : (lastM ? "Banked. Let's see how you did…" : "Banked. Next one…")}</div>
       <button class="next" onclick="measureAdvance()">Next →</button>
     </div>`;
   stage.appendChild(el);
