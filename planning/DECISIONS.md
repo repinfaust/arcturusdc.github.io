@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-11-12 — AssumeZero: honest-claims rule adopted from external review (D-SITE-094)
+
+An external review (Codex) of v0.3.3 was accepted on two standing principles, both
+applied immediately and binding on future content:
+
+1. **Public claims must not exceed citable evidence.** The pitch page now says
+   "well-evidenced / research-informed and undergoing evaluation" rather than "proven /
+   lasting resistance"; the "strongest effect from building fakes" claim is softened to
+   "core part of the method"; the family playtest is reported as what it is (two
+   children, ages 6 and 10); "swipe" copy is corrected to "tap" everywhere because no
+   swipe handlers exist; status date refreshed.
+2. **The game must not promise what the prototype doesn't do.** End-screen copy no
+   longer asserts a "detector improved" from a 2-item measure or that "tomorrow's
+   booster is the fix"; Day 2 copy now promises a re-run, not fresh fakes, until the
+   real booster deck exists.
+
+Bug fixes in the same pass (all reproduced before fixing): `bakery-real` and
+`fundraiser-real` had no `cap` field and rendered the literal string "undefined"
+(regression from the 0.3.3 deck rewrite); Creator Mode awarded +1 token on every
+`bInflate()` call with both pieces selected, so re-clicking caption chips farmed
+unlimited tokens — now a one-shot `bAwarded` flag, with a farming regression test.
+
+Deferred to the next content plan (not this commit): counterexample cards (calm-false /
+emotional-true), a third "can't tell yet" answer, deck base-rate rebalance (currently
+10 fake / 4 real — blanket scepticism scores 71%), and harder measurement pairs that
+don't share the loud-fake/quiet-real style shortcut.
+
 ## 2026-11-12 — AssumeZero/TruthNet v0.3.3: Felix-test remedies — verify onboarding, sting anchored to its card (D-SITE-093)
 
 Driven by the first v0.3.2 Felix test (2026-11-11, Felix 10 and Harley 6 — both needed

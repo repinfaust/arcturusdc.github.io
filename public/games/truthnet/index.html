@@ -250,9 +250,9 @@
       <div class="vstat" id="mstat" style="border-color:rgba(255,211,78,.35);background:rgba(255,211,78,.07)"></div>
       <div class="vstat" id="vstat"></div>
       <div class="booster" id="booster">
-        🛡️ Your spotting fades a little every day. Come back tomorrow for a
-        <strong>booster</strong> — fresh fakes, same tricks.
-        <button class="boostbtn" onclick="day2()">▶ Day 2 booster</button>
+        🛡️ Tricks are easiest to spot while they're fresh in your head. Come back
+        tomorrow and <strong>run it again</strong> — can you beat today's score?
+        <button class="boostbtn" onclick="day2()">▶ Play Day 2</button>
       </div>
       <button class="restart" onclick="restart()">Play again</button>
     </div>
@@ -265,7 +265,7 @@
     <button class="btn fake" onclick="decide('fake')">FAKE</button>
     <button class="btn real" onclick="decide('real')">REAL</button>
   </div>
-  <div class="hint" id="hint">Trust your gut. Swipe or tap.</div>
+  <div class="hint" id="hint">Trust your gut. Tap FAKE or REAL.</div>
 </div>
 
 <script>
@@ -350,7 +350,7 @@ function renderCard(){
   stage.appendChild(el);
   controls.style.display='flex'; hint.style.display='block';
   // per-card question reframes the call: picture? framing? feeling?
-  hint.textContent = c.question ? c.question + '  ·  swipe or tap' : 'Trust your gut. Swipe or tap.';
+  hint.textContent = c.question ? c.question + '  ·  tap to answer' : 'Trust your gut. Tap FAKE or REAL.';
   const vb=document.getElementById('verifybtn');
   if(c.verify){
     vb.textContent='🔍 check source'; vb.disabled=false; vb.classList.remove('done'); vb.classList.remove('pulse');
@@ -526,7 +526,7 @@ function closeRug(){
 }
 
 // — Creator Mode: scripted, menu-based. Reusing card components, no free typing. —
-let bHasCap=false, bHasArrow=false;
+let bHasCap=false, bHasArrow=false, bAwarded=false;
 function showCreator(){
   document.querySelectorAll('.card').forEach(c=>c.remove());
   controls.style.display='none'; hint.style.display='none'; setVerifyRow(false);
@@ -554,7 +554,7 @@ function bInflate(){
     document.getElementById('bPayoff').innerHTML =
       "<strong>You just made the thumbnail lie.</strong> Same true photo — but the panic caption and an arrow pointing at nothing took it from 12 likes to millions. Nothing real changed. Only the framing did.";
     document.getElementById('bDone').style.display='inline-block';
-    tokens+=1; tokEl.textContent='🪙 '+tokens; // creator awards a token
+    if(!bAwarded){ bAwarded=true; tokens+=1; tokEl.textContent='🪙 '+tokens; } // creator awards one token, once
   }
 }
 function closeCreator(){
@@ -575,10 +575,10 @@ function showEnd(){
   if(measure && measure.pre && measure.pre.length){
     const p=mScore.pre, q=mScore.post, n=measure.pre.length;
     let msg;
-    if(q>p) msg='Your detector improved — you caught more of the fresh fakes.';
+    if(q>p) msg='You caught more of the brand-new posts this time.';
     else if(p===n && q===n) msg='Sharp from the start — and still sharp at the end.';
-    else if(q===p) msg="Held steady. Tomorrow's booster is how it climbs.";
-    else msg="Fresh fakes are harder — that's normal. Tomorrow's booster is the fix.";
+    else if(q===p) msg='Held steady on posts you had never seen.';
+    else msg="Brand-new posts are harder — that's normal. Practice helps.";
     ms.style.display='block';
     ms.innerHTML=`🎯 <strong>Your detector — before: ${p}/${n} · after: ${q}/${measure.post.length}</strong><br>${msg}`;
   } else { ms.style.display='none'; }
@@ -594,7 +594,7 @@ function resetState(){
   i=0; tokens=0; streak=0; unlockedSting=false; rugDone=false; creatorDone=false;
   phase='pre'; mIdx=0; mScore.pre=0; mScore.post=0; verifyIntroDone=false;
   for(const k of Object.keys(competence)) delete competence[k];
-  bHasCap=false; bHasArrow=false; verifiedThisCard=false; vSeen=0; vChecked=0;
+  bHasCap=false; bHasArrow=false; bAwarded=false; verifiedThisCard=false; vSeen=0; vChecked=0;
   tokEl.textContent='🪙 0'; strkEl.textContent='🔥 0';
   const f=document.getElementById('pfill'); if(f) f.style.width='0%';
   const w=document.getElementById('pwalk'); if(w) w.style.left='0%';

@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'AssumeZero · A proven method for teaching children to question the feed',
-  description: 'AssumeZero trains children to question what they’re shown — AI fakes, clickbait, manufactured outrage — using inoculation, a method shown to build real, lasting resistance to misinformation, delivered in the swipe-feed format children already live in. v0.3 is a working, playtested prototype.',
+  description: 'AssumeZero trains children to question what they’re shown — AI fakes, clickbait, manufactured outrage — using inoculation (“prebunking”), one of the best-evidenced approaches in media-literacy research, delivered in the feed format children already live in. Research-informed and undergoing evaluation; v0.3 is a working, playtested prototype.',
   openGraph: {
     title: 'AssumeZero · A proven method for teaching children to question the feed',
     description: 'A proven method (inoculation / prebunking) for teaching children a durable skill — questioning what they’re shown — built in the format they already live in. v0.3 is a working, playtested prototype.',
@@ -138,7 +138,7 @@ export default function AssumeZeroPage() {
   <div class="hero">
     <span class="eyebrow">Est. 2025 · A Game by Arcturus Digital Consulting · TruthNet Signal //</span>
     <h1>The feed is built<br>to fool them.<br><em>Teach them to see it.</em></h1>
-    <p class="lead">AssumeZero trains children to question what they're shown — AI fakes, clickbait, manufactured outrage — using inoculation, a method shown to build real, lasting resistance to misinformation. The difference from everything else on offer: it's built in the format children already live in, so a proven method actually reaches them. v0.3 is a working prototype of that loop.</p>
+    <p class="lead">AssumeZero trains children to question what they're shown — AI fakes, clickbait, manufactured outrage — using inoculation ("prebunking"), one of the best-evidenced approaches in media-literacy research. The difference from everything else on offer: it's built in the format children already live in, so a well-evidenced method actually reaches them. v0.3 is a working prototype of that loop — research-informed, and now being evaluated with children.</p>
     <div>
       <span class="pill live">● Inoculation-based</span>
       <span class="pill">KS1 → KS3+</span>
@@ -166,8 +166,8 @@ export default function AssumeZeroPage() {
     <h2>Spot. Reveal. Repeat.</h2>
     <p class="body">One judgment, dressed a hundred ways. The disguise changes; the question never does.</p>
     <div class="grid g3">
-      <div class="card"><div class="n">01 · Spot</div><h3>The feed</h3><p>A card appears — a post, a photo, a clip. Real, or made to fool you? A two-second gut call. Swipe or tap. No wall of text, no homework face.</p></div>
-      <div class="card"><div class="n">02 · Reveal</div><h3>TruthNet cuts in</h3><p>After the swipe, TruthNet names the tell — the seventh leg, the red arrow pointing at nothing, the feeling that was engineered. The "ohh" moment is the learning.</p></div>
+      <div class="card"><div class="n">01 · Spot</div><h3>The feed</h3><p>A card appears — a post, a photo, a clip. Real, or made to fool you? A two-second gut call — FAKE or REAL. No wall of text, no homework face.</p></div>
+      <div class="card"><div class="n">02 · Reveal</div><h3>TruthNet cuts in</h3><p>After the call, TruthNet names the tell — the seventh leg, the red arrow pointing at nothing, the feeling that was engineered. The "ohh" moment is the learning.</p></div>
       <div class="card"><div class="n">03 · Repeat</div><h3>Tokens &amp; boosters</h3><p>Catches earn Truth Tokens. Spotting fades without practice — so the game asks you back tomorrow for a booster. The replay loop is the lesson's delivery schedule.</p></div>
     </div>
     <p class="body" style="margin-top:30px"><strong>And then — make the lie.</strong> In Creator Mode the child stops spotting and starts building: pick a real photo, bolt on a panic caption, add the arrow, watch the likes inflate. Becoming the manipulator — briefly, safely, white-hat only — is the highest-potency version of the lesson, and the research agrees.</p>
@@ -188,14 +188,14 @@ export default function AssumeZeroPage() {
 
   <!-- WHY IT WORKS -->
   <section>
-    <span class="marker">Why It Works // The method is proven</span>
+    <span class="marker">Why It Works // The method is well-evidenced</span>
     <h2>This isn't a hunch about gamification.</h2>
-    <p class="body">It's <strong>inoculation theory</strong> — "prebunking." Expose a child to a weakened, controlled dose of a manipulation tactic and they build resistance to the real thing. It's been demonstrated in nearly this exact format: Cambridge's <em>Bad News</em> game conferred measurable resistance to misinformation across a ~15,000-person evaluation, holding regardless of age, education or politics — and the strongest effect came from letting players <strong>build</strong> the fakes, not just spot them. The EU Commission has called gamified prebunking one of the most sustainable paths to combating fake news.</p>
+    <p class="body">It's <strong>inoculation theory</strong> — "prebunking." Expose a child to a weakened, controlled dose of a manipulation tactic and they build resistance to the real thing. It's been demonstrated in nearly this exact format: Cambridge's <em>Bad News</em> game conferred measurable resistance to misinformation across a ~15,000-person evaluation, holding regardless of age, education or politics — and letting players <strong>build</strong> the fakes, not just spot them, is a core part of the method. The EU Commission has called gamified prebunking one of the most sustainable paths to combating fake news.</p>
     <p class="body">The honest caveat we keep on the record: the effects are real but modest. We shift the odds. We don't immunise.</p>
     <div class="stats" style="margin-top:30px">
       <div class="stat"><div class="big">~⅓</div><p>of online 13–17s shown a celebrity product post failed to confidently identify it as influencer marketing.</p><div class="src">Ofcom, Media Use &amp; Attitudes, 2025</div></div>
       <div class="stat"><div class="big">Half</div><p>of online 8–17s now use AI tools — often for learning and schoolwork.</p><div class="src">Ofcom, Media Use &amp; Attitudes, 2025</div></div>
-      <div class="stat"><div class="big">92%</div><p>of 8–17s recall an online-safety lesson at school — almost all of it read, not played.</p><div class="src">Ofcom, Media Use &amp; Attitudes, 2025</div></div>
+      <div class="stat"><div class="big">92%</div><p>of 8–17s recall an online-safety lesson at school — but provision children choose to replay is still rare.</p><div class="src">Ofcom, Media Use &amp; Attitudes, 2025</div></div>
     </div>
     <p class="note">The Online Safety Act has created statutory pull toward exactly this kind of provision — and there still isn't much children will <em>voluntarily</em> engage with. That's the gap.</p>
   </section>
@@ -217,11 +217,11 @@ export default function AssumeZeroPage() {
       </div>
       <div class="v3"><h3>New in v0.3</h3>
         <ul>
-          <li>Swipe-to-judge feed as the core loop</li>
+          <li>Tap-to-judge feed as the core loop</li>
           <li>Provenance → framing → feeling spine across KS1–KS3+</li>
           <li>Truth Tokens + booster return mechanic</li>
           <li>Creator Mode — build the lie, white-hat</li>
-          <li>Validated by playtest, not just buildable</li>
+          <li>Playtested, with learning measurement built in</li>
         </ul>
       </div>
     </div>
@@ -230,11 +230,11 @@ export default function AssumeZeroPage() {
 
   <!-- STATUS -->
   <section>
-    <span class="marker">Current Status // last updated June 2026</span>
+    <span class="marker">Current Status // last updated November 2026</span>
     <h2>Where we are. What's next.</h2>
     <div class="status-row"><div class="mk done">✓</div><div><h3>Complete — v0.2 POC (web)</h3><p>Walkable village, NPC dialogue, the LIKELY / CAN'T TELL / UNLIKELY runner, three-state ad break, TruthNet cards. Proved the concept was buildable without a studio.</p></div></div>
-    <div class="status-row"><div class="mk done">✓</div><div><h3>Complete — v0.3 core loop (web prototype)</h3><p>Working swipe-to-judge feed across the spine — provenance (real vs AI), framing (clickbait), and a system-level trap; TruthNet reveals; Truth Tokens; a Kling-generated behind-the-scenes sting; Creator Mode; and the booster end-screen. Real images, real loop — a short, deliberate proof slice.</p></div></div>
-    <div class="status-row"><div class="mk done">✓</div><div><h3>Complete — playtest, first round</h3><p>Early testing with KS1 and KS2 children showed strong voluntary engagement, including repeat plays of the placeholder-art build — evidence the loop itself is the draw. Engagement is the delivery mechanism, not the goal; the next rounds test what matters most: whether the lesson sticks.</p></div></div>
+    <div class="status-row"><div class="mk done">✓</div><div><h3>Complete — v0.3 core loop (web prototype)</h3><p>Working tap-to-judge feed across the spine — provenance (real vs AI), framing (clickbait), and a system-level trap; TruthNet reveals; Truth Tokens; a Kling-generated behind-the-scenes sting; Creator Mode; and the booster end-screen. Real images, real loop — a short, deliberate proof slice.</p></div></div>
+    <div class="status-row"><div class="mk done">✓</div><div><h3>Complete — playtest, first round</h3><p>Early family testing with two children (ages 6 and 10) showed voluntary engagement and repeat plays of the placeholder-art build. A small sample, honestly reported; the next rounds widen the group and test what matters most: whether the lesson sticks.</p></div></div>
     <div class="status-row"><div class="mk now">◉</div><div><h3>In progress — content volume</h3><p>The loop holds attention; the deck is short. Building a repeatable card pipeline (GPT-image + Kling) so content scales without becoming a bespoke art project per card.</p></div></div>
     <div class="status-row"><div class="mk next">○</div><div><h3>Upcoming — school pilot conversations</h3><p>Seeking 2–3 UK primaries for endorsement and a home-play distribution pilot. No procurement — heads look at something and tell us honestly what they think.</p></div></div>
     <div class="status-row"><div class="mk next">○</div><div><h3>Upcoming — designer engagement</h3><p>Game-native visual direction for the feed, cards and TruthNet reveals, plus a repeatable content-art system. The interim build is house-style; the next pass needs a children's illustrator.</p></div></div>
