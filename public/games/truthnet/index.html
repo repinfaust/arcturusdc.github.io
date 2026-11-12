@@ -13,21 +13,24 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   body{margin:0; background:radial-gradient(circle at 50% 0%, #1b2330, #0e1116 60%); color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; display:flex; justify-content:center; min-height:100vh}
-  .phone{width:100%; max-width:420px; padding:14px 14px 28px; display:flex; flex-direction:column; min-height:100vh}
+  .phone{width:100%; max-width:420px; padding:14px 14px 20px; display:flex; flex-direction:column}
 
-  .topbar{display:flex; align-items:center; justify-content:space-between; padding:6px 4px 14px}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:6px 4px 10px}
   .brand{display:flex; align-items:center; gap:8px; font-weight:800; letter-spacing:.5px}
   .dot{width:11px; height:11px; border-radius:50%; background:var(--cyan); box-shadow:0 0 12px var(--cyan)}
   .stats{display:flex; gap:14px; font-weight:700; font-size:14px}
   .stats .tok{color:var(--gold)} .stats .strk{color:var(--cyan)}
 
-  /* run progress — one thin bar across pre-check, feed and final check */
-  .progress{height:4px; background:#1c2430; border-radius:2px; overflow:hidden; margin:0 4px 10px}
-  .progress-fill{height:100%; width:0%; background:var(--cyan); border-radius:2px; transition:width .3s ease}
+  /* run progress — detective walks the track to the trophy as you answer */
+  .progress{height:14px; background:#1c2430; border:1px solid var(--line); border-radius:9px; margin:2px 4px 12px; position:relative}
+  .progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--cyan),#7ee787); border-radius:8px; transition:width .4s ease}
+  .progress .walker{position:absolute; top:50%; left:0%; transform:translate(-50%,-54%); font-size:19px;
+    transition:left .4s ease; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5)); z-index:2}
+  .progress .goal{position:absolute; top:50%; right:4px; transform:translateY(-54%); font-size:12px}
 
-  .stage{position:relative; flex:1; display:flex; align-items:center; justify-content:center}
+  .stage{position:relative}
 
-  .card{position:absolute; width:100%; background:var(--panel); border:1px solid var(--line);
+  .card{position:relative; width:100%; background:var(--panel); border:1px solid var(--line);
     border-radius:22px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,.5);
     transition:transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s}
   .media{height:300px; display:flex; align-items:center; justify-content:center; position:relative;
@@ -42,7 +45,7 @@
   /* perfect/over-rendered look for the trap card */
   .glow .media{background:linear-gradient(135deg,#2b1f4a,#3a2a63); filter:saturate(1.4) brightness(1.08)}
 
-  .controls{display:flex; gap:12px; padding-top:16px}
+  .controls{display:flex; gap:12px; padding-top:12px}
   .btn{flex:1; border:none; border-radius:16px; padding:16px; font-size:16px; font-weight:800; letter-spacing:.4px;
     cursor:pointer; color:#0e1116; transition:transform .08s}
   .btn:active{transform:scale(.96)}
@@ -65,7 +68,7 @@
   .next:active{transform:scale(.96)}
 
   /* sting / unlock screen */
-  .sting{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex:1; padding:20px}
+  .sting{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:64vh; padding:20px}
   .sting.show{display:flex; animation:pop .35s ease}
   .sting .reel{width:100%; max-width:340px; aspect-ratio:16/9; border-radius:18px; border:1px solid var(--line);
     background:#000; display:flex; align-items:center; justify-content:center;
@@ -73,7 +76,7 @@
   .sting .reel .stingvid{width:100%; height:100%; object-fit:cover; display:block}
   .sting h2{margin:.2em 0; font-size:20px} .sting p{color:var(--dim); max-width:300px; line-height:1.5; font-size:14px}
 
-  .end{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex:1; padding:20px}
+  .end{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:64vh; padding:20px}
   .end.show{display:flex; animation:pop .35s ease}
   .end .big{font-size:40px; font-weight:900; color:var(--gold)}
   .restart{margin-top:18px; background:transparent; color:var(--cyan); border:1px solid var(--cyan); border-radius:14px;
@@ -84,7 +87,7 @@
   .redarrow{position:absolute; right:34px; top:60px; color:var(--red); font-size:64px; font-weight:900;
     text-shadow:0 2px 8px rgba(0,0,0,.5); transform:rotate(8deg); z-index:2}
   /* verify / check-source button — a game control, not part of the post */
-  .verifyrow{display:none; justify-content:center; padding-top:12px}
+  .verifyrow{display:none; justify-content:center; padding-top:10px}
   .verifybtn{background:transparent; border:1px solid var(--cyan); color:var(--cyan);
     border-radius:20px; padding:9px 18px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:.3px}
   .verifybtn:active{transform:scale(.96)}
@@ -105,7 +108,7 @@
   .vpanel .vfoot{font-size:12px; color:var(--dim); margin-top:10px; max-width:300px; text-align:center}
 
   /* rug-pull endgame — the thesis statement */
-  .rug{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex:1; padding:20px}
+  .rug{display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:64vh; padding:20px}
   .rug.show{display:flex; animation:pop .35s ease}
   .rug .frame{position:relative; width:100%; max-width:300px; border-radius:18px; overflow:hidden;
     border:1px solid var(--line); margin-bottom:18px}
@@ -179,7 +182,7 @@
     <div class="brand"><span class="dot"></span> TRUTHNET</div>
     <div class="stats"><span class="tok" id="tok">🪙 0</span><span class="strk" id="strk">🔥 0</span></div>
   </div>
-  <div class="progress"><div class="progress-fill" id="pfill"></div></div>
+  <div class="progress"><div class="progress-fill" id="pfill"></div><span class="walker" id="pwalk">🕵️</span><span class="goal">🏆</span></div>
 
   <div class="stage" id="stage">
     <!-- cards injected here -->
@@ -301,8 +304,10 @@ const controls=document.getElementById('controls'), hint=document.getElementById
 // run progress: judged cards over the whole run (pre + feed + post)
 function totalSteps(){ return cards.length + (measure ? measure.pre.length + measure.post.length : 0); }
 function updateProgress(done){
-  const f=document.getElementById('pfill');
-  if(f) f.style.width = Math.min(100, Math.round(done/totalSteps()*100)) + '%';
+  if(!totalSteps()) return;
+  const pct = Math.min(100, Math.round(done/totalSteps()*100)) + '%';
+  const f=document.getElementById('pfill'); if(f) f.style.width = pct;
+  const w=document.getElementById('pwalk'); if(w) w.style.left = pct;
 }
 
 function renderCard(){
@@ -592,6 +597,7 @@ function resetState(){
   bHasCap=false; bHasArrow=false; verifiedThisCard=false; vSeen=0; vChecked=0;
   tokEl.textContent='🪙 0'; strkEl.textContent='🔥 0';
   const f=document.getElementById('pfill'); if(f) f.style.width='0%';
+  const w=document.getElementById('pwalk'); if(w) w.style.left='0%';
   document.getElementById('end').classList.remove('show');
   document.getElementById('sting').classList.remove('show');
   document.getElementById('rug').classList.remove('show');
