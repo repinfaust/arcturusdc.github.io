@@ -7,14 +7,15 @@ if (path === '/apps/assumezero/ukraine') {
   document.documentElement.lang = 'uk';
   document.title = 'Перевірмо разом · AssumeZero';
   document.body.dataset.edition = 'ukraine';
-  try {
-    const { mount } = await import('./ukraine.js');
-    await mount(document.getElementById('game'));
-  } catch (cause) {
-    console.error(cause);
-    error.textContent = 'Не вдалося відкрити гру. Оновіть сторінку, щоб спробувати ще раз.';
-    error.hidden = false;
-  }
+  // Promise chain, not top-level await: TLA raises the parse floor to Safari 15
+  // and a parse failure here would break the UK game too, not just this branch.
+  import('./ukraine.js')
+    .then(({ mount }) => mount(document.getElementById('game')))
+    .catch(cause => {
+      console.error(cause);
+      error.textContent = 'Не вдалося відкрити гру. Оновіть сторінку, щоб спробувати ще раз.';
+      error.hidden = false;
+    });
 } else if (['/games/truthnet', '/games/truthnet/index.html'].includes(path)) {
   document.getElementById('game').append(document.getElementById('uk-game').content.cloneNode(true));
   window.TruthNet = { createDeckRun, loadDeck };
