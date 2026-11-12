@@ -1,0 +1,743 @@
+{
+  "schemaVersion": 1,
+  "engineCompatibility": 1,
+  "editionId": "ukraine",
+  "locale": "uk-UA",
+  "contentVersion": "0.1-draft",
+  "provenance": "Original fictional text and evidence prepared for adult review under D-SITE-098.",
+  "sessions": [
+    {
+      "id": "first",
+      "title": "Звідки ми це знаємо?",
+      "description": "Знайди дату, джерело або важливу подробицю.",
+      "kind": "practice",
+      "cards": [
+        {
+          "id": "snow",
+          "topic": "Дата",
+          "author": "Наш двір",
+          "claim": "Дивіться, скільки снігу! Це фото нашого майданчика зробили сьогодні.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Перший допис із цим фото",
+              "excerpt": "У підписі до того самого фото: «Наш майданчик, 18 січня минулого року».",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "У мене теж є санчата!",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Фото справжнє, але його зробили торік. Воно не показує, скільки снігу сьогодні."
+        },
+        {
+          "id": "chess",
+          "topic": "Джерело",
+          "author": "Гурток «Коник»",
+          "claim": "Ура! У п’ятницю о 16:00 буде відкрита зустріч шахового гуртка.",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Оголошення гуртка",
+              "excerpt": "Відкрита зустріч. П’ятниця, 16:00. Приходьте зі своєю дошкою або візьміть нашу.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я люблю грати білими.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Оголошення самого гуртка підтверджує день і час. Радісний тон не заважає допису бути точним."
+        },
+        {
+          "id": "cat",
+          "topic": "Припущення",
+          "author": "Клуб друзів тварин",
+          "claim": "На фото кіт сидить біля порожньої миски. Він щойно з’їв усю вечерю.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Опис від автора фото",
+              "excerpt": "Я сфотографувала кота біля миски. До цього я за ним не спостерігала.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Яка гарна миска!",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Порожня миска не показує, хто її спорожнив і коли. Це може бути правда, але ми поки не знаємо."
+        },
+        {
+          "id": "museum",
+          "topic": "Умови",
+          "author": "Дозвілля поруч",
+          "claim": "Вхід до Музею паперових міст безкоштовний для всіх щонеділі.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Розклад і квитки музею",
+              "excerpt": "Безкоштовна лише перша неділя місяця. В інші неділі потрібен звичайний квиток.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Мені сподобалися моделі будинків.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Квиткова сторінка уточнює умову. Перша неділя місяця — це не кожна неділя."
+        },
+        {
+          "id": "poster",
+          "topic": "Ілюстрація",
+          "author": "Гурток «Олівець»",
+          "claim": "Ми відкриваємо виставку малюнків у суботу. Кіт на афіші — ілюстрація.",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Афіша від організаторів",
+              "excerpt": "Відкриття виставки — субота. Ілюстрацію кота створено на комп’ютері для цієї афіші.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Кіт схожий на мого.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Афіша підтверджує дату та пояснює походження зображення. Ілюстрація може супроводжувати точну інформацію."
+        },
+        {
+          "id": "seed",
+          "topic": "Бракує даних",
+          "author": "Шкільний сад",
+          "claim": "Ця насінина проросте до п’ятниці.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Запис у щоденнику саду",
+              "excerpt": "Насінину посадили в понеділок. Поки що видно тільки землю. Вид насінини невідомий.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Мені подобаються соняшники.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Запис підтверджує, коли посадили насінину. Точний день появи паростка поки невідомий."
+        }
+      ]
+    },
+    {
+      "id": "second",
+      "title": "Що підказують докази?",
+      "description": "Відрізни підтвердження від здогадки.",
+      "kind": "practice",
+      "cards": [
+        {
+          "id": "score",
+          "topic": "Підтвердження",
+          "author": "Команда «Смуга»",
+          "claim": "Так! Ми виграли гру з рахунком 3:2!",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Підсумковий запис судді",
+              "excerpt": "Смуга — Хвиля: 3:2. Гру завершено.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Мені подобається ваша форма.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Підсумковий запис підтверджує рахунок. Захоплення в дописі нічого не змінює."
+        },
+        {
+          "id": "craft",
+          "topic": "Деталі",
+          "author": "Гурток «Нитка»",
+          "claim": "На заняття треба принести ножиці. У гуртку їх не видають.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Список від керівниці гуртка",
+              "excerpt": "Ножиці й папір є в майстерні. Із собою потрібен тільки клей.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я хочу зробити закладку.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Список майстерні прямо каже, що ножиці видають. Він допомагає з’ясувати, що справді треба взяти."
+        },
+        {
+          "id": "bird",
+          "topic": "Межі фото",
+          "author": "Спостерігачі за птахами",
+          "claim": "Це та сама синиця, що прилітала до годівнички вчора.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Записи спостерігача",
+              "excerpt": "Учора й сьогодні біля годівнички були синиці. На фото не видно міток чи особливих ознак.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Мені здається, що вони всі схожі.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Записи показують, що синиці прилітали двічі. Цих ознак замало, щоб упізнати одну конкретну пташку."
+        },
+        {
+          "id": "advert",
+          "topic": "Відкрита реклама",
+          "author": "Гурток «Мозаїка»",
+          "claim": "Реклама. У наборі «Крапка» є 12 олівців.",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Перелік на коробці",
+              "excerpt": "Склад набору «Крапка»: 12 кольорових олівців. Позначку «Реклама» додано до допису.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "У мене є улюблений синій олівець.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Опис на коробці підтверджує кількість. Позначка пояснює, що це реклама. Кількість усе одно можна перевірити."
+        },
+        {
+          "id": "books",
+          "topic": "Оригінал",
+          "author": "Читацькі новини",
+          "claim": "Обмін книжками починається о 12:00.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Підтверджений розклад організаторів",
+              "excerpt": "Обмін книжками: 14:00–15:00. Облаштування столів для організаторів: 12:00.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я вже вибрала книжку для обміну.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "О 12:00 організатори готують столи. Розклад відрізняє підготовку від початку обміну."
+        },
+        {
+          "id": "drawing",
+          "topic": "Авторство",
+          "author": "Куточок малюнків",
+          "claim": "Хтось у гуртку перемалював цей малюнок із чужої роботи.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Запис про роботу",
+              "excerpt": "У нас є лише цей малюнок. Іншої роботи для порівняння та імені автора немає.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я теж малювала щось схоже.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Схожий стиль не доводить копіювання. Без іншої роботи та відомостей про неї звинувачувати когось немає підстав."
+        }
+      ]
+    },
+    {
+      "id": "more",
+      "title": "Ще трохи практики",
+      "description": "Чотири нові дописи для самостійної перевірки.",
+      "kind": "practice",
+      "cards": [
+        {
+          "id": "puzzle",
+          "topic": "Уточнення",
+          "author": "Клуб головоломок",
+          "claim": "Усі головоломки на зустрічі складатимуть командами.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Програма зустрічі",
+              "excerpt": "Можна вибрати індивідуальні або командні головоломки.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я б обрав команду.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Програма пропонує обидва варіанти. Слово «усі» робить допис неточним."
+        },
+        {
+          "id": "music",
+          "topic": "Підтвердження",
+          "author": "Гурток «Нота»",
+          "claim": "Наш концерт перенесли на четвер!",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Оновлений календар гуртка",
+              "excerpt": "Новий день концерту — четвер. Попередній запис на середу скасовано.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я хочу почути барабани.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Оновлений календар підтверджує четвер і пояснює, що змінилося."
+        },
+        {
+          "id": "frog",
+          "topic": "Чого не видно",
+          "author": "Дослідники природи",
+          "claim": "За очеретом ховається ще одна жаба.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Польовий запис",
+              "excerpt": "Ми побачили одну жабу. За очеретом чути шелест, але нічого не видно.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Жаби добре стрибають.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Шелест має різні причини. Поки нічого не підтверджує, що там саме жаба."
+        },
+        {
+          "id": "board",
+          "topic": "Точна кількість",
+          "author": "Клуб настільних ігор",
+          "claim": "Для гри «Вежа» потрібно щонайменше троє людей.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Правила з коробки",
+              "excerpt": "Вежа. Для 2–4 гравців.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я вже вмію грати.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "У правилах написано, що можна грати вдвох. Для перевірки кількості гравців правила корисніші за коментар."
+        }
+      ]
+    },
+    {
+      "id": "form-a",
+      "title": "Форма А",
+      "description": "Шість окремих прикладів для огляду.",
+      "kind": "assessment",
+      "cards": [
+        {
+          "id": "a-paint",
+          "topic": "Розклад",
+          "author": "Гурток «Пензлик»",
+          "claim": "Заняття в середу почнеться о 15:30.",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Розклад майстерні",
+              "excerpt": "Середа, 15:30 — початок заняття.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Мені подобається акварель.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Час збігається з розкладом."
+        },
+        {
+          "id": "a-game",
+          "topic": "Деталі",
+          "author": "Клуб «Зірка»",
+          "claim": "У коробці гри чотири фішки.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Перелік деталей",
+              "excerpt": "У коробці: шість фішок, поле й кубик.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Фішки яскраві.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Перелік містить шість фішок."
+        },
+        {
+          "id": "a-plum",
+          "topic": "Час",
+          "author": "Садівники",
+          "claim": "У неділю ця слива вже достигне.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Запис догляду",
+              "excerpt": "У четвер слива тверда. Швидкість достигання невідома.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я люблю сливовий сік.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Точну дату ще не можна встановити."
+        },
+        {
+          "id": "a-map",
+          "topic": "Кількість",
+          "author": "Гурток «Мапа»",
+          "claim": "Неймовірно! У нашій грі 24 картки!",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Список карток",
+              "excerpt": "Комплект: 24 пронумеровані картки.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Гарна обкладинка.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Список підтверджує кількість."
+        },
+        {
+          "id": "a-time",
+          "topic": "Оригінал",
+          "author": "Клуб «Ліхтарик»",
+          "claim": "Усі зустрічі клубу відбуваються по суботах.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Календар клубу",
+              "excerpt": "Цього місяця: дві суботи й одна неділя.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я люблю зустрічі.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Одна зустріч припадає на неділю."
+        },
+        {
+          "id": "a-ink",
+          "topic": "Причина",
+          "author": "Майстерня «Пляма»",
+          "claim": "На столі пляма, бо перекинулася баночка з фарбою.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Нотатка майстерні",
+              "excerpt": "На столі синя пляма. Баночки поруч немає; ніхто не бачив, звідки вона взялася.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Синій — мій улюблений колір.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Причину плями не встановлено."
+        }
+      ]
+    },
+    {
+      "id": "form-b",
+      "title": "Форма Б",
+      "description": "Шість нових прикладів для огляду.",
+      "kind": "assessment",
+      "cards": [
+        {
+          "id": "b-pages",
+          "topic": "Кількість",
+          "author": "Майстерня «Зошит»",
+          "claim": "У цьому зошиті 32 сторінки.",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Опис виробу",
+              "excerpt": "Формат А5, 32 сторінки.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я люблю зошити в клітинку.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Опис підтверджує кількість."
+        },
+        {
+          "id": "b-fair",
+          "topic": "Розклад",
+          "author": "Книжковий гурток",
+          "claim": "Ярмарок відкриють у п’ятницю.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Афіша ярмарку",
+              "excerpt": "П’ятниця — підготовка. Відкриття для відвідувачів — субота.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я принесу книжку.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Ярмарок відкриється в суботу."
+        },
+        {
+          "id": "b-cloud",
+          "topic": "Припущення",
+          "author": "Куточок природи",
+          "claim": "На фото хмара схожа на кита. Вона буде такою самою через годину.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Опис фотографа",
+              "excerpt": "Це один знімок. Спостережень після нього немає.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я бачу дельфіна.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "Один знімок не встановлює майбутню форму хмари."
+        },
+        {
+          "id": "b-plant",
+          "topic": "Підтвердження",
+          "author": "Гурток «Паросток»",
+          "claim": "Ого! Ми посадили десять рослин!",
+          "finalConclusion": "supported",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Запис гуртка",
+              "excerpt": "Висадили 10 рослин у два ящики, по п’ять у кожен.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Мені подобається садити квіти.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Запис підтверджує десять рослин."
+        },
+        {
+          "id": "b-brush",
+          "topic": "Умови",
+          "author": "Майстерня «Колір»",
+          "claim": "У кожному наборі є пензлик.",
+          "finalConclusion": "contradicted",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Етикетка набору",
+              "excerpt": "Папір і фарби. Пензлик продається окремо.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я малюю тонким пензликом.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [
+            "source"
+          ],
+          "feedback": "Пензлик не входить до набору."
+        },
+        {
+          "id": "b-bell",
+          "topic": "Причина",
+          "author": "Гурток музики",
+          "claim": "За дверима подзвонив саме маленький дзвіночок.",
+          "finalConclusion": "unresolved",
+          "evidence": [
+            {
+              "id": "source",
+              "label": "Запис слухача",
+              "excerpt": "Я почув короткий звук за дверима. Джерела звуку не бачив.",
+              "relevant": true
+            },
+            {
+              "id": "other",
+              "label": "Коментар під дописом",
+              "excerpt": "Я знаю таку мелодію.",
+              "relevant": false
+            }
+          ],
+          "decisiveEvidenceIds": [],
+          "feedback": "З опису не можна визначити, що саме дзвеніло."
+        }
+      ]
+    }
+  ],
+  "repair": {
+    "claim": "Усі в нашому гуртку обожнюють читати пригоди!",
+    "evidence": "У гуртку 12 дітей. Семеро обрали пригодницьку книжку для спільного читання.",
+    "options": [
+      "Семеро з дванадцяти дітей обрали пригодницьку книжку.",
+      "Тепер усі діти читатимуть тільки пригоди.",
+      "Ніхто в гуртку не читає інших книжок."
+    ],
+    "answer": 0,
+    "feedback": "Сім голосів підтверджують вибір сімох дітей. Вони не показують, що люблять усі."
+  }
+}

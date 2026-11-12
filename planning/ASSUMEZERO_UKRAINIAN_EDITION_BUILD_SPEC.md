@@ -1,17 +1,17 @@
 # AssumeZero — Ukrainian edition: gated build specification
 
 Date: 12 November 2026  
-Status: **Opportunity recorded. Implementation deferred.**  
+Status: **Local adult-review prototype approved by David under D-SITE-098.**
 Owner: David / Arcturus Digital Consulting  
-Decision: [D-SITE-096](DECISIONS.md)
+Decisions: [D-SITE-096 and D-SITE-098](DECISIONS.md)
 
 ## 1. Decision and authority
 
-Explore a Ukrainian-led edition for children affected by Russia's invasion. Build only after the revised UK core produces a credible learning signal and a Ukrainian delivery partner commits to the work and its responsibilities.
+Explore a Ukrainian-led edition for children affected by Russia's invasion. David overruled G1 and G2 as prerequisites for a local adult-review prototype at `/apps/assumezero/ukraine`. UK pilot evidence and a Ukrainian partner remain pending. The override covers the local build. G3 and G4 continue to govern supervised child testing and deployment.
 
-Discovery conversations can precede the UK pilot. They must not become a parallel product build. This document commissions planning only. It does not commission code, translated production content, generated assets, child testing, deployment or outreach. Sending emails requires David's separate instruction.
+Discovery conversations can precede the UK pilot. Sending emails requires David's separate instruction.
 
-This is a conditional implementation contract. Before starting, an implementation agent must read the gate record below. Missing evidence means a gate is unmet. A grant application, a positive conversation, the passing of time or this spec's existence does not clear a gate.
+Read this spec alongside the scoped approval in D-SITE-098. Missing evidence leaves the corresponding gate unmet. The prototype is draft material for adult review.
 
 ## 2. SoRR alignment and current baseline
 
@@ -30,7 +30,7 @@ Preserve the static, browser-first, account-free model. State stays in memory. N
 
 ## 3. Gate register
 
-G0 is satisfied by recording this opportunity. **G1–G4 are UNMET / evidence pending.** Future gate records must contain evidence links, version identifiers, named reviewers, dates, scope and an explicit decision. Keep identifiable participant records out of this repository.
+G0 is satisfied by recording this opportunity. **G1–G4 are unmet. D-SITE-098 waives G1 and G2 for the local prototype.** Future gate records must contain evidence links, version identifiers, named reviewers, dates, scope and an explicit decision. Keep identifiable participant records out of this repository.
 
 | Gate | Evidence required | Acceptance owner | Permission granted |
 |---|---|---|---|
@@ -83,7 +83,7 @@ Adult documentation can state the context of Russia's invasion plainly. Child ac
 
 ## 6. Conditional first-build scope
 
-Ratify the following at G2, after reviewing the revised UK core:
+Use the following draft scope for the local build. Ratify pilot scope with the delivery partner:
 
 - Twelve teaching cards in two selectable sessions of six; target 5–8 minutes per session with no timer.
 - Four supported, four contradicted and four unresolved final conclusions across the module. Mix style within each category. Do not advertise the counts as a guessing rule.
@@ -134,7 +134,7 @@ Use session progress and specific encouragement. No correctness streaks, ranking
 
 ## 8. Shared implementation proposal
 
-Rebaseline against the released core at G1. Reuse its capabilities; do not copy the HTML into a second engine. Exact routes/schema are provisional. Select edition and locale from an explicit allowlist, never an arbitrary user-supplied deck URL. Unknown/incompatible editions show a clear error and must not fall back to UK content.
+The local prototype uses the current v0.4 core. Check the baseline again when preparing a pilot. Reuse the shared runtime and select the edition from an explicit route allowlist. Unknown or incompatible editions show a clear error.
 
 Separate:
 
@@ -209,7 +209,7 @@ Technical passes do not replace educational/safeguarding acceptance and cannot e
 
 **Now — documentation and adult discovery:** keep this opportunity record. Prepare questions about unmet need, existing provision, audience, access, local authorship, evaluation and operating capacity. Potential first conversations are IREX Learn to Discern and Voices of Children, with Filter as an additional reference. No relationship or funding availability is implied. No emails are sent by this task.
 
-**After G1 + G2 — internal prototype:** record released-core version and scoped amendments; ratify module, schema, edition policy, delivery method and device matrix; commission Ukrainian authorship/review; implement missing shared capabilities; prepare educator materials and acceptance evidence.
+**Local prototype — approved in D-SITE-098:** implement shared capabilities against the current v0.4 baseline, add draft Ukrainian text and fictional practice material, and verify the adult review route. Obtain Ukrainian authorship and review, agree delivery and device scope, and prepare the facilitator materials before proposing G3.
 
 **After G3 — supervised usability:** partner recruits and facilitates the agreed sample, records comprehension/usability issues and applies stopping rules. Resolve issues before proposing wider evaluation. Do not broaden setting or recruitment implicitly.
 
@@ -221,7 +221,7 @@ Required handoff: gate record; frozen scope/amendments; editorial/source/rights 
 
 Working model: free to children/families; explore partner, grant or commissioned funding. Greater fundability than the UK product is a hypothesis, not a fact. Budget Ukrainian authorship, education/child-support review, narration/accessibility, development/QA, facilitation/evaluation, reporting and maintenance separately. Do not fund only translation and leave partner responsibilities unpaid.
 
-Stop or retain deferred status if the UK gate fails, no unmet need is identified, partner responsibilities lack capable owners, local review is unavailable, or funding demands unsupported claims or learner tracking. Record the reason. Do not relax criteria after seeing disappointing results.
+For work beyond the local prototype, record how pilot evidence, local review, delivery ownership and funding affect the decision to continue. Any funding proposal must preserve the no-pupil-data model and evidence limits.
 
 ## 14. Evidence and limits
 

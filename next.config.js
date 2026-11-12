@@ -24,6 +24,15 @@ const nextConfig = {
   },
   async rewrites() {
     return [
+      // D-SITE-098: adult review uses the shared static game in local development.
+      ...(process.env.NODE_ENV === 'development' ? [{
+        source: '/apps/assumezero/ukraine',
+        destination: '/games/truthnet/index.html',
+      }] : []),
+      {
+        source: '/games/truthnet',
+        destination: '/games/truthnet/index.html',
+      },
       {
         source: '/stea/:path*',
         destination: '/apps/stea/:path*',
@@ -38,6 +47,10 @@ const nextConfig = {
 
   async headers() {
     return [
+      {
+        source: '/apps/assumezero/ukraine',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }]
+      },
       {
         source: '/(.*)',
         headers: [

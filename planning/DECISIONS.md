@@ -1,5 +1,20 @@
 # Decisions
 
+## 2026-11-12 — AssumeZero Ukrainian edition: local prototype approved (D-SITE-098)
+
+David explicitly overruled the UK learning and Ukrainian partnership prerequisites
+in D-SITE-096 for the local adult-review prototype. Build it at
+`/apps/assumezero/ukraine` on the development server using the shared TruthNet
+runtime and a separate Ukrainian deck and presentation. The override records
+permission to build, without recording pilot results or a partnership.
+The UK iframe keeps `/games/truthnet`, with an explicit rewrite to its static
+index so Next.js serves the shared document on local and deployed hosts.
+
+Keep D-SITE-096's rules for content, genuine safety instructions, participation
+and pupil data. G3 and G4 continue to govern child testing and deployment. The
+prototype uses draft text and static evidence artefacts for adult review. Native
+educator review, recorded narration and offline delivery remain future scope.
+
 ## 2026-11-12 — AssumeZero/TruthNet: measurement runs once; warm-up owns its identity (D-SITE-097)
 
 David flagged the v0.4 flow reading as broken: the check-source button appears
